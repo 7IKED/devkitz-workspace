@@ -1,0 +1,288 @@
+{
+  "agents": [
+    {
+      "name": "James™ Evaluator",
+      "id": "james-evaluator",
+      "version": "2.0.0",
+      "description": "Guardian + Prompt-Scoring Agent — überwacht Constitution, coded NICHT",
+      "capabilities": ["evaluate", "review", "score", "guard"],
+      "protocols": ["a2a", "mcp"],
+      "endpoint": "http://localhost:9880/agents/james",
+      "port": 9880,
+      "auth": { "type": "api-key", "header": "X-DKZ-Key" },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "prompt": { "type": "string", "description": "Text zum Evaluieren" },
+          "mode": { "type": "string", "enum": ["score", "review", "improve", "guard"] },
+          "rubrics": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["prompt", "mode"]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "score": { "type": "number", "minimum": 0, "maximum": 100 },
+          "feedback": { "type": "string" },
+          "improvements": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "tags": ["evaluator", "guardian", "scoring", "review"],
+      "status": "active"
+    },
+    {
+      "name": "Wispe™ Voice Agent",
+      "id": "wispe-voice",
+      "version": "3.0.0",
+      "description": "Hyperreal Voice Agent mit Brain View, Chat-Persistenz und Research Modi",
+      "capabilities": ["voice", "chat", "research", "brain-view", "notes"],
+      "protocols": ["http", "websocket"],
+      "endpoint": "http://localhost:8899",
+      "port": 8899,
+      "auth": { "type": "none" },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "command": { "type": "string", "description": "Console-Befehl (help, brain, fast, think, fakecheck, note, history, export)" },
+          "query": { "type": "string", "description": "Suchanfrage oder Chat-Nachricht" },
+          "mode": { "type": "string", "enum": ["chat", "voice", "research", "brain"] }
+        },
+        "required": ["command"]
+      },
+      "tags": ["voice", "research", "brain", "electron"],
+      "status": "active"
+    },
+    {
+      "name": "DkZ PM™",
+      "id": "dkz-pm",
+      "version": "1.0.0",
+      "description": "Product Manager — spec.md, User Stories, Akzeptanzkriterien",
+      "capabilities": ["spec", "user-stories", "prd", "brief"],
+      "protocols": ["a2a"],
+      "endpoint": "internal://bmad/pm",
+      "auth": { "type": "internal" },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "task": { "type": "string", "enum": ["brief", "prd", "spec", "stories"] },
+          "context": { "type": "string" }
+        },
+        "required": ["task"]
+      },
+      "tags": ["pm", "planning", "bmad"],
+      "status": "active"
+    },
+    {
+      "name": "DkZ Architekt™",
+      "id": "dkz-architekt",
+      "version": "1.0.0",
+      "description": "System-Architektur — plan.md, Tech-Stack, Verzeichnisstruktur",
+      "capabilities": ["architecture", "plan", "tech-stack", "tasks"],
+      "protocols": ["a2a"],
+      "endpoint": "internal://bmad/architekt",
+      "auth": { "type": "internal" },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "task": { "type": "string", "enum": ["plan", "architecture", "tasks", "tech-stack"] },
+          "spec": { "type": "string", "description": "Referenz auf spec.md" }
+        },
+        "required": ["task"]
+      },
+      "tags": ["architect", "planning", "bmad"],
+      "status": "active"
+    },
+    {
+      "name": "DkZ Developer™",
+      "id": "dkz-developer",
+      "version": "1.0.0",
+      "description": "Ralph-Loop Executor — Code nach plan.md, Tests, Commit",
+      "capabilities": ["code", "implement", "test", "commit"],
+      "protocols": ["a2a", "mcp"],
+      "endpoint": "internal://bmad/developer",
+      "auth": { "type": "internal" },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "task_id": { "type": "string", "description": "Task-ID aus tasks.json" },
+          "plan": { "type": "string", "description": "Referenz auf plan.md" },
+          "files": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["task_id"]
+      },
+      "tags": ["developer", "coder", "bmad", "ralph-loop"],
+      "status": "active"
+    },
+    {
+      "name": "DkZ Reviewer™",
+      "id": "dkz-reviewer",
+      "version": "1.0.0",
+      "description": "CodeRabbit — esc()? DkZ CSS? features.json? Qualitätsprüfung",
+      "capabilities": ["review", "lint", "security", "quality"],
+      "protocols": ["a2a"],
+      "endpoint": "internal://bmad/reviewer",
+      "auth": { "type": "internal" },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "files": { "type": "array", "items": { "type": "string" } },
+          "checks": { "type": "array", "items": { "type": "string" }, "default": ["xss", "css-vars", "features-json", "naming"] }
+        },
+        "required": ["files"]
+      },
+      "tags": ["reviewer", "quality", "bmad", "coderabbit"],
+      "status": "active"
+    },
+    {
+      "name": "DkZ Tester™",
+      "id": "dkz-tester",
+      "version": "1.0.0",
+      "description": "Validierung — TestCafe Tests, Browser-Check, Stresstest",
+      "capabilities": ["test", "validate", "stress-test", "audit"],
+      "protocols": ["a2a"],
+      "endpoint": "internal://bmad/tester",
+      "auth": { "type": "internal" },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "test_type": { "type": "string", "enum": ["unit", "integration", "e2e", "stress", "audit"] },
+          "target": { "type": "string", "description": "URL oder Pfad zum Testen" }
+        },
+        "required": ["test_type", "target"]
+      },
+      "tags": ["tester", "testcafe", "bmad", "qa"],
+      "status": "active"
+    },
+    {
+      "name": "DkZ Dokumentar™",
+      "id": "dkz-dokumentar",
+      "version": "1.0.0",
+      "description": "Dokumentation — README, Wiki, AGENTS.md Learnings",
+      "capabilities": ["document", "readme", "wiki", "changelog"],
+      "protocols": ["a2a"],
+      "endpoint": "internal://bmad/dokumentar",
+      "auth": { "type": "internal" },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "doc_type": { "type": "string", "enum": ["readme", "changelog", "wiki", "playbook", "walkthrough"] },
+          "module": { "type": "string" },
+          "changes": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["doc_type"]
+      },
+      "tags": ["documentation", "bmad", "wiki"],
+      "status": "active"
+    },
+    {
+      "name": "NanoBot",
+      "id": "nanobot",
+      "version": "2.0.0",
+      "description": "Auto-Classifier und Agent-Router — leitet Anfragen zum richtigen Agenten",
+      "capabilities": ["classify", "route", "registry", "health-check"],
+      "protocols": ["internal", "a2a"],
+      "endpoint": "http://localhost:9890",
+      "port": 9890,
+      "auth": { "type": "internal" },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "input": { "type": "string", "description": "User-Input zum Klassifizieren" },
+          "context": { "type": "object", "description": "Optionaler Kontext" },
+          "force_agent": { "type": "string", "description": "Agent erzwingen (bypass classifier)" }
+        },
+        "required": ["input"]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "agent": { "type": "string" },
+          "confidence": { "type": "number" },
+          "response": { "type": "object" }
+        }
+      },
+      "classification_rules": {
+        "developer": ["code", "fix", "build", "debug", "implement", "create"],
+        "tester": ["test", "check", "verify", "audit", "stress"],
+        "james": ["review", "score", "eval", "rate", "improve"],
+        "researcher": ["search", "research", "find", "analyze", "compare"],
+        "dokumentar": ["doc", "readme", "wiki", "changelog", "write"],
+        "pm": ["spec", "story", "requirement", "brief", "plan"],
+        "architekt": ["architecture", "design", "structure", "stack"]
+      },
+      "tags": ["classifier", "router", "orchestration"],
+      "status": "active"
+    },
+    {
+      "name": "NanoChat",
+      "id": "nanochat",
+      "version": "2.0.0",
+      "description": "WebSocket Agent-to-Agent Messaging — Echtzeit-Kommunikation zwischen Agenten",
+      "capabilities": ["messaging", "broadcast", "subscribe", "history"],
+      "protocols": ["websocket", "a2a"],
+      "endpoint": "ws://localhost:9891",
+      "port": 9891,
+      "auth": { "type": "internal" },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "enum": ["send", "broadcast", "subscribe", "history"] },
+          "from": { "type": "string", "description": "Sender Agent-ID" },
+          "to": { "type": "string", "description": "Empfänger Agent-ID (nur bei send)" },
+          "channel": { "type": "string", "description": "Channel Name (nur bei subscribe)" },
+          "payload": { "type": "object", "description": "Nachricht" }
+        },
+        "required": ["type", "from"]
+      },
+      "message_format": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "type": { "type": "string" },
+          "from": { "type": "string" },
+          "to": { "type": "string" },
+          "channel": { "type": "string" },
+          "payload": { "type": "object" },
+          "timestamp": { "type": "integer" }
+        }
+      },
+      "channels": ["general", "tasks", "alerts", "reviews", "deployments"],
+      "tags": ["messaging", "websocket", "a2a", "realtime"],
+      "status": "active"
+    },
+    {
+      "name": "Pi Agent",
+      "id": "pi-agent",
+      "version": "3.0.0",
+      "description": "Task-Decomposition Agent — zerlegt komplexe Aufgaben in atomare Sub-Tasks",
+      "capabilities": ["decompose", "plan", "prioritize", "delegate"],
+      "protocols": ["mcp"],
+      "endpoint": "http://localhost:9881",
+      "port": 9881,
+      "auth": { "type": "api-key" },
+      "tags": ["decomposition", "planning", "opencode"],
+      "status": "active"
+    },
+    {
+      "name": "Builder Agent",
+      "id": "builder-agent",
+      "version": "3.0.0",
+      "description": "Code-Builder Agent — implementiert Sub-Tasks mit Debounce und Qualitätsprüfung",
+      "capabilities": ["build", "implement", "refactor", "optimize"],
+      "protocols": ["mcp"],
+      "endpoint": "http://localhost:9882",
+      "port": 9882,
+      "auth": { "type": "api-key" },
+      "tags": ["builder", "coder", "opencode"],
+      "status": "active"
+    }
+  ],
+  "metadata": {
+    "ecosystem": "DEVKiTZ™",
+    "version": "3.0.0",
+    "total_agents": 12,
+    "protocols": ["a2a", "mcp", "http", "websocket", "internal"],
+    "updated": "2026-05-10",
+    "registry_url": "http://localhost:9890/registry"
+  }
+}
