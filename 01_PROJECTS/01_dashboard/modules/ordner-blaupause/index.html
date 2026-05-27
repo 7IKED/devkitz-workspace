@@ -304,7 +304,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
 ├── 🏗️ [WORKSPACE]/       ← GitHub Hub + Templates
 └── 🗄️ 99_ARCHIVE/        ← Abgeschlossenes
 </pre>
-<p style="font-size:.62rem;color:var(--green)">✅ 06_NOTEPAD + 07_PRIVAT hinzugefügt<br>✅ 06_RESEARCH → gemergt in 02_RESEARCH<br>✅ ONTHERUN → 04_SYSTEM/ONTHERUN<br>✅ SecondBrain → 04_SYSTEM/SecondBrain</p>
+<p style="font-size:.62rem;color:var(--green)">✅ 06_NOTEPAD + 07_PRIVAT hinzugefügt<br>✅ Research konsolidiert in 02_RESEARCH (21.269 Dateien)<br>✅ ONTHERUN → 04_SYSTEM/ONTHERUN<br>✅ SecondBrain → 04_SYSTEM/SecondBrain</p>
 </div>
 <div>
 <h3 style="margin-top:0">Drive-Struktur (Spiegel)</h3>
@@ -348,25 +348,32 @@ tr:hover td{background:rgba(255,255,255,.02)}
 <h2>⚙️ Google Apps Script Automatisierung</h2>
 
 <div class="c">
-<h3>🤖 Script 1: Auto-Sortierer (Inbox → Ordner)</h3>
-<p style="font-size:.68rem;color:var(--text2);margin-bottom:8px">Trigger: Alle 15 Min — sortiert neue Dateien aus <code>00_INBOX</code></p>
+<h3>🤖 Script 1: Auto-Sortierer (Inbox → Ordner) — KEIN LÖSCHEN!</h3>
+<p style="font-size:.68rem;color:var(--text2);margin-bottom:8px">Trigger: Alle 15 Min — sortiert + loggt. <strong style="color:var(--red)">⚠️ NIEMALS removeFile() oder trashFile()!</strong></p>
 <pre>
-// ⚠️ SICHERHEITS-PRINZIP: IMMER Kopie → Verifizieren → Dann erst entfernen!
-// NIE removeFile() ohne vorherige Prüfung ob Kopie existiert!
+// ═══ DkZ™ CLOUDIA² Auto-Sorter v3 ═══
+// GOLDENE REGEL: In Drive wird NIEMALS etwas gelöscht!
+// Dateien werden nur KOPIERT + GELOGGT.
+// Original bleibt in Inbox bis User manuell löscht.
+
+const SHEET_ID = 'DEINE_SHEET_ID'; // ← Google Sheet ID eintragen
 
 function autoSortInbox() {
   const RULES = [
-    { match: /image\//,        folder: '03_MEDIA/Screenshots' },
-    { match: /video\//,        folder: '03_MEDIA/Videos' },
-    { match: /audio\//,        folder: '03_MEDIA/Musik' },
-    { match: /pdf|document/,   folder: '02_RESEARCH/docs' },
-    { match: /zip|rar|7z/,     folder: '04_SYSTEM/00_Backups' },
-    { match: /javascript|json|html|css/, folder: '01_PROJECTS/_code_inbox' }
+    { match: /image\//,        folder: '03_MEDIA/Screenshots', typ: '🖼️ Bild' },
+    { match: /video\//,        folder: '03_MEDIA/Videos',      typ: '🎬 Video' },
+    { match: /audio\//,        folder: '03_MEDIA/Musik',       typ: '🎵 Audio' },
+    { match: /pdf|document/,   folder: '02_RESEARCH/docs',     typ: '📄 Dokument' },
+    { match: /zip|rar|7z/,     folder: '04_SYSTEM/00_Backups', typ: '📦 Archiv' },
+    { match: /javascript|json|html|css/, folder: '01_PROJECTS/_code_inbox', typ: '💻 Code' },
+    { match: /spreadsheet/,    folder: '04_SYSTEM/sheets',     typ: '📊 Sheet' },
+    { match: /text\/markdown/,  folder: '06_NOTEPAD/note/short', typ: '📝 Notiz' }
   ];
 
   const inbox = findFolder('00_INBOX');
   if (!inbox) return;
   const files = inbox.getFiles();
+  let sorted = 0;
 
   while (files.hasNext()) {
     const file = files.next();
@@ -377,25 +384,36 @@ function autoSortInbox() {
       if (rule.match.test(mime) || rule.match.test(name)) {
         const target = findOrCreate(rule.folder);
 
-        // SCHRITT 1: Kopie in Zielordner erstellen
+        // ═══ NUR KOPIEREN — NIE LÖSCHEN! ═══
+        // addFile() = Shortcut/Link in Zielordner
+        // Original BLEIBT in 00_INBOX
         target.addFile(file);
 
-        // SCHRITT 2: VERIFIZIEREN dass Datei im Ziel angekommen ist
-        const verify = target.getFilesByName(name);
-        if (verify.hasNext()) {
-          // SCHRITT 3: Erst JETZT aus Inbox entfernen
-          inbox.removeFile(file);
-          log('✅ Sortiert', name, rule.folder);
-        } else {
-          // FEHLER: Datei NICHT entfernen wenn Kopie fehlt!
-          log('❌ FEHLER — Datei blieb in Inbox', name, rule.folder);
-        }
+        // Sheets-Log mit vollständigen Metadaten
+        logToSheets({
+          action: '✅ Sortiert (Kopie)',
+          datei: name,
+          mime: mime,
+          typ: rule.typ,
+          quelle: '00_INBOX',
+          ziel: rule.folder,
+          groesse: file.getSize(),
+          id: file.getId(),
+          url: file.getUrl(),
+          erstellt: file.getDateCreated(),
+          geaendert: file.getLastUpdated(),
+          owner: file.getOwner()?.getEmail() || 'unbekannt',
+          geloescht: 'NEIN — NIEMALS'
+        });
+        sorted++;
         break;
       }
     }
   }
+  Logger.log('═══ ' + sorted + ' Dateien sortiert (0 gelöscht) ═══');
 }
 
+// ═══ Ordner-Helfer ═══
 function findFolder(path) {
   const parts = path.split('/');
   let current = DriveApp.getRootFolder();
@@ -417,28 +435,40 @@ function findOrCreate(path) {
   return current;
 }
 
-function log(action, file, dest) {
-  const sheet = SpreadsheetApp.openById('DEINE_SHEET_ID')
-    .getSheetByName('Log') || SpreadsheetApp.openById('DEINE_SHEET_ID')
-    .insertSheet('Log');
-  sheet.appendRow([new Date(), action, file, dest]);
+// ═══ Sheets-Logging (PFLICHT bei jeder Aktion) ═══
+function logToSheets(data) {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  let sheet = ss.getSheetByName('Sort-Log');
+  if (!sheet) {
+    sheet = ss.insertSheet('Sort-Log');
+    sheet.appendRow([
+      'Timestamp','Aktion','Datei','MIME','Typ',
+      'Quelle','Ziel','Grösse','ID','URL',
+      'Erstellt','Geändert','Owner','Gelöscht?'
+    ]);
+  }
+  sheet.appendRow([
+    new Date(), data.action, data.datei, data.mime, data.typ,
+    data.quelle, data.ziel, data.groesse, data.id, data.url,
+    data.erstellt, data.geaendert, data.owner, data.geloescht
+  ]);
 }
 </pre>
 </div>
 
 <div class="c">
-<h3>🤖 Script 2: Wöchentlicher Report + Alte Dateien → Archiv</h3>
+<h3>🤖 Script 2: Wöchentlicher Report + Alte Dateien → Archiv (KEIN LÖSCHEN!)</h3>
 <pre>
 function weeklyCleanup() {
   const ARCHIVE_AFTER_DAYS = 90;
   const now = new Date();
-  // Exakt gleiche Ordner wie C:\DEVKiTZ\
+  // Exakt gleiche Ordner wie C:\DEVKiTZ\ + 06_NOTEPAD + 07_PRIVAT
   const folders = ['00_INBOX','01_PROJECTS','02_RESEARCH',
-    '03_MEDIA','04_SYSTEM','05_INTERN','[DEEPKEEP]',
-    '[WORKSPACE]','99_ARCHIVE'];
+    '03_MEDIA','04_SYSTEM','05_INTERN','06_NOTEPAD','07_PRIVAT',
+    '[DEEPKEEP]','[WORKSPACE]','99_ARCHIVE'];
 
   let report = '📊 DkZ Drive-Report\n\n';
-  let archived = 0;
+  let copied = 0;
 
   folders.forEach(name =&gt; {
     const folder = findFolder(name);
@@ -447,7 +477,7 @@ function weeklyCleanup() {
     report += `${name}: ${count} Dateien\n`;
   });
 
-  // Alte Inbox-Dateien → Archiv (MIT VERIFY!)
+  // Alte Inbox-Dateien → KOPIE nach Archiv (KEIN LÖSCHEN!)
   const inbox = findFolder('00_INBOX');
   if (inbox) {
     const files = inbox.getFiles();
@@ -456,18 +486,23 @@ function weeklyCleanup() {
       const age = (now - f.getLastUpdated()) / 86400000;
       if (age &gt; ARCHIVE_AFTER_DAYS) {
         const arch = findOrCreate('99_ARCHIVE/auto-archived');
+        // NUR KOPIE — Original bleibt in Inbox!
         arch.addFile(f);
-        // VERIFY vor Remove!
-        const verify = arch.getFilesByName(f.getName());
-        if (verify.hasNext()) {
-          inbox.removeFile(f);
-          archived++;
-        }
+        logToSheets({
+          action: '📦 Archiv-Kopie (90d+)',
+          datei: f.getName(), mime: f.getMimeType(), typ: '🗄️ Alt',
+          quelle: '00_INBOX', ziel: '99_ARCHIVE/auto-archived',
+          groesse: f.getSize(), id: f.getId(), url: f.getUrl(),
+          erstellt: f.getDateCreated(), geaendert: f.getLastUpdated(),
+          owner: f.getOwner()?.getEmail() || '?',
+          geloescht: 'NEIN — Kopie, Original bleibt'
+        });
+        copied++;
       }
     }
   }
 
-  report += `\nArchiviert: ${archived} alte Dateien`;
+  report += `\nArchiv-Kopien: ${copied} alte Dateien (Originale unberührt!)`;
   MailApp.sendEmail({
     to: Session.getActiveUser().getEmail(),
     subject: '📊 DkZ Drive Report — ' + now.toLocaleDateString('de'),

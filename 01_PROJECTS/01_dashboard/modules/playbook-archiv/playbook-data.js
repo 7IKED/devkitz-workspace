@@ -336,10 +336,10 @@ Teste im Browser. Logge in _logs/. Commit: "feat(NAME): implement FT-XXX"</div>
 <div class="prompt-box" onclick="cp(this)">WALKTHROUGH v3 PIPELINE:
 LLM → otr_walkthrough_save (MCP)
   → n8n Webhook → Apps Script → Drive [06]/Walkthrough/ + Sheets
-  → Local Fallback → SecondBrain/raw/ + 06_RESEARCH/Walkthrough/
+  → Local Fallback → SecondBrain/raw/ + 06_NOTEPAD/archive/master/log/
 Screenshots: 777.dkz.app/screen/{bildname}
 Blog: blog-hub/posts/walkthrough-v3-autonome-session.html
-Research: 06_RESEARCH/Walkthrough/walkthrough-v3-research.md</div></div>`
+Research: 02_RESEARCH/Walkthrough/walkthrough-v3-research.md</div></div>`
     }
 };
 
