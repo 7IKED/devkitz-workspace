@@ -1,0 +1,724 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DkZâ„¢ LLM Cost Board &#8212; AI Model Pricing Calculator</title>
+    <meta name="description"
+        content="Comprehensive AI model cost calculator with role assignment, utilization sliders, and full pricing for 100+ models">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        :root {
+            --bg: #0e0e10;
+            --bg2: #16161a;
+            --bg3: #1a1a28;
+            --bg4: #222236;
+            --accent: #fa1e4e;
+            --accent2: #ff4d7a;
+            --accent-glow: rgba(250, 30, 78, .25);
+            --green: #00e676;
+            --blue: #448aff;
+            --purple: #b388ff;
+            --orange: #ffab40;
+            --cyan: #18ffff;
+            --yellow: #ffd740;
+            --text: #e8e8f0;
+            --text2: #a0a0b8;
+            --text3: #6a6a80;
+            --card: rgba(20, 20, 35, .85);
+            --border: rgba(255, 255, 255, .06);
+            --glass: rgba(255, 255, 255, .03);
+            --radius: 12px;
+            --radius2: 8px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at 20% 0%, rgba(250, 30, 78, .08) 0%, transparent 50%), radial-gradient(ellipse at 80% 100%, rgba(68, 138, 255, .06) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 28px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            backdrop-filter: blur(20px)
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .header .subtitle {
+            font-size: .8rem;
+            color: var(--text3);
+            margin-top: 2px
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 20px
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 8px 16px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: var(--radius2)
+        }
+
+        .stat-box .val {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent)
+        }
+
+        .stat-box .lbl {
+            font-size: .65rem;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: .5px
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 6px;
+            padding: 4px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            overflow-x: auto;
+            backdrop-filter: blur(20px)
+        }
+
+        .tab {
+            padding: 10px 18px;
+            border: none;
+            background: transparent;
+            color: var(--text2);
+            font-family: inherit;
+            font-size: .78rem;
+            font-weight: 500;
+            border-radius: var(--radius2);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all .2s
+        }
+
+        .tab:hover {
+            background: var(--glass);
+            color: var(--text)
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff;
+            font-weight: 600;
+            box-shadow: 0 4px 20px var(--accent-glow)
+        }
+
+        /* Panels */
+        .panel {
+            display: none;
+            animation: fadeIn .3s ease
+        }
+
+        .panel.active {
+            display: block
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        /* Global Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px
+        }
+
+        .ctrl-card {
+            padding: 20px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            backdrop-filter: blur(20px)
+        }
+
+        .ctrl-card label {
+            display: block;
+            font-size: .7rem;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-bottom: 8px
+        }
+
+        .ctrl-card .val-display {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 10px
+        }
+
+        input[type=range] {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 6px;
+            background: var(--bg4);
+            border-radius: 3px;
+            outline: none
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 12px var(--accent-glow)
+        }
+
+        /* Model Grid */
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 14px;
+            margin-bottom: 20px
+        }
+
+        .model-card {
+            padding: 16px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            backdrop-filter: blur(20px);
+            transition: all .25s;
+            position: relative;
+            overflow: hidden
+        }
+
+        .model-card:hover {
+            border-color: rgba(250, 30, 78, .3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, .3)
+        }
+
+        .model-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            opacity: 0;
+            transition: opacity .25s
+        }
+
+        .model-card:hover::before {
+            opacity: 1
+        }
+
+        .mc-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px
+        }
+
+        .mc-name {
+            font-size: .88rem;
+            font-weight: 700
+        }
+
+        .mc-provider {
+            font-size: .65rem;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-weight: 600
+        }
+
+        .mc-prices {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 10px
+        }
+
+        .mc-price {
+            padding: 8px;
+            background: var(--glass);
+            border-radius: var(--radius2);
+            text-align: center
+        }
+
+        .mc-price .p-val {
+            font-size: .95rem;
+            font-weight: 700
+        }
+
+        .mc-price .p-lbl {
+            font-size: .6rem;
+            color: var(--text3);
+            text-transform: uppercase
+        }
+
+        .mc-meta {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap
+        }
+
+        .mc-tag {
+            font-size: .6rem;
+            padding: 2px 7px;
+            background: var(--bg4);
+            border-radius: 10px;
+            color: var(--text2)
+        }
+
+        .mc-cost {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(250, 30, 78, .08);
+            border: 1px solid rgba(250, 30, 78, .15);
+            border-radius: var(--radius2);
+            text-align: center
+        }
+
+        .mc-cost .cost-val {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--accent)
+        }
+
+        .mc-cost .cost-lbl {
+            font-size: .6rem;
+            color: var(--text3)
+        }
+
+        /* Role Board */
+        .role-board {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 16px;
+            margin-bottom: 20px
+        }
+
+        .role-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .role-slot {
+            padding: 14px;
+            background: var(--card);
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            min-height: 70px;
+            transition: all .2s;
+            cursor: pointer
+        }
+
+        .role-slot.filled {
+            border-style: solid;
+            border-color: rgba(250, 30, 78, .3);
+            background: rgba(250, 30, 78, .05)
+        }
+
+        .role-slot .r-name {
+            font-size: .78rem;
+            font-weight: 600;
+            margin-bottom: 4px
+        }
+
+        .role-slot .r-model {
+            font-size: .7rem;
+            color: var(--accent)
+        }
+
+        .role-slot .r-cost {
+            font-size: .65rem;
+            color: var(--text3);
+            margin-top: 4px
+        }
+
+        /* Model Picker */
+        .model-picker {
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 8px
+        }
+
+        .model-picker::-webkit-scrollbar {
+            width: 4px
+        }
+
+        .model-picker::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 2px
+        }
+
+        .mp-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius2);
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .mp-item:hover {
+            border-color: var(--accent);
+            background: rgba(250, 30, 78, .05)
+        }
+
+        .mp-item .mp-name {
+            font-size: .78rem;
+            font-weight: 600
+        }
+
+        .mp-item .mp-cost {
+            font-size: .7rem;
+            color: var(--accent)
+        }
+
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px
+        }
+
+        .data-table th {
+            padding: 10px 14px;
+            background: var(--bg3);
+            font-size: .68rem;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            text-align: left;
+            position: sticky;
+            top: 0
+        }
+
+        .data-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            font-size: .78rem
+        }
+
+        .data-table tr:hover td {
+            background: rgba(250, 30, 78, .03)
+        }
+
+        .table-wrap {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: auto;
+            max-height: 600px;
+            backdrop-filter: blur(20px)
+        }
+
+        /* Filter bar */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap
+        }
+
+        .filter-bar input,
+        .filter-bar select {
+            padding: 8px 14px;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius2);
+            color: var(--text);
+            font-family: inherit;
+            font-size: .78rem;
+            outline: none
+        }
+
+        .filter-bar input:focus,
+        .filter-bar select:focus {
+            border-color: var(--accent)
+        }
+
+        /* Summary card */
+        .summary-card {
+            padding: 24px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            backdrop-filter: blur(20px)
+        }
+
+        .summary-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 12px
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px
+        }
+
+        .sg-item {
+            padding: 14px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: var(--radius2);
+            text-align: center
+        }
+
+        .sg-item .sg-val {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--accent)
+        }
+
+        .sg-item .sg-lbl {
+            font-size: .65rem;
+            color: var(--text3);
+            margin-top: 4px
+        }
+
+        /* Provider colors */
+        .prov-openai {
+            background: rgba(16, 163, 127, .15);
+            color: #10a37f
+        }
+
+        .prov-anthropic {
+            background: rgba(204, 119, 68, .15);
+            color: #cc7744
+        }
+
+        .prov-google {
+            background: rgba(66, 133, 244, .15);
+            color: #4285f4
+        }
+
+        .prov-xai {
+            background: rgba(255, 255, 255, .1);
+            color: #fff
+        }
+
+        .prov-deepseek {
+            background: rgba(0, 120, 255, .15);
+            color: #0078ff
+        }
+
+        .prov-alibaba {
+            background: rgba(255, 106, 0, .15);
+            color: #ff6a00
+        }
+
+        .prov-moonshot {
+            background: rgba(140, 100, 255, .15);
+            color: #8c64ff
+        }
+
+        .prov-minimax {
+            background: rgba(255, 200, 0, .15);
+            color: #ffc800
+        }
+
+        .prov-zhipu {
+            background: rgba(0, 200, 150, .15);
+            color: #00c896
+        }
+
+        .prov-mistral {
+            background: rgba(255, 80, 0, .15);
+            color: #ff5000
+        }
+
+        .prov-meta {
+            background: rgba(0, 100, 210, .15);
+            color: #0064d2
+        }
+
+        .prov-local {
+            background: rgba(0, 230, 118, .15);
+            color: #00e676
+        }
+
+        /* Uncensored badge */
+        .badge-uncensored {
+            background: rgba(255, 0, 0, .2);
+            color: #ff4444;
+            font-size: .55rem;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-weight: 700;
+            text-transform: uppercase
+        }
+
+        .badge-free {
+            background: rgba(0, 230, 118, .2);
+            color: #00e676;
+            font-size: .55rem;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-weight: 700
+        }
+
+        @media(max-width:900px) {
+            .controls {
+                grid-template-columns: 1fr
+            }
+
+            .role-board {
+                grid-template-columns: 1fr
+            }
+
+            .model-grid {
+                grid-template-columns: 1fr
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center
+            }
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="llm-cost-board" data-dkz-appid="DKZ-MOD-LLM" data-dkz-version="v0.01" data-dkz-title="LLM Cost Board  AI Model Pricing Calculator" data-dkz-icon="📦" data-dkz-separable="true">
+    <a href="../../hub/index.html" class="back-btn" style="padding:6px 12px;border:1px solid var(--border,#333);border-radius:8px;background:rgba(255,255,255,.03);color:var(--muted,#888);font-size:11px;text-decoration:none;position:fixed;top:10px;left:10px;z-index:200">? Hub</a>
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
+    <div class="app">
+        <header class="header">
+            <div>
+                <h1>? DkZ LLM COST BOARD</h1>
+                <div class="subtitle">Comprehensive AI Model Pricing &#8212; Role Assignment &#8212; Cost Simulation</div>
+            </div>
+            <div class="header-stats">
+                <div class="stat-box">
+                    <div class="val" id="totalModels">0</div>
+                    <div class="lbl">Models</div>
+                </div>
+                <div class="stat-box">
+                    <div class="val" id="totalCost">0.00</div>
+                    <div class="lbl">Est. Daily Cost</div>
+                </div>
+                <div class="stat-box">
+                    <div class="val" id="totalRoles">0/8</div>
+                    <div class="lbl">Roles Filled</div>
+                </div>
+            </div>
+        </header>
+
+        <nav class="tabs" id="tabNav"></nav>
+
+        <div id="panelContainer"></div>
+    </div>
+    <script src="tracker.js"></script>
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Llm cost board</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">LLM API Kosten Uebersicht und Vergleich.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Llm cost board</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">LLM API Kosten Uebersicht und Vergleich.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-llm-cost-board-onboarded','1')}if(!localStorage.getItem('dkz-llm-cost-board-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>
+
+    <script src="../../shared/dkz-prompt-hub.js"></script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+</html>
+
+

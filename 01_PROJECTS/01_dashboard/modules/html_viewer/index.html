@@ -1,0 +1,227 @@
+﻿<!DOCTYPE html>
+<html lang="de" class="dark">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Viewer &#8212; DkZâ„¢ v0.01</title>
+    <script src="https://cdn.tailwindcss.com">
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }</script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    colors: {
+                        darkBg: '#09090b', darkSurface: '#18181b', darkBorder: '#27272a',
+                        brand: { DEFAULT: '#ef4444', hover: '#dc2626' } // Red theme for HTML Viewer
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: theme('colors.darkBg');
+            color: #f4f4f5;
+            overflow: hidden;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: theme('colors.darkBorder');
+            border-radius: 3px;
+        }
+    /* DkZ v2 BG Blobs */body::before{content:"";position:fixed;top:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(250,30,78,.07),transparent 70%);pointer-events:none;z-index:0}body::after{content:"";position:fixed;bottom:-150px;left:-150px;width:500px;height:500px;background:radial-gradient(circle,rgba(168,85,247,.06),transparent 70%);pointer-events:none;z-index:0}
+</style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="html_viewer" data-dkz-appid="DKZ-MOD-HTM" data-dkz-version="v0.01" data-dkz-title="HTML Viewer" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const useIsMobile = () => {
+            const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+            useEffect(() => {
+                const check = () => setIsMobile(window.innerWidth < 1024);
+                window.addEventListener('resize', check);
+                return () => window.removeEventListener('resize', check);
+            }, []);
+            return isMobile;
+        };
+
+        const App = () => {
+            const isMobile = useIsMobile();
+            const [activeTab, setActiveTab] = useState('input');
+            const [htmlText, setHtmlText] = useState('<!-- Paste HTML here -->\n<div class="text-center p-10">\n  <h1 class="text-3xl font-bold text-blue-500">Live HTML Preview</h1>\n  <p class="text-gray-500">I render native HTML directly to the iframe.</p>\n</div>');
+
+            // Sync Logic
+            const [isSyncing, setIsSyncing] = useState(false);
+            const [syncStatus, setSyncStatus] = useState(null);
+
+            const handleSyncRepo = async () => {
+                setIsSyncing(true);
+                setSyncStatus(null);
+                try {
+                    const response = await fetch('http://localhost:3040/api/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                    const data = await response.json();
+                    setSyncStatus(data.success - { type: 'success', message: data.message } : { type: 'error', message: data.error });
+                } catch (err) {
+                    setSyncStatus({ type: 'error', message: 'Sync Server offline.' });
+                } finally {
+                    setIsSyncing(false);
+                    setTimeout(() => setSyncStatus(null), 5000);
+                }
+            };
+
+            return (
+                <div className="h-screen flex flex-col">
+                    <header className="h-16 border-b border-darkBorder bg-darkSurface flex items-center justify-between px-4 md:px-6 shrink-0">
+                        <div className="flex items-center gap-2 md:gap-3">
+                            <a
+                                href={isMobile - "../../dashboard/hub/index_panel.html" : "../../dashboard/hub/index.html"}
+                                className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-gray-400 hover:text-white shrink-0"
+                                title="Back to Dashboard"
+                            >
+                                <i className="ph-bold ph-caret-left text-lg md:text-xl"></i>
+                            </a>
+                            <i className="ph-duotone ph-file-html text-brand text-2xl md:text-3xl"></i>
+                            <h1 className="font-bold text-base md:text-lg tracking-tight">HTML <span className="text-brand">VIEWER</span></h1>
+                        </div>
+                        <div className="flex items-center gap-2 md:gap-4">
+                            {syncStatus && !isMobile && <span className={`text-xs font-bold ${syncStatus.type === 'success' - 'text-green-400' : 'text-red-400'} animate-pulse`}>{syncStatus.message}</span>}
+                            <button onClick={handleSyncRepo} disabled={isSyncing} className={`flex items-center gap-2 px-2 md:px-3 py-1.5 rounded text-xs font-bold transition-all uppercase ${isSyncing - 'bg-white/10 text-gray-400 cursor-not-allowed' : 'bg-darkBorder text-gray-300 hover:text-white border border-white/10'}`}>
+                                <i className={`ph-bold ph-git-commit ${isSyncing - "animate-spin" : ""}`}></i> {!isMobile && (isSyncing - 'Syncing...' : 'Sync Repo')}
+                            </button>
+                        </div>
+                    </header>
+                    <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+                        {isMobile && (
+                            <div className="flex bg-darkSurface border-b border-darkBorder shrink-0">
+                                <button onClick={() => setActiveTab('input')} className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest ${activeTab === 'input' - 'text-brand border-b-2 border-brand' : 'text-gray-500'}`}>Edit Code</button>
+                                <button onClick={() => setActiveTab('output')} className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest ${activeTab === 'output' - 'text-brand border-b-2 border-brand' : 'text-gray-500'}`}>Live Preview</button>
+                            </div>
+                        )}
+                        <div className={`w-full md:w-1/2 border-r border-darkBorder bg-darkBg flex-col ${isMobile && activeTab !== 'input' - 'hidden' : 'flex'}`}>
+                            <div className="p-2 border-b border-darkBorder bg-darkSurface text-xs font-bold text-gray-400 uppercase tracking-widest">Input (Raw HTML)</div>
+                            <textarea
+                                className="flex-1 p-4 bg-transparent text-gray-300 font-mono text-sm resize-none focus:outline-none custom-scroll"
+                                value={htmlText}
+                                onChange={e => setHtmlText(e.target.value)}
+                            />
+                        </div>
+                        <div className={`w-full md:w-1/2 bg-white flex-col relative ${isMobile && activeTab !== 'output' - 'hidden' : 'flex'}`}>
+                            <div className="p-2 border-b border-gray-300 bg-gray-100 text-xs font-bold text-gray-500 uppercase tracking-widest flex justify-between absolute top-0 left-0 w-full z-10">
+                                <span>Live Browser View (IFrame)</span>
+                            </div>
+                            {/* Injecting HTML with Tailwind CDN directly into iframe for accurate rendering */}
+                            <iframe
+                                className="flex-1 w-full border-none pt-[33px] relative z-0"
+                                srcDoc={`<html><head><script src="https://cdn.tailwindcss.com"><\/script><script src="../../shared/dkz-updater.js"></script>
+</head><body data-dkz-module="html_viewer" data-dkz-appid="DKZ-MOD-HTM" data-dkz-version="v0.01" data-dkz-title="HTML Viewer" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>${htmlText}
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Html viewer</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">HTML-Code live Vorschau und Editor.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Html viewer</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">HTML-Code live Vorschau und Editor.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-html_viewer-onboarded','1')}if(!localStorage.getItem('dkz-html_viewer-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+<!-- &#8212; DEVKiTZ 2026 &#8212; All Rights Reserved -->
+</html>`}
+                            />
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Html viewer</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">HTML-Code live Vorschau und Editor.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Html viewer</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">HTML-Code live Vorschau und Editor.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-html_viewer-onboarded','1')}if(!localStorage.getItem('dkz-html_viewer-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+
+<!-- &#8212; DEVKiTZ 2026 &#8212; All Rights Reserved -->
+</html>
+
+

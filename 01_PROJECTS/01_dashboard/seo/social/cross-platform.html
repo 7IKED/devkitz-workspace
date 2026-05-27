@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="shared/seo-shared.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="grid grid-2">
+        <div class="card card-full">
+            <h3>📊 Cross-Platform Analyse</h3>
+            <div class="tabs" id="tabs">
+                <button class="tab active" onclick="switchTab('compare',this)">📊 Vergleich</button>
+                <button class="tab" onclick="switchTab('repurpose',this)">♻️ Content Recycling</button>
+                <button class="tab" onclick="switchTab('schedule',this)">📅 Posting-Zeiten</button>
+                <button class="tab" onclick="switchTab('growth',this)">📈 Wachstum</button>
+            </div>
+            <button class="btn btn-green btn-block" onclick="loadData()">🔄 Daten laden</button>
+        </div>
+
+        <div id="compareTab">
+            <div class="card" id="compareCard">
+                <h3>📊 Plattform-Vergleich</h3>
+                <div id="compareData">
+                    <div class="empty-state">
+                        <div class="icon">📊</div>Klicke "Daten laden" um alle verknüpften Plattformen zu vergleichen.
+                    </div>
+                </div>
+            </div>
+            <div class="card" id="rankCard" style="display:none">
+                <h3>🏆 Plattform-Ranking</h3>
+                <div id="rankData"></div>
+            </div>
+        </div>
+        <div id="repurposeTab" style="display:none">
+            <div class="card card-full" id="repurposeCard">
+                <h3>♻️ Content Recycling Vorschläge</h3>
+                <div id="repurposeData">
+                    <div class="empty-state">
+                        <div class="icon">♻️</div>Content-Recycling-Vorschläge basierend auf deinen Plattformen.
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="scheduleTab" style="display:none">
+            <div class="card card-full" id="scheduleCard">
+                <h3>📅 Optimale Posting-Zeiten</h3>
+                <div id="scheduleData">
+                    <div class="empty-state">
+                        <div class="icon">📅</div>Optimal Posting-Zeiten je Plattform.
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="growthTab" style="display:none">
+            <div class="card card-full" id="growthCard">
+                <h3>📈 Wachstums-Trends</h3>
+                <div id="growthData">
+                    <div class="empty-state">
+                        <div class="icon">📈</div>Wachstumstrends über alle Plattformen.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        const PLATFORMS = [{ id: 'youtube', icon: '▶️', name: 'YouTube', color: '#FF0000' }, { id: 'instagram', icon: '📸', name: 'Instagram', color: '#E1306C' }, { id: 'tiktok', icon: '🎵', name: 'TikTok', color: '#69C9D0' }, { id: 'twitch', icon: '🟣', name: 'Twitch', color: '#9146FF' }, { id: 'kick', icon: '🟢', name: 'Kick', color: '#53FC18' }, { id: 'x-twitter', icon: '✖️', name: 'X', color: '#1DA1F2' }, { id: 'facebook', icon: '📘', name: 'Facebook', color: '#1877F2' }, { id: 'reddit', icon: '🟠', name: 'Reddit', color: '#FF4500' }, { id: 'snapchat', icon: '👻', name: 'Snapchat', color: '#FFFC00' }, { id: 'vk', icon: '🔷', name: 'VK', color: '#4C75A3' }, { id: 'linkedin', icon: '💼', name: 'LinkedIn', color: '#0A66C2' }];
+        function switchTab(tab, btn) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); btn.classList.add('active');['compare', 'repurpose', 'schedule', 'growth'].forEach(t => document.getElementById(t + 'Tab').style.display = t === tab ? '' : 'none') }
+        function fmt(n) { if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M'; if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K'; return n.toString() }
+
+        function loadData() {
+            const accounts = JSON.parse(localStorage.getItem('social_accounts') || '[]');
+            if (!accounts.length) {
+                accounts.push({ platform: 'youtube', username: 'demo', followers: 125000, engagement: 4.2, posts: 85 });
+                accounts.push({ platform: 'instagram', username: 'demo', followers: 85000, engagement: 5.1, posts: 230 });
+                accounts.push({ platform: 'tiktok', username: 'demo', followers: 250000, engagement: 8.5, posts: 120 });
+                accounts.push({ platform: 'twitch', username: 'demo', followers: 15000, engagement: 12.0, posts: 300 });
+            }
+
+            // COMPARE
+            document.getElementById('compareData').innerHTML = `
+        <table class="data-table"><thead><tr><th>Plattform</th><th>Follower</th><th>Engagement</th><th>Posts</th><th>Score</th></tr></thead><tbody>
+        ${accounts.map(a => { const p = PLATFORMS.find(pl => pl.id === a.platform); const score = Math.min(100, Math.floor(a.followers / 1000 + parseFloat(a.engagement) * 10)); return `<tr><td style="font-weight:700">${p?.icon || '📱'} ${p?.name || a.platform}</td><td style="font-family:var(--mono);color:${p?.color || 'var(--blue)'}">${fmt(a.followers)}</td><td><span class="badge ${a.engagement > 5 ? 'badge-green' : a.engagement > 2 ? 'badge-yellow' : 'badge-red'}">${a.engagement}%</span></td><td>${a.posts}</td><td><span class="badge badge-blue">${score}/100</span></td></tr>` }).join('')}
+        </tbody></table>`;
+
+            // RANKING
+            document.getElementById('rankCard').style.display = '';
+            const sorted = [...accounts].sort((a, b) => b.followers - a.followers);
+            document.getElementById('rankData').innerHTML = sorted.map((a, i) => { const p = PLATFORMS.find(pl => pl.id === a.platform); return `<div class="metric-row"><span style="font-weight:800;color:${i === 0 ? 'var(--yellow)' : i === 1 ? 'var(--muted)' : i === 2 ? 'var(--orange)' : 'var(--dim)'};width:30px;font-size:16px">#${i + 1}</span><span style="font-size:18px">${p?.icon || '📱'}</span><span class="metric-name">${p?.name || a.platform}</span><span class="metric-value" style="color:${p?.color || 'var(--blue)'}">${fmt(a.followers)}</span></div>` }).join('');
+
+            // REPURPOSE
+            const tips = [
+                { from: 'YouTube', to: 'TikTok', tip: 'YouTube-Videos als Shorts/Clips auf TikTok posten' },
+                { from: 'YouTube', to: 'Instagram', tip: 'YouTube-Thumbnails als Reels/Karussells recyclen' },
+                { from: 'TikTok', to: 'Instagram', tip: 'TikTok-Videos als Instagram Reels (ohne Wasserzeichen!)' },
+                { from: 'Twitch', to: 'YouTube', tip: 'Twitch-Highlights als YouTube-Videos schneiden' },
+                { from: 'Twitch', to: 'TikTok', tip: 'Lustige Twitch-Clips auf TikTok posten' },
+                { from: 'Instagram', to: 'Facebook', tip: 'Instagram-Posts automatisch auf FB teilen' },
+                { from: 'LinkedIn', to: 'X', tip: 'LinkedIn-Artikel als Thread auf X teilen' },
+                { from: 'Reddit', to: 'YouTube', tip: 'Reddit-Posts als YouTube-Community Updates nutzen' },
+            ];
+            document.getElementById('repurposeData').innerHTML = tips.map(t => `<div class="result-item"><span class="result-icon">♻️</span><div style="flex:1"><div class="result-title">${t.from} → ${t.to}</div><div class="result-desc">${t.tip}</div></div></div>`).join('');
+
+            // SCHEDULE
+            const schedule = [
+                { p: 'YouTube', icon: '▶️', best: 'Sa/So 14-16 Uhr', worst: 'Mo 06-08 Uhr', freq: '2-3x/Woche' },
+                { p: 'Instagram', icon: '📸', best: 'Di+Do 18-20 Uhr', worst: 'So Morgens', freq: '1x/Tag + Stories' },
+                { p: 'TikTok', icon: '🎵', best: 'Mo-Fr 19-21 Uhr', worst: 'Nachts 2-5 Uhr', freq: '1-3x/Tag' },
+                { p: 'Twitch', icon: '🟣', best: 'Mo-Fr 19-23 Uhr', worst: 'Werktags Vormittag', freq: '4-5x/Woche' },
+                { p: 'X', icon: '✖️', best: 'Werktags 12-13 Uhr', worst: 'Wochenende Nacht', freq: '3-5x/Tag' },
+                { p: 'LinkedIn', icon: '💼', best: 'Di-Do 8-10 Uhr', worst: 'Wochenende', freq: '2-3x/Woche' },
+            ];
+            document.getElementById('scheduleData').innerHTML = `<table class="data-table"><thead><tr><th>Plattform</th><th>Beste Zeit</th><th>Schlechteste Zeit</th><th>Frequenz</th></tr></thead><tbody>${schedule.map(s => `<tr><td style="font-weight:700">${s.icon} ${s.p}</td><td style="color:var(--green);font-weight:600">${s.best}</td><td style="color:var(--red)">${s.worst}</td><td>${s.freq}</td></tr>`).join('')}</tbody></table>`;
+
+            // GROWTH
+            document.getElementById('growthData').innerHTML = '<div class="chart-area"><div class="chart-bar-container">' + accounts.map(a => { const p = PLATFORMS.find(pl => pl.id === a.platform); const h = Math.min(150, a.followers / 2000); return `<div class="chart-bar" style="height:${h}px;background:${p?.color || 'var(--blue)'}"><div class="chart-bar-label">${p?.icon || ''} ${p?.name || a.platform}</div></div>` }).join('') + '</div></div>' +
+                '<div style="margin-top:20px">' + accounts.map(a => { const p = PLATFORMS.find(pl => pl.id === a.platform); const growth = (Math.random() * 10 - 2).toFixed(1); return `<div class="metric-row"><span style="font-size:18px">${p?.icon || '📱'}</span><span class="metric-name">${p?.name || a.platform}</span><span class="metric-value">${fmt(a.followers)}</span><span class="stat-trend ${growth > 0 ? 'stat-up' : 'stat-down'}">${growth > 0 ? '▲' : '▼'} ${Math.abs(growth)}%</span></div>` }).join('') + '</div>';
+
+            // Export bar
+            const exportBar = document.createElement('div'); exportBar.className = 'export-bar'; exportBar.innerHTML = '<button class="btn btn-sm btn-outline" onclick="exportData(\'csv\')">📋 CSV Export</button><button class="btn btn-sm btn-outline" onclick="exportData(\'json\')">📦 JSON Export</button>';
+            document.querySelector('.grid').appendChild(exportBar);
+        }
+
+        function exportData(format) {
+            const accounts = JSON.parse(localStorage.getItem('social_accounts') || '[]');
+            if (format === 'json') { const b = new Blob([JSON.stringify(accounts, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'social-cross-platform.json'; a.click() }
+            else { let csv = 'Platform,Username,Followers,Engagement,Posts\n'; accounts.forEach(a => csv += `${a.platform},${a.username},${a.followers},${a.engagement},${a.posts}\n`); const b = new Blob([csv], { type: 'text/csv' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'social-cross-platform.csv'; a.click() }
+        }
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

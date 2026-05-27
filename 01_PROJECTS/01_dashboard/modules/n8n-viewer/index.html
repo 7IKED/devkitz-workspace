@@ -1,0 +1,155 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v2.0">
+    <meta name="dkz-module" content="n8n-viewer">
+    <title>⚡ n8n Viewer™ — DEVKiTZâ„¢™</title>
+    <meta name="description" content="n8n Workflow Viewer v2 mit Run-Simulator, Docker HOOD Integration, 4600+ Templates">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="stylesheet" href="n8n-viewer.css">
+</head>
+<body data-dkz-module="n8n-viewer" data-dkz-appid="DKZ-MOD-N8N" data-dkz-version="v0.01" data-dkz-title="⚡ n8n Viewer™ — DEVKiTZ™" data-dkz-icon="📦" data-dkz-separable="true">
+<div class="app">
+    <header>
+        <div class="hdr-left">
+            <a href="../../hub/index.html" class="back-btn">←</a>
+            <div class="logo">⚡ <span class="logo-n8">n8n Viewer™</span> <span class="ver">v2.0</span></div>
+            <div class="server-status">
+                <div class="srv-dot" id="srvDot"></div>
+                <span id="srvText">Offline</span>
+            </div>
+        </div>
+        <div class="chain-nav">
+            <a class="chain-btn" href="../workflow-builder/index.html">Workflows</a>
+            <a class="chain-btn" href="../black8-builder/index.html" style="color:#ea4c2e;border-color:#ea4c2e">BLACK8™</a>
+            <a class="chain-btn" href="../hood-builder/index.html" style="color:#2496ed;border-color:#2496ed">H00D™</a>
+            <a class="chain-btn active">n8n Viewer™</a>
+            <a class="chain-btn" href="../agent-builder/index.html">Agents</a>
+        </div>
+        <div class="hdr-actions">
+            <button class="btn btn-s" onclick="importWorkflow()">📥 Import</button>
+            <button class="btn btn-s" onclick="exportWorkflow()">📤 Export</button>
+            <button class="btn btn-s" onclick="clearCanvas()">🗑️ Clear</button>
+            <button class="btn btn-run" onclick="runSimulator()">▶ Run Simulator</button>
+        </div>
+    </header>
+
+    <!-- LEFT: Node Library + Templates -->
+    <div class="side-l" id="sideL">
+        <div class="side-tabs">
+            <button class="stab active" onclick="showSideTab('nodes')">🧩 Nodes</button>
+            <button class="stab" onclick="showSideTab('templates')">📋 Templates</button>
+            <button class="stab" onclick="showSideTab('docker')">🐳 Docker</button>
+        </div>
+        <input class="search" id="searchInput" placeholder="🔍 Suchen..." oninput="onSearch()">
+        <div class="side-panel active" id="tab-nodes">
+            <div id="nodeLib"></div>
+        </div>
+        <div class="side-panel" id="tab-templates">
+            <div class="tag-bar" id="tagBar"></div>
+            <div id="tplList"></div>
+            <div class="wf-count" id="wfCount">0 Workflows</div>
+        </div>
+        <div class="side-panel" id="tab-docker">
+            <div class="stit">🐳 Docker Services <span class="info-btn" data-info="Docker Services aus H00D™. Klicke um als Node hinzuzufügen.">?</span></div>
+            <div id="dockerList"></div>
+            <div class="divider"></div>
+            <div class="stit">🖥️ Server</div>
+            <div id="serverList"></div>
+        </div>
+    </div>
+
+    <!-- CENTER: Canvas -->
+    <div class="canvas-wrap">
+        <div class="canvas" id="canvas" onmousedown="canvasDown(event)" onmousemove="canvasMove(event)" onmouseup="canvasUp(event)" onwheel="canvasWheel(event)">
+            <div class="grid-bg"></div>
+            <svg class="wire-layer" id="wires"></svg>
+            <div id="nodesContainer"></div>
+        </div>
+        <div class="empty-state" id="emptyState">
+            <div class="es-icon">⚡</div>
+            <div class="es-title">Workflow auswählen oder importieren</div>
+            <div class="es-text">Links ein Template wählen · JSON importieren · oder Nodes per Klick hinzufügen</div>
+        </div>
+        <!-- Run Simulator Overlay -->
+        <div class="sim-overlay" id="simOverlay">
+            <div class="sim-bar">
+                <div class="sim-progress" id="simProgress"></div>
+            </div>
+            <div class="sim-info">
+                <span class="sim-step" id="simStep">—</span>
+                <span class="sim-time" id="simTime">0.0s</span>
+            </div>
+        </div>
+        <!-- Canvas Controls -->
+        <div class="canvas-ctrl">
+            <button class="ctrl-btn" onclick="zoomIn()" title="Zoom +">+</button>
+            <button class="ctrl-btn" onclick="zoomOut()" title="Zoom −">−</button>
+            <button class="ctrl-btn" onclick="zoomReset()" title="Reset">⊙</button>
+            <span class="ctrl-info" id="zoomLvl">100%</span>
+            <span class="ctrl-info" id="nodeCount">0 Nodes</span>
+        </div>
+        <!-- Minimap -->
+        <div class="minimap" id="minimap"></div>
+    </div>
+
+    <!-- RIGHT: Properties + Details -->
+    <div class="side-r">
+        <div class="side-tabs">
+            <button class="stab active" onclick="showRightTab('props')">⚙ Properties</button>
+            <button class="stab" onclick="showRightTab('guide')">📖 Guide</button>
+            <button class="stab" onclick="showRightTab('log')">📊 Log</button>
+        </div>
+        <div class="side-panel active" id="tab-props">
+            <div class="stit">📊 Workflow Stats</div>
+            <div class="stat-row"><span class="stat-l">Nodes</span><span class="stat-v" id="sNodes">0</span></div>
+            <div class="stat-row"><span class="stat-l">Connections</span><span class="stat-v" id="sWires">0</span></div>
+            <div class="stat-row"><span class="stat-l">Templates</span><span class="stat-v" id="sTpl">0</span></div>
+            <div class="stat-row"><span class="stat-l">Docker Services</span><span class="stat-v">15</span></div>
+            <div class="stat-row"><span class="stat-l">Server</span><span class="stat-v" id="sSrv">3</span></div>
+            <div class="divider"></div>
+            <div class="stit" id="selTitle">⚙ Node Properties</div>
+            <div id="selProps"><div class="empty-hint">Klicke auf einen Node</div></div>
+            <div class="divider"></div>
+            <div class="stit">🗺️ Minimap</div>
+            <div class="minimap-panel" id="minimapPanel"></div>
+        </div>
+        <div class="side-panel" id="tab-guide">
+            <div class="guide-content" id="guideContent"></div>
+        </div>
+        <div class="side-panel" id="tab-log">
+            <div class="stit">📊 Run Log</div>
+            <div class="log-output" id="logOutput">[n8n Viewer™] Bereit...\n</div>
+        </div>
+    </div>
+</div>
+
+<!-- Info Popup -->
+<div class="info-pop" id="infoPop"></div>
+<!-- Toast -->
+<div class="toast" id="toast"><span id="tt"></span></div>
+<!-- Idle Hint -->
+<div class="idle-hint" id="idleHint">
+    <div style="font-size:.75rem;font-weight:800">💡 Tipp:</div>
+    <div style="font-size:.68rem;color:var(--accent);margin-top:.2rem" id="idleStep">Wähle ein Template aus der Sidebar</div>
+    <button class="btn btn-s" onclick="dismissIdle()" style="margin-top:.3rem;font-size:.55rem">OK</button>
+</div>
+
+<!-- Detail Panel Overlay -->
+<div class="detail-overlay" id="detailOverlay" onclick="if(event.target===this)closeDetail()">
+    <div class="detail-panel" id="detailPanel"></div>
+</div>
+<script src="n8n-catalog.js"></script>
+<script src="n8n-viewer.js"></script>
+<script src="../../shared/dkz-debug.js"></script>
+<script src="../../shared/dkz-analyser.js"></script>
+<script src="../../shared/dkz-guide.js"></script>
+<script src="../../shared/dkz-copilot.js"></script>
+<script src="../../shared/dkz-chain-nav.js"></script>    <script src="../../shared/dkz-headbar.js"></script>
+<script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+</html>

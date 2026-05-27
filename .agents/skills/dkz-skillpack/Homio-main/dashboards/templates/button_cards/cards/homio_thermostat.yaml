@@ -1,0 +1,240 @@
+homio_thermostat:
+  template:
+    - homio_entity
+  show_entity_picture: false
+  show_icon: false
+  show_label: true
+  label: |
+    [[[
+      return "Actual " + entity.attributes.current_temperature +"°"
+    ]]]
+  state_display: |
+    [[[
+      return entity.state === 'heat'
+        ? "Heating to " + entity.attributes.temperature + "°"
+        : "Off";
+    ]]]
+  tap_action:
+    action: call-service
+    service: input_boolean.toggle
+    service_data:
+      entity_id: input_boolean.homio_heating_control
+  styles:
+    name:
+      - opacity: |
+          [[[ return states["input_boolean.homio_heating_control"].state === "on" ? "0" : "1" ]]]
+      - transition: opacity 0.3s
+    state:
+      - opacity: |
+          [[[ return states["input_boolean.homio_heating_control"].state === "on" ? "0" : "0.8" ]]]
+      - transition: opacity 0.3s
+    label:
+      - position: absolute
+      - bottom: 25px
+      - font-size: 10px
+      - text-transform: uppercase
+      - color: white
+      - letter-spacing: 2px
+      - font-weight: 600
+      - opacity: 1
+      - justify-self: start
+    custom_fields:
+      heating_modes:
+        - position: absolute
+        - right: 0
+        - top: 0
+        - transition: all 0.3s
+        - opacity: |
+            [[[ return states["input_boolean.homio_heating_control"].state === "on" ? "0" : "1" ]]]
+      target_temperature:
+        - position: absolute
+        - top: 0
+        - left: 0
+        - width: 100%
+        - height: 100%
+        - transition: all 0.3s
+        - opacity: |
+            [[[ return states["input_boolean.homio_heating_control"].state === "on" ? "1" : "0" ]]]
+  custom_fields:
+    heating_modes:
+      card:
+        type: custom:layout-card
+        layout_type: custom:grid-layout
+        layout:
+          grid-template-columns: 60px
+          grid-auto-rows: 1fr
+          margin: 0
+          height: 170px
+          padding: 0
+        cards:
+          - type: custom:button-card
+            template:
+              - homio_default
+            show_entity_picture: true
+            entity_picture: /local/images/Homio/icons/power_off.svg
+            tap_action:
+              action: call-service
+              service: climate.set_hvac_mode
+              data:
+                entity_id: |
+                  [[[
+                    return entity.entity_id;
+                  ]]]
+                hvac_mode: "off"
+            styles:
+              card:
+                - height: 100%
+                - animation: none
+                - z-index: 2
+                - background: |
+                    [[[ return entity.state === 'off' ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.1)'; ]]]
+              img_cell:
+                - width: 19px
+              icon:
+                - width: 100%
+                - height: 100%
+          - type: custom:button-card
+            template:
+              - homio_default
+            show_entity_picture: true
+            entity_picture: /local/images/Homio/icons/heating.svg
+            tap_action:
+              action: call-service
+              service: climate.set_hvac_mode
+              data:
+                entity_id: |
+                  [[[
+                    return entity.entity_id;
+                  ]]]
+                hvac_mode: "heat"
+            styles:
+              card:
+                - height: 100%
+                - animation: none
+                - z-index: 2
+                - background: |
+                    [[[ return entity.state === 'heat' ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.1)'; ]]]
+              img_cell:
+                - width: 19px
+              icon:
+                - width: 100%
+                - height: 100%
+    target_temperature:
+      card:
+        type: "custom:button-card"
+        template:
+          - homio_entity
+        show_entity_picture: false
+        show_icon: false
+        name: Target Temp
+        state_display: |
+          [[[
+            return states['input_number.homio_thermostat_target_temperature'].state + "°"
+          ]]]
+        tap_action:
+          action: call-service
+          service: input_boolean.toggle
+          service_data:
+            entity_id: input_boolean.homio_heating_control
+        styles:
+          card:
+            - background: transparent
+            - backdrop-filter: none
+            - animation: none
+          custom_fields:
+            temperature_controls:
+              - position: absolute
+              - top: 0
+              - right: 0
+        custom_fields:
+          temperature_controls:
+            card:
+              type: "custom:layout-card"
+              layout_type: "custom:grid-layout"
+              layout:
+                grid-template-columns: 60px
+                grid-template-rows: "repeat(3,1fr)"
+                height: 170px
+                margin: 0
+                padding: 0
+                position: absolute
+                inset: auto 0 auto auto
+              cards:
+                - type: "custom:button-card"
+                  template:
+                    - homio_default
+                  show_entity_picture: true
+                  entity_picture: /local/images/Homio/icons/increase.svg
+                  tap_action:
+                    action: call-service
+                    service: input_number.increment
+                    service_data:
+                      entity_id: input_number.homio_thermostat_target_temperature
+                  styles:
+                    card:
+                      - height: 100%
+                      - background: "rgba(255,255,255,0.1)"
+                      - animation: none
+                    img_cell:
+                      - width: 30%
+                    icon:
+                      - transform: rotate(-90deg)
+                  extra_styles: |
+                    .button-card-main:active {
+                      background: rgba(255,255,255,0.4) !important;
+                    }
+                - type: "custom:button-card"
+                  template:
+                    - homio_default
+                  name: Set
+                  tap_action:
+                    action: call-service
+                    service: climate.set_temperature
+                    service_data:
+                      entity_id: |
+                        [[[
+                          return entity.entity_id
+                        ]]]
+                      temperature: |
+                        [[[
+                          return parseFloat(states['input_number.homio_thermostat_target_temperature'].state);
+                        ]]]
+                  styles:
+                    card:
+                      - height: 100%
+                      - background: "rgba(255,255,255,0.1)"
+                      - animation: none
+                      - border-top: "0.5px solid rgba(255,255,255,0.2)"
+                      - border-bottom: "0.5px solid rgba(255,255,255,0.2)"
+                    name:
+                      - font-size: 10px
+                      - letter-spacing: 2px
+                      - text-transform: uppercase
+                      - font-weight: 600
+                  extra_styles: |
+                    .button-card-main:active {
+                      background: rgba(255,255,255,0.4) !important;
+                    }
+                - type: "custom:button-card"
+                  template:
+                    - homio_default
+                  show_entity_picture: true
+                  entity_picture: /local/images/Homio/icons/decrease.svg
+                  tap_action:
+                    action: call-service
+                    service: input_number.decrement
+                    service_data:
+                      entity_id: input_number.homio_thermostat_target_temperature
+                  styles:
+                    card:
+                      - height: 100%
+                      - background: "rgba(255,255,255,0.1)"
+                      - animation: none
+                    img_cell:
+                      - width: 30%
+                    icon:
+                      - transform: rotate(-90deg)
+                  extra_styles: |
+                    .button-card-main:active {
+                      background: rgba(255,255,255,0.4) !important;
+                    }

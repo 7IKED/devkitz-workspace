@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXUZ² — Leistungsueberwachung</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0e0e10;--bg2:#121215;--card:#16161a;--card2:#1e1e24;--border:#1a1a2a;--border2:#252538;--text:#e8e8f0;--muted:#5e5e78;--accent:#fa1e4e;--purple:#a855f7;--green:#00ff88;--red:#ff4466;--yellow:#ffb800;--blue:#55acee;--orange:#ff8c42;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;--glass:rgba(15,15,24,.75);--radius:16px}
+html,body{min-height:100vh;font-family:var(--font);background:var(--bg);color:var(--text)}
+body{background:radial-gradient(ellipse at 20% 0%,rgba(250,30,78,.04) 0%,transparent 50%),radial-gradient(ellipse at 80% 100%,rgba(168,85,247,.03) 0%,transparent 50%),var(--bg)}
+
+.header{padding:20px 28px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
+.header h1{font-size:20px;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header .badge{font-size:9px;font-family:var(--mono);padding:3px 8px;border-radius:6px;background:rgba(250,30,78,.12);color:var(--accent);font-weight:700}
+.header-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.btn-nav{padding:7px 12px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--muted);font-family:var(--font);font-size:11px;cursor:pointer;transition:all .2s;text-decoration:none}
+.btn-nav:hover{color:var(--accent);border-color:var(--accent)}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--green);animation:p 2s infinite}
+@keyframes p{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
+.hstat{display:flex;align-items:center;gap:5px;font-size:10px;font-family:var(--mono);color:var(--muted);padding:5px 10px;background:var(--card);border:1px solid var(--border);border-radius:8px}
+.hstat .v{color:var(--text);font-weight:700}
+
+.content{padding:24px 28px;max-width:1400px;margin:0 auto}
+.sec{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2.5px;color:var(--muted);margin:0 0 14px;display:flex;align-items:center;gap:10px}
+.sec .ln{flex:1;height:1px;background:var(--border)}
+.sec .ct{font-size:10px;font-family:var(--mono);padding:2px 8px;border-radius:10px;background:rgba(250,30,78,.1);color:var(--accent)}
+
+/* GAUGE CARDS */
+.gauge-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.gauge-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden;transition:all .3s}
+.gauge-card:hover{transform:translateY(-2px);border-color:var(--border2);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.gauge-card::after{content:'';position:absolute;bottom:0;left:0;height:3px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.gauge-label{font-size:10px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.gauge-value{font-size:28px;font-weight:900;margin-bottom:4px}
+.gauge-sub{font-size:10px;color:var(--muted);font-family:var(--mono)}
+.gauge-bar{height:4px;background:var(--bg2);border-radius:2px;margin-top:10px;overflow:hidden}
+.gauge-fill{height:100%;border-radius:2px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+
+/* DISK CARDS */
+.disk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
+.disk-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.disk-name{font-size:12px;font-weight:700;margin-bottom:4px}
+.disk-info{font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:10px}
+.disk-bar{height:8px;background:var(--bg2);border-radius:4px;overflow:hidden}
+.disk-fill{height:100%;border-radius:4px;transition:width 1s}
+
+/* STATUS CARDS */
+.status-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
+.status-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;gap:12px;align-items:flex-start}
+.status-icon{font-size:24px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:10px;flex-shrink:0}
+.status-title{font-size:12px;font-weight:700;margin-bottom:3px}
+.status-val{font-size:18px;font-weight:900;margin-bottom:3px}
+.status-sub{font-size:9px;color:var(--muted);font-family:var(--mono)}
+.status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px}
+
+/* TASKS */
+.task-list{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:24px;max-height:280px;overflow-y:auto}
+.task-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
+.task-item:last-child{border-bottom:none}
+.task-prio{font-size:9px;font-family:var(--mono);padding:2px 6px;border-radius:4px;font-weight:700}
+.p0{background:rgba(255,68,102,.15);color:var(--red)}
+.p1{background:rgba(255,184,0,.15);color:var(--yellow)}
+.p2{background:rgba(85,172,238,.15);color:var(--blue)}
+.task-name{flex:1;color:var(--text)}
+.task-sessions{font-size:10px;font-family:var(--mono);color:var(--muted)}
+
+/* CHART */
+.chart-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px}
+.chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.chart-title{font-size:13px;font-weight:700}
+.chart-filters{display:flex;gap:8px;align-items:center}
+.chart-filters label{font-size:10px;color:var(--muted);font-family:var(--mono)}
+.chart-filters input[type=datetime-local]{background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:10px;padding:4px 8px}
+.chart-filters select{background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:10px;padding:4px 8px}
+.chart-filters button{padding:4px 10px;background:rgba(250,30,78,.15);border:1px solid rgba(250,30,78,.3);border-radius:6px;color:var(--accent);font-size:10px;font-family:var(--mono);cursor:pointer}
+canvas{width:100%!important;height:200px!important;border-radius:8px}
+
+/* SYSTEM DETAIL ACCORDION */
+.sys-list{margin-bottom:24px}
+.sys-item{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;overflow:hidden}
+.sys-header{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;transition:background .2s}
+.sys-header:hover{background:var(--bg2)}
+.sys-icon{font-size:20px}
+.sys-name{font-size:12px;font-weight:700;flex:1}
+.sys-status{font-size:9px;font-family:var(--mono);padding:2px 8px;border-radius:10px}
+.sys-arrow{font-size:10px;color:var(--muted);transition:transform .3s}
+.sys-body{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1)}
+.sys-body.open{max-height:300px}
+.sys-detail{padding:0 16px 14px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.sys-metric{text-align:center}
+.sys-metric-val{font-size:16px;font-weight:800}
+.sys-metric-label{font-size:9px;color:var(--muted);font-family:var(--mono)}
+
+/* DASHY ANIMATION */
+@keyframes dashy{0%{background-position:0 0}100%{background-position:40px 0}}
+.dashy{background-image:repeating-linear-gradient(90deg,transparent,transparent 10px,rgba(250,30,78,.06) 10px,rgba(250,30,78,.06) 20px);background-size:40px 100%;animation:dashy 2s linear infinite}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .5s ease both}
+
+@media(max-width:900px){.gauge-grid{grid-template-columns:repeat(2,1fr)}.disk-grid,.status-grid{grid-template-columns:1fr}.sys-detail{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <a href="index.html" class="btn-nav">← NEXUZ²</a>
+  <h1>📊 Leistungsueberwachung</h1>
+  <span class="badge">MONITORING v1.0</span>
+  <div class="header-right">
+    <div class="hstat"><div class="pulse"></div>VPS <span class="v">ONLINE</span></div>
+    <div class="hstat">Uptime <span class="v" id="uptime">--</span></div>
+    <div class="hstat">Sessions <span class="v" id="sessionCount">--</span></div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- VPS PERFORMANCE -->
+  <div class="sec">⚡ VPS Performance <span class="ct">LIVE</span><span class="ln"></span></div>
+  <div class="gauge-grid dashy" id="gaugeGrid"></div>
+
+  <!-- DISK STORAGE -->
+  <div class="sec">💾 Festplatten-Speicher<span class="ln"></span></div>
+  <div class="disk-grid" id="diskGrid"></div>
+
+  <!-- SYNC STATUS -->
+  <div class="sec">🔄 Sync Status<span class="ln"></span></div>
+  <div class="status-grid" id="syncGrid"></div>
+
+  <!-- AUSSTEHENDE ARBEITEN -->
+  <div class="sec">📋 Ausstehende Arbeiten <span class="ct" id="taskCount">0</span><span class="ln"></span></div>
+  <div class="task-list" id="taskList"></div>
+
+  <!-- LEISTUNGSDIAGRAMME -->
+  <div class="sec">📈 Leistungsdiagramme<span class="ln"></span></div>
+  <div class="chart-section fade-up">
+    <div class="chart-header">
+      <div class="chart-title">System-Auslastung (Langzeit)</div>
+      <div class="chart-filters">
+        <label>Von</label><input type="datetime-local" id="chartFrom">
+        <label>Bis</label><input type="datetime-local" id="chartTo">
+        <select id="chartMetric">
+          <option value="cpu">CPU</option>
+          <option value="ram">RAM</option>
+          <option value="net">Netzwerk</option>
+          <option value="disk">Disk I/O</option>
+          <option value="all">Alle</option>
+        </select>
+        <button onclick="renderChart()">Anwenden</button>
+      </div>
+    </div>
+    <canvas id="perfChart"></canvas>
+  </div>
+
+  <!-- EINZELSYSTEME -->
+  <div class="sec">🔧 Einzelsystem-Leistung<span class="ln"></span></div>
+  <div class="sys-list" id="sysList"></div>
+
+</div>
+
+<script>
+// DkZ XSS Protection
+function esc(s){const d=document.createElement('div');d.appendChild(document.createTextNode(s));return d.innerHTML}
+
+// === DATA ===
+const GAUGES=[
+  {id:'cpu',label:'CPU',value:34,max:100,unit:'%',sub:'4 Cores · Intel Xeon',color:'var(--accent)'},
+  {id:'ram',label:'RAM',value:2.8,max:8,unit:'GB',sub:'8 GB DDR4 ECC',color:'var(--purple)'},
+  {id:'net',label:'Netzwerk',value:12.4,max:100,unit:'MB/s',sub:'1 Gbit/s Uplink',color:'var(--blue)'},
+  {id:'load',label:'Load Avg',value:1.2,max:4,unit:'',sub:'1m / 5m / 15m',color:'var(--green)'}
+];
+
+const DISKS=[
+  {name:'/ (root)',used:18.2,total:50,fs:'ext4'},
+  {name:'/home',used:32.1,total:100,fs:'ext4'},
+  {name:'/var/docker',used:8.7,total:30,fs:'overlay2'}
+];
+
+const SYNC_STATUS=[
+  {icon:'📁',label:'Google Drive Backup',bg:'rgba(34,197,94,.1)',
+   status:'ok',lastSync:'2026-05-21 08:30',age:'5h',detail:'142 Dateien synchronisiert'},
+  {icon:'🐙',label:'GitHub Sync',bg:'rgba(168,85,247,.1)',
+   status:'ok',lastSync:'2026-05-21 12:15',age:'2h',detail:'3 Commits ausstehend'},
+  {icon:'🧠',label:'Second Brain Sync',bg:'rgba(85,172,238,.1)',
+   status:'warn',lastSync:'2026-05-20 23:00',age:'14h',detail:'Daily Note fehlt'}
+];
+
+const TASKS=[
+  {prio:'P0',name:'Port-Forwarding testen (5678, 11434)',sessions:3},
+  {prio:'P0',name:'docker-compose.vps.yml auf vLLM anpassen',sessions:2},
+  {prio:'P0',name:'vLLM API in ONTHERUN anbinden',sessions:1},
+  {prio:'P1',name:'Mission Control Dashboard Layout',sessions:4},
+  {prio:'P1',name:'Graphify Knowledge Graph (D3.js)',sessions:2},
+  {prio:'P1',name:'R31 Compliance Scan + Auto-Fix',sessions:1},
+  {prio:'P2',name:'DkZ Copilot Desktop finalisieren',sessions:5},
+  {prio:'P2',name:'Content Factory n8n Workflows',sessions:0}
+];
+
+const SYSTEMS=[
+  {icon:'🖥️',name:'ONTHERUN Gateway',status:'active',color:'var(--green)',
+   metrics:{cpu:'12%',ram:'180MB',req:'342/h',uptime:'48h'}},
+  {icon:'🧠',name:'vLLM Inference Server',status:'active',color:'var(--green)',
+   metrics:{cpu:'45%',ram:'3.2GB',inf:'28/h',uptime:'48h'}},
+  {icon:'🔄',name:'n8n Workflow Engine',status:'planned',color:'var(--blue)',
+   metrics:{cpu:'--',ram:'--',wf:'0',uptime:'--'}},
+  {icon:'🗄️',name:'DuckDB Analytics',status:'dev',color:'var(--yellow)',
+   metrics:{cpu:'2%',ram:'64MB',queries:'12/h',uptime:'48h'}},
+  {icon:'🌐',name:'Apache Web Server',status:'active',color:'var(--green)',
+   metrics:{cpu:'5%',ram:'120MB',req:'890/h',uptime:'720h'}},
+  {icon:'⚡',name:'Cloudflare Worker',status:'planned',color:'var(--blue)',
+   metrics:{cpu:'--',ram:'--',req:'0',uptime:'--'}}
+];
+
+// === RENDER ===
+function renderGauges(){
+  const g=document.getElementById('gaugeGrid');
+  g.innerHTML=GAUGES.map((x,i)=>{
+    const pct=Math.round((x.value/x.max)*100);
+    return `<div class="gauge-card fade-up" style="animation-delay:${i*100}ms">
+      <div class="gauge-label">${esc(x.label)}</div>
+      <div class="gauge-value" style="color:${x.color}">${x.value}${x.unit?'<span style="font-size:14px;color:var(--muted)">'+esc(x.unit)+'</span>':''}</div>
+      <div class="gauge-sub">${esc(x.sub)}</div>
+      <div class="gauge-bar"><div class="gauge-fill" style="width:${pct}%;background:${x.color}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderDisks(){
+  const g=document.getElementById('diskGrid');
+  g.innerHTML=DISKS.map(d=>{
+    const pct=Math.round((d.used/d.total)*100);
+    const col=pct>85?'var(--red)':pct>65?'var(--yellow)':'var(--green)';
+    return `<div class="disk-card">
+      <div class="disk-name">${esc(d.name)}</div>
+      <div class="disk-info">${d.used} / ${d.total} GB (${pct}%) · ${esc(d.fs)}</div>
+      <div class="disk-bar"><div class="disk-fill" style="width:${pct}%;background:${col}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderSync(){
+  const g=document.getElementById('syncGrid');
+  g.innerHTML=SYNC_STATUS.map(s=>{
+    const dotCol=s.status==='ok'?'var(--green)':s.status==='warn'?'var(--yellow)':'var(--red)';
+    const stText=s.status==='ok'?'AKTUELL':s.status==='warn'?'VERALTET':'OFFLINE';
+    return `<div class="status-card">
+      <div class="status-icon" style="background:${s.bg}">${s.icon}</div>
+      <div>
+        <div class="status-title">${esc(s.label)}</div>
+        <div class="status-val"><span class="status-dot" style="background:${dotCol}"></span>${stText}</div>
+        <div class="status-sub">Letzter Sync: ${esc(s.lastSync)} (vor ${esc(s.age)})</div>
+        <div class="status-sub">${esc(s.detail)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderTasks(){
+  const list=document.getElementById('taskList');
+  document.getElementById('taskCount').textContent=TASKS.length;
+  list.innerHTML=TASKS.map(t=>{
+    const cls=t.prio==='P0'?'p0':t.prio==='P1'?'p1':'p2';
+    return `<div class="task-item">
+      <span class="task-prio ${cls}">${esc(t.prio)}</span>
+      <span class="task-name">${esc(t.name)}</span>
+      <span class="task-sessions">${t.sessions} Sessions</span>
+    </div>`;
+  }).join('');
+}
+
+function renderSystems(){
+  const list=document.getElementById('sysList');
+  list.innerHTML=SYSTEMS.map((s,i)=>{
+    const stText=s.status==='active'?'AKTIV':s.status==='dev'?'DEV':'GEPLANT';
+    const stBg=s.status==='active'?'rgba(0,255,136,.15)':s.status==='dev'?'rgba(255,184,0,.15)':'rgba(85,172,238,.15)';
+    const mKeys=Object.keys(s.metrics);
+    return `<div class="sys-item">
+      <div class="sys-header" onclick="toggleSys(this)">
+        <span class="sys-icon">${s.icon}</span>
+        <span class="sys-name">${esc(s.name)}</span>
+        <span class="sys-status" style="background:${stBg};color:${s.color}">${stText}</span>
+        <span class="sys-arrow">▼</span>
+      </div>
+      <div class="sys-body" id="sys-${i}">
+        <div class="sys-detail">
+          ${mKeys.map(k=>`<div class="sys-metric"><div class="sys-metric-val" style="color:${s.color}">${esc(s.metrics[k])}</div><div class="sys-metric-label">${esc(k.toUpperCase())}</div></div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleSys(el){
+  const body=el.nextElementSibling;
+  const arrow=el.querySelector('.sys-arrow');
+  body.classList.toggle('open');
+  arrow.style.transform=body.classList.contains('open')?'rotate(180deg)':'';
+}
+
+// === CHART ===
+function renderChart(){
+  const canvas=document.getElementById('perfChart');
+  const ctx=canvas.getContext('2d');
+  canvas.width=canvas.offsetWidth*2;
+  canvas.height=400;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  const metric=document.getElementById('chartMetric').value;
+  const colors={cpu:'#fa1e4e',ram:'#a855f7',net:'#55acee',disk:'#ff8c42'};
+  const datasets=metric==='all'?['cpu','ram','net','disk']:[metric];
+
+  // Grid
+  ctx.strokeStyle='rgba(30,30,50,.5)';
+  ctx.lineWidth=1;
+  for(let y=0;y<5;y++){
+    const py=40+y*80;
+    ctx.beginPath();ctx.moveTo(60,py);ctx.lineTo(canvas.width-20,py);ctx.stroke();
+    ctx.fillStyle='#5e5e78';ctx.font='10px JetBrains Mono';
+    ctx.fillText((100-y*25)+'%',10,py+4);
+  }
+
+  // Time labels
+  const pts=48;
+  for(let x=0;x<pts;x+=6){
+    const px=60+x*((canvas.width-80)/pts);
+    ctx.fillStyle='#5e5e78';ctx.font='10px JetBrains Mono';
+    ctx.fillText((x)+'h',px,canvas.height-5);
+  }
+
+  // Data lines
+  datasets.forEach(ds=>{
+    ctx.beginPath();
+    ctx.strokeStyle=colors[ds]||'#fa1e4e';
+    ctx.lineWidth=2;
+    ctx.shadowColor=colors[ds]||'#fa1e4e';
+    ctx.shadowBlur=8;
+    let seed=ds==='cpu'?40:ds==='ram'?55:ds==='net'?20:15;
+    for(let x=0;x<pts;x++){
+      const noise=Math.sin(x*.5+ds.charCodeAt(0))*15+Math.random()*10;
+      const val=Math.max(5,Math.min(95,seed+noise));
+      const px=60+x*((canvas.width-80)/pts);
+      const py=40+(100-val)*3.2;
+      if(x===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+    ctx.shadowBlur=0;
+  });
+
+  // Legend
+  let lx=80;
+  datasets.forEach(ds=>{
+    ctx.fillStyle=colors[ds];
+    ctx.fillRect(lx,12,12,3);
+    ctx.fillStyle='#e8e8f0';ctx.font='11px Inter';
+    ctx.fillText(ds.toUpperCase(),lx+16,16);
+    lx+=70;
+  });
+}
+
+// === INIT ===
+function init(){
+  renderGauges();
+  renderDisks();
+  renderSync();
+  renderTasks();
+  renderSystems();
+
+  // Set default date range
+  const now=new Date();
+  const ago=new Date(now-48*60*60*1000);
+  document.getElementById('chartTo').value=now.toISOString().slice(0,16);
+  document.getElementById('chartFrom').value=ago.toISOString().slice(0,16);
+
+  document.getElementById('uptime').textContent='48h 12m';
+  document.getElementById('sessionCount').textContent='91+';
+
+  setTimeout(renderChart,300);
+
+  // Simulate live updates
+  setInterval(()=>{
+    GAUGES[0].value=Math.round(20+Math.random()*40);
+    GAUGES[1].value=+(2+Math.random()*2).toFixed(1);
+    GAUGES[2].value=+(5+Math.random()*20).toFixed(1);
+    GAUGES[3].value=+(0.5+Math.random()*2).toFixed(1);
+    renderGauges();
+  },3000);
+}
+
+init();
+</script>
+<script src="shared/sidebar.js"></script>
+<script src="shared/auth.js"></script>
+<script src="shared/versioning.js"></script>
+<script src="shared/nanobot.js"></script>
+</body>
+</html>

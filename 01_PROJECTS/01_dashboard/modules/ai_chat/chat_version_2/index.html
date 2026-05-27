@@ -1,0 +1,304 @@
+﻿<!-- 
+=============================================================================
+DKZ ECOSYSTEM BLUEPRINT v1.01.1
+BRAND: AntiCrav / DkZ 
+MODULE: AI CHAT (V2 - Multi-Model)
+=============================================================================
+-->
+<!DOCTYPE html>
+<html lang="de" class="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Multi-Model Chat V2 - DkZ Ecosystem</title>
+
+    <script src="https://cdn.tailwindcss.com">
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }</script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#f59e0b', // Amber focus for Multi-Model
+                        darkBg: '#0e0e10',
+                        darkBox: '#1a1a1c',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800;900&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #0e0e10;
+            color: white;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 10% 50%, rgba(245, 158, 11, 0.08) 0%, transparent 50%);
+        }
+
+        .glass {
+            background: rgba(26, 26, 28, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(245, 158, 11, 0.5);
+            border-radius: 4px;
+        }
+
+        .custom-scroll:hover::-webkit-scrollbar-thumb {
+            background: rgba(245, 158, 11, 0.8);
+        }
+
+        .btn-brand {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            box-shadow: 0 4px 15px -3px rgba(245, 158, 11, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .btn-brand:hover {
+            box-shadow: 0 6px 20px -3px rgba(245, 158, 11, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .markdown-body pre {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .markdown-body p {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const Icon = ({ name, size = 20, className = '', weight = 'regular' }) => <i className={`ph-${weight} ph-${name} text-[${size}px] ${className}`}></i>;
+
+        const useIsMobile = () => {
+            const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+            useEffect(() => {
+                const check = () => setIsMobile(window.innerWidth < 1024);
+                window.addEventListener('resize', check);
+                return () => window.removeEventListener('resize', check);
+            }, []);
+            return isMobile;
+        };
+
+        const App = () => {
+            const isMobile = useIsMobile();
+            const [messages, setMessages] = useState([{ role: 'system', content: 'Multi-Model Engine (Local NodeJS API) Initialized.' }]);
+            const [inputMessage, setInputMessage] = useState('');
+            const [selectedModel, setSelectedModel] = useState('gpt-4o-mini'); // Mock model selection
+            const [isScanning, setIsScanning] = useState(false);
+            const messagesEndRef = useRef(null);
+
+            // Sync Logic
+            const [isSyncing, setIsSyncing] = useState(false);
+            const [syncStatus, setSyncStatus] = useState(null);
+
+            const handleSyncRepo = async () => {
+                setIsSyncing(true); setSyncStatus(null);
+                try {
+                    const response = await fetch('http://localhost:3040/api/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                    const data = await response.json();
+                    setSyncStatus(data.success - { type: 'success', message: data.message } : { type: 'error', message: data.error });
+                } catch (err) { setSyncStatus({ type: 'error', message: 'Sync Server offline.' }); }
+                finally { setIsSyncing(false); setTimeout(() => setSyncStatus(null), 5000); }
+            };
+
+            const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            useEffect(() => { scrollToBottom() }, [messages]);
+
+            const sendMessage = async () => {
+                if (!inputMessage.trim() || isScanning) return;
+
+                const userMsg = { role: 'user', content: inputMessage };
+                setMessages(prev => [...prev, userMsg]);
+                setInputMessage('');
+                setIsScanning(true);
+
+                try {
+                    const response = await fetch('http://localhost:3040/api/chat-multimodel', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: userMsg.content, model: selectedModel, history: messages })
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        setMessages(prev => [...prev, { role: 'assistant', content: data.reply, modelUsed: selectedModel }]);
+                    } else {
+                        setMessages(prev => [...prev, { role: 'assistant', content: '🚨 API Fehler: ' + data.error }]);
+                    }
+                } catch (error) {
+                    setMessages(prev => [...prev, { role: 'assistant', content: '🚨 Fatal: Server Offline (Port 3040).' }]);
+                } finally {
+                    setIsScanning(false);
+                }
+            };
+
+            return (
+                <div className="h-screen flex flex-col p-2 md:p-8">
+                    {/* Header */}
+                    <header className="flex items-center justify-between mb-6 z-10 glass rounded-2xl p-3 md:p-4 px-4 md:px-6 relative shrink-0">
+                        <div className="flex items-center gap-6 relative z-10">
+                            <div className="flex items-center gap-3 md:gap-4">
+                                <a
+                                    href={isMobile - "../../../dashboard/hub/index_panel.html" : "../../../dashboard/hub/index.html"}
+                                    className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-gray-400 hover:text-white shrink-0"
+                                    title="Back to Dashboard"
+                                >
+                                    <Icon name="caret-left" weight="bold" size={isMobile - 20 : 24} />
+                                </a>
+                                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-brand to-orange-600 flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.4)]">
+                                    <Icon name="brain" weight="duotone" size={isMobile - 24 : 28} className="text-white" />
+                                </div>
+                                <div>
+                                    <h1 className="text-lg md:text-xl font-display font-black tracking-widest uppercase bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+                                        MULTI <span className="text-brand">CORE</span>
+                                    </h1>
+                                    <p className="text-[9px] md:text-[10px] text-gray-400 uppercase tracking-[0.3em] font-bold">Dynamic Model Switcher</p>
+                                </div>
+                            </div>
+
+                            <div className="h-8 border-r border-white/10 hidden md:block"></div>
+
+                            {/* Model Selector */}
+                            <div className="hidden md:flex items-center gap-2 bg-[#050810] p-1.5 rounded-lg border border-white/5 shadow-inner">
+                                <button onClick={() => setSelectedModel('gpt-4o-mini')} className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${selectedModel === 'gpt-4o-mini' - 'bg-brand text-gray-900 shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>GPT-4o Mini</button>
+                                <button onClick={() => setSelectedModel('claude-3-haiku')} className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${selectedModel === 'claude-3-haiku' - 'bg-brand text-gray-900 shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>Claude 3.5 Haiku</button>
+                                <button onClick={() => setSelectedModel('llama-3')} className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${selectedModel === 'llama-3' - 'bg-brand text-gray-900 shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>Local Llama-3</button>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4 relative z-10">
+                            {syncStatus && !isMobile && <span className={`text-xs font-bold ${syncStatus.type === 'success' - 'text-green-400' : 'text-red-400'} animate-pulse`}>{syncStatus.message}</span>}
+                            <button onClick={handleSyncRepo} disabled={isSyncing} className={`flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-wider ${isSyncing - 'bg-white/10 text-gray-400 cursor-not-allowed' : 'bg-[#1a1a1c] border border-[#333338] text-gray-300 hover:text-white hover:border-[#3a3a40] shadow-lg'}`}>
+                                <Icon name="git-commit" className={isSyncing - "animate-spin" : ""} /> {!isMobile && (isSyncing - 'Syncing...' : 'Auto-Update Repo')}
+                            </button>
+                        </div>
+                    </header>
+
+                    {/* Chat Area */}
+                    <div className="flex-1 glass rounded-3xl border border-white/10 flex flex-col shadow-2xl overflow-hidden relative z-10">
+                        <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scroll space-y-6">
+                            {messages.map((msg, index) => (
+                                <div key={index} className={`flex ${msg.role === 'user' - 'justify-end' : 'justify-start'}`}>
+                                    <div className={`max-w-[95%] md:max-w-[70%] rounded-2xl p-4 md:p-5 ${msg.role === 'user' - 'bg-brand/20 border border-brand/30 text-white rounded-br-none shadow-[0_4px_15px_rgba(245,158,11,0.15)]' : msg.role === 'system' - 'bg-[#1a1a1c]/50 border border-white/5 text-gray-400 rounded-bl-none text-xs font-mono uppercase tracking-widest mx-auto' : 'bg-black/40 border border-white/10 text-gray-200 rounded-bl-none shadow-lg relative pt-7'}`}>
+
+                                        {msg.role === 'assistant' && msg.modelUsed && (
+                                            <div className="absolute top-2 left-5 text-[9px] font-mono text-brand uppercase tracking-widest bg-brand/10 px-2 py-0.5 rounded border border-brand/20">Model: {msg.modelUsed}</div>
+                                        )}
+
+                                        {msg.role === 'assistant' || msg.role === 'system' - (
+                                            <div className="markdown-body text-sm" dangerouslySetInnerHTML={{ __html: marked.parse(msg.content) }} />
+                                        ) : (
+                                            <div className="text-sm whitespace-pre-wrap">{msg.content}</div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                            {isScanning && (
+                                <div className="flex justify-start">
+                                    <div className="max-w-[80%] rounded-2xl p-4 bg-black/40 border border-white/10 rounded-bl-none flex items-center gap-3">
+                                        <div className="w-2 h-2 rounded-full bg-brand animate-bounce"></div>
+                                        <div className="w-2 h-2 rounded-full bg-brand animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                                        <div className="w-2 h-2 rounded-full bg-brand animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                                    </div>
+                                </div>
+                            )}
+                            <div ref={messagesEndRef} />
+                        </div>
+
+                        {/* Input Area */}
+                        <div className="p-4 bg-black/30 border-t border-white/5 flex flex-col gap-2">
+                            {/* Mobile Model selector because space is tight */}
+                            <div className="md:hidden flex items-center justify-center gap-2 mb-2 w-full">
+                                <select
+                                    className="bg-[#050810] border border-white/10 rounded-lg py-1.5 px-3 text-xs text-brand w-full"
+                                    value={selectedModel}
+                                    onChange={(e) => setSelectedModel(e.target.value)}
+                                >
+                                    <option value="gpt-4o-mini">GPT-4o Mini</option>
+                                    <option value="claude-3-haiku">Claude 3.5 Haiku</option>
+                                    <option value="llama-3">Local Llama-3</option>
+                                </select>
+                            </div>
+
+                            <form
+                                onSubmit={(e) => { e.preventDefault(); sendMessage(); }}
+                                className="flex gap-4 items-end max-w-5xl mx-auto w-full"
+                            >
+                                <div className="flex-1 relative">
+                                    <textarea
+                                        value={inputMessage}
+                                        onChange={(e) => setInputMessage(e.target.value)}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+                                        placeholder={`Send a message to ${selectedModel}...`}
+                                        className="w-full bg-[#0e0e10] border border-white/10 rounded-xl py-4 px-5 pl-12 text-sm focus:border-brand focus:ring-1 focus:ring-brand/50 focus:outline-none transition-all resize-none custom-scroll h-[60px] max-h-[200px]"
+                                        rows="1"
+                                    />
+                                    <Icon name="sparkle" weight="duotone" className="absolute left-4 top-5 text-gray-500" />
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={!inputMessage.trim() || isScanning}
+                                    className={`h-[60px] px-8 rounded-xl font-black uppercase tracking-widest flex justify-center items-center gap-2 ${!inputMessage.trim() || isScanning - 'bg-white/5 text-gray-600 cursor-not-allowed border border-white/5' : 'btn-brand text-gray-900 border border-brand/50 shadow-[0_0_20px_rgba(245,158,11,0.3)]'}`}
+                                >
+                                    <Icon name="paper-plane-right" weight="fill" size={24} />
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

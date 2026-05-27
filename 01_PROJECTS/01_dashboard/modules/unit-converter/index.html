@@ -1,0 +1,434 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔄 Unit Converter — DkZâ„¢</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #fa1e4e;
+            --accent: #fa1e4e;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(14, 14, 22, .72);
+            --blur: blur(24px)
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .08);
+            border-radius: 6px
+        }
+
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .06;
+            animation: bf 20s ease-in-out infinite
+        }
+
+        .bg-blob:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: var(--blue);
+            top: -10%;
+            left: 10%
+        }
+
+        .bg-blob:nth-child(2) {
+            width: 350px;
+            height: 350px;
+            background: var(--accent);
+            bottom: 10%;
+            right: 10%;
+            animation-delay: -8s
+        }
+
+        @keyframes bf {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(30px, -40px) scale(1.1)
+            }
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        .header {
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .back-btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: none;
+            font-family: var(--font)
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--blue), var(--green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .hdr-right {
+            margin-left: auto
+        }
+
+        .ver {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono)
+        }
+
+        .content {
+            padding: 20px 28px;
+            flex: 1
+        }
+
+        .cat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 8px;
+            margin-bottom: 20px
+        }
+
+        .cat-btn {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--card);
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+            font-size: 12px;
+            font-weight: 700
+        }
+
+        .cat-btn:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px)
+        }
+
+        .cat-btn.active {
+            border-color: var(--accent);
+            background: rgba(250, 30, 78, .08)
+        }
+
+        .cat-btn .icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+            display: block
+        }
+
+        .converter {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            max-width: 600px;
+            margin: 0 auto
+        }
+
+        .conv-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px
+        }
+
+        .conv-input {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px
+        }
+
+        .conv-input input {
+            padding: 14px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 20px;
+            outline: none;
+            text-align: center
+        }
+
+        .conv-input input:focus {
+            border-color: var(--accent)
+        }
+
+        .conv-input select {
+            padding: 8px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            outline: none
+        }
+
+        .conv-swap {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            background: var(--card2);
+            color: var(--accent);
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .2s;
+            flex-shrink: 0
+        }
+
+        .conv-swap:hover {
+            background: var(--accent);
+            color: #fff;
+            transform: rotate(180deg)
+        }
+
+        .formula {
+            font-size: 11px;
+            color: var(--muted);
+            text-align: center;
+            font-family: var(--mono);
+            margin-top: 12px;
+            padding: 8px;
+            background: var(--card2);
+            border-radius: 6px
+        }
+
+        .quick-refs {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 6px;
+            margin-top: 16px
+        }
+
+        .qr-item {
+            padding: 8px 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 10px;
+            display: flex;
+            justify-content: space-between
+        }
+
+        .qr-item .qr-val {
+            font-family: var(--mono);
+            color: var(--green)
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: var(--green);
+            color: #000;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 10px;
+            z-index: 300;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all .3s;
+            pointer-events: none
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0)
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="unit-converter" data-dkz-appid="DKZ-MOD-UNI" data-dkz-version="v0.01" data-dkz-title="🔄 Unit Converter —" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+    </div>
+    <div class="app">
+        <div class="header"><a href="../../hub/index.html" class="back-btn">← Hub</a>
+            <h1>🔄 Unit Converter</h1>
+            <div class="hdr-right"><span class="ver">v0.01</span></div>
+        </div>
+        <div class="content">
+            <div class="cat-grid" id="catGrid"></div>
+            <div class="converter">
+                <div class="conv-row">
+                    <div class="conv-input"><input type="number" id="valA" value="1" oninput="convert('a')"><select
+                            id="unitA" onchange="convert('a')"></select></div>
+                    <button class="conv-swap" onclick="swap()">⇄</button>
+                    <div class="conv-input"><input type="number" id="valB" oninput="convert('b')"><select id="unitB"
+                            onchange="convert('a')"></select></div>
+                </div>
+                <div class="formula" id="formula"></div>
+                <div class="quick-refs" id="quickRefs"></div>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        const CATS = {
+            length: { icon: '📏', name: 'Länge', units: { m: 1, km: 1000, cm: 0.01, mm: 0.001, mi: 1609.34, ft: 0.3048, in: 0.0254, yd: 0.9144, nm: 1852 } },
+            weight: { icon: '⚖️', name: 'Gewicht', units: { kg: 1, g: 0.001, mg: 0.000001, t: 1000, lb: 0.453592, oz: 0.0283495, st: 6.35029 } },
+            temp: { icon: '🌡️', name: 'Temperatur', units: { C: 1, F: 1, K: 1 }, special: true },
+            area: { icon: '📐', name: 'Fläche', units: { m2: 1, km2: 1e6, cm2: 1e-4, ha: 10000, acre: 4046.86, sqft: 0.092903, sqmi: 2.59e6 } },
+            volume: { icon: '🧪', name: 'Volumen', units: { l: 1, ml: 0.001, m3: 1000, gal: 3.78541, qt: 0.946353, pt: 0.473176, cup: 0.236588, floz: 0.0295735 } },
+            speed: { icon: '🏎️', name: 'Geschwindigkeit', units: { 'm/s': 1, 'km/h': 0.277778, 'mph': 0.44704, knot: 0.514444, 'ft/s': 0.3048 } },
+            time: { icon: '⏰', name: 'Zeit', units: { s: 1, ms: 0.001, min: 60, h: 3600, day: 86400, week: 604800, month: 2592000, year: 31536000 } },
+            data: { icon: '💾', name: 'Daten', units: { B: 1, KB: 1024, MB: 1048576, GB: 1073741824, TB: 1099511627776, bit: 0.125, Kbit: 128, Mbit: 131072 } },
+            energy: { icon: '⚡', name: 'Energie', units: { J: 1, kJ: 1000, cal: 4.184, kcal: 4184, Wh: 3600, kWh: 3600000, BTU: 1055.06 } },
+        };
+        let activeCat = 'length';
+        function init() {
+            document.getElementById('catGrid').innerHTML = Object.entries(CATS).map(([k, v]) => `<div class="cat-btn ${k === activeCat - 'active' : ''}" onclick="setCat('${k}')"><span class="icon">${v.icon}</span>${v.name}</div>`).join('');
+            loadUnits(); convert('a');
+        }
+        function setCat(c) { activeCat = c; document.querySelectorAll('.cat-btn').forEach((b, i) => b.classList.toggle('active', Object.keys(CATS)[i] === c)); loadUnits(); convert('a') }
+        function loadUnits() {
+            const units = Object.keys(CATS[activeCat].units);
+            document.getElementById('unitA').innerHTML = units.map((u, i) => `<option value="${u}" ${i === 0 - 'selected' : ''}>${u}</option>`).join('');
+            document.getElementById('unitB').innerHTML = units.map((u, i) => `<option value="${u}" ${i === 1 - 'selected' : ''}>${u}</option>`).join('');
+        }
+        function convert(from) {
+            const cat = CATS[activeCat]; const uA = document.getElementById('unitA').value, uB = document.getElementById('unitB').value;
+            if (from === 'a') {
+                const vA = +document.getElementById('valA').value; let vB;
+                if (cat.special && activeCat === 'temp') { vB = convertTemp(vA, uA, uB) }
+                else { vB = vA * cat.units[uA] / cat.units[uB] }
+                document.getElementById('valB').value = isNaN(vB) - '' : Number(vB.toPrecision(10));
+            } else {
+                const vB = +document.getElementById('valB').value; let vA;
+                if (cat.special && activeCat === 'temp') { vA = convertTemp(vB, uB, uA) }
+                else { vA = vB * cat.units[uB] / cat.units[uA] }
+                document.getElementById('valA').value = isNaN(vA) - '' : Number(vA.toPrecision(10));
+            }
+            updateFormula(); updateQuickRefs();
+        }
+        function convertTemp(v, from, to) {
+            let c; if (from === 'C') c = v; else if (from === 'F') c = (v - 32) * 5 / 9; else c = v - 273.15;
+            if (to === 'C') return c; if (to === 'F') return c * 9 / 5 + 32; return c + 273.15;
+        }
+        function swap() { const a = document.getElementById('unitA'), b = document.getElementById('unitB'); const t = a.value; a.value = b.value; b.value = t; convert('a') }
+        function updateFormula() { const uA = document.getElementById('unitA').value, uB = document.getElementById('unitB').value; const cat = CATS[activeCat]; if (cat.special) { document.getElementById('formula').textContent = `${uA} → ${uB}` } else { const factor = cat.units[uA] / cat.units[uB]; document.getElementById('formula').textContent = `1 ${uA} = ${Number(factor.toPrecision(6))} ${uB}` } }
+        function updateQuickRefs() { const uA = document.getElementById('unitA').value, uB = document.getElementById('unitB').value; const cat = CATS[activeCat]; const refs = [1, 10, 100, 1000, 0.5, 0.1]; document.getElementById('quickRefs').innerHTML = refs.map(v => { let r; if (cat.special && activeCat === 'temp') r = convertTemp(v, uA, uB); else r = v * cat.units[uA] / cat.units[uB]; return `<div class="qr-item"><span>${v} ${uA}</span><span class="qr-val">${Number(r.toPrecision(6))} ${uB}</span></div>` }).join('') }
+        function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500) }
+        init();
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Unit converter</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Masseinheiten umrechnen.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Unit converter</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Masseinheiten umrechnen.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-unit-converter-onboarded','1')}if(!localStorage.getItem('dkz-unit-converter-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>
+
+

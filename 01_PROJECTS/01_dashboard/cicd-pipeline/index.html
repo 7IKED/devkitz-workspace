@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../shared/dkz-theme.css">
+    <link rel="manifest" href="../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚙️ DkZ CI/CD Pipeline — Build · Test · Deploy</title>
+    <meta name="description"
+        content="DkZ CI/CD Pipeline — Automatisierte Build-, Test- und Deploy-Pipeline mit GitHub Actions.">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        :root {
+            --bg: #0e0e10;
+            --bg2: #121215;
+            --card: #16161a;
+            --card2: #1e1e24;
+            --border: #1a1a2a;
+            --text: #e8e8f0;
+            --muted: #5e5e78;
+            --accent: #fa1e4e;
+            --cyan: #fa1e4e;
+            --purple: #a855f7;
+            --green: #00ff88;
+            --red: #ff4466;
+            --yellow: #ffb800;
+            --blue: #55acee;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --radius: 16px
+        }
+
+        html,
+        body {
+            height: 100%;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text)
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            background: radial-gradient(ellipse at 60% 30%, rgba(249, 115, 22, .03) 0%, transparent 50%), var(--bg)
+        }
+
+        .header {
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0
+        }
+
+        .header h1 {
+            font-size: 17px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #F97316, var(--yellow));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .header .sub {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono);
+            letter-spacing: 1px
+        }
+
+        .header-right {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .2s;
+            text-decoration: none
+        }
+
+        .btn:hover {
+            color: var(--text);
+            border-color: #F97316
+        }
+
+        .main {
+            flex: 1;
+            overflow: auto;
+            padding: 20px 24px
+        }
+
+        .pipeline-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 14px
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden
+        }
+
+        .card-head {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 700
+        }
+
+        .card-head .icon {
+            font-size: 18px
+        }
+
+        .card-head .status-badge {
+            margin-left: auto;
+            font-size: 9px;
+            font-family: var(--mono);
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-weight: 700
+        }
+
+        .badge-success {
+            background: rgba(0, 255, 136, .1);
+            color: var(--green)
+        }
+
+        .badge-running {
+            background: rgba(250, 30, 78, .1);
+            color: var(--cyan);
+            animation: runPulse 1.5s infinite
+        }
+
+        .badge-failed {
+            background: rgba(255, 68, 102, .1);
+            color: var(--red)
+        }
+
+        .badge-pending {
+            background: rgba(255, 184, 0, .1);
+            color: var(--yellow)
+        }
+
+        @keyframes runPulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .5
+            }
+        }
+
+        .card-body {
+            padding: 14px 16px
+        }
+
+        .pipeline-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, .03);
+            font-size: 12px
+        }
+
+        .pipeline-step:last-child {
+            border-bottom: none
+        }
+
+        .step-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0
+        }
+
+        .step-ok {
+            background: rgba(0, 255, 136, .1);
+            color: var(--green)
+        }
+
+        .step-run {
+            background: rgba(250, 30, 78, .1);
+            color: var(--cyan)
+        }
+
+        .step-fail {
+            background: rgba(255, 68, 102, .1);
+            color: var(--red)
+        }
+
+        .step-wait {
+            background: rgba(94, 94, 120, .1);
+            color: var(--muted)
+        }
+
+        .step-info {
+            flex: 1
+        }
+
+        .step-name {
+            font-weight: 600
+        }
+
+        .step-meta {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--muted)
+        }
+
+        .step-duration {
+            font-size: 10px;
+            font-family: var(--mono);
+            color: var(--muted)
+        }
+
+        .deploy-target {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            font-size: 12px
+        }
+
+        .deploy-target:last-child {
+            margin-bottom: 0
+        }
+
+        .dt-icon {
+            font-size: 18px
+        }
+
+        .dt-info {
+            flex: 1
+        }
+
+        .dt-name {
+            font-weight: 600
+        }
+
+        .dt-url {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--muted)
+        }
+
+        .dt-status {
+            font-size: 9px;
+            font-family: var(--mono);
+            padding: 3px 8px;
+            border-radius: 6px
+        }
+
+        .trigger-btn {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .2s;
+            margin-top: 8px
+        }
+
+        .trigger-btn:hover {
+            background: #F97316;
+            border-color: #F97316;
+            color: #fff
+        }
+
+        .trigger-btn.secondary {
+            font-weight: 400;
+            font-size: 11px
+        }
+
+        .trigger-btn.secondary:hover {
+            background: var(--card2);
+            color: var(--text)
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
+    <div class="header">
+        <div>
+            <h1>⚙️ CI/CD Pipeline</h1>
+            <div class="sub">BUILD · TEST · DEPLOY v1.01.1_01</div>
+        </div>
+        <div class="header-right">
+            <a href="../watchdog/index.html" class="btn">🛡️ Watchdog</a>
+            <a href="../nexuz/index.html" class="btn">⚡ NEXUZ²</a>
+            <a href="../hub/index.html" class="btn">← Hub</a>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="pipeline-grid">
+            <!-- LATEST BUILD -->
+            <div class="card">
+                <div class="card-head"><span class="icon">🔨</span> Letzter Build <span
+                        class="status-badge badge-success">✓ PASSED</span></div>
+                <div class="card-body">
+                    <div class="pipeline-step">
+                        <div class="step-icon step-ok">✓</div>
+                        <div class="step-info">
+                            <div class="step-name">Checkout</div>
+                            <div class="step-meta">main @ a3f2c1d</div>
+                        </div>
+                        <div class="step-duration">2s</div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon step-ok">✓</div>
+                        <div class="step-info">
+                            <div class="step-name">Install Dependencies</div>
+                            <div class="step-meta">npm ci — 847 packages</div>
+                        </div>
+                        <div class="step-duration">18s</div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon step-ok">✓</div>
+                        <div class="step-info">
+                            <div class="step-name">Lint & Type-Check</div>
+                            <div class="step-meta">0 errors, 3 warnings</div>
+                        </div>
+                        <div class="step-duration">4s</div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon step-ok">✓</div>
+                        <div class="step-info">
+                            <div class="step-name">Unit Tests</div>
+                            <div class="step-meta">142/142 passed — 96% coverage</div>
+                        </div>
+                        <div class="step-duration">12s</div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon step-ok">✓</div>
+                        <div class="step-info">
+                            <div class="step-name">Build</div>
+                            <div class="step-meta">Production bundle — 2.4 MB gzipped</div>
+                        </div>
+                        <div class="step-duration">8s</div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon step-ok">✓</div>
+                        <div class="step-info">
+                            <div class="step-name">Docker Image</div>
+                            <div class="step-meta">ghcr.io/dkz/nexuz:latest — 180 MB</div>
+                        </div>
+                        <div class="step-duration">22s</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DEPLOY TARGETS -->
+            <div class="card">
+                <div class="card-head"><span class="icon">🚀</span> Deploy Targets</div>
+                <div class="card-body">
+                    <div class="deploy-target">
+                        <div class="dt-icon">🖥️</div>
+                        <div class="dt-info">
+                            <div class="dt-name">KVM8 VPS (Production)</div>
+                            <div class="dt-url">api.devkitz.eu → Docker Compose</div>
+                        </div>
+                        <span class="dt-status badge-success">LIVE</span>
+                    </div>
+                    <div class="deploy-target">
+                        <div class="dt-icon">⚡</div>
+                        <div class="dt-info">
+                            <div class="dt-name">Cloudflare Worker (Edge)</div>
+                            <div class="dt-url">edge.devkitz.eu → Wrangler Deploy</div>
+                        </div>
+                        <span class="dt-status badge-success">LIVE</span>
+                    </div>
+                    <div class="deploy-target">
+                        <div class="dt-icon">🌐</div>
+                        <div class="dt-info">
+                            <div class="dt-name">Apache (Static/Legacy)</div>
+                            <div class="dt-url">www.devkitz.eu → rsync + restart</div>
+                        </div>
+                        <span class="dt-status badge-success">LIVE</span>
+                    </div>
+                    <div class="deploy-target">
+                        <div class="dt-icon">🐙</div>
+                        <div class="dt-info">
+                            <div class="dt-name">Nextcloud (Agent Host)</div>
+                            <div class="dt-url">cloud.devkitz.eu → Docker Update</div>
+                        </div>
+                        <span class="dt-status badge-success">LIVE</span>
+                    </div>
+                    <div class="deploy-target">
+                        <div class="dt-icon">📊</div>
+                        <div class="dt-info">
+                            <div class="dt-name">Google Apps Script</div>
+                            <div class="dt-url">clasp push → GAS Runtime</div>
+                        </div>
+                        <span class="dt-status badge-pending">Manual</span>
+                    </div>
+                    <button class="trigger-btn">🚀 Deploy ALL Targets</button>
+                </div>
+            </div>
+
+            <!-- RECENT RUNS -->
+            <div class="card">
+                <div class="card-head"><span class="icon">📋</span> Letzte Runs</div>
+                <div class="card-body">
+                    <div class="pipeline-step">
+                        <div class="step-icon step-ok">✓</div>
+                        <div class="step-info">
+                            <div class="step-name">#47 — main</div>
+                            <div class="step-meta">feat: add action-deck voice mode · vor 2h</div>
+                        </div>
+                        <div class="step-duration">66s</div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon step-ok">✓</div>
+                        <div class="step-info">
+                            <div class="step-name">#46 — main</div>
+                            <div class="step-meta">feat: knowledge-hub dashboard · vor 3h</div>
+                        </div>
+                        <div class="step-duration">58s</div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon step-ok">✓</div>
+                        <div class="step-info">
+                            <div class="step-name">#45 — main</div>
+                            <div class="step-meta">feat: nexuz core router + bridges · vor 4h</div>
+                        </div>
+                        <div class="step-duration">72s</div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon step-fail">✗</div>
+                        <div class="step-info">
+                            <div class="step-name">#44 — dev</div>
+                            <div class="step-meta">fix: landing page paths — test failed · vor 5h</div>
+                        </div>
+                        <div class="step-duration">34s</div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon step-ok">✓</div>
+                        <div class="step-info">
+                            <div class="step-name">#43 — main</div>
+                            <div class="step-meta">feat: mcp extension sidepanel · vor 6h</div>
+                        </div>
+                        <div class="step-duration">61s</div>
+                    </div>
+                    <button class="trigger-btn secondary">📋 Alle Runs anzeigen</button>
+                </div>
+            </div>
+
+            <!-- WORKFLOW CONFIG -->
+            <div class="card">
+                <div class="card-head"><span class="icon">📝</span> Workflow Config</div>
+                <div class="card-body">
+                    <div class="pipeline-step">
+                        <div class="step-icon step-ok">📄</div>
+                        <div class="step-info">
+                            <div class="step-name">.github/workflows/ci.yml</div>
+                            <div class="step-meta">on: push to main/dev</div>
+                        </div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon step-ok">📄</div>
+                        <div class="step-info">
+                            <div class="step-name">.github/workflows/deploy.yml</div>
+                            <div class="step-meta">on: release published</div>
+                        </div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon step-ok">📄</div>
+                        <div class="step-info">
+                            <div class="step-name">.github/workflows/health.yml</div>
+                            <div class="step-meta">schedule: every 30min</div>
+                        </div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon step-ok">📄</div>
+                        <div class="step-info">
+                            <div class="step-name">Dockerfile</div>
+                            <div class="step-meta">Multi-stage: node:20-alpine</div>
+                        </div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon step-ok">📄</div>
+                        <div class="step-info">
+                            <div class="step-name">docker-compose.yml</div>
+                            <div class="step-meta">3 services: api, worker, db</div>
+                        </div>
+                    </div>
+                    <button class="trigger-btn secondary">✏️ Workflows bearbeiten</button>
+                </div>
+            </div>
+
+            <!-- ENVIRONMENTS -->
+            <div class="card">
+                <div class="card-head"><span class="icon">🌍</span> Environments</div>
+                <div class="card-body">
+                    <div class="deploy-target">
+                        <div class="dt-icon">🟢</div>
+                        <div class="dt-info">
+                            <div class="dt-name">Production</div>
+                            <div class="dt-url">devkitz.eu · Version: v2.01.1_01</div>
+                        </div>
+                        <span class="dt-status badge-success">Stable</span>
+                    </div>
+                    <div class="deploy-target">
+                        <div class="dt-icon">🟡</div>
+                        <div class="dt-info">
+                            <div class="dt-name">Staging</div>
+                            <div class="dt-url">staging.devkitz.eu · Version: v2.01.2_dev</div>
+                        </div>
+                        <span class="dt-status badge-pending">Testing</span>
+                    </div>
+                    <div class="deploy-target">
+                        <div class="dt-icon">🔵</div>
+                        <div class="dt-info">
+                            <div class="dt-name">Development</div>
+                            <div class="dt-url">localhost:3000 · Branch: dev</div>
+                        </div>
+                        <span class="dt-status badge-running">Active</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECRETS -->
+            <div class="card">
+                <div class="card-head"><span class="icon">🔑</span> Secrets & Variables</div>
+                <div class="card-body">
+                    <div class="pipeline-step">
+                        <div class="step-icon step-ok">🔐</div>
+                        <div class="step-info">
+                            <div class="step-name">DOCKER_REGISTRY_TOKEN</div>
+                            <div class="step-meta">ghcr.io · Updated: vor 2d</div>
+                        </div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon step-ok">🔐</div>
+                        <div class="step-info">
+                            <div class="step-name">VPS_SSH_KEY</div>
+                            <div class="step-meta">ed25519 · KVM8 · Updated: vor 14d</div>
+                        </div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon step-ok">🔐</div>
+                        <div class="step-info">
+                            <div class="step-name">CF_API_TOKEN</div>
+                            <div class="step-meta">Cloudflare · Updated: vor 7d</div>
+                        </div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon step-ok">🔐</div>
+                        <div class="step-info">
+                            <div class="step-name">CLASP_CREDENTIALS</div>
+                            <div class="step-meta">Google Apps Script · Updated: vor 30d</div>
+                        </div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon step-ok">🔐</div>
+                        <div class="step-info">
+                            <div class="step-name">NC_APP_PASSWORD</div>
+                            <div class="step-meta">Nextcloud · Updated: vor 5d</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    <script src="../shared/dkz-debug.js"></script>
+    <script src="../shared/dkz-guide.js"></script>
+    <script src="../shared/dkz-copilot.js"></script>
+    <script src="../shared/dkz-shortcuts.js"></script>
+    <script src="../shared/dkz-export.js"></script>
+    <script src="../shared/dkz-crosslinks.js"></script>
+    <script src="../shared/dkz-a11y.js"></script>
+    <script src="../shared/dkz-test.js"></script>
+    <script src="../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../shared/sw.js").catch(()=>{});</script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

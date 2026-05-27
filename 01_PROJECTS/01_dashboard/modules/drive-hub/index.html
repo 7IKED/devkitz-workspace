@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DkZ™ Drive Hub — 00-99 File Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../shared/dkz-navbar.css">
+<style>
+:root{--accent:#fa1e4e;--bg:#060608;--card:#0c0c12;--card2:#111118;--border:#1a1a2a;--green:#00ff88;--yellow:#ffb800;--red:#ff3b5c;--blue:#4d8eff;--text:#e0e0e0;--muted:#555;--radius:10px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.main{padding:1.5rem;max-width:1400px;margin:0 auto;margin-top:60px}
+
+/* Header */
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
+.header h1{font-size:1.6rem;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--yellow));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header .subtitle{color:var(--muted);font-size:.85rem;margin-top:.25rem}
+
+/* Search */
+.search-box{display:flex;gap:.5rem;flex:1;max-width:500px}
+.search-input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:.6rem 1rem;color:var(--text);font-size:.9rem;outline:none;transition:border-color .2s}
+.search-input:focus{border-color:var(--accent)}
+.search-input::placeholder{color:var(--muted)}
+.search-btn{background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:.6rem 1.2rem;font-weight:600;cursor:pointer;transition:transform .15s}
+.search-btn:hover{transform:scale(1.05)}
+
+/* Stats Bar */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem;margin-bottom:1.5rem}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;text-align:center;transition:border-color .2s}
+.stat-card:hover{border-color:var(--accent)}
+.stat-value{font-size:1.5rem;font-weight:700;font-family:'JetBrains Mono',monospace}
+.stat-label{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:.25rem}
+
+/* Folder Grid */
+.folder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem;margin-bottom:1.5rem}
+.folder{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.folder:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 4px 15px rgba(250,30,78,.1)}
+.folder.active{border-color:var(--green);background:rgba(0,255,136,.05)}
+.folder-num{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--accent);font-weight:600}
+.folder-name{font-weight:600;margin-top:.25rem;font-size:.9rem}
+.folder-count{font-size:.75rem;color:var(--muted);margin-top:.25rem}
+.folder-icon{font-size:1.5rem;position:absolute;top:.75rem;right:.75rem;opacity:.3}
+
+/* File List */
+.file-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1.5rem}
+.file-panel h2{font-size:1.1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.file-list{max-height:400px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--accent) var(--card)}
+.file-item{display:flex;align-items:center;gap:.75rem;padding:.6rem .75rem;border-radius:6px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border)}
+.file-item:hover{background:rgba(250,30,78,.05)}
+.file-item:last-child{border-bottom:none}
+.file-icon{font-size:1.2rem;flex-shrink:0}
+.file-name{flex:1;font-size:.85rem;font-weight:500}
+.file-meta{font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.file-type{display:inline-block;padding:1px 6px;border-radius:3px;font-size:.65rem;font-family:'JetBrains Mono',monospace;background:rgba(77,142,255,.15);color:var(--blue)}
+
+/* Tabs */
+.tabs{display:flex;gap:2px;margin-bottom:1.5rem;background:var(--card);border-radius:var(--radius);padding:4px;border:1px solid var(--border)}
+.tab{padding:.5rem 1rem;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:500;color:var(--muted);transition:all .2s;flex:1;text-align:center}
+.tab:hover{color:var(--text)}
+.tab.active{background:var(--accent);color:#fff}
+
+/* Actions */
+.actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem}
+.action-btn{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.5rem 1rem;color:var(--text);cursor:pointer;font-size:.8rem;font-family:'Inter',sans-serif;transition:all .2s;display:flex;align-items:center;gap:.4rem}
+.action-btn:hover{border-color:var(--accent);transform:translateY(-1px)}
+
+/* Sync Status */
+.sync-bar{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:.5rem;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.sync-text{font-size:.8rem;color:var(--muted)}
+.sync-time{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--green)}
+
+/* Duplikat Panel */
+.dupes-panel{background:var(--card);border:1px solid var(--yellow);border-radius:var(--radius);padding:1.25rem}
+.dupes-panel h2{color:var(--yellow);font-size:1rem;margin-bottom:.75rem}
+.dupe-item{display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.85rem}
+.dupe-item:last-child{border:none}
+.dupe-action{display:flex;gap:.4rem}
+.dupe-btn{padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer;font-size:.7rem;transition:all .15s}
+.dupe-btn:hover{border-color:var(--accent);color:var(--accent)}
+.dupe-btn.archive{color:var(--red);border-color:var(--red)}
+
+/* Empty */
+.empty{text-align:center;padding:3rem;color:var(--muted)}
+.empty-icon{font-size:3rem;margin-bottom:1rem;opacity:.3}
+
+/* Toast */
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--green);color:#000;padding:.75rem 1.5rem;border-radius:8px;font-weight:600;font-size:.9rem;opacity:0;transform:translateY(20px);transition:all .3s;pointer-events:none;z-index:999}
+.toast.show{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="main">
+  <div class="header">
+    <div>
+      <h1>📁 Drive Hub — 00-99 Intelligence</h1>
+      <div class="subtitle">Jeff Su File System · PARA-Methode · Auto-Sortierung</div>
+    </div>
+    <div class="search-box">
+      <input class="search-input" id="search" placeholder="Datei suchen... (Strg+K)" autofocus>
+      <button class="search-btn" onclick="searchFiles()">🔍</button>
+    </div>
+  </div>
+
+  <!-- Sync Status -->
+  <div class="sync-bar">
+    <div><span class="sync-dot"></span><span class="sync-text">Drive Sync aktiv</span></div>
+    <div class="sync-time" id="syncTime">Letzter Sync: --</div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats" id="stats">
+    <div class="stat-card"><div class="stat-value" style="color:var(--accent)" id="totalFiles">0</div><div class="stat-label">Dateien</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:var(--green)" id="totalFolders">0</div><div class="stat-label">Ordner</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:var(--yellow)" id="totalDupes">0</div><div class="stat-label">Duplikate</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:var(--blue)" id="totalSize">0 MB</div><div class="stat-label">Gesamt</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:var(--green)" id="sortedPct">0%</div><div class="stat-label">Sortiert</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('explorer')">📁 Explorer</div>
+    <div class="tab" onclick="switchTab('dupes')">🔍 Duplikate</div>
+    <div class="tab" onclick="switchTab('research')">📚 Research</div>
+    <div class="tab" onclick="switchTab('sync')">🔄 Sync Log</div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <button class="action-btn" onclick="runOrganizer()">🗂️ Auto-Sortieren</button>
+    <button class="action-btn" onclick="scanDuplicates()">🔍 Duplikat-Scan</button>
+    <button class="action-btn" onclick="indexResearch()">📚 Research Indexieren</button>
+    <button class="action-btn" onclick="syncNow()">🔄 Jetzt Synchronisieren</button>
+    <button class="action-btn" onclick="openDrive()">↗️ Google Drive öffnen</button>
+  </div>
+
+  <!-- Explorer Tab -->
+  <div id="tab-explorer">
+    <div class="folder-grid" id="folderGrid"></div>
+    <div class="file-panel" id="filePanel" style="display:none">
+      <h2 id="filePanelTitle">📂 Ordner</h2>
+      <div class="file-list" id="fileList"></div>
+    </div>
+  </div>
+
+  <!-- Dupes Tab -->
+  <div id="tab-dupes" style="display:none">
+    <div class="dupes-panel">
+      <h2>🔍 Duplikat-Erkennung (5-Punkt-Prüfung)</h2>
+      <div id="dupesList"><div class="empty"><div class="empty-icon">🔍</div>Starte einen Duplikat-Scan um Ergebnisse zu sehen</div></div>
+    </div>
+  </div>
+
+  <!-- Research Tab -->
+  <div id="tab-research" style="display:none">
+    <div class="file-panel">
+      <h2>📚 Research Index</h2>
+      <div id="researchList"><div class="empty"><div class="empty-icon">📚</div>Research wird geladen...</div></div>
+    </div>
+  </div>
+
+  <!-- Sync Tab -->
+  <div id="tab-sync" style="display:none">
+    <div class="file-panel">
+      <h2>🔄 Synchronisations-Log</h2>
+      <div id="syncLog"><div class="empty"><div class="empty-icon">🔄</div>Noch keine Sync-Aktivitäten</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══ 00-99 FOLDER STRUCTURE (Jeff Su) ═══
+const FOLDERS_00_99 = [
+  { num: '00', name: 'Inbox', icon: '📥', desc: 'Unsortierte Dateien' },
+  { num: '01', name: 'Projekte', icon: '🚀', desc: 'Aktive Projekte' },
+  { num: '02', name: 'Bereiche', icon: '🎯', desc: 'Verantwortungsbereiche' },
+  { num: '03', name: 'Finanzen', icon: '💰', desc: 'Buchhaltung, Rechnungen' },
+  { num: '04', name: 'Verträge', icon: '📝', desc: 'Verträge, Dokumente' },
+  { num: '05', name: 'Wissen', icon: '🧠', desc: 'Notizen, Learnings' },
+  { num: '06', name: 'Research', icon: '🔬', desc: 'Recherche, Papers' },
+  { num: '07', name: 'Templates', icon: '📋', desc: 'Vorlagen, Snippets' },
+  { num: '08', name: 'Design', icon: '🎨', desc: 'Grafiken, Mockups' },
+  { num: '09', name: 'Medien', icon: '🎬', desc: 'Fotos, Videos, Audio' },
+  { num: '10', name: 'DEVKiTZ', icon: '⚡', desc: 'Projekt-spezifisch' },
+  { num: '11', name: 'Kunden', icon: '🤝', desc: 'Kundendaten' },
+  { num: '12', name: 'Marketing', icon: '📢', desc: 'Social, Content' },
+  { num: '13', name: 'Ausbildung', icon: '🎓', desc: 'Kurse, Zertifikate' },
+  { num: '14', name: 'Persönlich', icon: '👤', desc: 'Privat' },
+  { num: '15', name: 'Archiv', icon: '🗄️', desc: 'Abgeschlossenes' },
+  { num: '99', name: 'Papierkorb', icon: '🗑️', desc: 'Zum Löschen vorgemerkt' }
+];
+
+let activeFolder = null;
+let allFiles = [];
+
+// ═══ INIT ═══
+function init() {
+  renderFolders();
+  updateStats();
+  updateSyncTime();
+  loadDemoData();
+  
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); document.getElementById('search').focus(); }
+    if (e.key === 'Escape') { activeFolder = null; document.getElementById('filePanel').style.display = 'none'; }
+  });
+  
+  document.getElementById('search').addEventListener('input', (e) => searchFiles(e.target.value));
+}
+
+function renderFolders() {
+  const grid = document.getElementById('folderGrid');
+  grid.innerHTML = FOLDERS_00_99.map(f => `
+    <div class="folder${activeFolder === f.num ? ' active' : ''}" onclick="selectFolder('${f.num}')" title="${f.desc}">
+      <div class="folder-num">[${f.num}]</div>
+      <div class="folder-name">${f.name}</div>
+      <div class="folder-count" id="count-${f.num}">0 Dateien</div>
+      <div class="folder-icon">${f.icon}</div>
+    </div>
+  `).join('');
+}
+
+function selectFolder(num) {
+  activeFolder = num;
+  renderFolders();
+  const folder = FOLDERS_00_99.find(f => f.num === num);
+  const panel = document.getElementById('filePanel');
+  const title = document.getElementById('filePanelTitle');
+  title.innerHTML = `${folder.icon} [${num}] ${folder.name}`;
+  panel.style.display = 'block';
+  renderFiles(num);
+}
+
+function renderFiles(folderNum) {
+  const files = allFiles.filter(f => f.folder === folderNum);
+  const list = document.getElementById('fileList');
+  if (files.length === 0) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">📂</div>Keine Dateien in diesem Ordner</div>';
+    return;
+  }
+  list.innerHTML = files.map(f => `
+    <div class="file-item" title="${f.path || ''}">
+      <div class="file-icon">${getFileIcon(f.type)}</div>
+      <div class="file-name">${esc(f.name)}</div>
+      <span class="file-type">${f.type}</span>
+      <div class="file-meta">${formatSize(f.size)}</div>
+    </div>
+  `).join('');
+}
+
+function getFileIcon(type) {
+  const icons = { pdf: '📄', doc: '📝', docx: '📝', xls: '📊', xlsx: '📊', png: '🖼️', jpg: '🖼️', mp4: '🎬', mp3: '🎵', zip: '📦', md: '📋', js: '⚙️', html: '🌐', css: '🎨', json: '📦', txt: '📄' };
+  return icons[type] || '📎';
+}
+
+function formatSize(bytes) {
+  if (!bytes) return '--';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function searchFiles(query) {
+  if (!query) query = document.getElementById('search').value;
+  if (!query || query.length < 2) return;
+  const q = query.toLowerCase();
+  const results = allFiles.filter(f => f.name.toLowerCase().includes(q) || (f.tags && f.tags.some(t => t.includes(q))));
+  const list = document.getElementById('fileList');
+  const panel = document.getElementById('filePanel');
+  document.getElementById('filePanelTitle').innerHTML = `🔍 Suche: "${esc(query)}" (${results.length})`;
+  panel.style.display = 'block';
+  if (results.length === 0) { list.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div>Keine Ergebnisse</div>'; return; }
+  list.innerHTML = results.slice(0, 50).map(f => `
+    <div class="file-item"><div class="file-icon">${getFileIcon(f.type)}</div><div class="file-name">${esc(f.name)}</div><span class="file-type">[${f.folder}]</span><div class="file-meta">${formatSize(f.size)}</div></div>
+  `).join('');
+}
+
+// ═══ TABS ═══
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = 'none');
+  event.target.classList.add('active');
+  document.getElementById(`tab-${tab}`).style.display = 'block';
+}
+
+// ═══ ACTIONS ═══
+function runOrganizer() { showToast('🗂️ Auto-Sortierung gestartet...'); }
+function scanDuplicates() { showToast('🔍 Duplikat-Scan läuft...'); switchTab('dupes'); renderDemoDupes(); }
+function indexResearch() { showToast('📚 Research wird indexiert...'); }
+function syncNow() { showToast('🔄 Synchronisation gestartet...'); updateSyncTime(); }
+function openDrive() { window.open('https://drive.google.com', '_blank'); }
+
+// ═══ STATS ═══
+function updateStats() {
+  document.getElementById('totalFiles').textContent = allFiles.length;
+  document.getElementById('totalFolders').textContent = FOLDERS_00_99.length;
+  const sorted = allFiles.filter(f => f.folder !== '00').length;
+  document.getElementById('sortedPct').textContent = allFiles.length ? Math.round(sorted / allFiles.length * 100) + '%' : '0%';
+  FOLDERS_00_99.forEach(f => {
+    const el = document.getElementById(`count-${f.num}`);
+    if (el) el.textContent = allFiles.filter(a => a.folder === f.num).length + ' Dateien';
+  });
+}
+
+function updateSyncTime() {
+  document.getElementById('syncTime').textContent = 'Letzter Sync: ' + new Date().toLocaleTimeString('de-DE');
+}
+
+// ═══ DEMO DATA ═══
+function loadDemoData() {
+  allFiles = [
+    { name: 'Projektplan_DEVKiTZ_v3.docx', folder: '01', type: 'docx', size: 245760 },
+    { name: 'Budget_2026_Q2.xlsx', folder: '03', type: 'xlsx', size: 89000 },
+    { name: 'NDA_Partner_2026.pdf', folder: '04', type: 'pdf', size: 156000 },
+    { name: 'AI_Research_Notes.md', folder: '06', type: 'md', size: 34000, tags: ['ai', 'research'] },
+    { name: 'jeff-su-drive-system.md', folder: '06', type: 'md', size: 28000, tags: ['organization', 'para'] },
+    { name: 'DkZ_Logo_Final.png', folder: '08', type: 'png', size: 890000 },
+    { name: 'Promo_Video_Draft.mp4', folder: '09', type: 'mp4', size: 45000000 },
+    { name: 'feature-flags.json', folder: '10', type: 'json', size: 4500 },
+    { name: 'Unsortiert_Foto.jpg', folder: '00', type: 'jpg', size: 3200000 },
+    { name: 'Meeting_Notes_15Mai.md', folder: '00', type: 'md', size: 12000 },
+    { name: 'Rechnung_Hetzner_Mai.pdf', folder: '03', type: 'pdf', size: 67000 },
+    { name: 'CLAUDE.md', folder: '10', type: 'md', size: 18000 },
+    { name: 'REGELWERK.md', folder: '10', type: 'md', size: 52000 },
+    { name: 'cv_2026_update.pdf', folder: '14', type: 'pdf', size: 340000 },
+    { name: 'kubernetes_cheatsheet.pdf', folder: '05', type: 'pdf', size: 120000 },
+  ];
+  updateStats();
+}
+
+function renderDemoDupes() {
+  const dupes = [
+    { a: 'Logo_v2.png (890KB)', b: 'Logo_v2_copy.png (890KB)', match: '5/5' },
+    { a: 'Notes_15Mai.md (12KB)', b: 'Meeting_Notes_15Mai.md (12.5KB)', match: '3/5 Variante' },
+  ];
+  document.getElementById('dupesList').innerHTML = dupes.map(d => `
+    <div class="dupe-item">
+      <div><strong>${esc(d.a)}</strong> ↔ ${esc(d.b)} <span class="file-type">${d.match}</span></div>
+      <div class="dupe-action">
+        <button class="dupe-btn archive" onclick="showToast('🗑️ Archiviert')">Archivieren</button>
+        <button class="dupe-btn" onclick="showToast('✅ Behalten')">Behalten</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+init();
+</script>
+<script src="../../shared/dkz-navbar.js"></script>
+</body>
+</html>

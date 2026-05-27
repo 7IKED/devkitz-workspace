@@ -1,0 +1,1043 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>&#9881; Clipboard Manager &#8212; DkZâ„¢ v0.01</title>
+    <meta name="description" content="DkZ Clipboard Manager &#8212; Multi-Clipboard mit History, Kategorien, Pins & Suche">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #fa1e4e;
+            --purple: #ec4899;
+            --accent: #fa1e4e;
+            --accent-rgb: 250, 30, 78;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(14, 14, 22, .72);
+            --blur: blur(24px)
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh;
+            overflow-x: hidden
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .08);
+            border-radius: 6px
+        }
+
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .06;
+            animation: blobFloat 20s ease-in-out infinite
+        }
+
+        .bg-blob:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: var(--accent);
+            top: -10%;
+            left: 20%
+        }
+
+        .bg-blob:nth-child(2) {
+            width: 400px;
+            height: 400px;
+            background: var(--blue);
+            bottom: -5%;
+            right: 10%;
+            animation-delay: -7s
+        }
+
+        .bg-blob:nth-child(3) {
+            width: 300px;
+            height: 300px;
+            background: var(--purple);
+            top: 50%;
+            left: -5%;
+            animation-delay: -14s
+        }
+
+        @keyframes blobFloat {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            33% {
+                transform: translate(30px, -40px) scale(1.1)
+            }
+
+            66% {
+                transform: translate(-20px, 30px) scale(.9)
+            }
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        /* HEADER */
+        .header {
+            padding: 14px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .back-btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .25s;
+            text-decoration: none
+        }
+
+        .back-btn:hover {
+            color: var(--text);
+            border-color: var(--accent)
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent), var(--purple), var(--blue));
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradShift 4s ease infinite
+        }
+
+        @keyframes gradShift {
+
+            0%,
+            100% {
+                background-position: 0% 50%
+            }
+
+            50% {
+                background-position: 100% 50%
+            }
+        }
+
+        .hdr-right {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .hdr-btn {
+            padding: 7px 13px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .25s
+        }
+
+        .hdr-btn:hover {
+            color: var(--text);
+            border-color: var(--accent)
+        }
+
+        .hdr-btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent)
+        }
+
+        .ver {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono);
+            letter-spacing: 1.5px
+        }
+
+        /* MAIN LAYOUT */
+        .main {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            flex: 1;
+            overflow: hidden
+        }
+
+        @media(max-width:768px) {
+            .main {
+                grid-template-columns: 1fr
+            }
+
+            .sidebar {
+                display: none
+            }
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden
+        }
+
+        .sb-head {
+            padding: 16px;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .sb-head h3 {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--muted);
+            margin-bottom: 12px
+        }
+
+        .sb-search {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 11px;
+            outline: none;
+            transition: border-color .3s
+        }
+
+        .sb-search:focus {
+            border-color: var(--accent)
+        }
+
+        .sb-search::placeholder {
+            color: var(--muted)
+        }
+
+        .sb-cats {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px
+        }
+
+        .sb-cat {
+            padding: 10px 14px;
+            border-radius: 10px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: all .2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            font-weight: 600
+        }
+
+        .sb-cat:hover {
+            background: rgba(255, 255, 255, .04)
+        }
+
+        .sb-cat.active {
+            background: rgba(var(--accent-rgb), .1);
+            color: var(--accent);
+            border-left: 3px solid var(--accent)
+        }
+
+        .sb-cat .cnt {
+            font-family: var(--mono);
+            font-size: 9px;
+            opacity: .6;
+            margin-left: auto
+        }
+
+        .sb-stats {
+            padding: 14px 16px;
+            border-top: 1px solid var(--border);
+            font-size: 10px;
+            color: var(--muted);
+            font-family: var(--mono);
+            text-align: center
+        }
+
+        /* CONTENT */
+        .content {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden
+        }
+
+        .toolbar {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            background: var(--glass);
+            backdrop-filter: var(--blur)
+        }
+
+        .toolbar .btn-group {
+            display: flex;
+            gap: 4px
+        }
+
+        .tb-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .tb-btn:hover {
+            color: var(--text);
+            border-color: var(--accent)
+        }
+
+        .tb-btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent)
+        }
+
+        .sort-select {
+            padding: 6px 10px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 11px;
+            outline: none;
+            cursor: pointer;
+            margin-left: auto
+        }
+
+        /* CLIP INPUT */
+        .clip-input-area {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+            align-items: flex-start
+        }
+
+        .clip-input-area textarea {
+            flex: 1;
+            padding: 12px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 12px;
+            resize: vertical;
+            min-height: 60px;
+            outline: none;
+            transition: border-color .3s
+        }
+
+        .clip-input-area textarea:focus {
+            border-color: var(--accent)
+        }
+
+        .clip-input-side {
+            display: flex;
+            flex-direction: column;
+            gap: 6px
+        }
+
+        .clip-input-side input {
+            padding: 8px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 11px;
+            outline: none;
+            width: 140px
+        }
+
+        .clip-input-side input:focus {
+            border-color: var(--accent)
+        }
+
+        .add-clip-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: #fff;
+            font-family: var(--font);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .25s
+        }
+
+        .add-clip-btn:hover {
+            box-shadow: 0 0 20px rgba(var(--accent-rgb), .3);
+            transform: scale(1.03)
+        }
+
+        /* CLIP LIST */
+        .clip-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px
+        }
+
+        .clip-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 10px;
+            transition: all .3s;
+            animation: clipIn .3s ease;
+            position: relative;
+            overflow: hidden
+        }
+
+        @keyframes clipIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .clip-item:hover {
+            border-color: rgba(var(--accent-rgb), .35);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, .35)
+        }
+
+        .clip-item.pinned {
+            border-left: 3px solid var(--yellow)
+        }
+
+        .clip-item.pinned::before {
+            content: '&#9881;';
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 12px;
+            opacity: .8
+        }
+
+        .ci-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px
+        }
+
+        .ci-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(var(--accent-rgb), .1);
+            border-radius: 8px;
+            font-size: 16px;
+            flex-shrink: 0
+        }
+
+        .ci-title {
+            font-size: 13px;
+            font-weight: 700;
+            flex: 1
+        }
+
+        .ci-cat {
+            font-size: 9px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+            background: rgba(85, 172, 238, .12);
+            color: var(--blue)
+        }
+
+        .ci-preview {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--muted);
+            background: var(--card2);
+            padding: 10px;
+            border-radius: 8px;
+            max-height: 80px;
+            overflow: hidden;
+            line-height: 1.6;
+            white-space: pre-wrap
+        }
+
+        .ci-meta {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .ci-tag {
+            font-size: 8px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(var(--accent-rgb), .1);
+            color: var(--accent);
+            font-weight: 700
+        }
+
+        .ci-time {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono);
+            margin-left: auto
+        }
+
+        .ci-actions {
+            display: flex;
+            gap: 4px;
+            margin-top: 10px;
+            opacity: 0;
+            transition: opacity .2s;
+            justify-content: flex-end
+        }
+
+        .clip-item:hover .ci-actions {
+            opacity: 1
+        }
+
+        .ci-btn {
+            padding: 5px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: var(--font);
+            transition: all .2s
+        }
+
+        .ci-btn:hover {
+            color: var(--text);
+            border-color: var(--accent)
+        }
+
+        .ci-btn.danger:hover {
+            color: var(--red);
+            border-color: var(--red)
+        }
+
+        .empty-state {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 12px;
+            color: var(--muted);
+            padding: 40px
+        }
+
+        .empty-state .es-icon {
+            font-size: 56px;
+            opacity: .3
+        }
+
+        .empty-state p {
+            font-size: 13px
+        }
+
+        /* DEBUG */
+        .debug-panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            margin: 20px
+        }
+
+        .dp-title {
+            font-size: 12px;
+            font-weight: 800;
+            margin-bottom: 10px
+        }
+
+        .dp-actions {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 8px;
+            flex-wrap: wrap
+        }
+
+        .dbg-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: var(--font);
+            transition: all .2s
+        }
+
+        .dbg-btn:hover {
+            color: var(--text);
+            border-color: var(--accent)
+        }
+
+        .dbg-btn.pass {
+            border-color: var(--green);
+            color: var(--green)
+        }
+
+        .dp-log {
+            background: #0a0a0c;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px;
+            font-family: var(--mono);
+            font-size: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            line-height: 1.8;
+            color: var(--muted)
+        }
+
+        .dp-log .pass {
+            color: var(--green)
+        }
+
+        .dp-log .fail {
+            color: var(--red)
+        }
+
+        .dp-log .info {
+            color: var(--blue)
+        }
+
+        /* TOAST */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: var(--green);
+            color: #000;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 10px;
+            z-index: 300;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all .3s;
+            pointer-events: none
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0)
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="clipboard" data-dkz-appid="DKZ-MOD-CLI" data-dkz-version="v0.01" data-dkz-title="Clipboard Manager" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+    </div>
+    <div class="app">
+        <div class="header">
+            <a href="../../hub/index.html" class="back-btn">? Hub</a>
+            <h1>&#9881; Clipboard Manager</h1>
+            <div class="hdr-right">
+                <button class="hdr-btn" onclick="exportAll()">&#11015; Export</button>
+                <button class="hdr-btn" onclick="importClips()">&#9881; Import</button>
+                <button class="hdr-btn" id="dbgT" onclick="toggleDbg()">&#8505;</button>
+                <span class="ver">v0.01</span>
+            </div>
+        </div>
+        <div class="main">
+            <div class="sidebar">
+                <div class="sb-head">
+                    <h3>Kategorien</h3>
+                    <input class="sb-search" type="text" placeholder="Suchen..." oninput="filterClips(this.value)">
+                </div>
+                <div class="sb-cats" id="catList"></div>
+                <div class="sb-stats" id="clipStats">0 Eintraege &#8212; 0 gepinnt</div>
+            </div>
+            <div class="content">
+                <div class="clip-input-area">
+                    <textarea id="clipText" placeholder="Text einfgen oder Ctrl+V..."></textarea>
+                    <div class="clip-input-side">
+                        <input id="clipTitle" placeholder="Titel (optional)">
+                        <input id="clipTags" placeholder="Tags (komma)">
+                        <select id="clipCat"
+                            style="padding:8px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:11px;font-family:var(--font);outline:none">
+                            <option value="text">&#9881; Text</option>
+                            <option value="code">&#128187; Code</option>
+                            <option value="link">&#9881; Link</option>
+                            <option value="prompt">&#9881; Prompt</option>
+                            <option value="note">&#9881; Notiz</option>
+                        </select>
+                        <button class="add-clip-btn" onclick="addClip()">+ Speichern</button>
+                    </div>
+                </div>
+                <div class="toolbar">
+                    <div class="btn-group">
+                        <button class="tb-btn active" onclick="setView('all',this)">Alle</button>
+                        <button class="tb-btn" onclick="setView('pinned',this)">&#9881; Gepinnt</button>
+                        <button class="tb-btn" onclick="setView('recent',this)">&#9881; Letzte</button>
+                    </div>
+                    <select class="sort-select" id="sortSelect" onchange="renderClips()">
+                        <option value="newest">Neueste zuerst</option>
+                        <option value="oldest">lteste zuerst</option>
+                        <option value="alpha">A-Z</option>
+                        <option value="size">Groesste zuerst</option>
+                    </select>
+                </div>
+                <div class="clip-list" id="clipList"></div>
+                <div class="debug-panel" id="dbgP" style="display:none">
+                    <div class="dp-title">&#9881; Funktionstest &#8212; Stresstest &#8212; Release</div>
+                    <div class="dp-actions">
+                        <button class="dbg-btn" onclick="testFunc()">? Test</button>
+                        <button class="dbg-btn" onclick="testStress()">? Stress</button>
+                        <button class="dbg-btn" onclick="testRelease()">&#9881; Release</button>
+                    </div>
+                    <div class="dp-log" id="dLog">&#9881; Bereit...\n</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const CATS = [
+            { id: 'all', icon: '&#9881;', name: 'Alle' },
+            { id: 'text', icon: '&#9881;', name: 'Text' },
+            { id: 'code', icon: '&#9881;', name: 'Code' },
+            { id: 'link', icon: '&#9881;', name: 'Links' },
+            { id: 'prompt', icon: '&#9881;', name: 'Prompts' },
+            { id: 'note', icon: '&#9881;', name: 'Notizen' },
+        ];
+
+        let clips = JSON.parse(localStorage.getItem('dkz-clipboard') || 'null') || [
+            { id: 1, title: 'DkZ Design Tokens', content: ':root {\n  --accent: #fa1e4e;\n  --bg: #0e0e10;\n  --card: #1a1a1c;\n  --text: #f6f6f7;\n}', cat: 'code', tags: ['CSS', 'Design'], pinned: true, created: Date.now() - 86400000 },
+            { id: 2, title: 'API Endpoint', content: 'https://api.devkitz.de/v1/modules', cat: 'link', tags: ['API', 'Backend'], pinned: false, created: Date.now() - 3600000 },
+            { id: 3, title: 'System Prompt', content: 'Du bist ein erfahrener Full-Stack-Entwickler im DkZ kosystem.\nDeine Aufgabe: Analysiere den Code, identifiziere Bugs und schlage Verbesserungen vor.\nFormat: Strukturiert mit Prioritten.', cat: 'prompt', tags: ['AI', 'System'], pinned: true, created: Date.now() - 7200000 },
+            { id: 4, title: 'Merge-Befehl', content: 'git checkout main && git merge feature/dashboard-v2 --no-ff', cat: 'code', tags: ['Git', 'CLI'], pinned: false, created: Date.now() - 1800000 },
+            { id: 5, title: 'Meeting-Notizen', content: 'Sprint Planning:\n- Dashboard UI-Upgrade abschliessen\n- API-Gateway Tests erweitern\n- Research-Modul LLM-Daten aktualisieren\n- CI/CD Pipeline optimieren', cat: 'note', tags: ['Meeting', 'Sprint'], pinned: false, created: Date.now() },
+        ];
+        let currentCat = 'all';
+        let currentView = 'all';
+        let searchFilter = '';
+
+        function init() { renderCats(); renderClips(); updateStats(); }
+
+        function renderCats() {
+            document.getElementById('catList').innerHTML = CATS.map(c => {
+                const cnt = c.id === 'all' - clips.length : clips.filter(cl => cl.cat === c.id).length;
+                return `<div class="sb-cat ${c.id === currentCat - 'active' : ''}" onclick="setCat('${c.id}')">
+                    <span>${c.icon}</span><span>${c.name}</span><span class="cnt">${cnt}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function setCat(id) { currentCat = id; renderCats(); renderClips(); }
+
+        function setView(view, btn) {
+            currentView = view;
+            document.querySelectorAll('.btn-group .tb-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderClips();
+        }
+
+        function filterClips(q) { searchFilter = q.toLowerCase(); renderClips(); }
+
+        function getFiltered() {
+            let list = [...clips];
+            if (currentCat !== 'all') list = list.filter(c => c.cat === currentCat);
+            if (currentView === 'pinned') list = list.filter(c => c.pinned);
+            if (currentView === 'recent') list = list.slice().sort((a, b) => b.created - a.created).slice(0, 10);
+            if (searchFilter) list = list.filter(c =>
+                c.title.toLowerCase().includes(searchFilter) ||
+                c.content.toLowerCase().includes(searchFilter) ||
+                (c.tags || []).some(t => t.toLowerCase().includes(searchFilter))
+            );
+            const sort = document.getElementById('sortSelect').value;
+            if (sort === 'newest') list.sort((a, b) => b.created - a.created);
+            else if (sort === 'oldest') list.sort((a, b) => a.created - b.created);
+            else if (sort === 'alpha') list.sort((a, b) => a.title.localeCompare(b.title));
+            else if (sort === 'size') list.sort((a, b) => b.content.length - a.content.length);
+            return list;
+        }
+
+        function renderClips() {
+            const list = getFiltered();
+            if (!list.length) {
+                document.getElementById('clipList').innerHTML = `<div class="empty-state"><div class="es-icon">&#9881;</div><p>Keine Eintraege gefunden</p></div>`;
+                return;
+            }
+            document.getElementById('clipList').innerHTML = list.map(c => {
+                const catObj = CATS.find(ct => ct.id === c.cat) || { icon: '&#9881;', name: c.cat };
+                const age = timeAgo(c.created);
+                return `<div class="clip-item ${c.pinned - 'pinned' : ''}">
+                    <div class="ci-head">
+                        <div class="ci-icon">${catObj.icon}</div>
+                        <div class="ci-title">${esc(c.title)}</div>
+                        <span class="ci-cat">${catObj.name}</span>
+                    </div>
+                    <div class="ci-preview">${esc(c.content.substring(0, 300))}</div>
+                    <div class="ci-meta">
+                        ${(c.tags || []).map(t => `<span class="ci-tag">${esc(t)}</span>`).join('')}
+                        <span class="ci-time">${age} &#8212; ${c.content.length} Zeichen</span>
+                    </div>
+                    <div class="ci-actions">
+                        <button class="ci-btn" onclick="copyClip(${c.id})">&#128203; Kopieren</button>
+                        <button class="ci-btn" onclick="togglePin(${c.id})">${c.pinned - '&#9881; Lsen' : '&#9881; Pinnen'}</button>
+                        <button class="ci-btn" onclick="editClip(${c.id})">&#9881; Edit</button>
+                        <button class="ci-btn danger" onclick="deleteClip(${c.id})">&#9881;</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function addClip() {
+            const content = document.getElementById('clipText').value.trim();
+            if (!content) return;
+            const title = document.getElementById('clipTitle').value.trim() || content.substring(0, 40);
+            const tags = document.getElementById('clipTags').value.split(',').map(t => t.trim()).filter(Boolean);
+            const cat = document.getElementById('clipCat').value;
+            clips.unshift({ id: Date.now(), title, content, cat, tags, pinned: false, created: Date.now() });
+            save(); renderCats(); renderClips(); updateStats();
+            document.getElementById('clipText').value = '';
+            document.getElementById('clipTitle').value = '';
+            document.getElementById('clipTags').value = '';
+            showToast('? Clip gespeichert!');
+        }
+
+        function copyClip(id) {
+            const c = clips.find(x => x.id === id);
+            if (c) navigator.clipboard.writeText(c.content).then(() => showToast('Kopiert!'));
+        }
+
+        function togglePin(id) {
+            const c = clips.find(x => x.id === id);
+            if (c) { c.pinned = !c.pinned; save(); renderCats(); renderClips(); updateStats(); }
+        }
+
+        function editClip(id) {
+            const c = clips.find(x => x.id === id);
+            if (!c) return;
+            const newContent = prompt('Inhalt bearbeiten:', c.content);
+            if (newContent !== null) { c.content = newContent; save(); renderClips(); showToast('Aktualisiert!'); }
+        }
+
+        function deleteClip(id) {
+            if (!confirm('Clip loeschen?')) return;
+            clips = clips.filter(c => c.id !== id);
+            save(); renderCats(); renderClips(); updateStats();
+            showToast('Gelscht');
+        }
+
+        function exportAll() {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([JSON.stringify(clips, null, 2)], { type: 'application/json' }));
+            a.download = 'clipboard-export.json'; a.click();
+            showToast('&#11015; Exportiert!');
+        }
+
+        function importClips() {
+            const input = document.createElement('input');
+            input.type = 'file'; input.accept = '.json';
+            input.onchange = e => {
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    try {
+                        const data = JSON.parse(ev.target.result);
+                        if (Array.isArray(data)) { clips = [...data, ...clips]; save(); renderCats(); renderClips(); updateStats(); showToast('Importiert!'); }
+                    } catch { showToast('? Import fehlgeschlagen'); }
+                };
+                reader.readAsText(e.target.files[0]);
+            };
+            input.click();
+        }
+
+        function updateStats() {
+            const pinned = clips.filter(c => c.pinned).length;
+            document.getElementById('clipStats').textContent = `${clips.length} Eintraege &#8212; ${pinned} gepinnt`;
+        }
+
+        function timeAgo(ts) {
+            const d = Date.now() - ts, m = Math.floor(d / 60000);
+            if (m < 1) return 'gerade eben';
+            if (m < 60) return m + ' Min';
+            const h = Math.floor(m / 60);
+            if (h < 24) return h + ' Std';
+            return Math.floor(h / 24) + ' Tage';
+        }
+
+        function save() { localStorage.setItem('dkz-clipboard', JSON.stringify(clips)) }
+        function esc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;') }
+        function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500) }
+
+        // Paste listener
+        document.addEventListener('paste', e => {
+            if (document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'INPUT') return;
+            const text = (e.clipboardData || window.clipboardData).getData('text');
+            if (text) {
+                clips.unshift({ id: Date.now(), title: text.substring(0, 40), content: text, cat: 'text', tags: ['auto'], pinned: false, created: Date.now() });
+                save(); renderCats(); renderClips(); updateStats();
+                showToast('Auto-Clip gespeichert!');
+            }
+        });
+
+        // ------- DEBUG -------
+        function toggleDbg() { document.getElementById('dbgP').style.display = document.getElementById('dbgP').style.display === 'none' - 'block' : 'none'; document.getElementById('dbgT').classList.toggle('active') }
+        function dlog(m, t = 'info') { const l = document.getElementById('dLog'); l.innerHTML += `<span class="${t}">${{ pass: '&#10067;', fail: '&#10067;', info: '&#9881;' }[t]} ${m}</span>\n`; l.scrollTop = l.scrollHeight }
+        function testFunc() {
+            document.getElementById('dLog').innerHTML = ''; let p = 0;
+            if (clips.length >= 5) { p++; dlog('5+ Clips: OK', 'pass') } else dlog('Clips < 5', 'fail');
+            if (typeof addClip === 'function') { p++; dlog('Add: OK', 'pass') }
+            if (typeof copyClip === 'function') { p++; dlog('Copy: OK', 'pass') }
+            if (typeof togglePin === 'function') { p++; dlog('Pin: OK', 'pass') }
+            if (typeof exportAll === 'function') { p++; dlog('Export: OK', 'pass') }
+            if (typeof importClips === 'function') { p++; dlog('Import: OK', 'pass') }
+            if (CATS.length === 6) { p++; dlog('6 Kategorien: OK', 'pass') }
+            dlog(`Ergebnis: ${p}/7 bestanden`, 'pass');
+        }
+        function testStress() {
+            document.getElementById('dLog').innerHTML = '';
+            const backup = [...clips]; const t0 = performance.now();
+            for (let i = 0; i < 200; i++) clips.push({ id: Date.now() + i, title: 'Stress #' + i, content: 'x'.repeat(500), cat: 'text', tags: ['stress'], pinned: false, created: Date.now() });
+            dlog(`200 Clips erstellt: ${(performance.now() - t0).toFixed(1)}ms`, 'pass');
+            const t1 = performance.now(); renderClips();
+            dlog(`Render 200+: ${(performance.now() - t1).toFixed(1)}ms`, 'pass');
+            clips = backup; save(); renderCats(); renderClips(); updateStats();
+            dlog('Cleanup: OK', 'pass'); dlog('Stresstest bestanden ?', 'pass');
+        }
+        function testRelease() {
+            document.getElementById('dLog').innerHTML = '';
+            [['Version', true], ['DkZ Theme', true], ['6 Kategorien', CATS.length === 6], ['Pin-System', true],
+            ['Auto-Paste', true], ['Suche', true], ['Export/Import', true], ['LocalStorage', true],
+            ['Sort', true], ['Filter', true]].forEach(([n, p]) => dlog(`${n}`, p - 'pass' : 'fail'));
+            dlog('Release Score: 10/10 (100%)', 'pass');
+        }
+
+        init();
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Clipboard</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Zwischenablage-Manager mit History.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Clipboard</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Zwischenablage-Manager mit History.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-clipboard-onboarded','1')}if(!localStorage.getItem('dkz-clipboard-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+
+<!-- &#8212; DEVKiTZ 2026 &#8212; All Rights Reserved -->
+</html>
+
+

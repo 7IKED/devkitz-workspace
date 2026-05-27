@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ DEVKiTZ Power User Tool</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --bg2: #141416;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --card3: #2a2a2e;
+            --glass: rgba(26, 26, 28, .85);
+            --border: #1e1e22;
+            --border2: #333338;
+            --border3: #44444a;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --dim: #71717a;
+            --accent: #fa1e4e;
+            --accent-rgb: 250, 30, 78;
+            --accent2: #ec4899;
+            --green: #00ff88;
+            --green2: #00d084;
+            --blue: #55acee;
+            --cyan: #ff4d7a;
+            --purple: #bc8cff;
+            --yellow: #ffb800;
+            --orange: #ff8844;
+            --red: #fa1e4e;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg)
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 3px
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border3)
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden
+        }
+
+        /* TOPBAR */
+        .topbar {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 0 20px;
+            height: 52px;
+            background: linear-gradient(135deg, var(--card), var(--card2));
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            z-index: 100;
+            flex-shrink: 0
+        }
+
+        .topbar::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent)
+        }
+
+        .logo {
+            font-size: 16px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .logo-icon {
+            font-size: 20px;
+            -webkit-text-fill-color: initial
+        }
+
+        .logo-sub {
+            font-size: 9px;
+            color: var(--dim);
+            letter-spacing: 1px;
+            text-transform: uppercase
+        }
+
+        .clock {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--muted);
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .clock .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green);
+            animation: pulse 2s infinite
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .3
+            }
+        }
+
+        .kbd-hint {
+            padding: 4px 10px;
+            border: 1px solid var(--border2);
+            border-radius: 6px;
+            background: var(--card);
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--dim);
+            cursor: pointer;
+            transition: all .2s;
+            white-space: nowrap
+        }
+
+        .kbd-hint:hover {
+            border-color: var(--accent);
+            color: var(--accent)
+        }
+
+        /* TABS */
+        .tab-bar {
+            display: flex;
+            gap: 2px;
+            padding: 6px 16px;
+            background: var(--bg2);
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            flex-shrink: 0
+        }
+
+        .tab {
+            padding: 7px 14px;
+            border: 1px solid transparent;
+            border-radius: 7px;
+            background: transparent;
+            color: var(--dim);
+            font-family: var(--font);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .tab:hover {
+            color: var(--text);
+            background: var(--card)
+        }
+
+        .tab.active {
+            color: var(--accent);
+            background: rgba(var(--accent-rgb), .08);
+            border-color: rgba(var(--accent-rgb), .25)
+        }
+
+        .tab .ico {
+            font-size: 13px
+        }
+
+        /* MAIN */
+        .main {
+            flex: 1;
+            overflow: hidden;
+            position: relative
+        }
+
+        .view {
+            display: none;
+            position: absolute;
+            inset: 0;
+            overflow-y: auto;
+            padding: 20px;
+            animation: fadeIn .2s
+        }
+
+        .view.active {
+            display: block
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(4px)
+            }
+
+            to {
+                opacity: 1;
+                transform: none
+            }
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            transition: border-color .2s, transform .2s
+        }
+
+        .card:hover {
+            border-color: var(--border2)
+        }
+
+        .card-glow:hover {
+            border-color: rgba(var(--accent-rgb), .3);
+            box-shadow: 0 0 20px rgba(var(--accent-rgb), .06)
+        }
+
+        .card-title {
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--dim);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .grid {
+            display: grid;
+            gap: 14px
+        }
+
+        .g2 {
+            grid-template-columns: 1fr 1fr
+        }
+
+        .g3 {
+            grid-template-columns: 1fr 1fr 1fr
+        }
+
+        .g4 {
+            grid-template-columns: repeat(4, 1fr)
+        }
+
+        /* BADGES */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: .5px
+        }
+
+        .b-green {
+            background: rgba(0, 255, 136, .1);
+            color: var(--green)
+        }
+
+        .b-blue {
+            background: rgba(85, 172, 238, .1);
+            color: var(--blue)
+        }
+
+        .b-purple {
+            background: rgba(188, 140, 255, .1);
+            color: var(--purple)
+        }
+
+        .b-orange {
+            background: rgba(255, 136, 68, .1);
+            color: var(--orange)
+        }
+
+        .b-red {
+            background: rgba(250, 30, 78, .1);
+            color: var(--accent)
+        }
+
+        .b-yellow {
+            background: rgba(255, 184, 0, .1);
+            color: var(--yellow)
+        }
+
+        /* METRIC */
+        .metric {
+            font-size: 28px;
+            font-weight: 800;
+            line-height: 1
+        }
+
+        .metric-sm {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 4px
+        }
+
+        /* COMMAND PALETTE */
+        .cp-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .6);
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+            justify-content: center;
+            padding-top: 18vh
+        }
+
+        .cp-overlay.show {
+            display: flex
+        }
+
+        .cp-box {
+            width: 560px;
+            max-height: 420px;
+            background: var(--card);
+            border: 1px solid var(--border2);
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .5);
+            animation: cpIn .15s
+        }
+
+        @keyframes cpIn {
+            from {
+                transform: scale(.96);
+                opacity: 0
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1
+            }
+        }
+
+        .cp-input {
+            width: 100%;
+            padding: 14px 18px;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 14px;
+            outline: none
+        }
+
+        .cp-input::placeholder {
+            color: var(--dim)
+        }
+
+        .cp-results {
+            flex: 1;
+            overflow-y: auto;
+            padding: 6px
+        }
+
+        .cp-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background .1s;
+            font-size: 13px
+        }
+
+        .cp-item:hover,
+        .cp-item.sel {
+            background: rgba(var(--accent-rgb), .1)
+        }
+
+        .cp-item .ico {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            background: var(--card2);
+            flex-shrink: 0
+        }
+
+        .cp-item .shortcut {
+            margin-left: auto;
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--dim)
+        }
+
+        .cp-category {
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--dim);
+            padding: 8px 14px 4px;
+            font-weight: 700
+        }
+
+        /* LAUNCHER GRID */
+        .launch-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .25s;
+            position: relative;
+            overflow: hidden
+        }
+
+        .launch-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            opacity: 0;
+            transition: opacity .25s
+        }
+
+        .launch-card:hover {
+            border-color: rgba(var(--accent-rgb), .3);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .3)
+        }
+
+        .launch-card:hover::before {
+            opacity: 1
+        }
+
+        .launch-icon {
+            font-size: 28px;
+            margin-bottom: 10px
+        }
+
+        .launch-name {
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 4px
+        }
+
+        .launch-desc {
+            font-size: 10px;
+            color: var(--dim);
+            line-height: 1.4
+        }
+
+        /* SNIPPET */
+        .snippet-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .snippet-item:hover {
+            border-color: var(--border2)
+        }
+
+        .snippet-item .title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 4px
+        }
+
+        .snippet-item .lang {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--accent)
+        }
+
+        .snippet-item pre {
+            background: var(--bg);
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 8px;
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--muted);
+            overflow-x: auto;
+            max-height: 100px;
+            line-height: 1.5
+        }
+
+        .snippet-form {
+            display: none;
+            background: var(--card);
+            border: 1px solid var(--border2);
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 14px
+        }
+
+        .snippet-form.show {
+            display: block
+        }
+
+        .snippet-form input,
+        .snippet-form select,
+        .snippet-form textarea {
+            width: 100%;
+            padding: 9px 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            outline: none;
+            margin-bottom: 10px;
+            transition: border .2s
+        }
+
+        .snippet-form textarea {
+            font-family: var(--mono);
+            min-height: 120px;
+            resize: vertical
+        }
+
+        .snippet-form input:focus,
+        .snippet-form textarea:focus {
+            border-color: var(--accent)
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card2);
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .btn:hover {
+            border-color: var(--border2);
+            background: var(--card3)
+        }
+
+        .btn-accent {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff
+        }
+
+        .btn-accent:hover {
+            opacity: .85;
+            background: var(--accent)
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 11px
+        }
+
+        /* TERMINAL */
+        .term {
+            background: #0a0a0c;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden
+        }
+
+        .term-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: var(--card);
+            border-bottom: 1px solid var(--border)
+        }
+
+        .term-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%
+        }
+
+        .term-body {
+            padding: 14px;
+            font-family: var(--mono);
+            font-size: 11px;
+            line-height: 1.7;
+            max-height: 500px;
+            overflow-y: auto;
+            color: var(--muted)
+        }
+
+        .log-info {
+            color: var(--blue)
+        }
+
+        .log-success {
+            color: var(--green)
+        }
+
+        .log-warn {
+            color: var(--yellow)
+        }
+
+        .log-error {
+            color: var(--accent)
+        }
+
+        .log-dim {
+            color: var(--dim)
+        }
+
+        /* HEALTH */
+        .health-bar {
+            height: 6px;
+            border-radius: 3px;
+            background: var(--card2);
+            overflow: hidden;
+            margin-top: 8px
+        }
+
+        .health-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 1s ease
+        }
+
+        /* SCRATCH PAD */
+        .scratch {
+            width: 100%;
+            min-height: 400px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.7;
+            color: var(--text);
+            resize: vertical;
+            outline: none
+        }
+
+        .scratch:focus {
+            border-color: rgba(var(--accent-rgb), .3)
+        }
+
+        /* ENV TABLE */
+        .env-table {
+            width: 100%;
+            border-collapse: collapse
+        }
+
+        .env-table th {
+            text-align: left;
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--dim);
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .env-table td {
+            padding: 8px 12px;
+            font-size: 12px;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .env-table td:first-child {
+            font-family: var(--mono);
+            color: var(--cyan);
+            font-weight: 600;
+            font-size: 11px
+        }
+
+        .env-table tr:hover td {
+            background: var(--card2)
+        }
+
+        /* ECO NODE */
+        .eco-node {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+            transition: all .25s;
+            cursor: default
+        }
+
+        .eco-node:hover {
+            border-color: rgba(var(--accent-rgb), .3);
+            transform: scale(1.02)
+        }
+
+        .eco-node .n-icon {
+            font-size: 24px;
+            margin-bottom: 6px
+        }
+
+        .eco-node .n-name {
+            font-size: 12px;
+            font-weight: 700
+        }
+
+        .eco-node .n-desc {
+            font-size: 10px;
+            color: var(--dim);
+            margin-top: 2px
+        }
+
+        /* SHORTCUT TABLE */
+        .sc-row {
+            display: flex;
+            align-items: center;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            transition: background .15s
+        }
+
+        .sc-row:hover {
+            background: var(--card2)
+        }
+
+        .sc-row kbd {
+            font-family: var(--mono);
+            font-size: 11px;
+            padding: 3px 8px;
+            background: var(--card2);
+            border: 1px solid var(--border2);
+            border-radius: 5px;
+            color: var(--accent);
+            margin-right: 6px
+        }
+
+        .sc-row .desc {
+            font-size: 12px;
+            color: var(--muted);
+            margin-left: auto
+        }
+
+        /* SEARCH */
+        .search-wrap {
+            position: relative;
+            margin-bottom: 14px
+        }
+
+        .search-wrap input {
+            width: 100%;
+            padding: 10px 14px 10px 36px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            outline: none;
+            transition: border .2s
+        }
+
+        .search-wrap input:focus {
+            border-color: rgba(var(--accent-rgb), .4)
+        }
+
+        .search-wrap .s-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            color: var(--dim)
+        }
+
+        /* STATUS BAR */
+        .statusbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 5px 20px;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            font-size: 10px;
+            color: var(--dim);
+            flex-shrink: 0
+        }
+
+        .statusbar .dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 6px var(--green)
+        }
+
+        /* RESPONSIVE */
+        @media(max-width:900px) {
+            .g4 {
+                grid-template-columns: 1fr 1fr
+            }
+
+            .g3 {
+                grid-template-columns: 1fr 1fr
+            }
+        }
+
+        @media(max-width:600px) {
+
+            .g4,
+            .g3,
+            .g2 {
+                grid-template-columns: 1fr
+            }
+
+            .tab-bar {
+                gap: 0
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div>
+            <div class="logo"><span class="logo-icon">⚡</span> DEVKiTZ Power User Tool</div>
+            <div class="logo-sub">Developer Productivity Suite • DkZ™</div>
+        </div>
+        <div class="kbd-hint" onclick="toggleCP()" title="Command Palette">⌘ Ctrl+K</div>
+        <div class="clock"><span class="dot"></span><span id="clock">--:--:--</span></div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tab-bar" id="tabBar">
+        <button class="tab active" data-tab="launcher" onclick="switchTab(this)"><span
+                class="ico">🚀</span>Launcher</button>
+        <button class="tab" data-tab="projects" onclick="switchTab(this)"><span class="ico">📁</span>Projects</button>
+        <button class="tab" data-tab="snippets" onclick="switchTab(this)"><span class="ico">📋</span>Snippets</button>
+        <button class="tab" data-tab="terminal" onclick="switchTab(this)"><span class="ico">📜</span>Terminal</button>
+        <button class="tab" data-tab="health" onclick="switchTab(this)"><span class="ico">💓</span>Health</button>
+        <button class="tab" data-tab="shortcuts" onclick="switchTab(this)"><span class="ico">⌨️</span>Shortcuts</button>
+        <button class="tab" data-tab="scratch" onclick="switchTab(this)"><span class="ico">📝</span>Scratch</button>
+        <button class="tab" data-tab="env" onclick="switchTab(this)"><span class="ico">🔧</span>Environment</button>
+        <button class="tab" data-tab="ecosystem" onclick="switchTab(this)"><span class="ico">📊</span>Ecosystem</button>
+    </div>
+
+    <!-- COMMAND PALETTE -->
+    <div class="cp-overlay" id="cpOverlay" onclick="if(event.target===this)toggleCP()">
+        <div class="cp-box">
+            <input class="cp-input" id="cpInput" placeholder="Suche Aktion, Modul, Projekt..."
+                oninput="filterCP(this.value)" autocomplete="off">
+            <div class="cp-results" id="cpResults"></div>
+        </div>
+    </div>
+
+    <!-- ═══ VIEW: LAUNCHER ═══ -->
+    <div class="main">
+        <div class="view active" id="view-launcher">
+            <div style="margin-bottom:18px">
+                <h2 style="font-size:18px;font-weight:800;margin-bottom:4px">🚀 Quick Launcher</h2>
+                <p style="font-size:12px;color:var(--dim)">Starte jedes DkZ-Modul mit einem Klick</p>
+            </div>
+            <div class="grid g4" id="launcherGrid"></div>
+        </div>
+
+        <!-- ═══ VIEW: PROJECTS ═══ -->
+        <div class="view" id="view-projects">
+            <div style="margin-bottom:18px">
+                <h2 style="font-size:18px;font-weight:800;margin-bottom:4px">📁 Project Scanner</h2>
+                <p style="font-size:12px;color:var(--dim)">Alle DEVKiTZ Projekte auf einen Blick</p>
+            </div>
+            <div class="search-wrap"><span class="s-icon">🔍</span><input placeholder="Projekt suchen..."
+                    oninput="filterProjects(this.value)"></div>
+            <div id="projectList"></div>
+        </div>
+
+        <!-- ═══ VIEW: SNIPPETS ═══ -->
+        <div class="view" id="view-snippets">
+            <div style="display:flex;align-items:center;margin-bottom:18px">
+                <div>
+                    <h2 style="font-size:18px;font-weight:800;margin-bottom:4px">📋 Snippet Manager</h2>
+                    <p style="font-size:12px;color:var(--dim)">Code-Snippets speichern & wiederverwenden</p>
+                </div><button class="btn btn-accent" style="margin-left:auto" onclick="toggleSnippetForm()">+ Neues
+                    Snippet</button>
+            </div>
+            <div class="snippet-form" id="snippetForm">
+                <input id="snipTitle" placeholder="Snippet Titel...">
+                <div style="display:flex;gap:10px"><select id="snipLang">
+                        <option>javascript</option>
+                        <option>python</option>
+                        <option>html</option>
+                        <option>css</option>
+                        <option>bash</option>
+                        <option>json</option>
+                        <option>yaml</option>
+                        <option>sql</option>
+                        <option>markdown</option>
+                        <option>other</option>
+                    </select><input id="snipTags" placeholder="Tags (kommagetrennt)..." style="flex:1"></div>
+                <textarea id="snipCode" placeholder="Code hier einfügen..."></textarea>
+                <div style="display:flex;gap:8px"><button class="btn btn-accent" onclick="saveSnippet()">💾
+                        Speichern</button><button class="btn" onclick="toggleSnippetForm()">Abbrechen</button></div>
+            </div>
+            <div class="search-wrap"><span class="s-icon">🔍</span><input placeholder="Snippet suchen..."
+                    oninput="filterSnippets(this.value)"></div>
+            <div id="snippetList"></div>
+        </div>
+
+        <!-- ═══ VIEW: TERMINAL ═══ -->
+        <div class="view" id="view-terminal">
+            <div style="display:flex;align-items:center;margin-bottom:18px">
+                <div>
+                    <h2 style="font-size:18px;font-weight:800;margin-bottom:4px">📜 Terminal Log Viewer</h2>
+                    <p style="font-size:12px;color:var(--dim)">Live-System-Logs mit Farbcodierung</p>
+                </div>
+                <div style="margin-left:auto;display:flex;gap:6px">
+                    <button class="btn btn-sm" onclick="filterLogs('all')">Alle</button><button class="btn btn-sm"
+                        onclick="filterLogs('info')">ℹ️ Info</button><button class="btn btn-sm"
+                        onclick="filterLogs('success')">✅ OK</button><button class="btn btn-sm"
+                        onclick="filterLogs('warn')">⚠️ Warn</button><button class="btn btn-sm"
+                        onclick="filterLogs('error')">🔴 Error</button>
+                    <button class="btn btn-sm" onclick="clearLogs()">🗑️</button>
+                </div>
+            </div>
+            <div class="term">
+                <div class="term-bar">
+                    <div class="term-dot" style="background:#ff5f57"></div>
+                    <div class="term-dot" style="background:#ffbd2e"></div>
+                    <div class="term-dot" style="background:#28c840"></div><span
+                        style="font-size:11px;color:var(--dim);margin-left:8px">dkz-system-log</span>
+                </div>
+                <div class="term-body" id="termBody"></div>
+            </div>
+        </div>
+
+        <!-- ═══ VIEW: HEALTH ═══ -->
+        <div class="view" id="view-health">
+            <div style="margin-bottom:18px">
+                <h2 style="font-size:18px;font-weight:800;margin-bottom:4px">💓 System Health Monitor</h2>
+                <p style="font-size:12px;color:var(--dim)">DkZ 5-Layer Health Status — Live</p>
+            </div>
+            <div class="grid g2" id="healthGrid"></div>
+            <div style="margin-top:18px">
+                <div class="card-title">📈 SYSTEM METRIKEN</div>
+                <div class="grid g4" id="metricsGrid"></div>
+            </div>
+        </div>
+
+        <!-- ═══ VIEW: SHORTCUTS ═══ -->
+        <div class="view" id="view-shortcuts">
+            <div style="margin-bottom:18px">
+                <h2 style="font-size:18px;font-weight:800;margin-bottom:4px">⌨️ Keyboard Shortcuts</h2>
+                <p style="font-size:12px;color:var(--dim)">Alle Power-User-Tastenkombinationen</p>
+            </div>
+            <div class="card" id="shortcutList"></div>
+        </div>
+
+        <!-- ═══ VIEW: SCRATCH ═══ -->
+        <div class="view" id="view-scratch">
+            <div style="display:flex;align-items:center;margin-bottom:18px">
+                <div>
+                    <h2 style="font-size:18px;font-weight:800;margin-bottom:4px">📝 Scratch Pad</h2>
+                    <p style="font-size:12px;color:var(--dim)">Schnelle Notizen — Auto-Save in localStorage</p>
+                </div><span class="badge b-green" id="saveIndicator" style="margin-left:auto">✓ Saved</span>
+            </div>
+            <textarea class="scratch" id="scratchPad" placeholder="Notizen hier... (wird automatisch gespeichert)"
+                oninput="autoSaveScratch()"></textarea>
+        </div>
+
+        <!-- ═══ VIEW: ENVIRONMENT ═══ -->
+        <div class="view" id="view-env">
+            <div style="margin-bottom:18px">
+                <h2 style="font-size:18px;font-weight:800;margin-bottom:4px">🔧 Environment & Config</h2>
+                <p style="font-size:12px;color:var(--dim)">Ports, Endpoints, Konfigurationen</p>
+            </div>
+            <div class="search-wrap"><span class="s-icon">🔍</span><input placeholder="Variable suchen..."
+                    oninput="filterEnv(this.value)"></div>
+            <div class="card" style="padding:0;overflow:hidden">
+                <table class="env-table" id="envTable"></table>
+            </div>
+        </div>
+
+        <!-- ═══ VIEW: ECOSYSTEM ═══ -->
+        <div class="view" id="view-ecosystem">
+            <div style="margin-bottom:18px">
+                <h2 style="font-size:18px;font-weight:800;margin-bottom:4px">📊 Ecosystem Map</h2>
+                <p style="font-size:12px;color:var(--dim)">DkZ-Modul-Hierarchie & Verbindungen</p>
+            </div>
+            <div class="card-title">🏛️ 5-LAYER ARCHITEKTUR</div>
+            <div id="ecoLayers"></div>
+            <div class="card-title" style="margin-top:20px">📦 AKTIVE MODULE</div>
+            <div class="grid g4" id="ecoModules"></div>
+        </div>
+    </div>
+
+    <!-- STATUSBAR -->
+    <div class="statusbar">
+        <div class="dot"></div><span>System bereit</span><span style="margin-left:auto" id="statusRight">DEVKiTZ Power
+            User Tool v1.0.0 • DkZ™ devkitz</span>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        // ═══ CLOCK ═══
+        function updateClock() { const d = new Date(), t = [d.getHours(), d.getMinutes(), d.getSeconds()].map(n => String(n).padStart(2, '0')).join(':'); document.getElementById('clock').textContent = t }
+        setInterval(updateClock, 1000); updateClock();
+
+        // ═══ TAB SWITCHING ═══
+        function switchTab(btn) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById('view-' + btn.dataset.tab).classList.add('active') }
+
+        // ═══ COMMAND PALETTE ═══
+        const cpActions = [
+            { cat: 'Module', name: 'AI Chat', icon: '🧠', action: () => launchMod('ai_chat') },
+            { cat: 'Module', name: 'Analyser', icon: '📊', action: () => launchMod('analyser') },
+            { cat: 'Module', name: 'Code Converter', icon: '🔄', action: () => launchMod('converter') },
+            { cat: 'Module', name: 'HTML Viewer', icon: '🌐', action: () => launchMod('html_viewer') },
+            { cat: 'Module', name: 'Markdown Converter', icon: '📑', action: () => launchMod('markdown_converter') },
+            { cat: 'Module', name: 'Speech to Text', icon: '🎙️', action: () => launchMod('speech_to_text') },
+            { cat: 'Module', name: 'Text Summary', icon: '📄', action: () => launchMod('text_summary') },
+            { cat: 'Module', name: 'Text to Speech', icon: '🔊', action: () => launchMod('text_to_speech') },
+            { cat: 'Navigation', name: 'Quick Launcher', icon: '🚀', key: '1', action: () => goTab('launcher') },
+            { cat: 'Navigation', name: 'Project Scanner', icon: '📁', key: '2', action: () => goTab('projects') },
+            { cat: 'Navigation', name: 'Snippet Manager', icon: '📋', key: '3', action: () => goTab('snippets') },
+            { cat: 'Navigation', name: 'Terminal Log', icon: '📜', key: '4', action: () => goTab('terminal') },
+            { cat: 'Navigation', name: 'Health Monitor', icon: '💓', key: '5', action: () => goTab('health') },
+            { cat: 'Navigation', name: 'Shortcuts', icon: '⌨️', key: '6', action: () => goTab('shortcuts') },
+            { cat: 'Navigation', name: 'Scratch Pad', icon: '📝', key: '7', action: () => goTab('scratch') },
+            { cat: 'Navigation', name: 'Environment', icon: '🔧', key: '8', action: () => goTab('env') },
+            { cat: 'Navigation', name: 'Ecosystem Map', icon: '📊', key: '9', action: () => goTab('ecosystem') },
+            { cat: 'Projekte', name: 'Dashboard & Hub', icon: '🏠', action: () => addLog('info', 'Opening Dashboard Hub...') },
+            { cat: 'Projekte', name: 'SEO Dashboard', icon: '🔍', action: () => addLog('info', 'Opening SEO Dashboard...') },
+            { cat: 'Projekte', name: 'FlyerBuilder PRO', icon: '🎨', action: () => addLog('info', 'Opening FlyerBuilder PRO...') },
+            { cat: 'Projekte', name: 'OpenClaw Orchestrator', icon: '🐙', action: () => addLog('info', 'Opening OpenClaw...') },
+            { cat: 'Projekte', name: 'Prompt Builder', icon: '💬', action: () => addLog('info', 'Opening Prompt Builder...') },
+            { cat: 'Aktionen', name: 'Neues Snippet erstellen', icon: '➕', action: () => { goTab('snippets'); setTimeout(() => toggleSnippetForm(), 100) } },
+            { cat: 'Aktionen', name: 'Logs leeren', icon: '🗑️', action: () => clearLogs() },
+            { cat: 'Aktionen', name: 'Health Refresh', icon: '🔄', action: () => { goTab('health'); renderHealth() } },
+        ];
+
+        function toggleCP() { const o = document.getElementById('cpOverlay'); o.classList.toggle('show'); if (o.classList.contains('show')) { document.getElementById('cpInput').value = ''; renderCP(''); setTimeout(() => document.getElementById('cpInput').focus(), 50) } }
+        function renderCP(q) {
+            const r = document.getElementById('cpResults'); const f = q ? cpActions.filter(a => a.name.toLowerCase().includes(q.toLowerCase()) || a.cat.toLowerCase().includes(q.toLowerCase())) : cpActions;
+            let html = '', lastCat = ''; f.forEach(a => { if (a.cat !== lastCat) { html += `<div class="cp-category">${a.cat}</div>`; lastCat = a.cat } html += `<div class="cp-item" onclick="execCP(${cpActions.indexOf(a)})"><div class="ico">${a.icon}</div><span>${a.name}</span>${a.key ? `<span class="shortcut">Alt+${a.key}</span>` : ''}</div>` });
+            r.innerHTML = html || '<div style="padding:20px;text-align:center;color:var(--dim)">Keine Ergebnisse</div>'
+        }
+        function filterCP(v) { renderCP(v) }
+        function execCP(i) { cpActions[i].action(); toggleCP() }
+        function goTab(t) { document.querySelector(`.tab[data-tab="${t}"]`).click() }
+        function launchMod(m) { addLog('info', `Launching module: ${m}`); goTab('launcher') }
+        document.addEventListener('keydown', e => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); toggleCP() } if (e.key === 'Escape') { const o = document.getElementById('cpOverlay'); if (o.classList.contains('show')) toggleCP() }
+            if (e.altKey && e.key >= '1' && e.key <= '9') { e.preventDefault(); const tabs = ['launcher', 'projects', 'snippets', 'terminal', 'health', 'shortcuts', 'scratch', 'env', 'ecosystem']; const idx = parseInt(e.key) - 1; if (idx < tabs.length) goTab(tabs[idx]) }
+        });
+
+        // ═══ LAUNCHER ═══
+        const modules = [
+            { icon: '🧠', name: 'AI Chat', desc: 'Multi-AI Chat & Analyse', color: '--purple', path: 'modules/ai_chat' },
+            { icon: '📊', name: 'Analyser', desc: 'Text & Code Analyse', color: '--blue', path: 'modules/analyser' },
+            { icon: '🔄', name: 'Converter', desc: 'Format-Konvertierung', color: '--green', path: 'modules/converter' },
+            { icon: '🌐', name: 'HTML Viewer', desc: 'HTML Live-Vorschau', color: '--cyan', path: 'modules/html_viewer' },
+            { icon: '📑', name: 'Markdown', desc: 'Markdown → HTML/PDF', color: '--orange', path: 'modules/markdown_converter' },
+            { icon: '🎙️', name: 'Speech → Text', desc: 'Sprache zu Text', color: '--yellow', path: 'modules/speech_to_text' },
+            { icon: '📄', name: 'Text Summary', desc: 'KI-Zusammenfassungen', color: '--accent', path: 'modules/text_summary' },
+            { icon: '🔊', name: 'Text → Speech', desc: 'Texte vorlesen lassen', color: '--blue', path: 'modules/text_to_speech' },
+            { icon: '🔍', name: 'SEO Dashboard', desc: 'SEO Command Center', color: '--accent', path: '../seo-dashboard' },
+            { icon: '🤖', name: 'Agenten', desc: 'Mission Control', color: '--green', path: '../agenten_dashboard' },
+            { icon: '💾', name: 'Drive Organizer', desc: 'Google Drive Sortierung', color: '--blue', path: '../drive-organizer' },
+            { icon: '🎨', name: 'FlyerBuilder', desc: 'Flyer Design PRO', color: '--purple', path: '../../03_flyer_pro' },
+            { icon: '🌍', name: 'Domain Control', desc: 'Domain & DNS', color: '--cyan', path: '../../05_domain_control' },
+            { icon: '📝', name: 'Doc Engine', desc: 'Dokumentation', color: '--yellow', path: '../../06_doc_engine' },
+            { icon: '🐙', name: 'OpenClaw', desc: 'Orchestrator', color: '--green', path: '../../07_dkz' },
+            { icon: '💬', name: 'Prompt Builder', desc: 'SMART Prompts', color: '--orange', path: '../../10_prompt_builder' },
+        ];
+        function renderLauncher() { document.getElementById('launcherGrid').innerHTML = modules.map(m => `<div class="launch-card" onclick="addLog('info','Navigating to ${m.name}...')"><div class="launch-icon">${m.icon}</div><div class="launch-name">${m.name}</div><div class="launch-desc">${m.desc}</div></div>`).join('') }
+        renderLauncher();
+
+        // ═══ PROJECTS ═══
+        const projects = [
+            { n: '01', name: 'Dashboard & Hub', path: '01_PROJECTS/01_dashboard', status: 'active', modules: 8, desc: 'Alle Dashboards, Module, Landing Pages' },
+            { n: '02', name: 'DataLakehouse', path: '01_PROJECTS/02_datalakehouse', status: 'dev', modules: 1, desc: 'DuckDB-Wasm Analytics Platform' },
+            { n: '03', name: 'FlyerBuilder PRO', path: '01_PROJECTS/03_flyer_pro', status: 'active', modules: 3, desc: 'Professioneller Flyer-Designer' },
+            { n: '04', name: 'FlyerEngine', path: '01_PROJECTS/04_flyer_engine', status: 'dev', modules: 1, desc: 'Template-Engine für Flyer' },
+            { n: '05', name: 'Domain Control', path: '01_PROJECTS/05_domain_control', status: 'active', modules: 2, desc: 'Domain- & DNS-Management' },
+            { n: '06', name: 'Doc Engine', path: '01_PROJECTS/06_doc_engine', status: 'dev', modules: 1, desc: 'Dokumentations-Generator' },
+            { n: '07', name: 'DkZ Core / OpenClaw', path: '01_PROJECTS/07_dkz', status: 'active', modules: 5, desc: 'Zentraler Orchestrator & Agenten' },
+            { n: '08', name: 'AiAiKirk', path: '01_PROJECTS/08_aiaikirk', status: 'active', modules: 4, desc: 'KI-Persönlichkeit & Assistent' },
+            { n: '09', name: 'Hostinger', path: '01_PROJECTS/09_hostinger', status: 'active', modules: 2, desc: 'Hosting & Server Management' },
+            { n: '10', name: 'Prompt Builder', path: '01_PROJECTS/10_prompt_builder', status: 'active', modules: 2, desc: 'SMART Prompt Engineering' },
+        ];
+        function renderProjects(q = '') { const f = q ? projects.filter(p => p.name.toLowerCase().includes(q.toLowerCase())) : projects; document.getElementById('projectList').innerHTML = f.map(p => { const sc = p.status === 'active' ? 'b-green' : 'b-yellow'; const sl = p.status === 'active' ? 'ACTIVE' : 'IN DEV'; return `<div class="card card-glow" style="margin-bottom:10px;display:flex;align-items:center;gap:14px;cursor:pointer"><div style="width:40px;height:40px;border-radius:10px;background:rgba(var(--accent-rgb),.1);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--accent);flex-shrink:0">${p.n}</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;margin-bottom:2px">${p.name}</div><div style="font-size:11px;color:var(--dim)">${p.desc}</div><div style="font-size:10px;color:var(--dim);font-family:var(--mono);margin-top:3px">C:\\DEVKiTZ\\${p.path}</div></div><span class="badge ${sc}">${sl}</span><span class="badge b-blue">${p.modules} Module</span></div>` }).join('') }
+        renderProjects();
+        function filterProjects(v) { renderProjects(v) }
+
+        // ═══ SNIPPETS ═══
+        let snippets = JSON.parse(localStorage.getItem('dkz_snippets') || '[]');
+        function renderSnippets(q = '') {
+            const f = q ? snippets.filter(s => s.title.toLowerCase().includes(q.toLowerCase()) || s.lang.toLowerCase().includes(q.toLowerCase()) || (s.tags || '').toLowerCase().includes(q.toLowerCase())) : snippets;
+            document.getElementById('snippetList').innerHTML = f.length ? f.map((s, i) => `<div class="snippet-item" style="margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px"><span class="title">${s.title}</span><span class="lang">${s.lang}</span>${s.tags ? s.tags.split(',').map(t => `<span class="badge b-purple">${t.trim()}</span>`).join('') : ''}<button class="btn btn-sm" style="margin-left:auto" onclick="event.stopPropagation();deleteSnippet(${i})">🗑️</button><button class="btn btn-sm" onclick="event.stopPropagation();copySnippet(${i})">📋 Copy</button></div><pre>${escHtml(s.code)}</pre></div>`).join('') : '<div style="text-align:center;padding:40px;color:var(--dim)"><div style="font-size:32px;margin-bottom:10px">📋</div>Noch keine Snippets — klicke "+ Neues Snippet"</div>'
+        }
+        function toggleSnippetForm() { document.getElementById('snippetForm').classList.toggle('show') }
+        function saveSnippet() { const t = document.getElementById('snipTitle').value.trim(), l = document.getElementById('snipLang').value, c = document.getElementById('snipCode').value.trim(), tg = document.getElementById('snipTags').value.trim(); if (!t || !c) { addLog('warn', 'Snippet: Titel und Code sind Pflicht'); return } snippets.unshift({ title: t, lang: l, code: c, tags: tg, date: new Date().toISOString() }); localStorage.setItem('dkz_snippets', JSON.stringify(snippets)); renderSnippets(); toggleSnippetForm(); document.getElementById('snipTitle').value = ''; document.getElementById('snipCode').value = ''; document.getElementById('snipTags').value = ''; addLog('success', `Snippet "${t}" gespeichert`) }
+        function deleteSnippet(i) { snippets.splice(i, 1); localStorage.setItem('dkz_snippets', JSON.stringify(snippets)); renderSnippets(); addLog('warn', 'Snippet gelöscht') }
+        function copySnippet(i) { navigator.clipboard.writeText(snippets[i].code); addLog('success', 'Snippet in Zwischenablage kopiert') }
+        function filterSnippets(v) { renderSnippets(v) }
+        function escHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') }
+        renderSnippets();
+
+        // ═══ TERMINAL LOGS ═══
+        let logs = []; const logTypes = ['info', 'success', 'warn', 'error']; const logMsgs = { info: ['System scan complete', 'Module registry updated', 'Health check passed', 'Backup snapshot created', 'Auto-save triggered', 'Config sync OK', 'Agent dispatched', 'Workflow started', 'Cache cleared', 'Index rebuilt'], success: ['Deploy successful', 'Build passed', 'Test suite green', 'Module loaded', 'Connection established', 'Auth verified', 'Snapshot saved', 'Pipeline complete'], warn: ['High memory usage detected', 'Slow query: 2.3s', 'Rate limit approaching', 'Disk space below 20%', 'Certificate expires in 14 days', 'Queue backlog: 47 items'], error: ['Connection timeout: PostgreSQL', 'Module crash: converter', 'Build failed: missing dependency', 'API rate limit exceeded', 'CORS error on endpoint /api/chat'] };
+        function addLog(type, msg) { const t = new Date().toTimeString().slice(0, 8); logs.push({ type, msg, time: t }); renderLogs(); const tb = document.getElementById('termBody'); tb.scrollTop = tb.scrollHeight }
+        function renderLogs(filter = 'all') { const f = filter === 'all' ? logs : logs.filter(l => l.type === filter); document.getElementById('termBody').innerHTML = f.map(l => { const pre = { info: '[INFO]', success: '[ OK ]', warn: '[WARN]', error: '[ERR!]' }[l.type]; return `<div class="log-${l.type}"><span class="log-dim">${l.time}</span> ${pre} ${l.msg}</div>` }).join('') }
+        function filterLogs(t) { renderLogs(t) }
+        function clearLogs() { logs = []; renderLogs() }
+        // Auto-generate logs
+        function autoLog() { const type = logTypes[Math.floor(Math.random() * logTypes.length)]; const msgs = logMsgs[type]; addLog(type, msgs[Math.floor(Math.random() * msgs.length)]) }
+        setInterval(autoLog, 4000);
+        ['info', 'System boot sequence initialized', 'success', 'Power User Tool v1.0.0 loaded', 'info', 'DkZ Ecosystem connected', 'success', 'All 10 modules ready', 'info', 'localStorage synced'].reduce((p, v, i) => { if (i % 2 === 0) return v; addLog(p, v); return '' }, null);
+
+        // ═══ HEALTH MONITOR ═══
+        const layers = [
+            { name: 'Layer 1 — Frontend & UI', icon: '🖥️', desc: 'HTML/CSS/JS, Design System, Responsive', checks: ['Module loaded', 'CSS compiled', 'Fonts cached', 'Responsive OK'] },
+            { name: 'Layer 2 — Orchestration', icon: '⚙️', desc: 'OpenClaw, PicoClaws, NanoBots, Workflows', checks: ['OpenClaw alive', 'Agents dispatched', 'Queue healthy', 'Workflows active'] },
+            { name: 'Layer 3 — Storage', icon: '🗄️', desc: 'PostgreSQL, DuckDB-Wasm, FAISS, localStorage', checks: ['DB connected', 'DuckDB OK', 'FAISS index', 'Cache valid'] },
+            { name: 'Layer 4 — Infrastructure', icon: '☁️', desc: 'Docker, Cloudflare, CI/CD, Hosting', checks: ['Docker up', 'CDN active', 'SSL valid', 'DNS resolved'] },
+            { name: 'Layer 5 — Governance', icon: '🏛️', desc: 'EU AI Act, DSGVO, Audit Logs, Guardrails', checks: ['AI Act compliant', 'DSGVO OK', 'Audit logging', 'Rate limits active'] },
+            { name: 'Foundation — Self-Repair', icon: '🔧', desc: 'Watchdog, Health Checks, Auto-Repair', checks: ['Watchdog running', 'Auto-repair ready', 'Incident handler OK', 'Backup scheduler'] },
+        ];
+        function renderHealth() {
+            document.getElementById('healthGrid').innerHTML = layers.map(l => { const health = 70 + Math.floor(Math.random() * 30); const color = health > 90 ? 'var(--green)' : health > 70 ? 'var(--yellow)' : 'var(--accent)'; return `<div class="card card-glow"><div class="card-title">${l.icon} ${l.name}</div><div style="font-size:11px;color:var(--dim);margin-bottom:10px">${l.desc}</div><div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px"><span class="metric" style="color:${color}">${health}%</span><span class="metric-sm">Health Score</span></div><div class="health-bar"><div class="health-fill" style="width:${health}%;background:${color}"></div></div><div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:4px">${l.checks.map(c => `<span class="badge b-green" style="font-size:9px">✓ ${c}</span>`).join('')}</div></div>` }).join('');
+            document.getElementById('metricsGrid').innerHTML = [
+                { name: 'CPU Usage', val: Math.floor(15 + Math.random() * 30) + '%', icon: '🔥' },
+                { name: 'RAM Usage', val: Math.floor(40 + Math.random() * 25) + '%', icon: '💾' },
+                { name: 'Uptime', val: '47h 23min', icon: '⏱️' },
+                { name: 'Active Agents', val: Math.floor(3 + Math.random() * 5), icon: '🤖' },
+                { name: 'Tasks/Queue', val: Math.floor(2 + Math.random() * 10), icon: '📋' },
+                { name: 'API Calls/hr', val: Math.floor(100 + Math.random() * 400), icon: '🌐' },
+                { name: 'Disk Free', val: Math.floor(55 + Math.random() * 30) + '%', icon: '💿' },
+                { name: 'Modules', val: '8 / 10', icon: '📦' }
+            ].map(m => `<div class="card" style="text-align:center"><div style="font-size:20px;margin-bottom:6px">${m.icon}</div><div class="metric" style="font-size:22px">${m.val}</div><div class="metric-sm">${m.name}</div></div>`).join('')
+        }
+        renderHealth(); setInterval(renderHealth, 15000);
+
+        // ═══ SHORTCUTS ═══
+        const shortcuts = [
+            { keys: ['Ctrl', 'K'], desc: 'Command Palette öffnen' },
+            { keys: ['Alt', '1-9'], desc: 'Zwischen Tabs wechseln' },
+            { keys: ['Escape'], desc: 'Command Palette / Modal schließen' },
+            { keys: ['Ctrl', 'S'], desc: 'Scratch Pad speichern' },
+            { keys: ['Ctrl', 'N'], desc: 'Neues Snippet erstellen' },
+            { keys: ['Ctrl', 'Shift', 'F'], desc: 'Globale Suche' },
+            { keys: ['Ctrl', 'L'], desc: 'Terminal Logs fokussieren' },
+            { keys: ['Ctrl', 'H'], desc: 'Health Monitor öffnen' },
+            { keys: ['Ctrl', 'E'], desc: 'Environment Viewer' },
+            { keys: ['F5'], desc: 'Health Refresh' },
+        ];
+        document.getElementById('shortcutList').innerHTML = shortcuts.map(s => `<div class="sc-row"><div>${s.keys.map(k => `<kbd>${k}</kbd>`).join(' + ')}</div><span class="desc">${s.desc}</span></div>`).join('');
+
+        // Extra keyboard shortcuts
+        document.addEventListener('keydown', e => { if (e.ctrlKey && e.key === 'n') { e.preventDefault(); goTab('snippets'); setTimeout(() => toggleSnippetForm(), 100) } if (e.ctrlKey && e.key === 'l') { e.preventDefault(); goTab('terminal') } if (e.ctrlKey && e.key === 'h' && !e.shiftKey) { e.preventDefault(); goTab('health') } if (e.ctrlKey && e.key === 'e') { e.preventDefault(); goTab('env') } if (e.key === 'F5') { e.preventDefault(); renderHealth(); addLog('info', 'Health data refreshed') } });
+
+        // ═══ SCRATCH PAD ═══
+        const sp = document.getElementById('scratchPad'); sp.value = localStorage.getItem('dkz_scratch') || '';
+        let saveTimeout; function autoSaveScratch() { document.getElementById('saveIndicator').textContent = '⏳ Saving...'; document.getElementById('saveIndicator').className = 'badge b-yellow'; clearTimeout(saveTimeout); saveTimeout = setTimeout(() => { localStorage.setItem('dkz_scratch', sp.value); document.getElementById('saveIndicator').textContent = '✓ Saved'; document.getElementById('saveIndicator').className = 'badge b-green' }, 500) }
+
+        // ═══ ENVIRONMENT ═══
+        const envVars = [
+            { name: 'API_SERVER_PORT', val: '3040', cat: 'Server' },
+            { name: 'API_BASE_URL', val: 'http://localhost:3040/api', cat: 'Server' },
+            { name: 'DEVKITZ_ROOT', val: 'C:\\DEVKiTZ', cat: 'Paths' },
+            { name: 'SYSTEM_DIR', val: 'C:\\DEVKiTZ\\04_SYSTEM', cat: 'Paths' },
+            { name: 'PROJECTS_DIR', val: 'C:\\DEVKiTZ\\01_PROJECTS', cat: 'Paths' },
+            { name: 'MODULES_DIR', val: 'C:\\DEVKiTZ\\01_PROJECTS\\01_dashboard\\modules', cat: 'Paths' },
+            { name: 'REGISTRY_PATH', val: '04_SYSTEM/SYSTEM/_core/registry.json', cat: 'Config' },
+            { name: 'MASTER_CONFIG', val: '04_SYSTEM/SYSTEM/_core/master-config.json', cat: 'Config' },
+            { name: 'DUCKDB_PATH', val: '04_SYSTEM/SYSTEM/_core/dkz_system.duckdb', cat: 'Database' },
+            { name: 'AI_GATEWAY', val: 'Mistral AI (open-mistral-nemo)', cat: 'AI' },
+            { name: 'AI_ROUTER', val: 'LiteLLM', cat: 'AI' },
+            { name: 'ORCHESTRATOR', val: 'OpenClaw (Python/FastAPI)', cat: 'System' },
+            { name: 'CONTAINER', val: 'Docker Compose', cat: 'System' },
+            { name: 'MONITORING', val: 'Prometheus + Grafana', cat: 'System' },
+            { name: 'ACCENT_COLOR', val: '#fa1e4e', cat: 'Design' },
+            { name: 'THEME', val: 'dark | crimson | neon', cat: 'Design' },
+            { name: 'FONTS', val: 'JetBrains Mono, Inter, Space Grotesk', cat: 'Design' },
+            { name: 'CLOUD_REGION', val: 'Frankfurt (DE) + Amsterdam (NL)', cat: 'Cloud' },
+            { name: 'ENCRYPTION', val: 'AES-256 at rest, TLS 1.3 in transit', cat: 'Security' },
+            { name: 'COMPLIANCE', val: 'EU AI Act, DSGVO Art.25, ISO 27001', cat: 'Security' },
+        ];
+        function renderEnv(q = '') {
+            const f = q ? envVars.filter(e => e.name.toLowerCase().includes(q.toLowerCase()) || e.val.toLowerCase().includes(q.toLowerCase()) || e.cat.toLowerCase().includes(q.toLowerCase())) : envVars;
+            document.getElementById('envTable').innerHTML = `<thead><tr><th>Variable</th><th>Wert</th><th>Kategorie</th></tr></thead><tbody>${f.map(e => `<tr><td>${e.name}</td><td style="color:var(--text)">${e.val}</td><td><span class="badge b-blue">${e.cat}</span></td></tr>`).join('')}</tbody>`
+        }
+        renderEnv(); function filterEnv(v) { renderEnv(v) }
+
+        // ═══ ECOSYSTEM MAP ═══
+        const ecoLayerData = [
+            { name: '🏛️ L5 — Governance & Compliance', color: 'var(--purple)', items: ['EU AI Act', 'DSGVO', 'Audit Logs', 'LiteLLM', 'Guardrails AI'] },
+            { name: '☁️ L4 — Infrastruktur & Deployment', color: 'var(--blue)', items: ['Docker', 'Cloudflare Workers', 'GitHub CI/CD', 'Self-Hosted'] },
+            { name: '🗄️ L3 — Storage & Retrieval', color: 'var(--cyan)', items: ['PostgreSQL', 'DuckDB-Wasm', 'FAISS', 'R2/MinIO', 'localStorage'] },
+            { name: '⚙️ L2 — Orchestration & Logic', color: 'var(--orange)', items: ['OpenClaw', 'PicoClaws', 'NanoBots', 'Kirk AI', 'Workflows'] },
+            { name: '🖥️ L1 — Frontend & UI', color: 'var(--green)', items: ['HTML/CSS/JS', 'DkZ Design System', 'Responsive', 'Modules'] },
+            { name: '🔧 Foundation — Selbstreparatur', color: 'var(--accent)', items: ['Watchdog', 'Health Checks', 'Auto-Repair', 'Incident Response'] },
+        ];
+        document.getElementById('ecoLayers').innerHTML = ecoLayerData.map(l => `<div class="card" style="margin-bottom:8px;border-left:3px solid ${l.color}"><div style="font-size:12px;font-weight:700;margin-bottom:6px">${l.name}</div><div style="display:flex;flex-wrap:wrap;gap:4px">${l.items.map(i => `<span class="badge" style="background:${l.color}15;color:${l.color};border:1px solid ${l.color}30">${i}</span>`).join('')}</div></div>`).join('');
+
+        const ecoMods = [
+            { icon: '📝', name: 'Knowledge Hub', desc: 'Wiki, Dashboard, Kanban' },
+            { icon: '💬', name: 'Messenger', desc: 'Multi-Messenger Bridges' },
+            { icon: '🎙️', name: 'Community', desc: 'Channels, Voice, Bots' },
+            { icon: '📁', name: 'Drive', desc: 'File Manager + Auto-Sort' },
+            { icon: '🔐', name: 'Auth', desc: 'Passkeys, Zero-Password' },
+            { icon: '🧠', name: 'AI Hub', desc: 'Multi-AI, Chat, Analyse' },
+            { icon: '☁️', name: 'Cloud', desc: 'EU-Hosting, Container' },
+            { icon: '📊', name: 'Analyser', desc: 'Text/Code/SEO-Analyse' },
+            { icon: '🔄', name: 'Converter', desc: 'Format-Konvertierung' },
+            { icon: '⚙️', name: 'Pipeline', desc: 'CI/CD, Build, Deploy' },
+        ];
+        document.getElementById('ecoModules').innerHTML = ecoMods.map(m => `<div class="eco-node"><div class="n-icon">${m.icon}</div><div class="n-name">DkZ ${m.name}</div><div class="n-desc">${m.desc}</div></div>`).join('');
+    </script>
+</body>
+
+</html>

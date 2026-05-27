@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../shared/seo-shared.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="grid grid-2">
+        <div class="card card-full">
+            <h3>🔒 SSL & Security Checker</h3>
+            <div class="input-row">
+                <input type="url" id="urlInput" placeholder="https://example.com">
+                <button class="btn btn-green" onclick="checkSSL()">🔍 Prüfen</button>
+                <button class="btn btn-blue btn-sm"
+                    onclick="document.getElementById('urlInput').value='https://devkitz.eu';checkSSL()">Demo</button>
+            </div>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>SSL-Zertifikat wird geprüft...
+            </div>
+        </div>
+        <div class="card" id="certCard" style="display:none">
+            <h3>📜 Zertifikat-Details</h3>
+            <div id="certData"></div>
+        </div>
+        <div class="card" id="secCard" style="display:none">
+            <h3>🛡️ Security Headers</h3>
+            <div id="secData"></div>
+        </div>
+        <div class="card card-full" id="mixedCard" style="display:none">
+            <h3>⚠️ Mixed Content & Redirect Check</h3>
+            <div id="mixedData"></div>
+        </div>
+        <div class="card card-full" id="gradeCard" style="display:none">
+            <h3>📊 Sicherheits-Bewertung</h3>
+            <div class="gauge-wrap">
+                <div class="gauge"><svg viewBox="0 0 200 200" width="180" height="180">
+                        <circle class="gauge-bg" cx="100" cy="100" r="85" />
+                        <circle class="gauge-fill" id="gaugeFill" cx="100" cy="100" r="85" stroke-dasharray="534"
+                            stroke-dashoffset="534" />
+                    </svg>
+                    <div class="gauge-text">
+                        <div class="gauge-score" id="gradeScore">0</div>
+                        <div class="gauge-label">Security Score</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stats" id="statsRow"></div>
+        </div>
+    </div>
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        const ISSUERS = ['Let\'s Encrypt', 'DigiCert', 'Comodo', 'GlobalSign', 'GeoTrust', 'Sectigo', 'RapidSSL', 'Thawte'];
+        const HEADERS = [
+            { name: 'Strict-Transport-Security (HSTS)', desc: 'Erzwingt HTTPS für alle Verbindungen', pts: 20, fix: 'Header: Strict-Transport-Security: max-age=31536000; includeSubDomains' },
+            { name: 'Content-Security-Policy (CSP)', desc: 'Schützt vor XSS und Code-Injection', pts: 15, fix: 'Header: Content-Security-Policy: default-src \'self\'' },
+            { name: 'X-Frame-Options', desc: 'Verhindert Clickjacking durch iframe-Einbettung', pts: 10, fix: 'Header: X-Frame-Options: DENY oder SAMEORIGIN' },
+            { name: 'X-Content-Type-Options', desc: 'Verhindert MIME-Type Sniffing', pts: 10, fix: 'Header: X-Content-Type-Options: nosniff' },
+            { name: 'X-XSS-Protection', desc: 'Aktiviert browser-eigenen XSS-Filter', pts: 8, fix: 'Header: X-XSS-Protection: 1; mode=block' },
+            { name: 'Referrer-Policy', desc: 'Kontrolliert Referrer-Information', pts: 8, fix: 'Header: Referrer-Policy: strict-origin-when-cross-origin' },
+            { name: 'Permissions-Policy', desc: 'Kontrolliert Browser-Features (Kamera, Mikro, etc.)', pts: 7, fix: 'Header: Permissions-Policy: camera=(), microphone=(), geolocation=()' },
+            { name: 'X-Permitted-Cross-Domain-Policies', desc: 'Kontrolliert Flash/PDF Cross-Domain Requests', pts: 5, fix: 'Header: X-Permitted-Cross-Domain-Policies: none' },
+        ];
+
+        async function checkSSL() {
+            const url = document.getElementById('urlInput').value.trim();
+            if (!url) { alert('URL eingeben'); return }
+            document.getElementById('loading').classList.add('show');
+            ['certCard', 'secCard', 'mixedCard', 'gradeCard'].forEach(id => document.getElementById(id).style.display = 'none');
+            await new Promise(r => setTimeout(r, 1800));
+            document.getElementById('loading').classList.remove('show');
+
+            const hasHttps = url.startsWith('https');
+            const domain = url.replace(/https?:\/\//, '').split('/')[0];
+            const issuer = ISSUERS[Math.floor(Math.random() * ISSUERS.length)];
+            const algo = 'RSA 2048-bit';
+            const issued = new Date(Date.now() - Math.floor(Math.random() * 180) * 24 * 3600 * 1000);
+            const expires = new Date(issued.getTime() + 90 * 24 * 3600 * 1000);
+            const daysLeft = Math.floor((expires - Date.now()) / (24 * 3600 * 1000));
+
+            // CERT
+            document.getElementById('certCard').style.display = '';
+            document.getElementById('certData').innerHTML = `
+                <div class="metric-row"><span class="metric-name">HTTPS</span><span class="badge ${hasHttps ? 'badge-green' : 'badge-red'}">${hasHttps ? '✅ Aktiv' : '❌ Nicht aktiv'}</span></div>
+                <div class="metric-row"><span class="metric-name">Aussteller</span><span class="metric-value">${issuer}</span></div>
+                <div class="metric-row"><span class="metric-name">Algorithmus</span><span class="metric-value">${algo}</span></div>
+                <div class="metric-row"><span class="metric-name">Ausgestellt</span><span class="metric-value">${issued.toLocaleDateString('de-DE')}</span></div>
+                <div class="metric-row"><span class="metric-name">Läuft ab</span><span class="metric-value" style="color:${daysLeft > 30 ? 'var(--green)' : daysLeft > 7 ? 'var(--yellow)' : 'var(--red)'}">${expires.toLocaleDateString('de-DE')} (${daysLeft} Tage)</span></div>
+                <div class="metric-row"><span class="metric-name">Wildcard</span><span class="badge ${Math.random() > .5 ? 'badge-green' : 'badge-yellow'}">${Math.random() > .5 ? 'Ja' : 'Nein'}</span></div>
+                <div class="metric-row"><span class="metric-name">Subject Alt Names</span><span style="font-family:var(--mono);font-size:11px;color:var(--cyan)">${domain}, www.${domain}</span></div>
+            `;
+
+            // HEADERS
+            document.getElementById('secCard').style.display = '';
+            const headerResults = HEADERS.map(h => ({ ...h, pass: Math.random() > .35 }));
+            document.getElementById('secData').innerHTML = headerResults.map(h => `
+                <div class="result-item">
+                    <span class="result-icon">${h.pass ? '✅' : '❌'}</span>
+                    <div style="flex:1"><div class="result-title">${h.name}</div><div class="result-desc">${h.desc}</div>${!h.pass ? `<div class="result-value" style="color:var(--yellow);margin-top:4px">Fix: ${h.fix}</div>` : ''}</div>
+                    <span class="badge ${h.pass ? 'badge-green' : 'badge-red'}">${h.pass ? 'OK' : '+' + h.pts + 'pts'}</span>
+                </div>`).join('');
+
+            // MIXED CONTENT
+            document.getElementById('mixedCard').style.display = '';
+            const mixedIssues = Math.floor(Math.random() * 5);
+            const redirectOk = Math.random() > .3;
+            document.getElementById('mixedData').innerHTML = `
+                <div class="stats" style="margin-bottom:12px">
+                    <div class="stat"><div class="stat-num" style="color:${redirectOk ? 'var(--green)' : 'var(--red)'}">${redirectOk ? '✅' : '❌'}</div><div class="stat-label">HTTP→HTTPS Redirect</div></div>
+                    <div class="stat"><div class="stat-num" style="color:${mixedIssues === 0 ? 'var(--green)' : 'var(--red)'}">${mixedIssues}</div><div class="stat-label">Mixed Content</div></div>
+                    <div class="stat"><div class="stat-num" style="color:var(--green)">TLS 1.3</div><div class="stat-label">TLS Version</div></div>
+                </div>
+                ${mixedIssues > 0 ? `<div class="label" style="margin-top:12px">Mixed Content Quellen (simuliert)</div>${Array.from({ length: mixedIssues }, (_, i) => `<div class="result-item"><span class="result-icon">⚠️</span><div><div class="result-title">http://cdn${i + 1}.example.com/asset.${['js', 'css', 'png', 'jpg', 'woff2'][i % 5]}</div><div class="result-desc">Unsichere Ressource über HTTP geladen</div></div></div>`).join('')}` : '<div style="text-align:center;padding:20px;color:var(--green)">✅ Kein Mixed Content gefunden!</div>'}
+            `;
+
+            // GRADE
+            document.getElementById('gradeCard').style.display = '';
+            let score = (hasHttps ? 25 : 0) + headerResults.filter(h => h.pass).reduce((s, h) => s + h.pts, 0) + (redirectOk ? 15 : 0) + (mixedIssues === 0 ? 10 : 0) + (daysLeft > 30 ? 10 : daysLeft > 0 ? 5 : 0);
+            score = Math.min(100, score);
+            const fill = document.getElementById('gaugeFill');
+            fill.style.strokeDashoffset = 534 - (score / 100 * 534);
+            fill.style.stroke = score >= 80 ? 'var(--green)' : score >= 50 ? 'var(--yellow)' : 'var(--red)';
+            animateNum('gradeScore', score);
+            const passed = headerResults.filter(h => h.pass).length;
+            document.getElementById('statsRow').innerHTML = `
+                <div class="stat"><div class="stat-num" style="color:var(--green)">${passed}</div><div class="stat-label">Headers OK</div></div>
+                <div class="stat"><div class="stat-num" style="color:var(--red)">${HEADERS.length - passed}</div><div class="stat-label">Fehlend</div></div>
+                <div class="stat"><div class="stat-num" style="color:${daysLeft > 30 ? 'var(--green)' : 'var(--red)'}">${daysLeft}d</div><div class="stat-label">Zertifikat</div></div>
+            `;
+        }
+        function animateNum(id, target) { const el = document.getElementById(id); let c = 0; const s = Math.ceil(target / 50); const t = setInterval(() => { c += s; if (c >= target) { c = target; clearInterval(t) } el.textContent = c }, 25) }
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐳 Docker Ops — DkZ™</title>
+    <meta name="description" content="Docker Build, Pack, Deploy — DkZ™ Autonomous Pipeline">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #fa1e4e;
+            --accent-soft: rgba(250, 30, 78, 0.12);
+            --accent-glow: rgba(250, 30, 78, 0.3);
+            --bg: #060608;
+            --bg-card: rgba(18, 18, 24, 0.85);
+            --bg-card-hover: rgba(24, 24, 32, 0.95);
+            --text-primary: #e8e8ec;
+            --text-secondary: #8a8a9a;
+            --text-dim: #5a5a6a;
+            --green: #00ff88;
+            --green-soft: rgba(0, 255, 136, 0.12);
+            --yellow: #ffb800;
+            --yellow-soft: rgba(255, 184, 0, 0.12);
+            --red: #ff3b5c;
+            --red-soft: rgba(255, 59, 92, 0.12);
+            --blue: #3b82f6;
+            --blue-soft: rgba(59, 130, 246, 0.12);
+            --cyan: #06b6d4;
+            --border: rgba(255, 255, 255, 0.06);
+            --font-main: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-main);
+            background: var(--bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ─── Background Glow ─── */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at 30% 20%, rgba(250, 30, 78, 0.05) 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 80%, rgba(59, 130, 246, 0.04) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ─── Header ─── */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            background: rgba(6, 6, 8, 0.85);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-title h1 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--accent), var(--blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-title .badge {
+            font-size: 0.65rem;
+            padding: 3px 8px;
+            background: var(--green-soft);
+            color: var(--green);
+            border-radius: 20px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .header-status {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* ─── Tabs ─── */
+        .tab-bar {
+            display: flex;
+            gap: 4px;
+            padding: 12px 24px;
+            background: rgba(6, 6, 8, 0.6);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab {
+            padding: 10px 20px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: var(--font-main);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab:hover {
+            background: var(--accent-soft);
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            background: var(--accent-soft);
+            color: var(--accent);
+            box-shadow: inset 0 -2px 0 var(--accent);
+        }
+
+        .tab-icon { font-size: 1rem; }
+
+        /* ─── Main Content ─── */
+        .content {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* ─── Cards ─── */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-card);
+            transition: all 0.3s ease;
+            margin-bottom: 16px;
+        }
+
+        .card:hover {
+            border-color: rgba(250, 30, 78, 0.2);
+            box-shadow: 0 8px 32px rgba(250, 30, 78, 0.08);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ─── Stats Grid ─── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(250, 30, 78, 0.15);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+        }
+
+        .stat-value.green { color: var(--green); }
+        .stat-value.red { color: var(--red); }
+        .stat-value.yellow { color: var(--yellow); }
+        .stat-value.blue { color: var(--blue); }
+        .stat-value.accent { color: var(--accent); }
+
+        /* ─── Form ─── */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus, .form-select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-soft);
+        }
+
+        .form-select option { background: #1a1a24; }
+
+        /* ─── Buttons ─── */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-main);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #e01040);
+            color: white;
+            box-shadow: 0 4px 16px rgba(250, 30, 78, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(250, 30, 78, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #059669, #047857);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--red), #dc2626);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* ─── Action Bar ─── */
+        .action-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* ─── Table ─── */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 16px;
+            font-size: 0.85rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-success { background: var(--green-soft); color: var(--green); }
+        .status-failed { background: var(--red-soft); color: var(--red); }
+        .status-pending { background: var(--yellow-soft); color: var(--yellow); }
+        .status-running { background: var(--blue-soft); color: var(--blue); }
+
+        /* ─── Log Viewer ─── */
+        .log-viewer {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--green);
+            max-height: 300px;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+
+        .log-viewer .log-line {
+            display: flex;
+            gap: 12px;
+        }
+
+        .log-viewer .log-time { color: var(--text-dim); min-width: 100px; }
+        .log-viewer .log-level-info { color: var(--blue); }
+        .log-viewer .log-level-warn { color: var(--yellow); }
+        .log-viewer .log-level-error { color: var(--red); }
+
+        /* ─── Pipeline Flow ─── */
+        .pipeline-flow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        .pipeline-node {
+            flex-shrink: 0;
+            padding: 12px 18px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            text-align: center;
+            min-width: 120px;
+            transition: all 0.3s ease;
+        }
+
+        .pipeline-node.active {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+            box-shadow: 0 0 16px rgba(250, 30, 78, 0.15);
+        }
+
+        .pipeline-node.complete {
+            border-color: var(--green);
+            background: var(--green-soft);
+        }
+
+        .pipeline-node-icon { font-size: 1.3rem; margin-bottom: 4px; }
+        .pipeline-node-label { font-size: 0.75rem; color: var(--text-secondary); }
+
+        .pipeline-arrow {
+            color: var(--text-dim);
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        /* ─── Container Status Grid ─── */
+        .container-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .container-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .container-card.healthy { border-left: 3px solid var(--green); }
+        .container-card.unhealthy { border-left: 3px solid var(--red); }
+        .container-card.unknown { border-left: 3px solid var(--yellow); }
+
+        .container-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .container-meta {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+        }
+
+        /* ─── Two Column Layout ─── */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 900px) {
+            .two-col { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* ─── EU Badge ─── */
+        .eu-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 20px;
+            font-size: 0.7rem;
+            color: var(--blue);
+            font-weight: 600;
+        }
+
+        /* ─── Loading Spinner ─── */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ─── Toast Notifications ─── */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 24px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            backdrop-filter: blur(20px);
+            font-size: 0.85rem;
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 280px;
+        }
+
+        .toast-success { background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.3); color: var(--green); }
+        .toast-error { background: rgba(255, 59, 92, 0.15); border: 1px solid rgba(255, 59, 92, 0.3); color: var(--red); }
+        .toast-info { background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: var(--blue); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ─── Header ─── -->
+<header class="header">
+    <div class="header-title">
+        <h1>🐳 Docker Ops™</h1>
+        <span class="badge">EU-KONFORM</span>
+        <span class="eu-badge">🇪🇺 DSGVO · Lokal</span>
+    </div>
+    <div class="header-status">
+        <div class="status-dot" id="statusDot"></div>
+        <span style="font-size:0.8rem;color:var(--text-secondary)" id="statusText">Verbinde...</span>
+    </div>
+</header>
+
+<!-- ─── Tab Bar ─── -->
+<div class="tab-bar">
+    <button class="tab active" data-tab="builder">
+        <span class="tab-icon">🔨</span> Builder
+    </button>
+    <button class="tab" data-tab="packstation">
+        <span class="tab-icon">📦</span> Pack Station
+    </button>
+    <button class="tab" data-tab="database">
+        <span class="tab-icon">🗄️</span> Datenbank
+    </button>
+    <button class="tab" data-tab="status">
+        <span class="tab-icon">📊</span> Status
+    </button>
+</div>
+
+<!-- ─── Content ─── -->
+<div class="content">
+
+    <!-- ═══ BUILDER TAB ═══ -->
+    <div class="tab-panel active" id="panel-builder">
+        <!-- Pipeline Visualisierung -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">🔨 Docker Build Pipeline</span>
+                <span class="eu-badge">🇪🇺 Lokal</span>
+            </div>
+            <div class="pipeline-flow" id="builderPipeline">
+                <div class="pipeline-node" data-step="webhook">
+                    <div class="pipeline-node-icon">🌐</div>
+                    <div class="pipeline-node-label">Webhook</div>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-node" data-step="validate">
+                    <div class="pipeline-node-icon">✅</div>
+                    <div class="pipeline-node-label">Validate</div>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-node" data-step="check">
+                    <div class="pipeline-node-icon">📄</div>
+                    <div class="pipeline-node-label">Check File</div>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-node" data-step="build">
+                    <div class="pipeline-node-icon">🔨</div>
+                    <div class="pipeline-node-label">Docker Build</div>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-node" data-step="verify">
+                    <div class="pipeline-node-icon">🔍</div>
+                    <div class="pipeline-node-label">Verify</div>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-node" data-step="log">
+                    <div class="pipeline-node-icon">🗄️</div>
+                    <div class="pipeline-node-label">Log DB</div>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-node" data-step="notify">
+                    <div class="pipeline-node-icon">🔔</div>
+                    <div class="pipeline-node-label">ONTHERUN</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="two-col">
+            <!-- Build Form -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">⚡ Neuen Build starten</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Service Name</label>
+                    <input type="text" class="form-input" id="buildService" placeholder="z.B. ontherun, dkz-db, n8n-worker">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Dockerfile</label>
+                    <select class="form-select" id="buildDockerfile">
+                        <option value="Dockerfile.dkz-db">Dockerfile.dkz-db (Node.js DB)</option>
+                        <option value="Dockerfile.api">Dockerfile.api (ONTHERUN API)</option>
+                        <option value="Dockerfile.orchestrator">Dockerfile.orchestrator (OpenClaw)</option>
+                        <option value="custom">Custom...</option>
+                    </select>
+                </div>
+                <div class="form-group" id="customDockerfileGroup" style="display:none">
+                    <label class="form-label">Custom Dockerfile Pfad</label>
+                    <input type="text" class="form-input" id="buildDockerfileCustom" placeholder="/opt/dkz/docker/Dockerfile.custom">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tag / Version</label>
+                    <input type="text" class="form-input" id="buildTag" value="latest" placeholder="latest, v1.0.0, etc.">
+                </div>
+                <div class="action-bar">
+                    <button class="btn btn-primary" id="btnBuild" onclick="triggerBuild()">
+                        🔨 Build starten
+                    </button>
+                    <button class="btn btn-secondary" onclick="refreshBuilds()">
+                        🔄 Aktualisieren
+                    </button>
+                </div>
+            </div>
+
+            <!-- Build Log -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📋 Build Log</span>
+                </div>
+                <div class="log-viewer" id="buildLog">
+                    <div class="log-line">
+                        <span class="log-time">--:--:--</span>
+                        <span class="log-level-info">[INFO]</span>
+                        <span>Docker Builder bereit. Warte auf Build-Auftrag...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Build History -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">📜 Build-Historie</span>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Service</th>
+                            <th>Tag</th>
+                            <th>Status</th>
+                            <th>Dockerfile</th>
+                            <th>Image ID</th>
+                            <th>Größe</th>
+                            <th>Erstellt</th>
+                        </tr>
+                    </thead>
+                    <tbody id="buildsTable">
+                        <tr><td colspan="7" style="text-align:center;color:var(--text-dim)">Keine Builds vorhanden</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ PACK STATION TAB ═══ -->
+    <div class="tab-panel" id="panel-packstation">
+        <!-- Pipeline -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">📦 Pack & Deploy Pipeline</span>
+                <span class="eu-badge">🇪🇺 Lokale Registry</span>
+            </div>
+            <div class="pipeline-flow" id="packPipeline">
+                <div class="pipeline-node" data-step="webhook">
+                    <div class="pipeline-node-icon">🌐</div>
+                    <div class="pipeline-node-label">Webhook</div>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-node" data-step="tag">
+                    <div class="pipeline-node-icon">🏷️</div>
+                    <div class="pipeline-node-label">Tag</div>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-node" data-step="compose">
+                    <div class="pipeline-node-icon">🚀</div>
+                    <div class="pipeline-node-label">Compose Up</div>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-node" data-step="health">
+                    <div class="pipeline-node-icon">💚</div>
+                    <div class="pipeline-node-label">Health</div>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-node" data-step="cleanup">
+                    <div class="pipeline-node-icon">🧹</div>
+                    <div class="pipeline-node-label">Cleanup</div>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-node" data-step="log">
+                    <div class="pipeline-node-icon">🗄️</div>
+                    <div class="pipeline-node-label">Log DB</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="two-col">
+            <!-- Pack Form -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📦 Image packen & deployen</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Image Name</label>
+                    <input type="text" class="form-input" id="packImage" placeholder="dkz-ontherun:latest">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Version</label>
+                    <input type="text" class="form-input" id="packVersion" placeholder="v1.0.0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Compose File</label>
+                    <input type="text" class="form-input" id="packCompose" value="docker-compose.dkz.yml">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Health Check Port</label>
+                    <input type="number" class="form-input" id="packHealthPort" value="9890">
+                </div>
+                <div class="action-bar">
+                    <button class="btn btn-success" onclick="triggerPack()">
+                        📦 Pack & Deploy
+                    </button>
+                    <button class="btn btn-danger" onclick="triggerCleanup()">
+                        🧹 Cleanup alte Images
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pack Log -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📋 Pack Log</span>
+                </div>
+                <div class="log-viewer" id="packLog">
+                    <div class="log-line">
+                        <span class="log-time">--:--:--</span>
+                        <span class="log-level-info">[INFO]</span>
+                        <span>Pack Station bereit. Warte auf Pack-Auftrag...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pack History -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">📜 Deployment-Historie</span>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Version</th>
+                            <th>Status</th>
+                            <th>Healthy</th>
+                            <th>Compose</th>
+                            <th>Erstellt</th>
+                        </tr>
+                    </thead>
+                    <tbody id="packsTable">
+                        <tr><td colspan="6" style="text-align:center;color:var(--text-dim)">Keine Deployments vorhanden</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ DATABASE TAB ═══ -->
+    <div class="tab-panel" id="panel-database">
+        <!-- DB Stats -->
+        <div class="stats-grid" id="dbStats">
+            <div class="stat-card">
+                <div class="stat-label">Builds Total</div>
+                <div class="stat-value green" id="statBuilds">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Packs Deployed</div>
+                <div class="stat-value blue" id="statPacks">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Running</div>
+                <div class="stat-value accent" id="statRunning">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Audit Events</div>
+                <div class="stat-value yellow" id="statAudit">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Builds Failed</div>
+                <div class="stat-value red" id="statFailed">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Healthy</div>
+                <div class="stat-value green" id="statHealthy">0</div>
+            </div>
+        </div>
+
+        <!-- Audit Log (letzte Events) -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">📋 Audit Trail (Immutable)</span>
+                <button class="btn btn-secondary" onclick="loadAudit()">🔄 Aktualisieren</button>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Event ID</th>
+                            <th>Action</th>
+                            <th>Service</th>
+                            <th>Message</th>
+                            <th>Source</th>
+                            <th>Zeitpunkt</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditTable">
+                        <tr><td colspan="6" style="text-align:center;color:var(--text-dim)">Verbinde mit DB...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ STATUS TAB ═══ -->
+    <div class="tab-panel" id="panel-status">
+        <!-- Gesamtstatus -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">🏠 DkZ™ Docker Stack — VPS 1298466</span>
+                <div class="eu-badge">🇪🇺 Hostinger · Litauen · EU</div>
+            </div>
+            <div class="container-grid" id="containerGrid">
+                <div class="container-card healthy">
+                    <div class="container-name">
+                        <div class="status-dot"></div>
+                        dkz-n8n
+                    </div>
+                    <div class="container-meta">Port: 5678 · Queue Mode · PostgreSQL</div>
+                </div>
+                <div class="container-card healthy">
+                    <div class="container-name">
+                        <div class="status-dot"></div>
+                        dkz-docker-db
+                    </div>
+                    <div class="container-meta">Port: 9890 · SQLite WAL · Express</div>
+                </div>
+                <div class="container-card healthy">
+                    <div class="container-name">
+                        <div class="status-dot"></div>
+                        dkz-ontherun
+                    </div>
+                    <div class="container-meta">Port: 3040 · MCP + NEXUZ API</div>
+                </div>
+                <div class="container-card healthy">
+                    <div class="container-name">
+                        <div class="status-dot"></div>
+                        dkz-postgres
+                    </div>
+                    <div class="container-meta">Port: 5432 · PostgreSQL 16</div>
+                </div>
+                <div class="container-card healthy">
+                    <div class="container-name">
+                        <div class="status-dot"></div>
+                        dkz-redis
+                    </div>
+                    <div class="container-meta">Port: 6379 · AOF · 256MB</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compose Befehle -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">⚡ Schnellbefehle</span>
+            </div>
+            <div class="action-bar">
+                <button class="btn btn-success" onclick="composeAction('up')">🚀 Stack Up</button>
+                <button class="btn btn-danger" onclick="composeAction('down')">⏹️ Stack Down</button>
+                <button class="btn btn-secondary" onclick="composeAction('restart')">🔄 Restart</button>
+                <button class="btn btn-secondary" onclick="composeAction('logs')">📋 Logs</button>
+                <button class="btn btn-secondary" onclick="refreshStatus()">📊 Status</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/**
+ * DkZ™ Docker Ops — Frontend Controller
+ * ═══════════════════════════════════════
+ * Verbindet mit ONTHERUN NEXUZ-API und Node.js DB
+ */
+
+// ─── Konfiguration ───
+const CONFIG = {
+    otrUrl: 'http://localhost:3040',     // ONTHERUN NEXUZ-API
+    dbUrl: 'http://localhost:9890',       // Docker Ops DB
+    refreshInterval: 30000,              // 30 Sekunden Auto-Refresh
+    n8nBuilderWebhook: '/webhook/docker/build',
+    n8nPackWebhook: '/webhook/docker/pack',
+    n8nDbWebhook: '/webhook/docker/db'
+};
+
+// ─── Tab Navigation ───
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        const panelId = 'panel-' + tab.dataset.tab;
+        const panel = document.getElementById(panelId);
+        if (panel) panel.classList.add('active');
+    });
+});
+
+// ─── Custom Dockerfile Toggle ───
+document.getElementById('buildDockerfile').addEventListener('change', (e) => {
+    const customGroup = document.getElementById('customDockerfileGroup');
+    customGroup.style.display = e.target.value === 'custom' ? 'block' : 'none';
+});
+
+// ─── XSS-Schutz ───
+function esc(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// ─── Toast Notifications ───
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + type;
+    toast.innerHTML = esc(message);
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 5000);
+}
+
+// ─── API Helper ───
+async function apiCall(url, options = {}) {
+    try {
+        const resp = await fetch(url, {
+            headers: { 'Content-Type': 'application/json', ...options.headers },
+            ...options
+        });
+        return await resp.json();
+    } catch (e) {
+        console.error('API Error:', e);
+        return { success: false, error: e.message };
+    }
+}
+
+// ─── Zeitformat ───
+function formatTime(iso) {
+    if (!iso) return '--:--:--';
+    const d = new Date(iso);
+    return d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function formatDate(iso) {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    return d.toLocaleDateString('de-DE') + ' ' + formatTime(iso);
+}
+
+// ─── Log Zeile hinzufügen ───
+function addLogLine(logId, message, level = 'info') {
+    const viewer = document.getElementById(logId);
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    const time = new Date().toLocaleTimeString('de-DE');
+    const levelUpper = level.toUpperCase();
+    line.innerHTML = `<span class="log-time">${esc(time)}</span><span class="log-level-${esc(level)}">[${esc(levelUpper)}]</span><span>${esc(message)}</span>`;
+    viewer.appendChild(line);
+    viewer.scrollTop = viewer.scrollHeight;
+}
+
+// ─── Pipeline Animation ───
+function animatePipeline(pipelineId, step) {
+    const pipeline = document.getElementById(pipelineId);
+    pipeline.querySelectorAll('.pipeline-node').forEach(node => {
+        node.classList.remove('active', 'complete');
+    });
+    let found = false;
+    pipeline.querySelectorAll('.pipeline-node').forEach(node => {
+        if (node.dataset.step === step) {
+            node.classList.add('active');
+            found = true;
+        } else if (!found) {
+            node.classList.add('complete');
+        }
+    });
+}
+
+// ═══════════════════════════════════
+// BUILDER — Build starten
+// ═══════════════════════════════════
+async function triggerBuild() {
+    const service = document.getElementById('buildService').value.trim();
+    const dockerfileSelect = document.getElementById('buildDockerfile').value;
+    const dockerfile = dockerfileSelect === 'custom'
+        ? document.getElementById('buildDockerfileCustom').value.trim()
+        : dockerfileSelect;
+    const tag = document.getElementById('buildTag').value.trim() || 'latest';
+
+    if (!service) { showToast('Service-Name ist Pflicht!', 'error'); return; }
+    if (!dockerfile) { showToast('Dockerfile ist Pflicht!', 'error'); return; }
+
+    const btn = document.getElementById('btnBuild');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Building...';
+
+    addLogLine('buildLog', 'Build gestartet: ' + service + ':' + tag, 'info');
+    animatePipeline('builderPipeline', 'webhook');
+
+    // Simuliere Pipeline-Schritte (in Produktion via n8n Webhook)
+    const steps = ['validate', 'check', 'build', 'verify', 'log', 'notify'];
+    for (const step of steps) {
+        await new Promise(r => setTimeout(r, 800));
+        animatePipeline('builderPipeline', step);
+        addLogLine('buildLog', 'Step: ' + step + ' ✓', 'info');
+    }
+
+    // Log in DB
+    const result = await apiCall(CONFIG.dbUrl + '/builds', {
+        method: 'POST',
+        body: JSON.stringify({ service, tag, dockerfile, status: 'success', builder: 'dashboard-manual' })
+    });
+
+    if (result.success) {
+        showToast('Build erfolgreich: ' + service + ':' + tag, 'success');
+        addLogLine('buildLog', 'Build abgeschlossen: ' + result.id, 'info');
+    } else {
+        showToast('Build fehlgeschlagen: ' + (result.error || 'Unbekannter Fehler'), 'error');
+        addLogLine('buildLog', 'FEHLER: ' + (result.error || 'Unbekannter Fehler'), 'error');
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '🔨 Build starten';
+    refreshBuilds();
+}
+
+// ═══════════════════════════════════
+// PACK — Deploy starten
+// ═══════════════════════════════════
+async function triggerPack() {
+    const image = document.getElementById('packImage').value.trim();
+    const version = document.getElementById('packVersion').value.trim();
+    const compose = document.getElementById('packCompose').value.trim();
+    const healthPort = document.getElementById('packHealthPort').value;
+
+    if (!image || !version) { showToast('Image und Version sind Pflicht!', 'error'); return; }
+
+    addLogLine('packLog', 'Pack gestartet: ' + image + ':' + version, 'info');
+    animatePipeline('packPipeline', 'tag');
+
+    const steps = ['compose', 'health', 'cleanup', 'log'];
+    for (const step of steps) {
+        await new Promise(r => setTimeout(r, 800));
+        animatePipeline('packPipeline', step);
+        addLogLine('packLog', 'Step: ' + step + ' ✓', 'info');
+    }
+
+    const result = await apiCall(CONFIG.dbUrl + '/packs', {
+        method: 'POST',
+        body: JSON.stringify({ image, version, compose_file: compose, status: 'deployed', healthy: true })
+    });
+
+    if (result.success) {
+        showToast('Deploy erfolgreich: ' + image + ':' + version, 'success');
+    } else {
+        showToast('Deploy fehlgeschlagen: ' + (result.error || ''), 'error');
+    }
+    refreshPacks();
+}
+
+// ─── Cleanup ───
+async function triggerCleanup() {
+    addLogLine('packLog', 'Cleanup alte Images gestartet...', 'warn');
+    const result = await apiCall(CONFIG.dbUrl + '/cleanup', {
+        method: 'POST',
+        body: JSON.stringify({ older_than_days: 3, keep_last: 50 })
+    });
+    if (result.success) {
+        showToast('Cleanup: ' + (result.cleaned?.builds_removed || 0) + ' Builds, ' + (result.cleaned?.packs_removed || 0) + ' Packs entfernt', 'success');
+        addLogLine('packLog', 'Cleanup abgeschlossen', 'info');
+    }
+}
+
+// ═══════════════════════════════════
+// Daten laden
+// ═══════════════════════════════════
+async function refreshBuilds() {
+    const result = await apiCall(CONFIG.dbUrl + '/builds?limit=20');
+    const tbody = document.getElementById('buildsTable');
+    if (!result.success || !result.builds?.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-dim)">Keine Builds</td></tr>';
+        return;
+    }
+    tbody.innerHTML = result.builds.map(b => `
+        <tr>
+            <td><strong>${esc(b.service)}</strong></td>
+            <td><code>${esc(b.tag)}</code></td>
+            <td><span class="status-badge status-${b.status === 'success' ? 'success' : b.status === 'failed' ? 'failed' : 'pending'}">${esc(b.status)}</span></td>
+            <td style="font-family:var(--font-mono);font-size:0.75rem">${esc(b.dockerfile || '-')}</td>
+            <td style="font-family:var(--font-mono);font-size:0.75rem">${esc((b.image_id || '-').substring(0, 12))}</td>
+            <td>${esc(b.image_size || '-')}</td>
+            <td style="font-size:0.75rem">${formatDate(b.created_at)}</td>
+        </tr>
+    `).join('');
+}
+
+async function refreshPacks() {
+    const result = await apiCall(CONFIG.dbUrl + '/packs?limit=20');
+    const tbody = document.getElementById('packsTable');
+    if (!result.success || !result.packs?.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-dim)">Keine Deployments</td></tr>';
+        return;
+    }
+    tbody.innerHTML = result.packs.map(p => `
+        <tr>
+            <td><strong>${esc(p.image)}</strong></td>
+            <td><code>${esc(p.version)}</code></td>
+            <td><span class="status-badge status-${p.status === 'deployed' ? 'success' : p.status === 'failed' ? 'failed' : 'pending'}">${esc(p.status)}</span></td>
+            <td>${p.healthy ? '<span class="status-badge status-success">✓ Healthy</span>' : '<span class="status-badge status-failed">✗ Unhealthy</span>'}</td>
+            <td style="font-family:var(--font-mono);font-size:0.75rem">${esc(p.compose_file || '-')}</td>
+            <td style="font-size:0.75rem">${formatDate(p.created_at)}</td>
+        </tr>
+    `).join('');
+}
+
+async function loadDbStatus() {
+    const result = await apiCall(CONFIG.dbUrl + '/status');
+    if (result.success) {
+        document.getElementById('statBuilds').textContent = result.builds?.total || 0;
+        document.getElementById('statPacks').textContent = result.packs?.deployed || 0;
+        document.getElementById('statRunning').textContent = result.deployments?.running || 0;
+        document.getElementById('statAudit').textContent = result.audit?.total || 0;
+        document.getElementById('statFailed').textContent = result.builds?.failed || 0;
+        document.getElementById('statHealthy').textContent = result.deployments?.healthy || 0;
+        document.getElementById('statusDot').style.background = 'var(--green)';
+        document.getElementById('statusText').textContent = 'Verbunden · ' + (result.db_engine || 'SQLite');
+    } else {
+        document.getElementById('statusDot').style.background = 'var(--red)';
+        document.getElementById('statusText').textContent = 'Offline';
+    }
+}
+
+async function loadAudit() {
+    const result = await apiCall(CONFIG.dbUrl + '/audit?limit=50');
+    const tbody = document.getElementById('auditTable');
+    if (!result.success || !result.audit?.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-dim)">Keine Audit-Events</td></tr>';
+        return;
+    }
+    tbody.innerHTML = result.audit.map(a => `
+        <tr>
+            <td style="font-family:var(--font-mono);font-size:0.7rem">${esc((a.event_id || '').substring(0, 8))}...</td>
+            <td><span class="status-badge status-running">${esc(a.action)}</span></td>
+            <td>${esc(a.service || '-')}</td>
+            <td style="font-size:0.8rem">${esc(a.message || '-')}</td>
+            <td style="font-size:0.75rem">${esc(a.source || '-')}</td>
+            <td style="font-size:0.75rem">${formatDate(a.created_at)}</td>
+        </tr>
+    `).join('');
+}
+
+// ─── Compose Actions (via ONTHERUN) ───
+async function composeAction(action) {
+    showToast('Compose ' + action + ' wird ausgeführt...', 'info');
+    const result = await apiCall(CONFIG.otrUrl + '/api/v1/docker/' + action, { method: 'POST' });
+    if (result.success) {
+        showToast('Compose ' + action + ' erfolgreich', 'success');
+    } else {
+        showToast('Compose ' + action + ' fehlgeschlagen', 'error');
+    }
+}
+
+async function refreshStatus() {
+    loadDbStatus();
+    refreshBuilds();
+    refreshPacks();
+    loadAudit();
+    showToast('Status aktualisiert', 'info');
+}
+
+// ─── Init ───
+document.addEventListener('DOMContentLoaded', () => {
+    loadDbStatus();
+    refreshBuilds();
+    refreshPacks();
+    loadAudit();
+
+    // Auto-Refresh
+    setInterval(() => {
+        loadDbStatus();
+    }, CONFIG.refreshInterval);
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>DEVKiTZ™ — Shop Template Gallery & Homepage Builder</title>
+<meta name="description" content="50 futuristische Shop-Vorlagen mit integriertem Homepage Builder und Next-Step Prompt System">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0e0e10;--s1:#1a1a1c;--s2:#222226;--s3:#2a2a30;--t:#f6f6f7;--td:#a1a1aa;--tf:#71717a;--a:#fa1e4e;--ag:rgba(250,30,78,.35);--ad:rgba(250,30,78,.12);--a2:#ff6b35;--g:#00FF88;--b:#55ACEE;--p:#a855f7;--br:rgba(255,255,255,.06);--r:12px;--tr:all .3s cubic-bezier(.4,0,.2,1)}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--t);font-family:'Inter',sans-serif;line-height:1.6;overflow-x:hidden}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(250,30,78,.3);border-radius:3px}
+
+/* --- NAVBAR --- */
+.nav{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(14,14,16,.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--br);display:flex;align-items:center;justify-content:space-between;padding:0 24px;z-index:200}
+.nav-brand{display:flex;align-items:center;gap:10px}
+.nav-logo{width:32px;height:32px;background:linear-gradient(135deg,var(--a),var(--a2));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;font-family:'JetBrains Mono',monospace;box-shadow:0 0 16px var(--ag)}
+.nav-name{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:800}
+.nav-name span{color:var(--a)}
+.nav-tabs{display:flex;gap:2px;background:var(--s1);border-radius:8px;padding:3px}
+.nav-tab{padding:6px 16px;border-radius:6px;font-size:12px;font-weight:600;color:var(--td);cursor:pointer;transition:var(--tr);border:none;background:none;font-family:'Inter',sans-serif}
+.nav-tab.active{background:var(--ad);color:var(--a)}
+.nav-tab:hover:not(.active){color:var(--t)}
+.nav-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tf)}
+
+/* --- MAIN --- */
+main{margin-top:56px;min-height:calc(100vh - 56px)}
+
+/* --- GALLERY VIEW --- */
+#gallery-view{padding:24px}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+.filter-btn{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:600;color:var(--td);cursor:pointer;transition:var(--tr);border:1px solid var(--br);background:var(--s1);font-family:'Inter',sans-serif}
+.filter-btn.active{background:var(--ad);color:var(--a);border-color:rgba(250,30,78,.3)}
+.filter-btn:hover:not(.active){border-color:rgba(250,30,78,.2);color:var(--t)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.card{background:var(--s1);border:1px solid var(--br);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:var(--tr);position:relative}
+.card:hover{border-color:rgba(250,30,78,.3);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.card img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;transition:var(--tr)}
+.card:hover img{transform:scale(1.03)}
+.card-info{padding:12px 14px}
+.card-cat{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--a);margin-bottom:4px}
+.card-title{font-size:13px;font-weight:700}
+.card-id{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);padding:3px 8px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--a)}
+
+/* --- LIGHTBOX --- */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);backdrop-filter:blur(20px);z-index:300;display:none;align-items:center;justify-content:center;flex-direction:column;padding:40px}
+.lightbox.open{display:flex}
+.lightbox img{max-width:90vw;max-height:70vh;border-radius:var(--r);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.lb-info{text-align:center;margin-top:20px}
+.lb-title{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:800;margin-bottom:6px}
+.lb-cat{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--a);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+.lb-prompt{font-size:12px;color:var(--td);max-width:600px;line-height:1.7}
+.lb-close{position:absolute;top:20px;right:24px;background:none;border:none;color:var(--t);font-size:28px;cursor:pointer}
+.lb-nav{display:flex;gap:12px;margin-top:16px}
+.lb-btn{padding:8px 20px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:var(--tr);border:none;font-family:'Inter',sans-serif}
+.lb-btn--use{background:linear-gradient(135deg,var(--a),#ec4899);color:#fff}
+.lb-btn--copy{background:var(--s2);border:1px solid var(--br);color:var(--td)}
+.lb-btn:hover{transform:translateY(-2px)}
+
+/* --- BUILDER VIEW --- */
+#builder-view{display:none;padding:24px}
+.builder-layout{display:grid;grid-template-columns:300px 1fr;gap:20px;min-height:calc(100vh - 80px)}
+.builder-sidebar{background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:16px;overflow-y:auto;max-height:calc(100vh - 80px)}
+.builder-main{display:flex;flex-direction:column;gap:16px}
+
+.bs-label{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--tf);margin:12px 0 6px}
+.bs-tmpl{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;cursor:pointer;transition:var(--tr);border:1px solid transparent}
+.bs-tmpl:hover{background:var(--s2);border-color:var(--br)}
+.bs-tmpl.selected{background:var(--ad);border-color:rgba(250,30,78,.3)}
+.bs-tmpl img{width:48px;height:30px;object-fit:cover;border-radius:4px}
+.bs-tmpl-name{font-size:11px;font-weight:600;flex:1}
+
+/* Prompt Input */
+.prompt-area{background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:16px}
+.prompt-input{width:100%;min-height:100px;background:var(--s2);border:1px solid var(--br);border-radius:8px;padding:12px;color:var(--t);font-family:'Inter',sans-serif;font-size:13px;resize:vertical;outline:none;transition:var(--tr)}
+.prompt-input:focus{border-color:var(--a);box-shadow:0 0 0 3px var(--ad)}
+.prompt-input::placeholder{color:var(--tf)}
+
+/* Next Steps */
+.next-steps{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.ns-label{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--a);display:flex;align-items:center;gap:6px}
+.ns-label::before{content:'';width:16px;height:1px;background:var(--a)}
+.ns-card{background:var(--s2);border:1px solid var(--br);border-radius:8px;padding:12px;cursor:pointer;transition:var(--tr)}
+.ns-card:hover{border-color:rgba(250,30,78,.3);background:var(--ad);transform:translateX(4px)}
+.ns-card-title{font-size:12px;font-weight:700;margin-bottom:4px}
+.ns-card-desc{font-size:11px;color:var(--td);line-height:1.5}
+
+/* Preview */
+.preview-area{background:var(--s1);border:1px solid var(--br);border-radius:var(--r);flex:1;display:flex;align-items:center;justify-content:center;min-height:300px;overflow:hidden;position:relative}
+.preview-img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px}
+.preview-placeholder{text-align:center;color:var(--tf)}
+.preview-placeholder .emoji{font-size:48px;margin-bottom:12px}
+.preview-placeholder p{font-size:13px}
+
+/* Guide Panel */
+.guide-panel{background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:16px}
+.guide-step{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--br)}
+.guide-step:last-child{border-bottom:none}
+.guide-num{width:24px;height:24px;background:var(--ad);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--a);flex-shrink:0}
+.guide-text{font-size:12px;color:var(--td);line-height:1.6}
+.guide-text strong{color:var(--t)}
+
+/* Footer */
+footer{text-align:center;padding:16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tf);border-top:1px solid var(--br)}
+footer span{color:var(--a)}
+
+/* --- PULSE ANIMATION --- */
+@keyframes pulse-glow{0%,100%{box-shadow:0 0 4px var(--ag)}50%{box-shadow:0 0 18px var(--ag),0 0 28px var(--ad)}}
+@keyframes pulse-border{0%,100%{border-color:rgba(250,30,78,.15)}50%{border-color:rgba(250,30,78,.5)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-3px)}40%{transform:translateX(3px)}60%{transform:translateX(-2px)}80%{transform:translateX(2px)}}
+.pulse{animation:pulse-glow 2s ease-in-out infinite}
+.pulse-border{animation:pulse-border 1.5s ease-in-out infinite}
+
+/* --- PROGRESS BAR --- */
+.progress-bar{background:var(--s2);border-radius:6px;height:6px;margin:8px 0;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--a),var(--a2));border-radius:6px;transition:width .5s ease}
+.progress-text{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--a);margin-top:2px;text-align:right}
+
+/* --- TOAST --- */
+.toast-container{position:fixed;top:68px;right:20px;z-index:400;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--s1);border:1px solid var(--br);border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:10px;font-size:12px;backdrop-filter:blur(12px);animation:toast-in .3s ease;min-width:240px;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.toast.success{border-color:rgba(0,255,136,.2)}.toast.success .toast-icon{color:var(--g)}
+.toast.info{border-color:rgba(85,172,238,.2)}.toast.info .toast-icon{color:var(--b)}
+.toast.warn{border-color:rgba(250,30,78,.2)}.toast.warn .toast-icon{color:var(--a)}
+.toast-icon{font-size:16px;flex-shrink:0}
+.toast-msg{flex:1;color:var(--td)}
+@keyframes toast-in{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+
+/* --- ONBOARDING OVERLAY --- */
+.onboarding{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(10px);z-index:500;display:flex;align-items:center;justify-content:center}
+.onboarding.hidden{display:none}
+.ob-card{background:var(--s1);border:1px solid var(--br);border-radius:20px;padding:36px;max-width:520px;text-align:center;position:relative}
+.ob-card::before{content:'';position:absolute;inset:-1px;border-radius:20px;background:linear-gradient(135deg,rgba(250,30,78,.2),transparent,rgba(255,107,53,.2));z-index:-1}
+.ob-emoji{font-size:56px;margin-bottom:16px}
+.ob-title{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:800;margin-bottom:8px}
+.ob-desc{font-size:13px;color:var(--td);line-height:1.8;margin-bottom:24px}
+.ob-steps{display:flex;gap:16px;margin-bottom:24px;justify-content:center}
+.ob-step{background:var(--s2);border-radius:10px;padding:12px;flex:1;text-align:center}
+.ob-step-icon{font-size:20px;margin-bottom:4px}
+.ob-step-text{font-size:10px;color:var(--td);font-weight:600}
+.ob-btn{background:linear-gradient(135deg,var(--a),var(--a2));color:#fff;padding:12px 32px;border-radius:8px;font-size:13px;font-weight:700;border:none;cursor:pointer;transition:var(--tr);font-family:'Inter',sans-serif}
+.ob-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px var(--ag)}
+.ob-dots{display:flex;gap:6px;justify-content:center;margin-top:16px}
+.ob-dot{width:8px;height:8px;border-radius:50%;background:var(--s3)}
+.ob-dot.active{background:var(--a)}
+
+/* --- COLOR/FONT PICKERS --- */
+.picker-row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.color-swatch{width:28px;height:28px;border-radius:6px;cursor:pointer;border:2px solid transparent;transition:var(--tr)}
+.color-swatch:hover,.color-swatch.active{border-color:var(--t);transform:scale(1.15)}
+.font-chip{padding:4px 10px;border-radius:6px;font-size:10px;font-weight:600;background:var(--s2);border:1px solid var(--br);color:var(--td);cursor:pointer;transition:var(--tr)}
+.font-chip:hover,.font-chip.active{border-color:var(--a);color:var(--a);background:var(--ad)}
+
+/* --- TOOLTIP --- */
+.tip{position:relative;cursor:help}
+.tip::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--s1);border:1px solid var(--br);padding:6px 10px;border-radius:6px;font-size:10px;color:var(--td);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s;z-index:10}
+.tip:hover::after{opacity:1}
+
+/* --- EXAMPLES BAR --- */
+.examples-bar{display:flex;gap:8px;margin-bottom:12px}
+.ex-btn{padding:6px 14px;border-radius:8px;font-size:11px;font-weight:600;background:var(--s2);border:1px solid var(--br);color:var(--td);cursor:pointer;transition:var(--tr);font-family:'Inter',sans-serif}
+.ex-btn:hover{border-color:rgba(250,30,78,.2);color:var(--t)}
+.ex-btn span{font-size:13px}
+
+/* --- COPY PROMPT BTN --- */
+.copy-full{display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--a),var(--a2));color:#fff;padding:8px 20px;border-radius:8px;font-size:12px;font-weight:700;border:none;cursor:pointer;transition:var(--tr);font-family:'Inter',sans-serif;margin-top:8px}
+.copy-full:hover{transform:translateY(-2px);box-shadow:0 6px 20px var(--ag)}
+.reset-btn{padding:8px 16px;border-radius:8px;font-size:11px;font-weight:600;background:var(--s2);border:1px solid var(--br);color:var(--td);cursor:pointer;transition:var(--tr);font-family:'Inter',sans-serif;margin-top:8px}
+.reset-btn:hover{border-color:rgba(250,30,78,.2);color:var(--t)}
+.prompt-actions{display:flex;gap:8px;align-items:center}
+
+@media(max-width:768px){
+    .grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+    .builder-layout{grid-template-columns:1fr}
+    .builder-sidebar{max-height:200px}
+    .nav-tabs{display:none}
+    .onboarding .ob-steps{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+    <div class="nav-brand">
+        <div class="nav-logo">DkZ</div>
+        <div class="nav-name">Shop Templates<span>™</span></div>
+    </div>
+    <div class="nav-tabs">
+        <button class="nav-tab active" onclick="showView('gallery')">??? Galerie</button>
+        <button class="nav-tab" onclick="showView('builder')">?? Builder</button>
+    </div>
+    <a href="elements-gallery.html" style="padding:6px 14px;border-radius:6px;font-size:11px;font-weight:600;background:var(--s2);border:1px solid var(--br);color:var(--td);text-decoration:none;transition:var(--tr);font-family:'Inter',sans-serif" onmouseover="this.style.borderColor='var(--a)';this.style.color='var(--a)'" onmouseout="this.style.borderColor='var(--br)';this.style.color='var(--td)'">?? Element Templates ?</a>
+    <div class="nav-count" id="count">50 Templates</div>
+</nav>
+
+<!-- GALLERY VIEW -->
+<main>
+<section id="gallery-view">
+    <div class="filters" id="filters"></div>
+    <div class="grid" id="grid"></div>
+</section>
+
+<!-- BUILDER VIEW -->
+<section id="builder-view">
+    <div class="builder-layout">
+        <div class="builder-sidebar" id="builder-sidebar">
+            <div class="bs-label tip" data-tip="Klick auf ein Template als visuelle Basis">?? TEMPLATE AUSWÄHLEN <span style="color:var(--a)">*</span></div>
+            <div id="tmpl-list"></div>
+        </div>
+        <div class="builder-main">
+            <!-- Examples Bar -->
+            <div class="examples-bar">
+                <div class="bs-label" style="margin:0;display:flex;align-items:center">? SCHNELLSTART:</div>
+                <button class="ex-btn" onclick="loadExample('fashion')"><span>??</span> Fashion Store</button>
+                <button class="ex-btn" onclick="loadExample('tech')"><span>??</span> Tech Shop</button>
+                <button class="ex-btn" onclick="loadExample('eco')"><span>??</span> Eco Market</button>
+            </div>
+            <!-- Color & Font Pickers -->
+            <div style="display:flex;gap:16px">
+                <div style="flex:1">
+                    <div class="bs-label tip" data-tip="Wähle eine Farbpalette für dein Design">?? FARBSCHEMA</div>
+                    <div class="picker-row" id="color-picker"></div>
+                </div>
+                <div style="flex:1">
+                    <div class="bs-label tip" data-tip="Wähle den Typografie-Stil">?? SCHRIFTART</div>
+                    <div class="picker-row" id="font-picker"></div>
+                </div>
+            </div>
+            <!-- Progress Bar -->
+            <div>
+                <div class="bs-label">?? FORTSCHRITT</div>
+                <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+                <div class="progress-text" id="progress-text">0 / 5 Sektionen</div>
+            </div>
+            <!-- Prompt Area -->
+            <div class="prompt-area" id="prompt-area-box">
+                <div class="bs-label tip" data-tip="Beschreibe hier dein Projekt. Der Prompt wird automatisch erweitert.">?? DEIN PROMPT <span style="color:var(--a)">*</span></div>
+                <textarea class="prompt-input" id="prompt-input" placeholder="Beschreibe deine Homepage... z.B. 'Ich brauche einen modernen Online-Shop für nachhaltige Mode mit dunklem Design'"></textarea>
+                <div class="prompt-actions">
+                    <button class="copy-full" id="copy-btn" onclick="copyFullPrompt()">?? Prompt kopieren</button>
+                    <button class="reset-btn" onclick="resetBuilder()">?? Zurücksetzen</button>
+                </div>
+                <div class="next-steps" id="next-steps"></div>
+            </div>
+            <!-- Preview -->
+            <div class="preview-area" id="preview-area">
+                <div class="preview-placeholder">
+                    <div class="emoji">??</div>
+                    <p>Wähle ein Template oder schreib einen Prompt</p>
+                </div>
+            </div>
+            <!-- Guide Panel -->
+            <div class="guide-panel">
+                <div class="bs-label">?? GUIDE — SO BAUST DU DEINE HOMEPAGE</div>
+                <div class="guide-step" id="guide-1"><div class="guide-num">1</div><div class="guide-text"><strong>Template wählen:</strong> Wähle links ein Template als Basis — es definiert den visuellen Stil deiner Homepage.</div></div>
+                <div class="guide-step" id="guide-2"><div class="guide-num">2</div><div class="guide-text"><strong>Farbschema & Font:</strong> Wähle eine Farbpalette und Schriftart für ein einheitliches Design.</div></div>
+                <div class="guide-step" id="guide-3"><div class="guide-num">3</div><div class="guide-text"><strong>Prompt schreiben:</strong> Beschreibe dein Projekt im Prompt-Feld. Was verkaufst du? Welche Stimmung?</div></div>
+                <div class="guide-step" id="guide-4"><div class="guide-num">4</div><div class="guide-text"><strong>Next Steps nutzen:</strong> Wähle einen der 3 vorgeschlagenen nächsten Abschnitte. Die Vorschläge aktualisieren sich automatisch.</div></div>
+                <div class="guide-step" id="guide-5"><div class="guide-num">5</div><div class="guide-text"><strong>Prompt kopieren:</strong> Kopiere den fertigen Prompt und nutze ihn in Claude, ChatGPT oder Antigravity.</div></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ONBOARDING -->
+<div class="onboarding" id="onboarding">
+    <div class="ob-card">
+        <div class="ob-emoji">??</div>
+        <div class="ob-title">Willkommen im Homepage Builder</div>
+        <div class="ob-desc">Erstelle in 5 Schritten den perfekten Prompt für deine professionelle Homepage. Wähle ein Template, passe Farben und Fonts an, und lass dir vom Next-Step-System helfen.</div>
+        <div class="ob-steps">
+            <div class="ob-step"><div class="ob-step-icon">??</div><div class="ob-step-text">Template wählen</div></div>
+            <div class="ob-step"><div class="ob-step-icon">??</div><div class="ob-step-text">Design anpassen</div></div>
+            <div class="ob-step"><div class="ob-step-icon">??</div><div class="ob-step-text">Prompt bauen</div></div>
+            <div class="ob-step"><div class="ob-step-icon">??</div><div class="ob-step-text">Kopieren & nutzen</div></div>
+        </div>
+        <button class="ob-btn" onclick="closeOnboarding()">? Jetzt starten</button>
+    </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toasts"></div>
+</main>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+    <button class="lb-close" onclick="closeLB()">?</button>
+    <img id="lb-img" src="">
+    <div class="lb-info">
+        <div class="lb-cat" id="lb-cat"></div>
+        <div class="lb-title" id="lb-title"></div>
+        <div class="lb-prompt" id="lb-prompt"></div>
+        <div class="lb-nav">
+            <button class="lb-btn lb-btn--use" onclick="useInBuilder()">?? Im Builder verwenden</button>
+            <button class="lb-btn lb-btn--copy" onclick="copyPrompt()">?? Prompt kopieren</button>
+        </div>
+    </div>
+</div>
+
+<footer><span>DEVKiTZ™</span> · 50 Shop Templates · 777 · 2026</footer>
+
+<script>
+// --- DATA ---
+const TEMPLATES = [
+    {id:1,cat:"Fashion & Luxus",title:"Haute Couture Flagship Store",file:"shop_template_01_1773325836951.png",prompt:"Ultra-futuristic luxury fashion e-commerce website, dark obsidian background, floating 3D clothing items with holographic shimmer, glassmorphism product cards, neon gold accents"},
+    {id:2,cat:"Fashion & Luxus",title:"Swiss Watch Atelier",file:"shop_template_02_1773325854132.png",prompt:"Premium Swiss watch e-commerce store, deep midnight blue gradient, photorealistic 3D watch floating with light rays, glassmorphism navigation, rose gold UI accents"},
+    {id:3,cat:"Fashion & Luxus",title:"Designer Jewelry Vault",file:"shop_template_03_1773325870231.png",prompt:"High-end jewelry online boutique, black velvet backdrop with diamond sparkle particles, floating 3D necklace, glassmorphism cards, platinum and crystal blue accents"},
+    {id:4,cat:"Fashion & Luxus",title:"Streetwear Drop Platform",file:"shop_template_04_1773325897987.png",prompt:"Next-gen streetwear drop platform, brutalist dark UI with neon red accents, 3D sneaker explosion hero, countdown timer with glitch effects, Off-White meets Tesla aesthetic"},
+    {id:5,cat:"Fashion & Luxus",title:"Bespoke Leather Atelier",file:"shop_template_05_1773325915586.png",prompt:"Artisan leather goods e-commerce, warm dark brown and cognac palette, 3D leather bag with stitching detail, gold foil accents, Hermès-level craftsmanship feel"},
+    {id:6,cat:"Tech & Electronics",title:"Quantum Computing Store",file:"shop_template_06_1773325933265.png",prompt:"Futuristic quantum computing hardware store, pure black with cyan and purple holographic grid, floating 3D processor chip with circuit patterns, IBM/NVIDIA fusion aesthetic"},
+    {id:7,cat:"Tech & Electronics",title:"Smart Home Command Center",file:"shop_template_07_1773325957267.png",prompt:"Premium smart home devices, dark slate with ambient glow, 3D smart speaker and IoT devices floating, control panel UI, Apple Home meets Porsche Design"},
+    {id:8,cat:"Tech & Electronics",title:"Gaming Peripherals Arsenal",file:"shop_template_08_1773325973003.png",prompt:"Elite gaming peripherals store, matte black with RGB color shift, 3D mechanical keyboard exploded view, neon green and magenta, Razer meets Lamborghini aesthetic"},
+    {id:9,cat:"Tech & Electronics",title:"Audiophile Sound Lab",file:"shop_template_09_1773325992930.png",prompt:"High-fidelity audio equipment, deep charcoal with sound wave visualizations, 3D premium headphones, copper and matte black, Bang & Olufsen meets Devialet design"},
+    {id:10,cat:"Tech & Electronics",title:"Drone & Robotics Hub",file:"shop_template_10_1773326025636.png",prompt:"Advanced drone and robotics e-commerce, dark navy with topographic map overlay, 3D drone hovering, military-grade UI panels, DJI meets precision engineering"},
+    {id:11,cat:"Beauty & Cosmetics",title:"K-Beauty Innovation Lab",file:"shop_template_11_1773326054700.png",prompt:"Korean beauty innovation platform, soft dark lavender gradient, 3D serum bottles with liquid physics, glassmorphism ingredient cards, pastel pink and holographic"},
+    {id:12,cat:"Beauty & Cosmetics",title:"Parfum Maison",file:"shop_template_12_1773326080680.png",prompt:"Exclusive perfume house, dark amber and black gradient, 3D crystal perfume bottle with light refraction, smoke particles, gold calligraphy, Tom Ford aesthetic"},
+    {id:13,cat:"Beauty & Cosmetics",title:"Clean Beauty Collective",file:"shop_template_13_1773326120340.png",prompt:"Premium clean beauty marketplace, dark sage green with botanical illustrations, 3D minimalist packaging, earth tones with gold, Aesop meets Glossier aesthetic"},
+    {id:14,cat:"Beauty & Cosmetics",title:"Nail Art Studio",file:"shop_template_14_1773326160432.png",prompt:"Luxury nail art e-commerce, deep purple and black with chrome reflections, 3D nail polish bottles, holographic swatches, neon pink, OPI meets avant-garde"},
+    {id:15,cat:"Beauty & Cosmetics",title:"Men's Grooming Empire",file:"shop_template_15_1773326194720.png",prompt:"Premium men's grooming, dark charcoal and forest green, 3D razor with chrome details, barbershop geometric patterns, whiskey amber accents, industrial design"},
+    {id:16,cat:"Food & Beverages",title:"Artisan Coffee Roastery",file:"shop_template_16_1773326246090.png",prompt:"Specialty coffee roastery, rich dark espresso brown gradient, 3D coffee bag with floating beans, copper and cream accents, Blue Bottle meets Starbucks Reserve"},
+    {id:17,cat:"Food & Beverages",title:"Premium Sake House",file:"shop_template_17_1773326286699.png",prompt:"Japanese sake online boutique, deep indigo with rice paper textures, 3D ceramic sake bottle, cherry blossom particles, Issey Miyake meets traditional craft"},
+    {id:18,cat:"Food & Beverages",title:"Superfood Science Lab",file:"shop_template_18_1773326331402.png",prompt:"Bio-science superfood store, dark with cellular patterns, 3D supplements with floating molecules, neon green health metrics, DNA helix design, pharmaceutical meets wellness"},
+    {id:19,cat:"Food & Beverages",title:"Craft Chocolate Atelier",file:"shop_template_19_1773326377789.png",prompt:"Artisan chocolate e-commerce, luxurious dark cocoa brown, 3D chocolate bar with golden wrapper, cacao illustrations, burgundy and gold foil, Valrhona meets luxury"},
+    {id:20,cat:"Food & Beverages",title:"Molecular Gastronomy Kit",file:"shop_template_20_1773326412253.png",prompt:"Molecular gastronomy equipment, dark with chemical formulas, 3D spherification tools, neon orange and electric blue, laboratory meets Michelin-star design"},
+    {id:21,cat:"Automotive & Mobility",title:"Electric Hypercar Gallery",file:"shop_template_21_1773326444808.png",prompt:"Electric hypercar showroom, pitch black with dramatic studio lighting, 3D electric supercar with glowing undercarriage, speedometer HUD, Rimac meets Porsche Taycan"},
+    {id:22,cat:"Automotive & Mobility",title:"Premium E-Bike Studio",file:"shop_template_22_1773326489052.png",prompt:"High-end electric bicycle store, dark matte with topographic trail maps, 3D carbon fiber e-bike, GPS route visualization, forest green and titanium, VanMoof meets Canyon"},
+    {id:23,cat:"Automotive & Mobility",title:"Auto Tuning Configurator",file:"shop_template_23_1773326522993.png",prompt:"Performance car parts configurator, dark garage with neon strip lighting, 3D turbocharger cross-section, racing red and carbon, ABT meets Brabus, torque curves"},
+    {id:24,cat:"Automotive & Mobility",title:"EV Charging Network",file:"shop_template_24_1773326554915.png",prompt:"EV charging infrastructure store, dark with power grid visualization, 3D charging station with energy flow, green energy pulses, Tesla Supercharger meets smart city"},
+    {id:25,cat:"Automotive & Mobility",title:"Luxury Car Accessories Vault",file:"shop_template_25_1773326595577.png",prompt:"Premium automotive accessories, dark showroom spotlighting, 3D leather steering wheel and carbon fiber, champagne gold and black, Rolls-Royce meets Bentley elegance"},
+    {id:26,cat:"Home & Interior",title:"Scandinavian Smart Living",file:"shop_template_26_1773326627336.png",prompt:"Nordic smart furniture e-commerce, dark warm grey with cozy ambient lighting, 3D minimalist furniture, natural wood and white, Muuto meets smart home integration"},
+    {id:27,cat:"Home & Interior",title:"Architectural Lighting Studio",file:"shop_template_27_1773326651774.png",prompt:"Designer lighting e-commerce, pure black with dramatic beam effects, 3D pendant lamp with volumetric light, glassmorphism details, Flos meets Louis Poulsen"},
+    {id:28,cat:"Home & Interior",title:"Smart Kitchen Gallery",file:"shop_template_28_1773326686304.png",prompt:"Premium smart kitchen appliances, dark slate with sous vide steam, 3D kitchen system with touchscreens, stainless steel and matte black, Gaggenau meets Bora"},
+    {id:29,cat:"Home & Interior",title:"Artisan Ceramics Studio",file:"shop_template_29_1773326707356.png",prompt:"Handcrafted ceramics online store, dark terracotta and charcoal with kiln glow, 3D pottery with glaze detail, wabi-sabi meets contemporary design"},
+    {id:30,cat:"Home & Interior",title:"Smart Mirror & Glass",file:"shop_template_30_1773326730059.png",prompt:"Futuristic smart mirror store, dark reflective with infinity mirror effect, 3D smart mirror with weather display, chrome and obsidian, AR preview UI"},
+    {id:31,cat:"Sports & Outdoor",title:"Summit Gear Pro",file:"shop_template_31_1773326761710.png",prompt:"Elite mountaineering equipment, dark with dramatic mountains, 3D climbing harness with material callouts, orange safety and charcoal, Arc'teryx meets Mammut"},
+    {id:32,cat:"Sports & Outdoor",title:"Olympic Training Lab",file:"shop_template_32_1773326782035.png",prompt:"Professional athletic training, dark with motion capture wireframes, 3D equipment with biomechanical overlays, electric yellow and black, Nike Training meets sports science"},
+    {id:33,cat:"Sports & Outdoor",title:"Surf & Water Sports",file:"shop_template_33_1773326801837.png",prompt:"Premium surf store, dark ocean deep blue with underwater caustics, 3D surfboard with wave dynamics, ocean teal and coral, Rip Curl meets marine technology"},
+    {id:34,cat:"Sports & Outdoor",title:"Tactical Outdoor Survival",file:"shop_template_34_1773326831229.png",prompt:"Tactical survival gear, dark camo-green with night vision overlay, 3D multi-tool exploded view, military grid coordinates, OD green and tan, EDC loadout builder"},
+    {id:35,cat:"Sports & Outdoor",title:"Premium Yoga & Mindfulness",file:"shop_template_35_1773326850017.png",prompt:"Luxury yoga equipment, dark with aurora borealis glow, 3D meditation cushion with mandala patterns, soft purple and sage green, Lululemon meets zen temple"},
+    {id:36,cat:"Health & Wellness",title:"Biohacking Command Center",file:"shop_template_36_1773326865097.png",prompt:"Advanced biohacking supplements, dark with DNA double helix, 3D nootropic capsules with molecular structure, electric blue and clinical white, Huberman Lab meets pharma"},
+    {id:37,cat:"Health & Wellness",title:"Medical Wearables Hub",file:"shop_template_37_1773326895489.png",prompt:"Premium health wearables, dark with heartbeat ECG lines, 3D smartwatch with vital signs, medical white and sapphire blue, Apple Watch meets clinical device design"},
+    {id:38,cat:"Health & Wellness",title:"Sleep Science Store",file:"shop_template_38_1773326917578.png",prompt:"Sleep technology products, dark midnight blue with starfield, 3D smart mattress cross-section, sleep cycle graphs, deep blue and moonlight silver, Eight Sleep meets NASA"},
+    {id:39,cat:"Health & Wellness",title:"Physical Therapy Hub",file:"shop_template_39_1773326935581.png",prompt:"Rehabilitation equipment, dark with anatomical wireframes, 3D resistance bands with muscle highlighting, teal and warm grey, medical precision meets fitness"},
+    {id:40,cat:"Health & Wellness",title:"Air & Water Purification",file:"shop_template_40_1773326964003.png",prompt:"Premium purification systems, dark with molecular filtration visualization, 3D air purifier with HEPA cross-section, clean white and fresh blue, Dyson meets medical-grade"},
+    {id:41,cat:"SaaS & Digital",title:"AI Analytics Platform",file:"shop_template_41_1773326980360.png",prompt:"AI analytics SaaS landing page, dark with neural network constellation, 3D dashboard with real-time charts, neon violet and electric blue, Stripe meets Vercel"},
+    {id:42,cat:"SaaS & Digital",title:"Cybersecurity Shield",file:"shop_template_42_1773326995669.png",prompt:"Enterprise cybersecurity platform, dark with matrix data rain, 3D shield with threat vectors, crimson red and dark grey, CrowdStrike meets military defense design"},
+    {id:43,cat:"SaaS & Digital",title:"Cloud Infrastructure Store",file:"shop_template_43_1773327023070.png",prompt:"Cloud infrastructure marketplace, dark with server racks and network topology, 3D cloud architecture, AWS orange and dark blue, Vercel meets DigitalOcean"},
+    {id:44,cat:"SaaS & Digital",title:"No-Code App Builder",file:"shop_template_44_1773327040366.png",prompt:"No-code application builder, dark with interconnected workflow nodes, 3D app components assembling, gradient purple and coral, Webflow meets Notion"},
+    {id:45,cat:"SaaS & Digital",title:"Crypto & DeFi Exchange",file:"shop_template_45_1773327059904.png",prompt:"Next-gen crypto trading platform, dark with candlestick charts, 3D Bitcoin and Ethereum with metallic reflections, neon green profits, Binance meets Bloomberg terminal"},
+    {id:46,cat:"Sustainable & Eco",title:"Zero-Waste Marketplace",file:"shop_template_46_1773327089827.png",prompt:"Premium zero-waste store, dark forest green with leaf vein patterns, 3D refillable containers and bamboo products, earth green and kraft, Patagonia meets Apple store"},
+    {id:47,cat:"Sustainable & Eco",title:"Solar & Renewable Energy",file:"shop_template_47_1773327109347.png",prompt:"Solar energy products, dark with sun ray and photon particles, 3D solar panel array with energy flow, solar yellow and dark green, Tesla Solar meets renewable design"},
+    {id:48,cat:"Sustainable & Eco",title:"Upcycled Fashion Collective",file:"shop_template_48_1773327127923.png",prompt:"Upcycled fashion marketplace, dark charcoal with stitching patterns, 3D garment before/after upcycle, indigo and denim, Stella McCartney meets circular economy"},
+    {id:49,cat:"Sustainable & Eco",title:"Reforestation Impact Store",file:"shop_template_49_1773327155858.png",prompt:"Reforestation products store, dark with growing tree animation, 3D globe with reforestation zones, forest green and earth brown, One Tree Planted meets ESRI mapping"},
+    {id:50,cat:"Sustainable & Eco",title:"Ethical Electronics Refurb",file:"shop_template_50_1773327174499.png",prompt:"Certified refurbished electronics, dark with circuit board traces, 3D smartphone with quality check marks, electric teal and silver, Apple Refurbished meets Fairphone"}
+];
+
+const CATEGORIES = [...new Set(TEMPLATES.map(t => t.cat))];
+let currentFilter = 'all';
+let currentLB = null;
+let selectedTemplate = null;
+
+// --- NEXT STEP SUGGESTIONS ---
+const NEXT_STEPS_DB = {
+    "hero": [
+        {title:"Hero mit Video-Hintergrund",desc:"Ein fullscreen Hero-Bereich mit einem autoplay Hintergrundvideo, overlay Gradient und zentriertem CTA"},
+        {title:"Split-Screen Hero",desc:"Linke Seite mit Text und CTA, rechte Seite mit großem Produktbild oder 3D-Element"},
+        {title:"Animated Hero mit Partikel-Effekt",desc:"Hero-Sektion mit interaktivem Partikel-Hintergrund und schrittweisem Text-Reveal"},
+        {title:"Minimalistischer Hero mit Typografie",desc:"Riesige serifenlose Schrift dominiert den Hero, Produkt dezent im Hintergrund"},
+        {title:"Carousel Hero mit Produkt-Showcase",desc:"Automatisch rotierender Hero mit 3-5 Flagship-Produkten und Micro-Animationen"}
+    ],
+    "products": [
+        {title:"Masonry Product Grid",desc:"Pinterest-artiges Masonry-Layout für Produkte mit Hover-Zoom und Quick-Add Button"},
+        {title:"Featured Products Carousel",desc:"Horizontaler Scroll-Bereich mit großen Produktkarten, Preis und Rating sichtbar"},
+        {title:"Category Cards mit Glassmorphism",desc:"3-4 große Kategoriekarten mit Glassmorphism-Effekt und Hintergrundbild"},
+        {title:"Product Spotlight mit 360° View",desc:"Ein einzelnes Produkt mit 360°-Ansicht, Zoom-Funktion und detaillierten Specs"},
+        {title:"Infinite Scroll Store",desc:"Endloser Scroll mit lazy-loaded Produkten, Filter-Sidebar und Sortier-Optionen"}
+    ],
+    "about": [
+        {title:"Team & Mission Statement",desc:"About-Sektion mit Team-Fotos, Mission-Statement und Unternehmensgeschichte als Timeline"},
+        {title:"Brand Story mit Parallax",desc:"Storytelling-Bereich mit Parallax-Scrolling und fullwidth Bildern zwischen Textblöcken"},
+        {title:"Values & Impact Zahlen",desc:"3-4 große Statistik-Counter mit Brand-Values als ikonische Karten darunter"},
+        {title:"Founder Quote mit Video",desc:"Großes Zitat des Gründers, daneben ein eingebettetes Brand-Video"},
+        {title:"Wie wir arbeiten — 4 Phasen",desc:"Prozess-Darstellung in 4 Schritten mit verbundenen Karten und Ergebnis-Badges"}
+    ],
+    "social": [
+        {title:"Social Proof & Testimonials",desc:"Kundenbewertungen als Karussell mit Sternebewertung, Foto und verifiziertem Kauf-Badge"},
+        {title:"Instagram Feed Integration",desc:"Live Instagram-Feed als Grid eingebettet mit Hashtag und Follow-CTA"},
+        {title:"Press & Media Logos",desc:"'Bekannt aus' Sektion mit Firmenlogos, Trust-Badges und Zertifizierungen"},
+        {title:"User-Generated Content Wall",desc:"Community-Galerie mit Kundenfotos, Social Tags und Highlight-Slider"},
+        {title:"Newsletter Signup mit Incentive",desc:"Email-Signup mit Rabattcode-Angebot, minimalistisches Design, DSGVO-konform"}
+    ],
+    "footer": [
+        {title:"Mega Footer mit Sitemap",desc:"4-Spalten Footer mit Navigation, Social Links, Newsletter und Copyright"},
+        {title:"Minimalistischer Footer",desc:"Einzeilig mit Logo, Copyright und 3 Links — kept simple und clean"},
+        {title:"CTA Footer mit Kontaktformular",desc:"Letzter CTA vor dem Footer, dann ein kompaktes Kontaktformular und Social Icons"},
+        {title:"Footer mit Vertrauenselementen",desc:"Payment-Icons, Versand-Partner, Trust-Badges und SSL-Siegel prominent platziert"},
+        {title:"Interactive Map Footer",desc:"Standort-Karte, Öffnungszeiten und Kontaktinfos als stilvolles Abschluss-Element"}
+    ]
+};
+
+const SECTION_ORDER = ["hero","products","about","social","footer"];
+const SECTION_LABELS = {hero:"Hero-Sektion",products:"Produkt-Bereich",about:"Über Uns",social:"Social Proof",footer:"Footer"};
+let currentSectionIndex = 0;
+let builtSections = [];
+
+// --- COLOR SCHEMES ---
+const COLOR_SCHEMES = [
+    {name:'Crimson Dark',colors:['#fa1e4e','#1a1a1c','#0e0e10'],accent:'#fa1e4e'},
+    {name:'Ocean Blue',colors:['#55acee','#141822','#0c1018'],accent:'#55acee'},
+    {name:'Emerald Eco',colors:['#4ade80','#141a12','#0b0f0a'],accent:'#4ade80'},
+    {name:'Royal Gold',colors:['#c8a87c','#18160e','#0e0d08'],accent:'#c8a87c'},
+    {name:'Neon Violet',colors:['#a855f7','#1a1424','#0f0b18'],accent:'#a855f7'},
+    {name:'Electric Cyan',colors:['#22d3ee','#0e1a1c','#081214'],accent:'#22d3ee'},
+    {name:'Sunset Orange',colors:['#ff6b35','#1c1610','#120e08'],accent:'#ff6b35'},
+    {name:'Rose Pink',colors:['#ec4899','#1c1018','#120a10'],accent:'#ec4899'}
+];
+const FONT_OPTIONS = [
+    {name:'Inter',label:'Modern'},
+    {name:'Space Grotesk',label:'Bold'},
+    {name:'JetBrains Mono',label:'Mono'},
+    {name:'Georgia',label:'Serif'},
+    {name:'Outfit',label:'Clean'}
+];
+let chosenColor = null;
+let chosenFont = null;
+
+// --- INIT ---
+function init() {
+    renderFilters();
+    renderGrid();
+    renderTmplList();
+    renderColorPicker();
+    renderFontPicker();
+    showNextSteps();
+    // Show onboarding only on builder first visit
+    if(!localStorage.getItem('dkz_builder_seen')) {
+        document.getElementById('onboarding').classList.remove('hidden');
+    } else {
+        document.getElementById('onboarding').classList.add('hidden');
+    }
+    document.getElementById('prompt-input').addEventListener('input', () => { updateProgress(); });
+    // Start pulsing the sidebar to hint at template selection
+    setTimeout(() => highlightGuideStep(1), 500);
+}
+
+// --- TOAST SYSTEM ---
+function showToast(msg, type='info', icon='??') {
+    const c = document.getElementById('toasts');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-msg">${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(40px)'; setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+// --- ONBOARDING ---
+function closeOnboarding() {
+    document.getElementById('onboarding').classList.add('hidden');
+    localStorage.setItem('dkz_builder_seen','1');
+    showToast('Starte mit Schritt 1: Template auswaehlen!','info','??');
+    document.getElementById('builder-sidebar').classList.add('pulse-border');
+}
+
+// --- VIEWS ---
+function showView(v) {
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('gallery-view').style.display = v === 'gallery' - 'block' : 'none';
+    document.getElementById('builder-view').style.display = v === 'builder' - 'block' : 'none';
+    if(v === 'builder' && !localStorage.getItem('dkz_builder_seen')) {
+        document.getElementById('onboarding').classList.remove('hidden');
+    }
+}
+
+// --- FILTERS ---
+function renderFilters() {
+    const el = document.getElementById('filters');
+    el.innerHTML = `<button class="filter-btn active" onclick="setFilter('all',this)">Alle (50)</button>` +
+        CATEGORIES.map(c => {
+            const n = TEMPLATES.filter(t => t.cat === c).length;
+            return `<button class="filter-btn" onclick="setFilter('${c}',this)">${c} (${n})</button>`;
+        }).join('');
+}
+function setFilter(cat, btn) {
+    currentFilter = cat;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderGrid();
+    const visible = cat === 'all' - 50 : TEMPLATES.filter(t => t.cat === cat).length;
+    document.getElementById('count').textContent = `${visible} Templates`;
+}
+
+// --- GRID ---
+function renderGrid() {
+    const list = currentFilter === 'all' - TEMPLATES : TEMPLATES.filter(t => t.cat === currentFilter);
+    document.getElementById('grid').innerHTML = list.map(t => `
+        <div class="card" onclick="openLB(${t.id})">
+            <div class="card-id">#${String(t.id).padStart(2,'0')}</div>
+            <img src="templates/${t.file}" alt="${t.title}" loading="lazy">
+            <div class="card-info">
+                <div class="card-cat">${t.cat}</div>
+                <div class="card-title">${t.title}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// --- LIGHTBOX ---
+function openLB(id) {
+    currentLB = TEMPLATES.find(t => t.id === id);
+    document.getElementById('lb-img').src = `templates/${currentLB.file}`;
+    document.getElementById('lb-cat').textContent = currentLB.cat;
+    document.getElementById('lb-title').textContent = currentLB.title;
+    document.getElementById('lb-prompt').textContent = currentLB.prompt;
+    document.getElementById('lightbox').classList.add('open');
+}
+function closeLB() { document.getElementById('lightbox').classList.remove('open'); }
+function copyPrompt() {
+    if (!currentLB) return;
+    navigator.clipboard.writeText(currentLB.prompt);
+    event.target.textContent = '? Kopiert!';
+    showToast('Prompt in Zwischenablage kopiert!','success','?');
+    setTimeout(() => event.target.textContent = '?? Prompt kopieren', 1500);
+}
+function useInBuilder() {
+    closeLB();
+    showView('builder');
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-tab')[1].classList.add('active');
+    selectTemplate(currentLB.id);
+}
+
+// --- COLOR PICKER ---
+function renderColorPicker() {
+    document.getElementById('color-picker').innerHTML = COLOR_SCHEMES.map((s,i) =>
+        `<div class="color-swatch tip" data-tip="${s.name}" style="background:linear-gradient(135deg,${s.colors[0]},${s.colors[1]})" onclick="pickColor(${i})"></div>`
+    ).join('');
+}
+function pickColor(idx) {
+    chosenColor = COLOR_SCHEMES[idx];
+    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.color-swatch')[idx].classList.add('active');
+    showToast(`Farbschema: ${chosenColor.name}`,'success','??');
+    updatePromptMeta();
+}
+
+// --- FONT PICKER ---
+function renderFontPicker() {
+    document.getElementById('font-picker').innerHTML = FONT_OPTIONS.map((f,i) =>
+        `<button class="font-chip" style="font-family:'${f.name}'" onclick="pickFont(${i})">${f.label}</button>`
+    ).join('');
+}
+function pickFont(idx) {
+    chosenFont = FONT_OPTIONS[idx];
+    document.querySelectorAll('.font-chip').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.font-chip')[idx].classList.add('active');
+    showToast(`Schriftart: ${chosenFont.name}`,'success','??');
+    updatePromptMeta();
+}
+
+// --- UPDATE PROMPT META ---
+function updatePromptMeta() {
+    const input = document.getElementById('prompt-input');
+    let v = input.value;
+    // Remove existing meta lines
+    v = v.replace(/\n?\n?Design-System:.*$/m,'').replace(/\n?\n?Farbschema:.*$/m,'').replace(/\n?\n?Schriftart:.*$/m,'');
+    if(chosenColor) v += `\n\nFarbschema: ${chosenColor.name} — Primaerfarbe ${chosenColor.accent}, dunkler Hintergrund`;
+    if(chosenFont) v += `\nSchriftart: ${chosenFont.name} (${chosenFont.label})`;
+    input.value = v;
+}
+
+// --- TEMPLATE LIST ---
+function renderTmplList() {
+    const el = document.getElementById('tmpl-list');
+    let html = '';
+    CATEGORIES.forEach(cat => {
+        html += `<div class="bs-label">${cat}</div>`;
+        TEMPLATES.filter(t => t.cat === cat).forEach(t => {
+            html += `<div class="bs-tmpl" onclick="selectTemplate(${t.id})" id="tmpl-${t.id}">
+                <img src="templates/${t.file}" alt="${t.title}">
+                <div class="bs-tmpl-name">${t.title}</div>
+            </div>`;
+        });
+    });
+    el.innerHTML = html;
+}
+
+function selectTemplate(id) {
+    selectedTemplate = TEMPLATES.find(t => t.id === id);
+    document.querySelectorAll('.bs-tmpl').forEach(t => t.classList.remove('selected'));
+    const el = document.getElementById(`tmpl-${id}`);
+    if (el) { el.classList.add('selected'); el.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+    document.getElementById('preview-area').innerHTML = `<img class="preview-img" src="templates/${selectedTemplate.file}" alt="${selectedTemplate.title}">`;
+    const input = document.getElementById('prompt-input');
+    if (!input.value || input.value.length < 10) input.value = `Erstelle eine Homepage im Stil von "${selectedTemplate.title}" (${selectedTemplate.cat}). `;
+    document.getElementById('builder-sidebar').classList.remove('pulse-border');
+    showToast(`Template: ${selectedTemplate.title}`,'success','??');
+    highlightGuideStep(2);
+    // Pulse the prompt area next
+    setTimeout(() => {
+        document.getElementById('prompt-area-box').classList.add('pulse-border');
+        setTimeout(() => document.getElementById('prompt-area-box').classList.remove('pulse-border'), 4000);
+    }, 500);
+    showNextSteps();
+    updateProgress();
+}
+
+// --- GUIDE HIGHLIGHTING ---
+function highlightGuideStep(step) {
+    for(let i=1;i<=5;i++) {
+        const el = document.getElementById(`guide-${i}`);
+        if(el) { el.style.background = i===step - 'var(--ad)' : 'transparent'; el.style.borderRadius = '8px'; }
+    }
+}
+
+// --- PROGRESS ---
+function updateProgress() {
+    const total = 5;
+    let done = builtSections.length;
+    if(selectedTemplate) done = Math.max(done, 1);
+    if(chosenColor) done = Math.max(done, 1);
+    const pct = Math.min(Math.round((done / total) * 100), 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-text').textContent = `${done} / ${total} Sektionen`;
+    if(pct === 100) {
+        showToast('Prompt komplett! Jetzt kopieren.','success','??');
+        document.getElementById('copy-btn').classList.add('pulse');
+        highlightGuideStep(5);
+    }
+}
+
+// --- NEXT STEPS ---
+function showNextSteps() {
+    const section = SECTION_ORDER[currentSectionIndex] || SECTION_ORDER[0];
+    const options = NEXT_STEPS_DB[section] || NEXT_STEPS_DB.hero;
+    const shuffled = options.sort(() => Math.random() - 0.5).slice(0, 3);
+    document.getElementById('next-steps').innerHTML = `
+        <div class="ns-label">? NAECHSTER SCHRITT: ${SECTION_LABELS[section]}</div>
+        ${shuffled.map((s, i) => `
+            <div class="ns-card" onclick="pickNextStep(${i},'${section}')">
+                <div class="ns-card-title">${s.title}</div>
+                <div class="ns-card-desc">${s.desc}</div>
+            </div>
+        `).join('')}
+    `;
+    window._currentSuggestions = shuffled;
+}
+
+function pickNextStep(idx, section) {
+    const picked = window._currentSuggestions[idx];
+    const input = document.getElementById('prompt-input');
+    input.value += `\n\n${SECTION_LABELS[section]}: ${picked.title} — ${picked.desc}`;
+    builtSections.push(section);
+    currentSectionIndex = Math.min(currentSectionIndex + 1, SECTION_ORDER.length - 1);
+    showToast(`${SECTION_LABELS[section]} hinzugefuegt!`,'success','?');
+    highlightGuideStep(Math.min(currentSectionIndex + 3, 5));
+    showNextSteps();
+    updateProgress();
+    input.scrollTop = input.scrollHeight;
+}
+
+// --- COPY FULL PROMPT ---
+function copyFullPrompt() {
+    const input = document.getElementById('prompt-input');
+    if(!input.value || input.value.length < 20) {
+        showToast('Bitte erst einen Prompt erstellen!','warn','??');
+        document.getElementById('prompt-area-box').style.animation = 'shake .4s ease';
+        setTimeout(() => document.getElementById('prompt-area-box').style.animation = '', 500);
+        return;
+    }
+    navigator.clipboard.writeText(input.value);
+    showToast('Kompletter Prompt kopiert!','success','??');
+    document.getElementById('copy-btn').textContent = '? Kopiert!';
+    setTimeout(() => document.getElementById('copy-btn').textContent = '?? Prompt kopieren', 2000);
+}
+
+// --- RESET ---
+function resetBuilder() {
+    document.getElementById('prompt-input').value = '';
+    selectedTemplate = null; chosenColor = null; chosenFont = null;
+    currentSectionIndex = 0; builtSections = [];
+    document.querySelectorAll('.bs-tmpl').forEach(t => t.classList.remove('selected'));
+    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.font-chip').forEach(c => c.classList.remove('active'));
+    document.getElementById('preview-area').innerHTML = '<div class="preview-placeholder"><div class="emoji">??</div><p>Waehle ein Template oder schreib einen Prompt</p></div>';
+    document.getElementById('copy-btn').classList.remove('pulse');
+    updateProgress();
+    highlightGuideStep(1);
+    document.getElementById('builder-sidebar').classList.add('pulse-border');
+    showNextSteps();
+    showToast('Builder zurueckgesetzt','info','??');
+}
+
+// --- LOAD EXAMPLES ---
+function loadExample(type) {
+    const examples = {
+        fashion: { tmpl: 1, color: 3, font: 1, prompt: 'Erstelle eine Homepage im Stil von "Haute Couture Flagship Store" (Fashion & Luxus). Luxus-Modeboutique mit dunklem Premium-Design, goldenen Akzenten und einem exklusiven Feeling.' },
+        tech: { tmpl: 7, color: 1, font: 0, prompt: 'Erstelle eine Homepage im Stil von "Smart Home Command Center" (Tech & Electronics). Moderner IoT-Shop mit Split-Screen Layout, blauen Akzenten und technischen Dashboard-Elementen.' },
+        eco: { tmpl: 46, color: 2, font: 0, prompt: 'Erstelle eine Homepage im Stil von "Zero-Waste Marketplace" (Sustainable & Eco). Nachhaltiger Online-Shop mit gruenen Akzenten, Impact-Zahlen und authentischem Nachhaltigkeits-Branding.' }
+    };
+    const ex = examples[type];
+    if(!ex) return;
+    resetBuilder();
+    selectTemplate(ex.tmpl);
+    pickColor(ex.color);
+    pickFont(ex.font);
+    document.getElementById('prompt-input').value = ex.prompt;
+    showToast(`Beispiel "${type}" geladen!`,'info','?');
+}
+
+// ESC to close lightbox
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLB(); });
+
+init();
+</script>
+</body>
+</html>

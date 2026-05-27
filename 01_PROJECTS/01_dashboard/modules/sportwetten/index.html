@@ -1,0 +1,348 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<link rel="stylesheet" href="../../shared/dkz-theme.css">
+<link rel="manifest" href="../../shared/manifest.json">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>&#9917; BET TRACKER &#8212; DkZâ„¢ Live Command Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<style>
+:root{--bg:#0e0e10;--card:#1a1a1c;--card2:#222226;--border:#333338;--text:#f6f6f7;--muted:#a1a1aa;--green:#00ff88;--blue:#55ACEE;--yellow:#FFB800;--red:#fa1e4e;--purple:#ec4899;--accent:#fa1e4e;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+body::before{content:"";position:fixed;top:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(250,30,78,.07),transparent 70%);pointer-events:none;z-index:0}
+body::after{content:"";position:fixed;bottom:-150px;left:-150px;width:500px;height:500px;background:radial-gradient(circle,rgba(0,255,136,.05),transparent 70%);pointer-events:none;z-index:0}
+
+.header{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1.25rem;background:rgba(26,26,28,.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.header-left{display:flex;align-items:center;gap:.75rem}
+.logo{font-size:1.3rem;font-weight:900;letter-spacing:2px;background:linear-gradient(135deg,var(--green),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-size:.6rem;color:var(--muted);letter-spacing:3px;text-transform:uppercase}
+.hdr-btn{padding:.4rem .75rem;border:1px solid var(--border);border-radius:6px;background:rgba(255,255,255,.03);color:var(--muted);cursor:pointer;font-size:.75rem;font-weight:600;transition:.2s}
+.hdr-btn:hover{background:rgba(255,255,255,.08);color:var(--text);border-color:#555}
+.hdr-btn.active{background:rgba(250,30,78,.15);color:var(--red);border-color:var(--red)}
+
+.tabs{display:flex;gap:4px;padding:.5rem 1rem;background:var(--card);border-bottom:1px solid var(--border)}
+.tab{padding:.5rem 1rem;border:none;background:none;color:var(--muted);font-size:.75rem;font-weight:700;cursor:pointer;border-radius:6px;transition:.2s;letter-spacing:1px;text-transform:uppercase}
+.tab:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.tab.active{color:var(--green);background:rgba(0,255,136,.1)}
+
+.main{display:flex;flex:1;overflow:hidden;height:calc(100vh - 90px)}
+.panel{display:none;flex-direction:column;width:100%;overflow-y:auto;padding:1rem}
+.panel.active{display:flex}
+.panel::-webkit-scrollbar{width:6px}
+.panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+
+/* UPLOAD ZONE */
+.upload-zone{border:2px dashed var(--border);border-radius:16px;padding:2rem;text-align:center;transition:.3s;cursor:pointer;background:rgba(255,255,255,.02);margin-bottom:1rem}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--green);background:rgba(0,255,136,.05)}
+.upload-icon{font-size:3rem;margin-bottom:.75rem}
+.upload-title{font-size:1rem;font-weight:800;margin-bottom:.25rem}
+.upload-sub{font-size:.75rem;color:var(--muted)}
+.upload-methods{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem;margin-top:1rem}
+.upload-method{padding:1rem;background:var(--card2);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:.2s;text-align:left}
+.upload-method:hover{border-color:var(--green);background:rgba(0,255,136,.05)}
+.upload-method .um-icon{font-size:1.5rem;margin-bottom:.5rem}
+.upload-method .um-title{font-size:.8rem;font-weight:700}
+.upload-method .um-desc{font-size:.65rem;color:var(--muted);margin-top:.25rem}
+
+/* SCHEIN CARDS */
+.schein-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1rem}
+.schein-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.25rem;position:relative;overflow:hidden;transition:.3s}
+.schein-card:hover{border-color:var(--green);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,255,136,.08)}
+.schein-card.won{border-color:var(--green)}
+.schein-card.lost{border-color:var(--red);opacity:.7}
+.schein-card.live{border-color:var(--yellow);animation:livePulse 2s infinite}
+@keyframes livePulse{0%,100%{box-shadow:0 0 0 0 rgba(255,184,0,.2)}50%{box-shadow:0 0 20px 4px rgba(255,184,0,.15)}}
+.sc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+.sc-id{font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+.sc-badge{font-size:.6rem;font-weight:800;padding:2px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:1px}
+.sc-badge.live{background:rgba(255,184,0,.15);color:var(--yellow)}
+.sc-badge.won{background:rgba(0,255,136,.15);color:var(--green)}
+.sc-badge.lost{background:rgba(250,30,78,.15);color:var(--red)}
+.sc-badge.pending{background:rgba(255,255,255,.08);color:var(--muted)}
+.sc-prob{text-align:center;margin:.75rem 0}
+.sc-prob-val{font-size:2.5rem;font-weight:900;font-family:var(--mono)}
+.sc-prob-label{font-size:.6rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+.sc-games{margin-top:.75rem}
+.sc-game{display:flex;align-items:center;justify-content:space-between;padding:.4rem .5rem;background:var(--card2);border-radius:6px;margin-bottom:4px;font-size:.7rem}
+.sc-game .teams{flex:1;font-weight:600}
+.sc-game .score{font-family:var(--mono);font-weight:800;color:var(--green);min-width:40px;text-align:center}
+.sc-game .minute{font-size:.6rem;color:var(--yellow);font-weight:700;min-width:35px;text-align:right}
+.sc-game .status-dot{width:6px;height:6px;border-radius:50%;margin-right:6px;flex-shrink:0}
+.sc-game .status-dot.live{background:var(--yellow);animation:blink 1s infinite}
+.sc-game .status-dot.won{background:var(--green)}
+.sc-game .status-dot.lost{background:var(--red)}
+.sc-game .status-dot.pending{background:var(--muted)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.sc-footer{display:flex;justify-content:space-between;margin-top:.75rem;padding-top:.5rem;border-top:1px solid var(--border);font-size:.7rem}
+.sc-einsatz{color:var(--muted)}
+.sc-auszahlung{font-weight:800;color:var(--green)}
+
+/* LIVE MONITOR */
+.live-split{display:grid;grid-template-columns:1fr 350px;gap:1rem;height:100%}
+.live-main{display:flex;flex-direction:column;gap:1rem;overflow-y:auto}
+.live-sidebar{display:flex;flex-direction:column;gap:.75rem;overflow-y:auto;padding-right:4px}
+.stream-container{background:#000;border-radius:14px;overflow:hidden;aspect-ratio:16/9;position:relative;border:1px solid var(--border)}
+.stream-container iframe{width:100%;height:100%;border:none}
+.stream-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.8);flex-direction:column;gap:1rem}
+.stream-overlay .so-icon{font-size:3rem}
+.stream-overlay .so-text{font-size:.8rem;color:var(--muted)}
+
+.ticker-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.75rem}
+.ticker-card .tc-title{font-size:.7rem;font-weight:800;color:var(--green);letter-spacing:2px;text-transform:uppercase;margin-bottom:.5rem}
+.ticker-event{display:flex;gap:.5rem;padding:.3rem 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:.7rem;align-items:center}
+.ticker-event:last-child{border:none}
+.ticker-event .te-min{font-family:var(--mono);color:var(--yellow);font-weight:700;min-width:30px}
+.ticker-event .te-icon{font-size:.9rem;min-width:20px;text-align:center}
+.ticker-event .te-text{color:var(--muted);flex:1}
+.ticker-event .te-text b{color:var(--text)}
+
+/* SCORES WIDGET */
+.score-widget{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.75rem;cursor:pointer;transition:.2s}
+.score-widget:hover{border-color:var(--blue)}
+.sw-header{display:flex;justify-content:space-between;font-size:.6rem;color:var(--muted);margin-bottom:.5rem}
+.sw-teams{display:flex;align-items:center;justify-content:center;gap:1rem}
+.sw-team{text-align:center;font-size:.7rem;font-weight:700;min-width:80px}
+.sw-score{font-size:1.5rem;font-weight:900;font-family:var(--mono);padding:0 .5rem}
+.sw-minute{font-size:.6rem;color:var(--yellow);font-weight:800;text-align:center;margin-top:.25rem}
+
+/* TIPPS POPUP */
+.popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.3s}
+.popup-overlay.show{opacity:1;pointer-events:all}
+.popup{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;max-width:700px;width:90%;max-height:80vh;overflow-y:auto}
+.popup-close{float:right;border:none;background:none;color:var(--muted);font-size:1.2rem;cursor:pointer}
+.popup-close:hover{color:var(--text)}
+
+/* STATS */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.75rem;margin-bottom:1rem}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center}
+.stat-val{font-size:1.8rem;font-weight:900;font-family:var(--mono)}
+.stat-label{font-size:.6rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:.25rem}
+.stat-box.green .stat-val{color:var(--green)}
+.stat-box.red .stat-val{color:var(--red)}
+.stat-box.blue .stat-val{color:var(--blue)}
+.stat-box.yellow .stat-val{color:var(--yellow)}
+
+/* HISTORY TABLE */
+.htable{width:100%;border-collapse:collapse;font-size:.7rem}
+.htable th{text-align:left;padding:.5rem;color:var(--muted);font-size:.6rem;letter-spacing:2px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+.htable td{padding:.5rem;border-bottom:1px solid rgba(255,255,255,.03)}
+.htable tr:hover td{background:rgba(255,255,255,.02)}
+
+/* MANUAL FORM */
+.form-group{margin-bottom:.75rem}
+.form-label{font-size:.65rem;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;display:block}
+.form-input{width:100%;padding:.5rem .75rem;background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.8rem;font-family:var(--font)}
+.form-input:focus{outline:none;border-color:var(--green)}
+.btn{padding:.5rem 1rem;border:none;border-radius:6px;font-weight:700;font-size:.75rem;cursor:pointer;transition:.2s;letter-spacing:1px}
+.btn-green{background:var(--green);color:#000}.btn-green:hover{filter:brightness(1.2)}
+.btn-red{background:var(--red);color:#fff}.btn-red:hover{filter:brightness(1.2)}
+.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{filter:brightness(1.2)}
+.btn-ghost{background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--border)}.btn-ghost:hover{color:var(--text);border-color:#555}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;padding:.75rem 1.25rem;background:var(--card);border:1px solid var(--border);border-radius:10px;font-size:.75rem;font-weight:600;z-index:999;transform:translateY(100px);opacity:0;transition:.3s}
+.toast.show{transform:translateY(0);opacity:1}
+
+@media(max-width:900px){.live-split{grid-template-columns:1fr}.schein-grid{grid-template-columns:1fr}}
+</style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+<body data-dkz-module="sportwetten" data-dkz-appid="DKZ-MOD-SPO" data-dkz-version="v0.01" data-dkz-title="BET TRACKER  Live Command Center" data-dkz-icon="📦" data-dkz-separable="true">
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div><div class="logo">&#9917; BET TRACKER</div><div class="logo-sub">Live Command Center &#8212; DkZ v2.0</div></div>
+  </div>
+  <div style="display:flex;gap:6px;align-items:center">
+    <button class="hdr-btn" onclick="openTipps()" title="Tages-Tipps">&#128161; Tipps</button>
+    <button class="hdr-btn" onclick="openSofaScore()" title="SofaScore">&#9918; SofaScore</button>
+    <button class="hdr-btn" onclick="openOddspedia()" title="Oddspedia">&#128202; Odds</button>
+    <button class="hdr-btn" onclick="showModuleInfo()" title="Info">&#9432;</button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('upload')">&#128228; Eingabe</button>
+  <button class="tab" onclick="switchTab('dashboard')">&#128200; Dashboard</button>
+  <button class="tab" onclick="switchTab('live')">&#128308; Live Monitor</button>
+  <button class="tab" onclick="switchTab('history')">&#128203; History</button>
+</div>
+
+<!-- ═══ TAB 1: UPLOAD / EINGABE ═══ -->
+<div class="panel active" id="panel-upload">
+<div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+  <div class="upload-icon">&#128247;</div>
+  <div class="upload-title">Wettschein hochladen</div>
+  <div class="upload-sub">Foto, Screenshot oder QR-Code &#8212; Drag &amp; Drop oder Klick</div>
+  <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleUpload(this.files[0])">
+</div>
+<div class="upload-methods">
+  <div class="upload-method" onclick="document.getElementById('fileInput').click()">
+    <div class="um-icon">&#128247;</div><div class="um-title">Foto / Screenshot</div>
+    <div class="um-desc">Tipico Wettschein abfotografieren &#8212; OCR erkennt automatisch</div>
+  </div>
+  <div class="upload-method" onclick="startQRScan()">
+    <div class="um-icon">&#128274;</div><div class="um-title">QR-Code scannen</div>
+    <div class="um-desc">Kamera &#246;ffnen und den Tipico QR-Code scannen</div>
+  </div>
+  <div class="upload-method" onclick="toggleLinkInput()">
+    <div class="um-icon">&#128279;</div><div class="um-title">Link eingeben</div>
+    <div class="um-desc">Tipico Wettschein-URL oder Cashout-Link einfuegen</div>
+  </div>
+  <div class="upload-method" onclick="toggleManualForm()">
+    <div class="um-icon">&#9997;</div><div class="um-title">Manuell eintragen</div>
+    <div class="um-desc">Spiele, Quoten und Einsatz selbst eingeben</div>
+  </div>
+</div>
+
+<!-- Link Input -->
+<div id="linkInput" style="display:none;margin-top:1rem">
+  <div class="form-group">
+    <label class="form-label">Tipico Link / QR-URL</label>
+    <div style="display:flex;gap:6px">
+      <input class="form-input" id="scheinLink" placeholder="https://sports.tipico.de/...">
+      <button class="btn btn-green" onclick="loadFromLink()">Laden</button>
+    </div>
+  </div>
+</div>
+
+<!-- Manual Form -->
+<div id="manualForm" style="display:none;margin-top:1rem;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem">
+  <div style="font-size:.8rem;font-weight:800;margin-bottom:.75rem">&#9997; Manuell eintragen</div>
+  <div id="manualGames"></div>
+  <button class="btn btn-ghost" onclick="addManualGame()" style="width:100%;margin:.5rem 0">+ Spiel hinzufuegen</button>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.5rem">
+    <div class="form-group"><label class="form-label">Einsatz (EUR)</label><input class="form-input" id="manEinsatz" type="number" value="2" step="0.5"></div>
+    <div class="form-group"><label class="form-label">Max. Auszahlung (EUR)</label><input class="form-input" id="manAusz" type="number" placeholder="auto"></div>
+  </div>
+  <button class="btn btn-green" onclick="saveManualSchein()" style="width:100%;margin-top:.5rem">&#128190; Wettschein speichern</button>
+</div>
+
+<!-- OCR Preview -->
+<div id="ocrPreview" style="display:none;margin-top:1rem;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+    <div style="font-size:.8rem;font-weight:800">&#129504; OCR Erkennung</div>
+    <button class="btn btn-ghost" onclick="document.getElementById('ocrPreview').style.display='none'">&#10005;</button>
+  </div>
+  <div style="display:grid;grid-template-columns:200px 1fr;gap:1rem">
+    <img id="ocrImage" style="width:100%;border-radius:8px;border:1px solid var(--border)">
+    <div>
+      <div id="ocrResult" style="font-size:.75rem;color:var(--muted);line-height:1.8;white-space:pre-wrap;max-height:200px;overflow-y:auto"></div>
+      <button class="btn btn-green" onclick="confirmOCR()" style="margin-top:.5rem">&#9989; Uebernehmen</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ TAB 2: DASHBOARD ═══ -->
+<div class="panel" id="panel-dashboard">
+<div class="stat-row" id="statsRow">
+  <div class="stat-box green"><div class="stat-val" id="st-active">0</div><div class="stat-label">Aktive Scheine</div></div>
+  <div class="stat-box yellow"><div class="stat-val" id="st-prob">--%</div><div class="stat-label">&#216; Gewinn-Chance</div></div>
+  <div class="stat-box blue"><div class="stat-val" id="st-einsatz">0&#8364;</div><div class="stat-label">Gesamt-Einsatz</div></div>
+  <div class="stat-box green"><div class="stat-val" id="st-potential">0&#8364;</div><div class="stat-label">Potenzial</div></div>
+</div>
+<div class="schein-grid" id="scheinGrid"></div>
+<div id="emptyDash" style="text-align:center;padding:3rem;color:var(--muted)">
+  <div style="font-size:3rem;margin-bottom:1rem">&#9917;</div>
+  <div style="font-weight:800;margin-bottom:.25rem">Keine Wettscheine</div>
+  <div style="font-size:.75rem">Lade einen Schein hoch oder trage manuell ein</div>
+</div>
+</div>
+
+<!-- ═══ TAB 3: LIVE MONITOR ═══ -->
+<div class="panel" id="panel-live">
+<div class="live-split">
+  <div class="live-main">
+    <div class="stream-container" id="streamBox">
+      <div class="stream-overlay" id="streamOverlay">
+        <div class="so-icon">&#128250;</div>
+        <div class="so-text">Waehle ein Spiel fuer den Live-Stream</div>
+        <button class="btn btn-blue" onclick="autoFindStream()">&#128269; Stream suchen</button>
+      </div>
+    </div>
+    <div id="liveGames" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:.5rem"></div>
+  </div>
+  <div class="live-sidebar">
+    <div class="ticker-card">
+      <div class="tc-title">&#9889; Live Ticker</div>
+      <div id="liveTicker"><div style="color:var(--muted);font-size:.7rem;padding:.5rem">Warte auf Live-Events...</div></div>
+    </div>
+    <div class="ticker-card">
+      <div class="tc-title">&#128202; Quoten-Monitor</div>
+      <div id="oddsMonitor"><div style="color:var(--muted);font-size:.7rem;padding:.5rem">Keine aktiven Quoten</div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ TAB 4: HISTORY ═══ -->
+<div class="panel" id="panel-history">
+<div class="stat-row" id="histStats">
+  <div class="stat-box green"><div class="stat-val" id="hs-won">0</div><div class="stat-label">Gewonnen</div></div>
+  <div class="stat-box red"><div class="stat-val" id="hs-lost">0</div><div class="stat-label">Verloren</div></div>
+  <div class="stat-box blue"><div class="stat-val" id="hs-roi">0%</div><div class="stat-label">ROI</div></div>
+  <div class="stat-box yellow"><div class="stat-val" id="hs-total">0&#8364;</div><div class="stat-label">Bilanz</div></div>
+</div>
+<table class="htable" id="histTable">
+  <thead><tr><th>Datum</th><th>Schein</th><th>Einsatz</th><th>Quote</th><th>Ergebnis</th><th>Gewinn</th></tr></thead>
+  <tbody id="histBody"></tbody>
+</table>
+<div id="emptyHist" style="text-align:center;padding:2rem;color:var(--muted);font-size:.75rem">Noch keine Schein-History</div>
+</div>
+
+<!-- TIPPS POPUP -->
+<div class="popup-overlay" id="tippsPopup">
+<div class="popup">
+  <button class="popup-close" onclick="closeTipps()">&#10005;</button>
+  <div style="font-size:1.1rem;font-weight:900;margin-bottom:1rem">&#128161; Tages-Tipps</div>
+  <div style="display:flex;gap:.5rem;margin-bottom:1rem">
+    <button class="btn btn-green" onclick="loadTipps('today')">Heute</button>
+    <button class="btn btn-ghost" onclick="loadTipps('yesterday')">Gestern</button>
+    <button class="btn btn-ghost" onclick="window.open('https://www.wetttippsheute.com','_blank')">&#128279; wetttippsheute.com</button>
+  </div>
+  <div id="tippsContent" style="font-size:.75rem;line-height:1.8;color:var(--muted)">Lade Tipps...</div>
+  <div style="margin-top:1rem;padding-top:.75rem;border-top:1px solid var(--border)">
+    <div style="font-size:.75rem;font-weight:800;margin-bottom:.5rem">&#128202; Tipp-Erfolgsstatistik</div>
+    <div id="tippsStats" style="font-size:.7rem;color:var(--muted)">Noch keine Daten</div>
+  </div>
+</div>
+</div>
+
+<!-- INFO MODAL -->
+<div class="popup-overlay" id="info-modal">
+<div class="popup">
+  <button class="popup-close" onclick="document.getElementById('info-modal').classList.remove('show')">&#10005;</button>
+  <div style="font-size:1.1rem;font-weight:900;margin-bottom:.5rem">&#9917; BET TRACKER</div>
+  <p style="font-size:.8rem;color:var(--muted);line-height:1.8">
+    Live-Wettschein-Tracker mit Foto-Upload, QR-Scanner, Live-Streams und Statistiken.
+  </p>
+  <div style="font-size:.75rem;line-height:2;margin-top:.75rem">
+    <div><b>Datenquellen:</b></div>
+    <div>&#9918; SofaScore &#8212; Live-Scores, Events, Aufstellungen</div>
+    <div>&#128202; Oddspedia &#8212; Live-Quoten, Statistiken</div>
+    <div>&#128250; livetv.sx &#8212; Kostenlose Live-Streams</div>
+    <div>&#128161; Wetttippsheute &#8212; Community Tages-Tipps</div>
+    <div>&#129504; Puter.js AI &#8212; OCR Schein-Erkennung</div>
+  </div>
+</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="../../shared/dkz-analyser.js"></script>
+<script src="../../shared/dkz-debug.js"></script>
+<script src="../../shared/dkz-guide.js"></script>
+<script src="../../shared/dkz-copilot.js"></script>
+<script src="../../shared/dkz-export.js"></script>
+<script src="../../shared/dkz-crosslinks.js"></script>
+<script src="../../shared/dkz-test.js"></script>
+<script src="../../shared/dkz-puter.js"></script>
+<script src="tracker.js"></script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../shared/seo-shared.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="grid grid-2">
+        <!-- DOMAIN INPUT -->
+        <div class="card card-full">
+            <h3><span class="icon">📡</span> DNS Health Monitor</h3>
+            <div class="input-row">
+                <input type="text" id="domainInput" placeholder="domain.com eingeben...">
+                <button class="btn btn-green" onclick="scanDomain()">🔍 Scannen</button>
+                <button class="btn btn-blue btn-sm"
+                    onclick="document.getElementById('domainInput').value='devkitz.eu';scanDomain()">Demo</button>
+            </div>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>DNS-Records werden abgefragt...
+            </div>
+        </div>
+
+        <!-- HEALTH SCORE -->
+        <div class="card" id="scoreCard" style="display:none">
+            <h3><span class="icon">🏥</span> DNS Health Score</h3>
+            <div class="gauge-wrap">
+                <div class="gauge">
+                    <svg viewBox="0 0 200 200" width="180" height="180">
+                        <circle class="gauge-bg" cx="100" cy="100" r="85" />
+                        <circle class="gauge-fill" id="gaugeFill" cx="100" cy="100" r="85" stroke-dasharray="534"
+                            stroke-dashoffset="534" />
+                    </svg>
+                    <div class="gauge-text">
+                        <div class="gauge-score" id="scoreNum">0</div>
+                        <div class="gauge-label">Health Score</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stats" id="statsRow"></div>
+        </div>
+
+        <!-- RECORD TABLE -->
+        <div class="card" id="recordsCard" style="display:none">
+            <h3><span class="icon">📋</span> DNS Records</h3>
+            <div id="recordsList"></div>
+        </div>
+
+        <!-- CHECKS -->
+        <div class="card card-full" id="checksCard" style="display:none">
+            <h3><span class="icon">✅</span> Health Checks</h3>
+            <div class="filter-bar" id="filterBar"></div>
+            <div id="checksList"></div>
+        </div>
+
+        <!-- RECOMMENDATIONS -->
+        <div class="card card-full" id="recoCard" style="display:none">
+            <h3><span class="icon">💡</span> Empfehlungen</h3>
+            <div id="recoList"></div>
+        </div>
+
+        <!-- HISTORY -->
+        <div class="card card-full">
+            <h3><span class="icon">📈</span> Scan-Verlauf <span
+                    style="font-size:10px;color:var(--muted);font-weight:400;margin-left:auto">(localStorage)</span>
+            </h3>
+            <div id="historyList"></div>
+            <div id="historyEmpty" class="empty-state">
+                <div class="icon">🌐</div>Noch keine Domains gescannt.
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        const DNS_CHECKS = [
+            { id: 'a-record', name: 'A Record', cat: 'records', desc: 'IPv4-Adresse korrekt konfiguriert', pts: 15, fix: 'A-Record bei deinem DNS-Provider setzen (z.B. Cloudflare, Hostinger).' },
+            { id: 'aaaa-record', name: 'AAAA Record', cat: 'records', desc: 'IPv6-Adresse vorhanden (zukunftssicher)', pts: 5, fix: 'AAAA-Record für IPv6 hinzufügen – immer mehr Provider nutzen IPv6.' },
+            { id: 'cname', name: 'CNAME / Alias', cat: 'records', desc: 'CNAME/Alias korrekt für www-Subdomain', pts: 8, fix: 'CNAME für www → root-domain setzen oder umgekehrt.' },
+            { id: 'mx-record', name: 'MX Record', cat: 'mail', desc: 'Mail-Exchange Record für E-Mail-Empfang', pts: 10, fix: 'MX-Record auf deinen Mail-Provider setzen (Gmail: ASPMX.L.GOOGLE.COM).' },
+            { id: 'spf', name: 'SPF Record', cat: 'mail', desc: 'Sender Policy Framework gegen Email-Spoofing', pts: 10, fix: 'TXT-Record: v=spf1 include:_spf.google.com ~all (für Gmail).' },
+            { id: 'dkim', name: 'DKIM', cat: 'mail', desc: 'DomainKeys Identified Mail Signatur', pts: 8, fix: 'DKIM-Key vom Mail-Provider holen und als TXT-Record eintragen.' },
+            { id: 'dmarc', name: 'DMARC', cat: 'mail', desc: 'Domain-based Message Auth, Reporting & Conformance', pts: 8, fix: 'TXT _dmarc.domain.com: v=DMARC1; p=quarantine; rua=mailto:...' },
+            { id: 'ns-record', name: 'NS Records', cat: 'records', desc: 'Nameserver korrekt delegiert', pts: 10, fix: 'Nameserver beim Registrar auf deinen DNS-Provider setzen.' },
+            { id: 'soa', name: 'SOA Record', cat: 'records', desc: 'Start of Authority – Zone-Autorität', pts: 5, fix: 'SOA wird automatisch vom DNS-Provider gesetzt.' },
+            { id: 'ttl', name: 'TTL Werte', cat: 'perf', desc: 'Time To Live optimal konfiguriert (300-3600s)', pts: 5, fix: 'TTL auf 300s für dynamische, 3600s für statische Records.' },
+            { id: 'dnssec', name: 'DNSSEC', cat: 'security', desc: 'DNS Security Extensions aktiviert', pts: 8, fix: 'DNSSEC bei deinem DNS-Provider aktivieren (Cloudflare: 1-Klick).' },
+            { id: 'caa', name: 'CAA Record', cat: 'security', desc: 'Certificate Authority Authorization', pts: 5, fix: 'CAA Record: 0 issue "letsencrypt.org" – nur LE darf Zertifikate ausstellen.' },
+            { id: 'propagation', name: 'Propagation', cat: 'perf', desc: 'DNS-Propagation weltweit abgeschlossen', pts: 3, fix: 'Warten (bis 48h) oder TTL vorher auf 60s senken für schnelle Änderungen.' },
+        ];
+
+        let scanHistory = JSON.parse(localStorage.getItem('seo_dns_history') || '{}');
+
+        async function scanDomain() {
+            const domain = document.getElementById('domainInput').value.trim().replace(/https?:\/\//, '').split('/')[0];
+            if (!domain) { alert('Bitte Domain eingeben'); return }
+
+            const ld = document.getElementById('loading'); ld.classList.add('show');
+            ['scoreCard', 'recordsCard', 'checksCard', 'recoCard'].forEach(id => document.getElementById(id).style.display = 'none');
+
+            await new Promise(r => setTimeout(r, 1500));
+
+            // Simulate DNS scan results
+            const results = DNS_CHECKS.map(c => {
+                let pass = Math.random() > .3;
+                if (c.id === 'a-record' || c.id === 'ns-record') pass = Math.random() > .1;
+                if (c.id === 'dnssec') pass = Math.random() > .6;
+                const val = pass ? 'OK' : 'Fehlt / Fehlerhaft';
+                return { ...c, pass, val };
+            });
+
+            // Simulated DNS records
+            const records = [
+                { type: 'A', name: domain, value: `${Math.floor(Math.random() * 200 + 10)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`, ttl: 300 },
+                { type: 'AAAA', name: domain, value: '2606:4700:3030::ac43:' + Math.floor(Math.random() * 9999).toString(16), ttl: 300 },
+                { type: 'CNAME', name: 'www.' + domain, value: domain, ttl: 3600 },
+                { type: 'MX', name: domain, value: 'mx1.hostinger.com (Pri: 10)', ttl: 3600 },
+                { type: 'TXT', name: domain, value: 'v=spf1 include:_spf.google.com ~all', ttl: 3600 },
+                { type: 'NS', name: domain, value: 'ns1.dns-parking.com, ns2.dns-parking.com', ttl: 86400 },
+                { type: 'SOA', name: domain, value: 'ns1.dns-parking.com hostmaster.' + domain, ttl: 86400 },
+            ];
+
+            let score = 0, maxPts = 0;
+            results.forEach(c => { maxPts += c.pts; if (c.pass) score += c.pts });
+            const pct = Math.round(score / maxPts * 100);
+            const passed = results.filter(c => c.pass).length;
+            const failed = results.filter(c => !c.pass).length;
+
+            // Save history
+            if (!scanHistory[domain]) scanHistory[domain] = { scans: [] };
+            scanHistory[domain].scans.push({ score: pct, date: new Date().toISOString(), passed, failed, total: results.length });
+            localStorage.setItem('seo_dns_history', JSON.stringify(scanHistory));
+
+            ld.classList.remove('show');
+
+            // SCORE
+            document.getElementById('scoreCard').style.display = '';
+            const fill = document.getElementById('gaugeFill');
+            fill.style.strokeDashoffset = 534 - (pct / 100 * 534);
+            fill.style.stroke = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--yellow)' : 'var(--red)';
+            animateNum('scoreNum', pct);
+            document.getElementById('statsRow').innerHTML = `
+                <div class="stat"><div class="stat-num" style="color:var(--green)">${passed}</div><div class="stat-label">Bestanden</div></div>
+                <div class="stat"><div class="stat-num" style="color:var(--red)">${failed}</div><div class="stat-label">Fehler</div></div>
+                <div class="stat"><div class="stat-num" style="color:var(--cyan)">${results.length}</div><div class="stat-label">Geprüft</div></div>
+                <div class="stat"><div class="stat-num" style="color:var(--yellow)">${records.length}</div><div class="stat-label">Records</div></div>
+            `;
+
+            // RECORDS TABLE
+            document.getElementById('recordsCard').style.display = '';
+            document.getElementById('recordsList').innerHTML = `
+                <table class="data-table"><thead><tr><th>Typ</th><th>Name</th><th>Wert</th><th>TTL</th></tr></thead><tbody>
+                ${records.map(r => `<tr><td><span class="badge badge-blue">${r.type}</span></td><td style="font-weight:600">${r.name}</td><td style="font-family:var(--mono);font-size:11px;color:var(--cyan)">${r.value}</td><td style="color:var(--muted)">${r.ttl}s</td></tr>`).join('')}
+                </tbody></table>`;
+
+            // CHECKS
+            document.getElementById('checksCard').style.display = '';
+            const cats = [...new Set(results.map(c => c.cat))];
+            document.getElementById('filterBar').innerHTML = `<button class="filter-chip active" onclick="filterChecks('all',this)">Alle</button>` +
+                cats.map(c => `<button class="filter-chip" onclick="filterChecks('${c}',this)">${c === 'records' ? '📋 Records' : c === 'mail' ? '📧 Mail' : c === 'security' ? '🔒 Security' : '⚡ Performance'}</button>`).join('');
+            document.getElementById('checksList').innerHTML = results.map(c => `
+                <div class="result-item" data-cat="${c.cat}">
+                    <span class="result-icon">${c.pass ? '✅' : '❌'}</span>
+                    <div style="flex:1">
+                        <div class="result-title">${c.name}</div>
+                        <div class="result-desc">${c.desc}</div>
+                        <div class="result-value">${c.val}</div>
+                    </div>
+                    <span class="badge ${c.pass ? 'badge-green' : 'badge-red'}">${c.pass ? 'OK' : 'FIX'}</span>
+                </div>`).join('');
+
+            // RECOMMENDATIONS
+            const fails = results.filter(c => !c.pass).sort((a, b) => b.pts - a.pts);
+            if (fails.length) {
+                document.getElementById('recoCard').style.display = '';
+                document.getElementById('recoList').innerHTML = fails.map((c, i) => `
+                    <div class="result-item">
+                        <span class="result-icon">💡</span>
+                        <div style="flex:1">
+                            <div class="result-title">#${i + 1}: ${c.name} konfigurieren (+${c.pts} Punkte)</div>
+                            <div class="result-desc">${c.fix}</div>
+                        </div>
+                    </div>`).join('');
+            }
+
+            renderHistory();
+        }
+
+        function filterChecks(cat, btn) {
+            document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('#checksList .result-item').forEach(r => {
+                r.style.display = cat === 'all' || r.dataset.cat === cat ? '' : 'none';
+            });
+        }
+
+        function animateNum(elId, target) {
+            const el = document.getElementById(elId); let c = 0;
+            const s = Math.ceil(target / 50);
+            const t = setInterval(() => { c += s; if (c >= target) { c = target; clearInterval(t) } el.textContent = c }, 25);
+        }
+
+        function renderHistory() {
+            const entries = Object.entries(scanHistory);
+            document.getElementById('historyEmpty').style.display = entries.length ? 'none' : 'block';
+            document.getElementById('historyList').innerHTML = entries.map(([d, data]) => {
+                const latest = data.scans[data.scans.length - 1];
+                const prev = data.scans.length > 1 ? data.scans[data.scans.length - 2] : null;
+                const color = latest.score >= 80 ? 'var(--green)' : latest.score >= 50 ? 'var(--yellow)' : 'var(--red)';
+                const trend = prev ? (latest.score > prev.score ? `<span style="color:var(--green)">▲ +${latest.score - prev.score}</span>` : latest.score < prev.score ? `<span style="color:var(--red)">▼ ${latest.score - prev.score}</span>` : '<span style="color:var(--muted)">→ 0</span>') : '<span class="badge badge-cyan">NEU</span>';
+                return `<div class="metric-row" style="cursor:pointer" onclick="document.getElementById('domainInput').value='${d}';scanDomain()">
+                    <span style="font-weight:700;flex:1">${d}</span>
+                    <span class="metric-value" style="color:${color}">${latest.score}/100</span>
+                    ${trend}
+                    <span style="font-size:10px;color:var(--dim)">${data.scans.length} Scans • ${new Date(latest.date).toLocaleDateString('de-DE')}</span>
+                    <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();delete scanHistory['${d}'];localStorage.setItem('seo_dns_history',JSON.stringify(scanHistory));renderHistory()">✕</button>
+                </div>`;
+            }).join('');
+        }
+
+        renderHistory();
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

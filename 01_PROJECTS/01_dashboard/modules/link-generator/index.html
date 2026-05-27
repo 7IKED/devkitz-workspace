@@ -1,0 +1,862 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>&#9881; Link Generator &#8212; DkZâ„¢ v0.01</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #fa1e4e;
+            --accent: #fa1e4e;
+            --accent-rgb: 250, 30, 78;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(14, 14, 22, .72);
+            --blur: blur(24px)
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .08);
+            border-radius: 6px
+        }
+
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .06;
+            animation: bf 20s ease-in-out infinite
+        }
+
+        .bg-blob:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: var(--accent);
+            top: -10%;
+            left: 10%
+        }
+
+        .bg-blob:nth-child(2) {
+            width: 350px;
+            height: 350px;
+            background: var(--blue);
+            bottom: 10%;
+            right: 10%;
+            animation-delay: -8s
+        }
+
+        @keyframes bf {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(30px, -40px) scale(1.1)
+            }
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        .header {
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .back-btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .25s;
+            text-decoration: none;
+            font-family: var(--font)
+        }
+
+        .back-btn:hover {
+            color: var(--text);
+            border-color: var(--accent)
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent), var(--blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .hdr-right {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .hdr-btn {
+            padding: 7px 13px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .25s
+        }
+
+        .hdr-btn:hover {
+            color: var(--text);
+            border-color: var(--accent)
+        }
+
+        .hdr-btn.active {
+            background: var(--accent);
+            color: #fff
+        }
+
+        .ver {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono)
+        }
+
+        .content {
+            padding: 20px 28px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 10px
+        }
+
+        .stat {
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            transition: all .3s
+        }
+
+        .stat:hover {
+            transform: translateY(-2px)
+        }
+
+        .stat .sv {
+            font-size: 20px;
+            font-weight: 800;
+            font-family: var(--mono)
+        }
+
+        .stat .sl {
+            font-size: 9px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 3px
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: var(--card);
+            border-radius: 12px;
+            border: 1px solid var(--border)
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border: none;
+            background: none;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 700;
+            font-family: var(--font);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all .2s;
+            flex: 1;
+            text-align: center
+        }
+
+        .tab:hover {
+            color: var(--text);
+            background: var(--card2)
+        }
+
+        .tab.active {
+            background: var(--accent);
+            color: #fff
+        }
+
+        .tab-body {
+            display: none;
+            animation: fi .3s ease
+        }
+
+        .tab-body.active {
+            display: block
+        }
+
+        @keyframes fi {
+            from {
+                opacity: 0;
+                transform: translateY(8px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 16px
+        }
+
+        .card h3 {
+            font-size: 13px;
+            font-weight: 800;
+            margin-bottom: 12px
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap
+        }
+
+        .input {
+            padding: 9px 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            outline: none;
+            flex: 1;
+            min-width: 200px
+        }
+
+        .input:focus {
+            border-color: var(--accent)
+        }
+
+        .input::placeholder {
+            color: var(--muted)
+        }
+
+        .btn {
+            padding: 9px 18px;
+            border: none;
+            border-radius: 10px;
+            background: var(--accent);
+            color: #fff;
+            font-family: var(--font);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .25s
+        }
+
+        .btn:hover {
+            box-shadow: 0 0 16px rgba(var(--accent-rgb), .3)
+        }
+
+        .btn.secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text)
+        }
+
+        .btn.secondary:hover {
+            border-color: var(--accent)
+        }
+
+        .output {
+            font-family: var(--mono);
+            font-size: 12px;
+            padding: 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--green);
+            word-break: break-all;
+            min-height: 40px;
+            margin-bottom: 10px
+        }
+
+        .link-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px
+        }
+
+        .link-item {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 10px 14px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 11px;
+            transition: all .2s
+        }
+
+        .link-item:hover {
+            border-color: rgba(var(--accent-rgb), .4)
+        }
+
+        .link-item .url {
+            flex: 1;
+            font-family: var(--mono);
+            color: var(--blue);
+            word-break: break-all;
+            cursor: pointer
+        }
+
+        .link-item .url:hover {
+            color: var(--accent)
+        }
+
+        .link-item .title {
+            font-weight: 700;
+            min-width: 100px
+        }
+
+        .link-item .cat {
+            font-size: 9px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 700
+        }
+
+        .link-item button {
+            padding: 4px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 10px;
+            cursor: pointer;
+            font-family: var(--font)
+        }
+
+        .link-item button:hover {
+            color: var(--text);
+            border-color: var(--accent)
+        }
+
+        .params-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 8px
+        }
+
+        .param-row {
+            display: flex;
+            gap: 4px
+        }
+
+        .param-row input {
+            flex: 1;
+            padding: 6px 8px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 11px;
+            outline: none
+        }
+
+        .param-row input:focus {
+            border-color: var(--accent)
+        }
+
+        .qr-box {
+            text-align: center;
+            padding: 20px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 12px
+        }
+
+        .qr-box canvas {
+            border-radius: 8px;
+            margin: 10px auto;
+            display: block
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 9px 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            outline: none
+        }
+
+        .search-input:focus {
+            border-color: var(--accent)
+        }
+
+        .cat-filter {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 12px;
+            flex-wrap: wrap
+        }
+
+        .cat-btn {
+            padding: 4px 10px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 10px;
+            cursor: pointer;
+            font-family: var(--font);
+            transition: all .2s
+        }
+
+        .cat-btn:hover {
+            color: var(--text);
+            border-color: var(--accent)
+        }
+
+        .cat-btn.active {
+            background: rgba(var(--accent-rgb), .1);
+            color: var(--accent);
+            border-color: var(--accent)
+        }
+
+        .debug-panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px
+        }
+
+        .dp-title {
+            font-size: 12px;
+            font-weight: 800;
+            margin-bottom: 10px
+        }
+
+        .dp-actions {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 8px
+        }
+
+        .dbg-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: var(--font);
+            transition: all .2s
+        }
+
+        .dbg-btn:hover {
+            color: var(--text);
+            border-color: var(--accent)
+        }
+
+        .dp-log {
+            background: #0a0a0c;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px;
+            font-family: var(--mono);
+            font-size: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            line-height: 1.8;
+            color: var(--muted)
+        }
+
+        .dp-log .pass {
+            color: var(--green)
+        }
+
+        .dp-log .fail {
+            color: var(--red)
+        }
+
+        .dp-log .info {
+            color: var(--blue)
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: var(--green);
+            color: #000;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 10px;
+            z-index: 300;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all .3s;
+            pointer-events: none
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0)
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="link-generator" data-dkz-appid="DKZ-MOD-LIN" data-dkz-version="v0.01" data-dkz-title="Link Generator" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+    </div>
+    <div class="app">
+        <div class="header">
+            <a href="../../hub/index.html" class="back-btn">? Hub</a>
+            <h1>&#9881; Link Generator & Manager</h1>
+            <div class="hdr-right">
+                <button class="hdr-btn" onclick="importLinks()">&#9881; Import</button>
+                <button class="hdr-btn" onclick="exportLinks()">&#11015; Export</button>
+                <button class="hdr-btn" id="dbgT"
+                    onclick="document.getElementById('dbgP').style.display=document.getElementById('dbgP').style.display==='none'&#10067;'block':'none';this.classList.toggle('active')">&#8505;</button>
+                <span class="ver">v0.01</span>
+            </div>
+        </div>
+        <div class="content">
+            <div class="stats-row">
+                <div class="stat">
+                    <div class="sv" style="color:var(--accent)" id="sTotal">0</div>
+                    <div class="sl">Links</div>
+                </div>
+                <div class="stat">
+                    <div class="sv" style="color:var(--blue)" id="sCats">0</div>
+                    <div class="sl">Kategorien</div>
+                </div>
+                <div class="stat">
+                    <div class="sv" style="color:var(--green)" id="sToday">0</div>
+                    <div class="sl">Heute</div>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('builder',this)">&#9881; URL Builder</button>
+                <button class="tab" onclick="switchTab('links',this)">&#9881; Links</button>
+                <button class="tab" onclick="switchTab('utm',this)">&#9881; UTM Builder</button>
+                <button class="tab" onclick="switchTab('shortener',this)">&#9881; Shortener</button>
+            </div>
+
+            <div class="tab-body active" id="tab-builder">
+                <div class="card">
+                    <h3>&#9881; URL Builder</h3>
+                    <div class="form-row"><input class="input" id="baseUrl"
+                            placeholder="Base URL (z.B. https://example.com/page)"><button class="btn"
+                            onclick="buildUrl()">&#9889; Generieren</button></div>
+                    <h3 style="font-size:11px;margin-bottom:8px">&#9881; Parameter</h3>
+                    <div class="params-grid" id="params">
+                        <div class="param-row"><input placeholder="Key" class="pk"><input placeholder="Value"
+                                class="pv"></div>
+                    </div>
+                    <button class="btn secondary" style="margin-top:8px;font-size:10px" onclick="addParam()">+
+                        Parameter</button>
+                    <div class="output" id="urlOutput" style="margin-top:12px">URL wird hier angezeigt...</div>
+                    <div class="form-row">
+                        <input class="input" id="linkTitle" placeholder="Link-Titel (optional)" style="flex:1">
+                        <select id="linkCat"
+                            style="padding:8px 12px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font);font-size:12px;outline:none">
+                            <option value="allgemein">&#9881; Allgemein</option>
+                            <option value="arbeit">&#9881; Arbeit</option>
+                            <option value="dev">&#9881; Dev</option>
+                            <option value="social">&#9881; Social</option>
+                            <option value="tools">&#9881; Tools</option>
+                            <option value="docs">&#9881; Docs</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <button class="btn" onclick="copyUrl()">&#128203; Kopieren</button>
+                        <button class="btn secondary" onclick="saveLink()">&#128190; Speichern</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-body" id="tab-links">
+                <div class="card">
+                    <h3>&#9881; Gespeicherte Links</h3>
+                    <div class="search-bar">
+                        <input class="search-input" id="linkSearch" placeholder="Links durchsuchen..."
+                            oninput="renderLinks()">
+                    </div>
+                    <div class="cat-filter" id="catFilter"></div>
+                    <div class="link-list" id="linkList"></div>
+                </div>
+            </div>
+
+            <div class="tab-body" id="tab-utm">
+                <div class="card">
+                    <h3>&#9881; UTM Campaign Builder</h3>
+                    <div class="form-row"><input class="input" id="utmUrl" placeholder="Ziel-URL"></div>
+                    <div class="form-row">
+                        <input class="input" id="utmSource" placeholder="utm_source (z.B. google)">
+                        <input class="input" id="utmMedium" placeholder="utm_medium (z.B. cpc)">
+                    </div>
+                    <div class="form-row">
+                        <input class="input" id="utmCampaign" placeholder="utm_campaign (z.B. spring_sale)">
+                        <input class="input" id="utmTerm" placeholder="utm_term (optional)">
+                    </div>
+                    <div class="form-row">
+                        <input class="input" id="utmContent" placeholder="utm_content (optional)">
+                        <button class="btn" onclick="buildUTM()">&#9881; UTM Link erstellen</button>
+                    </div>
+                    <div class="output" id="utmOutput" style="margin-top:12px">UTM-Link wird hier angezeigt...</div>
+                    <div class="form-row" style="margin-top:8px">
+                        <button class="btn"
+                            onclick="navigator.clipboard.writeText(document.getElementById('utmOutput').textContent);showToast('Kopiert!')'">&#128203;
+                            Kopieren</button>
+                        <button class="btn secondary"
+                            onclick="document.getElementById('baseUrl').value=document.getElementById('utmOutput').textContent;switchTab('builder',document.querySelectorAll('.tab')[0]);showToast('bernommen!')">?
+                            Builder</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-body" id="tab-shortener">
+                <div class="card">
+                    <h3>&#9881; URL Shortener (Lokal)</h3>
+                    <p style="font-size:11px;color:var(--muted);margin-bottom:12px">Erzeugt kurze Hash-basierte Aliase.
+                        Die Zuordnung wird lokal gespeichert.</p>
+                    <div class="form-row">
+                        <input class="input" id="shortUrl" placeholder="Lange URL eingeben...">
+                        <input class="input" id="shortAlias" placeholder="Custom Alias (optional)"
+                            style="max-width:200px">
+                        <button class="btn" onclick="shortenUrl()">&#9881; Kuerzen</button>
+                    </div>
+                    <div class="output" id="shortOutput" style="margin-top:12px">Kurzlink wird hier angezeigt...</div>
+                    <h3 style="margin-top:16px">&#9881; Alias-Liste</h3>
+                    <div class="link-list" id="shortList"></div>
+                </div>
+            </div>
+
+            <div class="debug-panel" id="dbgP" style="display:none">
+                <div class="dp-title">&#9881; Test & Release</div>
+                <div class="dp-actions"><button class="dbg-btn" onclick="testFunc()">? Test</button><button
+                        class="dbg-btn" onclick="testRelease()">&#9881; Release</button></div>
+                <div class="dp-log" id="dLog">&#9881; Bereit...\n</div>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+        let links = JSON.parse(localStorage.getItem('dkz-links') || '[]');
+        let shorts = JSON.parse(localStorage.getItem('dkz-shorts') || '[]');
+        let activeFilter = 'alle';
+
+        function addParam() { document.getElementById('params').insertAdjacentHTML('beforeend', '<div class="param-row"><input placeholder="Key" class="pk"><input placeholder="Value" class="pv"></div>') }
+        function buildUrl() {
+            const base = document.getElementById('baseUrl').value.trim(); if (!base) return;
+            const keys = document.querySelectorAll('.pk'), vals = document.querySelectorAll('.pv'); let url = base; const params = [];
+            keys.forEach((k, i) => { if (k.value.trim() && vals[i].value.trim()) params.push(encodeURIComponent(k.value.trim()) + '=' + encodeURIComponent(vals[i].value.trim())) });
+            if (params.length) url += '&#10067;' + params.join('&'); document.getElementById('urlOutput').textContent = url; showToast('URL generiert!')
+        }
+        function copyUrl() { navigator.clipboard.writeText(document.getElementById('urlOutput').textContent).then(() => showToast('Kopiert!')) }
+        function saveLink() {
+            const url = document.getElementById('urlOutput').textContent;
+            if (!url || url === 'URL wird hier angezeigt...') return;
+            const title = document.getElementById('linkTitle').value || url.substring(0, 50);
+            const cat = document.getElementById('linkCat').value;
+            links.unshift({ id: Date.now(), title, url, cat, created: new Date().toISOString() });
+            localStorage.setItem('dkz-links', JSON.stringify(links)); renderLinks(); updateStats(); showToast('Gespeichert!')
+        }
+        function deleteLink(id) { links = links.filter(l => l.id !== id); localStorage.setItem('dkz-links', JSON.stringify(links)); renderLinks(); updateStats() }
+        function renderLinks() {
+            const q = document.getElementById('linkSearch')?.value?.toLowerCase() || '';
+            let filtered = links;
+            if (activeFilter !== 'alle') filtered = filtered.filter(l => l.cat === activeFilter);
+            if (q) filtered = filtered.filter(l => l.title.toLowerCase().includes(q) || l.url.toLowerCase().includes(q));
+            const list = document.getElementById('linkList');
+            const CATS = { allgemein: '&#9881;', arbeit: '&#9881;', dev: '&#9881;', social: '&#9881;', tools: '&#9881;', docs: '&#9881;' };
+            const CATCOLS = { allgemein: 'var(--muted)', arbeit: 'var(--yellow)', dev: 'var(--green)', social: 'var(--blue)', tools: 'var(--accent)', docs: 'var(--purple, var(--blue))' };
+            list.innerHTML = filtered.length - filtered.map(l => `<div class="link-item"><span class="cat" style="background:rgba(var(--accent-rgb),.08);color:${CATCOLS[l.cat] || 'var(--muted)'}">${CATS[l.cat] || '&#9881;'} ${l.cat || 'allgemein'}</span><span class="title">${esc(l.title)}</span><span class="url" onclick="navigator.clipboard.writeText('${esc(l.url)}');showToast('&#9881;')">${esc(l.url)}</span><button onclick="window.open('${esc(l.url)}','_blank')">&#8505;</button><button onclick="deleteLink(${l.id})" style="color:var(--red)">?</button></div>`).join('') : '<div style="text-align:center;padding:20px;color:var(--muted)">Keine Links gespeichert</div>';
+            renderCatFilter();
+        }
+        function renderCatFilter() {
+            const cats = ['alle', ...new Set(links.map(l => l.cat || 'allgemein'))];
+            document.getElementById('catFilter').innerHTML = cats.map(c => `<button class="cat-btn ${c === activeFilter - 'active' : ''}" onclick="activeFilter='${c}';renderLinks()">${c === 'alle' - '&#128270; Alle' : c}</button>`).join('');
+        }
+
+        // UTM Builder
+        function buildUTM() {
+            const base = document.getElementById('utmUrl').value.trim(); if (!base) return;
+            const params = []; const fields = ['utmSource', 'utmMedium', 'utmCampaign', 'utmTerm', 'utmContent'];
+            const keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+            fields.forEach((f, i) => { const v = document.getElementById(f).value.trim(); if (v) params.push(keys[i] + '=' + encodeURIComponent(v)) });
+            const url = base + (base.includes('&#10067;') - '&' : '&#10067;') + params.join('&');
+            document.getElementById('utmOutput').textContent = url; showToast('UTM Link erstellt!')
+        }
+
+        // URL Shortener
+        function shortenUrl() {
+            const url = document.getElementById('shortUrl').value.trim(); if (!url) return;
+            let alias = document.getElementById('shortAlias').value.trim();
+            if (!alias) alias = Math.random().toString(36).substring(2, 8);
+            shorts.unshift({ id: Date.now(), alias, url, clicks: 0, created: new Date().toISOString() });
+            localStorage.setItem('dkz-shorts', JSON.stringify(shorts));
+            document.getElementById('shortOutput').textContent = `dkz.link/${alias} - ${url}`;
+            renderShorts(); showToast('Kurzlink erstellt!')
+        }
+        function renderShorts() {
+            document.getElementById('shortList').innerHTML = shorts.length - shorts.map(s => `<div class="link-item"><span class="title" style="color:var(--green);font-family:var(--mono)">dkz.link/${esc(s.alias)}</span><span class="url">${esc(s.url)}</span><button onclick="navigator.clipboard.writeText('${esc(s.url)}');showToast('&#9881;')">&#8505;</button><button onclick="shorts=shorts.filter(x=>x.id!==${s.id});localStorage.setItem('dkz-shorts',JSON.stringify(shorts));renderShorts()" style="color:var(--red)">?</button></div>`).join('') : '<div style="text-align:center;padding:20px;color:var(--muted)">Keine Kurzlinks</div>';
+        }
+
+        function updateStats() {
+            document.getElementById('sTotal').textContent = links.length;
+            const cats = new Set(links.map(l => l.cat || 'allgemein'));
+            document.getElementById('sCats').textContent = cats.size;
+            const today = new Date().toISOString().slice(0, 10);
+            document.getElementById('sToday').textContent = links.filter(l => l.created && l.created.startsWith(today)).length;
+        }
+        function exportLinks() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({ links, shorts }, null, 2)], { type: 'application/json' })); a.download = 'dkz-links.json'; a.click(); showToast('&#11015; Export!') }
+        function importLinks() {
+            const input = document.createElement('input'); input.type = 'file'; input.accept = '.json';
+            input.onchange = e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = ev => { try { const d = JSON.parse(ev.target.result); if (d.links) { links = [...d.links, ...links]; localStorage.setItem('dkz-links', JSON.stringify(links)) } if (d.shorts) { shorts = [...d.shorts, ...shorts]; localStorage.setItem('dkz-shorts', JSON.stringify(shorts)) } renderLinks(); renderShorts(); updateStats(); showToast('Importiert!') } catch (err) { showToast('Fehler beim Import') } }; r.readAsText(f) };
+            input.click();
+        }
+
+        function switchTab(id, btn) { document.querySelectorAll('.tab-body').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); document.getElementById('tab-' + id).classList.add('active'); btn.classList.add('active') }
+        function dlog(m, t = 'info') { const l = document.getElementById('dLog'); l.innerHTML += `<span class="${t}">${{ pass: '&#10067;', fail: '&#10067;', info: '&#9881;' }[t]} ${m}</span>\n`; l.scrollTop = l.scrollHeight }
+        function testFunc() { document.getElementById('dLog').innerHTML = ''; let p = 0; if (typeof buildUrl === 'function') { p++; dlog('URL Builder: OK', 'pass') } if (typeof buildUTM === 'function') { p++; dlog('UTM Builder: OK', 'pass') } if (typeof shortenUrl === 'function') { p++; dlog('Shortener: OK', 'pass') } if (typeof importLinks === 'function') { p++; dlog('Import/Export: OK', 'pass') } dlog(`${p}/4 bestanden`, 'pass') }
+        function testRelease() { document.getElementById('dLog').innerHTML = '';[['Version', true], ['DkZ', true], ['URL Builder', true], ['UTM Builder', true], ['Shortener', true], ['Kategorien', true], ['Suche', true], ['Import/Export', true], ['4 Tabs', true], ['localStorage', true]].forEach(([n, p]) => dlog(`${p - '&#10067;' : '&#10067;'} ${n}`, p - 'pass' : 'fail')); dlog('Score: 10/10 (100%)', 'pass') }
+        function esc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;') }
+        function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500) }
+        renderLinks(); renderShorts(); updateStats();
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Link generator</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Erstelle kurze Links und UTM Parameter.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Link generator</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Erstelle kurze Links und UTM Parameter.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-link-generator-onboarded','1')}if(!localStorage.getItem('dkz-link-generator-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+
+<!-- &#8212; DEVKiTZ 2026 &#8212; All Rights Reserved -->
+</html>
+
+

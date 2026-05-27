@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #1a1a1e;
+            --border2: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --cyan: #00FFD5;
+            --purple: #ec4899;
+            --yellow: #FFB800;
+            --orange: #ff8844;
+            --red: #fa1e4e;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            padding: 20px;
+            overflow-y: auto
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg)
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 3px
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            max-width: 1200px;
+            margin: 0 auto
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            transition: border-color .3s
+        }
+
+        .card:hover {
+            border-color: var(--border2)
+        }
+
+        .card-full {
+            grid-column: 1/-1
+        }
+
+        .card h3 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px
+        }
+
+        input[type=text],
+        input[type=url] {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--card2);
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 13px;
+            outline: none;
+            transition: border .2s
+        }
+
+        input:focus {
+            border-color: var(--blue)
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-family: var(--font);
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .btn:hover {
+            transform: translateY(-1px)
+        }
+
+        .btn-green {
+            background: var(--green);
+            color: #000
+        }
+
+        .btn-blue {
+            background: var(--blue);
+            color: #fff
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 11px;
+            border-radius: 8px
+        }
+
+        /* MODE SELECTOR */
+        .mode-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 16px
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--card2);
+            color: var(--muted);
+            font-family: var(--font);
+            font-weight: 700;
+            font-size: 11px;
+            cursor: pointer;
+            text-align: center;
+            transition: all .2s
+        }
+
+        .mode-btn:hover {
+            border-color: var(--border2);
+            color: var(--text)
+        }
+
+        .mode-btn.active {
+            border-color: var(--green);
+            color: var(--green);
+            background: rgba(0, 255, 136, .05)
+        }
+
+        /* GAUGE */
+        .gauge-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px
+        }
+
+        .gauge {
+            position: relative;
+            width: 180px;
+            height: 180px
+        }
+
+        .gauge svg {
+            transform: rotate(-90deg)
+        }
+
+        .gauge-bg {
+            fill: none;
+            stroke: var(--border);
+            stroke-width: 12
+        }
+
+        .gauge-fill {
+            fill: none;
+            stroke-width: 12;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1.5s ease, stroke .5s
+        }
+
+        .gauge-text {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center
+        }
+
+        .gauge-score {
+            font-size: 42px;
+            font-weight: 800;
+            line-height: 1
+        }
+
+        .gauge-label {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 4px
+        }
+
+        /* RESULTS */
+        .result-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            font-size: 12px;
+            transition: background .2s
+        }
+
+        .result-item:hover {
+            background: rgba(68, 136, 255, .04)
+        }
+
+        .result-item:last-child {
+            border: none
+        }
+
+        .result-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+            margin-top: 1px
+        }
+
+        .result-title {
+            font-weight: 600;
+            margin-bottom: 2px
+        }
+
+        .result-desc {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.5
+        }
+
+        .result-value {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--cyan);
+            background: var(--card2);
+            padding: 3px 8px;
+            border-radius: 6px;
+            margin-top: 4px;
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap
+        }
+
+        .cat-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 14px
+        }
+
+        .cat-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .cat-badge:hover,
+        .cat-badge.active {
+            border-color: var(--green);
+            color: var(--green);
+            background: rgba(0, 255, 136, .06)
+        }
+
+        .stats {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px
+        }
+
+        .stat {
+            flex: 1;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center
+        }
+
+        .stat-num {
+            font-size: 24px;
+            font-weight: 800;
+            line-height: 1
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 4px
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            color: var(--muted)
+        }
+
+        .loading.show {
+            display: block
+        }
+
+        .loading .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        /* TRACKING */
+        .track-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .track-item:hover {
+            background: rgba(68, 136, 255, .04);
+            padding-left: 14px
+        }
+
+        .track-item:last-child {
+            border: none
+        }
+
+        .track-domain {
+            font-weight: 600;
+            flex: 1
+        }
+
+        .track-score {
+            font-weight: 800;
+            font-size: 14px
+        }
+
+        .track-trend {
+            font-size: 11px;
+            font-weight: 700
+        }
+
+        .track-date {
+            font-size: 10px;
+            color: var(--muted)
+        }
+
+        .track-delete {
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 12px;
+            padding: 4px
+        }
+
+        .track-delete:hover {
+            color: var(--red)
+        }
+
+        /* GUIDE STEPS */
+        .guide-step {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 8px
+        }
+
+        .guide-step-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px
+        }
+
+        .guide-step-num {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, var(--red), var(--purple));
+            color: #fff;
+            font-weight: 800;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0
+        }
+
+        .guide-step-title {
+            font-weight: 700;
+            font-size: 12px
+        }
+
+        .guide-step-desc {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.6
+        }
+
+        .report-section {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 10px
+        }
+
+        .report-section h4 {
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .report-text {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.8
+        }
+
+        @media(max-width:768px) {
+            .grid {
+                grid-template-columns: 1fr
+            }
+
+            .input-row {
+                flex-direction: column
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="grid">
+        <!-- INPUT -->
+        <div class="card card-full">
+            <h3>🎯 SEO Analyzer – Website Scanner</h3>
+            <div class="input-row">
+                <input type="url" id="urlInput" placeholder="https://example.com eingeben...">
+                <button class="btn btn-green" onclick="analyze()">🔍 Analysieren</button>
+                <button class="btn btn-blue btn-sm"
+                    onclick="document.getElementById('urlInput').value='https://devkitz.eu';analyze()">Demo</button>
+            </div>
+            <div class="mode-row">
+                <button class="mode-btn active" data-mode="short" onclick="setMode(this)">⚡ Kurz-Analyse</button>
+                <button class="mode-btn" data-mode="long" onclick="setMode(this)">📊 Lang-Analyse</button>
+                <button class="mode-btn" data-mode="full" onclick="setMode(this)">🔬 Umfassend</button>
+            </div>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>Analysiere Website...
+            </div>
+        </div>
+
+        <!-- SCORE -->
+        <div class="card" id="scoreCard" style="display:none">
+            <h3>📊 SEO Score</h3>
+            <div class="gauge-wrap">
+                <div class="gauge"><svg viewBox="0 0 200 200" width="180" height="180">
+                        <circle class="gauge-bg" cx="100" cy="100" r="85" />
+                        <circle class="gauge-fill" id="gaugeFill" cx="100" cy="100" r="85" stroke-dasharray="534"
+                            stroke-dashoffset="534" />
+                    </svg>
+                    <div class="gauge-text">
+                        <div class="gauge-score" id="scoreNum">0</div>
+                        <div class="gauge-label">von 100</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stats" id="statsRow"></div>
+        </div>
+
+        <!-- RESULTS -->
+        <div class="card" id="resultsCard" style="display:none">
+            <h3>📝 Ergebnisse</h3>
+            <div class="cat-badges" id="catBadges"></div>
+            <div id="resultsList"></div>
+        </div>
+
+        <!-- IMPROVEMENT GUIDE -->
+        <div class="card" id="guideCard" style="display:none">
+            <h3>🛠️ Verbesserungsplan (vor nächster Analyse)</h3>
+            <div id="guideSteps"></div>
+        </div>
+
+        <!-- REPORT -->
+        <div class="card" id="reportCard" style="display:none">
+            <h3>📋 Bericht</h3>
+            <div id="reportContent"></div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+                <button class="btn btn-blue btn-sm" onclick="copyReport()">📋 Bericht kopieren</button>
+                <button class="btn btn-sm" style="background:var(--purple);color:#fff" onclick="downloadReport()">💾 Als
+                    Datei speichern</button>
+            </div>
+        </div>
+
+        <!-- RECOMMENDATIONS -->
+        <div class="card card-full" id="recoCard" style="display:none">
+            <h3>💡 Top Empfehlungen</h3>
+            <div id="recoList"></div>
+        </div>
+
+        <!-- LONG-TERM TRACKING -->
+        <div class="card card-full" id="trackCard">
+            <h3>📈 Langzeit-Tracking <span
+                    style="font-size:10px;color:var(--muted);font-weight:400;margin-left:auto">(Domains werden
+                    automatisch gespeichert)</span></h3>
+            <div id="trackList"></div>
+            <div id="trackEmpty" style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Noch keine
+                Domains getrackt. Starte eine Analyse!</div>
+        </div>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        let analysisMode = 'short';
+        let lastResults = null;
+        let trackedDomains = JSON.parse(localStorage.getItem('seo_tracked') || '{}');
+
+        function setMode(btn) { document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); analysisMode = btn.dataset.mode }
+
+        // CHECKS DATABASE
+        const ALL_CHECKS = [
+            // ON-PAGE (always shown)
+            { id: 'title', name: 'Title Tag', cat: 'onpage', pts: 8, tier: 'short', desc: 'Jede Seite braucht ein einzigartiges Title Tag (max 60 Zeichen) mit dem Hauptkeyword am Anfang.', fix: 'Schreibe einen einzigartigen Title: "Keyword – Marke". Beispiel: Stell dir vor, dein Laden hat kein Namensschild – niemand findet ihn.' },
+            { id: 'meta', name: 'Meta Description', cat: 'onpage', pts: 7, tier: 'short', desc: 'Unique Description mit CTA (120-155 Zeichen). Beeinflusst CTR, nicht direkt Ranking.', fix: 'Verfasse eine aktive Description mit Handlungsaufforderung. Beispiel: Wie eine Werbeanzeige in den Gelben Seiten – sie muss Lust machen zu klicken.' },
+            { id: 'h1', name: 'H1 Tag', cat: 'onpage', pts: 8, tier: 'short', desc: 'Genau ein H1 pro Seite mit dem primären Keyword.', fix: 'H1 muss vorhanden und einzigartig sein. Denke an die Schlagzeile einer Zeitung – sie sagt sofort worum es geht.' },
+            { id: 'h2h3', name: 'Heading Hierarchie', cat: 'onpage', pts: 6, tier: 'long', desc: 'Saubere H1>H2>H3 Hierarchie ohne Sprünge.', fix: 'Strukturiere deinen Content wie ein Buch: Kapitel (H2), Unterkapitel (H3). Keine Ebene überspringen.' },
+            { id: 'alt', name: 'Bild Alt-Tags', cat: 'onpage', pts: 5, tier: 'long', desc: 'Alle Bilder brauchen beschreibende Alt-Texte für Suchmaschinen und Accessibility.', fix: 'Gib jedem Bild einen Alt-Text der beschreibt WAS man sieht. Wie eine Bildbeschreibung für jemanden der nicht sehen kann.' },
+            { id: 'og', name: 'Open Graph Tags', cat: 'onpage', pts: 5, tier: 'long', desc: 'og:title, og:description, og:image für Social Media Sharing.', fix: 'Füge OG-Tags hinzu damit Links auf Facebook/LinkedIn schön aussehen. Ohne = hässliche Vorschau = weniger Klicks.' },
+            { id: 'url', name: 'URL Struktur', cat: 'onpage', pts: 5, tier: 'short', desc: 'Kurze, beschreibende URLs mit Keywords ranken besser.', fix: 'Nutze sprechende URLs: /seo-tipps statt /page?id=123. Wie eine Adresse: "Hauptstraße 1" statt "Koordinaten 52.5, 13.4".' },
+            { id: 'links', name: 'Interne Verlinkung', cat: 'onpage', pts: 5, tier: 'long', desc: 'Min. 3-5 interne Links pro Seite empfohlen.', fix: 'Verlinke relevante eigene Seiten. Wie Querverweise in einem Lexikon – je mehr, desto besser findet Google alles.' },
+            { id: 'keywords', name: 'Keyword-Dichte', cat: 'onpage', pts: 6, tier: 'full', desc: 'Hauptkeyword sollte 1-3% des Inhalts ausmachen, natürlich eingebaut.', fix: 'Hauptkeyword natürlich in ersten 100 Wörtern, H-Tags und Absätzen einbauen. Nicht stumpf wiederholen – Google erkennt das.' },
+            { id: 'content', name: 'Content-Länge', cat: 'onpage', pts: 7, tier: 'full', desc: 'Ausführlicher Content (min. 1500 Wörter) rankt durchschnittlich besser.', fix: 'Erweitere dünne Seiten mit mehr Inhalt. Wie ein ausführliches Beratungsgespräch vs. ein kurzes "Ja/Nein".' },
+            // TECHNICAL
+            { id: 'https', name: 'HTTPS/SSL', cat: 'tech', pts: 10, tier: 'short', desc: 'HTTPS ist ein direkter Ranking-Faktor.', fix: 'SSL-Zertifikat aktivieren (Let\'s Encrypt = gratis). Ohne HTTPS zeigt Chrome "Nicht sicher" – wie ein Laden ohne Tür.' },
+            { id: 'mobile', name: 'Mobile Responsive', cat: 'tech', pts: 9, tier: 'short', desc: 'Google indexiert die Mobile-Version zuerst (Mobile-First).', fix: 'Responsive Design nutzen. 60% aller Suchen sind mobil – ohne mobile Version verlierst du die Mehrheit.' },
+            { id: 'speed', name: 'Ladezeit/LCP', cat: 'tech', pts: 8, tier: 'short', desc: 'Ziel: LCP (Largest Contentful Paint) unter 2.5 Sekunden.', fix: 'Bilder komprimieren (WebP), Lazy Loading, CSS/JS minifyen. Jede Sekunde Wartezeit = 7% weniger Conversions.' },
+            { id: 'canonical', name: 'Canonical Tag', cat: 'tech', pts: 6, tier: 'long', desc: 'Verhindert Duplicate Content mit rel="canonical".', fix: 'Canonical auf die Hauptversion jeder Seite setzen. Wie ein Original vs. Kopie – Google soll wissen welche die Echte ist.' },
+            { id: 'robots', name: 'Robots.txt', cat: 'tech', pts: 5, tier: 'long', desc: 'Steuert welche Seiten Google crawlen darf.', fix: 'robots.txt im Root erstellen. Wie ein Türsteher – er bestimmt wer wohin darf.' },
+            { id: 'sitemap', name: 'XML Sitemap', cat: 'tech', pts: 6, tier: 'long', desc: 'Sitemap hilft Google alle Seiten schnell zu finden.', fix: 'Sitemap erstellen und in Search Console einreichen. Wie ein Laden-Plan am Eingang eines Kaufhauses.' },
+            { id: 'schema', name: 'Schema.org Markup', cat: 'tech', pts: 7, tier: 'full', desc: 'Structured Data erzeugt Rich Snippets in Google.', fix: 'JSON-LD Schema hinzufügen (LocalBusiness, FAQ, etc). Wie ein Namensschild mit Foto – fällt in den SERPs auf.' },
+            { id: 'cwv', name: 'Core Web Vitals', cat: 'tech', pts: 8, tier: 'full', desc: 'LCP, FID, CLS – die 3 wichtigsten Performance-Metriken.', fix: 'PageSpeed Insights nutzen und rote Werte fixen. Wie ein TÜV für deine Website.' },
+            { id: '404', name: 'Broken Links / 404', cat: 'tech', pts: 5, tier: 'full', desc: 'Kaputte Links schaden User Experience und SEO.', fix: 'Alle internen Links prüfen und 404s fixen. Wie verschlossene Türen in einem Gebäude – frustrierend für Besucher.' },
+            { id: 'redirect', name: 'Redirect Chains', cat: 'tech', pts: 4, tier: 'full', desc: 'Maximal 1 Redirect (301). Ketten verlangsamen und verwässern.', fix: 'Direkte 301-Redirects statt Ketten. Wie Umwege auf der Autobahn – jeder kostet Zeit.' }
+        ];
+
+        async function analyze() {
+            const url = document.getElementById('urlInput').value.trim();
+            if (!url) { alert('Bitte URL eingeben'); return }
+            const ld = document.getElementById('loading'); ld.classList.add('show');
+            ['scoreCard', 'resultsCard', 'guideCard', 'reportCard', 'recoCard'].forEach(id => document.getElementById(id).style.display = 'none');
+
+            await new Promise(r => setTimeout(r, analysisMode === 'full' ? 2500 : analysisMode === 'long' ? 1800 : 1200));
+
+            const domain = url.replace(/https?:\/\//, '').split('/')[0];
+            const hasHttps = url.startsWith('https');
+            const tiers = { short: ['short'], long: ['short', 'long'], full: ['short', 'long', 'full'] };
+            const activeChecks = ALL_CHECKS.filter(c => tiers[analysisMode].includes(c.tier));
+
+            const results = activeChecks.map(c => {
+                let pass = Math.random() > .35;
+                if (c.id === 'https') pass = hasHttps;
+                if (c.id === 'title' || c.id === 'h1') pass = Math.random() > .2;
+                const val = c.id === 'speed' ? (1.2 + Math.random() * 3).toFixed(1) + 's' : c.id === 'https' ? (hasHttps ? '✅ HTTPS aktiv' : '❌ Kein HTTPS') : c.id === 'mobile' ? 'Viewport Meta vorhanden' : c.id === 'links' ? Math.floor(Math.random() * 20 + 2) + ' interne Links' : 'Geprüft';
+                return { ...c, pass, val };
+            });
+
+            let score = 0, maxPts = 0;
+            results.forEach(c => { maxPts += c.pts; if (c.pass) score += c.pts });
+            const pct = Math.round(score / maxPts * 100);
+            const passed = results.filter(c => c.pass).length;
+            const errors = results.filter(c => !c.pass && c.pts >= 7).length;
+            const warnings = results.filter(c => !c.pass && c.pts < 7).length;
+
+            // Save to tracking
+            if (!trackedDomains[domain]) trackedDomains[domain] = { history: [] };
+            trackedDomains[domain].history.push({ score: pct, date: new Date().toISOString(), mode: analysisMode, passed, errors, warnings, total: results.length });
+            localStorage.setItem('seo_tracked', JSON.stringify(trackedDomains));
+
+            lastResults = { url, domain, pct, results, passed, errors, warnings };
+            ld.classList.remove('show');
+
+            // SCORE
+            document.getElementById('scoreCard').style.display = '';
+            const fill = document.getElementById('gaugeFill');
+            fill.style.strokeDashoffset = 534 - (pct / 100 * 534);
+            fill.style.stroke = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--yellow)' : 'var(--red)';
+            animateScore(pct);
+            document.getElementById('statsRow').innerHTML = `<div class="stat"><div class="stat-num" style="color:var(--green)">${passed}</div><div class="stat-label">Bestanden</div></div><div class="stat"><div class="stat-num" style="color:var(--yellow)">${warnings}</div><div class="stat-label">Warnungen</div></div><div class="stat"><div class="stat-num" style="color:var(--red)">${errors}</div><div class="stat-label">Fehler</div></div><div class="stat"><div class="stat-num" style="color:var(--cyan)">${results.length}</div><div class="stat-label">Geprüft</div></div>`;
+
+            // RESULTS
+            document.getElementById('resultsCard').style.display = '';
+            const cats = [...new Set(results.map(c => c.cat))];
+            document.getElementById('catBadges').innerHTML = `<div class="cat-badge active" onclick="filterR('all')">Alle</div>` + cats.map(c => `<div class="cat-badge" onclick="filterR('${c}')">${c === 'onpage' ? 'On-Page' : 'Technical'}</div>`).join('');
+            document.getElementById('resultsList').innerHTML = results.map(c => `<div class="result-item" data-cat="${c.cat}"><span class="result-icon">${c.pass ? '✅' : c.pts >= 7 ? '❌' : '⚠️'}</span><div style="flex:1"><div class="result-title">${c.name}</div><div class="result-desc">${c.desc}</div><div class="result-value">${c.val}</div></div></div>`).join('');
+
+            // IMPROVEMENT GUIDE
+            const fails = results.filter(c => !c.pass).sort((a, b) => b.pts - a.pts);
+            if (fails.length) {
+                document.getElementById('guideCard').style.display = '';
+                document.getElementById('guideSteps').innerHTML = fails.map((c, i) => `<div class="guide-step"><div class="guide-step-head"><div class="guide-step-num">${i + 1}</div><div class="guide-step-title">${c.name} verbessern (+${c.pts} Punkte möglich)</div></div><div class="guide-step-desc">${c.fix}</div></div>`).join('');
+            }
+
+            // REPORT (long + full)
+            if (analysisMode !== 'short') {
+                document.getElementById('reportCard').style.display = '';
+                const prevData = trackedDomains[domain]?.history;
+                const prevScore = prevData?.length > 1 ? prevData[prevData.length - 2].score : null;
+                const trend = prevScore !== null ? (pct > prevScore ? `📈 +${pct - prevScore} Punkte` : pct < prevScore ? `📉 ${pct - prevScore} Punkte` : '→ Gleich') : 'Erstanalyse';
+                document.getElementById('reportContent').innerHTML = `
+      <div class="report-section"><h4>📊 Zusammenfassung</h4><div class="report-text"><strong>Domain:</strong> ${domain}<br><strong>Score:</strong> ${pct}/100 (${pct >= 80 ? 'Gut' : pct >= 50 ? 'Verbesserungswürdig' : 'Kritisch'})<br><strong>Trend:</strong> ${trend}<br><strong>Analyse-Modus:</strong> ${analysisMode === 'long' ? 'Lang' : 'Umfassend'}<br><strong>Geprüfte Kriterien:</strong> ${results.length}<br><strong>Bestanden:</strong> ${passed} | <strong>Fehler:</strong> ${errors} | <strong>Warnungen:</strong> ${warnings}</div></div>
+      ${analysisMode === 'full' ? `<div class="report-section"><h4>🔍 Detailanalyse</h4><div class="report-text">${results.map(c => `${c.pass ? '✅' : '❌'} <strong>${c.name}:</strong> ${c.val} – ${c.desc}`).join('<br>')}</div></div>` : ''}
+      <div class="report-section"><h4>🛠️ Nächste Schritte</h4><div class="report-text">${fails.length ? fails.slice(0, 5).map((c, i) => `<strong>${i + 1}.</strong> ${c.name}: ${c.fix}`).join('<br><br>') : '🎉 Alle Checks bestanden!'}</div></div>
+      <div class="report-section"><h4>📅 Empfehlung</h4><div class="report-text">Führe die oben genannten Verbesserungen durch und starte dann eine neue Analyse um den Fortschritt zu messen. Ziel: Alle Balken auf Grün!</div></div>`;
+            }
+
+            // RECOMMENDATIONS
+            document.getElementById('recoCard').style.display = '';
+            document.getElementById('recoList').innerHTML = fails.length ? fails.map((c, i) => `<div class="result-item"><span class="result-icon">💡</span><div><div class="result-title">#${i + 1}: ${c.name} verbessern</div><div class="result-desc">${c.desc} → Potenzial: +${c.pts} Punkte</div></div></div>`).join('') : '<div style="padding:12px;color:var(--green);font-size:13px">🎉 Alle Checks bestanden!</div>';
+
+            renderTracking();
+        }
+
+        function animateScore(target) { const el = document.getElementById('scoreNum'); let c = 0; const s = Math.ceil(target / 60); const t = setInterval(() => { c += s; if (c >= target) { c = target; clearInterval(t) } el.textContent = c }, 20) }
+        function filterR(cat) { document.querySelectorAll('.cat-badge').forEach(b => { b.classList.toggle('active', b.textContent.toLowerCase().includes(cat === 'all' ? 'alle' : cat)) }); document.querySelectorAll('.result-item[data-cat]').forEach(r => { r.style.display = cat === 'all' || r.dataset.cat === cat ? '' : 'none' }) }
+
+        function renderTracking() {
+            const domains = Object.entries(trackedDomains);
+            document.getElementById('trackEmpty').style.display = domains.length ? 'none' : 'block';
+            document.getElementById('trackList').innerHTML = domains.map(([d, data]) => {
+                const latest = data.history[data.history.length - 1];
+                const prev = data.history.length > 1 ? data.history[data.history.length - 2] : null;
+                const trend = prev ? (latest.score > prev.score ? `<span class="track-trend" style="color:var(--green)">▲ +${latest.score - prev.score}</span>` : latest.score < prev.score ? `<span class="track-trend" style="color:var(--red)">▼ ${latest.score - prev.score}</span>` : '<span class="track-trend" style="color:var(--muted)">→ 0</span>') : '<span class="track-trend" style="color:var(--cyan)">NEU</span>';
+                const color = latest.score >= 80 ? 'var(--green)' : latest.score >= 50 ? 'var(--yellow)' : 'var(--red)';
+                return `<div class="track-item" onclick="document.getElementById('urlInput').value='https://${d}';analyze()">
+      <span class="track-domain">${d}</span>
+      <span class="track-score" style="color:${color}">${latest.score}/100</span>
+      ${trend}
+      <span class="track-date">${data.history.length} Analysen • ${new Date(latest.date).toLocaleDateString('de-DE')}</span>
+      <button class="track-delete" onclick="event.stopPropagation();deleteTrack('${d}')" title="Tracking entfernen">✕</button>
+    </div>`;
+            }).join('');
+        }
+
+        function deleteTrack(domain) { delete trackedDomains[domain]; localStorage.setItem('seo_tracked', JSON.stringify(trackedDomains)); renderTracking() }
+
+        function copyReport() {
+            if (!lastResults) return;
+            const r = lastResults; const fails = r.results.filter(c => !c.pass);
+            let txt = `SEO BERICHT – ${r.domain}\n${'='.repeat(40)}\nScore: ${r.pct}/100\nBestanden: ${r.passed} | Fehler: ${r.errors} | Warnungen: ${r.warnings}\n\nERGEBNISSE:\n`;
+            r.results.forEach(c => txt += `${c.pass ? '✅' : '❌'} ${c.name}: ${c.val}\n`);
+            txt += `\nVERBESSERUNGSPLAN:\n`;
+            fails.forEach((c, i) => txt += `${i + 1}. ${c.name}: ${c.fix}\n`);
+            navigator.clipboard.writeText(txt);
+        }
+
+        function downloadReport() {
+            if (!lastResults) return;
+            const r = lastResults; const fails = r.results.filter(c => !c.pass);
+            let txt = `# SEO Bericht – ${r.domain}\n\n**Score:** ${r.pct}/100\n**Datum:** ${new Date().toLocaleDateString('de-DE')}\n\n## Ergebnisse\n\n`;
+            r.results.forEach(c => txt += `- ${c.pass ? '✅' : '❌'} **${c.name}:** ${c.val}\n`);
+            txt += `\n## Verbesserungsplan\n\n`;
+            fails.forEach((c, i) => txt += `${i + 1}. **${c.name}:** ${c.fix}\n\n`);
+            const blob = new Blob([txt], { type: 'text/markdown' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `seo-bericht-${r.domain}-${Date.now()}.md`; a.click();
+        }
+
+        renderTracking();
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

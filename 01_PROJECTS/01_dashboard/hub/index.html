@@ -1,0 +1,1829 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ DkZ Hub — Auto-Discovery Dashboard</title>
+    <meta name="description"
+        content="DkZ Hub — Zentrales Modul-Management mit Auto-Discovery, Error-Detection und Health-Checks">
+    <link rel="stylesheet" href="../shared/dkz-theme.css">
+    <link rel="manifest" href="../shared/manifest.json">
+    <style>
+        /* Hub-spezifische Overrides — Basis kommt aus dkz-theme.css */
+        :root {
+            --card: rgba(14, 14, 22, .85);
+            --border: rgba(255, 255, 255, .06);
+            --border2: rgba(255, 255, 255, .1);
+            --purple: #a855f7;
+            --orange: #ff8c42;
+            --glass: rgba(14, 14, 22, .72);
+            --blur: blur(24px);
+            --radius: 16px;
+        }
+
+        html,
+        body {
+            height: 100%;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .08);
+            border-radius: 6px
+        }
+
+        /* ANIMATED BACKGROUND */
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .08;
+            animation: blobFloat 20s ease-in-out infinite
+        }
+
+        .bg-blob:nth-child(1) {
+            width: 600px;
+            height: 600px;
+            background: var(--accent);
+            top: -10%;
+            left: -5%;
+            animation-delay: 0s
+        }
+
+        .bg-blob:nth-child(2) {
+            width: 500px;
+            height: 500px;
+            background: var(--accent);
+            bottom: -10%;
+            right: -5%;
+            animation-delay: -7s
+        }
+
+        .bg-blob:nth-child(3) {
+            width: 400px;
+            height: 400px;
+            background: var(--purple);
+            top: 40%;
+            left: 50%;
+            animation-delay: -14s
+        }
+
+        @keyframes blobFloat {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            33% {
+                transform: translate(30px, -40px) scale(1.1)
+            }
+
+            66% {
+                transform: translate(-20px, 30px) scale(.9)
+            }
+        }
+
+        /* PARTICLES */
+        .particles {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, .15);
+            border-radius: 50%;
+            animation: particleFade 4s ease-in-out infinite
+        }
+
+        @keyframes particleFade {
+
+            0%,
+            100% {
+                opacity: 0;
+                transform: translateY(0)
+            }
+
+            50% {
+                opacity: 1;
+                transform: translateY(-60px)
+            }
+        }
+
+        /* LAYOUT */
+        .app {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        /* HEADER */
+        .header {
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .header-logo {
+            font-size: 32px;
+            filter: drop-shadow(0 0 12px rgba(250, 30, 78, .4))
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent), var(--purple), var(--accent));
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradShift 4s ease infinite
+        }
+
+        @keyframes gradShift {
+
+            0%,
+            100% {
+                background-position: 0% 50%
+            }
+
+            50% {
+                background-position: 100% 50%
+            }
+        }
+
+        .header .sub {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono);
+            letter-spacing: 1.5px
+        }
+
+        .header-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .hdr-btn {
+            padding: 7px 13px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .25s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(8px)
+        }
+
+        .hdr-btn:hover {
+            color: var(--text);
+            border-color: var(--accent);
+            box-shadow: 0 0 16px rgba(250, 30, 78, .1);
+            transform: translateY(-1px)
+        }
+
+        .hdr-stat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-family: var(--mono);
+            color: var(--muted);
+            padding: 6px 12px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            backdrop-filter: blur(12px)
+        }
+
+        .hdr-stat .val {
+            color: var(--text);
+            font-weight: 700
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 12px var(--green);
+            animation: pulse 2s infinite
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1)
+            }
+
+            50% {
+                opacity: .4;
+                transform: scale(.7)
+            }
+        }
+
+        .live-clock {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--muted);
+            padding: 6px 10px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 8px
+        }
+
+        /* ERROR BADGE */
+        .err-badge {
+            position: relative;
+            cursor: pointer
+        }
+
+        .err-badge .count {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            min-width: 16px;
+            height: 16px;
+            border-radius: 8px;
+            background: var(--red);
+            color: #fff;
+            font-size: 9px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            box-shadow: 0 0 12px rgba(255, 68, 102, .5);
+            animation: errPulse 1.5s infinite
+        }
+
+        .err-badge .count.hidden {
+            display: none
+        }
+
+        @keyframes errPulse {
+
+            0%,
+            100% {
+                transform: scale(1)
+            }
+
+            50% {
+                transform: scale(1.15)
+            }
+        }
+
+        /* ERROR DRAWER */
+        .err-drawer {
+            position: fixed;
+            top: 0;
+            right: -480px;
+            width: 480px;
+            height: 100vh;
+            background: rgba(10, 10, 18, .96);
+            backdrop-filter: blur(30px);
+            border-left: 1px solid var(--border);
+            z-index: 200;
+            transition: right .4s cubic-bezier(.4, 0, .2, 1);
+            display: flex;
+            flex-direction: column
+        }
+
+        .err-drawer.open {
+            right: 0
+        }
+
+        .err-drawer-head {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
+
+        .err-drawer-head h2 {
+            font-size: 16px;
+            font-weight: 800;
+            flex: 1
+        }
+
+        .err-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .2s
+        }
+
+        .err-close:hover {
+            color: var(--red);
+            border-color: var(--red)
+        }
+
+        .err-drawer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px
+        }
+
+        .err-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .4);
+            z-index: 199;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .3s
+        }
+
+        .err-overlay.open {
+            opacity: 1;
+            pointer-events: auto
+        }
+
+        .err-item {
+            padding: 14px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            transition: all .2s
+        }
+
+        .err-item:hover {
+            border-color: var(--border2)
+        }
+
+        .err-item .err-head {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px
+        }
+
+        .err-item .err-sev {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0
+        }
+
+        .err-item .err-sev.critical {
+            background: var(--red);
+            box-shadow: 0 0 8px var(--red)
+        }
+
+        .err-item .err-sev.warning {
+            background: var(--yellow);
+            box-shadow: 0 0 8px var(--yellow)
+        }
+
+        .err-item .err-sev.info {
+            background: var(--blue);
+            box-shadow: 0 0 8px var(--blue)
+        }
+
+        .err-item .err-title {
+            font-size: 12px;
+            font-weight: 700;
+            flex: 1
+        }
+
+        .err-item .err-time {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--muted)
+        }
+
+        .err-item .err-msg {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.5
+        }
+
+        .err-item .err-retry {
+            margin-top: 8px;
+            padding: 5px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--accent);
+            font-size: 10px;
+            font-family: var(--font);
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .err-item .err-retry:hover {
+            background: rgba(250, 30, 78, .1);
+            border-color: var(--accent)
+        }
+
+        .err-empty {
+            text-align: center;
+            padding: 40px;
+            color: var(--muted);
+            font-size: 12px
+        }
+
+        /* FILTER BAR */
+        .filter-bar {
+            padding: 12px 28px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            position: sticky;
+            top: 60px;
+            z-index: 99;
+            transition: box-shadow .3s
+        }
+
+        .filter-bar.scrolled {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .4)
+        }
+
+        .fbtn {
+            padding: 6px 14px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: transparent;
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .25s
+        }
+
+        .fbtn:hover {
+            border-color: var(--accent);
+            color: var(--text);
+            transform: translateY(-1px)
+        }
+
+        .fbtn.active {
+            background: linear-gradient(135deg, var(--accent), #d91643);
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(250, 30, 78, .3)
+        }
+
+        .search-box {
+            margin-left: auto;
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            width: 240px;
+            outline: none;
+            transition: all .25s;
+            backdrop-filter: blur(8px)
+        }
+
+        .search-box:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(250, 30, 78, .1);
+            width: 300px
+        }
+
+        .search-box::placeholder {
+            color: var(--muted)
+        }
+
+        .kbd {
+            font-size: 9px;
+            font-family: var(--mono);
+            padding: 2px 5px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--muted);
+            margin-left: 6px
+        }
+
+        /* CONTENT */
+        .content {
+            padding: 24px 28px;
+            position: relative
+        }
+
+        /* STATS BAR */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px
+        }
+
+        .stat-card {
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            transition: all .3s;
+            position: relative;
+            overflow: hidden
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent 60%, rgba(255, 255, 255, .02));
+            pointer-events: none
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border2);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .3)
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            margin-bottom: 6px
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 800;
+            font-family: var(--mono)
+        }
+
+        .stat-sub {
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 3px
+        }
+
+        /* SCAN PROGRESS */
+        .scan-bar {
+            height: 3px;
+            background: var(--border);
+            border-radius: 2px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            opacity: 0;
+            transition: opacity .3s
+        }
+
+        .scan-bar.active {
+            opacity: 1
+        }
+
+        .scan-fill {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, var(--accent), var(--accent));
+            border-radius: 2px;
+            transition: width .3s
+        }
+
+        /* SECTION TITLE */
+        .sec-title {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--muted);
+            margin: 0 0 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
+            transition: color .2s
+        }
+
+        .sec-title:hover {
+            color: var(--text)
+        }
+
+        .sec-title .line {
+            flex: 1;
+            height: 1px;
+            background: var(--border)
+        }
+
+        .sec-title .cnt {
+            font-size: 10px;
+            font-family: var(--mono);
+            padding: 2px 10px;
+            border-radius: 10px;
+            background: rgba(250, 30, 78, .08);
+            color: var(--accent)
+        }
+
+        .sec-title .chevron {
+            transition: transform .3s;
+            font-size: 10px
+        }
+
+        .sec-title .chevron.collapsed {
+            transform: rotate(-90deg)
+        }
+
+        /* MODULE GRID */
+        .mod-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 14px;
+            margin-bottom: 28px
+        }
+
+        .mod-grid.collapsed {
+            display: none
+        }
+
+        /* MODULE CARD */
+        .mod-card {
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            cursor: pointer;
+            transition: all .35s cubic-bezier(.4, 0, .2, 1);
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: cardIn .5s forwards
+        }
+
+        @keyframes cardIn {
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .mod-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--card-color, var(--accent)), transparent);
+            opacity: 0;
+            transition: opacity .3s
+        }
+
+        .mod-card:hover {
+            transform: translateY(-6px) scale(1.01);
+            border-color: var(--border2);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .5), 0 0 30px rgba(var(--card-rgb, 250, 30, 78), .06)
+        }
+
+        .mod-card:hover::before {
+            opacity: 1
+        }
+
+        .mod-card.err-state {
+            border-color: rgba(255, 68, 102, .3);
+            box-shadow: inset 0 0 30px rgba(255, 68, 102, .03)
+        }
+
+        .mod-card.err-state::after {
+            content: '⚠';
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            font-size: 14px;
+            opacity: .6
+        }
+
+        .mc-head {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px
+        }
+
+        .mc-icon {
+            font-size: 30px;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, .04);
+            border-radius: 14px;
+            flex-shrink: 0;
+            transition: transform .3s
+        }
+
+        .mod-card:hover .mc-icon {
+            transform: scale(1.1) rotate(-3deg)
+        }
+
+        .mc-info {
+            flex: 1;
+            min-width: 0
+        }
+
+        .mc-name {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .mc-ver {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--muted)
+        }
+
+        .mc-desc {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.6;
+            margin-bottom: 14px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden
+        }
+
+        .mc-foot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 6px
+        }
+
+        .mc-tags {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap
+        }
+
+        .mc-tag {
+            font-size: 9px;
+            font-family: var(--mono);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            letter-spacing: .5px;
+            transition: all .2s
+        }
+
+        .mc-tag:hover {
+            transform: scale(1.05)
+        }
+
+        .mc-st {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 10px;
+            font-family: var(--mono);
+            color: var(--muted)
+        }
+
+        .mc-st .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%
+        }
+
+        .st-active .dot {
+            background: var(--green);
+            box-shadow: 0 0 10px var(--green)
+        }
+
+        .st-active {
+            color: var(--green)
+        }
+
+        .st-dev .dot {
+            background: var(--yellow);
+            box-shadow: 0 0 10px var(--yellow)
+        }
+
+        .st-dev {
+            color: var(--yellow)
+        }
+
+        .st-plan .dot {
+            background: var(--blue);
+            box-shadow: 0 0 10px var(--blue)
+        }
+
+        .st-plan {
+            color: var(--blue)
+        }
+
+        .st-error .dot {
+            background: var(--red);
+            box-shadow: 0 0 10px var(--red)
+        }
+
+        .st-error {
+            color: var(--red)
+        }
+
+        .mc-launch {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all .25s;
+            opacity: 0;
+            backdrop-filter: blur(8px)
+        }
+
+        .mod-card:hover .mc-launch {
+            opacity: 1
+        }
+
+        .mc-launch:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(250, 30, 78, .3);
+            transform: scale(1.1)
+        }
+
+        /* SKELETON LOADING */
+        .skel {
+            background: linear-gradient(90deg, var(--card) 25%, rgba(255, 255, 255, .04) 50%, var(--card) 75%);
+            background-size: 400% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0
+            }
+
+            100% {
+                background-position: -200% 0
+            }
+        }
+
+        /* TOAST */
+        .toast-wrap {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .toast {
+            padding: 12px 18px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: toastIn .4s cubic-bezier(.4, 0, .2, 1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .4);
+            max-width: 360px
+        }
+
+        .toast.out {
+            animation: toastOut .3s forwards
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateX(40px) scale(.95)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1)
+            }
+        }
+
+        @keyframes toastOut {
+            to {
+                opacity: 0;
+                transform: translateX(40px) scale(.95)
+            }
+        }
+
+        .toast .t-icon {
+            font-size: 16px;
+            flex-shrink: 0
+        }
+
+        .toast .t-msg {
+            flex: 1;
+            color: var(--text);
+            line-height: 1.4
+        }
+
+        /* ECO MAP */
+        .eco-map {
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px;
+            margin-bottom: 24px
+        }
+
+        .eco-title {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .eco-layers {
+            display: flex;
+            flex-direction: column;
+            gap: 5px
+        }
+
+        .eco-layer {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, .02);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 12px;
+            transition: all .25s
+        }
+
+        .eco-layer:hover {
+            border-color: var(--accent);
+            transform: translateX(4px)
+        }
+
+        .eco-layer .num {
+            font-family: var(--mono);
+            font-weight: 700;
+            color: var(--accent);
+            min-width: 22px
+        }
+
+        .eco-layer .name {
+            font-weight: 600;
+            flex: 1
+        }
+
+        .eco-layer .tech {
+            font-size: 10px;
+            color: var(--muted);
+            font-family: var(--mono)
+        }
+
+        .eco-layer .bar {
+            width: 70px;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden
+        }
+
+        .eco-layer .bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width .8s cubic-bezier(.4, 0, .2, 1)
+        }
+
+        /* RESPONSIVE */
+        @media(max-width:900px) {
+            .header {
+                padding: 12px 16px;
+                flex-wrap: wrap
+            }
+
+            .filter-bar {
+                padding: 10px 16px
+            }
+
+            .content {
+                padding: 16px
+            }
+
+            .mod-grid {
+                grid-template-columns: 1fr 1fr
+            }
+
+            .stats-bar {
+                grid-template-columns: 1fr 1fr
+            }
+
+            .search-box {
+                width: 100%;
+                margin-left: 0
+            }
+
+            .err-drawer {
+                width: 100%
+            }
+        }
+
+        @media(max-width:600px) {
+            .mod-grid {
+                grid-template-columns: 1fr
+            }
+
+            .stats-bar {
+                grid-template-columns: 1fr
+            }
+
+            .hdr-stat {
+                display: none
+            }
+        }
+
+        /* Accessibility: prefers-reduced-motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+            .bg-blob, .particle { display: none }
+        }
+
+        /* === 4K VEO CINEMATIC BUTTON === */
+        .veo-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border: 1px solid rgba(250, 30, 78, .25);
+            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(250,30,78,.08), rgba(168,85,247,.06));
+            color: var(--accent);
+            font-family: var(--mono);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            overflow: hidden;
+            transition: all .3s cubic-bezier(.22,1,.36,1);
+            text-transform: uppercase;
+        }
+        .veo-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, 
+                rgba(250,30,78,.15) 0%,
+                rgba(168,85,247,.12) 30%,
+                rgba(0,255,136,.08) 60%,
+                rgba(250,30,78,.15) 100%);
+            background-size: 300% 300%;
+            animation: veo-shift 4s ease infinite;
+            opacity: 0;
+            transition: opacity .4s;
+            z-index: 0;
+        }
+        .veo-btn:hover::before { opacity: 1 }
+        .veo-btn:hover {
+            border-color: rgba(250, 30, 78, .5);
+            color: #fff;
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 
+                0 0 20px rgba(250,30,78,.2),
+                0 0 60px rgba(250,30,78,.08),
+                inset 0 0 20px rgba(250,30,78,.05);
+        }
+        .veo-btn:active {
+            transform: translateY(0) scale(.98);
+        }
+        .veo-btn span { position: relative; z-index: 1 }
+        .veo-icon {
+            font-size: 14px;
+            filter: drop-shadow(0 0 6px rgba(250,30,78,.5));
+            animation: veo-pulse 2s ease-in-out infinite;
+        }
+        .veo-label {
+            background: linear-gradient(90deg, #fa1e4e, #a855f7, #00ff88);
+            background-size: 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: veo-text-shift 3s linear infinite;
+        }
+        /* VEO Particle burst on click */
+        .veo-particle {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 100000;
+            animation: veo-burst .8s cubic-bezier(.25,.46,.45,.94) forwards;
+        }
+        @keyframes veo-shift {
+            0%,100% { background-position: 0% 50% }
+            50% { background-position: 100% 50% }
+        }
+        @keyframes veo-pulse {
+            0%,100% { transform: scale(1); filter: drop-shadow(0 0 6px rgba(250,30,78,.5)) }
+            50% { transform: scale(1.15); filter: drop-shadow(0 0 12px rgba(250,30,78,.8)) }
+        }
+        @keyframes veo-text-shift {
+            0% { background-position: 0% 50% }
+            100% { background-position: 200% 50% }
+        }
+        @keyframes veo-burst {
+            0% { transform: translate(0,0) scale(1); opacity: 1 }
+            100% { transform: translate(var(--vx), var(--vy)) scale(0); opacity: 0 }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ANIMATED BACKGROUND -->
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+    </div>
+    <div class="particles" id="particles"></div>
+
+    <!-- ERROR OVERLAY -->
+    <div class="err-overlay" id="errOverlay" onclick="toggleErrDrawer()"></div>
+
+    <!-- ERROR DRAWER -->
+    <div class="err-drawer" id="errDrawer">
+        <div class="err-drawer-head">
+            <span style="font-size:20px">🚨</span>
+            <h2>Error Detection</h2>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--muted)" id="errScanTime">—</div>
+            <button class="err-close" onclick="toggleErrDrawer()">✕</button>
+        </div>
+        <div class="err-drawer-body" id="errList">
+            <div class="err-empty">✅ Keine Fehler erkannt.<br><span
+                    style="font-size:10px;margin-top:6px;display:block">Auto-Scan läuft alle 30 Sekunden</span></div>
+        </div>
+    </div>
+
+    <main class="app" role="main">
+
+        <!-- HEADER -->
+        <header class="header" role="banner">
+            <a href="../mainboard/index.html" class="hdr-btn" aria-label="Zurueck zum Mainboard">← Mainboard</a>
+            <div class="header-logo" aria-hidden="true">⚡</div>
+            <div>
+                <h1>DkZ Hub</h1>
+                <div class="sub">AUTO-DISCOVERY ENGINE v2.0</div>
+            </div>
+            <nav class="header-right" role="navigation" aria-label="Hub Navigation">
+                <div class="live-clock" id="liveClock" aria-label="Aktuelle Uhrzeit">--:--:--</div>
+                <button class="veo-btn" id="veoBtn" aria-label="4K VEO Effekte aktivieren">
+                    <span class="veo-icon">🎬</span>
+                    <span class="veo-label">4K VEO</span>
+                </button>
+                <a href="../nexuz/index.html" class="hdr-btn" aria-label="NEXUZ² oeffnen">⚡ NEXUZ²</a>
+                <a href="../knowledge-hub/index.html" class="hdr-btn" aria-label="Wiki oeffnen">📝 Wiki</a>
+                <a href="../action-deck/index.html" class="hdr-btn" aria-label="Actions oeffnen">🎴 Actions</a>
+                <a href="../playbook-runner/index.html" class="hdr-btn" aria-label="Playbooks oeffnen">📋 Playbooks</a>
+                <div class="err-badge" onclick="toggleErrDrawer()" title="Error Detection Dashboard">
+                    <span class="hdr-btn">🚨 Errors</span>
+                    <span class="count hidden" id="errCount">0</span>
+                </div>
+                <div class="hdr-stat">
+                    <div class="pulse-dot"></div> System <span class="val" id="sysStatus">SCAN…</span>
+                </div>
+                <div class="hdr-stat">Module <span class="val" id="moduleCount">—</span></div>
+                <div class="hdr-stat">Aktiv <span class="val" id="activeCount">—</span></div>
+            </nav>
+        </header>
+
+        <!-- FILTER BAR -->
+        <div class="filter-bar" id="filterBar">
+            <button class="fbtn active" data-filter="all">Alle</button>
+            <button class="fbtn" data-filter="A-AI">🧠 AI</button>
+            <button class="fbtn" data-filter="B-Tools">🔧 Tools</button>
+            <button class="fbtn" data-filter="C-Media">🎵 Media</button>
+            <button class="fbtn" data-filter="D-System">⚙️ System</button>
+            <input type="text" class="search-box" placeholder="🔍 Modul suchen..." id="searchInput">
+            <span class="kbd">Ctrl+K</span>
+        </div>
+
+        <div class="content">
+            <!-- SCAN PROGRESS -->
+            <div class="scan-bar" id="scanBar">
+                <div class="scan-fill" id="scanFill"></div>
+            </div>
+
+            <!-- STATS -->
+            <div class="stats-bar" id="statsBar">
+                <div class="stat-card">
+                    <div class="stat-label">Module Gesamt</div>
+                    <div class="stat-value" id="statTotal">—</div>
+                    <div class="stat-sub">Auto-Discovery Scan</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Aktiv</div>
+                    <div class="stat-value" style="color:var(--green)" id="statActive">—</div>
+                    <div class="stat-sub">Laufend & einsatzbereit</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">In Entwicklung</div>
+                    <div class="stat-value" style="color:var(--yellow)" id="statDev">—</div>
+                    <div class="stat-sub">Work in Progress</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Fehler</div>
+                    <div class="stat-value" style="color:var(--red)" id="statErrors">0</div>
+                    <div class="stat-sub">Erkannte Probleme</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Health Score</div>
+                    <div class="stat-value" style="color:var(--accent)" id="statHealth">—</div>
+                    <div class="stat-sub">Gesamtstatus</div>
+                </div>
+            </div>
+
+            <!-- ECO MAP -->
+            <div class="eco-map">
+                <div class="eco-title">🏗️ 5-Layer-Architektur — Fortschritt</div>
+                <div class="eco-layers">
+                    <div class="eco-layer"><span class="num">L5</span><span class="name">Governance &
+                            Compliance</span><span class="tech">EU AI Act · DSGVO</span>
+                        <div class="bar">
+                            <div class="bar-fill" style="width:0;background:var(--purple)" data-w="25"></div>
+                        </div>
+                    </div>
+                    <div class="eco-layer"><span class="num">L4</span><span class="name">Infrastruktur &
+                            Deployment</span><span class="tech">Docker · CI/CD</span>
+                        <div class="bar">
+                            <div class="bar-fill" style="width:0;background:var(--blue)" data-w="15"></div>
+                        </div>
+                    </div>
+                    <div class="eco-layer"><span class="num">L3</span><span class="name">Storage & Retrieval</span><span
+                            class="tech">DuckDB · FAISS</span>
+                        <div class="bar">
+                            <div class="bar-fill" style="width:0;background:var(--accent)" data-w="20"></div>
+                        </div>
+                    </div>
+                    <div class="eco-layer"><span class="num">L2</span><span class="name">Orchestration &
+                            Logic</span><span class="tech">OpenClaw · PicoClaws</span>
+                        <div class="bar">
+                            <div class="bar-fill" style="width:0;background:var(--yellow)" data-w="30"></div>
+                        </div>
+                    </div>
+                    <div class="eco-layer"><span class="num">L1</span><span class="name">Frontend & UI</span><span
+                            class="tech">HTML/CSS/JS · DkZ Design</span>
+                        <div class="bar">
+                            <div class="bar-fill" style="width:0;background:var(--green)" data-w="65"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACTIVE -->
+            <div class="sec-title" onclick="toggleSection('active')">🟢 Aktive Module <span class="cnt"
+                    id="activeSec">0</span><span class="chevron" id="chevActive">▼</span><span class="line"></span>
+            </div>
+            <div class="mod-grid" id="activeGrid"></div>
+
+            <!-- DEV -->
+            <div class="sec-title" onclick="toggleSection('dev')">🟡 In Entwicklung <span class="cnt"
+                    id="devSec">0</span><span class="chevron" id="chevDev">▼</span><span class="line"></span></div>
+            <div class="mod-grid" id="devGrid"></div>
+
+            <!-- PLANNED -->
+            <div class="sec-title" onclick="toggleSection('planned')">🔵 Geplant (Roadmap) <span class="cnt"
+                    id="plannedSec">0</span><span class="chevron" id="chevPlanned">▼</span><span class="line"></span>
+            </div>
+            <div class="mod-grid" id="plannedGrid"></div>
+
+            <!-- ERRORS -->
+            <div class="sec-title" onclick="toggleSection('errors')" id="errSecTitle" style="display:none">🔴
+                Fehlerhafte Module <span class="cnt" id="errSec">0</span><span class="chevron"
+                    id="chevErrors">▼</span><span class="line"></span></div>
+            <div class="mod-grid" id="errGrid"></div>
+        </div>
+    </main>
+
+    <!-- TOASTS -->
+    <div class="toast-wrap" id="toastWrap"></div>
+
+    <script>
+        // DkZ XSS Protection
+        function esc(s) {
+            const d = document.createElement('div');
+            d.appendChild(document.createTextNode(s));
+            return d.innerHTML;
+        }
+        // ════════════════════════════════════════
+        // ⚡ DKZ HUB — AUTO-DISCOVERY ENGINE v2.0
+        // ════════════════════════════════════════
+
+        // ═══ MODULE REGISTRY (Auto-Discovery Source) ═══
+        // In production, this is populated by scanning module.json files.
+        // The system script (scan-modules.ps1) generates this registry.
+        // Fallback: static registry maintained here.
+
+        const DISCOVERY_CONFIG = {
+            scanInterval: 30000,
+            healthTimeout: 5000,
+            retryAttempts: 3,
+            retryDelay: 2000,
+            apiBase: 'http://localhost:3040'
+        };
+
+        const MODULE_REGISTRY = [
+            // ═══ DISCOVERED FROM module.json FILES ═══
+            { name: "dkz-ai-chat", displayName: "AI Chat", version: "v2.01.1_01", description: "Multi-Provider AI Chat mit OpenRouter, Claude, GPT und Gemini", icon: "🧠", color: "#fa1e4e", category: "A-AI", tags: ["#ai", "#chat", "#multi-provider"], entry: "../modules/ai_chat/chat_version_2/index.html", permissions: ["network", "storage"], status: "active" },
+            { name: "dkz-analyser", displayName: "Text & Code Analyser", version: "v1.01.1_01", description: "AI-gestützte Text- und Code-Analyse mit Sentiment, Grammatik und Komplexitätsprüfung", icon: "📊", color: "#55ACEE", category: "B-Tools", tags: ["#analyser", "#nlp"], entry: "../modules/analyser/index.html", permissions: ["network"], status: "active" },
+            { name: "dkz-converter", displayName: "Format Converter", version: "v1.01.1_01", description: "Universeller Datei-Konverter: JSON, YAML, CSV, Base64, URL-Encoding und mehr", icon: "🔄", color: "#22C55E", category: "B-Tools", tags: ["#converter", "#format"], entry: "../modules/converter/index.html", permissions: [], status: "active" },
+            { name: "dkz-speech-to-text", displayName: "Speech to Text", version: "v1.01.1_01", description: "Browser-basierte Spracherkennung mit Web Speech API und Transkription", icon: "🎤", color: "#F59E0B", category: "C-Media", tags: ["#speech", "#stt"], entry: "../modules/speech_to_text/index.html", permissions: ["microphone"], status: "active" },
+            { name: "dkz-text-to-speech", displayName: "Text to Speech", version: "v1.01.1_01", description: "Text-to-Speech mit Stimmenauswahl und Export-Funktionalität", icon: "🔊", color: "#8B5CF6", category: "C-Media", tags: ["#tts", "#voice"], entry: "../modules/text_to_speech/index.html", permissions: ["audio"], status: "active" },
+            { name: "dkz-html-viewer", displayName: "HTML Viewer", version: "v1.01.1_01", description: "Live HTML/CSS/JS Preview mit Syntax-Highlighting und iframe-Rendering", icon: "🌐", color: "#EF4444", category: "B-Tools", tags: ["#html", "#preview"], entry: "../modules/html_viewer/index.html", permissions: [], status: "active" },
+            { name: "dkz-markdown-converter", displayName: "Markdown Converter", version: "v1.01.1_01", description: "Markdown zu HTML/PDF Konverter mit Live-Preview und Export", icon: "📝", color: "#06B6D4", category: "B-Tools", tags: ["#markdown", "#export"], entry: "../modules/markdown_converter/index.html", permissions: [], status: "active" },
+            { name: "dkz-text-summary", displayName: "Text Summarizer", version: "v1.01.1_01", description: "AI-gestützte Textzusammenfassung mit einstellbarer Länge und Fokus", icon: "📋", color: "#EC4899", category: "A-AI", tags: ["#summary", "#ai"], entry: "../modules/text_summary/index.html", permissions: ["network"], status: "active" },
+            { name: "dkz-seo-dashboard", displayName: "SEO Dashboard", version: "v1.01.1_01", description: "SEO-Analyse-Dashboard mit YouTube Metrics, Google Ranking und Wettbewerbsanalyse", icon: "📈", color: "#10B981", category: "B-Tools", tags: ["#seo", "#analytics"], entry: "../seo-dashboard/index.html", permissions: ["network"], status: "active" },
+            { name: "dkz-agenten-dashboard", displayName: "Agenten Dashboard", version: "v2.01.1_01", description: "Übersicht aller DkZ-Agenten mit Echtzeit-Status, Animation und Steuerung", icon: "🤖", color: "#a855f7", category: "D-System", tags: ["#agents", "#monitoring"], entry: "../agenten_dashboard/index.html", permissions: [], status: "active" },
+            { name: "dkz-drive-organizer", displayName: "Drive Organizer", version: "v1.01.1_01", description: "Google Drive 5x99 Sortiersystem nach Jeff Su — automatische Datei-Organisation", icon: "📁", color: "#3B82F6", category: "B-Tools", tags: ["#drive", "#files"], entry: "../drive-organizer/index.html", permissions: ["filesystem"], status: "active" },
+            { name: "dkz-power-user-tool", displayName: "Power User Tool", version: "v1.01.1_01", description: "10-Module Keyboard-First Power Suite: Launcher, Scanner, Snippets, Monitor", icon: "⚡", color: "#fa1e4e", category: "D-System", tags: ["#power-user", "#keyboard"], entry: "../power-user-tool/index.html", permissions: [], status: "active" },
+            { name: "dkz-nexuz", displayName: "NEXUZ² Command Center", version: "v2.02.0_01", description: "Zentrales Nervensystem: 6 Backends, 7 Frontends, MCP Browser Integration", icon: "⚡", color: "#fa1e4e", category: "D-System", tags: ["#nexuz", "#backends", "#mcp"], entry: "../nexuz/index.html", permissions: ["network", "storage", "filesystem"], status: "active" },
+            { name: "dkz-playbook-runner", displayName: "Playbook Runner", version: "v1.01.1_01", description: "Workflow-Management: 100 DKZ-Workflows mit Kategorien, Suche und Run-System", icon: "📋", color: "#F59E0B", category: "D-System", tags: ["#playbook", "#workflow"], entry: "../playbook-runner/index.html", permissions: [], status: "active" },
+            { name: "dkz-action-deck", displayName: "Action Deck", version: "v1.01.1_01", description: "Swipe-to-Decide Dashboard mit YOLO JOLO Modus, Sprachassistent und QR-Code", icon: "🎴", color: "#fa1e4e", category: "D-System", tags: ["#swipe", "#action-deck", "#yolo-jolo"], entry: "../action-deck/index.html", permissions: ["audio", "network"], status: "active" },
+            { name: "dkz-knowledge-hub", displayName: "Knowledge Hub", version: "v1.01.1_01", description: "Notion-Alternative: Wiki, Kanban-Board, Schnellnotizen — EU-souverän", icon: "📝", color: "#a855f7", category: "B-Tools", tags: ["#wiki", "#kanban", "#notion"], entry: "../knowledge-hub/index.html", permissions: ["storage"], status: "active" },
+            { name: "dkz-auth", displayName: "Auth Center", version: "v1.01.1_01", description: "Passkey Authentication — WebAuthn/FIDO2, Biometrie, Session-Management", icon: "🔐", color: "#EF4444", category: "D-System", tags: ["#auth", "#passkeys", "#webauthn"], entry: "../auth-center/index.html", permissions: ["security"], status: "active" },
+            { name: "dkz-pipeline", displayName: "CI/CD Pipeline", version: "v1.01.1_01", description: "Build · Test · Deploy Pipeline mit GitHub Actions, Docker und Multi-Target Deploy", icon: "⚙️", color: "#F97316", category: "D-System", tags: ["#cicd", "#deploy", "#github-actions"], entry: "../cicd-pipeline/index.html", permissions: ["network", "system"], status: "active" },
+            { name: "dkz-watchdog", displayName: "Self-Repair Watchdog", version: "v1.01.1_01", description: "System-Überwachung mit automatischer Fehlerbehebung und Incident-Response", icon: "🛡️", color: "#fa1e4e", category: "D-System", tags: ["#watchdog", "#health", "#self-repair"], entry: "../watchdog/index.html", permissions: ["network", "system"], status: "active" },
+            { name: "dkz-cost-dashboard", displayName: "Cost Calculator", version: "v1.01.1_01", description: "LLM Kosten-Kalkulator mit Rollen-Zuordnung, Nutzungs-Slider und Multi-Provider Preise", icon: "💰", color: "#FFB800", category: "B-Tools", tags: ["#costs", "#calculator", "#llm"], entry: "../modules/cost-dashboard.html", permissions: [], status: "active" },
+            // ═══ IN DEVELOPMENT ═══
+            { name: "dkz-autopilot", displayName: "AutoPilot Hub", version: "v0.01.1_01", description: "Browser-Automation mit Pattern-Learning-Engine und Playwright-Integration", icon: "🚀", color: "#F97316", category: "D-System", tags: ["#autopilot", "#automation"], entry: null, permissions: ["network", "browser"], status: "dev" },
+            { name: "dkz-blogger-dashboard", displayName: "Blogger Dashboard", version: "v0.01.1_01", description: "Google Blogger API Management — Blog-Verwaltung, Templates und HTML-Posting", icon: "✍️", color: "#F59E0B", category: "B-Tools", tags: ["#blogger", "#api"], entry: null, permissions: ["network"], status: "dev" },
+            { name: "dkz-landing-pages", displayName: "Landing Pages", version: "v0.01.1_01", description: "Multi-Device Landing-Page System mit auto. Browser/Device-Erkennung", icon: "🖥️", color: "#06B6D4", category: "B-Tools", tags: ["#landing", "#multi-device"], entry: null, permissions: [], status: "dev" },
+            { name: "dkz-raw-api-hub", displayName: "Raw API Resource Hub", version: "v0.01.1_01", description: "Zentrale API-Key-Verwaltung für HuggingFace, NVIDIA, OpenRouter und mehr", icon: "🔑", color: "#EF4444", category: "D-System", tags: ["#api", "#keys"], entry: "../modules/raw-api-hub.html", permissions: ["network"], status: "dev" },
+            { name: "dkz-openclaw", displayName: "OpenClaw Orchestrator", version: "v0.01.1_01", description: "Almächtiger Agent-Orchestrator mit PicoClaw-Registry und Remote-Steuerung", icon: "🐙", color: "#a855f7", category: "D-System", tags: ["#openclaw", "#orchestrator"], entry: null, permissions: ["network", "filesystem", "browser"], status: "dev" },
+            { name: "dkz-mcp-dashboard", displayName: "MCP Dashboard", version: "v1.01.1_01", description: "MCP Server Control Panel — Tool-Monitor, Resource-Explorer und Prompt-Manager", icon: "🔌", color: "#fa1e4e", category: "D-System", tags: ["#mcp", "#server", "#control"], entry: "../mcp-dashboard.html", permissions: ["network"], status: "dev" },
+            // ═══ PLANNED ═══
+            { name: "dkz-messenger", displayName: "Multi-Messenger", version: "planned", description: "Matrix-basierter Multi-Messenger mit Bridges zu WhatsApp, Telegram, Signal", icon: "💬", color: "#22C55E", category: "B-Tools", tags: ["#messenger", "#matrix"], entry: null, permissions: [], status: "planned" },
+            { name: "dkz-community", displayName: "Community Hub", version: "planned", description: "Discord-Ersatz: Channels, Voice (Jitsi), Bots, Threads — Self-Hosted", icon: "🎙️", color: "#7C3AED", category: "B-Tools", tags: ["#community", "#discord"], entry: null, permissions: [], status: "planned" },
+            { name: "dkz-cloud", displayName: "EU Cloud", version: "planned", description: "100% EU-souveränes Hosting: Docker, K8s, R2 Storage — Frankfurt + Amsterdam", icon: "☁️", color: "#0EA5E9", category: "D-System", tags: ["#cloud", "#eu"], entry: null, permissions: [], status: "planned" },
+        ];
+
+        // ═══ ERROR TRACKING SYSTEM ═══
+        const ErrorTracker = {
+            errors: [],
+            listeners: [],
+            add(err) {
+                err.id = Date.now() + Math.random();
+                err.time = new Date();
+                this.errors.unshift(err);
+                this.notify();
+                showToast(err.severity === 'critical' ? '🔴' : err.severity === 'warning' ? '🟡' : '🔵', err.title);
+            },
+            clear() { this.errors = []; this.notify(); },
+            remove(id) { this.errors = this.errors.filter(e => e.id !== id); this.notify(); },
+            notify() { this.listeners.forEach(fn => fn(this.errors)); },
+            on(fn) { this.listeners.push(fn); }
+        };
+
+        // ═══ AUTO-DISCOVERY ENGINE ═══
+        const DiscoveryEngine = {
+            scanning: false,
+            lastScan: null,
+            results: [],
+
+            async scan() {
+                if (this.scanning) return;
+                this.scanning = true;
+                const bar = document.getElementById('scanBar');
+                const fill = document.getElementById('scanFill');
+                bar.classList.add('active');
+                fill.style.width = '0%';
+
+                ErrorTracker.errors = [];
+                const total = MODULE_REGISTRY.length;
+                let checked = 0;
+                let errorModules = [];
+
+                for (const mod of MODULE_REGISTRY) {
+                    checked++;
+                    fill.style.width = Math.round((checked / total) * 100) + '%';
+
+                    if (mod.entry && mod.status === 'active') {
+                        try {
+                            const resp = await fetch(mod.entry, { method: 'HEAD', signal: AbortSignal.timeout(DISCOVERY_CONFIG.healthTimeout) });
+                            if (!resp.ok && resp.status !== 0) {
+                                mod._health = 'error';
+                                ErrorTracker.add({ severity: 'critical', title: `${mod.displayName} nicht erreichbar`, message: `HTTP ${resp.status} — ${mod.entry}`, module: mod.name });
+                                errorModules.push(mod);
+                            } else {
+                                mod._health = 'ok';
+                            }
+                        } catch (e) {
+                            // file:// protocol throws on fetch — treat as OK for local dev
+                            if (location.protocol === 'file:') {
+                                mod._health = 'ok';
+                            } else {
+                                mod._health = 'error';
+                                ErrorTracker.add({ severity: 'warning', title: `${mod.displayName} Timeout`, message: e.message, module: mod.name });
+                                errorModules.push(mod);
+                            }
+                        }
+                    }
+                    await new Promise(r => setTimeout(r, 30)); // stagger for visual effect
+                }
+
+                // Check API Gateway
+                try {
+                    await fetch(DISCOVERY_CONFIG.apiBase + '/api/v1/health', { signal: AbortSignal.timeout(3000) });
+                } catch {
+                    if (location.protocol !== 'file:') {
+                        ErrorTracker.add({ severity: 'info', title: 'API Gateway offline', message: `${DISCOVERY_CONFIG.apiBase} nicht erreichbar. MCP-Tools deaktiviert.`, module: 'api-gateway' });
+                    }
+                }
+
+                this.lastScan = new Date();
+                this.scanning = false;
+                document.getElementById('errScanTime').textContent = 'Scan: ' + this.lastScan.toLocaleTimeString('de-DE');
+
+                setTimeout(() => { bar.classList.remove('active'); fill.style.width = '0%'; }, 800);
+                renderAll();
+                showToast('✅', `Auto-Discovery: ${total} Module gescannt, ${errorModules.length} Fehler`);
+            }
+        };
+
+        // ═══ RENDER ENGINE ═══
+        function hexToRgba(hex, a) {
+            const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r},${g},${b},${a})`;
+        }
+
+        function renderCard(mod, idx) {
+            const sc = mod._health === 'error' ? 'st-error' : mod.status === 'active' ? 'st-active' : mod.status === 'dev' ? 'st-dev' : 'st-plan';
+            const st = mod._health === 'error' ? 'FEHLER' : mod.status === 'active' ? 'AKTIV' : mod.status === 'dev' ? 'DEV' : 'GEPLANT';
+            const tags = mod.tags.map(t => `<span class="mc-tag" style="background:${hexToRgba(mod.color, .1)};color:${mod.color}">${t}</span>`).join('');
+            const launch = mod.entry ? `<button class="mc-launch" onclick="event.stopPropagation();launchMod('${mod.entry}')" title="Modul starten">▶</button>` : '';
+            const errCls = mod._health === 'error' ? ' err-state' : '';
+            return `<div class="mod-card${errCls}" style="--card-color:${mod.color};animation-delay:${idx * 60}ms" data-cat="${mod.category}" data-name="${mod.displayName.toLowerCase()}" data-status="${mod.status}" onclick="${mod.entry ? `launchMod('${mod.entry}')` : ''}">
+<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,${mod.color},transparent);opacity:0;transition:opacity .3s" class="cg"></div>
+${launch}
+<div class="mc-head"><div class="mc-icon" style="background:${hexToRgba(mod.color, .08)}">${mod.icon}</div><div class="mc-info"><div class="mc-name">${mod.displayName}</div><div class="mc-ver">${mod.version}</div></div></div>
+<div class="mc-desc">${mod.description}</div>
+<div class="mc-foot"><div class="mc-tags">${tags}</div><div class="mc-st ${sc}"><div class="dot"></div>${st}</div></div>
+</div>`;
+        }
+
+        function renderAll() {
+            const active = MODULE_REGISTRY.filter(m => m.status === 'active' && m._health !== 'error');
+            const dev = MODULE_REGISTRY.filter(m => m.status === 'dev');
+            const planned = MODULE_REGISTRY.filter(m => m.status === 'planned');
+            const errors = MODULE_REGISTRY.filter(m => m._health === 'error');
+
+            document.getElementById('moduleCount').textContent = MODULE_REGISTRY.length;
+            document.getElementById('activeCount').textContent = active.length;
+            document.getElementById('statTotal').textContent = MODULE_REGISTRY.length;
+            document.getElementById('statActive').textContent = active.length;
+            document.getElementById('statDev').textContent = dev.length;
+            document.getElementById('statErrors').textContent = errors.length;
+            document.getElementById('activeSec').textContent = active.length;
+            document.getElementById('devSec').textContent = dev.length;
+            document.getElementById('plannedSec').textContent = planned.length;
+
+            const health = Math.round((active.length / MODULE_REGISTRY.filter(m => m.status === 'active').length) * 100) || 0;
+            document.getElementById('statHealth').textContent = health + '%';
+            document.getElementById('sysStatus').textContent = health >= 90 ? 'ONLINE' : health >= 50 ? 'DEGRADED' : 'CRITICAL';
+            document.getElementById('sysStatus').style.color = health >= 90 ? 'var(--green)' : health >= 50 ? 'var(--yellow)' : 'var(--red)';
+
+            document.getElementById('activeGrid').innerHTML = active.map((m, i) => renderCard(m, i)).join('');
+            document.getElementById('devGrid').innerHTML = dev.map((m, i) => renderCard(m, i)).join('');
+            document.getElementById('plannedGrid').innerHTML = planned.map((m, i) => renderCard(m, i)).join('');
+
+            // Error section
+            const errTitle = document.getElementById('errSecTitle');
+            if (errors.length > 0) {
+                errTitle.style.display = '';
+                document.getElementById('errSec').textContent = errors.length;
+                document.getElementById('errGrid').innerHTML = errors.map((m, i) => renderCard(m, i)).join('');
+            } else {
+                errTitle.style.display = 'none';
+                document.getElementById('errGrid').innerHTML = '';
+            }
+
+            // Card hover glow
+            document.querySelectorAll('.mod-card').forEach(c => {
+                c.addEventListener('mouseenter', () => { const g = c.querySelector('.cg'); if (g) g.style.opacity = '1'; });
+                c.addEventListener('mouseleave', () => { const g = c.querySelector('.cg'); if (g) g.style.opacity = '0'; });
+            });
+        }
+
+        function launchMod(entry) {
+            if (entry) { window.open(entry, '_blank'); showToast('🚀', 'Modul gestartet'); }
+        }
+
+        // ═══ ERROR DRAWER ═══
+        function toggleErrDrawer() {
+            document.getElementById('errDrawer').classList.toggle('open');
+            document.getElementById('errOverlay').classList.toggle('open');
+        }
+
+        ErrorTracker.on(errors => {
+            const badge = document.getElementById('errCount');
+            badge.textContent = errors.length;
+            badge.classList.toggle('hidden', errors.length === 0);
+            document.getElementById('statErrors').textContent = errors.length;
+
+            const list = document.getElementById('errList');
+            if (errors.length === 0) {
+                list.innerHTML = '<div class="err-empty">✅ Keine Fehler erkannt.<br><span style="font-size:10px;margin-top:6px;display:block">Auto-Scan läuft alle 30 Sekunden</span></div>';
+                return;
+            }
+            list.innerHTML = errors.map(e => `<div class="err-item">
+<div class="err-head"><div class="err-sev ${e.severity}"></div><div class="err-title">${e.title}</div><div class="err-time">${e.time.toLocaleTimeString('de-DE')}</div></div>
+<div class="err-msg">${e.message}</div>
+<button class="err-retry" onclick="retryModule('${e.module}')">🔄 Retry</button>
+</div>`).join('');
+        });
+
+        async function retryModule(name) {
+            const mod = MODULE_REGISTRY.find(m => m.name === name);
+            if (!mod || !mod.entry) return;
+            showToast('🔄', `Retry: ${mod.displayName}...`);
+            try {
+                await fetch(mod.entry, { method: 'HEAD', signal: AbortSignal.timeout(5000) });
+                mod._health = 'ok';
+                ErrorTracker.errors = ErrorTracker.errors.filter(e => e.module !== name);
+                ErrorTracker.notify();
+                renderAll();
+                showToast('✅', `${mod.displayName} wieder erreichbar!`);
+            } catch {
+                showToast('🔴', `${mod.displayName} immer noch nicht erreichbar`);
+            }
+        }
+
+        // ═══ FILTERS ═══
+        document.querySelectorAll('.fbtn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const f = btn.dataset.filter;
+                document.querySelectorAll('.mod-card').forEach(c => {
+                    c.style.display = (f === 'all' || c.dataset.cat === f) ? '' : 'none';
+                });
+            });
+        });
+
+        // ═══ SEARCH ═══
+        document.getElementById('searchInput').addEventListener('input', e => {
+            const q = e.target.value.toLowerCase();
+            document.querySelectorAll('.mod-card').forEach(c => {
+                c.style.display = c.dataset.name.includes(q) ? '' : 'none';
+            });
+            if (q) document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
+        });
+
+        // ═══ SECTION TOGGLE ═══
+        function toggleSection(id) {
+            const grid = document.getElementById(id + 'Grid');
+            const chev = document.getElementById('chev' + id.charAt(0).toUpperCase() + id.slice(1));
+            grid.classList.toggle('collapsed');
+            chev.classList.toggle('collapsed');
+        }
+
+        // ═══ KEYBOARD SHORTCUTS ═══
+        document.addEventListener('keydown', e => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); document.getElementById('searchInput').focus(); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') { e.preventDefault(); DiscoveryEngine.scan(); }
+            if (e.key === 'Escape') {
+                document.getElementById('errDrawer').classList.remove('open');
+                document.getElementById('errOverlay').classList.remove('open');
+            }
+        });
+
+        // ═══ TOAST SYSTEM ═══
+        function showToast(icon, msg) {
+            const wrap = document.getElementById('toastWrap');
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.innerHTML = `<span class="t-icon">${icon}</span><span class="t-msg">${msg}</span>`;
+            wrap.appendChild(t);
+            setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, 3500);
+        }
+
+        // ═══ PARTICLES ═══
+        (function initParticles() {
+            const c = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.top = Math.random() * 100 + '%';
+                p.style.animationDelay = (Math.random() * 4) + 's';
+                p.style.animationDuration = (3 + Math.random() * 3) + 's';
+                c.appendChild(p);
+            }
+        })();
+
+        // ═══ LIVE CLOCK ═══
+        function updateClock() {
+            document.getElementById('liveClock').textContent = new Date().toLocaleTimeString('de-DE');
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // ═══ SCROLL SHADOW ═══
+        window.addEventListener('scroll', () => {
+            document.getElementById('filterBar').classList.toggle('scrolled', window.scrollY > 10);
+        });
+
+        // ═══ ANIMATED BAR FILLS ═══
+        setTimeout(() => {
+            document.querySelectorAll('.bar-fill[data-w]').forEach(b => { b.style.width = b.dataset.w + '%'; });
+        }, 500);
+
+        // ═══ BOOT ═══
+        renderAll();
+        showToast('⚡', 'DkZ Hub Auto-Discovery Engine v2.0 gestartet');
+        setTimeout(() => DiscoveryEngine.scan(), 1500);
+        setInterval(() => DiscoveryEngine.scan(), DISCOVERY_CONFIG.scanInterval);
+    </script>
+    <!-- DkZ Shared System -->
+    <script src="../shared/dkz-eventbus.js"></script>
+    <script src="../shared/dkz-console.js"></script>
+    <script src="../shared/dkz-health.js"></script>
+    <script src="../shared/dkz-shortcuts.js"></script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    <script src="../shared/dkz-debug.js"></script>
+    <script src="../shared/dkz-guide.js"></script>
+    <script src="../shared/dkz-copilot.js"></script>
+    <script src="../shared/dkz-puter.js"></script>
+    <script src="../shared/dkz-navbar.js"></script>
+
+    <!-- 4K VEO Cinematic Button Logic -->
+    <script>
+    (function() {
+        const veoBtn = document.getElementById('veoBtn');
+        if (!veoBtn) return;
+        let veoActive = false;
+        const VEO_COLORS = ['#fa1e4e','#a855f7','#00ff88','#ffb800','#55acee','#ff8c42'];
+
+        // Particle burst on click
+        function spawnParticles(x, y) {
+            const count = 24;
+            for (let i = 0; i < count; i++) {
+                const p = document.createElement('div');
+                p.className = 'veo-particle';
+                const angle = (Math.PI * 2 / count) * i + (Math.random() * .4 - .2);
+                const dist = 40 + Math.random() * 80;
+                const vx = Math.cos(angle) * dist;
+                const vy = Math.sin(angle) * dist;
+                p.style.left = x + 'px';
+                p.style.top = y + 'px';
+                p.style.setProperty('--vx', vx + 'px');
+                p.style.setProperty('--vy', vy + 'px');
+                p.style.width = (2 + Math.random() * 4) + 'px';
+                p.style.height = p.style.width;
+                p.style.background = VEO_COLORS[i % VEO_COLORS.length];
+                p.style.boxShadow = '0 0 8px ' + VEO_COLORS[i % VEO_COLORS.length];
+                document.body.appendChild(p);
+                p.addEventListener('animationend', () => p.remove());
+            }
+        }
+
+        // VEO cinematic overlay effect
+        function toggleVeo() {
+            veoActive = !veoActive;
+            const rect = veoBtn.getBoundingClientRect();
+            spawnParticles(rect.left + rect.width/2, rect.top + rect.height/2);
+
+            if (veoActive) {
+                veoBtn.style.borderColor = 'rgba(0,255,136,.5)';
+                veoBtn.style.boxShadow = '0 0 20px rgba(0,255,136,.2), 0 0 40px rgba(250,30,78,.1)';
+                document.documentElement.style.setProperty('--veo-film', '1');
+                // Add cinematic vignette
+                let v = document.getElementById('veo-vignette');
+                if (!v) {
+                    v = document.createElement('div');
+                    v.id = 'veo-vignette';
+                    v.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:99998;' +
+                        'background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.4) 100%);' +
+                        'opacity:0;transition:opacity .6s';
+                    document.body.appendChild(v);
+                }
+                requestAnimationFrame(() => v.style.opacity = '1');
+                // Add film grain
+                let g = document.getElementById('veo-grain');
+                if (!g) {
+                    g = document.createElement('div');
+                    g.id = 'veo-grain';
+                    g.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:99997;' +
+                        'opacity:0;transition:opacity .6s;mix-blend-mode:overlay;' +
+                        'background-image:url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\'/%3E%3C/svg%3E");' +
+                        'animation:veo-grain-anim .15s steps(1) infinite';
+                    const style = document.createElement('style');
+                    style.textContent = '@keyframes veo-grain-anim{0%,100%{transform:translate(0)}10%{transform:translate(-1%,-1%)}20%{transform:translate(1%)}30%{transform:translate(-1%,1%)}40%{transform:translate(1%,-1%)}50%{transform:translate(-1%)}60%{transform:translate(1%,1%)}70%{transform:translate(-1%,-1%)}80%{transform:translate(1%)}90%{transform:translate(-1%,1%)}}';
+                    document.head.appendChild(style);
+                    document.body.appendChild(g);
+                }
+                requestAnimationFrame(() => g.style.opacity = '.04');
+                if (typeof showToast === 'function') showToast('\ud83c\udfac', '4K VEO Cinematic Mode AKTIV');
+            } else {
+                veoBtn.style.borderColor = '';
+                veoBtn.style.boxShadow = '';
+                const v = document.getElementById('veo-vignette');
+                const g = document.getElementById('veo-grain');
+                if (v) v.style.opacity = '0';
+                if (g) g.style.opacity = '0';
+                if (typeof showToast === 'function') showToast('\ud83c\udfac', '4K VEO Mode deaktiviert');
+            }
+        }
+
+        veoBtn.addEventListener('click', toggleVeo);
+    })();
+    </script>
+</body>
+
+<!-- @DKZ:RULES → REGELWERK.md + ORDNER.ini | @DKZ:DOCS → REGISTRY.json | BLAUPAUSE.md -->
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+
+</html>

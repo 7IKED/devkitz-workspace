@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DEVKiTZ™ Panel</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  width:100%;min-height:100vh;
+  background:#040404;
+  font-family:'Courier New',monospace;
+  color:#c8c8c8;
+  font-size:11px;
+  overflow-x:hidden;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:rgba(250,30,78,.15);}
+
+/* SCANLINES */
+body::before{content:'';position:fixed;inset:0;z-index:100;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.04) 2px,rgba(0,0,0,.04) 4px);}
+
+/* HEADER */
+.hdr{
+  padding:12px 14px 10px;
+  border-bottom:1px solid rgba(250,30,78,.08);
+  background:#020202;
+  position:sticky;top:0;z-index:50;
+}
+.brand{font-size:10px;letter-spacing:4px;color:rgba(250,30,78,.7);text-transform:uppercase;}
+.brand b{color:rgba(250,30,78,.95);}
+.clock{font-size:8px;letter-spacing:2px;color:rgba(50,50,50,.6);margin-top:3px;}
+.status-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:rgba(0,255,136,.5);margin-right:5px;animation:blink 2s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+
+/* SECTIONS */
+.section{padding:10px 14px 4px;}
+.sec-label{font-size:7px;letter-spacing:3px;text-transform:uppercase;color:rgba(50,50,50,.4);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.sec-label::after{content:'';flex:1;height:1px;background:rgba(250,30,78,.05);}
+
+/* LINKS */
+.link-list{display:flex;flex-direction:column;gap:3px;}
+.lnk{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 10px;
+  border:1px solid rgba(255,255,255,.03);
+  border-radius:2px;
+  color:rgba(100,100,100,.6);
+  text-decoration:none;
+  font-size:9px;letter-spacing:1px;
+  transition:all .2s;
+  background:rgba(0,0,0,.4);
+  cursor:pointer;
+}
+.lnk:hover{border-color:rgba(250,30,78,.2);color:rgba(200,200,200,.8);background:rgba(250,30,78,.03);}
+.lnk .ico{font-size:13px;line-height:1;flex-shrink:0;}
+.lnk .lbl{flex:1;}
+.lnk .badge{font-size:6px;letter-spacing:1px;padding:1px 5px;border-radius:1px;border:1px solid;}
+.badge-on{border-color:rgba(0,255,136,.2);color:rgba(0,255,136,.45);}
+.badge-plan{border-color:rgba(255,180,0,.2);color:rgba(255,180,0,.4);}
+
+/* AI BUTTONS — prominent */
+.ai-section{padding:10px 14px 8px;}
+.ai-btn{
+  display:flex;align-items:center;gap:10px;width:100%;
+  padding:10px 12px;margin-bottom:6px;
+  border-radius:2px;border:none;
+  font-family:'Courier New',monospace;
+  font-size:9px;letter-spacing:2px;text-transform:uppercase;
+  cursor:pointer;transition:all .25s;text-decoration:none;
+}
+.ai-claude{
+  background:rgba(207,147,107,.06);
+  border:1px solid rgba(207,147,107,.25);
+  color:rgba(207,147,107,.8);
+}
+.ai-claude:hover{background:rgba(207,147,107,.12);border-color:rgba(207,147,107,.5);color:rgba(207,147,107,1);}
+.ai-antigrav{
+  background:rgba(250,30,78,.04);
+  border:1px solid rgba(250,30,78,.2);
+  color:rgba(250,30,78,.7);
+}
+.ai-antigrav:hover{background:rgba(250,30,78,.08);border-color:rgba(250,30,78,.5);color:rgba(250,30,78,.95);}
+.ai-grok{
+  background:rgba(255,255,255,.02);
+  border:1px solid rgba(100,100,100,.15);
+  color:rgba(100,100,100,.5);
+}
+.ai-grok:hover{background:rgba(255,255,255,.05);border-color:rgba(180,180,180,.3);color:rgba(180,180,180,.8);}
+.ai-ico{font-size:16px;line-height:1;}
+.ai-info{display:flex;flex-direction:column;gap:2px;text-align:left;}
+.ai-name{font-size:9px;letter-spacing:2px;}
+.ai-sub{font-size:7px;letter-spacing:1px;opacity:.5;text-transform:none;}
+
+/* QUICK ACTIONS */
+.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0 14px 10px;}
+.qa-btn{
+  padding:6px 8px;border-radius:2px;
+  border:1px solid rgba(255,255,255,.05);
+  background:rgba(0,0,0,.5);
+  color:rgba(60,60,60,.5);
+  font-family:'Courier New',monospace;
+  font-size:7px;letter-spacing:1px;text-transform:uppercase;
+  cursor:pointer;transition:all .2s;text-decoration:none;
+  display:flex;align-items:center;gap:5px;justify-content:center;
+}
+.qa-btn:hover{border-color:rgba(250,30,78,.2);color:rgba(200,200,200,.7);}
+
+/* DIVIDER */
+.div{height:1px;background:rgba(250,30,78,.04);margin:4px 14px;}
+
+/* FOOTER */
+.footer{padding:10px 14px;font-size:7px;letter-spacing:2px;color:rgba(30,30,30,.5);border-top:1px solid rgba(255,255,255,.02);}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="brand">DEVKiTZ<b>™</b></div>
+  <div class="clock">
+    <span class="status-dot"></span>
+    <span id="clk">--:--:--</span> · ONLINE
+  </div>
+</div>
+
+<!-- AI CONNECT -->
+<div class="ai-section">
+  <div class="sec-label">// KI Verbindung</div>
+
+  <a class="ai-btn ai-antigrav" href="https://claude.ai" target="_blank">
+    <span class="ai-ico">⚡</span>
+    <div class="ai-info">
+      <span class="ai-name">Antigravity</span>
+      <span class="ai-sub">claude.ai → Antigravity Agent</span>
+    </div>
+  </a>
+
+  <a class="ai-btn ai-claude" href="https://claude.ai/new" target="_blank">
+    <span class="ai-ico">🤖</span>
+    <div class="ai-info">
+      <span class="ai-name">Claude</span>
+      <span class="ai-sub">Neuer Chat · claude.ai</span>
+    </div>
+  </a>
+
+  <a class="ai-btn ai-grok" href="https://grok.com" target="_blank">
+    <span class="ai-ico">🌐</span>
+    <div class="ai-info">
+      <span class="ai-name">Grok</span>
+      <span class="ai-sub">xAI · grok.com</span>
+    </div>
+  </a>
+</div>
+
+<div class="div"></div>
+
+<!-- DEVKITZ NAV -->
+<div class="section">
+  <div class="sec-label">// DEVKiTZ Module</div>
+  <div class="link-list">
+
+    <a class="lnk" href="dashboard.html" target="_top">
+      <span class="ico">⚙️</span>
+      <span class="lbl">Dashboard</span>
+      <span class="badge badge-on">AKTIV</span>
+    </a>
+
+    <a class="lnk" href="../../15_xper/index.html" target="_top">
+      <span class="ico">🎙️</span>
+      <span class="lbl">XPER™ Voice</span>
+      <span class="badge badge-on">AKTIV</span>
+    </a>
+
+    <a class="lnk" href="../../15_xper/snippets.html" target="_top">
+      <span class="ico">🔊</span>
+      <span class="lbl">XPER™ Snippets</span>
+      <span class="badge badge-on">AKTIV</span>
+    </a>
+
+    <a class="lnk" href="../hub/index.html" target="_top">
+      <span class="ico">🚀</span>
+      <span class="lbl">DEVKiTZ Hub</span>
+      <span class="badge badge-on">AKTIV</span>
+    </a>
+
+    <a class="lnk" href="../../14_cloudia2/drive/Index.html" target="_top">
+      <span class="ico">☁️</span>
+      <span class="lbl">CLOUDIA²</span>
+      <span class="badge badge-on">AKTIV</span>
+    </a>
+
+    <a class="lnk" href="../../../04_SYSTEM/VIDEO_BLAUPAUSE_VIEWER.html" target="_top">
+      <span class="ico">📄</span>
+      <span class="lbl">Blaupause Viewer</span>
+      <span class="badge badge-on">AKTIV</span>
+    </a>
+
+  </div>
+</div>
+
+<div class="div"></div>
+
+<!-- QUICK ACTIONS -->
+<div class="section">
+  <div class="sec-label">// Quick Actions</div>
+</div>
+<div class="qa-grid">
+  <button class="qa-btn" onclick="copyPrompt()">📋 Prompt kopieren</button>
+  <a class="qa-btn" href="https://fish.audio" target="_blank">🐟 fish.audio</a>
+  <a class="qa-btn" href="https://github.com/BAZE2/devkitz-ecosystem" target="_blank">🐙 GitHub</a>
+  <a class="qa-btn" href="https://mymemory.translated.net" target="_blank">🌍 Übersetzer</a>
+</div>
+
+<div class="div"></div>
+
+<!-- FOOTER -->
+<div class="footer">
+  DEVKiTZ™ v2026 · BAZE² · Vivaldi Panel<br>
+  <span style="color:rgba(250,30,78,.2)">// Panel-URL: file:///C:/DEVKiTZ/01_PROJECTS/01_dashboard/landing-pages/vivaldi-panel.html</span>
+</div>
+
+<script>
+// Clock
+function tick() {
+  document.getElementById('clk').textContent = new Date().toLocaleTimeString('de-DE');
+}
+tick(); setInterval(tick, 1000);
+
+// Copy DEVKiTZ system prompt for Claude
+function copyPrompt() {
+  const prompt = `Du bist Antigravity für DEVKiTZ™ (BAZE²). 
+Workspace: C:/DEVKiTZ/ | Browser: Vivaldi | Sprache: Deutsch
+Regeln: CLAUDE.md lesen | Kein Löschen | Git Commit nach Änderungen | Desktop = nur ablegen nie ändern
+Aktive Projekte: XPER™ (TTS+Personas+Übersetzer), Dashboard (Sound-Animated), SYMPHONY™ (geplant), NEXUZ™ (geplant)
+Blaupausen: 04_SYSTEM/ | Registry: 01_PROJECTS/01_dashboard/REGISTRY.json`;
+  navigator.clipboard.writeText(prompt).then(() => {
+    const btn = document.querySelector('button.qa-btn');
+    btn.textContent = '✅ Kopiert!';
+    setTimeout(() => { btn.textContent = '📋 Prompt kopieren'; }, 2000);
+  });
+}
+</script>
+<script src="../shared/dkz-copilot.js"></script>
+</body>
+</html>

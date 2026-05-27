@@ -1,0 +1,96 @@
+# DkZ CodeRabbit Verify — Post-Fix Review
+# Triggers when a PR is labeled 'fix-ready' to verify the fix is clean
+# @DKZ:RULES -> R21 Pflegefall-System
+
+name: "🐰 CodeRabbit Verify"
+
+on:
+  pull_request:
+    types: [labeled, synchronize]
+
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read
+
+jobs:
+  verify-fix:
+    if: contains(github.event.pull_request.labels.*.name, 'fix-ready')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Fix Clean
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const issueMatch = pr.body?.match(/#(\d+)/);
+
+            if (!issueMatch) {
+              console.log('No linked issue found');
+              return;
+            }
+
+            const issueNumber = parseInt(issueMatch[1]);
+
+            // Post verification request to CodeRabbit
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              body: `## 🐰 CodeRabbit Verify Request\n\n` +
+                    `Linked Issue: #${issueNumber}\n\n` +
+                    `**Prüfe bitte:**\n` +
+                    `- [ ] Fix beseitigt das Problem vollständig\n` +
+                    `- [ ] Keine Regression eingeführt\n` +
+                    `- [ ] DkZ Design System eingehalten\n` +
+                    `- [ ] XSS-Schutz (esc()) vorhanden\n` +
+                    `- [ ] Event-Log (DkzEventLog) integriert\n\n` +
+                    `> 🤖 _Auto-triggered by DkZ Pflegefall-System (R21)_`
+            });
+
+            // Add review label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              labels: ['coderabbit:review']
+            });
+
+  reopen-on-failure:
+    if: contains(github.event.pull_request.labels.*.name, 'coderabbit:failed')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reopen Original Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const issueMatch = pr.body?.match(/#(\d+)/);
+
+            if (!issueMatch) return;
+            const issueNumber = parseInt(issueMatch[1]);
+
+            // Reopen original issue
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              state: 'open'
+            });
+
+            // Create follow-up issue
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🔄 Re-Fix: ${pr.title} (CodeRabbit rejected)`,
+              body: `## Problem nicht vollständig gelöst\n\n` +
+                    `Original Issue: #${issueNumber}\n` +
+                    `Abgelehnter PR: #${pr.number}\n\n` +
+                    `CodeRabbit hat festgestellt dass der Fix nicht sauber ist.\n` +
+                    `Bitte erneut prüfen und beheben.\n\n` +
+                    `> 🤖 _Auto-created by DkZ Pflegefall-System (R21)_`,
+              labels: ['pf:hoch', 'refix']
+            });

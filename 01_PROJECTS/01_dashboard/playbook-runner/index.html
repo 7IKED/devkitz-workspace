@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📋 DkZ Playbook Runner — Workflow Management</title>
+    <meta name="description" content="DkZ Playbook Runner — Visualisierung und Steuerung der 100 DKZ Workflows">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        :root {
+            --bg: #0e0e10;
+            --bg2: #121215;
+            --card: #16161a;
+            --card2: #1a1a24;
+            --border: #1e1e2e;
+            --border2: #2a2a3a;
+            --text: #e8e8f0;
+            --muted: #6e6e8a;
+            --accent: #fa1e4e;
+            --cyan: #fa1e4e;
+            --purple: #a855f7;
+            --green: #00ff88;
+            --red: #ff4466;
+            --yellow: #ffb800;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(18, 18, 26, .7);
+            --radius: 14px
+        }
+
+        html,
+        body {
+            min-height: 100vh;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text)
+        }
+
+        .header {
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg2);
+            display: flex;
+            align-items: center;
+            gap: 16px
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .header .sub {
+            font-size: 10px;
+            color: var(--muted);
+            font-family: var(--mono);
+            letter-spacing: 1px
+        }
+
+        .header-right {
+            margin-left: auto;
+            display: flex;
+            gap: 10px;
+            align-items: center
+        }
+
+        .hstat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-family: var(--mono);
+            color: var(--muted);
+            padding: 6px 12px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px
+        }
+
+        .hstat .v {
+            color: var(--text);
+            font-weight: 700
+        }
+
+        .btn-nav {
+            padding: 8px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all .2s;
+            text-decoration: none
+        }
+
+        .btn-nav:hover {
+            color: var(--cyan);
+            border-color: var(--cyan)
+        }
+
+        .toolbar {
+            padding: 14px 32px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg2)
+        }
+
+        .search {
+            padding: 8px 14px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            width: 260px;
+            outline: none
+        }
+
+        .search:focus {
+            border-color: var(--accent)
+        }
+
+        .search::placeholder {
+            color: var(--muted)
+        }
+
+        .filter {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: transparent;
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .filter:hover {
+            border-color: var(--accent);
+            color: var(--text)
+        }
+
+        .filter.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff
+        }
+
+        .content {
+            padding: 24px 32px
+        }
+
+        .wf-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 12px
+        }
+
+        .wf-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            transition: all .3s;
+            cursor: pointer;
+            position: relative
+        }
+
+        .wf-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border2);
+            box-shadow: 0 6px 24px rgba(0, 0, 0, .3)
+        }
+
+        .wf-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px
+        }
+
+        .wf-id {
+            font-size: 10px;
+            font-family: var(--mono);
+            color: var(--accent);
+            font-weight: 700;
+            min-width: 60px
+        }
+
+        .wf-name {
+            font-size: 13px;
+            font-weight: 700;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .wf-run {
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+            border: 1px solid var(--green);
+            background: transparent;
+            color: var(--green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all .2s;
+            font-size: 12px;
+            opacity: 0
+        }
+
+        .wf-card:hover .wf-run {
+            opacity: 1
+        }
+
+        .wf-run:hover {
+            background: var(--green);
+            color: #000
+        }
+
+        .wf-desc {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.5;
+            margin-bottom: 10px
+        }
+
+        .wf-meta {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap
+        }
+
+        .wf-tag {
+            font-size: 8px;
+            font-family: var(--mono);
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, .04);
+            color: var(--muted);
+            border: 1px solid var(--border)
+        }
+
+        .wf-cat {
+            font-size: 8px;
+            font-family: var(--mono);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 700
+        }
+
+        .cat-ops {
+            background: rgba(250, 30, 78, .1);
+            color: var(--cyan)
+        }
+
+        .cat-dev {
+            background: rgba(168, 85, 247, .1);
+            color: var(--purple)
+        }
+
+        .cat-data {
+            background: rgba(0, 255, 136, .1);
+            color: var(--green)
+        }
+
+        .cat-ai {
+            background: rgba(250, 30, 78, .1);
+            color: var(--accent)
+        }
+
+        .cat-sys {
+            background: rgba(255, 184, 0, .1);
+            color: var(--yellow)
+        }
+
+        .empty {
+            text-align: center;
+            padding: 60px;
+            color: var(--muted);
+            font-size: 14px
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <a href="../hub/index.html" class="btn-nav">← Hub</a>
+        <div>
+            <h1>📋 Playbook Runner</h1>
+            <div class="sub">DKZ WORKFLOW MANAGEMENT v1.01.1_01</div>
+        </div>
+        <div class="header-right">
+            <div class="hstat">Workflows <span class="v" id="wfTotal">0</span></div>
+            <div class="hstat">Kategorien <span class="v" id="wfCats">0</span></div>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <input type="text" class="search" placeholder="🔍 Workflow suchen..." id="wfSearch">
+        <button class="filter active" data-cat="all">Alle</button>
+        <button class="filter" data-cat="ops">⚙️ Ops</button>
+        <button class="filter" data-cat="dev">💻 Dev</button>
+        <button class="filter" data-cat="data">📊 Data</button>
+        <button class="filter" data-cat="ai">🧠 AI</button>
+        <button class="filter" data-cat="sys">🔧 System</button>
+    </div>
+
+    <div class="content">
+        <div class="wf-grid" id="wfGrid"></div>
+        <div class="empty" id="wfEmpty" style="display:none">Keine Workflows gefunden.</div>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        // Generate 100 DKZ Workflows matching the DKZ-WF-001.json to DKZ-WF-100.json files
+        const CATEGORIES = [
+            { id: "ops", name: "Operations", cls: "cat-ops", workflows: ["Backup durchführen", "Health Check", "Log Rotation", "SSL Zertifikat erneuern", "DNS Update", "Server Restart", "Port Monitoring", "Disk Cleanup", "Uptime Check", "Firewall Audit"] },
+            { id: "dev", name: "Development", cls: "cat-dev", workflows: ["Git Push + Deploy", "Branch erstellen", "Code Review", "npm Audit", "Dependency Update", "Lint & Format", "Unit Tests", "Build Pipeline", "PR Merge", "Release Tag"] },
+            { id: "data", name: "Datenbank & Files", cls: "cat-data", workflows: ["DB Backup", "DB Migration", "CSV Import", "JSON Validierung", "File Deduplizierung", "EXIF Extraktion", "OCR Pipeline", "Indexierung", "Datenbankbereinigung", "Archivierung"] },
+            { id: "ai", name: "AI & LLM", cls: "cat-ai", workflows: ["RAG Rebuild", "Embedding Update", "Prompt Optimierung", "Modell Benchmark", "Fine-Tuning Pipeline", "Token-Statistik", "Output Qualitätsprüfung", "Guardrails Check", "AI Compliance Audit", "Knowledge Base Sync"] },
+            { id: "sys", name: "System", cls: "cat-sys", workflows: ["System-Snapshot", "Config Sync", "User Management", "API Key Rotation", "Session Cleanup", "Cache Invalidierung", "Cronjob Update", "Service Discovery", "Performance Report", "Incident Response"] }
+        ];
+
+        const allWorkflows = [];
+        let idx = 1;
+        for (const cat of CATEGORIES) {
+            for (const wf of cat.workflows) {
+                for (let r = 0; r < 2; r++) {
+                    if (idx > 100) break;
+                    const id = String(idx).padStart(3, '0');
+                    allWorkflows.push({
+                        id: `DKZ-WF-${id}`,
+                        name: wf + (r > 0 ? ` (v${r + 1})` : ''),
+                        category: cat.id,
+                        catCls: cat.cls,
+                        catName: cat.name,
+                        description: `Automatisierter Workflow: ${wf}. Trigger: ${['manual', 'cron', 'event'][idx % 3]}. Retry: ${[1, 3, 5][idx % 3]}.`,
+                        trigger: ['manual', 'cron', 'event'][idx % 3],
+                        steps: 2 + (idx % 5)
+                    });
+                    idx++;
+                }
+            }
+        }
+
+        function renderWorkflow(wf) {
+            return `<div class="wf-card" data-cat="${wf.category}" data-name="${wf.name.toLowerCase()}">
+        <div class="wf-head">
+            <span class="wf-id">${wf.id}</span>
+            <span class="wf-name">${wf.name}</span>
+            <button class="wf-run" title="Workflow starten">▶</button>
+        </div>
+        <div class="wf-desc">${wf.description}</div>
+        <div class="wf-meta">
+            <span class="wf-cat ${wf.catCls}">${wf.catName}</span>
+            <span class="wf-tag">trigger: ${wf.trigger}</span>
+            <span class="wf-tag">${wf.steps} steps</span>
+        </div>
+    </div>`;
+        }
+
+        function render(filter, search) {
+            let filtered = allWorkflows;
+            if (filter && filter !== 'all') filtered = filtered.filter(w => w.category === filter);
+            if (search) filtered = filtered.filter(w => w.name.toLowerCase().includes(search) || w.id.toLowerCase().includes(search));
+            const grid = document.getElementById('wfGrid');
+            const empty = document.getElementById('wfEmpty');
+            grid.innerHTML = filtered.map(renderWorkflow).join('');
+            empty.style.display = filtered.length === 0 ? '' : 'none';
+        }
+
+        // Stats
+        document.getElementById('wfTotal').textContent = allWorkflows.length;
+        document.getElementById('wfCats').textContent = CATEGORIES.length;
+
+        // Filters
+        let activeFilter = 'all';
+        document.querySelectorAll('.filter').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                activeFilter = btn.dataset.cat;
+                render(activeFilter, document.getElementById('wfSearch').value.toLowerCase());
+            });
+        });
+
+        // Search
+        document.getElementById('wfSearch').addEventListener('input', e => {
+            render(activeFilter, e.target.value.toLowerCase());
+        });
+
+        // Run buttons
+        document.getElementById('wfGrid').addEventListener('click', e => {
+            const btn = e.target.closest('.wf-run');
+            if (btn) {
+                btn.textContent = '✓';
+                btn.style.background = 'var(--green)';
+                btn.style.color = '#000';
+                btn.style.opacity = '1';
+                setTimeout(() => { btn.textContent = '▶'; btn.style.background = 'transparent'; btn.style.color = 'var(--green)'; btn.style.opacity = ''; }, 2000);
+            }
+        });
+
+        // Initial render
+        render('all', '');
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

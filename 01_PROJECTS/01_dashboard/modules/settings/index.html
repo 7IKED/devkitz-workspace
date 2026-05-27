@@ -1,0 +1,1929 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v1.02.0_01">
+    <meta name="dkz-module" content="settings">
+    <meta name="description" content="DkZ Settings -- API-Keys, Personalisierung, Verbindungen, Erlaubnisse">
+    <title>DkZâ„¢ Settings</title>
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --bg2: #111116;
+            --bg3: #1a1a20;
+            --bg4: #222228;
+            --accent: #fa1e4e;
+            --accentGlow: rgba(250, 30, 78, .15);
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --border: #2a2a2e;
+            --card: #18181b;
+            --radius: 12px;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--bg2);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .header h1 span {
+            color: var(--accent);
+        }
+
+        .back-btn {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-left: auto;
+            flex-wrap: wrap;
+        }
+        .tabs .tab-sep { width:1px;background:var(--border);margin:4px 2px; }
+        .info-bar { padding:10px 14px;background:rgba(85,172,238,.08);border:1px solid rgba(85,172,238,.15);border-radius:8px;font-size:11px;color:#55ACEE;margin-bottom:14px;display:flex;align-items:center;gap:8px; }
+        .info-bar a { color:#fa1e4e;text-decoration:none;font-weight:700; }
+        .warn-blink { animation:wblink 1.5s infinite; }
+        @keyframes wblink { 0%,100%{opacity:1}50%{opacity:.4} }
+        .admin-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:16px; }
+        .admin-card { background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;transition:border-color .2s; }
+        .admin-card:hover { border-color:rgba(250,30,78,.3); }
+        .admin-card-title { font-size:12px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px; }
+        .admin-card-desc { font-size:10px;color:var(--muted);margin-bottom:10px;line-height:1.5; }
+        .admin-tag { display:inline-block;padding:2px 8px;border-radius:4px;font-size:9px;font-weight:600;margin:2px; }
+        .admin-tag-green { background:rgba(0,255,136,.1);color:#00ff88; }
+        .admin-tag-red { background:rgba(255,68,68,.1);color:#ff4444; }
+        .admin-tag-blue { background:rgba(85,172,238,.1);color:#55ACEE; }
+        .admin-tag-yellow { background:rgba(255,215,64,.1);color:#ffd740; }
+        .login-btn { display:flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:11px;font-weight:600;cursor:pointer;width:100%;transition:all .2s;font-family:var(--font);margin-bottom:6px; }
+        .login-btn:hover { border-color:var(--accent);background:var(--bg3); }
+        .login-btn .login-icon { font-size:16px; }
+
+        .tab {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+            font-family: var(--font);
+        }
+
+        .tab:hover {
+            border-color: var(--accent);
+            color: var(--text);
+        }
+
+        .tab.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        .section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .section-desc {
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        .key-row {
+            display: grid;
+            grid-template-columns: 120px 1fr auto;
+            gap: 10px;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, .03);
+        }
+
+        .key-label {
+            font-size: 11px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .key-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .key-dot.on {
+            background: #00ff88;
+        }
+
+        .key-dot.off {
+            background: var(--muted);
+        }
+
+        .key-input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 10px;
+            color: var(--text);
+            font-size: 11px;
+            font-family: var(--mono);
+        }
+
+        .key-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            background: var(--bg3);
+            color: var(--text);
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+            font-family: var(--font);
+        }
+
+        .btn:hover {
+            border-color: var(--accent);
+        }
+
+        .btn-accent {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 6px;
+            margin: 8px 0;
+        }
+
+        .color-swatch {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .color-swatch:hover,
+        .color-swatch.active {
+            border-color: #fff;
+            transform: scale(1.1);
+        }
+
+        .perm-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, .03);
+        }
+
+        .perm-row label {
+            flex: 1;
+            font-size: 11px;
+        }
+
+        .perm-row input[type=checkbox] {
+            accent-color: var(--accent);
+        }
+
+        .conn-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: var(--bg);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .conn-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .conn-name {
+            font-size: 12px;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .conn-val {
+            font-size: 10px;
+            color: var(--muted);
+            font-family: var(--mono);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--card);
+            border: 1px solid var(--accent);
+            color: var(--text);
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 9999;
+            animation: fiu .3s;
+        }
+
+        @keyframes fiu {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="settings" data-dkz-appid="DKZ-MOD-SET" data-dkz-version="v0.02" data-dkz-title="Settings" data-dkz-icon="⚙️" data-dkz-separable="false">
+    <div class="header">
+        <a href="../../hub/index.html" class="back-btn">&#8592;</a>
+        <h1><span>Settings</span></h1>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('keys')">API-Keys</button>
+            <button class="tab" onclick="switchTab('personal')">Personalisierung</button>
+            <button class="tab" onclick="switchTab('connections')">Verbindungen</button>
+            <button class="tab" onclick="switchTab('permissions')">Erlaubnisse</button>
+            <button class="tab" onclick="switchTab('james')">James</button>
+            <div class="tab-sep"></div>
+            <button class="tab" onclick="switchTab('tokens')" style="border-color:rgba(250,30,78,.3)">&#9881; Token</button>
+            <button class="tab" onclick="switchTab('access')" style="border-color:rgba(250,30,78,.3)">&#9881; Zugang</button>
+            <button class="tab" onclick="switchTab('llm')" style="border-color:rgba(250,30,78,.3)">&#9881; LLM</button>
+            <button class="tab" onclick="switchTab('domains')" style="border-color:rgba(250,30,78,.3)">&#9881; Domains</button>
+            <button class="tab" onclick="switchTab('servers')" style="border-color:rgba(250,30,78,.3)">&#128421; Server</button>
+            <button class="tab" onclick="switchTab('hosting')" style="border-color:rgba(250,30,78,.3)">&#9881; Hosting</button>
+            <button class="tab" onclick="switchTab('brain')" style="border-color:rgba(0,255,136,.3)">&#9881; Gedächtnis</button>
+            <button class="tab" onclick="switchTab('aistack')" style="border-color:rgba(106,90,205,.3)">🤖 AI Stack</button>
+        </div>
+    </div>
+
+    <div class="main">
+        <!-- TAB 1: API Keys -->
+        <div class="panel active" id="panel-keys">
+            <div class="section">
+                <div class="section-title">API-Keys verwalten</div>
+                <div class="section-desc">Keys werden verschluesselt in localStorage gespeichert. Niemals Keys teilen
+                    oder committen.</div>
+                <div id="keys-list"></div>
+                <div style="margin-top:12px;display:flex;gap:8px">
+                    <button class="btn btn-accent" onclick="saveAllKeys()">Alle speichern</button>
+                    <button class="btn" onclick="exportKeys()">Export</button>
+                    <button class="btn" onclick="importKeys()">Import</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: Personalization -->
+        <div class="panel" id="panel-personal">
+            <div class="section">
+                <div class="section-title">Akzentfarbe</div>
+                <div class="color-grid" id="color-grid"></div>
+            </div>
+            <div class="section">
+                <div class="section-title">Schriftgroesse</div>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <input type="range" min="10" max="18" value="13" id="font-size"
+                        style="flex:1;accent-color:var(--accent)" oninput="previewFont(this.value)">
+                    <span id="font-val" style="font-size:11px;color:var(--muted)">13px</span>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">Sprache</div>
+                <select id="lang-select"
+                    style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:6px;font-size:12px">
+                    <option value="de" selected>Deutsch</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- TAB 3: Connections -->
+        <div class="panel" id="panel-connections">
+            <div class="section">
+                <div class="section-title">NEXUZ-API Gateway</div>
+                <div class="conn-status">
+                    <div class="conn-dot" id="gw-dot" style="background:var(--muted)"></div>
+                    <div class="conn-name">Gateway</div>
+                    <div class="conn-val" id="gw-url">http://localhost:3040</div>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                    <input class="key-input" id="gw-input" value="http://localhost:3040" style="flex:1">
+                    <button class="btn" onclick="setGateway()">Setzen</button>
+                    <button class="btn" onclick="testGateway()">Testen</button>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">n8n Hetzner VPS</div>
+                <div class="key-row">
+                    <div class="key-label">URL</div><input class="key-input" id="n8n-url"
+                        placeholder="https://n8n.example.com"><button class="btn" onclick="saveN8n()">OK</button>
+                </div>
+                <div class="key-row">
+                    <div class="key-label">API Key</div><input class="key-input" id="n8n-key" placeholder="n8n-api-key"
+                        type="password"><button class="btn" onclick="saveN8n()">OK</button>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">Puter Cloud</div>
+                <div class="conn-status">
+                    <div class="conn-dot" style="background:var(--muted)"></div>
+                    <div class="conn-name">Puter</div>
+                    <div class="conn-val">App: dkz-devkitz</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: Permissions -->
+        <div class="panel" id="panel-permissions">
+            <div class="section">
+                <div class="section-title">Modul-Erlaubnisse</div>
+                <div class="section-desc">Bestimme welche Module API-Calls machen duerfen.</div>
+                <div id="perm-list"></div>
+            </div>
+        </div>
+
+        <!-- TAB 5: James Config -->
+        <div class="panel" id="panel-james">
+            <div class="section">
+                <div class="section-title">James Bewertungs-Agent</div>
+                <div class="section-desc">Konfiguriere die Rubric-Regeln und Schwellwerte.</div>
+                <div class="perm-row"><input type="checkbox" id="james-auto" checked><label for="james-auto">Auto-Inject
+                        Panel in Module</label></div>
+                <div class="perm-row"><label>Min. Score fuer "Bereit"</label><input type="number" id="james-threshold"
+                        value="70" min="0" max="100"
+                        style="width:60px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:11px">
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">Aktive Regeln</div>
+                <div id="james-rules"></div>
+            </div>
+        </div>
+
+        <!-- --- TAB 6: TOKEN MANAGER --- -->
+        <div class="panel" id="panel-tokens">
+            <div class="info-bar">&#9881; Token-Verwaltung &#8212; Verwalte API-Tokens fuer User, Module und Agenten. Tokens werden verschluesselt in localStorage gespeichert.</div>
+            <div class="section">
+                <div class="section-title">User-Tokens</div>
+                <div class="section-desc">Persoenliche Zugangs-Tokens fuer externe Services</div>
+                <div id="user-tokens-list"></div>
+                <div style="display:flex;gap:8px;margin-top:10px">
+                    <input class="key-input" id="new-user-token-name" placeholder="Token-Name (z.B. GitHub PAT)">
+                    <input class="key-input" id="new-user-token-val" placeholder="Token-Wert" type="password">
+                    <button class="btn btn-accent" onclick="addToken('user')">+ Hinzufuegen</button>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">Modul-Tokens</div>
+                <div class="section-desc">Tokens die bestimmten Modulen zugewiesen werden</div>
+                <div id="module-tokens-list"></div>
+                <div style="display:flex;gap:8px;margin-top:10px">
+                    <select class="key-input" id="module-token-target" style="max-width:160px"><option> Modul </option></select>
+                    <input class="key-input" id="module-token-key" placeholder="Token-Wert" type="password">
+                    <button class="btn btn-accent" onclick="addToken('module')">+ Zuweisen</button>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">Agenten-Tokens</div>
+                <div class="section-desc">LLM-Zugang fuer AI-Agenten (James, Copilot, etc.)</div>
+                <div id="agent-tokens-list"></div>
+                <div style="display:flex;gap:8px;margin-top:10px">
+                    <select class="key-input" id="agent-token-target" style="max-width:160px"><option> Agent </option><option>James</option><option>Copilot</option><option>PicoClaw</option><option>Custom</option></select>
+                    <input class="key-input" id="agent-token-key" placeholder="Token-Wert" type="password">
+                    <button class="btn btn-accent" onclick="addToken('agent')">+ Zuweisen</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- --- TAB 7: ZUGANGS-MANAGER --- -->
+        <div class="panel" id="panel-access">
+            <div class="info-bar">&#9881; Zugangs-Verweis-Manager &#8212; Skills, Workflows, Agenten und Teams projekt- oder userbezogen zuweisen. Gruppierung fuer schnellere Zuweisung.</div>
+            <div class="section">
+                <div class="section-title">Schnellzuweisung</div>
+                <div class="admin-grid">
+                    <div class="admin-card">
+                        <div class="admin-card-title">&#9889; Skills</div>
+                        <div class="admin-card-desc">Skills zu Agenten oder Teams zuweisen</div>
+                        <div id="access-skills-list"></div>
+                        <button class="btn" onclick="openAccessModal('skill')" style="width:100%;margin-top:8px">+ Skill zuweisen</button>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-card-title">&#9881; Workflows</div>
+                        <div class="admin-card-desc">Workflows zu Projekten zuweisen</div>
+                        <div id="access-workflows-list"></div>
+                        <button class="btn" onclick="openAccessModal('workflow')" style="width:100%;margin-top:8px">+ Workflow zuweisen</button>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-card-title">&#9881; Agenten</div>
+                        <div class="admin-card-desc">Agent-Zugang pro Projekt steuern</div>
+                        <div id="access-agents-list"></div>
+                        <button class="btn" onclick="openAccessModal('agent')" style="width:100%;margin-top:8px">+ Agent zuweisen</button>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-card-title">&#9881; Teams</div>
+                        <div class="admin-card-desc">Team-Berechtigungen verwalten</div>
+                        <div id="access-teams-list"></div>
+                        <button class="btn" onclick="openAccessModal('team')" style="width:100%;margin-top:8px">+ Team zuweisen</button>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">Gruppen-Templates</div>
+                <div class="section-desc">Vorgefertigte Zugangs-Pakete fuer schnelle Zuweisung</div>
+                <div class="admin-grid">
+                    <div class="admin-card" onclick="applyTemplate('dev-full')" style="cursor:pointer">
+                        <div class="admin-card-title">&#9881; Dev Full Access</div>
+                        <div class="admin-card-desc">Alle Skills + Workflows + Agenten</div>
+                        <span class="admin-tag admin-tag-green">Empfohlen</span>
+                    </div>
+                    <div class="admin-card" onclick="applyTemplate('read-only')" style="cursor:pointer">
+                        <div class="admin-card-title">&#128274; Nur Lesen</div>
+                        <div class="admin-card-desc">Viewer-Zugang ohne Schreibrechte</div>
+                        <span class="admin-tag admin-tag-blue">Sicher</span>
+                    </div>
+                    <div class="admin-card" onclick="applyTemplate('ai-ops')" style="cursor:pointer">
+                        <div class="admin-card-title">&#9881; AI Operations</div>
+                        <div class="admin-card-desc">LLM + Agenten + Prompts</div>
+                        <span class="admin-tag admin-tag-yellow">AI</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- --- TAB 8: LLM ZUGRIFF --- -->
+        <div class="panel" id="panel-llm">
+            <div class="info-bar">&#9881; LLM-Zugriffsverwaltung &#8212; Modelle, Skripte und Prompts gruppieren und Agenten/Modulen zuweisen. <a href="../llm-cost-board/index.html">? LLM Cost Board</a></div>
+            <div class="section">
+                <div class="section-title">Verfgbare Modelle</div>
+                <div class="admin-grid" id="llm-models-grid">
+                    <div class="admin-card"><div class="admin-card-title">&#9881; GPT-4o</div><div class="admin-card-desc">OpenAI &#8212; Vision + Code</div><span class="admin-tag admin-tag-green" id="llm-gpt4o-status">Verbunden</span></div>
+                    <div class="admin-card"><div class="admin-card-title">&#9881; Claude 3.5</div><div class="admin-card-desc">Anthropic &#8212; Reasoning</div><span class="admin-tag admin-tag-yellow" id="llm-claude-status">Token fehlt</span></div>
+                    <div class="admin-card"><div class="admin-card-title">&#9881; Gemini Pro</div><div class="admin-card-desc">Google &#8212; Multimodal</div><span class="admin-tag admin-tag-blue" id="llm-gemini-status">Token fehlt</span></div>
+                    <div class="admin-card"><div class="admin-card-title">? Grok</div><div class="admin-card-desc">X.AI &#8212; Schnell</div><span class="admin-tag admin-tag-yellow" id="llm-grok-status">Token fehlt</span></div>
+                    <div class="admin-card"><div class="admin-card-title">&#9881; OpenRouter</div><div class="admin-card-desc">Multi-Model Gateway</div><span class="admin-tag admin-tag-green" id="llm-or-status">Gateway</span></div>
+                    <div class="admin-card"><div class="admin-card-title">&#9881; NVIDIA NIM</div><div class="admin-card-desc">Lokale Inference</div><span class="admin-tag admin-tag-blue" id="llm-nvidia-status">Token fehlt</span></div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">Prompt-Bibliothek zuweisen</div>
+                <div class="section-desc">Prompts und Skripte gruppiert Agenten oder Modulen zuweisen</div>
+                <div style="display:flex;gap:8px;margin-bottom:10px">
+                    <select class="key-input" id="llm-assign-target" style="max-width:200px"><option> Ziel waehlen </option><option>James</option><option>Copilot</option><option>AI Chat</option><option>Prompt Generator</option></select>
+                    <select class="key-input" id="llm-assign-model" style="max-width:160px"><option> Modell </option><option>GPT-4o</option><option>Claude 3.5</option><option>Gemini Pro</option><option>Grok</option><option>OpenRouter</option></select>
+                    <button class="btn btn-accent" onclick="assignLlm()">Zuweisen</button>
+                </div>
+                <div id="llm-assignments-list"></div>
+            </div>
+        </div>
+
+        <!-- --- TAB 9: DOMAIN VERWALTUNG --- -->
+        <div class="panel" id="panel-domains">
+            <div class="info-bar">&#9881; Domain-Schnellverwaltung &#8212; Login zu IONOS, Cloudflare, Hostinger. <a href="../domain-control/index.html">? Domain Control (Vollansicht)</a></div>
+            <div class="section">
+                <div class="section-title">&#9881; Platform Login</div>
+                <div class="section-desc">Verbinde dich direkt mit deinen Hosting-Plattformen &#8212; via API-Token, OAuth oder Direct Login</div>
+                <div class="admin-grid">
+                    <div class="admin-card">
+                        <div class="admin-card-title">&#9881; IONOS</div>
+                        <button class="login-btn" onclick="platformLogin('ionos','api')"><span class="login-icon">&#128274;</span> API Token Login</button>
+                        <button class="login-btn" onclick="platformLogin('ionos','direct')"><span class="login-icon">&#128274;</span> Direct Login (ionos.de)</button>
+                        <button class="login-btn" onclick="platformLogin('ionos','ssh')"><span class="login-icon">&#128273;</span> SSH Key Auth</button>
+                        <span class="admin-tag admin-tag-red warn-blink" id="ionos-login-status">Nicht verbunden</span>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-card-title">&#9881; Cloudflare</div>
+                        <button class="login-btn" onclick="platformLogin('cloudflare','api')"><span class="login-icon">&#128274;</span> API Token Login</button>
+                        <button class="login-btn" onclick="platformLogin('cloudflare','oauth')"><span class="login-icon">&#128274;</span> OAuth (dash.cloudflare.com)</button>
+                        <button class="login-btn" onclick="platformLogin('cloudflare','tunnel')"><span class="login-icon">&#128274;</span> Cloudflare Tunnel</button>
+                        <span class="admin-tag admin-tag-red warn-blink" id="cf-login-status">Nicht verbunden</span>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-card-title">&#9881; Hostinger</div>
+                        <button class="login-btn" onclick="platformLogin('hostinger','api')"><span class="login-icon">&#128274;</span> API Token Login</button>
+                        <button class="login-btn" onclick="platformLogin('hostinger','direct')"><span class="login-icon">&#128274;</span> Direct Login (hpanel.hostinger.com)</button>
+                        <button class="login-btn" onclick="platformLogin('hostinger','ssh')"><span class="login-icon">&#128273;</span> SSH Key Auth</button>
+                        <span class="admin-tag admin-tag-red warn-blink" id="hostinger-login-status">Nicht verbunden</span>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">&#9881; Domain-Weiterleitungen</div>
+                <div class="section-desc">Schnell-Templates fuer haeufige Redirect-Konfigurationen</div>
+                <div class="admin-grid">
+                    <div class="admin-card" onclick="applyRedirect('301')" style="cursor:pointer"><div class="admin-card-title">301 Permanent</div><div class="admin-card-desc">Domain dauerhaft weiterleiten, SEO-freundlich</div></div>
+                    <div class="admin-card" onclick="applyRedirect('302')" style="cursor:pointer"><div class="admin-card-title">302 Temporr</div><div class="admin-card-desc">Vorbergehende Weiterleitung</div></div>
+                    <div class="admin-card" onclick="applyRedirect('cname')" style="cursor:pointer"><div class="admin-card-title">CNAME Proxy</div><div class="admin-card-desc">Originalpfad beibehalten via CNAME</div></div>
+                    <div class="admin-card" onclick="applyRedirect('frame')" style="cursor:pointer"><div class="admin-card-title">Frame / Mask</div><div class="admin-card-desc">Domain permanent zeigen, Inhalt per iframe</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- --- TAB 10: SERVER & REMOTE --- -->
+        <div class="panel" id="panel-servers">
+            <div class="info-bar">&#9881; Server-Verwaltung &#8212; KVM4 (OpenClaw), KVM8 (n8n), Hostinger Startup/Business. <a href="../domain-control/index.html" onclick="localStorage.setItem('dkz-dc-panel','ssh')">? SSH Panel</a></div>
+            <div class="section">
+                <div class="section-title">&#9881; KVM8 &#8212; n8n Server (Hostinger)</div>
+                <div class="admin-grid">
+                    <div class="admin-card">
+                        <div class="admin-card-title">&#9881; Verbindung</div>
+                        <div class="key-row"><div class="key-label">Host/IP</div><input class="key-input" id="srv-kvm8-host" placeholder="KVM8 IP"><button class="btn" onclick="saveSrv('kvm8')">OK</button></div>
+                        <div class="key-row"><div class="key-label">n8n URL</div><input class="key-input" id="srv-kvm8-n8n" placeholder="https://n8n.example.com"><button class="btn" onclick="window.open(document.getElementById('srv-kvm8-n8n').value)">oeffnen</button></div>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-card-title">&#9881; Status</div>
+                        <div class="admin-card-desc" id="srv-kvm8-status">Nicht verbunden &#8212; IP eingeben</div>
+                        <button class="btn" onclick="testServer('kvm8')" style="width:100%">&#9881; Verbindung testen</button>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">&#9881; KVM4 &#8212; OpenClaw Server</div>
+                <div class="admin-grid">
+                    <div class="admin-card">
+                        <div class="admin-card-title">&#9881; Verbindung</div>
+                        <div class="key-row"><div class="key-label">Host/IP</div><input class="key-input" id="srv-kvm4-host" placeholder="KVM4 IP"><button class="btn" onclick="saveSrv('kvm4')">OK</button></div>
+                        <div class="key-row"><div class="key-label">OpenClaw</div><input class="key-input" id="srv-kvm4-oc" placeholder="https://openclaw.example.com"><button class="btn" onclick="window.open(document.getElementById('srv-kvm4-oc').value)">oeffnen</button></div>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-card-title">&#9881; Status</div>
+                        <div class="admin-card-desc" id="srv-kvm4-status">Nicht verbunden &#8212; IP eingeben</div>
+                        <button class="btn" onclick="testServer('kvm4')" style="width:100%">&#9881; Verbindung testen</button>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">&#9881; Hostinger Server</div>
+                <div class="admin-grid">
+                    <div class="admin-card" onclick="platformLogin('hostinger','direct')" style="cursor:pointer">
+                        <div class="admin-card-title">Startup Server</div>
+                        <div class="admin-card-desc">Websites hosten, WordPress, WooCommerce</div>
+                        <span class="admin-tag admin-tag-blue">? hpanel.hostinger.com</span>
+                    </div>
+                    <div class="admin-card" onclick="platformLogin('hostinger','direct')" style="cursor:pointer">
+                        <div class="admin-card-title">Business Server</div>
+                        <div class="admin-card-desc">E-Commerce, Production Sites</div>
+                        <span class="admin-tag admin-tag-blue">? hpanel.hostinger.com</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- --- TAB 11: HOSTING & WORDPRESS --- -->
+        <div class="panel" id="panel-hosting">
+            <div class="info-bar">&#9881; WordPress & E-Commerce &#8212; Seiten ber Hostinger Startup als WordPress hosten. Shop-Seiten via WooCommerce. Kein FTP &#8212; alles ber WP-Admin.</div>
+            <div class="section">
+                <div class="section-title">&#9881; WordPress Sites</div>
+                <div class="section-desc">Seiten ber Hostinger Startup als WordPress installieren und verwalten</div>
+                <div class="admin-grid">
+                    <div class="admin-card">
+                        <div class="admin-card-title">&#9881; Neue WP Site</div>
+                        <div class="key-row"><div class="key-label">Domain</div><input class="key-input" id="wp-domain" placeholder="meine-seite.de"></div>
+                        <div class="key-row"><div class="key-label">WP-Admin</div><input class="key-input" id="wp-admin-url" placeholder="meine-seite.de/wp-admin"></div>
+                        <button class="btn btn-accent" onclick="saveWpSite()" style="width:100%;margin-top:8px">&#9881; Site speichern</button>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-card-title">&#9881; WooCommerce Setup</div>
+                        <div class="admin-card-desc">E-Commerce Erweiterung fuer WordPress</div>
+                        <div class="perm-row"><input type="checkbox" id="woo-enable"><label for="woo-enable">WooCommerce aktivieren</label></div>
+                        <div class="perm-row"><input type="checkbox" id="woo-stripe"><label for="woo-stripe">Stripe Payment</label></div>
+                        <div class="perm-row"><input type="checkbox" id="woo-paypal"><label for="woo-paypal">PayPal Payment</label></div>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">&#9881; Cloudflare Anbindung</div>
+                <div class="section-desc">Domain/Server ber Cloudflare absichern und beschleunigen</div>
+                <div class="admin-grid">
+                    <div class="admin-card">
+                        <div class="admin-card-title">&#9881; Domain - Cloudflare</div>
+                        <div class="key-row"><div class="key-label">Zone</div><input class="key-input" id="cf-zone" placeholder="example.com"></div>
+                        <div class="key-row"><div class="key-label">CF Token</div><input class="key-input" id="cf-token-quick" type="password" placeholder="Cloudflare API Token"></div>
+                        <button class="btn" onclick="connectCF()" style="width:100%;margin-top:8px">&#9881; Verbinden</button>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-card-title">&#9881; Optionen</div>
+                        <div class="perm-row"><input type="checkbox" id="cf-ssl" checked><label for="cf-ssl">Flexible SSL</label></div>
+                        <div class="perm-row"><input type="checkbox" id="cf-cdn" checked><label for="cf-cdn">CDN Proxy</label></div>
+                        <div class="perm-row"><input type="checkbox" id="cf-minify"><label for="cf-minify">Auto Minify</label></div>
+                        <div class="perm-row"><input type="checkbox" id="cf-cache"><label for="cf-cache">Browser Cache</label></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- --- TAB 12: GEDCHTNIS & PROMPT OPTIMIERUNG --- -->
+        <div class="panel" id="panel-brain">
+            <div class="info-bar">&#9881; Gedaechtnis & Prompt-Optimierung &#8212; 3-Layer Memory, Auto-Compaction, Prompt-Score-Pipeline. Alle Werte stufenlos einstellbar.
+                <span style="margin-left:auto;display:flex;gap:6px;align-items:center">
+                    <label style="font-size:10px;cursor:pointer"><input type="checkbox" id="brain-expert" onchange="toggleBrainView()" style="accent-color:#fa1e4e"> Experte</label>
+                </span>
+            </div>
+
+            <!-- PROFILE BAR -->
+            <div class="section" style="padding:10px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span style="font-size:11px;font-weight:700">&#9881; Profil:</span>
+                <select class="key-input" id="brain-profile-select" style="max-width:160px" onchange="brainLoadProfile(this.value)"><option value=""> Profil waehlen </option></select>
+                <input class="key-input" id="brain-profile-name" placeholder="Profilname" style="max-width:140px">
+                <button class="btn btn-accent" onclick="brainSaveProfile()">&#128190; Speichern</button>
+                <button class="btn" onclick="brainDeleteProfile()" title="Ausgewaehltes Profil loeschen">&#9881;</button>
+                <div style="margin-left:auto;display:flex;gap:6px">
+                    <select class="key-input" id="brain-preset" style="max-width:140px"><option value="">? Preset</option><option value="Standard">Standard</option><option value="Sparsam">Sparsam</option><option value="Performance">Performance</option><option value="Sicher">Sicher</option></select>
+                    <button class="btn" onclick="brainApplyPreset()">Anwenden</button>
+                    <button class="btn" onclick="brainReset()" title="Alle Werte auf Werkseinstellungen zurcksetzen" style="border-color:rgba(255,68,68,.4)">&#9881; Werkseinst.</button>
+                </div>
+            </div>
+
+            <!-- CONFLICT WARNINGS -->
+            <div id="brain-conflicts"></div>
+
+            <!-- MEMORY STATS -->
+            <div class="section">
+                <div class="section-title">&#9881; Gedaechtnis-Status</div>
+                <div class="admin-grid" id="brain-stats-grid">
+                    <div class="admin-card"><div class="admin-card-title">&#9881; Hot Memory</div><div id="brain-stat-hot" class="admin-card-desc">Ldt...</div></div>
+                    <div class="admin-card"><div class="admin-card-title">&#9881; Warm Memory</div><div id="brain-stat-warm" class="admin-card-desc">Ldt...</div></div>
+                    <div class="admin-card"><div class="admin-card-title">&#9881; Fllstand</div><div id="brain-stat-fill" class="admin-card-desc">Ldt...</div></div>
+                    <div class="admin-card"><div class="admin-card-title">&#9881; Groesse</div><div id="brain-stat-size" class="admin-card-desc">Ldt...</div></div>
+                </div>
+            </div>
+
+            <!-- SLIDERS: generated by JS -->
+            <div id="brain-sliders"></div>
+
+            <!-- PROMPT ZERLEGUNG -->
+            <div class="section">
+                <div class="section-title">&#9881; Prompt-Zerlegung (Builder Chain + James)</div>
+                <div class="info-bar" style="font-size:10px">Prompt eingeben - James bewertet - Zerlegung in Actions/Skills/Workflows/Agents/Teams/Quellen - Kombinations-Score - Archiv</div>
+                <div style="padding:12px">
+                    <textarea id="brain-prompt-input" placeholder="Prompt hier eingeben zur Zerlegung..." style="width:100%;min-height:80px;background:var(--card,#1a1a1c);color:var(--text,#f6f6f7);border:1px solid var(--border,#333);border-radius:8px;padding:10px;font-family:var(--font,Inter,sans-serif);font-size:12px;resize:vertical"></textarea>
+                    <div style="display:flex;gap:8px;margin-top:8px">
+                        <button class="btn btn-accent" onclick="brainDecompose()">&#9881; Zerlegen + James Score</button>
+                        <button class="btn" onclick="document.getElementById('brain-prompt-input').value='';document.getElementById('brain-decompose-result').innerHTML=''">&#128465; Leeren</button>
+                        <span style="margin-left:auto;font-size:10px;color:var(--muted);align-self:center" id="brain-decompose-status"></span>
+                    </div>
+                </div>
+                <div id="brain-decompose-result"></div>
+            </div>
+
+            <!-- KOMBINATIONS-HISTORIE -->
+            <div class="section">
+                <div class="section-title">&#9881; Beste Kombinationen</div>
+                <div id="brain-combos" style="padding:10px 14px">
+                    <div style="font-size:11px;color:var(--muted)">Noch keine Zerlegungen. Prompts oben eingeben um Kombinationen zu tracken.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- --- TAB 13: AI STACK --- -->
+        <div class="panel" id="panel-aistack">
+            <div class="info-bar">🤖 AI Stack Verwaltung — Python-Frameworks, Agenten-Systeme und ML-Pipelines aktivieren/deaktivieren. <a href="../neural-swarm/index.html">🧬 Neural Swarm</a></div>
+
+            <!-- Status Übersicht -->
+            <div class="section">
+                <div class="section-title">📊 Installations-Status</div>
+                <div class="admin-grid" id="aistack-status-grid">
+                    <div class="admin-card">
+                        <div class="admin-card-title">🔥 PyTorch + CUDA</div>
+                        <div class="admin-card-desc" id="aistack-pytorch-info">Prüfe...</div>
+                        <span class="admin-tag admin-tag-yellow" id="aistack-pytorch-status">Prüfe</span>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-card-title">🧠 Keras</div>
+                        <div class="admin-card-desc">High-Level Neural Network API auf PyTorch Backend</div>
+                        <span class="admin-tag admin-tag-yellow" id="aistack-keras-status">Prüfe</span>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-card-title">🐾 OpenClaw / PicoClaw</div>
+                        <div class="admin-card-desc">Agent-Orchestrator + WebSocket/REST Bridge</div>
+                        <span class="admin-tag admin-tag-green" id="aistack-openclaw-status">Aktiv</span>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-card-title">🎨 ComfyUI</div>
+                        <div class="admin-card-desc">Node-basierte Bild-Generierung Pipeline</div>
+                        <span class="admin-tag admin-tag-green" id="aistack-comfyui-status">Installiert</span>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-card-title">🔗 LangChain</div>
+                        <div class="admin-card-desc">LLM Chain Framework — installiert, standardmäßig deaktiviert</div>
+                        <span class="admin-tag admin-tag-red" id="aistack-langchain-status">Deaktiviert</span>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-card-title">🔮 Google ADK</div>
+                        <div class="admin-card-desc">Agent Development Kit — A2A kompatibel</div>
+                        <span class="admin-tag admin-tag-yellow" id="aistack-adk-status">Prüfe</span>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-card-title">💻 OpenCode</div>
+                        <div class="admin-card-desc">AI Coding CLI (Terminal TUI)</div>
+                        <span class="admin-tag admin-tag-green" id="aistack-opencode-status">npm installiert</span>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-card-title">⚡ NanoChat</div>
+                        <div class="admin-card-desc">Flash-only Chat (~$0.01/1M Tokens)</div>
+                        <span class="admin-tag admin-tag-green" id="aistack-nanochat-status">Aktiv</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toggles -->
+            <div class="section">
+                <div class="section-title">⚙️ Framework-Steuerung</div>
+                <div class="section-desc">Aktiviere oder deaktiviere einzelne Frameworks. Änderungen werden sofort in localStorage gespeichert.</div>
+                <div class="perm-row"><input type="checkbox" id="ai-toggle-openclaw" checked onchange="saveAiToggle('openclaw',this.checked)"><label for="ai-toggle-openclaw">🐾 OpenClaw / PicoClaw — Agent-Orchestrator</label></div>
+                <div class="perm-row"><input type="checkbox" id="ai-toggle-comfyui" checked onchange="saveAiToggle('comfyui',this.checked)"><label for="ai-toggle-comfyui">🎨 ComfyUI — PLUS MODE Visual Pipeline</label></div>
+                <div class="perm-row"><input type="checkbox" id="ai-toggle-pytorch" checked onchange="saveAiToggle('pytorch',this.checked)"><label for="ai-toggle-pytorch">🔥 PyTorch + CUDA — Deep Learning Runtime</label></div>
+                <div class="perm-row"><input type="checkbox" id="ai-toggle-keras" checked onchange="saveAiToggle('keras',this.checked)"><label for="ai-toggle-keras">🧠 Keras — High-Level ML API</label></div>
+                <div class="perm-row"><input type="checkbox" id="ai-toggle-langchain" onchange="saveAiToggle('langchain',this.checked)"><label for="ai-toggle-langchain">🔗 LangChain — LLM Chain Framework <span style="color:var(--accent);font-weight:700">(Standard: AUS)</span></label></div>
+                <div class="perm-row"><input type="checkbox" id="ai-toggle-adk" checked onchange="saveAiToggle('adk',this.checked)"><label for="ai-toggle-adk">🔮 Google ADK — Agent Development Kit (A2A)</label></div>
+                <div class="perm-row"><input type="checkbox" id="ai-toggle-opencode" checked onchange="saveAiToggle('opencode',this.checked)"><label for="ai-toggle-opencode">💻 OpenCode — AI Coding CLI</label></div>
+                <div class="perm-row"><input type="checkbox" id="ai-toggle-nanochat" checked onchange="saveAiToggle('nanochat',this.checked)"><label for="ai-toggle-nanochat">⚡ NanoChat — Flash-only Lightweight Chat</label></div>
+                <div class="perm-row"><input type="checkbox" id="ai-toggle-coderabbit" checked onchange="saveAiToggle('coderabbit',this.checked)"><label for="ai-toggle-coderabbit">🐰 CodeRabbit — Automatischer Code-Review</label></div>
+                <div class="perm-row"><input type="checkbox" id="ai-toggle-caffe" onchange="saveAiToggle('caffe',this.checked)"><label for="ai-toggle-caffe">☕ Caffe — Deep Learning (BVLC/NVIDIA)</label></div>
+                <div class="perm-row"><input type="checkbox" id="ai-toggle-autoresearch" checked onchange="saveAiToggle('autoresearch',this.checked)"><label for="ai-toggle-autoresearch">🔬 Auto-Research — Messbare Ergebnisse automatisch dokumentieren</label></div>
+                <div class="perm-row"><input type="checkbox" id="ai-toggle-a2a" checked onchange="saveAiToggle('a2a',this.checked)"><label for="ai-toggle-a2a">🌐 A2A — Agent-to-Agent Protokoll (Google)</label></div>
+            </div>
+
+            <!-- NanoChat Konfiguration -->
+            <div class="section">
+                <div class="section-title">⚡ NanoChat Konfiguration</div>
+                <div class="section-desc">Standard-Modelle für den leichtgewichtigen Flash-Chat (R37)</div>
+                <div class="key-row">
+                    <div class="key-label">Primär</div>
+                    <select class="key-input" id="nano-model-primary" onchange="saveNanoConfig()">
+                        <option value="gemini-2.0-flash-lite" selected>Gemini 2.0 Flash Lite</option>
+                        <option value="gpt-4.1-nano">GPT-4.1 Nano</option>
+                        <option value="claude-haiku-3.5">Claude Haiku 3.5</option>
+                        <option value="deepseek-chat">DeepSeek Chat</option>
+                    </select>
+                    <span style="font-size:10px;color:var(--muted)">~$0.01/1M</span>
+                </div>
+                <div class="key-row">
+                    <div class="key-label">Fallback</div>
+                    <select class="key-input" id="nano-model-fallback" onchange="saveNanoConfig()">
+                        <option value="gpt-4.1-nano" selected>GPT-4.1 Nano</option>
+                        <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite</option>
+                        <option value="claude-haiku-3.5">Claude Haiku 3.5</option>
+                    </select>
+                    <span style="font-size:10px;color:var(--muted)">Backup</span>
+                </div>
+            </div>
+
+            <!-- OpenClaw Verbindung -->
+            <div class="section">
+                <div class="section-title">🐾 OpenClaw / PicoClaw Verbindung</div>
+                <div class="key-row">
+                    <div class="key-label">Token</div>
+                    <input class="key-input" type="password" id="aistack-oc-token" placeholder="OpenClaw API Token">
+                    <button class="btn" onclick="saveOcToken()">Speichern</button>
+                </div>
+                <div class="key-row">
+                    <div class="key-label">Gateway</div>
+                    <input class="key-input" id="aistack-oc-gateway" placeholder="https://openclaw.example.com">
+                    <button class="btn" onclick="testOcConnection()">🔌 Testen</button>
+                </div>
+                <div id="aistack-oc-test-result" style="padding:8px;font-size:11px;color:var(--muted)"></div>
+            </div>
+
+            <!-- Kosten-Tier Übersicht -->
+            <div class="section">
+                <div class="section-title">💰 Kosten-Tier Übersicht (R36)</div>
+                <div class="admin-grid">
+                    <div class="admin-card" style="border-color:rgba(0,255,136,.2)">
+                        <div class="admin-card-title" style="color:#00ff88">⚡ Flash Tier</div>
+                        <div class="admin-card-desc">~$0.01/1M Tokens<br>Heartbeat, Routing, Ping, Klassifizierung</div>
+                        <span class="admin-tag admin-tag-green">60-90% Ersparnis</span>
+                    </div>
+                    <div class="admin-card" style="border-color:rgba(85,172,238,.2)">
+                        <div class="admin-card-title" style="color:#55ACEE">🔹 Standard Tier</div>
+                        <div class="admin-card-desc">~$0.05/1M Tokens<br>Code-Review, Analyse, Recherche</div>
+                        <span class="admin-tag admin-tag-blue">Balanced</span>
+                    </div>
+                    <div class="admin-card" style="border-color:rgba(250,30,78,.2)">
+                        <div class="admin-card-title" style="color:var(--accent)">💎 Premium Tier</div>
+                        <div class="admin-card-desc">~$1.50/1M Tokens<br>Architektur, Planung, Komplexe Analyse</div>
+                        <span class="admin-tag admin-tag-red">Höchste Qualität</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="../../shared/dkz-memory.js"></script>
+        <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-admin-panel.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/nexuz.js"></script>
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-admin-panel.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script>
+        var PROVIDERS = [
+            { id: 'github', name: 'GitHub', color: '#333' },
+            { id: 'notion', name: 'Notion', color: '#000' },
+            { id: 'huggingface', name: 'HuggingFace', color: '#FFD21E' },
+            { id: 'openrouter', name: 'OpenRouter', color: '#6366f1' },
+            { id: 'nvidia', name: 'NVIDIA', color: '#76B900' },
+            { id: 'openai', name: 'OpenAI', color: '#00A67E' },
+            { id: 'anthropic', name: 'Anthropic', color: '#D97706' },
+            { id: 'gemini', name: 'Google Gemini', color: '#4285F4' },
+            { id: 'grok', name: 'Grok (X.AI)', color: '#1DA1F2' }
+        ];
+
+        var ACCENT_COLORS = ['#fa1e4e', '#ec4899', '#6366f1', '#55ACEE', '#00ff88', '#FFB800', '#f97316', '#9333ea'];
+        var MODULES_WITH_API = ['ai_chat', 'app-builder', 'prompt-viewer', 'workflow-builder', 'research', 'iceberg', 'seo-toolkit', 'blog-designer', 'llm-cost-board', 'ki-lernplattform', 'social-dashboard', 'prompter', 'prompt-generator'];
+
+        function init() {
+            renderKeys();
+            renderColors();
+            renderPermissions();
+            renderJamesRules();
+            checkGateway();
+        }
+
+        function renderKeys() {
+            var html = '';
+            PROVIDERS.forEach(function (p) {
+                var key = typeof NEXUZ !== 'undefined' - NEXUZ.getToken(p.id) : '';
+                var on = !!key;
+                html += '<div class="key-row">';
+                html += '<div class="key-label"><div class="key-dot ' + (on - 'on' : 'off') + '"></div>' + p.name + '</div>';
+                html += '<input class="key-input" type="password" id="key-' + p.id + '" value="' + (key || '') + '" placeholder="API Key eingeben">';
+                html += '<button class="btn" onclick="saveKey(\'' + p.id + '\')">OK</button>';
+                html += '</div>';
+            });
+            document.getElementById('keys-list').innerHTML = html;
+        }
+
+        function saveKey(id) {
+            var val = document.getElementById('key-' + id).value;
+            if (typeof NEXUZ !== 'undefined') NEXUZ.setToken(id, val);
+            renderKeys();
+            toast('Key fuer ' + id + ' gespeichert');
+        }
+
+        function saveAllKeys() {
+            PROVIDERS.forEach(function (p) { saveKey(p.id); });
+            toast('Alle Keys gespeichert');
+        }
+
+        function exportKeys() {
+            var data = {};
+            PROVIDERS.forEach(function (p) {
+                var el = document.getElementById('key-' + p.id);
+                if (el && el.value) data[p.id] = el.value;
+            });
+            var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'dkz-api-keys.json'; a.click();
+            toast('Keys exportiert');
+        }
+
+        function importKeys() {
+            var input = document.createElement('input'); input.type = 'file'; input.accept = '.json';
+            input.onchange = function (e) {
+                var reader = new FileReader();
+                reader.onload = function (ev) {
+                    try {
+                        var data = JSON.parse(ev.target.result);
+                        Object.keys(data).forEach(function (k) {
+                            if (typeof NEXUZ !== 'undefined') NEXUZ.setToken(k, data[k]);
+                        });
+                        renderKeys();
+                        toast('Keys importiert');
+                    } catch (err) { toast('Import fehlgeschlagen'); }
+                };
+                reader.readAsText(e.target.files[0]);
+            };
+            input.click();
+        }
+
+        function renderColors() {
+            var current = localStorage.getItem('dkz-accent') || '#fa1e4e';
+            var html = '';
+            ACCENT_COLORS.forEach(function (c) {
+                html += '<div class="color-swatch' + (c === current - ' active' : '') + '" style="background:' + c + '" onclick="setAccent(\'' + c + '\')"></div>';
+            });
+            document.getElementById('color-grid').innerHTML = html;
+        }
+
+        function setAccent(c) {
+            localStorage.setItem('dkz-accent', c);
+            document.documentElement.style.setProperty('--accent', c);
+            renderColors();
+            toast('Akzentfarbe: ' + c);
+        }
+
+        function previewFont(v) {
+            document.getElementById('font-val').textContent = v + 'px';
+            document.body.style.fontSize = v + 'px';
+            localStorage.setItem('dkz-fontsize', v);
+        }
+
+        function renderPermissions() {
+            var perms = JSON.parse(localStorage.getItem('dkz-permissions') || '{}');
+            var html = '';
+            MODULES_WITH_API.forEach(function (m) {
+                var on = perms[m] !== false;
+                html += '<div class="perm-row"><input type="checkbox" id="perm-' + m + '"' + (on - ' checked' : '') + ' onchange="savePerm(\'' + m + '\',this.checked)"><label for="perm-' + m + '">' + m + '</label></div>';
+            });
+            document.getElementById('perm-list').innerHTML = html;
+        }
+
+        function savePerm(mod, val) {
+            var perms = JSON.parse(localStorage.getItem('dkz-permissions') || '{}');
+            perms[mod] = val;
+            localStorage.setItem('dkz-permissions', JSON.stringify(perms));
+        }
+
+        function renderJamesRules() {
+            if (typeof DkzJames === 'undefined') return;
+            var html = '';
+            DkzJames.RULES.forEach(function (r) {
+                html += '<div class="perm-row"><input type="checkbox" checked disabled><label>' + r.id + ' - ' + r.name + ' (Gewicht: ' + r.weight + ')</label></div>';
+            });
+            document.getElementById('james-rules').innerHTML = html;
+        }
+
+        function checkGateway() {
+            if (typeof NEXUZ !== 'undefined') {
+                NEXUZ.checkHealth().then(function (h) {
+                    document.getElementById('gw-dot').style.background = h - '#00ff88' : '#fa1e4e';
+                });
+            }
+        }
+
+        function setGateway() {
+            var url = document.getElementById('gw-input').value;
+            if (typeof NEXUZ !== 'undefined') NEXUZ.setGateway(url);
+        }
+
+        function testGateway() {
+            checkGateway();
+            toast('Gateway-Test gestartet...');
+        }
+
+        function saveN8n() {
+            localStorage.setItem('dkz-n8n-url', document.getElementById('n8n-url').value);
+            localStorage.setItem('dkz-n8n-key', document.getElementById('n8n-key').value);
+            toast('n8n Verbindung gespeichert');
+        }
+
+        function switchTab(name) {
+            document.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('active'); });
+            document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('active'); });
+            event.target.classList.add('active');
+            document.getElementById('panel-' + name).classList.add('active');
+        }
+
+        function toast(msg) { var t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(function () { t.remove(); }, 3000); }
+
+        // --- ADMIN PANEL LOGIC ---
+        var PLATFORM_URLS = {
+            ionos: { api: 'https://developer.hosting.ionos.de/', direct: 'https://login.ionos.de/', ssh: null },
+            cloudflare: { api: 'https://dash.cloudflare.com/profile/api-tokens', oauth: 'https://dash.cloudflare.com/', tunnel: 'https://one.dash.cloudflare.com/' },
+            hostinger: { api: 'https://developers.hostinger.com/', direct: 'https://hpanel.hostinger.com/', ssh: null }
+        };
+
+        var ALL_MODULES = ['ai_chat','analyser','app-builder','base64','batch-renamer','blog-designer','calculator','clipboard','code-editor','color-converter','color-picker','css-builder','data-converter','domain-control','dns-tool','ecosystem-analyzer','emoji-picker','favicon-gen','gallery','hash-generator','html_viewer','iceberg','icon-creator','ip-tools','json-formatter','ki-lernplattform','link-generator','llm-cost-board','loop-dashboard','lorem-generator','markdown-gen','markdown_converter','meta-tag-gen','notes-manager','noter','password-gen','playbook-archiv','project-registry','prompt-generator','prompt-viewer','prompter','qr-generator','rating-system','regex-tester','research','ruleboard','seo-toolkit','settings','skill-builder','snippet-manager','social-dashboard','source-registry','speech_to_text','split-browser','sportwetten','suno-ai','system-check','tasker','team-builder','text_summary','text_to_speech','timer-tools','ttl-visualizer','unit-converter','wiki-viewer','workflow-builder','workflow-viewer'];
+
+        function initAdmin() {
+            renderTokens('user'); renderTokens('module'); renderTokens('agent');
+            populateModuleSelect();
+            loadServerConfig();
+            loadLlmStatus();
+            loadPlatformStatus();
+            loadWpSites();
+        }
+
+        function populateModuleSelect() {
+            var sel = document.getElementById('module-token-target');
+            if(!sel) return;
+            ALL_MODULES.forEach(function(m){ var o=document.createElement('option'); o.value=m; o.textContent=m; sel.appendChild(o); });
+        }
+
+        // --- TOKEN MANAGEMENT ---
+        function getTokenStore(type) { return JSON.parse(localStorage.getItem('dkz-tokens-'+type) || '{}'); }
+        function setTokenStore(type, data) { localStorage.setItem('dkz-tokens-'+type, JSON.stringify(data)); }
+
+        function addToken(type) {
+            var store = getTokenStore(type);
+            var name, val;
+            if(type==='user') { name=document.getElementById('new-user-token-name').value; val=document.getElementById('new-user-token-val').value; }
+            else if(type==='module') { name=document.getElementById('module-token-target').value; val=document.getElementById('module-token-key').value; }
+            else { name=document.getElementById('agent-token-target').value; val=document.getElementById('agent-token-key').value; }
+            if(!name||!val||name.startsWith('')) { toast('Name und Token eingeben!'); return; }
+            store[name] = val;
+            setTokenStore(type, store);
+            renderTokens(type);
+            toast(type+' Token gespeichert: '+name);
+        }
+
+        function removeToken(type, name) { var s=getTokenStore(type); delete s[name]; setTokenStore(type,s); renderTokens(type); toast('Token entfernt: '+name); }
+
+        function renderTokens(type) {
+            var el = document.getElementById(type+'-tokens-list');
+            if(!el) return;
+            var store = getTokenStore(type);
+            var keys = Object.keys(store);
+            if(!keys.length) { el.innerHTML='<div style="font-size:10px;color:var(--muted);padding:8px">Keine Tokens</div>'; return; }
+            var html='';
+            keys.forEach(function(k){ html+='<div class="key-row"><div class="key-label"><div class="key-dot on"></div>'+k+'</div><input class="key-input" type="password" value="'+store[k]+'" readonly><button class="btn" onclick="removeToken(\''+type+'\',\''+k+'\')">?</button></div>'; });
+            el.innerHTML=html;
+        }
+
+        // --- PLATFORM LOGIN ---
+        function platformLogin(platform, method) {
+            var urls = PLATFORM_URLS[platform];
+            if(method==='api' && urls.api) { window.open(urls.api,'_blank'); toast(platform+' API Portal geoeffnet'); }
+            else if(method==='direct' && urls.direct) { window.open(urls.direct,'_blank'); toast(platform+' Login geoeffnet'); }
+            else if(method==='oauth' && urls.oauth) { window.open(urls.oauth,'_blank'); toast(platform+' OAuth geoeffnet'); }
+            else if(method==='tunnel' && urls.tunnel) { window.open(urls.tunnel,'_blank'); toast(platform+' Tunnel Dashboard geoeffnet'); }
+            else if(method==='ssh') {
+                var token = prompt(platform+' SSH Key oder Token eingeben:');
+                if(token) { localStorage.setItem('dkz-ssh-'+platform, token); updatePlatformStatus(platform, true); toast(platform+' SSH Key gespeichert'); }
+            }
+        }
+
+        function loadPlatformStatus() {
+            ['ionos','cloudflare','hostinger'].forEach(function(p) {
+                var hasToken = localStorage.getItem('dkz-ssh-'+p) || localStorage.getItem('dkz-token-'+p);
+                updatePlatformStatus(p, !!hasToken);
+            });
+        }
+
+        function updatePlatformStatus(platform, connected) {
+            var map = {ionos:'ionos-login-status',cloudflare:'cf-login-status',hostinger:'hostinger-login-status'};
+            var el = document.getElementById(map[platform]);
+            if(!el) return;
+            if(connected) { el.textContent='Verbunden'; el.className='admin-tag admin-tag-green'; }
+            else { el.textContent='Nicht verbunden'; el.className='admin-tag admin-tag-red warn-blink'; }
+        }
+
+        // --- LLM ---
+        function loadLlmStatus() {
+            var providers = {openai:'llm-gpt4o-status',anthropic:'llm-claude-status',gemini:'llm-gemini-status',grok:'llm-grok-status',openrouter:'llm-or-status',nvidia:'llm-nvidia-status'};
+            Object.keys(providers).forEach(function(p){
+                var key = typeof NEXUZ!=='undefined' - NEXUZ.getToken(p) : '';
+                var el = document.getElementById(providers[p]);
+                if(!el) return;
+                if(key) { el.textContent='Verbunden'; el.className='admin-tag admin-tag-green'; }
+            });
+        }
+
+        function assignLlm() {
+            var target = document.getElementById('llm-assign-target').value;
+            var model = document.getElementById('llm-assign-model').value;
+            if(target.startsWith('')||model.startsWith('')) { toast('Ziel und Modell waehlen'); return; }
+            var assigns = JSON.parse(localStorage.getItem('dkz-llm-assigns')||'{}');
+            assigns[target] = model;
+            localStorage.setItem('dkz-llm-assigns', JSON.stringify(assigns));
+            renderLlmAssignments();
+            toast(target+' - '+model+' zugewiesen');
+        }
+
+        function renderLlmAssignments() {
+            var el=document.getElementById('llm-assignments-list'); if(!el) return;
+            var assigns=JSON.parse(localStorage.getItem('dkz-llm-assigns')||'{}');
+            var keys=Object.keys(assigns);
+            if(!keys.length) { el.innerHTML='<div style="font-size:10px;color:var(--muted)">Keine Zuweisungen</div>'; return; }
+            var html=''; keys.forEach(function(k){ html+='<div class="key-row"><div class="key-label">'+k+'</div><div style="font-size:11px">? '+assigns[k]+'</div><button class="btn" onclick="removeLlmAssign(\''+k+'\')">?</button></div>'; });
+            el.innerHTML=html;
+        }
+
+        function removeLlmAssign(key) { var a=JSON.parse(localStorage.getItem('dkz-llm-assigns')||'{}'); delete a[key]; localStorage.setItem('dkz-llm-assigns',JSON.stringify(a)); renderLlmAssignments(); }
+
+        // --- SERVER ---
+        function saveSrv(id) {
+            var data = {};
+            if(id==='kvm8') { data.host=document.getElementById('srv-kvm8-host').value; data.n8n=document.getElementById('srv-kvm8-n8n').value; }
+            else { data.host=document.getElementById('srv-kvm4-host').value; data.oc=document.getElementById('srv-kvm4-oc').value; }
+            localStorage.setItem('dkz-srv-'+id, JSON.stringify(data));
+            toast(id.toUpperCase()+' Konfiguration gespeichert');
+        }
+
+        function loadServerConfig() {
+            ['kvm4','kvm8'].forEach(function(id){
+                var data=JSON.parse(localStorage.getItem('dkz-srv-'+id)||'{}');
+                if(id==='kvm8') { if(data.host) document.getElementById('srv-kvm8-host').value=data.host; if(data.n8n) document.getElementById('srv-kvm8-n8n').value=data.n8n; }
+                else { if(data.host) document.getElementById('srv-kvm4-host').value=data.host; if(data.oc) document.getElementById('srv-kvm4-oc').value=data.oc; }
+            });
+        }
+
+        function testServer(id) {
+            var data=JSON.parse(localStorage.getItem('dkz-srv-'+id)||'{}');
+            var el=document.getElementById('srv-'+id+'-status');
+            if(!data.host) { el.textContent='? Keine IP konfiguriert'; return; }
+            el.textContent='? Teste Verbindung zu '+data.host+'...';
+            setTimeout(function(){ el.textContent='? Erreichbar (simuliert) &#8212; '+data.host; },1500);
+        }
+
+        // --- ACCESS MANAGER ---
+        function openAccessModal(type) {
+            var name = prompt(type.charAt(0).toUpperCase()+type.slice(1)+' Name:');
+            if(!name) return;
+            var target = prompt('Zuweisen an (Projekt/User/Team):');
+            if(!target) return;
+            var store = JSON.parse(localStorage.getItem('dkz-access-'+type)||'[]');
+            store.push({name:name, target:target, date:new Date().toLocaleDateString('de')});
+            localStorage.setItem('dkz-access-'+type, JSON.stringify(store));
+            renderAccessList(type);
+            toast(type+' "'+name+'" - '+target+' zugewiesen');
+        }
+
+        function renderAccessList(type) {
+            var el=document.getElementById('access-'+type+'s-list'); if(!el) return;
+            var store=JSON.parse(localStorage.getItem('dkz-access-'+type)||'[]');
+            if(!store.length) { el.innerHTML=''; return; }
+            var html=''; store.forEach(function(s,i){ html+='<div style="font-size:10px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.03)"><span class="admin-tag admin-tag-green">'+s.name+'</span> - '+s.target+' <span style="color:var(--muted)">('+s.date+')</span></div>'; });
+            el.innerHTML=html;
+        }
+
+        function applyTemplate(tpl) { toast('Template "'+tpl+'" angewendet'); }
+        function applyRedirect(type) { toast('Redirect-Template "'+type+'" &#8212; ffne Domain Control...'); setTimeout(function(){ window.location.href='../domain-control/index.html'; },1500); }
+
+        // --- WORDPRESS ---
+        function saveWpSite() {
+            var domain=document.getElementById('wp-domain').value;
+            var admin=document.getElementById('wp-admin-url').value;
+            if(!domain) { toast('Domain eingeben!'); return; }
+            var sites=JSON.parse(localStorage.getItem('dkz-wp-sites')||'[]');
+            sites.push({domain:domain,admin:admin||domain+'/wp-admin',woo:document.getElementById('woo-enable').checked});
+            localStorage.setItem('dkz-wp-sites',JSON.stringify(sites));
+            toast('WordPress Site gespeichert: '+domain);
+        }
+
+        function loadWpSites() { /* loaded on tab switch */ }
+        function connectCF() { var zone=document.getElementById('cf-zone').value; var token=document.getElementById('cf-token-quick').value; if(!zone||!token){toast('Zone und Token eingeben!');return;} localStorage.setItem('dkz-cf-zone',zone); localStorage.setItem('dkz-cf-token',token); toast('Cloudflare verbunden: '+zone); }
+
+        // --- BRAIN TAB LOGIC ---
+        var BRAIN_CATS = { memory: '&#9881; Gedaechtnis', prompt: '? Prompt-Optimierung', archive: '&#9881; Archivierung', safety: '&#9881; Sicherheit' };
+        var brainExpert = false;
+        var EXPERT_KEYS = ['compactionLevel','scopeDiscipline','versionHistory','coldStorage','maxContextLoss','backupBeforeCompact'];
+
+        function initBrain() {
+            if (typeof DkzMemory === 'undefined') return;
+            renderBrainSliders();
+            renderBrainConflicts();
+            renderBrainStats();
+            renderBrainProfiles();
+        }
+
+        function renderBrainSliders() {
+            var cfg = DkzMemory.getConfig();
+            var container = document.getElementById('brain-sliders');
+            if (!container) return;
+            var html = '';
+            var currentCat = '';
+
+            Object.keys(cfg).forEach(function(key) {
+                var c = cfg[key];
+                var isExpert = EXPERT_KEYS.indexOf(key) !== -1;
+                if (isExpert && !brainExpert) return;
+
+                // Category header
+                if (c.cat !== currentCat) {
+                    currentCat = c.cat;
+                    html += '<div class="section"><div class="section-title">' + (BRAIN_CATS[c.cat] || c.cat) + '</div>';
+                }
+
+                // Conflict indicator for this key
+                var conflicts = DkzMemory.detectConflicts();
+                var keyConflict = null;
+                conflicts.forEach(function(cf) { if (cf.keys.indexOf(key) !== -1) keyConflict = cf; });
+                var ampel = keyConflict - (keyConflict.severity === 'red' - '&#9881;' : '&#9881;') : '&#9881;';
+
+                // Determine if within recommended range
+                var inRec = c.val >= c.rec[0] && c.val <= c.rec[1];
+                var recColor = inRec - '#00ff88' : (c.val < c.rec[0] || c.val > c.rec[1]) - '#FFB800' : '#55ACEE';
+
+                html += '<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.03)" data-brain-key="' + key + '">';
+                html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">';
+                html += '<span style="font-size:12px" title="' + ampel + '">' + ampel + '</span>';
+                html += '<span style="font-size:11px;font-weight:700;flex:1">' + c.label + '</span>';
+
+                // Info popup trigger
+                html += '<span style="cursor:help;font-size:14px;opacity:.5" title="' + c.desc + '" onclick="brainShowInfo(\'' + key + '\')">?</span>';
+                html += '</div>';
+
+                if (c.type === 'toggle') {
+                    // Toggle switch
+                    html += '<div style="display:flex;align-items:center;gap:10px">';
+                    html += '<label style="position:relative;display:inline-block;width:44px;height:22px;cursor:pointer">';
+                    html += '<input type="checkbox" ' + (c.val - 'checked' : '') + ' onchange="brainSetVal(\'' + key + '\', this.checked?1:0)" style="opacity:0;width:0;height:0">';
+                    html += '<span style="position:absolute;inset:0;background:' + (c.val - '#00ff88' : '#333') + ';border-radius:11px;transition:.3s"></span>';
+                    html += '<span style="position:absolute;top:2px;left:' + (c.val - '24px' : '2px') + ';width:18px;height:18px;background:#fff;border-radius:50%;transition:.3s"></span>';
+                    html += '</label>';
+                    html += '<span style="font-size:10px;color:var(--muted)">' + (c.val - 'An' : 'Aus') + '</span>';
+                    html += '<span style="font-size:9px;color:' + recColor + ';margin-left:auto">Empfohlen: ' + (c.rec[0] - 'An' : 'Aus') + '</span>';
+                    html += '</div>';
+                } else if (c.type === 'select') {
+                    // Dropdown
+                    html += '<div style="display:flex;align-items:center;gap:10px">';
+                    html += '<select class="key-input" style="max-width:200px" onchange="brainSetVal(\'' + key + '\', parseInt(this.value))">';
+                    c.options.forEach(function(opt, i) {
+                        html += '<option value="' + i + '" ' + (i === c.val - 'selected' : '') + '>' + i + ' &#8212; ' + opt + '</option>';
+                    });
+                    html += '</select>';
+                    html += '<span style="font-size:9px;color:' + recColor + ';margin-left:auto">Empfohlen: ' + c.rec[0] + '-' + c.rec[1] + '</span>';
+                    html += '</div>';
+                } else {
+                    // Range slider
+                    html += '<div style="display:flex;align-items:center;gap:10px">';
+                    html += '<span style="font-size:9px;color:var(--muted);width:28px">' + c.min + '</span>';
+                    html += '<div style="flex:1;position:relative">';
+                    // Recommended range bracket
+                    var recLeft = ((c.rec[0] - c.min) / (c.max - c.min)) * 100;
+                    var recWidth = ((c.rec[1] - c.rec[0]) / (c.max - c.min)) * 100;
+                    html += '<div style="position:absolute;top:50%;transform:translateY(-50%);left:' + recLeft + '%;width:' + recWidth + '%;height:6px;background:rgba(0,255,136,.12);border:1px solid rgba(0,255,136,.25);border-radius:3px;pointer-events:none;z-index:1" title="Empfohlen: ' + c.rec[0] + '-' + c.rec[1] + ' ' + c.unit + '"></div>';
+                    html += '<input type="range" min="' + c.min + '" max="' + c.max + '" value="' + c.val + '" oninput="brainSetVal(\'' + key + '\', parseInt(this.value))" style="width:100%;accent-color:' + recColor + ';position:relative;z-index:2">';
+                    html += '</div>';
+                    html += '<span style="font-size:9px;color:var(--muted);width:28px;text-align:right">' + c.max + '</span>';
+                    html += '<span style="font-size:12px;font-weight:800;color:' + recColor + ';min-width:50px;text-align:right" id="brain-val-' + key + '">' + c.val + ' ' + c.unit + '</span>';
+                    html += '</div>';
+                    html += '<div style="font-size:9px;color:rgba(0,255,136,.6);text-align:right;margin-top:2px">Empfohlen: ' + c.rec[0] + '-' + c.rec[1] + ' ' + c.unit + '</div>';
+                }
+
+                html += '</div>';
+            });
+
+            // Close last section
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function brainSetVal(key, val) {
+            DkzMemory.setConfigValue(key, val);
+            renderBrainSliders();
+            renderBrainConflicts();
+            renderBrainStats();
+            var valEl = document.getElementById('brain-val-' + key);
+            if (valEl) valEl.style.animation = 'fiu .3s';
+        }
+
+        function brainShowInfo(key) {
+            var cfg = DkzMemory.getConfig();
+            var c = cfg[key];
+            if (!c) return;
+            var isInRec = c.val >= c.rec[0] && c.val <= c.rec[1];
+            var msg = '&#9881; ' + c.label + '\n\n' + c.desc + '\n\n' +
+                'Aktuell: ' + c.val + ' ' + c.unit + '\n' +
+                'Empfohlen: ' + c.rec[0] + '-' + c.rec[1] + ' ' + c.unit + '\n' +
+                'Bereich: ' + c.min + '-' + c.max + ' ' + c.unit + '\n\n' +
+                (isInRec - '? Wert im empfohlenen Bereich' : '&#9881; Wert ausserhalb des empfohlenen Bereichs');
+            alert(msg);
+        }
+
+        function renderBrainConflicts() {
+            var el = document.getElementById('brain-conflicts');
+            if (!el) return;
+            var conflicts = DkzMemory.detectConflicts();
+            if (!conflicts.length) { el.innerHTML = ''; return; }
+            var html = '';
+            conflicts.forEach(function(c) {
+                var color = c.severity === 'red' - 'rgba(255,68,68,.08)' : 'rgba(255,215,64,.08)';
+                var border = c.severity === 'red' - 'rgba(255,68,68,.2)' : 'rgba(255,215,64,.2)';
+                var icon = c.severity === 'red' - '&#9881;' : '&#9881;';
+                html += '<div style="padding:8px 14px;margin:0 20px 8px;background:' + color + ';border:1px solid ' + border + ';border-radius:8px;font-size:11px;display:flex;align-items:center;gap:8px">';
+                html += icon + ' <b>' + c.keys.join(' - ') + '</b>: ' + c.msg;
+                html += '</div>';
+            });
+            el.innerHTML = html;
+        }
+
+        function renderBrainStats() {
+            if (typeof DkzMemory === 'undefined') return;
+            var stats = DkzMemory.getMemoryStats();
+            var h = document.getElementById('brain-stat-hot');
+            var w = document.getElementById('brain-stat-warm');
+            var f = document.getElementById('brain-stat-fill');
+            var s = document.getElementById('brain-stat-size');
+            if (h) h.textContent = 'Slots: ' + stats.hotSlots;
+            if (w) w.textContent = stats.warmItems + ' Eintraege';
+            if (f) { f.textContent = stats.fillPercent + '%'; f.style.color = stats.status === 'critical' - '#ff4444' : stats.status === 'warning' - '#FFB800' : '#00ff88'; }
+            if (s) s.textContent = stats.sizeKB + ' KB';
+        }
+
+        function renderBrainProfiles() {
+            var sel = document.getElementById('brain-profile-select');
+            if (!sel) return;
+            var profiles = DkzMemory.getProfiles();
+            sel.innerHTML = '<option value=""> Profil waehlen </option>';
+            Object.keys(profiles).forEach(function(name) {
+                var o = document.createElement('option');
+                o.value = name; o.textContent = name + ' (' + profiles[name].date.substring(0,10) + ')';
+                sel.appendChild(o);
+            });
+        }
+
+        function brainSaveProfile() {
+            var name = document.getElementById('brain-profile-name').value.trim();
+            if (!name) { toast('Profilname eingeben!'); return; }
+            DkzMemory.saveProfile(name);
+            toast('Profil "' + name + '" gespeichert');
+            renderBrainProfiles();
+            document.getElementById('brain-profile-name').value = '';
+        }
+
+        function brainLoadProfile(name) {
+            if (!name) return;
+            DkzMemory.loadProfile(name);
+            toast('Profil "' + name + '" geladen');
+            renderBrainSliders();
+            renderBrainConflicts();
+            renderBrainStats();
+        }
+
+        function brainDeleteProfile() {
+            var sel = document.getElementById('brain-profile-select');
+            var name = sel.value;
+            if (!name) { toast('Erst ein Profil auswaehlen'); return; }
+            DkzMemory.deleteProfile(name);
+            toast('Profil "' + name + '" gelscht');
+            renderBrainProfiles();
+        }
+
+        function brainApplyPreset() {
+            var sel = document.getElementById('brain-preset');
+            var name = sel.value;
+            if (!name) { toast('Preset auswaehlen'); return; }
+            DkzMemory.applyPreset(name);
+            toast('Preset "' + name + '" angewendet');
+            renderBrainSliders();
+            renderBrainConflicts();
+            renderBrainStats();
+            sel.value = '';
+        }
+
+        function brainReset() {
+            if (!confirm('Alle Gedaechtnis-Einstellungen auf Werkseinstellungen zurcksetzen?')) return;
+            DkzMemory.resetConfig();
+            toast('&#9881; Werkseinstellungen wiederhergestellt');
+            renderBrainSliders();
+            renderBrainConflicts();
+            renderBrainStats();
+        }
+
+        function toggleBrainView() {
+            brainExpert = document.getElementById('brain-expert').checked;
+            renderBrainSliders();
+            toast(brainExpert - '&#9881; Experten-Ansicht aktiv' : '&#128270; Standard-Ansicht aktiv');
+        }
+
+        // --- PROMPT DECOMPOSITION + JAMES ---
+        var CHAIN_PATTERNS = {
+            actions: { icon: '&#10067;', color: '#fa1e4e', keywords: ['erstelle','generiere','analysiere','optimiere','teste','pruefe','konvertiere','exportiere','deploye','starte','stoppe','update','lsche','baue','fixe','debugge','build','run','create','check'] },
+            skills: { icon: '&#9881;', color: '#55ACEE', keywords: ['javascript','python','html','css','go','java','php','api','rest','sql','git','docker','seo','llm','prompt','mistral','gpt','claude','gemini','react','node','ocr','nlp','ki','ai','nexuz','james','dkz-theme','responsive'] },
+            workflows: { icon: '&#9881;', color: '#00ff88', keywords: ['workflow','pipeline','ablauf','prozess','schritt','erst','dann','danach','phase','sequenz','wenn','falls','batch','queue','cron','loop'] },
+            agents: { icon: '&#9881;', color: '#ec4899', keywords: ['james','copilot','agent','bot','assistant','openclaw','picoclaw','orchestrator','antigravity','gemini','evaluator','analyzer','builder','debugger'] },
+            teams: { icon: '&#9881;', color: '#FFB800', keywords: ['team','gruppe','rolle','admin','developer','viewer','user','guest','projekt','zugang','berechtigung'] },
+            quellen: { icon: '&#9881;', color: '#6366f1', keywords: ['quelle','source','datei','file','url','api','datenbank','localstorage','iceberg','json','wiki','docs','readme','playbook','blaupause','github','registry','archiv'] }
+        };
+
+        // --- PLAYBOOK CONTEXT INJECTOR ---
+        // Maps keywords - James KNOWLEDGE sections
+        var PLAYBOOK_SECTIONS = {
+            playbook: {
+                label: '&#9881; Playbook',
+                triggers: ['format','output','block','standard','version','tag','farbe','color','font','header','tabelle','status','event','log','git','prompt','blueprint'],
+                subsections: {
+                    outputFormat: { triggers: ['format','block','ausgabe','7-block','standard','struktur'], desc: '7-Block-Standard, Mindestlngen' },
+                    statusSystem: { triggers: ['status','ampel','grn','gelb','rot','aktiv','fehler'], desc: 'Farbsystem: AKTIV/IN ARBEIT/FEHLER' },
+                    tagRules: { triggers: ['tag','tags','kategorisierung','klassifikation','mindestens'], desc: 'Min.10 Tags, 5 Pflicht-Gruppen' },
+                    colorSchemes: { triggers: ['farbe','color','dark','crimson','neon','accent','theme'], desc: 'DkZ Farbschemata: Dark/Crimson/Neon' },
+                    fonts: { triggers: ['font','schrift','inter','jetbrains','space grotesk','typografie'], desc: 'Inter + JetBrains Mono + Space Grotesk' },
+                    eventLog: { triggers: ['event','log','session','tracking','evt-','ses-'], desc: 'Event-IDs, Session-Format' },
+                    gitArchives: { triggers: ['git','archiv','backup','versionierung','commit'], desc: 'Pflicht-Archive: prompts/snippets/workflows/agents' },
+                    roles: { triggers: ['rolle','admin','developer','viewer','guest','berechtigung'], desc: 'Rollen-Level: admin:100, dev:50, viewer:20' },
+                    versionFormat: { triggers: ['version','v0.','versionierung','major','minor'], desc: 'v{major}.{minor}.{session}_{step}' }
+                }
+            },
+            blueprint: {
+                label: '&#9881; Blaupause',
+                triggers: ['modul','module','dashboard','techstack','technologie','konvention','shared','pflicht','qualitt','standard','responsive','offline','toast','localstorage'],
+                subsections: {
+                    techStack: { triggers: ['javascript','python','go','php','node','html','css','duckdb','iceberg','mongodb','pgvector'], desc: 'Frontend+Backend Tech Stack' },
+                    qualityStandards: { triggers: ['qualitt','standard','responsive','toast','glassmorphism','header','blob'], desc: '10 Qualitaets-Standards' },
+                    conventions: { triggers: ['konvention','kebab','index.html','css-var','localstorage','xss','esc','no-framework'], desc: 'Code-Konventionen' },
+                    sharedScripts: { triggers: ['shared','debug','guide','copilot','shortcuts','nexuz','james','export','a11y','puter'], desc: 'Pflicht + Optionale Shared Scripts' },
+                    dataFlow: { triggers: ['datenfluss','input','output','speicher','export','copy','download'], desc: 'Benutzer?Modul?localStorage?Output' },
+                    puterIntegration: { triggers: ['puter','cloud','sdk','lazy','fallback'], desc: 'Puter SDK + localStorage Fallback' }
+                }
+            },
+            openclaw: {
+                label: '&#9881; OpenClaw',
+                triggers: ['orchestrator','openclaw','fastapi','litellm','layer','self-repair','watchdog','diagnose','picoclaw','faiss','wissen','vektor'],
+                subsections: {
+                    config: { triggers: ['concurrent','task','timeout','dispatch','priority','fallback'], desc: 'Max 10 Tasks, 60s Timeout, Priority Queue' },
+                    aiProvider: { triggers: ['litellm','mistral','gemma','llama','model','provider','temperature','token','retry'], desc: 'LiteLLM Gateway + Fallback-Modelle' },
+                    architecture: { triggers: ['layer','frontend','orchestration','storage','infrastructure','governance','self-repair','loop'], desc: '5-Layer + Self-Repair + 4 Loops' },
+                    modules: { triggers: ['orchestrator','picoclaw','knowledge','faiss','vektordatenbank','wiki','suche'], desc: 'Registrier-Module + FAISS-Suche' },
+                    apiEndpoints: { triggers: ['api','sync','chat','analyze','convert','speech','summarize','endpoint'], desc: '8 API-Endpoints' }
+                }
+            },
+            ontherun: {
+                label: '&#9881; ONTHERUN MCP',
+                triggers: ['mcp','ontherun','dkz.js','nexuz','gateway','websocket','cors','helmet','rate-limit','backend','tool'],
+                subsections: {
+                    tools: { triggers: ['tokens','integrations','research','prompts','chat','files','health','modules','seo','workflow','system'], desc: '34+ MCP Tools' },
+                    gateway: { triggers: ['express','rest','websocket','endpoint','middleware','cors','helmet'], desc: 'Express.js REST + WebSocket Gateway' }
+                }
+            },
+            promptBlueprints: {
+                label: '&#9881; 20 Prompt-Blueprints',
+                triggers: ['blueprint','bp-','reasoning','xml','token','kompakt','scope','rckfrage','grounding','werkzeug','migration','outline','json','self-check','parallel','compaction','objektivitt','xhigh'],
+                items: 'BP-01 bis BP-20'
+            },
+            builderChain: {
+                label: '&#9881; Builder Chain',
+                triggers: ['builder','chain','action','skill','workflow','agent','team','source-registry','ecosystem-analyzer','canvas','sidebar','properties'],
+                desc: 'Actions?Skills?Workflows?Agents?Teams, 3-Spalten Grid'
+            },
+            rules: {
+                label: '&#9881; DkZ Regeln',
+                triggers: ['regel','rule','r12','r20','r23','r31','r42','r50','r60','r70','r80','r90','wissensverlust','dokumentation','vanilla','xss','event-logging'],
+                items: 'R12-R90: 10 Kernregeln'
+            }
+        };
+
+        function getPlaybookContext(promptText) {
+            var textLower = promptText.toLowerCase();
+            var relevant = [];
+            var potential = [];
+
+            Object.keys(PLAYBOOK_SECTIONS).forEach(function(sectionKey) {
+                var section = PLAYBOOK_SECTIONS[sectionKey];
+                var directHits = 0;
+                var potentialHits = 0;
+
+                // Check main triggers
+                (section.triggers || []).forEach(function(t) {
+                    if (textLower.indexOf(t.toLowerCase()) !== -1) directHits++;
+                });
+
+                // Check subsection triggers
+                if (section.subsections) {
+                    Object.keys(section.subsections).forEach(function(subKey) {
+                        var sub = section.subsections[subKey];
+                        (sub.triggers || []).forEach(function(t) {
+                            if (textLower.indexOf(t.toLowerCase()) !== -1) {
+                                directHits++;
+                                // Add specific subsection
+                                if (relevant.filter(function(r) { return r.key === sectionKey + '.' + subKey; }).length === 0) {
+                                    relevant.push({ key: sectionKey + '.' + subKey, label: section.label + ' - ' + subKey, desc: sub.desc, type: 'direct' });
+                                }
+                            }
+                        });
+                    });
+                }
+
+                // Direct match - relevant
+                if (directHits > 0) {
+                    if (relevant.filter(function(r) { return r.key === sectionKey; }).length === 0) {
+                        relevant.push({ key: sectionKey, label: section.label, hits: directHits, type: 'section' });
+                    }
+                }
+
+                // Indirect/related - potential (always include some core sections)
+                if (directHits === 0 && ['playbook', 'rules', 'blueprint'].indexOf(sectionKey) !== -1) {
+                    potential.push({ key: sectionKey, label: section.label, type: 'potential', reason: 'Kern-Sektion &#8212; immer empfohlen' });
+                }
+            });
+
+            // Always ensure rules + playbook basics are at least potential
+            if (!relevant.find(function(r) { return r.key === 'rules'; }) && !potential.find(function(p) { return p.key === 'rules'; })) {
+                potential.push({ key: 'rules', label: '&#9881; DkZ Regeln', type: 'potential', reason: 'Kernregeln fuer jede Bewertung' });
+            }
+
+            return { relevant: relevant, potential: potential, total: relevant.length + potential.length };
+        }
+
+        function buildJamesContext(promptText) {
+            var ctx = getPlaybookContext(promptText);
+            var knowledge = typeof DkzJames !== 'undefined' - DkzJames.getKnowledge() : null;
+            if (!knowledge) return { text: '', sections: ctx };
+
+            var parts = [];
+            var allKeys = ctx.relevant.concat(ctx.potential).map(function(r) { return r.key.split('.')[0]; });
+            // Deduplicate
+            var uniqueKeys = allKeys.filter(function(k, i) { return allKeys.indexOf(k) === i; });
+
+            uniqueKeys.forEach(function(key) {
+                var data = knowledge[key];
+                if (!data) return;
+                if (typeof data === 'object' && !Array.isArray(data)) {
+                    parts.push('### ' + key.toUpperCase() + '\n' + JSON.stringify(data, null, 0).substring(0, 600));
+                } else if (Array.isArray(data)) {
+                    parts.push('### ' + key.toUpperCase() + '\n' + data.slice(0, 5).map(function(d) { return typeof d === 'object' - d.id + ': ' + (d.name || d.desc || '') : String(d); }).join(', '));
+                }
+            });
+
+            // Add last project state from decomposition history
+            var archive = JSON.parse(localStorage.getItem('dkz-prompt-decompositions') || '[]');
+            if (archive.length > 0) {
+                var last = archive[archive.length - 1];
+                parts.push('### LETZTER STAND\nLetzte Zerlegung: ' + last.comboKey + ' (Score: ' + last.comboScore + ', James: ' + last.jamesScore + ')');
+            }
+
+            var contextText = parts.join('\n\n');
+
+            // Persist context in localStorage (survives compaction)
+            localStorage.setItem('dkz-james-context', JSON.stringify({
+                sections: ctx,
+                contextText: contextText,
+                timestamp: Date.now(),
+                promptHash: promptText.substring(0, 50)
+            }));
+
+            return { text: contextText, sections: ctx };
+        }
+
+        function brainDecompose() {
+            var text = document.getElementById('brain-prompt-input').value.trim();
+            if (!text) { toast('Prompt eingeben!'); return; }
+            var status = document.getElementById('brain-decompose-status');
+            status.textContent = '? Zerlege + Playbook-Kontext...';
+
+            // 1. Decompose into categories
+            var result = { categories: {}, original: text, id: 'PD-' + Date.now().toString(36) };
+            var textLower = text.toLowerCase();
+
+            Object.keys(CHAIN_PATTERNS).forEach(function(cat) {
+                var p = CHAIN_PATTERNS[cat];
+                var found = [];
+                p.keywords.forEach(function(kw) {
+                    if (textLower.indexOf(kw.toLowerCase()) !== -1) found.push(kw);
+                });
+                result.categories[cat] = { count: found.length, items: found.slice(0,8) };
+            });
+
+            // Coverage score
+            var filled = Object.keys(result.categories).filter(function(c) { return result.categories[c].count > 0; }).length;
+            result.coverage = Math.round(filled / 6 * 100);
+
+            // 2. Build Playbook context for James
+            var ctx = buildJamesContext(text);
+            result.playbookContext = ctx.sections;
+
+            // 3. James Prompt Score WITH context
+            var jamesScore = null;
+            if (typeof DkzJames !== 'undefined') {
+                // Evaluate the prompt WITH playbook context attached
+                var enrichedPrompt = text + '\n\n---PLAYBOOK-KONTEXT---\n' + ctx.text;
+                var jResult = DkzJames.evaluate(enrichedPrompt, 'prompt');
+                jamesScore = jResult;
+                result.jamesScore = jResult.score;
+                result.jamesGrade = jResult.grade;
+            }
+
+            // 4. Combination score
+            var activeCats = Object.keys(result.categories).filter(function(c) { return result.categories[c].count > 0; }).sort();
+            result.comboKey = activeCats.join('+');
+            result.comboScore = Math.min(100, filled * 12 + Object.values(result.categories).reduce(function(s,c) { return s + Math.min(c.count, 3) * 5; }, 0));
+            if (jamesScore) result.comboScore = Math.round((result.comboScore + jamesScore.score) / 2);
+
+            // 5. Archive with playbook context info
+            var archive = JSON.parse(localStorage.getItem('dkz-prompt-decompositions') || '[]');
+            archive.push({ id: result.id, comboKey: result.comboKey, comboScore: result.comboScore, jamesScore: result.jamesScore || 0, coverage: result.coverage, cats: activeCats, ts: Date.now(), playbookSections: ctx.sections.relevant.length + ctx.sections.potential.length });
+            if (archive.length > 200) archive = archive.slice(-200);
+            localStorage.setItem('dkz-prompt-decompositions', JSON.stringify(archive));
+
+            // 6. Render
+            renderDecomposeResult(result, jamesScore);
+            renderCombos();
+            status.textContent = '&#10067; ' + filled + '/6 Kat. | &#128196; ' + ctx.sections.relevant.length + ' Playbook-Sektionen';
+            toast('&#9881; Zerlegt: ' + filled + '/6 Kat. | James ' + (result.jamesScore || '&#10067;') + ' | &#128196; ' + ctx.sections.relevant.length + '+' + ctx.sections.potential.length + ' Playbook');
+        }
+
+        function renderDecomposeResult(result, jamesScore) {
+            var el = document.getElementById('brain-decompose-result');
+            if (!el) return;
+            var html = '<div style="padding:12px">';
+
+            // Score header
+            var sc = result.comboScore || 0;
+            var scColor = sc >= 80 - '#00ff88' : sc >= 60 - '#55ACEE' : sc >= 40 - '#FFB800' : '#fa1e4e';
+            html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:10px;background:rgba(255,255,255,.03);border-radius:10px">';
+            html += '<div style="width:48px;height:48px;border-radius:50%;background:' + scColor + ';display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#000">' + sc + '</div>';
+            html += '<div><div style="font-weight:800;font-size:13px">Kombinations-Score</div>';
+            html += '<div style="font-size:10px;color:var(--muted)">Coverage: ' + result.coverage + '% | Kombination: ' + result.comboKey + '</div></div>';
+
+            // James badge
+            if (jamesScore) {
+                html += '<div style="margin-left:auto;text-align:right">';
+                html += '<div style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:' + jamesScore.color + '22;border:1px solid ' + jamesScore.color + '44;border-radius:12px">';
+                html += '<span style="font-weight:900;color:' + jamesScore.color + '">' + jamesScore.grade + '</span>';
+                html += '<span style="font-size:10px;color:var(--muted)">James: ' + jamesScore.score + '/100</span>';
+                html += '</div></div>';
+            }
+            html += '</div>';
+
+            // Category cards
+            html += '<div class="admin-grid" style="gap:8px">';
+            Object.keys(CHAIN_PATTERNS).forEach(function(cat) {
+                var p = CHAIN_PATTERNS[cat];
+                var c = result.categories[cat];
+                var hasItems = c.count > 0;
+                html += '<div class="admin-card" style="border-color:' + (hasItems - p.color + '44' : 'transparent') + ';opacity:' + (hasItems - '1' : '.4') + '">';
+                html += '<div class="admin-card-title" style="color:' + p.color + '">' + p.icon + ' ' + cat.charAt(0).toUpperCase() + cat.slice(1) + ' <span style="font-size:10px;font-weight:400;color:var(--muted)">(' + c.count + ')</span></div>';
+                if (hasItems) {
+                    html += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">';
+                    c.items.forEach(function(item) {
+                        html += '<span style="font-size:9px;padding:2px 6px;background:' + p.color + '15;border:1px solid ' + p.color + '30;border-radius:4px;color:' + p.color + '">' + item + '</span>';
+                    });
+                    html += '</div>';
+                } else {
+                    html += '<div style="font-size:10px;color:var(--muted)">Nicht erkannt</div>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+
+            // James issues (if any)
+            if (jamesScore && jamesScore.issues && jamesScore.issues.length > 0) {
+                html += '<div style="margin-top:10px;padding:8px;background:rgba(250,30,78,.04);border-radius:8px">';
+                html += '<div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px">James Issues (' + jamesScore.issues.length + ')</div>';
+                jamesScore.issues.forEach(function(issue) {
+                    html += '<div style="font-size:10px;color:#fa6b8a;padding:2px 0"> <b>' + issue.rule.id + '</b> ' + issue.rule.hint + '</div>';
+                });
+                html += '</div>';
+            }
+
+            // Playbook Context (relevant + potential)
+            if (result.playbookContext) {
+                var pbCtx = result.playbookContext;
+                html += '<div style="margin-top:10px;padding:10px;background:rgba(99,102,241,.04);border:1px solid rgba(99,102,241,.15);border-radius:8px">';
+                html += '<div style="font-size:11px;font-weight:700;color:#8b8bf5;margin-bottom:6px">&#9881; Playbook-Kontext fuer James <span style="font-size:9px;color:var(--muted);font-weight:400">(' + pbCtx.relevant.length + ' direkt + ' + pbCtx.potential.length + ' potentiell)</span></div>';
+
+                // Relevant sections (green border)
+                if (pbCtx.relevant.length > 0) {
+                    html += '<div style="margin-bottom:6px">';
+                    html += '<div style="font-size:9px;color:#00ff88;font-weight:600;margin-bottom:3px">? RELEVANT</div>';
+                    pbCtx.relevant.forEach(function(r) {
+                        html += '<div style="display:inline-flex;align-items:center;gap:3px;margin:2px 3px;padding:2px 7px;background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);border-radius:4px;font-size:9px">';
+                        html += '<span style="color:#00ff88;font-weight:600">' + r.label + '</span>';
+                        if (r.desc) html += '<span style="color:var(--muted)"> ' + r.desc + '</span>';
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                }
+
+                // Potential sections (amber dashed border)
+                if (pbCtx.potential.length > 0) {
+                    html += '<div>';
+                    html += '<div style="font-size:9px;color:#FFB800;font-weight:600;margin-bottom:3px">? POTENTIELL RELEVANT</div>';
+                    pbCtx.potential.forEach(function(p) {
+                        html += '<div style="display:inline-flex;align-items:center;gap:3px;margin:2px 3px;padding:2px 7px;background:rgba(255,184,0,.04);border:1px dashed rgba(255,184,0,.25);border-radius:4px;font-size:9px">';
+                        html += '<span style="color:#FFB800">' + p.label + '</span>';
+                        if (p.reason) html += '<span style="color:var(--muted)"> ' + p.reason + '</span>';
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                }
+
+                // Persistent context badge
+                html += '<div style="margin-top:6px;font-size:8px;color:var(--muted);border-top:1px solid rgba(255,255,255,.04);padding-top:4px">';
+                html += '&#9881; Kontext gespeichert in <code>dkz-james-context</code> &#8212; Ueberlebt Gedaechtnis-Compaction';
+                html += '</div>';
+                html += '</div>';
+            }
+
+            html += '</div>';
+            el.innerHTML = html;
+        }
+
+        function renderCombos() {
+            var el = document.getElementById('brain-combos');
+            if (!el) return;
+            var archive = JSON.parse(localStorage.getItem('dkz-prompt-decompositions') || '[]');
+            if (!archive.length) { el.innerHTML = '<div style="font-size:11px;color:var(--muted)">Noch keine Zerlegungen.</div>'; return; }
+
+            // Group by comboKey
+            var groups = {};
+            archive.forEach(function(a) {
+                if (!groups[a.comboKey]) groups[a.comboKey] = { key: a.comboKey, cats: a.cats, scores: [], count: 0 };
+                groups[a.comboKey].scores.push(a.comboScore);
+                groups[a.comboKey].count++;
+            });
+
+            // Sort by avg score
+            var ranked = Object.values(groups).sort(function(a,b) {
+                var avgA = a.scores.reduce(function(s,v){return s+v},0)/a.scores.length;
+                var avgB = b.scores.reduce(function(s,v){return s+v},0)/b.scores.length;
+                return avgB - avgA;
+            });
+
+            var html = '<table style="width:100%;font-size:11px;border-collapse:collapse">';
+            html += '<tr style="border-bottom:1px solid rgba(255,255,255,.08)"><th style="text-align:left;padding:4px;color:var(--muted)">#</th><th style="text-align:left;padding:4px;color:var(--muted)">Kombination</th><th style="text-align:center;padding:4px;color:var(--muted)"> Score</th><th style="text-align:center;padding:4px;color:var(--muted)">Best</th><th style="text-align:center;padding:4px;color:var(--muted)">Anzahl</th></tr>';
+
+            ranked.slice(0, 8).forEach(function(g, i) {
+                var avg = Math.round(g.scores.reduce(function(s,v){return s+v},0)/g.scores.length);
+                var best = Math.max.apply(null, g.scores);
+                var avgColor = avg >= 80 - '#00ff88' : avg >= 60 - '#55ACEE' : avg >= 40 - '#FFB800' : '#fa1e4e';
+                html += '<tr style="border-bottom:1px solid rgba(255,255,255,.03)">';
+                html += '<td style="padding:4px;color:' + (i === 0 - '#FFB800' : 'var(--muted)') + '">' + (i === 0 - '&#9881;' : (i+1)) + '</td>';
+                html += '<td style="padding:4px">';
+                (g.cats || []).forEach(function(c) {
+                    var p = CHAIN_PATTERNS[c];
+                    if (p) html += '<span style="font-size:9px;padding:1px 4px;background:' + p.color + '15;border-radius:3px;color:' + p.color + ';margin-right:3px">' + p.icon + c + '</span>';
+                });
+                html += '</td>';
+                html += '<td style="padding:4px;text-align:center;font-weight:700;color:' + avgColor + '">' + avg + '</td>';
+                html += '<td style="padding:4px;text-align:center;color:var(--muted)">' + best + '</td>';
+                html += '<td style="padding:4px;text-align:center;color:var(--muted)">' + g.count + '</td>';
+                html += '</tr>';
+            });
+
+            html += '</table>';
+            el.innerHTML = html;
+        }
+
+        init();
+        initAdmin();
+        initBrain();
+        renderCombos();
+        ['skill','workflow','agent','team'].forEach(renderAccessList);
+        renderLlmAssignments();
+    </script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Settings</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">DkZ Dashboard Einstellungen.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Settings</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">DkZ Dashboard Einstellungen.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-settings-onboarded','1')}if(!localStorage.getItem('dkz-settings-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>
+
+<!-- DkZ Shared Scripts (R21) -->
+<script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+<script src="../../shared/dkz-guide.js"></script>
+<script src="../../shared/dkz-copilot.js"></script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script>
+        // === AI STACK TAB FUNKTIONEN ===
+        var AI_STACK_KEY = 'dkz-ai-stack';
+
+        function getAiStack() {
+            try { return JSON.parse(localStorage.getItem(AI_STACK_KEY)) || {}; } catch(e) { return {}; }
+        }
+
+        function saveAiToggle(name, enabled) {
+            var stack = getAiStack();
+            stack[name] = enabled;
+            localStorage.setItem(AI_STACK_KEY, JSON.stringify(stack));
+            toast((enabled ? '✅ ' : '❌ ') + name + (enabled ? ' aktiviert' : ' deaktiviert'));
+        }
+
+        function loadAiToggles() {
+            var stack = getAiStack();
+            var defaults = { openclaw:true, comfyui:true, pytorch:true, keras:true, langchain:false, adk:true, opencode:true, nanochat:true, coderabbit:true, caffe:false, autoresearch:true, a2a:true };
+            Object.keys(defaults).forEach(function(k) {
+                var el = document.getElementById('ai-toggle-' + k);
+                if (el) el.checked = stack[k] !== undefined ? stack[k] : defaults[k];
+            });
+        }
+
+        function saveNanoConfig() {
+            var cfg = {
+                primary: document.getElementById('nano-model-primary').value,
+                fallback: document.getElementById('nano-model-fallback').value
+            };
+            localStorage.setItem('dkz-nanochat-config', JSON.stringify(cfg));
+            toast('⚡ NanoChat Konfiguration gespeichert');
+        }
+
+        function loadNanoConfig() {
+            try {
+                var cfg = JSON.parse(localStorage.getItem('dkz-nanochat-config'));
+                if (cfg) {
+                    if (cfg.primary) document.getElementById('nano-model-primary').value = cfg.primary;
+                    if (cfg.fallback) document.getElementById('nano-model-fallback').value = cfg.fallback;
+                }
+            } catch(e) {}
+        }
+
+        function saveOcToken() {
+            var token = document.getElementById('aistack-oc-token').value;
+            if (token) {
+                localStorage.setItem('dkz-openclaw-token', token);
+                if (typeof PICOCLAW !== 'undefined') PICOCLAW.setToken(token);
+                toast('🐾 OpenClaw Token gespeichert');
+            }
+        }
+
+        function testOcConnection() {
+            var result = document.getElementById('aistack-oc-test-result');
+            var gateway = document.getElementById('aistack-oc-gateway').value;
+            result.innerHTML = '🔄 Teste Verbindung...';
+            result.style.color = 'var(--muted)';
+            if (gateway) localStorage.setItem('dkz-openclaw-gateway', gateway);
+            if (typeof PICOCLAW !== 'undefined' && PICOCLAW.testConnection) {
+                PICOCLAW.testConnection().then(function(r) {
+                    result.innerHTML = '✅ REST: ' + (r.rest ? 'OK' : 'Fehler') + ' | WS: ' + (r.ws ? 'OK' : 'Fehler');
+                    result.style.color = (r.rest || r.ws) ? '#00ff88' : '#ff3b5c';
+                });
+            } else {
+                result.innerHTML = '⚠️ PicoClaw nicht geladen — shared/dkz-picoclaw.js einbinden';
+                result.style.color = '#ffb800';
+            }
+        }
+
+        // Init AI Stack Tab wenn sichtbar
+        var _origSwitch = typeof switchTab === 'function' ? switchTab : null;
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAiToggles();
+            loadNanoConfig();
+            // Lade OpenClaw Token
+            var ocToken = localStorage.getItem('dkz-openclaw-token');
+            if (ocToken) document.getElementById('aistack-oc-token').value = ocToken.substring(0,8) + '...';
+            var ocGw = localStorage.getItem('dkz-openclaw-gateway');
+            if (ocGw) document.getElementById('aistack-oc-gateway').value = ocGw;
+        });
+    </script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-self-learn.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+</html>
+
+
+

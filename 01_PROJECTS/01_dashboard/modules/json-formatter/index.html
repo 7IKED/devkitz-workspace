@@ -1,0 +1,636 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>&#9881; JSON Formatter &#8212; DkZâ„¢</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #fa1e4e;
+            --accent: #fa1e4e;
+            --accent-rgb: 250, 30, 78;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(14, 14, 22, .72);
+            --blur: blur(24px)
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .08);
+            border-radius: 6px
+        }
+
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .06;
+            animation: bf 20s ease-in-out infinite
+        }
+
+        .bg-blob:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: var(--yellow);
+            top: -10%;
+            left: 20%
+        }
+
+        .bg-blob:nth-child(2) {
+            width: 350px;
+            height: 350px;
+            background: var(--accent);
+            bottom: 10%;
+            right: 10%;
+            animation-delay: -8s
+        }
+
+        @keyframes bf {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(30px, -40px) scale(1.1)
+            }
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        .header {
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .back-btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .25s;
+            text-decoration: none;
+            font-family: var(--font)
+        }
+
+        .back-btn:hover {
+            color: var(--text);
+            border-color: var(--accent)
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--yellow), var(--green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .hdr-right {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .ver {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono)
+        }
+
+        .content {
+            padding: 20px 28px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 10px
+        }
+
+        .stat {
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center
+        }
+
+        .stat .sv {
+            font-size: 18px;
+            font-weight: 800;
+            font-family: var(--mono)
+        }
+
+        .stat .sl {
+            font-size: 9px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 3px
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: var(--card);
+            border-radius: 12px;
+            border: 1px solid var(--border)
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border: none;
+            background: none;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 700;
+            font-family: var(--font);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all .2s;
+            flex: 1;
+            text-align: center
+        }
+
+        .tab:hover {
+            color: var(--text);
+            background: var(--card2)
+        }
+
+        .tab.active {
+            background: var(--accent);
+            color: #fff
+        }
+
+        .tab-body {
+            display: none;
+            animation: fi .3s ease
+        }
+
+        .tab-body.active {
+            display: block
+        }
+
+        @keyframes fi {
+            from {
+                opacity: 0;
+                transform: translateY(8px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .editor-split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            min-height: 400px
+        }
+
+        .editor-pane {
+            display: flex;
+            flex-direction: column;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden
+        }
+
+        .pane-header {
+            padding: 10px 14px;
+            background: var(--card2);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-weight: 700
+        }
+
+        .pane-header .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%
+        }
+
+        textarea {
+            flex: 1;
+            padding: 14px;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 12px;
+            resize: none;
+            outline: none;
+            line-height: 1.6;
+            tab-size: 2
+        }
+
+        .output-area {
+            flex: 1;
+            padding: 14px;
+            overflow: auto;
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.6
+        }
+
+        .btns {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: #fff;
+            font-family: var(--font);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .25s
+        }
+
+        .btn:hover {
+            box-shadow: 0 0 16px rgba(var(--accent-rgb), .3)
+        }
+
+        .btn.secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text)
+        }
+
+        .btn.secondary:hover {
+            border-color: var(--accent)
+        }
+
+        .tree-node {
+            padding-left: 20px
+        }
+
+        .tree-key {
+            color: var(--blue)
+        }
+
+        .tree-str {
+            color: var(--green)
+        }
+
+        .tree-num {
+            color: var(--yellow)
+        }
+
+        .tree-bool {
+            color: var(--accent)
+        }
+
+        .tree-null {
+            color: var(--muted)
+        }
+
+        .tree-toggle {
+            cursor: pointer;
+            user-select: none;
+            color: var(--muted)
+        }
+
+        .tree-toggle:hover {
+            color: var(--text)
+        }
+
+        .error-box {
+            background: rgba(250, 30, 78, .08);
+            border: 1px solid rgba(250, 30, 78, .3);
+            border-radius: 10px;
+            padding: 12px;
+            color: var(--red);
+            font-size: 12px;
+            font-family: var(--mono);
+            margin-bottom: 12px;
+            display: none
+        }
+
+        .valid-box {
+            background: rgba(0, 255, 136, .08);
+            border: 1px solid rgba(0, 255, 136, .3);
+            border-radius: 10px;
+            padding: 12px;
+            color: var(--green);
+            font-size: 12px;
+            font-family: var(--mono);
+            margin-bottom: 12px;
+            display: none
+        }
+
+        .diff-add {
+            background: rgba(0, 255, 136, .08);
+            color: var(--green)
+        }
+
+        .diff-rem {
+            background: rgba(250, 30, 78, .08);
+            color: var(--red)
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: var(--green);
+            color: #000;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 10px;
+            z-index: 300;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all .3s;
+            pointer-events: none
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0)
+        }
+
+        @media(max-width:768px) {
+            .editor-split {
+                grid-template-columns: 1fr
+            }
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="json-formatter" data-dkz-appid="DKZ-MOD-JSO" data-dkz-version="v0.01" data-dkz-title="JSON Formatter" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+    </div>
+    <div class="app">
+        <div class="header">
+            <a href="../../hub/index.html" class="back-btn">? Hub</a>
+            <h1>&#9881; JSON Formatter & Validator</h1>
+            <div class="hdr-right"><span class="ver">v0.01</span></div>
+        </div>
+        <div class="content">
+            <div class="stats-row">
+                <div class="stat">
+                    <div class="sv" style="color:var(--green)" id="sKeys">0</div>
+                    <div class="sl">Keys</div>
+                </div>
+                <div class="stat">
+                    <div class="sv" style="color:var(--blue)" id="sDepth">0</div>
+                    <div class="sl">Tiefe</div>
+                </div>
+                <div class="stat">
+                    <div class="sv" style="color:var(--yellow)" id="sSize">0B</div>
+                    <div class="sl">Groesse</div>
+                </div>
+                <div class="stat">
+                    <div class="sv" style="color:var(--accent)" id="sStatus"></div>
+                    <div class="sl">Status</div>
+                </div>
+            </div>
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('format',this)">&#9881; Format</button>
+                <button class="tab" onclick="switchTab('tree',this)">&#9881; Tree View</button>
+                <button class="tab" onclick="switchTab('compare',this)">&#9881; Vergleich</button>
+                <button class="tab" onclick="switchTab('convert',this)">&#9881; Konverter</button>
+            </div>
+            <div id="errorBox" class="error-box"></div>
+            <div id="validBox" class="valid-box"></div>
+
+            <div class="tab-body active" id="tab-format">
+                <div class="btns" style="margin-bottom:12px">
+                    <button class="btn" onclick="beautify()">? Beautify</button>
+                    <button class="btn secondary" onclick="minify()">&#9881; Minify</button>
+                    <button class="btn secondary" onclick="validate()">? Validate</button>
+                    <button class="btn secondary" onclick="sortKeys()">&#9881; Sort Keys</button>
+                    <button class="btn secondary" onclick="copyOutput()">&#128203; Copy</button>
+                    <button class="btn secondary" onclick="clearAll()">&#128465; Clear</button>
+                    <button class="btn secondary" onclick="loadSample()">&#9881; Sample</button>
+                </div>
+                <div class="editor-split">
+                    <div class="editor-pane">
+                        <div class="pane-header">
+                            <div class="dot" style="background:var(--accent)"></div>Input JSON
+                        </div>
+                        <textarea id="jsonInput" placeholder='{"name": "DkZ", "version": "1.0"}' oninput="autoFormat()">{
+  "name": "DkZ Framework",
+  "version": "1.01.1_01",
+  "modules": ["color-picker", "json-formatter", "regex-tester"],
+  "settings": {
+    "theme": "dark",
+    "accent": "#fa1e4e",
+    "language": "de"
+  },
+  "active": true,
+  "count": 42
+}</textarea>
+                    </div>
+                    <div class="editor-pane">
+                        <div class="pane-header">
+                            <div class="dot" style="background:var(--green)"></div>Output
+                        </div>
+                        <div class="output-area" id="jsonOutput" style="white-space:pre-wrap"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-body" id="tab-tree">
+                <div class="editor-pane" style="min-height:400px">
+                    <div class="pane-header">
+                        <div class="dot" style="background:var(--blue)"></div>&#9881; Tree View (klickbar)
+                    </div>
+                    <div class="output-area" id="treeView" style="padding:14px"></div>
+                </div>
+            </div>
+
+            <div class="tab-body" id="tab-compare">
+                <div class="editor-split">
+                    <div class="editor-pane">
+                        <div class="pane-header">
+                            <div class="dot" style="background:var(--yellow)"></div>JSON A
+                        </div>
+                        <textarea id="compareA" placeholder="JSON A..."></textarea>
+                    </div>
+                    <div class="editor-pane">
+                        <div class="pane-header">
+                            <div class="dot" style="background:var(--blue)"></div>JSON B
+                        </div>
+                        <textarea id="compareB" placeholder="JSON B..."></textarea>
+                    </div>
+                </div>
+                <button class="btn" style="margin-top:12px" onclick="compareJSON()">&#9881; Vergleichen</button>
+                <div class="editor-pane" style="margin-top:12px;min-height:200px">
+                    <div class="pane-header">
+                        <div class="dot" style="background:var(--green)"></div>Diff Result
+                    </div>
+                    <div class="output-area" id="diffResult"></div>
+                </div>
+            </div>
+
+            <div class="tab-body" id="tab-convert">
+                <div class="btns" style="margin-bottom:12px">
+                    <button class="btn" onclick="toCSV()">&#128203; CSV</button>
+                    <button class="btn secondary" onclick="toYAML()">&#128196; YAML</button>
+                    <button class="btn secondary" onclick="toXML()">&#128196; XML</button>
+                    <button class="btn secondary" onclick="toTS()">&#128312; TypeScript</button>
+                </div>
+                <div class="editor-pane" style="min-height:300px">
+                    <div class="pane-header">
+                        <div class="dot" style="background:var(--green)"></div>Konvertiert
+                    </div>
+                    <div class="output-area" id="convertOutput" style="white-space:pre-wrap"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+        function parse() { try { const d = JSON.parse(document.getElementById('jsonInput').value); hideErr(); return d } catch (e) { showErr(e.message); return null } }
+        function beautify() { const d = parse(); if (!d) return; const o = JSON.stringify(d, null, 2); document.getElementById('jsonOutput').textContent = o; colorize(); updateStats(d); showValid('? Formatiert') }
+        function minify() { const d = parse(); if (!d) return; document.getElementById('jsonOutput').textContent = JSON.stringify(d); updateStats(d); showValid('&#9881; Minified') }
+        function validate() { const d = parse(); if (d) { showValid('? Gltiges JSON!'); updateStats(d) } else { document.getElementById('sStatus').textContent = '&#10067;' } }
+        function sortKeys() { const d = parse(); if (!d) return; const sorted = sortObj(d); document.getElementById('jsonInput').value = JSON.stringify(sorted, null, 2); beautify(); showToast('Keys sortiert!') }
+        function sortObj(o) { if (Array.isArray(o)) return o.map(sortObj); if (o && typeof o === 'object') { const s = {}; Object.keys(o).sort().forEach(k => s[k] = sortObj(o[k])); return s } return o }
+        function autoFormat() { const d = parse(); if (d) { updateStats(d); document.getElementById('sStatus').textContent = '&#10067;'; document.getElementById('sStatus').style.color = 'var(--green)' } else { document.getElementById('sStatus').textContent = '&#10067;'; document.getElementById('sStatus').style.color = 'var(--red)' } }
+        function updateStats(d) { const s = JSON.stringify(d); document.getElementById('sKeys').textContent = countKeys(d); document.getElementById('sDepth').textContent = getDepth(d); document.getElementById('sSize').textContent = formatBytes(new Blob([s]).size); document.getElementById('sStatus').textContent = '&#10067;'; document.getElementById('sStatus').style.color = 'var(--green)' }
+        function countKeys(o) { if (!o || typeof o !== 'object') return 0; let c = Object.keys(o).length; Object.values(o).forEach(v => c += countKeys(v)); return c }
+        function getDepth(o, d = 0) { if (!o || typeof o !== 'object') return d; return Math.max(...Object.values(o).map(v => getDepth(v, d + 1)), d) }
+        function formatBytes(b) { if (b < 1024) return b + 'B'; if (b < 1048576) return (b / 1024).toFixed(1) + 'KB'; return (b / 1048576).toFixed(1) + 'MB' }
+        function colorize() { const el = document.getElementById('jsonOutput'); let html = el.textContent; html = html.replace(/"([^"]+)"(\s*:)/g, '<span class="tree-key">"$1"</span>$2'); html = html.replace(/:\s*"([^"]*)"/g, ': <span class="tree-str">"$1"</span>'); html = html.replace(/:\s*(\d+\.?\d*)/g, ': <span class="tree-num">$1</span>'); html = html.replace(/:\s*(true|false)/g, ': <span class="tree-bool">$1</span>'); html = html.replace(/:\s*(null)/g, ': <span class="tree-null">$1</span>'); el.innerHTML = html }
+        function buildTree(obj, path = '') { let html = ''; if (Array.isArray(obj)) { html += '<span class="tree-toggle" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'">? Array[' + obj.length + ']</span><div class="tree-node">'; obj.forEach((v, i) => { html += '<div><span class="tree-key">[' + i + ']</span>: '; if (typeof v === 'object' && v !== null) html += buildTree(v, path + '[' + i + ']'); else html += colorVal(v); html += '</div>' }); html += '</div>' } else if (obj && typeof obj === 'object') { html += '<span class="tree-toggle" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'">? Object{' + Object.keys(obj).length + '}</span><div class="tree-node">'; Object.entries(obj).forEach(([k, v]) => { html += '<div><span class="tree-key">"' + esc(k) + '"</span>: '; if (typeof v === 'object' && v !== null) html += buildTree(v, path + '.' + k); else html += colorVal(v); html += '</div>' }); html += '</div>' } else { html += colorVal(obj) } return html }
+        function colorVal(v) { if (typeof v === 'string') return '<span class="tree-str">"' + esc(v) + '"</span>'; if (typeof v === 'number') return '<span class="tree-num">' + v + '</span>'; if (typeof v === 'boolean') return '<span class="tree-bool">' + v + '</span>'; return '<span class="tree-null">null</span>' }
+        function compareJSON() { try { const a = JSON.parse(document.getElementById('compareA').value), b = JSON.parse(document.getElementById('compareB').value); const diff = getDiff(a, b, ''); document.getElementById('diffResult').innerHTML = diff || '<span style="color:var(--green)">&#9989; Identisch!</span>' } catch (e) { document.getElementById('diffResult').innerHTML = '<span style="color:var(--red)">&#10060; ' + esc(e.message) + '</span>' } }
+        function getDiff(a, b, path) { let html = ''; const allKeys = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]); allKeys.forEach(k => { const p = path - path + '.' + k : k; if (!(k in (a || {}))) { html += '<div class="diff-add">+ ' + esc(p) + ': ' + JSON.stringify(b[k]) + '</div>' } else if (!(k in (b || {}))) { html += '<div class="diff-rem">- ' + esc(p) + ': ' + JSON.stringify(a[k]) + '</div>' } else if (typeof a[k] === 'object' && typeof b[k] === 'object') { html += getDiff(a[k], b[k], p) } else if (a[k] !== b[k]) { html += '<div class="diff-rem">- ' + esc(p) + ': ' + JSON.stringify(a[k]) + '</div><div class="diff-add">+ ' + esc(p) + ': ' + JSON.stringify(b[k]) + '</div>' } }); return html }
+        function toCSV() { const d = parse(); if (!d) return; let csv = ''; if (Array.isArray(d) && d.length) { const keys = Object.keys(d[0]); csv = keys.join(',') + '\n' + d.map(r => keys.map(k => JSON.stringify(r[k] || '')).join(',')).join('\n') } else { csv = Object.entries(d).map(([k, v]) => k + ',' + JSON.stringify(v)).join('\n') } document.getElementById('convertOutput').textContent = csv; showToast('CSV!') }
+        function toYAML() { const d = parse(); if (!d) return; document.getElementById('convertOutput').textContent = jsonToYaml(d, 0); showToast('YAML!') }
+        function jsonToYaml(o, indent) { let yaml = ''; const pad = ' '.repeat(indent); if (Array.isArray(o)) { o.forEach(v => { if (typeof v === 'object' && v !== null) yaml += pad + '- \n' + jsonToYaml(v, indent + 2); else yaml += pad + '- ' + v + '\n' }) } else if (o && typeof o === 'object') { Object.entries(o).forEach(([k, v]) => { if (typeof v === 'object' && v !== null) yaml += pad + k + ':\n' + jsonToYaml(v, indent + 2); else yaml += pad + k + ': ' + JSON.stringify(v) + '\n' }) } return yaml }
+        function toXML() { const d = parse(); if (!d) return; document.getElementById('convertOutput').textContent = '<?xml version="1.0"?>\n<root>\n' + jsonToXml(d, 1) + '</root>'; showToast('XML!') }
+        function jsonToXml(o, indent) { let xml = ''; const pad = ' '.repeat(indent * 2); Object.entries(o).forEach(([k, v]) => { const tag = k.replace(/[^a-zA-Z0-9_]/g, '_'); if (Array.isArray(v)) { v.forEach(item => { if (typeof item === 'object') xml += pad + '<' + tag + '>\n' + jsonToXml(item, indent + 1) + pad + '</' + tag + '>\n'; else xml += pad + '<' + tag + '>' + esc(String(item)) + '</' + tag + '>\n' }) } else if (typeof v === 'object' && v !== null) { xml += pad + '<' + tag + '>\n' + jsonToXml(v, indent + 1) + pad + '</' + tag + '>\n' } else { xml += pad + '<' + tag + '>' + esc(String(v)) + '</' + tag + '>\n' } }); return xml }
+        function toTS() { const d = parse(); if (!d) return; document.getElementById('convertOutput').textContent = 'interface Root {\n' + genTS(d, 1) + '}'; showToast('TypeScript!') }
+        function genTS(o, indent) { let ts = ''; const pad = ' '.repeat(indent * 2); Object.entries(o).forEach(([k, v]) => { const type = Array.isArray(v) - genArrType(v) + '[]' : typeof v === 'object' && v !== null - '{\n' + genTS(v, indent + 1) + pad + '}' : typeof v; ts += pad + k + ': ' + type + ';\n' }); return ts }
+        function genArrType(arr) { if (!arr.length) return 'any'; const v = arr[0]; return typeof v === 'object' - '{\n' + genTS(v, 2) + '}' : typeof v }
+        function copyOutput() { const t = document.getElementById('jsonOutput').textContent || document.getElementById('convertOutput').textContent; navigator.clipboard.writeText(t); showToast('Kopiert!') }
+        function clearAll() { document.getElementById('jsonInput').value = ''; document.getElementById('jsonOutput').textContent = ''; hideErr() }
+        function loadSample() { document.getElementById('jsonInput').value = JSON.stringify({ name: "DkZ Framework", version: "1.01.1_01", modules: ["color-picker", "json-formatter", "regex-tester"], settings: { theme: "dark", accent: "#fa1e4e", language: "de" }, active: true, count: 42 }, null, 2); beautify() }
+        function showErr(m) { const e = document.getElementById('errorBox'); e.textContent = '&#9881; ' + m; e.style.display = 'block'; document.getElementById('validBox').style.display = 'none' }
+        function showValid(m) { const e = document.getElementById('validBox'); e.textContent = m; e.style.display = 'block'; document.getElementById('errorBox').style.display = 'none' }
+        function hideErr() { document.getElementById('errorBox').style.display = 'none'; document.getElementById('validBox').style.display = 'none' }
+        function switchTab(id, btn) { document.querySelectorAll('.tab-body').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); document.getElementById('tab-' + id).classList.add('active'); btn.classList.add('active'); if (id === 'tree') { const d = parse(); if (d) document.getElementById('treeView').innerHTML = buildTree(d) } }
+        function esc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;') }
+        function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500) }
+        beautify();
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Json formatter</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">JSON formatieren, validieren und minifizieren.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Json formatter</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">JSON formatieren, validieren und minifizieren.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-json-formatter-onboarded','1')}if(!localStorage.getItem('dkz-json-formatter-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+
+<!-- &#8212; DEVKiTZ 2026 &#8212; All Rights Reserved -->
+</html>
+
+

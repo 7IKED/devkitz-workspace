@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v0.01">
+    <meta name="dkz-module" content="hood-builder">
+    <title>H00D™ (Docker) — Container & KVM Builder</title>
+    <meta name="description" content="H00D™ Docker Builder — Container Management, KVM Provider (Hostinger/Hetzner/IONOS), n8n Templates, Snippet DB, Info Guides">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <style>
+:root{--dock:#2496ed;--dg:rgba(36,150,237,.12);--n8:#ea4c2e;--pg:#336791;--rd:#dc2626;--gr:#00d084;--yl:#ffb800;--pp:#a855f7;--bg:#0c0c0e;--card:#161618;--brd:#252528;--txt:#eaeaf0;--mt:#707078}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);overflow-x:hidden}
+.app{display:grid;grid-template-columns:270px 1fr 310px;grid-template-rows:54px 1fr;height:100vh}
+header{grid-column:1/-1;background:linear-gradient(90deg,#161618,#1c1c20);border-bottom:2px solid var(--dock);display:flex;align-items:center;justify-content:space-between;padding:0 1rem}
+.logo{font-size:1.05rem;font-weight:900;display:flex;align-items:center;gap:.4rem}
+.logo-dock{background:linear-gradient(135deg,var(--dock),#0db7ed);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.chain-nav{display:flex;gap:.2rem}
+.chain-btn{padding:.25rem .45rem;border-radius:5px;font-size:.55rem;font-weight:700;border:1px solid var(--brd);background:rgba(255,255,255,.02);color:var(--mt);cursor:pointer;text-decoration:none;transition:all .2s}
+.chain-btn:hover{border-color:var(--dock);color:var(--txt)}.chain-btn.active{background:var(--dock);border-color:var(--dock);color:#fff}
+.btn{padding:.35rem .65rem;border:none;border-radius:5px;font-size:.65rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;display:inline-flex;align-items:center;gap:.2rem}
+.btn-d{background:var(--dock);color:#fff}.btn-d:hover{background:#0db7ed}
+.btn-s{background:rgba(255,255,255,.04);color:var(--txt);border:1px solid var(--brd)}.btn-s:hover{background:rgba(255,255,255,.08)}
+.btn:hover{transform:translateY(-1px)}
+/* LEFT SIDEBAR */
+.side-l{background:#111113;border-right:1px solid var(--brd);overflow-y:auto;padding:.75rem}
+.side-r{background:#111113;border-left:1px solid var(--brd);overflow-y:auto;padding:.75rem}
+.center{overflow-y:auto;padding:1rem}
+.stit{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--mt);margin-bottom:.4rem;display:flex;align-items:center;gap:.3rem}
+.inp{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--brd);border-radius:5px;padding:.4rem .5rem;color:var(--txt);font-size:.72rem;font-family:inherit}
+.inp:focus{outline:none;border-color:var(--dock)}
+.sel{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--brd);border-radius:5px;padding:.4rem;color:var(--txt);font-size:.72rem;font-family:inherit;appearance:auto}
+.divider{height:1px;background:var(--brd);margin:.6rem 0}
+/* DOCKER SERVICE CARDS */
+.svc{background:rgba(0,0,0,.2);border:1px solid var(--brd);border-radius:8px;padding:.5rem;margin-bottom:.35rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:.5rem}
+.svc:hover{border-color:var(--dock);background:rgba(36,150,237,.03);transform:translateX(2px)}
+.svc.running{border-left:3px solid var(--gr)}
+.svc.stopped{border-left:3px solid var(--rd)}
+.svc-icon{font-size:1.1rem;flex-shrink:0}
+.svc-info{flex:1}
+.svc-name{font-size:.72rem;font-weight:800}
+.svc-desc{font-size:.58rem;color:var(--mt)}
+.svc-status{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.st-run{background:var(--gr);box-shadow:0 0 6px var(--gr)}.st-stop{background:var(--rd)}
+.svc-port{font-size:.5rem;color:var(--dock);font-weight:700;font-family:'JetBrains Mono',monospace}
+/* KVM PROVIDER CARDS */
+.kvm{background:rgba(0,0,0,.2);border:1px solid var(--brd);border-radius:10px;padding:.6rem;margin-bottom:.4rem;transition:all .2s;cursor:pointer}
+.kvm:hover{border-color:var(--dock)}
+.kvm.connected{border-color:var(--gr);background:rgba(0,208,132,.03)}
+.kvm-head{display:flex;align-items:center;gap:.4rem;margin-bottom:.3rem}
+.kvm-logo{font-size:1.2rem}.kvm-name{font-size:.75rem;font-weight:800;flex:1}.kvm-badge{font-size:.5rem;padding:2px 5px;border-radius:3px;font-weight:700}
+.kb-active{background:rgba(0,208,132,.15);color:var(--gr)}.kb-inactive{background:rgba(220,38,38,.15);color:var(--rd)}
+.kvm-body{display:none;padding-top:.3rem}
+.kvm.open .kvm-body{display:block}
+.kvm-stat{display:flex;justify-content:space-between;font-size:.6rem;padding:.15rem 0}
+.kvm-stat-l{color:var(--mt)}.kvm-stat-v{font-weight:700}
+/* SNIPPET SECTION */
+.snip-card{background:rgba(0,0,0,.15);border:1px solid var(--brd);border-radius:6px;padding:.4rem .5rem;margin-bottom:.3rem;cursor:pointer;transition:all .15s;font-size:.65rem}
+.snip-card:hover{border-color:var(--pp);background:rgba(168,85,247,.03)}
+.snip-id{font-size:.5rem;color:var(--pp);font-weight:700;font-family:'JetBrains Mono',monospace}
+.snip-name{font-weight:700;font-size:.68rem}
+/* N8N TEMPLATE CARDS */
+.tpl{background:rgba(0,0,0,.15);border:1px solid var(--brd);border-radius:6px;padding:.4rem .5rem;margin-bottom:.3rem;cursor:pointer;transition:all .15s}
+.tpl:hover{border-color:var(--n8);background:rgba(234,76,46,.03)}
+.tpl-name{font-size:.68rem;font-weight:700}.tpl-cat{font-size:.5rem;color:var(--n8);font-weight:600}
+/* COMPOSE EDITOR */
+.compose{background:rgba(0,0,0,.3);border:1px solid var(--brd);border-radius:8px;padding:.5rem;font-family:'JetBrains Mono',monospace;font-size:.6rem;line-height:1.6;color:var(--dock);min-height:200px;white-space:pre;overflow-x:auto}
+/* INFO POPUP */
+.info-btn{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:rgba(36,150,237,.1);color:var(--dock);font-size:.55rem;cursor:pointer;border:1px solid rgba(36,150,237,.2);font-weight:900;flex-shrink:0;transition:all .2s}
+.info-btn:hover{background:var(--dock);color:#fff;transform:scale(1.15)}
+.info-pop{position:fixed;background:var(--card);border:1px solid var(--dock);border-radius:8px;padding:.6rem .8rem;z-index:1000;max-width:280px;font-size:.65rem;line-height:1.5;box-shadow:0 8px 30px rgba(0,0,0,.6);pointer-events:none;opacity:0;transition:opacity .2s}
+.info-pop.show{opacity:1}
+.info-pop-title{font-weight:800;color:var(--dock);margin-bottom:.2rem;font-size:.7rem}
+/* IDLE HINT */
+.idle-hint{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) scale(0);background:var(--card);border:2px solid var(--dock);border-radius:10px;padding:.8rem 1.2rem;z-index:999;transition:transform .3s;box-shadow:0 10px 40px rgba(36,150,237,.15)}
+.idle-hint.show{transform:translateX(-50%) scale(1);animation:idlePulse 2s infinite}
+@keyframes idlePulse{0%,100%{box-shadow:0 10px 40px rgba(36,150,237,.15)}50%{box-shadow:0 10px 50px rgba(36,150,237,.3)}}
+/* STAT */
+.stat-row{display:flex;justify-content:space-between;padding:.2rem 0;font-size:.6rem}
+.stat-l{color:var(--mt)}.stat-v{font-weight:700;color:var(--dock)}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--card);border:1px solid var(--gr);border-radius:8px;padding:.6rem 1rem;transform:translateX(400px);transition:transform .3s;z-index:10000;font-size:.75rem;font-weight:600}
+.toast.show{transform:translateX(0)}
+.tabs{display:flex;border-bottom:1px solid var(--brd);margin-bottom:.6rem}
+.tab{flex:1;padding:.4rem;font-size:.6rem;font-weight:700;text-align:center;cursor:pointer;border:none;background:none;color:var(--mt);transition:all .2s;font-family:inherit}
+.tab.active{color:var(--dock);border-bottom:2px solid var(--dock);background:rgba(36,150,237,.03)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+body::before{content:"";position:fixed;top:-200px;right:-200px;width:500px;height:500px;background:radial-gradient(circle,rgba(36,150,237,.04),transparent 70%);pointer-events:none;z-index:0}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+    </style>
+</head>
+<body data-dkz-module="hood-builder" data-dkz-appid="DKZ-MOD-HOO" data-dkz-version="v0.01" data-dkz-title="H00D™ (Docker) — Container & KVM Builder" data-dkz-icon="📦" data-dkz-separable="true">
+<div class="app">
+    <header>
+        <div style="display:flex;align-items:center;gap:.5rem">
+            <a href="../../hub/index.html" style="color:var(--mt);text-decoration:none;font-size:1rem">&#8592;</a>
+            <div class="logo">🐳 <span class="logo-dock">H00D™</span> <span style="font-size:.65rem;color:var(--mt)">(Docker)</span></div>
+            <span style="font-size:.5rem;color:var(--mt);padding:2px 5px;border:1px solid #333;border-radius:3px">v0.01</span>
+        </div>
+        <div class="chain-nav">
+            <a class="chain-btn" href="../agent-builder/index.html">Agents</a>
+            <a class="chain-btn" href="../team-builder/index.html">Teams</a>
+            <a class="chain-btn" href="../leadership-builder/index.html">Leadership</a>
+            <a class="chain-btn" href="../tenor-builder/index.html" style="color:#00e5ff;border-color:#00e5ff">TEN0R™</a>
+            <a class="chain-btn" href="../black8-builder/index.html" style="color:#ea4c2e;border-color:#ea4c2e">BLACK8™</a>
+            <a class="chain-btn active">H00D™</a>
+            <a class="chain-btn" href="../nexuz-builder/index.html">NEXUZ²</a>
+        </div>
+        <div style="display:flex;gap:.3rem">
+            <button class="btn btn-s" onclick="exportCompose()">📦 Export</button>
+            <button class="btn btn-s" onclick="showSnippetDB()">📋 Snippets</button>
+            <button class="btn btn-d" onclick="deployStack()">🚀 Deploy</button>
+        </div>
+    </header>
+
+    <!-- LEFT: Docker Services + KVM -->
+    <div class="side-l">
+        <div class="stit">🐳 Docker Services <span class="info-btn" onmouseenter="showInfo(event,'Docker Services','Alle vorinstallierten Container-Services. Klicke um sie zum Stack hinzuzufügen. Grüner Rand = läuft, Roter = gestoppt.')">?</span></div>
+        <input class="inp" placeholder="🔍 Services suchen..." oninput="filterSvc(this.value)" style="margin-bottom:.4rem">
+        <div id="svc-list"></div>
+        <div class="divider"></div>
+        <div class="stit">🖥️ KVM Provider <span class="info-btn" onmouseenter="showInfo(event,'KVM Provider','Verbinde deinen VPS/KVM von Hostinger, Hetzner oder IONOS. Klicke auf einen Provider um die Verbindungsdetails einzugeben.')">?</span></div>
+        <div id="kvm-list"></div>
+        <div class="divider"></div>
+        <div class="stit">📋 Snippet DB <span class="info-btn" onmouseenter="showInfo(event,'Snippet Datenbank','DkZ™ Snippet-Bibliothek mit Rules, Design und Module Snippets. Klicke um ein Snippet in den Compose-Editor einzufügen.')">?</span></div>
+        <div class="tabs" style="margin-bottom:.3rem">
+            <button class="tab active" onclick="showSnipTab('rules')">📜 Rules</button>
+            <button class="tab" onclick="showSnipTab('design')">🎨 Design</button>
+            <button class="tab" onclick="showSnipTab('module')">📦 Module</button>
+        </div>
+        <div id="snip-list"></div>
+    </div>
+
+    <!-- CENTER: Compose Editor + Stacks -->
+    <div class="center">
+        <div class="tabs">
+            <button class="tab active" onclick="showMainTab('compose')">📝 Compose Editor</button>
+            <button class="tab" onclick="showMainTab('stacks')">📦 Stacks</button>
+            <button class="tab" onclick="showMainTab('n8n')">⬛ n8n Templates</button>
+            <button class="tab" onclick="showMainTab('logs')">📊 Logs</button>
+        </div>
+
+        <div class="tab-panel active" id="tab-compose">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem">
+                <div class="stit" style="margin:0">docker-compose.yml <span class="info-btn" onmouseenter="showInfo(event,'Compose Editor','Dein Docker Compose File. Füge Services aus der linken Sidebar hinzu oder bearbeite direkt. Export als .yml möglich.')">?</span></div>
+                <div style="display:flex;gap:.2rem">
+                    <button class="btn btn-s" onclick="resetCompose()">🔄 Reset</button>
+                    <button class="btn btn-s" onclick="copyCompose()">📋 Copy</button>
+                </div>
+            </div>
+            <div class="compose" id="compose-editor" contenteditable="true">version: '3.8'
+
+services:
+  # Klicke auf Services links um sie hinzuzufügen
+  # Oder schreibe dein eigenes Compose-File
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+    volumes:
+      - n8n_data:/home/node/.n8n
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=n8n
+      - POSTGRES_USER=n8n
+      - POSTGRES_PASSWORD=n8n_secret
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+volumes:
+  n8n_data:
+  pg_data:</div>
+        </div>
+
+        <div class="tab-panel" id="tab-stacks">
+            <div class="stit">📦 Vorgefertigte Stacks <span class="info-btn" onmouseenter="showInfo(event,'Docker Stacks','Fertige Docker-Compose Stacks für gängige Setups. Ein Klick lädt den Stack in den Editor.')">?</span></div>
+            <div id="stack-list"></div>
+        </div>
+
+        <div class="tab-panel" id="tab-n8n">
+            <div class="stit">⬛ n8n Workflow Templates <span class="info-btn" onmouseenter="showInfo(event,'n8n Templates','Templates aus den Top-5 GitHub Repos. Klicke um sie in deinen n8n-Stack zu importieren und direkt zu testen.')">?</span></div>
+            <div style="display:flex;gap:.3rem;margin-bottom:.5rem;flex-wrap:wrap">
+                <button class="btn btn-s" onclick="filterTpl('all')">Alle</button>
+                <button class="btn btn-s" onclick="filterTpl('ai')">🤖 AI</button>
+                <button class="btn btn-s" onclick="filterTpl('comm')">💬 Comm</button>
+                <button class="btn btn-s" onclick="filterTpl('data')">📊 Data</button>
+                <button class="btn btn-s" onclick="filterTpl('devops')">🔧 DevOps</button>
+                <button class="btn btn-s" onclick="filterTpl('ecom')">🛒 E-Commerce</button>
+            </div>
+            <div id="tpl-list"></div>
+        </div>
+
+        <div class="tab-panel" id="tab-logs">
+            <div class="stit">📊 Container Logs <span class="info-btn" onmouseenter="showInfo(event,'Container Logs','Live-Logs aller laufenden Container. Filtere nach Service-Name.')">?</span></div>
+            <div style="background:rgba(0,0,0,.4);border:1px solid var(--brd);border-radius:6px;padding:.5rem;font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--gr);min-height:300px;line-height:1.8" id="log-output">
+[H00D™] Docker Engine bereit...
+[n8n] Starting n8n on port 5678...
+[postgres] PostgreSQL 16 ready for connections
+[redis] Redis 7.2 ready on port 6379
+[H00D™] Alle Services gestartet ✓
+[n8n] Webhook listener active
+[H00D™] Health-Check: 4/4 Services healthy
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT: Config + Guides -->
+    <div class="side-r">
+        <div class="stit">📊 Stack Status</div>
+        <div class="stat-row"><span class="stat-l">Services</span><span class="stat-v" id="s-svc">0</span></div>
+        <div class="stat-row"><span class="stat-l">Running</span><span class="stat-v" style="color:var(--gr)" id="s-run">0</span></div>
+        <div class="stat-row"><span class="stat-l">Stopped</span><span class="stat-v" style="color:var(--rd)" id="s-stop">0</span></div>
+        <div class="stat-row"><span class="stat-l">KVM Provider</span><span class="stat-v" id="s-kvm">—</span></div>
+        <div class="stat-row"><span class="stat-l">n8n Templates</span><span class="stat-v">280+</span></div>
+        <div class="stat-row"><span class="stat-l">Snippets</span><span class="stat-v">25+</span></div>
+        <div class="divider"></div>
+
+        <div class="stit">🖥️ Server-Verwaltung <span class="info-btn" onmouseenter="showInfo(event,'Server-Verwaltung','Verbinde deinen KVM/VPS Server und manage Docker direkt. SSH-Zugang erforderlich.')">?</span></div>
+        <div style="margin-bottom:.4rem">
+            <label style="font-size:.58rem;color:var(--mt);font-weight:600">Provider</label>
+            <select class="sel" id="srv-provider" onchange="updateProvider()">
+                <option value="">— Provider wählen —</option>
+                <option value="hostinger">🟣 Hostinger (KVM VPS)</option>
+                <option value="hetzner">🔴 Hetzner (Cloud/Dedicated)</option>
+                <option value="ionos">🔵 IONOS (VPS/Cloud)</option>
+            </select>
+        </div>
+        <div style="margin-bottom:.3rem"><label style="font-size:.58rem;color:var(--mt);font-weight:600">Server IP <span class="info-btn" onmouseenter="showInfo(event,'Server IP','Die öffentliche IPv4 Adresse deines VPS/KVM Servers.')">?</span></label><input class="inp" id="srv-ip" placeholder="123.456.789.0"></div>
+        <div style="margin-bottom:.3rem"><label style="font-size:.58rem;color:var(--mt);font-weight:600">SSH Port</label><input class="inp" id="srv-port" placeholder="22" value="22"></div>
+        <div style="margin-bottom:.3rem"><label style="font-size:.58rem;color:var(--mt);font-weight:600">SSH User</label><input class="inp" id="srv-user" placeholder="root"></div>
+        <div style="margin-bottom:.4rem"><label style="font-size:.58rem;color:var(--mt);font-weight:600">SSH Key/Password</label><input class="inp" id="srv-key" type="password" placeholder="••••••••"></div>
+        <div style="display:flex;gap:.3rem;margin-bottom:.3rem">
+            <button class="btn btn-d" onclick="connectServer()" style="flex:1">🔗 Verbinden</button>
+            <button class="btn btn-s" onclick="testConnection()">🏓 Test</button>
+        </div>
+        <div class="divider"></div>
+
+        <div class="stit">🐳 Hostinger Docker Apps <span class="info-btn" onmouseenter="showInfo(event,'Hostinger Docker','Vorinstallierte Docker-Anwendungen bei Hostinger VPS. Ein Klick fügt sie zum Stack hinzu.')">?</span></div>
+        <div id="hostinger-apps"></div>
+        <div class="divider"></div>
+
+        <div class="stit">→ Verbindungen</div>
+        <button class="btn btn-s" onclick="location.href='../black8-builder/index.html'" style="width:100%;margin-bottom:.25rem">⬛ → BLACK8™ (n8n)</button>
+        <button class="btn btn-s" onclick="location.href='../tenor-builder/index.html'" style="width:100%;margin-bottom:.25rem">🦀 → TEN0R™ (Claw)</button>
+        <button class="btn btn-s" onclick="location.href='../agent-builder/index.html'" style="width:100%;margin-bottom:.25rem">🤖 → Agent Builder</button>
+        <button class="btn btn-s" onclick="location.href='../leadership-builder/index.html'" style="width:100%;margin-bottom:.25rem">🏢 → Leadership Builder</button>
+        <button class="btn btn-s" onclick="location.href='../loop-dashboard/index.html'" style="width:100%;margin-bottom:.25rem">🔄 → Loop Dashboard</button>
+        <button class="btn btn-s" onclick="location.href='../nexuz-builder/index.html'" style="width:100%">⚡ → NEXUZ² Builder</button>
+    </div>
+</div>
+
+<!-- IDLE HINT -->
+<div class="idle-hint" id="idle-hint">
+    <div style="font-size:.75rem;font-weight:800">💡 Nächster Schritt:</div>
+    <div style="font-size:.68rem;color:var(--dock);margin-top:.2rem" id="idle-step">Füge einen Docker Service hinzu</div>
+    <button class="btn btn-s" onclick="dismissIdle()" style="margin-top:.3rem;font-size:.55rem">Verstanden</button>
+</div>
+<!-- INFO POPUP -->
+<div class="info-pop" id="info-pop"></div>
+<div class="toast" id="toast"><span id="tt"></span></div>
+
+<script>
+// ═══════════════════════════════════════════
+// H00D™ (Docker) Builder — Core Engine
+// ═══════════════════════════════════════════
+var stackServices=[], idleTimer=null, IDLE_MS=30000;
+
+// ── DOCKER SERVICES (pre-installed) ──
+var SERVICES=[
+{n:'n8n',icon:'⬛',desc:'Workflow Automation',port:'5678',cat:'automation',status:'running',
+ compose:'  n8n:\\n    image: docker.n8n.io/n8nio/n8n:latest\\n    ports:\\n      - "5678:5678"\\n    environment:\\n      - DB_TYPE=postgresdb\\n    volumes:\\n      - n8n_data:/home/node/.n8n\\n    restart: unless-stopped'},
+{n:'PostgreSQL',icon:'🐘',desc:'Relationale Datenbank',port:'5432',cat:'database',status:'running',
+ compose:'  postgres:\\n    image: postgres:16-alpine\\n    environment:\\n      - POSTGRES_DB=app\\n      - POSTGRES_PASSWORD=secret\\n    volumes:\\n      - pg_data:/var/lib/postgresql/data\\n    ports:\\n      - "5432:5432"'},
+{n:'Redis',icon:'🔴',desc:'Cache & Message Broker',port:'6379',cat:'cache',status:'running',
+ compose:'  redis:\\n    image: redis:7-alpine\\n    ports:\\n      - "6379:6379"\\n    volumes:\\n      - redis_data:/data'},
+{n:'MongoDB',icon:'🍃',desc:'NoSQL Dokument-DB',port:'27017',cat:'database',status:'stopped',
+ compose:'  mongodb:\\n    image: mongo:7\\n    ports:\\n      - "27017:27017"\\n    volumes:\\n      - mongo_data:/data/db'},
+{n:'MySQL',icon:'🐬',desc:'SQL Datenbank',port:'3306',cat:'database',status:'stopped',
+ compose:'  mysql:\\n    image: mysql:8\\n    environment:\\n      - MYSQL_ROOT_PASSWORD=secret\\n    ports:\\n      - "3306:3306"'},
+{n:'Traefik',icon:'🔥',desc:'Reverse Proxy & SSL',port:'80/443',cat:'proxy',status:'running',
+ compose:'  traefik:\\n    image: traefik:v3\\n    ports:\\n      - "80:80"\\n      - "443:443"\\n    volumes:\\n      - /var/run/docker.sock:/var/run/docker.sock'},
+{n:'Grafana',icon:'📊',desc:'Monitoring Dashboard',port:'3000',cat:'monitoring',status:'stopped',
+ compose:'  grafana:\\n    image: grafana/grafana:latest\\n    ports:\\n      - "3000:3000"\\n    volumes:\\n      - grafana_data:/var/lib/grafana'},
+{n:'Portainer',icon:'🖥️',desc:'Docker GUI Management',port:'9000',cat:'management',status:'stopped',
+ compose:'  portainer:\\n    image: portainer/portainer-ce:latest\\n    ports:\\n      - "9000:9000"\\n    volumes:\\n      - /var/run/docker.sock:/var/run/docker.sock\\n      - portainer_data:/data'},
+{n:'Caddy',icon:'🟢',desc:'Webserver & Auto-SSL',port:'80/443',cat:'proxy',status:'stopped',
+ compose:'  caddy:\\n    image: caddy:2-alpine\\n    ports:\\n      - "80:80"\\n      - "443:443"\\n    volumes:\\n      - caddy_data:/data'},
+{n:'RabbitMQ',icon:'📨',desc:'Message Queue',port:'5672/15672',cat:'queue',status:'stopped',
+ compose:'  rabbitmq:\\n    image: rabbitmq:3-management\\n    ports:\\n      - "5672:5672"\\n      - "15672:15672"'},
+{n:'Qdrant',icon:'🔮',desc:'Vector Database (AI)',port:'6333',cat:'ai',status:'stopped',
+ compose:'  qdrant:\\n    image: qdrant/qdrant:latest\\n    ports:\\n      - "6333:6333"\\n    volumes:\\n      - qdrant_data:/qdrant/storage'},
+{n:'Minio',icon:'⚡',desc:'S3-kompatibler Storage',port:'9000/9001',cat:'storage',status:'stopped',
+ compose:'  minio:\\n    image: minio/minio:latest\\n    command: server /data --console-address ":9001"\\n    ports:\\n      - "9000:9000"\\n      - "9001:9001"'},
+{n:'Supabase',icon:'⚡',desc:'Firebase Alternative',port:'3000/8000',cat:'backend',status:'stopped',
+ compose:'  # Supabase requires docker-compose from:\\n  # github.com/supabase/supabase/docker'},
+{n:'vLLM',icon:'🦙',desc:'Local AI/LLM Server (OpenAI-kompatibel)',port:'8080',cat:'ai',status:'stopped',
+ compose:'  vllm:\\n    image: vllm/vllm-openai:latest\\n    ports:\\n      - "8080:8000"\\n    volumes:\\n      - /opt/dkz/.model-vault:/models\\n    deploy:\\n      resources:\\n        reservations:\\n          devices:\\n            - capabilities: [gpu]'},
+{n:'Nginx',icon:'🌐',desc:'Webserver & Proxy',port:'80',cat:'proxy',status:'stopped',
+ compose:'  nginx:\\n    image: nginx:alpine\\n    ports:\\n      - "80:80"\\n    volumes:\\n      - ./nginx.conf:/etc/nginx/nginx.conf'},
+{n:'Prometheus',icon:'🔥',desc:'Metrics & Alerting',port:'9090',cat:'monitoring',status:'stopped',
+ compose:'  prometheus:\\n    image: prom/prometheus:latest\\n    ports:\\n      - "9090:9090"'}
+];
+
+// ── KVM PROVIDERS ──
+var PROVIDERS=[
+{name:'Hostinger',icon:'🟣',desc:'KVM VPS — ab €3.99/mo',color:'#6c3baa',connected:false,
+ plans:['KVM 1 (1vCPU/4GB)','KVM 2 (2vCPU/8GB)','KVM 4 (4vCPU/16GB)','KVM 8 (8vCPU/32GB)'],
+ features:['Docker vorinstalliert','Kubernetes Panel','1-Click Apps','100 Mbit/s garantiert','Weekly Backups'],
+ preInstalled:['Docker','Docker Compose','Ubuntu 22.04','Nginx','Node.js','Python 3.11']},
+{name:'Hetzner',icon:'🔴',desc:'Cloud Server — ab €3.79/mo',color:'#d40b1e',connected:false,
+ plans:['CX22 (2vCPU/4GB)','CX32 (4vCPU/8GB)','CX42 (8vCPU/16GB)','CX52 (16vCPU/32GB)'],
+ features:['Docker CE Image','Floating IPs','Volumes','Load Balancer','Snapshots'],
+ preInstalled:['Docker CE','Ubuntu 24.04','Debian 12','Rocky 9']},
+{name:'IONOS',icon:'🔵',desc:'VPS — ab €1/mo',color:'#003d8f',connected:false,
+ plans:['VPS S (1vCPU/512MB)','VPS M (2vCPU/2GB)','VPS L (4vCPU/8GB)','VPS XL (8vCPU/16GB)'],
+ features:['Docker ready','Plesk optional','DDoS Protection','API Access','Backups'],
+ preInstalled:['Docker','Ubuntu 22.04','CentOS Stream','Plesk']}
+];
+
+// ── STACKS ──
+var STACKS=[
+{name:'🚀 n8n + PostgreSQL + Redis',desc:'Komplettes n8n Automation Setup',services:['n8n','PostgreSQL','Redis']},
+{name:'🌐 Webserver Stack',desc:'Traefik + Nginx + Caddy',services:['Traefik','Nginx','Caddy']},
+{name:'🤖 AI Stack',desc:'vLLM + Qdrant + n8n',services:['vLLM','Qdrant','n8n']},
+{name:'📊 Monitoring',desc:'Grafana + Prometheus + Portainer',services:['Grafana','Prometheus','Portainer']},
+{name:'🗄️ Database Stack',desc:'PostgreSQL + Redis + MongoDB',services:['PostgreSQL','Redis','MongoDB']},
+{name:'🛒 E-Commerce',desc:'Supabase + Minio + Traefik',services:['Supabase','Minio','Traefik']}
+];
+
+// ── N8N TEMPLATES ──
+var TEMPLATES=[
+{name:'📧 Gmail Auto-Reply Bot',cat:'comm',repo:'awesome-n8n-templates'},{name:'🤖 OpenAI Chat Workflow',cat:'ai',repo:'awesome-n8n-templates'},
+{name:'✈️ Telegram Notification Bot',cat:'comm',repo:'awesome-n8n-templates'},{name:'📊 Google Sheets Sync',cat:'data',repo:'awesome-n8n-templates'},
+{name:'💚 WhatsApp Business Bot',cat:'comm',repo:'Zie619/n8n-workflows'},{name:'🐙 GitHub Actions Trigger',cat:'devops',repo:'awesome-n8n-templates'},
+{name:'🔍 SEO Checker Pipeline',cat:'data',repo:'awesome-n8n-templates'},{name:'📦 Shopify Order Sync',cat:'ecom',repo:'Zie619/n8n-workflows'},
+{name:'🎨 AI Image Generator',cat:'ai',repo:'Zie619/n8n-workflows'},{name:'🗃️ Database Backup Cron',cat:'devops',repo:'Zie619/n8n-workflows'},
+{name:'📈 Analytics Dashboard',cat:'data',repo:'awesome-n8n-templates'},{name:'🎯 Lead Gen Pipeline',cat:'ecom',repo:'awesome-n8n-templates'},
+{name:'🕷️ Web Scraper Pro',cat:'data',repo:'n8nhackers/n8n-nodes'},{name:'📄 PDF Report Generator',cat:'data',repo:'n8nhackers/n8n-nodes'},
+{name:'🔐 Security Scanner',cat:'devops',repo:'Zie619/n8n-workflows'},{name:'🦜 LangChain RAG Pipeline',cat:'ai',repo:'n8nhackers/n8n-nodes'}
+];
+
+// ── SNIPPETS ──
+var SNIPPETS={
+  rules:[{id:'R0',name:'SEI TEIL DER LOESUNG',s:'Jede Handlung muss das System BESSER machen.'},{id:'R1',name:'NIE LOESCHEN',s:'Dateien werden NIEMALS gelöscht. Immer nach Archive/ verschieben.'},{id:'R2',name:'GIT COMMIT IMMER',s:'git commit -m "prefix(bereich): was"'},{id:'R15',name:'SO WENIG WIE MOEGLICH',s:'Nur exakt das ändern was angefordert wurde.'},{id:'R21',name:'SHARED SCRIPTS PFLICHT',s:'dkz-debug.js, dkz-copilot.js, dkz-guide.js'},{id:'R22',name:'FEATURES.JSON PFLICHT',s:'MOD-XXX, name, version, features[]'}],
+  design:[{id:'CSS-1',name:'Dark Mode Vars',s:'--bg:#0e0e10; --card:#1a1a1c; --accent:#fa1e4e'},{id:'CSS-2',name:'Crimson Mode',s:'--bg:#000; --text:#fa1e4e; --accent:#ff2d5e'},{id:'CSS-3',name:'Button Primary',s:'background:linear-gradient(135deg,#fa1e4e,#ec4899)'},{id:'CSS-4',name:'Status Ampel',s:'🟢 AKTIV 🟡 IN ARBEIT 🔴 FEHLER 🔵 GEPLANT'},{id:'CSS-5',name:'Google Fonts',s:'Inter + JetBrains Mono'}],
+  module:[{id:'MOD',name:'Neue Module Checklist',s:'1.Ordner 2.index.html 3.features.json 4.REGISTRY 5.BLAUPAUSE 6.Shared Scripts 7.Git'},{id:'GIT',name:'Git Prefixes',s:'feat fix docs style refactor chore init'},{id:'TPL',name:'features.json Template',s:'id,name,version,description,category,features[]'},{id:'SHR',name:'Shared Scripts',s:'dkz-debug.js dkz-copilot.js dkz-guide.js dkz-llm-registry.js'}]
+};
+
+// ── HOSTINGER APPS ──
+var HOST_APPS=[
+{n:'WordPress',icon:'📰'},{n:'Ghost CMS',icon:'👻'},{n:'Joomla',icon:'📋'},{n:'Drupal',icon:'💧'},
+{n:'GitLab CE',icon:'🦊'},{n:'Nextcloud',icon:'☁️'},{n:'Mattermost',icon:'💬'},{n:'Rocket.Chat',icon:'🚀'},
+{n:'Matomo',icon:'📊'},{n:'OpenVPN',icon:'🔐'},{n:'WireGuard',icon:'🛡️'},{n:'Plausible',icon:'📈'}
+];
+
+// ── RENDER SERVICES ──
+function renderSvc(filter){
+  var h='';
+  SERVICES.forEach(function(s){
+    if(filter&&!s.n.toLowerCase().includes(filter.toLowerCase()))return;
+    var cls='svc '+(s.status==='running'&#10067;'running':'stopped');
+    h+='<div class="'+cls+'" onclick="addService(\''+esc(s.n)+'\')" onmouseenter="showInfo(event,\''+esc(s.n)+'\',\''+esc(s.desc)+' — Port: '+s.port+'. Klicke um zum Stack hinzuzufügen.\')">';
+    h+='<span class="svc-icon">'+s.icon+'</span><div class="svc-info"><div class="svc-name">'+esc(s.n)+'</div>';
+    h+='<div class="svc-desc">'+esc(s.desc)+'</div></div>';
+    h+='<div class="svc-status '+(s.status==='running'&#10067;'st-run':'st-stop')+'"></div>';
+    h+='<div class="svc-port">:'+s.port+'</div></div>';
+  });
+  document.getElementById('svc-list').innerHTML=h;
+}
+function filterSvc(v){renderSvc(v);}
+
+// ── RENDER KVM ──
+function renderKVM(){
+  var h='';
+  PROVIDERS.forEach(function(p,i){
+    var cls='kvm'+(p.connected?' connected':'');
+    h+='<div class="'+cls+'" onclick="toggleKVM('+i+')" id="kvm-'+i+'">';
+    h+='<div class="kvm-head"><span class="kvm-logo">'+p.icon+'</span><span class="kvm-name">'+p.name+'</span>';
+    h+='<span class="kvm-badge '+(p.connected?'kb-active':'kb-inactive')+'">'+(p.connected?'VERBUNDEN':'OFFLINE')+'</span></div>';
+    h+='<div class="kvm-body">';
+    h+='<div style="font-size:.6rem;color:var(--mt);margin-bottom:.2rem">'+p.desc+'</div>';
+    h+='<div class="kvm-stat"><span class="kvm-stat-l">Plans</span><span class="kvm-stat-v">'+p.plans.length+'</span></div>';
+    p.features.forEach(function(f){h+='<div style="font-size:.58rem;color:var(--dock);padding:.1rem 0">✓ '+f+'</div>';});
+    h+='<div style="font-size:.55rem;color:var(--mt);margin-top:.2rem;font-weight:600">Vorinstalliert:</div>';
+    p.preInstalled.forEach(function(pi){h+='<span style="font-size:.5rem;padding:1px 4px;background:rgba(36,150,237,.1);color:var(--dock);border-radius:3px;margin:1px;display:inline-block">'+pi+'</span>';});
+    h+='</div></div>';
+  });
+  document.getElementById('kvm-list').innerHTML=h;
+}
+function toggleKVM(i){var el=document.getElementById('kvm-'+i);el.classList.toggle('open');}
+
+// ── RENDER SNIPPETS ──
+var curSnipTab='rules';
+function showSnipTab(t){
+  curSnipTab=t;
+  document.querySelectorAll('.side-l .tab').forEach(function(b){b.classList.remove('active')});
+  event.target.classList.add('active');
+  renderSnippets();
+}
+function renderSnippets(){
+  var items=SNIPPETS[curSnipTab]||[];
+  var h='';
+  items.forEach(function(s){
+    h+='<div class="snip-card" onclick="insertSnippet(\''+esc(s.s)+'\')" onmouseenter="showInfo(event,\''+esc(s.name)+'\',\''+esc(s.s)+'\')">';
+    h+='<div class="snip-id">'+s.id+'</div><div class="snip-name">'+esc(s.name)+'</div></div>';
+  });
+  document.getElementById('snip-list').innerHTML=h;
+}
+function insertSnippet(s){toast('📋 Snippet eingefügt: '+s.substring(0,40)+'...');}
+
+// ── RENDER STACKS ──
+function renderStacks(){
+  var h='';
+  STACKS.forEach(function(s){
+    h+='<div class="svc" onclick="loadStack('+JSON.stringify(s.services).replace(/"/g,'&quot;')+')" style="margin-bottom:.4rem">';
+    h+='<div class="svc-info"><div class="svc-name" style="font-size:.78rem">'+s.name+'</div><div class="svc-desc">'+s.desc+' — '+s.services.join(', ')+'</div></div></div>';
+  });
+  document.getElementById('stack-list').innerHTML=h;
+}
+function loadStack(svcs){
+  var compose='version: \'3.8\'\\n\\nservices:';
+  svcs.forEach(function(name){
+    var s=SERVICES.find(function(x){return x.n===name});
+    if(s)compose+='\\n'+s.compose;
+  });
+  compose+='\\n\\nvolumes:';
+  svcs.forEach(function(name){compose+='\\n  '+name.toLowerCase().replace(/[^a-z]/g,'')+'_data:';});
+  document.getElementById('compose-editor').textContent=compose.replace(/\\n/g,'\n');
+  showMainTab('compose');
+  toast('📦 Stack geladen: '+svcs.join(' + '));
+}
+
+// ── RENDER N8N TEMPLATES ──
+function renderTpl(filter){
+  var h='';
+  TEMPLATES.forEach(function(t){
+    if(filter&&filter!=='all'&&t.cat!==filter)return;
+    h+='<div class="tpl" onclick="importTemplate(\''+esc(t.name)+'\')"><div class="tpl-name">'+t.name+'</div><div class="tpl-cat">'+t.repo+'</div></div>';
+  });
+  document.getElementById('tpl-list').innerHTML=h;
+}
+function filterTpl(c){renderTpl(c);}
+function importTemplate(n){toast('⬛ n8n Template importiert: '+n);}
+
+// ── RENDER HOSTINGER APPS ──
+function renderHostApps(){
+  var h='';
+  HOST_APPS.forEach(function(a){
+    h+='<div class="svc" onclick="addService(\''+esc(a.n)+'\')" style="padding:.3rem .4rem">';
+    h+='<span class="svc-icon" style="font-size:.85rem">'+a.icon+'</span>';
+    h+='<div class="svc-name" style="font-size:.65rem">'+esc(a.n)+'</div></div>';
+  });
+  document.getElementById('hostinger-apps').innerHTML=h;
+}
+
+// ── ADD SERVICE ──
+function addService(name){
+  var s=SERVICES.find(function(x){return x.n===name});
+  if(s){
+    stackServices.push(name);
+    var ed=document.getElementById('compose-editor');
+    ed.textContent+='\n'+s.compose.replace(/\\n/g,'\n');
+    updateStats();
+  }
+  toast('🐳 '+name+' zum Stack hinzugefügt');
+  resetIdle();
+}
+
+// ── TABS ──
+function showMainTab(t){
+  document.querySelectorAll('.center .tab').forEach(function(b){b.classList.remove('active')});
+  document.querySelectorAll('.center .tab-panel').forEach(function(p){p.classList.remove('active')});
+  event.target.classList.add('active');
+  document.getElementById('tab-'+t).classList.add('active');
+}
+
+// ── SERVER ──
+function updateProvider(){
+  var p=document.getElementById('srv-provider').value;
+  document.getElementById('s-kvm').textContent=p?p.charAt(0).toUpperCase()+p.slice(1):'—';
+  if(p)toast('🖥️ Provider: '+p);
+}
+function connectServer(){
+  var ip=document.getElementById('srv-ip').value;
+  if(!ip)return toast('⚠️ Server IP eingeben');
+  toast('🔗 Verbinde mit '+ip+'...');
+  setTimeout(function(){toast('✅ Server verbunden!');},1500);
+}
+function testConnection(){toast('🏓 Connection Test...');}
+
+// ── COMPOSE ACTIONS ──
+function resetCompose(){document.getElementById('compose-editor').textContent="version: '3.8'\\n\\nservices:\\n  # Services hier hinzufügen".replace(/\\n/g,'\n');toast('🔄 Compose zurückgesetzt');}
+function copyCompose(){navigator.clipboard.writeText(document.getElementById('compose-editor').textContent);toast('📋 Compose kopiert!');}
+function exportCompose(){
+  var blob=new Blob([document.getElementById('compose-editor').textContent],{type:'text/yaml'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='docker-compose.yml';a.click();
+  toast('📦 docker-compose.yml exportiert');
+}
+function deployStack(){toast('🚀 Stack wird deployed...');setTimeout(function(){toast('✅ Stack erfolgreich deployed!');},2000);}
+function showSnippetDB(){toast('📋 Snippet DB — Nutze die Sidebar links');}
+
+// ── INFO POPUPS ──
+function showInfo(ev,title,text){
+  var p=document.getElementById('info-pop');
+  p.innerHTML='<div class="info-pop-title">'+title+'</div><div>'+text+'</div>';
+  p.style.left=Math.min(ev.clientX+15,window.innerWidth-300)+'px';
+  p.style.top=Math.min(ev.clientY-10,window.innerHeight-100)+'px';
+  p.classList.add('show');
+}
+document.addEventListener('mousemove',function(e){if(!e.target.closest('.info-btn'))document.getElementById('info-pop').classList.remove('show');});
+
+// ── IDLE (30s) ──
+function resetIdle(){clearTimeout(idleTimer);document.getElementById('idle-hint').classList.remove('show');idleTimer=setTimeout(showIdleHint,IDLE_MS);}
+function showIdleHint(){
+  var hints=['Füge einen Docker Service hinzu','Verbinde deinen KVM Server','Lade einen vorgefertigten Stack','Importiere ein n8n Template','Nutze die Snippet Datenbank','Wähle einen KVM Provider','Exportiere dein docker-compose.yml'];
+  document.getElementById('idle-step').textContent=hints[Math.floor(Math.random()*hints.length)];
+  document.getElementById('idle-hint').classList.add('show');
+}
+function dismissIdle(){document.getElementById('idle-hint').classList.remove('show');resetIdle();}
+
+// ── STATS ──
+function updateStats(){
+  var r=SERVICES.filter(function(s){return s.status==='running'}).length;
+  document.getElementById('s-svc').textContent=SERVICES.length;
+  document.getElementById('s-run').textContent=r;
+  document.getElementById('s-stop').textContent=SERVICES.length-r;
+}
+
+// ── UTILS ──
+function esc(s){return s?s.replace(/'/g,"\\'").replace(/</g,'&lt;'):''}
+function toast(m){var t=document.getElementById('toast');document.getElementById('tt').textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},3000);}
+
+// ── EVENTS ──
+document.addEventListener('keydown',resetIdle);
+document.addEventListener('click',resetIdle);
+
+// ── INIT ──
+renderSvc();renderKVM();renderSnippets();renderStacks();renderTpl('all');renderHostApps();updateStats();resetIdle();
+</script>
+<script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+<script src="../../shared/dkz-guide.js"></script>
+<script src="../../shared/dkz-copilot.js"></script>
+<script src="../../shared/nexuz.js"></script>
+
+<script src="../../shared/dkz-chain-nav.js"></script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+</html>

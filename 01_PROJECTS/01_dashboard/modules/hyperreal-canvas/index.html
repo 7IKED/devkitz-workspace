@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>DkZ™ Hyperreal Canvas v2</title>
+<style>
+  :root {
+    --accent: #fa1e4e;
+    --bg: #060608;
+    --green: #00ff88;
+    --blue: #3b82f6;
+    --yellow: #ffb800;
+    --red: #ff3b5c;
+    --text: #e8e8ec;
+    --text2: #8a8a9a;
+    --font: 'Inter',sans-serif;
+    --mono: 'JetBrains Mono',monospace;
+  }
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:var(--font)}
+  canvas{display:block;position:fixed;top:0;left:0;width:100vw;height:100vh;cursor:crosshair}
+  @font-face{font-family:'Inter';src:local('Inter'),url('https://fonts.gstatic.com/s/inter/v18/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa2JL7SUc.woff2') format('woff2');font-display:swap}
+  @font-face{font-family:'JetBrains Mono';src:local('JetBrains Mono'),url('https://fonts.gstatic.com/s/jetbrainsmono/v20/BdtyFQng0ql0D2Jm-g0j6MuC3w.ttf') format('truetype');font-display:swap}
+</style>
+</head>
+<body>
+<canvas id="hyperrealCanvas"></canvas>
+<script>
+(function() {
+  'use strict';
+
+  // ============================================================
+  // CANVAS SETUP
+  // ============================================================
+  const canvas = document.getElementById('hyperrealCanvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, dpr;
+
+  function resize() {
+    dpr = window.devicePixelRatio || 1;
+    W = canvas.width = window.innerWidth * dpr;
+    H = canvas.height = window.innerHeight * dpr;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ============================================================
+  // MOUSE TRACKING
+  // ============================================================
+  const mouse = { x: -10000, y: -10000, active: false, cx: -10000, cy: -10000 };
+
+  canvas.addEventListener('mousemove', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const csx = canvas.width / rect.width;
+    const csy = canvas.height / rect.height;
+    mouse.cx = (e.clientX - rect.left) * csx;
+    mouse.cy = (e.clientY - rect.top) * csy;
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+    mouse.active = true;
+    resetStandbyTimer();
+  });
+
+  canvas.addEventListener('mouseleave', function() {
+    mouse.active = false;
+    mouse.x = -10000;
+    mouse.y = -10000;
+  });
+
+  // ============================================================
+  // TIMING
+  // ============================================================
+  const startTime = performance.now();
+  let tick = 0;
+
+  // ============================================================
+  // INTRO STAGGER (Effect 10)
+  // ============================================================
+  const introElements = {
+    stars:      { delay: 0,     dur: 300  },
+    nebula:     { delay: 100,   dur: 400  },
+    hexagons:   { delay: 200,   dur: 500  },
+    particles:  { delay: 400,   dur: 500  },
+    logo:       { delay: 800,   dur: 1000 },
+    accent:     { delay: 1200,  dur: 800  },
+    claim:      { delay: 1400,  dur: 1000 },
+    corners:    { delay: 1600,  dur: 600  },
+    tagline:    { delay: 1800,  dur: 1000 },
+    status:     { delay: 2000,  dur: 800  },
+    buttons:    { delay: 2200,  dur: 800  },
+    hamburger:  { delay: 2600,  dur: 600  }
+  };
+
+  function introOpacity(name) {
+    var now = performance.now() - startTime;
+    var el = introElements[name];
+    if (now < el.delay) return 0;
+    var t = (now - el.delay) / el.dur;
+    return Math.min(1, Math.max(0, t));
+  }
+
+  // ============================================================
+  // EFFECT 3: STARS (400 microdots)
+  // ============================================================
+  function Star() {
+    this.x = Math.random();
+    this.y = Math.random();
+    this.r = 0.5 + Math.random() * 1.5;
+    this.a = 0.08 + Math.random() * 0.35;
+    this.twinkle = Math.random() * Math.PI * 2;
+  }
+
+  var stars = [];
+
+  function spawnStars() {
+    stars = [];
+    for (var i = 0; i < 400; i++) stars.push(new Star());
+  }
+  spawnStars();
+
+  // ============================================================
+  // EFFECT 4: NEBULA CLOUDS (50 colored ellipses)
+  // ============================================================
+  function Cloud() {
+    this.x = Math.random();
+    this.y = Math.random();
+    this.r = 30 + Math.random() * 180;
+    this.alpha = 0.004 + Math.random() * 0.012;
+    var ci = Math.random() * 3 | 0;
+    this.color = ci === 0 ? [250, 30, 78] : ci === 1 ? [59, 130, 246] : [120, 50, 200];
+  }
+
+  var clouds = [];
+
+  function spawnClouds() {
+    clouds = [];
+    for (var i = 0; i < 50; i++) clouds.push(new Cloud());
+  }
+  spawnClouds();
+
+  // ============================================================
+  // EFFECT 5: PARTICLES (160 float particles)
+  // ============================================================
+  function Particle() {
+    this.x = Math.random();
+    this.y = Math.random();
+    this.r = 0.5 + Math.random() * 2.5;
+    this.dx = (Math.random() - 0.5) * 0.4;
+    this.dy = (Math.random() - 0.5) * 0.4;
+    this.alpha = 0.1 + Math.random() * 0.4;
+    this.hue = Math.random() > 0.6 ? 250 : 348;
+    this.phase = Math.random() * Math.PI * 2;
+  }
+
+  var particles = [];
+
+  function spawnParticles() {
+    particles = [];
+    for (var i = 0; i < 160; i++) particles.push(new Particle());
+  }
+  spawnParticles();
+
+  // ============================================================
+  // EFFECT 9: EXPLOSION CONFETTI
+  // ============================================================
+  var confettiPieces = [];
+
+  function spawnConfetti(ex, ey) {
+    var colors = ['#fa1e4e','#ff6b8a','#00ff88','#3b82f6','#ffb800','#a855f7'];
+    for (var i = 0; i < 80; i++) {
+      var angle = Math.random() * Math.PI * 2;
+      var speed = 200 + Math.random() * 400;
+      confettiPieces.push({
+        x: ex, y: ey,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 200,
+        size: 3 + Math.random() * 8,
+        color: colors[i % colors.length],
+        rotation: (Math.random() - 0.5) * 720,
+        life: 0,
+        maxLife: 800 + Math.random() * 600,
+        round: Math.random() > 0.5
+      });
+    }
+  }
+
+  // ============================================================
+  // EFFECT 14: RIPPLE
+  // ============================================================
+  var ripples = [];
+
+  function spawnRipple(x, y) {
+    ripples.push({ x: x, y: y, radius: 0, maxRadius: 80, life: 0, maxLife: 600 });
+  }
+
+  // ============================================================
+  // EFFECT 7+16: NANOBOT / GRADIENT LOGO
+  // ============================================================
+  var nanobotChars = [];
+  var nanobotActive = false;
+  var nanobotReconstructTimer = 0;
+  var nanobotReconstructing = false;
+  var logoText = "DkZ";
+  var logoFontSize = 80;
+  var logoX, logoY;
+  var logoCharWidths = [];
+
+  function setupNanobot() {
+    var cw = logoFontSize * 0.6;
+    logoCharWidths = [cw * 0.85, cw * 0.7, cw * 0.8];
+    nanobotChars = [];
+    for (var i = 0; i < logoText.length; i++) {
+      var cx = logoX;
+      for (var j = 0; j < i; j++) cx += logoCharWidths[j];
+      nanobotChars.push({
+        char: logoText[i],
+        homeX: cx + logoCharWidths[i] / 2,
+        homeY: logoY,
+        x: cx + logoCharWidths[i] / 2,
+        y: logoY,
+        vx: 0, vy: 0,
+        width: logoCharWidths[i],
+        dispersed: false,
+        reconstructing: false
+      });
+    }
+  }
+
+  function disperseNanobot() {
+    if (nanobotActive || nanobotReconstructing) return;
+    var hit = false;
+    var now = performance.now();
+    for (var i = 0; i < nanobotChars.length; i++) {
+      var ch = nanobotChars[i];
+      var sx = ch.homeX / dpr;
+      var sy = ch.homeY / dpr;
+      var dist = Math.hypot(mouse.x - sx, mouse.y - sy);
+      if (dist < 100) {
+        hit = true;
+        ch.dispersed = true;
+        var angle = Math.atan2(ch.homeY - sy, ch.homeX - sx);
+        var force = 80 + Math.random() * 60;
+        ch.vx = Math.cos(angle) * force + (Math.random() - 0.5) * 40;
+        ch.vy = Math.sin(angle) * force + (Math.random() - 0.5) * 40;
+      }
+    }
+    if (hit) {
+      nanobotActive = true;
+      var self = this;
+      setTimeout(function() {
+        reconstructNanobot();
+      }, 1800);
+    }
+  }
+
+  function reconstructNanobot() {
+    nanobotReconstructing = true;
+    for (var i = 0; i < nanobotChars.length; i++) {
+      var ch = nanobotChars[i];
+      ch.vx = (ch.homeX - ch.x) * 0.05;
+      ch.vy = (ch.homeY - ch.y) * 0.05;
+    }
+    setTimeout(function() {
+      for (var i = 0; i < nanobotChars.length; i++) {
+        var ch = nanobotChars[i];
+        ch.x = ch.homeX;
+        ch.y = ch.homeY;
+        ch.vx = 0; ch.vy = 0;
+        ch.dispersed = false;
+      }
+      nanobotActive = false;
+      nanobotReconstructing = false;
+    }, 800);
+  }
+
+  // ============================================================
+  // EFFECT 11: STANDBY/AFK
+  // ============================================================
+  var standbyTimer = null;
+  var standbyActive = false;
+  var standbyText = "";
+  var standbyPos = 0;
+  var standbyIdx = 0;
+  var standbyInfos = [
+    " \u2BFF DkZ HYPERREAL v2.0  \u2BFF  SYSTEM: ONLINE  \u2BFF  MODULES: 89+",
+    " \u2BFF PURE CANVAS UI  \u2BFF  20 HYPERREAL EFFECTS  \u2BFF  60 FPS",
+    " \u2BFF DEVKiTZ ECOSYSTEM  \u2BFF  26 WORKFLOWS  \u2BFF  19 SKILLS",
+    " \u2BFF HOST: BAZE\u00B2  \u2BFF  DkZ DESIGN SYSTEM v2  \u2BFF  8K CANVAS"
+  ];
+
+  function startStandby() {
+    if (standbyActive) return;
+    standbyActive = true;
+    standbyPos = window.innerWidth;
+    standbyIdx = 0;
+    standbyText = standbyInfos[0];
+  }
+
+  function stopStandby() {
+    standbyActive = false;
+  }
+
+  function resetStandbyTimer() {
+    clearTimeout(standbyTimer);
+    if (standbyActive) stopStandby();
+    standbyTimer = setTimeout(startStandby, 4000);
+  }
+
+  // ============================================================
+  // LAYOUT CONSTANTS (CSS pixel coords)
+  // ============================================================
+  var $ = {};
+  var menuOpen = false;
+  var menuAnimProgress = 0;
+
+  function computeLayout() {
+    var w = window.innerWidth;
+    var h = window.innerHeight;
+    $.W = w; $.H = h;
+    $.logoSize = Math.max(48, Math.min(100, Math.round(w * 0.055)));
+    $.claimSize = Math.max(14, Math.min(26, Math.round(w * 0.016)));
+    $.tagSize = Math.max(10, Math.min(16, Math.round(w * 0.010)));
+    $.btnSize = Math.max(32, Math.min(44, Math.round(w * 0.028)));
+    $.btnFontSize = Math.max(10, Math.min(14, Math.round(w * 0.009)));
+
+    $.logoX = w / 2;
+    $.logoY = h * 0.28;
+    logoX = $.logoX * dpr;
+    logoY = $.logoY * dpr;
+    logoFontSize = $.logoSize * dpr;
+
+    $.claimY = h * 0.40;
+    $.taglineY = h * 0.46;
+    $.statusY = h - 50;
+
+    $.btnY = h * 0.54;
+    $.btnW = Math.max(80, Math.round(w * 0.07));
+    $.btnH = Math.max(36, Math.round(h * 0.042));
+    $.btnGap = Math.max(8, Math.round(w * 0.008));
+    var totalBtnW = $.btnW * 4 + $.btnGap * 3;
+    $.btnStartX = (w - totalBtnW) / 2;
+
+    $.hamburgerX = w - 52;
+    $.hamburgerY = 20;
+    $.hamburgerSize = 40;
+
+    $.panelW = Math.min(360, Math.round(w * 0.85));
+    $.dotSize = Math.max(6, Math.min(12, Math.round(w * 0.007)));
+    $.dotMargin = 20;
+
+    setupNanobot();
+  }
+
+  computeLayout();
+
+  // ============================================================
+  // ICON PATH DEFINITIONS (Effect 13: HD-Icons)
+  // ============================================================
+  var iconPaths = {};
+
+  function buildIcons() {
+    iconPaths.play = new Path2D();
+    iconPaths.play.moveTo(5, 3);
+    iconPaths.play.lineTo(19, 12);
+    iconPaths.play.lineTo(5, 21);
+    iconPaths.play.closePath();
+
+    iconPaths.home = new Path2D();
+    iconPaths.home.moveTo(3, 9);
+    iconPaths.home.lineTo(12, 2);
+    iconPaths.home.lineTo(21, 9);
+    iconPaths.home.lineTo(21, 22);
+    iconPaths.home.lineTo(15, 22);
+    iconPaths.home.lineTo(15, 12);
+    iconPaths.home.lineTo(9, 12);
+    iconPaths.home.lineTo(9, 22);
+    iconPaths.home.lineTo(3, 22);
+    iconPaths.home.closePath();
+
+    iconPaths.settings = new Path2D();
+    iconPaths.settings.arc(12, 12, 3, 0, Math.PI * 2);
+    iconPaths.settings.moveTo(19.4, 15);
+    // simplified gear path
+    var gr = 10;
+    for (var i = 0; i < 8; i++) {
+      var a = (Math.PI / 4) * i - Math.PI / 8;
+      var a2 = (Math.PI / 4) * i;
+      var ox = 12 + Math.cos(a) * (gr + 2.5);
+      var oy = 12 + Math.sin(a) * (gr + 2.5);
+      var ix = 12 + Math.cos(a2) * gr;
+      var iy = 12 + Math.sin(a2) * gr;
+      if (i === 0) iconPaths.settings.moveTo(ox, oy);
+      else iconPaths.settings.lineTo(ox, oy);
+      iconPaths.settings.lineTo(ix, iy);
+    }
+    iconPaths.settings.closePath();
+
+    iconPaths.trash = new Path2D();
+    iconPaths.trash.moveTo(3, 6);
+    iconPaths.trash.lineTo(21, 6);
+    iconPaths.trash.moveTo(8, 6);
+    iconPaths.trash.lineTo(8, 4);
+    iconPaths.trash.lineTo(16, 4);
+    iconPaths.trash.lineTo(16, 6);
+    iconPaths.trash.moveTo(10, 9);
+    iconPaths.trash.lineTo(10, 18);
+    iconPaths.trash.moveTo(14, 9);
+    iconPaths.trash.lineTo(14, 18);
+    iconPaths.trash.moveTo(19, 6);
+    iconPaths.trash.lineTo(18, 20);
+    iconPaths.trash.lineTo(6, 20);
+    iconPaths.trash.lineTo(5, 6);
+
+    iconPaths.hamburger = new Path2D();
+    iconPaths.hamburger.moveTo(3, 6);
+    iconPaths.hamburger.lineTo(21, 6);
+    iconPaths.hamburger.moveTo(3, 12);
+    iconPaths.hamburger.lineTo(21, 12);
+    iconPaths.hamburger.moveTo(3, 18);
+    iconPaths.hamburger.lineTo(21, 18);
+  }
+  buildIcons();
+
+  // ============================================================
+  // BUTTON DEFINITIONS (Effect 12+20)
+  // ============================================================
+  var btnDefs = [
+    { id: 'play',    label: 'Play',     icon: 'play',     primary: false },
+    { id: 'home',    label: 'Home',     icon: 'home',     primary: false },
+    { id: 'settings',label: 'Settings', icon: 'settings', primary: false },
+    { id: 'explode', label: 'EXPLODE',  icon: 'trash',    primary: true  }
+  ];
+
+  // ============================================================
+  // HAMBURGER MENU ITEMS (Effect 15)
+  // ============================================================
+  var menuItems = [
+    { id: 'dashboard', label: 'Dashboard',     icon: 'home' },
+    { id: 'modules',   label: 'Module',        icon: 'settings' },
+    { id: 'about',     label: '\u00DCber DkZ', icon: 'play' },
+    { id: 'system',    label: 'System Info',   icon: 'trash' }
+  ];
+
+  // ============================================================
+  // EFFECT 8: HEXAGONS
+  // ============================================================
+  function drawHexagons(opacity) {
+    if (opacity <= 0) return;
+    var size = 45;
+    var rows = Math.ceil($.H / (size * 1.5)) + 2;
+    var cols = Math.ceil($.W / (size * 1.75)) + 2;
+    var cx = $.W / 2, cy = $.H / 2;
+    var maxDist = Math.hypot($.W, $.H) / 2;
+
+    for (var row = -1; row < rows; row++) {
+      for (var col = -1; col < cols; col++) {
+        var offsetX = (row % 2 === 0) ? 0 : size * 0.9;
+        var x = col * size * 1.75 + offsetX;
+        var y = row * size * 1.5;
+
+        var dist = Math.hypot(x - cx, y - cy) / maxDist;
+        if (dist < 0.15) continue;
+
+        var alpha = Math.min(1, Math.pow(Math.max(0, (dist - 0.15) / 0.7), 1.4)) * 0.15 * opacity;
+
+        ctx.save();
+        ctx.translate(x * dpr, y * dpr);
+        ctx.transform(1, ((y - cy) / cy) * 0.05 * dpr / dpr, ((x - cx) / cx) * 0.08 * dpr / dpr, 1, 0, 0);
+
+        ctx.beginPath();
+        for (var i = 0; i < 6; i++) {
+          var angle = (Math.PI / 3) * i - Math.PI / 6;
+          var px = size * Math.cos(angle) * dpr;
+          var py = size * Math.sin(angle) * dpr;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = 'rgba(250,30,78,' + alpha + ')';
+        ctx.lineWidth = 0.8 * dpr;
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(250,30,78,' + (alpha * 0.08) + ')';
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+  }
+
+  // ============================================================
+  // DRAW FUNCTIONS (all in CSS pixel coords)
+  // ============================================================
+
+  function drawBackground() {
+    ctx.fillStyle = '#060608';
+    ctx.fillRect(0, 0, $.W * dpr, $.H * dpr);
+  }
+
+  // EFFECT 3: Stars
+  function drawStars() {
+    var op = introOpacity('stars');
+    if (op <= 0) return;
+    for (var i = 0; i < stars.length; i++) {
+      var s = stars[i];
+      var twinkle = 0.6 + 0.4 * Math.sin(tick * 0.002 + s.twinkle);
+      ctx.beginPath();
+      ctx.arc(s.x * $.W * dpr, s.y * $.H * dpr, s.r * dpr, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,' + (s.a * twinkle * op) + ')';
+      ctx.fill();
+    }
+  }
+
+  // EFFECT 2: Light rays
+  function drawLightRays() {
+    var op = introOpacity('nebula');
+    if (op <= 0) return;
+    for (var a = 0; a < 360; a += 15) {
+      var rad = a * Math.PI / 180;
+      var x1 = $.W / 2 + Math.cos(rad) * 80;
+      var y1 = $.H / 2 + Math.sin(rad) * 80;
+      var x2 = $.W / 2 + Math.cos(rad) * 3000;
+      var y2 = $.H / 2 + Math.sin(rad) * 3000;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x1 * dpr, y1 * dpr);
+      ctx.lineTo(x2 * dpr, (y2 - 150) * dpr);
+      ctx.lineTo(x2 * dpr, (y2 + 150) * dpr);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(255,255,255,' + (0.012 * op) + ')';
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  // EFFECT 1: Nebula glows
+  function drawNebulae() {
+    var op = introOpacity('nebula');
+    if (op <= 0) return;
+    var nebulae = [
+      { x: 0.15, y: 0.15, r: 0.35 },
+      { x: 0.85, y: 0.20, r: 0.30 },
+      { x: 0.10, y: 0.85, r: 0.28 },
+      { x: 0.80, y: 0.80, r: 0.32 }
+    ];
+    for (var i = 0; i < nebulae.length; i++) {
+      var n = nebulae[i];
+      var nx = $.W * n.x, ny = $.H * n.y, nr = Math.min($.W, $.H) * n.r;
+      var grad = ctx.createRadialGradient(
+        nx * dpr, ny * dpr, 0,
+        nx * dpr, ny * dpr, nr * dpr
+      );
+      grad.addColorStop(0, 'rgba(250,30,78,' + (0.04 * op) + ')');
+      grad.addColorStop(0.5, 'rgba(59,130,246,' + (0.02 * op) + ')');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.fillRect((nx - nr) * dpr, (ny - nr) * dpr, nr * 2 * dpr, nr * 2 * dpr);
+    }
+  }
+
+  // EFFECT 4: Clouds
+  function drawClouds() {
+    var op = introOpacity('stars');
+    if (op <= 0) return;
+    for (var i = 0; i < clouds.length; i++) {
+      var c = clouds[i];
+      var cx = c.x * $.W * dpr, cy = c.y * $.H * dpr, cr = c.r * dpr;
+      var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, cr);
+      grad.addColorStop(0, 'rgba(' + c.color[0] + ',' + c.color[1] + ',' + c.color[2] + ',' + (c.alpha * op) + ')');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.fillRect((c.x * $.W - c.r) * dpr, (c.y * $.H - c.r) * dpr, cr * 2, cr * 2);
+    }
+  }
+
+  // EFFECT 5+6: Particles + Neural Mesh
+  function updateAndDrawParticles() {
+    var op = introOpacity('particles');
+    if (op <= 0) return;
+    var time = tick * 0.008;
+
+    // Update
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      p.x += p.dx + Math.sin(time * 0.5 + p.phase) * 0.08;
+      p.y += p.dy + Math.cos(time * 0.4 + p.phase) * 0.08;
+
+      if (p.x < 0) p.x += 1;
+      if (p.x > 1) p.x -= 1;
+      if (p.y < 0) p.y += 1;
+      if (p.y > 1) p.y -= 1;
+
+      var px_css = p.x * $.W, py_css = p.y * $.H;
+      var dm = Math.hypot(px_css - mouse.x, py_css - mouse.y);
+      if (dm < 120 && mouse.active) {
+        var force = (120 - dm) / 120;
+        var angle = Math.atan2(py_css - mouse.y, px_css - mouse.x);
+        p.x += Math.cos(angle) * force * 0.015;
+        p.y += Math.sin(angle) * force * 0.015;
+      }
+    }
+
+    // Neural Mesh
+    for (var i = 0; i < particles.length; i++) {
+      for (var j = i + 1; j < particles.length; j += 3) {
+        var p1 = particles[i], p2 = particles[j];
+        var dx = (p1.x - p2.x) * $.W;
+        var dy = (p1.y - p2.y) * $.H;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 100) {
+          ctx.beginPath();
+          ctx.moveTo(p1.x * $.W * dpr, p1.y * $.H * dpr);
+          ctx.lineTo(p2.x * $.W * dpr, p2.y * $.H * dpr);
+          ctx.strokeStyle = 'rgba(250,30,78,' + (0.025 * (1 - dist / 100) * op) + ')';
+          ctx.lineWidth = 0.5 * dpr;
+          ctx.stroke();
+        }
+      }
+    }
+
+    // Draw particles
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      var px = p.x * $.W * dpr, py = p.y * $.H * dpr;
+      var pr = p.r * dpr;
+
+      var px_css = p.x * $.W, py_css = p.y * $.H;
+      var dm = Math.hypot(px_css - mouse.x, py_css - mouse.y);
+      if (dm < 120 && mouse.active) {
+        var force = (120 - dm) / 120;
+        ctx.beginPath();
+        ctx.arc(px, py, pr * 4, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(250,30,78,' + (0.08 * force * op) + ')';
+        ctx.fill();
+      }
+
+      ctx.beginPath();
+      ctx.arc(px, py, pr, 0, Math.PI * 2);
+      ctx.fillStyle = p.hue === 348
+        ? 'rgba(250,30,78,' + (p.alpha * op) + ')'
+        : 'rgba(120,80,255,' + (p.alpha * 0.8 * op) + ')';
+      ctx.fill();
+    }
+  }
+
+  // EFFECT 7+16: Nanobot + Gradient Logo
+  function drawNanobotLogo() {
+    var op = introOpacity('logo');
+    if (op <= 0) return;
+
+    var time = tick * 0.001;
+    var floatY = Math.sin(time * 2) * 4 * dpr;
+
+    // Check mouse proximity for dispersion
+    if (mouse.active && !nanobotActive && !nanobotReconstructing) {
+      var logoCenterX = $.logoX;
+      var logoCenterY = $.logoY;
+      var distToLogo = Math.hypot(mouse.x - logoCenterX, mouse.y - logoCenterY);
+      if (distToLogo < 120) {
+        disperseNanobot();
+      }
+    }
+
+    // Update nanobot positions
+    if (nanobotActive) {
+      for (var i = 0; i < nanobotChars.length; i++) {
+        var ch = nanobotChars[i];
+        if (ch.dispersed) {
+          var chx = ch.x / dpr, chy = ch.y / dpr;
+          chx += ch.vx * 0.016;
+          chy += ch.vy * 0.016;
+          ch.vx *= 0.96;
+          ch.vy *= 0.96;
+          ch.x = chx * dpr;
+          ch.y = chy * dpr;
+        } else if (nanobotReconstructing) {
+          var chx = ch.x / dpr, chy = ch.y / dpr;
+          chx += (ch.homeX / dpr - chx) * 0.08;
+          chy += (ch.homeY / dpr - chy) * 0.08;
+          ch.x = chx * dpr;
+          ch.y = chy * dpr;
+        }
+      }
+    }
+
+    ctx.save();
+    ctx.translate(0, floatY);
+
+    // Gradient logo (Effect 16)
+    for (var i = 0; i < nanobotChars.length; i++) {
+      var ch = nanobotChars[i];
+      var cx = ch.x;
+      var cy = ch.y;
+
+      ctx.save();
+      ctx.font = 'bold ' + logoFontSize + 'px "Inter",sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // Gradient fill
+      var grad = ctx.createLinearGradient(
+        ($.logoX - 60) * dpr, cy - logoFontSize / 2,
+        ($.logoX + 60) * dpr, cy + logoFontSize / 2
+      );
+      var gradPos = (Math.sin(time * 0.5) + 1) / 2;
+      grad.addColorStop(0, 'rgba(250,30,78,' + op + ')');
+      grad.addColorStop(0.4, 'rgba(255,107,138,' + op + ')');
+      grad.addColorStop(1, 'rgba(250,30,78,' + (op * 0.7) + ')');
+
+      // Glow effect
+      ctx.shadowColor = 'rgba(250,30,78,' + (0.3 * op) + ')';
+      ctx.shadowBlur = 40 * dpr;
+
+      ctx.fillStyle = grad;
+      ctx.fillText(ch.char, cx, cy);
+
+      ctx.restore();
+    }
+
+    ctx.restore();
+  }
+
+  // EFFECT 17: Accent lines
+  function drawAccentLines() {
+    var op = introOpacity('accent');
+    if (op <= 0) return;
+    var time = tick * 0.001;
+    var y = $.logoY + $.logoSize * 0.6;
+
+    // Left accent line
+    var leftX = $.logoX - $.logoSize * 3.5;
+    var rightX = $.logoX + $.logoSize * 3.5;
+    var lineW = $.logoSize * 2.5;
+
+    ctx.save();
+    ctx.globalAlpha = op;
+
+    // Left line
+    var lx1 = leftX, lx2 = leftX + lineW;
+    var grad1 = ctx.createLinearGradient(lx1 * dpr, 0, lx2 * dpr, 0);
+    grad1.addColorStop(0, 'transparent');
+    grad1.addColorStop(0.3, 'rgba(250,30,78,0.3)');
+    grad1.addColorStop(1, 'transparent');
+    ctx.beginPath();
+    ctx.moveTo(lx1 * dpr, y * dpr);
+    ctx.lineTo(lx2 * dpr, y * dpr);
+    ctx.strokeStyle = grad1;
+    ctx.lineWidth = 1.5 * dpr;
+    ctx.stroke();
+
+    // Right line
+    var rx1 = rightX - lineW, rx2 = rightX;
+    var grad2 = ctx.createLinearGradient(rx1 * dpr, 0, rx2 * dpr, 0);
+    grad2.addColorStop(0, 'transparent');
+    grad2.addColorStop(0.7, 'rgba(250,30,78,0.3)');
+    grad2.addColorStop(1, 'transparent');
+    ctx.beginPath();
+    ctx.moveTo(rx1 * dpr, y * dpr);
+    ctx.lineTo(rx2 * dpr, y * dpr);
+    ctx.strokeStyle = grad2;
+    ctx.stroke();
+
+    // Pulsing dot in center
+    var pulse = 0.5 + 0.5 * Math.sin(time * 2);
+    ctx.beginPath();
+    ctx.arc($.logoX * dpr, y * dpr, (3 + pulse * 4) * dpr, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(250,30,78,' + (0.3 + pulse * 0.5) + ')';
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // EFFECT 18: Status bar
+  function drawStatusBar() {
+    var op = introOpacity('status');
+    if (op <= 0) return;
+    var barW = 280 * dpr, barH = 4 * dpr;
+    var barX = ($.W / 2 - 140) * dpr;
+    var barY = $.statusY * dpr;
+
+    // Background
+    ctx.beginPath();
+    ctx.roundRect(barX, barY, barW, barH, 2 * dpr);
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.fill();
+
+    // Scanning fill
+    var scan = 0.5 + 0.5 * Math.sin(tick * 0.002);
+    var fillW = barW * (0.3 + 0.7 * scan);
+    ctx.beginPath();
+    ctx.roundRect(barX, barY, fillW, barH, 2 * dpr);
+    ctx.fillStyle = 'rgba(0,255,136,' + (0.4 + 0.6 * scan) + ')';
+    ctx.fill();
+
+    // Label
+    ctx.font = (10 * dpr) + 'px "JetBrains Mono",monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.fillText('SYSTEM: ONLINE  \u2502  98%', barX, (barY + barH + 6 * dpr));
+  }
+
+  // EFFECT 19: Corner dots
+  function drawCornerDots() {
+    var op = introOpacity('corners');
+    if (op <= 0) return;
+    var time = tick * 0.001;
+    var pulse = 0.6 + 0.4 * Math.sin(time * 2);
+    var s = $.dotSize * dpr;
+    var m = $.dotMargin * dpr;
+
+    var corners = [
+      [m, m],
+      [$.W * dpr - m, m],
+      [m, $.H * dpr - m],
+      [$.W * dpr - m, $.H * dpr - m]
+    ];
+
+    for (var i = 0; i < 4; i++) {
+      var cx = corners[i][0], cy = corners[i][1];
+      var r = s / 2 * (0.8 + 0.2 * pulse);
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(250,30,78,' + (pulse * op) + ')';
+      ctx.fill();
+
+      // Glow
+      ctx.beginPath();
+      ctx.arc(cx, cy, r * 2, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(250,30,78,' + (0.15 * pulse * op) + ')';
+      ctx.fill();
+    }
+  }
+
+  // EFFECT 12+13+20: Buttons with icons + EXPLODE
+  function drawButtons() {
+    var op = introOpacity('buttons');
+    if (op <= 0) return;
+    var time = tick * 0.001;
+    var hoverBtn = -1;
+
+    // Check hover
+    for (var i = 0; i < btnDefs.length; i++) {
+      var bx = ($.btnStartX + i * ($.btnW + $.btnGap)) * dpr;
+      var by = $.btnY * dpr;
+      var bw = $.btnW * dpr, bh = $.btnH * dpr;
+      if (mouse.cx >= bx && mouse.cx <= bx + bw && mouse.cy >= by && mouse.cy <= by + bh) {
+        hoverBtn = i;
+      }
+    }
+
+    for (var i = 0; i < btnDefs.length; i++) {
+      var bd = btnDefs[i];
+      var bx = $.btnStartX + i * ($.btnW + $.btnGap);
+      var by = $.btnY;
+      var bw = $.btnW, bh = $.btnH;
+      var isHover = hoverBtn === i;
+
+      ctx.save();
+      ctx.globalAlpha = op;
+
+      // Glassmorphism background
+      var bgColor = bd.primary
+        ? 'rgba(250,30,78,0.15)'
+        : 'rgba(18,18,24,0.6)';
+      var borderColor = bd.primary
+        ? (isHover ? 'rgba(250,30,78,0.4)' : 'rgba(250,30,78,0.25)')
+        : (isHover ? 'rgba(250,30,78,0.2)' : 'rgba(255,255,255,0.08)');
+
+      // Button rect
+      ctx.beginPath();
+      ctx.roundRect(bx * dpr, by * dpr, bw * dpr, bh * dpr, 10 * dpr);
+      ctx.fillStyle = bgColor;
+      ctx.fill();
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = 1 * dpr;
+      ctx.stroke();
+
+      // Hover effect
+      if (isHover) {
+        ctx.beginPath();
+        ctx.roundRect(bx * dpr, by * dpr, bw * dpr, bh * dpr, 10 * dpr);
+        ctx.fillStyle = 'rgba(250,30,78,0.04)';
+        ctx.fill();
+        // Hover glow
+        ctx.shadowColor = 'rgba(250,30,78,0.1)';
+        ctx.shadowBlur = 20 * dpr;
+        ctx.beginPath();
+        ctx.roundRect(bx * dpr, by * dpr, bw * dpr, bh * dpr, 10 * dpr);
+        ctx.strokeStyle = 'rgba(250,30,78,0.15)';
+        ctx.lineWidth = 1 * dpr;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+
+      // Icon
+      var iconSize = 14 * dpr;
+      var iconX = (bx + 14) * dpr;
+      var iconY = (by + bh / 2) * dpr;
+      ctx.save();
+      ctx.translate(iconX, iconY);
+      ctx.scale(iconSize / 24, iconSize / 24);
+      ctx.translate(-12, -12);
+      ctx.strokeStyle = bd.primary ? 'rgba(255,255,255,0.9)' : 'rgba(232,232,236,0.7)';
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke(iconPaths[bd.icon]);
+      ctx.restore();
+
+      // Label
+      var labelX = bx + 28 + (bd.icon ? 10 : 0);
+      ctx.font = '500 ' + ($.btnFontSize * dpr) + 'px "Inter",sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = bd.primary
+        ? (isHover ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.85)')
+        : (isHover ? 'rgba(232,232,236,0.9)' : 'rgba(232,232,236,0.6)');
+      ctx.fillText(bd.label, labelX * dpr, (by + bh / 2) * dpr);
+
+      ctx.restore();
+    }
+  }
+
+  // EFFECT 15: Hamburger button + panel
+  function drawHamburger() {
+    var op = introOpacity('hamburger');
+    if (op <= 0) return;
+
+    var bx = $.hamburgerX, by = $.hamburgerY;
+    var bs = $.hamburgerSize;
+    var isHover = mouse.cx >= bx * dpr && mouse.cx <= (bx + bs) * dpr &&
+                  mouse.cy >= by * dpr && mouse.cy <= (by + bs) * dpr;
+
+    ctx.save();
+    ctx.globalAlpha = op;
+
+    // Button background
+    ctx.beginPath();
+    ctx.roundRect(bx * dpr, by * dpr, bs * dpr, bs * dpr, 10 * dpr);
+    ctx.fillStyle = isHover ? 'rgba(250,30,78,0.12)' : 'rgba(18,18,24,0.5)';
+    ctx.fill();
+    ctx.strokeStyle = isHover ? 'rgba(250,30,78,0.3)' : 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1 * dpr;
+    ctx.stroke();
+
+    // Hamburger/Close icon
+    ctx.save();
+    var icx = (bx + bs / 2) * dpr;
+    var icy = (by + bs / 2) * dpr;
+    var lineW = 16 * dpr;
+    var lineH = 2 * dpr;
+    var gap = 5 * dpr;
+
+    ctx.strokeStyle = menuOpen ? 'rgba(250,30,78,0.9)' : 'rgba(232,232,236,0.7)';
+    ctx.lineWidth = lineH;
+    ctx.lineCap = 'round';
+
+    if (menuOpen) {
+      // X shape
+      ctx.beginPath();
+      ctx.moveTo(icx - lineW / 2, icy - lineW / 2);
+      ctx.lineTo(icx + lineW / 2, icy + lineW / 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(icx + lineW / 2, icy - lineW / 2);
+      ctx.lineTo(icx - lineW / 2, icy + lineW / 2);
+      ctx.stroke();
+    } else {
+      // Three lines
+      for (var li = 0; li < 3; li++) {
+        ctx.beginPath();
+        var ly = icy - gap * dpr + li * gap * dpr;
+        ctx.moveTo(icx - lineW / 2, ly);
+        ctx.lineTo(icx + lineW / 2, ly);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+
+    ctx.restore();
+
+    // ---- Hamburger Panel (slide from right) ----
+    var targetOpen = menuOpen ? 1 : 0;
+    menuAnimProgress += (targetOpen - menuAnimProgress) * 0.1;
+    if (Math.abs(menuAnimProgress - targetOpen) < 0.002) menuAnimProgress = targetOpen;
+
+    if (menuAnimProgress > 0.01) {
+      var panelW = $.panelW;
+      var openRatio = menuAnimProgress;
+      var px = ($.W - panelW * openRatio) * dpr;
+      var py = 0;
+
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, openRatio * 1.5);
+
+      // Panel background
+      ctx.beginPath();
+      ctx.roundRect(px, py, panelW * dpr, $.H * dpr, 0);
+      ctx.fillStyle = 'rgba(8,8,12,0.85)';
+      ctx.fill();
+
+      // Left border
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(px, $.H * dpr);
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+      ctx.lineWidth = 1 * dpr;
+      ctx.stroke();
+
+      // Title
+      ctx.font = 'bold ' + (14 * dpr) + 'px "Inter",sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = 'rgba(232,232,236,0.8)';
+      ctx.fillText('DkZ\u2122 HYPERREAL', px + 24 * dpr, 40 * dpr);
+
+      // Divider
+      ctx.beginPath();
+      ctx.moveTo(px + 24 * dpr, 72 * dpr);
+      ctx.lineTo(px + (panelW - 24) * dpr, 72 * dpr);
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 1 * dpr;
+      ctx.stroke();
+
+      // Menu items
+      var itemY = 96;
+      var hoverItem = -1;
+      for (var mi = 0; mi < menuItems.length; mi++) {
+        var iy = (itemY + mi * 56) * dpr;
+        var ih = 44 * dpr;
+        var isHoverItem = mouse.active &&
+          mouse.cx >= px + 16 * dpr &&
+          mouse.cx <= px + (panelW - 16) * dpr &&
+          mouse.cy >= iy &&
+          mouse.cy <= iy + ih;
+
+        if (isHoverItem) hoverItem = mi;
+
+        // Item bg
+        if (isHoverItem) {
+          ctx.beginPath();
+          ctx.roundRect(px + 16 * dpr, iy, (panelW - 32) * dpr, ih, 8 * dpr);
+          ctx.fillStyle = 'rgba(250,30,78,0.06)';
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(250,30,78,0.1)';
+          ctx.lineWidth = 1 * dpr;
+          ctx.stroke();
+        }
+
+        // Icon
+        var miObj = menuItems[mi];
+        ctx.save();
+        ctx.translate(px + 28 * dpr, iy + ih / 2);
+        ctx.scale(14 / 24, 14 / 24);
+        ctx.translate(-12, -12);
+        ctx.strokeStyle = isHoverItem ? 'rgba(250,30,78,0.9)' : 'rgba(232,232,236,0.5)';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke(iconPaths[miObj.icon]);
+        ctx.restore();
+
+        // Label
+        ctx.font = (13 * dpr) + 'px "Inter",sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = isHoverItem ? 'rgba(232,232,236,0.9)' : 'rgba(138,138,154,0.8)';
+        ctx.fillText(miObj.label, px + 52 * dpr, iy + ih / 2);
+      }
+
+      // Footer
+      ctx.font = (9 * dpr) + 'px "JetBrains Mono",monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.fillText('DkZ\u2122 HYPERREAL v2.0  \u2502  PURE CANVAS', px + panelW / 2 * dpr, ($.H - 20) * dpr);
+
+      ctx.restore();
+    }
+  }
+
+  // EFFECT 14: Ripple
+  function drawRipples() {
+    for (var i = ripples.length - 1; i >= 0; i--) {
+      var r = ripples[i];
+      r.life += 16;
+      r.radius += (r.maxRadius - r.radius) * 0.08;
+      var progress = r.life / r.maxLife;
+      if (progress >= 1) {
+        ripples.splice(i, 1);
+        continue;
+      }
+      var alpha = (1 - progress) * 0.5;
+      ctx.beginPath();
+      ctx.arc(r.x * dpr, r.y * dpr, r.radius * dpr, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(250,30,78,' + alpha + ')';
+      ctx.lineWidth = 2 * (1 - progress) * dpr;
+      ctx.stroke();
+    }
+  }
+
+  // EFFECT 11: Standby/AFK scrolling text
+  function drawStandbyOverlay() {
+    // Subtle overlay
+    ctx.fillStyle = 'rgba(6,6,8,0.5)';
+    ctx.fillRect(0, 0, $.W * dpr, $.H * dpr);
+
+    standbyPos -= 1.2 * dpr;
+    if (standbyPos < -3000) {
+      standbyIdx = (standbyIdx + 1) % standbyInfos.length;
+      standbyText = standbyInfos[standbyIdx];
+      standbyPos = $.W * dpr + 50 * dpr;
+    }
+
+    ctx.font = '300 ' + (14 * dpr) + 'px "JetBrains Mono",monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.fillText(standbyText, standbyPos, ($.H / 2) * dpr);
+  }
+
+  // EFFECT 9: Confetti explosion
+  function updateAndDrawConfetti() {
+    for (var i = confettiPieces.length - 1; i >= 0; i--) {
+      var c = confettiPieces[i];
+      c.life += 16;
+      c.x += c.vx * 0.016;
+      c.y += c.vy * 0.016;
+      c.vy += 400 * 0.016; // gravity
+      c.rotation += (c.vx > 0 ? 1 : -1) * 8;
+
+      var progress = c.life / c.maxLife;
+      if (progress >= 1) {
+        confettiPieces.splice(i, 1);
+        continue;
+      }
+
+      var alpha = 1 - progress;
+      ctx.save();
+      ctx.translate(c.x * dpr, c.y * dpr);
+      ctx.rotate(c.rotation * Math.PI / 180);
+      if (c.round) {
+        ctx.beginPath();
+        ctx.arc(0, 0, c.size / 2 * dpr, 0, Math.PI * 2);
+      } else {
+        ctx.beginPath();
+        ctx.roundRect(-c.size / 2 * dpr, -c.size / 4 * dpr, c.size * dpr, c.size / 2 * dpr, 1 * dpr);
+      }
+      ctx.fillStyle = c.color;
+      ctx.globalAlpha = alpha;
+      ctx.fill();
+
+      // Glow
+      ctx.shadowColor = c.color;
+      ctx.shadowBlur = 6 * dpr;
+      if (c.round) {
+        ctx.beginPath();
+        ctx.arc(0, 0, c.size / 2 * dpr, 0, Math.PI * 2);
+      } else {
+        ctx.beginPath();
+        ctx.roundRect(-c.size / 2 * dpr, -c.size / 4 * dpr, c.size * dpr, c.size / 2 * dpr, 1 * dpr);
+      }
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      ctx.restore();
+    }
+  }
+
+  // ============================================================
+  // CLAIM + TAGLINE
+  // ============================================================
+  function drawClaimTagline() {
+    var claimOp = introOpacity('claim');
+    var tagOp = introOpacity('tagline');
+    var time = tick * 0.001;
+
+    if (claimOp > 0) {
+      ctx.save();
+      ctx.globalAlpha = claimOp;
+      ctx.font = '300 ' + ($.claimSize * dpr) + 'px "Inter",sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(232,232,236,0.6)';
+      ctx.fillText('DEVKiTZ\u2122 Hyperreal Canvas', $.logoX * dpr, $.claimY * dpr);
+      ctx.restore();
+    }
+
+    if (tagOp > 0) {
+      ctx.save();
+      ctx.globalAlpha = tagOp;
+      ctx.font = '300 ' + ($.tagSize * dpr) + 'px "Inter",sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(138,138,154,0.4)';
+      ctx.fillText('20 Hyperreal Effects  \u2502  Pure Canvas2D  \u2502  60 FPS', $.logoX * dpr, $.taglineY * dpr);
+      ctx.restore();
+    }
+  }
+
+  // ============================================================
+  // EFFECT 10: INTRO COUNTER (top-right corner badge)
+  // ============================================================
+  function drawIntroBadge() {
+    var op = introOpacity('buttons');
+    if (op <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = op * 0.7;
+    ctx.font = (10 * dpr) + 'px "JetBrains Mono",monospace';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    var introPct = Math.min(100, Math.round((performance.now() - startTime) / 2600 * 100));
+    ctx.fillText('INTRO ' + introPct + '%  \u2502  20 FX', ($.W - 12) * dpr, 12 * dpr);
+    ctx.restore();
+  }
+
+  // ============================================================
+  // CLICK HANDLER (Hit detection via bounding boxes)
+  // ============================================================
+  canvas.addEventListener('click', function(e) {
+    var rect = canvas.getBoundingClientRect();
+    var csx = canvas.width / rect.width;
+    var csy = canvas.height / rect.height;
+    var cx = (e.clientX - rect.left) * csx;
+    var cy = (e.clientY - rect.top) * csy;
+
+    // Spawn ripple at click
+    spawnRipple(e.clientX, e.clientY);
+
+    // Check hamburger button
+    var bx = $.hamburgerX * dpr, by = $.hamburgerY * dpr;
+    var bs = $.hamburgerSize * dpr;
+    if (cx >= bx && cx <= bx + bs && cy >= by && cy <= by + bs) {
+      menuOpen = !menuOpen;
+      return;
+    }
+
+    // Check main buttons
+    for (var i = 0; i < btnDefs.length; i++) {
+      var bbx = ($.btnStartX + i * ($.btnW + $.btnGap)) * dpr;
+      var bby = $.btnY * dpr;
+      var bbw = $.btnW * dpr, bbh = $.btnH * dpr;
+      if (cx >= bbx && cx <= bbx + bbw && cy >= bby && cy <= bby + bbh) {
+        if (btnDefs[i].id === 'explode') {
+          // Trigger confetti at button center
+          var ex = ($.btnStartX + i * ($.btnW + $.btnGap) + $.btnW / 2);
+          var ey = $.btnY + $.btnH / 2;
+          spawnConfetti(ex, ey);
+          resetStandbyTimer();
+        }
+        return;
+      }
+    }
+
+    // Check hamburger menu items (if panel is open)
+    if (menuOpen) {
+      var panelW = $.panelW;
+      var panelX = ($.W - panelW) * dpr;
+      if (cx >= panelX && cx <= panelX + panelW * dpr) {
+        for (var mi = 0; mi < menuItems.length; mi++) {
+          var iy = (96 + mi * 56) * dpr;
+          var ih = 44 * dpr;
+          if (cx >= panelX + 16 * dpr && cx <= panelX + (panelW - 16) * dpr &&
+              cy >= iy && cy <= iy + ih) {
+            menuOpen = false;
+            return;
+          }
+        }
+      }
+    }
+
+    resetStandbyTimer();
+  });
+
+  // ============================================================
+  // RESIZE HANDLER
+  // ============================================================
+  window.addEventListener('resize', function() {
+    resize();
+    computeLayout();
+    spawnStars();
+    spawnClouds();
+    spawnParticles();
+  });
+
+  // ============================================================
+  // INIT
+  // ============================================================
+  resetStandbyTimer();
+
+  // ============================================================
+  // MAIN RAF LOOP
+  // ============================================================
+  function loop(timestamp) {
+    tick++;
+    $.W = window.innerWidth;
+    $.H = window.innerHeight;
+    ctx.clearRect(0, 0, $.W * dpr, $.H * dpr);
+
+    // Draw order (z-index from background to foreground)
+
+    // Background
+    drawBackground();
+
+    // Effect 3: Stars
+    drawStars();
+
+    // Effect 2: Light rays
+    drawLightRays();
+
+    // Effect 1: Nebula
+    drawNebulae();
+
+    // Effect 8: Hexagons
+    drawHexagons(introOpacity('hexagons'));
+
+    // Effect 4: Clouds
+    drawClouds();
+
+    // Effect 5+6: Particles + Neural Mesh
+    updateAndDrawParticles();
+
+    // Effect 7+16: Nanobot + Gradient Logo
+    drawNanobotLogo();
+
+    // Claim + Tagline
+    drawClaimTagline();
+
+    // Effect 17: Accent lines
+    drawAccentLines();
+
+    // Effect 19: Corner dots
+    drawCornerDots();
+
+    // Effect 18: Status bar
+    drawStatusBar();
+
+    // Effect 12+13+20: Buttons with icons
+    drawButtons();
+
+    // Effect 15: Hamburger
+    drawHamburger();
+
+    // Effect 14: Ripple
+    drawRipples();
+
+    // Effect 9: Confetti
+    updateAndDrawConfetti();
+
+    // Effect 11: Standby/AFK
+    if (standbyActive) drawStandbyOverlay();
+
+    // Intro badge
+    drawIntroBadge();
+
+    requestAnimationFrame(loop);
+  }
+
+  requestAnimationFrame(loop);
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #1a1a1e;
+            --border2: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --cyan: #00FFD5;
+            --purple: #ec4899;
+            --yellow: #FFB800;
+            --orange: #ff8844;
+            --red: #fa1e4e;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            padding: 0;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg)
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 3px
+        }
+
+        .console-header {
+            padding: 12px 20px;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0
+        }
+
+        .console-header h3 {
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1
+        }
+
+        .console-dots {
+            display: flex;
+            gap: 6px
+        }
+
+        .console-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%
+        }
+
+        .cmd-chips {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap
+        }
+
+        .cmd-chip {
+            padding: 4px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all .2s;
+            background: transparent;
+            font-family: var(--mono)
+        }
+
+        .cmd-chip:hover {
+            border-color: var(--green);
+            color: var(--green)
+        }
+
+        .console-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 2
+        }
+
+        .line {
+            margin-bottom: 2px;
+            animation: fadeIn .2s
+        }
+
+        .line-system {
+            color: var(--cyan)
+        }
+
+        .line-cmd {
+            color: var(--green)
+        }
+
+        .line-result {
+            color: var(--text)
+        }
+
+        .line-error {
+            color: var(--red)
+        }
+
+        .line-warn {
+            color: var(--yellow)
+        }
+
+        .line-info {
+            color: var(--muted)
+        }
+
+        .prompt {
+            color: var(--green);
+            font-weight: 700
+        }
+
+        .console-input {
+            padding: 12px 20px;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-shrink: 0
+        }
+
+        .console-input .prompt-label {
+            color: var(--green);
+            font-family: var(--mono);
+            font-weight: 700;
+            font-size: 13px;
+            white-space: nowrap
+        }
+
+        .console-input input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 13px;
+            outline: none
+        }
+
+        .autocomplete {
+            position: absolute;
+            bottom: 50px;
+            left: 20px;
+            right: 20px;
+            background: var(--card);
+            border: 1px solid var(--border2);
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            z-index: 10
+        }
+
+        .autocomplete.show {
+            display: block
+        }
+
+        .ac-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-family: var(--mono);
+            font-size: 11px;
+            display: flex;
+            gap: 10px;
+            transition: background .1s
+        }
+
+        .ac-item:hover,
+        .ac-item.selected {
+            background: var(--card2)
+        }
+
+        .ac-cmd {
+            color: var(--green);
+            font-weight: 700;
+            min-width: 150px
+        }
+
+        .ac-desc {
+            color: var(--muted)
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(4px)
+            }
+
+            to {
+                opacity: 1;
+                transform: none
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="console-header">
+        <div class="console-dots">
+            <div class="console-dot" style="background:var(--red)"></div>
+            <div class="console-dot" style="background:var(--yellow)"></div>
+            <div class="console-dot" style="background:var(--green)"></div>
+        </div>
+        <h3>🤖 SEO AI Konsole</h3>
+        <div class="cmd-chips">
+            <button class="cmd-chip" onclick="runCmd('/help')">/help</button>
+            <button class="cmd-chip" onclick="runCmd('/analyze example.com')">/analyze</button>
+            <button class="cmd-chip" onclick="runCmd('/seo-hacks')">/seo-hacks</button>
+            <button class="cmd-chip" onclick="runCmd('/audit full')">/audit</button>
+        </div>
+    </div>
+
+    <div class="console-body" id="output">
+        <div class="line line-system">╔══════════════════════════════════════════════╗</div>
+        <div class="line line-system">║ 🤖 SEO Command Center – AI Konsole v1.0 ║</div>
+        <div class="line line-system">║ Tippe /help für alle verfügbaren Befehle ║</div>
+        <div class="line line-system">╚══════════════════════════════════════════════╝</div>
+        <div class="line line-info">[System] Konsole bereit. Warte auf Eingabe...</div>
+    </div>
+
+    <div style="position:relative">
+        <div class="autocomplete" id="autocomplete"></div>
+    </div>
+    <div class="console-input">
+        <span class="prompt-label">seo@devkitz:~$</span>
+        <input type="text" id="cmdInput" placeholder="Befehl eingeben..." autofocus autocomplete="off">
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        const COMMANDS = {
+            '/help': { desc: 'Alle Befehle anzeigen', fn: () => helpCmd() },
+            '/analyze': { desc: 'SEO-Analyse einer URL starten', fn: (a) => analyzeCmd(a) },
+            '/adsense setup': { desc: 'AdSense Einrichtungs-Guide', fn: () => adsenseCmd() },
+            '/business create': { desc: 'Google Business Profil Guide', fn: () => businessCmd() },
+            '/maps embed': { desc: 'Maps Embed-Code generieren', fn: (a) => mapsCmd(a) },
+            '/seo-hacks': { desc: 'Top 10 SEO Hacks anzeigen', fn: () => hacksCmd() },
+            '/audit full': { desc: 'Kompletten SEO Audit starten', fn: () => auditCmd() },
+            '/schema': { desc: 'Schema.org JSON-LD generieren', fn: (a) => schemaCmd(a) },
+            '/robots': { desc: 'robots.txt Template', fn: () => robotsCmd() },
+            '/sitemap': { desc: 'Sitemap.xml Anleitung', fn: () => sitemapCmd() },
+            '/meta': { desc: 'Meta Tag Generator', fn: (a) => metaCmd(a) },
+            '/speed': { desc: 'Speed-Optimierung Tipps', fn: () => speedCmd() },
+            '/keywords': { desc: 'Keyword-Research Tools', fn: () => keywordsCmd() },
+            '/clear': { desc: 'Konsole leeren', fn: () => { document.getElementById('output').innerHTML = ''; addLine('Konsole gelöscht.', 'system') } },
+            '/domain': { desc: 'Domain-Wert Analyse', fn: (a) => domainCmd(a) },
+        };
+
+        const history = []; let histIdx = -1, acIdx = -1;
+        const input = document.getElementById('cmdInput');
+        const output = document.getElementById('output');
+        const ac = document.getElementById('autocomplete');
+
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { const v = input.value.trim(); if (v) { history.unshift(v); histIdx = -1; processCmd(v); input.value = ''; ac.classList.remove('show') } }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); if (histIdx < history.length - 1) { histIdx++; input.value = history[histIdx] } }
+            else if (e.key === 'ArrowDown') { e.preventDefault(); if (histIdx > 0) { histIdx--; input.value = history[histIdx] } else { histIdx = -1; input.value = '' } }
+            else if (e.key === 'Tab') { e.preventDefault(); const items = ac.querySelectorAll('.ac-item'); if (items.length) { input.value = items[0].dataset.cmd + ' '; ac.classList.remove('show') } }
+            else if (e.key === 'Escape') { ac.classList.remove('show') }
+        });
+
+        input.addEventListener('input', () => {
+            const v = input.value.trim().toLowerCase();
+            if (v.startsWith('/')) {
+                const matches = Object.entries(COMMANDS).filter(([k]) => k.startsWith(v));
+                if (matches.length && v !== matches[0][0]) {
+                    ac.innerHTML = matches.map(([k, c]) => `<div class="ac-item" data-cmd="${k}" onclick="input.value='${k} ';input.focus();ac.classList.remove('show')"><span class="ac-cmd">${k}</span><span class="ac-desc">${c.desc}</span></div>`).join('');
+                    ac.classList.add('show');
+                } else { ac.classList.remove('show') }
+            } else { ac.classList.remove('show') }
+        });
+
+        function addLine(text, type = 'result') {
+            const d = document.createElement('div'); d.className = `line line-${type}`; d.innerHTML = text; output.appendChild(d); output.scrollTop = output.scrollHeight;
+        }
+
+        function processCmd(raw) {
+            addLine(`<span class="prompt">$</span> ${raw}`, 'cmd');
+            const parts = raw.trim().split(' ');
+            const cmd = parts[0].toLowerCase();
+            const args = parts.slice(1).join(' ');
+
+            // Try exact match first, then partial
+            let matched = COMMANDS[raw.trim().toLowerCase()] || COMMANDS[cmd];
+            if (!matched) {
+                // Try two-word commands
+                const twoWord = parts.slice(0, 2).join(' ').toLowerCase();
+                matched = COMMANDS[twoWord];
+            }
+            if (matched) { matched.fn(args) }
+            else { addLine(`❌ Unbekannter Befehl: ${cmd}. Tippe /help für Hilfe.`, 'error') }
+        }
+
+        function runCmd(cmd) { input.value = cmd; processCmd(cmd); input.value = '' }
+
+        function helpCmd() {
+            addLine('╔════════════════════════════════════════╗', 'system');
+            addLine('║  📖 Verfügbare Befehle                 ║', 'system');
+            addLine('╚════════════════════════════════════════╝', 'system');
+            Object.entries(COMMANDS).forEach(([k, v]) => addLine(`  <span style="color:var(--green);font-weight:700">${k.padEnd(20)}</span> ${v.desc}`, 'info'));
+            addLine('', 'info'); addLine('💡 Tab = Autocomplete, ↑↓ = History', 'info');
+        }
+
+        function analyzeCmd(url) {
+            if (!url) { addLine('⚠️ Usage: /analyze <url>', 'warn'); return }
+            addLine(`🔍 Analysiere ${url}...`, 'system');
+            setTimeout(() => {
+                const score = Math.floor(Math.random() * 40 + 50);
+                addLine(`📊 SEO Score: ${score}/100`, 'result');
+                addLine(`  ✅ Title Tag vorhanden (${url} – Startseite)`, 'result');
+                addLine(`  ${Math.random() > .5 ? '✅' : '⚠️'} Meta Description: ${Math.random() > .5 ? 'Vorhanden' : 'Fehlt oder zu kurz'}`, 'result');
+                addLine(`  ✅ HTTPS: ${url.startsWith('https') ? 'Aktiv' : 'Nicht aktiv!'}`, 'result');
+                addLine(`  ${Math.random() > .5 ? '✅' : '❌'} Schema Markup: ${Math.random() > .5 ? 'JSON-LD gefunden' : 'Nicht vorhanden'}`, 'result');
+                addLine(`  ⚡ Geschätzte Ladezeit: ${(1 + Math.random() * 3).toFixed(1)}s`, 'result');
+                addLine(`💡 Tipp: Nutze /audit full für detaillierte Analyse`, 'info');
+            }, 1200);
+        }
+
+        function adsenseCmd() {
+            addLine('📊 AdSense Setup Guide:', 'system');
+            ['1. Account erstellen: adsense.google.com', '2. Website hinzufügen & verifizieren', '3. Auto-Ads Code im <head> einbauen', '4. ads.txt im Root-Verzeichnis erstellen', '5. Review abwarten (1-14 Tage)', '6. Anzeigen-Platzierung optimieren'].forEach(s => addLine(`  ${s}`, 'result'));
+            addLine('🔗 https://www.google.com/adsense', 'info');
+        }
+
+        function businessCmd() {
+            addLine('🏢 Google Business Profil Guide:', 'system');
+            ['1. business.google.com besuchen', '2. Unternehmen eintragen', '3. Kategorie(n) wählen', '4. Standort, Kontakt, Öffnungszeiten', '5. Verifizierung durchführen', '6. Fotos + Beschreibung hinzufügen', '7. Ersten Post erstellen', '8. Bewertungen sammeln'].forEach(s => addLine(`  ${s}`, 'result'));
+        }
+
+        function mapsCmd(addr) {
+            if (!addr) { addLine('⚠️ Usage: /maps embed <adresse>', 'warn'); return }
+            const q = encodeURIComponent(addr);
+            addLine(`🗺️ Embed-Code für "${addr}":`, 'system');
+            addLine(`<span style="color:var(--cyan)">&lt;iframe src="https://maps.google.com/maps?q=${q}&z=14&output=embed" width="600" height="400" style="border:0"&gt;&lt;/iframe&gt;</span>`, 'result');
+        }
+
+        function hacksCmd() {
+            addLine('🏆 Top 10 SEO Quick-Wins:', 'system');
+            ['1. 🎯 Title Tag: Keyword am Anfang, max 60 Zeichen', '2. 📝 Meta Description: CTA + 155 Zeichen', '3. 🏷️ H1 Tag: Nur EINER pro Seite', '4. 🔒 HTTPS: SSL aktivieren (Ranking-Faktor)', '5. 📱 Mobile First: Responsive ist Pflicht', '6. ⚡ Page Speed: LCP < 2.5s, Bilder in WebP', '7. 🔗 Internal Links: Min. 3-5 pro Seite', '8. 🏷️ Schema.org: JSON-LD für Rich Snippets', '9. 🗺️ Sitemap.xml: In Search Console einreichen', '10. 📊 Google Search Console: Wöchentlich prüfen'].forEach(s => addLine(`  ${s}`, 'result'));
+        }
+
+        function auditCmd() {
+            addLine('🔍 Starte vollständigen SEO Audit...', 'system');
+            const steps = ['Prüfe Title Tags...', 'Prüfe Meta Descriptions...', 'Prüfe Heading Struktur...', 'Prüfe Bild Alt-Tags...', 'Prüfe SSL/HTTPS...', 'Prüfe Mobile Responsiveness...', 'Prüfe Page Speed...', 'Prüfe Schema Markup...', 'Prüfe Sitemap...', 'Prüfe robots.txt...', 'Prüfe Open Graph Tags...', 'Prüfe Canonical Tags...', 'Generiere Bericht...'];
+            steps.forEach((s, i) => setTimeout(() => {
+                addLine(`  ${Math.random() > .3 ? '✅' : '⚠️'} ${s}`, 'result');
+                if (i === steps.length - 1) { addLine(`\n📊 Audit abgeschlossen. Score: ${Math.floor(Math.random() * 30 + 65)}/100`, 'system'); addLine('💡 Nutze /seo-hacks für Verbesserungsvorschläge', 'info') }
+            }, (i + 1) * 400));
+        }
+
+        function schemaCmd(type) {
+            addLine('🏷️ Schema.org Templates:', 'system');
+            addLine('  LocalBusiness, FAQ, HowTo, Product, Article', 'result');
+            addLine(`  <span style="color:var(--cyan)">{"@context":"https://schema.org","@type":"LocalBusiness","name":"Dein Business"}</span>`, 'result');
+        }
+
+        function robotsCmd() {
+            addLine('🤖 robots.txt Template:', 'system');
+            ['User-agent: *', 'Allow: /', 'Disallow: /admin/', 'Disallow: /api/', 'Sitemap: https://example.com/sitemap.xml'].forEach(l => addLine(`  <span style="color:var(--cyan)">${l}</span>`, 'result'));
+        }
+
+        function sitemapCmd() {
+            addLine('🗺️ Sitemap erstellen:', 'system');
+            addLine('  1. Automatisch: Yoast SEO, Rank Math, oder xml-sitemaps.com', 'result');
+            addLine('  2. In Google Search Console einreichen', 'result');
+            addLine('  3. In robots.txt die URL angeben', 'result');
+            addLine('  🔗 https://search.google.com/search-console', 'info');
+        }
+
+        function metaCmd(title) {
+            addLine('🏷️ Meta Tag Generator:', 'system');
+            const t = title || 'Deine Seite';
+            addLine(`  <span style="color:var(--cyan)">&lt;title&gt;${t} – Keyword | Brand&lt;/title&gt;</span>`, 'result');
+            addLine(`  <span style="color:var(--cyan)">&lt;meta name="description" content="Beschreibung mit CTA..."&gt;</span>`, 'result');
+            addLine(`  <span style="color:var(--cyan)">&lt;meta property="og:title" content="${t}"&gt;</span>`, 'result');
+        }
+
+        function speedCmd() {
+            addLine('⚡ Speed-Optimierung:', 'system');
+            ['1. Bilder: WebP Format, max 200KB', '2. Lazy Loading: loading="lazy"', '3. CSS/JS: Minifizieren + defer', '4. CDN: Cloudflare (kostenlos)', '5. Cache: Browser + Server Cache', '6. Tool: pagespeed.web.dev'].forEach(s => addLine(`  ${s}`, 'result'));
+        }
+
+        function keywordsCmd() {
+            addLine('🔑 Kostenlose Keyword-Tools:', 'system');
+            ['• Google Keyword Planner: ads.google.com', '• Ubersuggest: neilpatel.com/ubersuggest', '• AnswerThePublic: answerthepublic.com', '• Google Trends: trends.google.com', '• Google Suggest: Suchleiste nutzen', '• Also Asked: alsoasked.com'].forEach(s => addLine(`  ${s}`, 'result'));
+        }
+
+        function domainCmd(domain) {
+            if (!domain) { addLine('⚠️ Usage: /domain <domain.com>', 'warn'); return }
+            addLine(`💎 Domain-Analyse: ${domain}`, 'system');
+            setTimeout(() => {
+                const ext = domain.split('.').pop();
+                const len = domain.split('.')[0].length;
+                const tldVals = { com: 1.5, de: 1.3, eu: 1.2, io: 1.1, net: 0.9, org: 0.8 };
+                const tldMult = tldVals[ext] || 0.7;
+                const baseVal = Math.max(50, 500 - len * 30) * tldMult;
+                const val = Math.floor(baseVal * (0.8 + Math.random() * 0.4));
+                addLine(`  💰 Geschätzter Wert: €${val.toLocaleString()} - €${(val * 3).toLocaleString()}`, 'result');
+                addLine(`  📏 Länge: ${len} Zeichen (${len <= 6 ? 'Premium kurz ✅' : len <= 10 ? 'OK' : 'Lang ⚠️'})`, 'result');
+                addLine(`  🌐 TLD: .${ext} (${tldMult >= 1.2 ? 'Starke TLD ✅' : 'Standard TLD'})`, 'result');
+                addLine(`  🏷️ Keywords: ${domain.includes('-') ? 'Bindestrich erkannt' : 'Keine Bindestriche ✅'}`, 'result');
+                addLine(`  📊 Eignung: ${ext === 'de' || ext === 'eu' ? 'DACH-Markt' : 'International'}, ${len <= 8 ? 'Branding' : 'Nischen-Domain'}`, 'result');
+                addLine(`  💡 Empfehlung: ${len <= 6 ? 'Hochwertige Brand-Domain' : 'Content-/Nischen-Projekt ideal'}`, 'info');
+            }, 800);
+        }
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

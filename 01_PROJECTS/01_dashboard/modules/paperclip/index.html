@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paperclip[DkZ] — LLM Orchestrierung</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#060608;--surface:#0d0d12;--card:#111118;--border:#1a1a24;
+  --text:#e8e8ed;--muted:#6b6b80;--accent:#fa1e4e;--green:#00ff88;
+  --yellow:#ffb800;--red:#ff3b5c;--blue:#3b82f6;--purple:#a855f7;
+  --cyan:#06b6d4;--radius:12px
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:40px}
+
+/* ═══ HEADER ═══ */
+.header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;
+  background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo{width:38px;height:38px;background:linear-gradient(135deg,var(--yellow),var(--accent));
+  border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.title{font-size:16px;font-weight:600}
+.badge{background:var(--yellow);color:#000;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.header-right{display:flex;align-items:center;gap:12px}
+.heartbeat{display:flex;align-items:center;gap:6px;background:rgba(0,255,136,.08);
+  border:1px solid rgba(0,255,136,.2);padding:6px 14px;border-radius:8px;font-size:12px}
+.hb-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,255,136,.4)}50%{opacity:.6;box-shadow:0 0 8px 4px rgba(0,255,136,.2)}}
+.api-status{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;font-size:11px;
+  font-family:'JetBrains Mono',monospace;border:1px solid var(--border);background:var(--surface)}
+.api-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.api-dot.online{background:var(--green);box-shadow:0 0 6px rgba(0,255,136,.5)}
+.api-dot.offline{background:var(--red);box-shadow:0 0 6px rgba(255,59,92,.4)}
+
+/* ═══ STATS BAR ═══ */
+.stats-bar{display:flex;gap:12px;padding:12px 24px;flex-wrap:wrap}
+.stat-chip{display:flex;align-items:center;gap:6px;padding:6px 14px;
+  background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;font-size:12px}
+.stat-chip .num{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--accent)}
+
+/* ═══ LAYOUT ═══ */
+.main-grid{display:grid;grid-template-columns:280px 1fr;gap:16px;padding:0 24px 24px}
+@media(max-width:960px){.main-grid{grid-template-columns:1fr}}
+
+/* ═══ PANELS ═══ */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.panel-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;
+  align-items:center;justify-content:space-between;font-size:13px;font-weight:600}
+.panel-header .count{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.panel-body{padding:12px}
+
+/* ═══ MODEL FLEET ═══ */
+.model-list{display:flex;flex-direction:column;gap:6px}
+.model-card{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface);
+  border:1px solid var(--border);border-radius:10px;transition:all .2s;cursor:default;font-size:12px}
+.model-card.active{border-color:var(--green);box-shadow:0 0 12px rgba(0,255,136,.08)}
+.model-card.heartbeat-card{border-color:var(--green);background:rgba(0,255,136,.03)}
+.model-icon{font-size:18px;flex-shrink:0}
+.model-info{flex:1;min-width:0}
+.model-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.model-meta{font-size:9px;color:var(--muted);display:flex;gap:6px;margin-top:2px}
+.model-toggle{width:36px;height:20px;border-radius:10px;border:none;cursor:pointer;position:relative;
+  transition:all .3s;flex-shrink:0;padding:0}
+.model-toggle.on{background:rgba(0,255,136,.25);border:1px solid rgba(0,255,136,.4)}
+.model-toggle.off{background:rgba(107,107,128,.15);border:1px solid rgba(107,107,128,.3)}
+.model-toggle::after{content:'';position:absolute;top:2px;width:14px;height:14px;border-radius:50%;
+  transition:all .3s}
+.model-toggle.on::after{right:2px;left:auto;background:var(--green);box-shadow:0 0 6px rgba(0,255,136,.4)}
+.model-toggle.off::after{left:2px;background:var(--muted)}
+
+/* ═══ KANBAN ═══ */
+.kanban-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;
+  border-bottom:1px solid var(--border)}
+.kanban-title{font-size:13px;font-weight:600}
+.btn-new-task{display:flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(250,30,78,.1);
+  border:1px solid rgba(250,30,78,.3);color:var(--accent);border-radius:8px;cursor:pointer;
+  font-size:11px;font-weight:600;font-family:'Inter',sans-serif;transition:all .2s}
+.btn-new-task:hover{background:rgba(250,30,78,.2);box-shadow:0 0 16px rgba(250,30,78,.15)}
+
+.kanban-board{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:12px}
+@media(max-width:1200px){.kanban-board{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.kanban-board{grid-template-columns:1fr}}
+
+.kanban-col{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;
+  min-height:200px;display:flex;flex-direction:column}
+.kanban-col.drag-over{border-color:var(--accent);background:rgba(250,30,78,.03);
+  box-shadow:0 0 20px rgba(250,30,78,.08)}
+.col-header{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;
+  align-items:center;justify-content:space-between;font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1px}
+.col-header .col-count{font-family:'JetBrains Mono',monospace;font-size:10px;
+  background:rgba(255,255,255,.06);padding:2px 8px;border-radius:4px}
+.col-queued .col-header{color:var(--yellow);border-bottom-color:rgba(255,184,0,.15)}
+.col-running .col-header{color:var(--blue);border-bottom-color:rgba(59,130,246,.15)}
+.col-done .col-header{color:var(--green);border-bottom-color:rgba(0,255,136,.15)}
+.col-failed .col-header{color:var(--red);border-bottom-color:rgba(255,59,92,.15)}
+.col-body{padding:8px;flex:1;display:flex;flex-direction:column;gap:6px;min-height:100px}
+
+/* ═══ TASK CARDS ═══ */
+.task-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;
+  cursor:grab;transition:all .2s;position:relative}
+.task-card:active{cursor:grabbing}
+.task-card.dragging{opacity:.4;transform:scale(.95)}
+.task-card:hover{border-color:rgba(250,30,78,.3);transform:translateY(-1px);
+  box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.task-id{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--accent);font-weight:600;
+  margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
+.task-title{font-size:12px;font-weight:600;margin-bottom:4px;line-height:1.3}
+.task-desc{font-size:10px;color:var(--muted);margin-bottom:6px;line-height:1.4;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.task-footer{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.task-model{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--cyan);
+  background:rgba(6,182,212,.08);padding:2px 6px;border-radius:4px}
+.task-priority{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px}
+.task-priority.high{background:rgba(255,59,92,.12);color:var(--red)}
+.task-priority.medium{background:rgba(255,184,0,.12);color:var(--yellow)}
+.task-priority.low{background:rgba(0,255,136,.1);color:var(--green)}
+.task-time{font-size:8px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.task-delete{position:absolute;top:6px;right:8px;background:none;border:none;color:var(--muted);
+  cursor:pointer;font-size:12px;opacity:0;transition:opacity .2s}
+.task-card:hover .task-delete{opacity:1}
+.task-delete:hover{color:var(--red)}
+
+/* ═══ ARCHITECTURE ═══ */
+.arch{padding:16px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.6;
+  color:var(--muted);background:var(--surface);border-radius:8px;overflow-x:auto;white-space:pre}
+.arch .hl{color:var(--accent)}.arch .g{color:var(--green)}.arch .y{color:var(--yellow)}.arch .c{color:var(--cyan)}
+
+/* ═══ MODAL ═══ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
+  z-index:1000;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;
+  width:90%;max-width:440px;position:relative;
+  box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 40px rgba(250,30,78,.05)}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);
+  cursor:pointer;font-size:18px;transition:color .2s}
+.modal-close:hover{color:var(--red)}
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;
+  text-transform:uppercase;letter-spacing:.5px}
+.form-input,.form-select,.form-textarea{width:100%;background:var(--surface);
+  border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;
+  font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border .2s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent)}
+.form-textarea{resize:vertical;min-height:60px}
+.form-select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b6b80' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center}
+.form-select option{background:var(--card);color:var(--text)}
+.btn-submit{width:100%;padding:10px;background:linear-gradient(135deg,var(--accent),#d91643);
+  color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;
+  font-family:'Inter',sans-serif;transition:all .2s;margin-top:4px}
+.btn-submit:hover{box-shadow:0 4px 20px rgba(250,30,78,.3);transform:translateY(-1px)}
+
+/* ═══ AMPEL TABLE ═══ */
+.ampel-section{margin-top:16px}
+.ampel-table{width:100%;border-collapse:separate;border-spacing:0 3px;font-size:11px}
+.ampel-table th{text-align:left;padding:4px 8px;color:var(--muted);font-size:9px;text-transform:uppercase}
+.ampel-table td{padding:4px 8px;background:var(--surface);vertical-align:middle}
+.ampel-table tr td:first-child{border-radius:6px 0 0 6px}
+.ampel-table tr td:last-child{border-radius:0 6px 6px 0}
+.ampel{width:12px;height:12px;border-radius:50%;display:inline-block}
+.ampel.green{background:var(--green);box-shadow:0 0 6px rgba(0,255,136,.4)}
+.ampel.yellow{background:var(--yellow);box-shadow:0 0 6px rgba(255,184,0,.4)}
+.ampel.red{background:var(--accent);box-shadow:0 0 6px rgba(250,30,78,.4)}
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:4px}
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<div class="header">
+ <div class="header-left">
+  <a href="../../hub/index.html" style="color:var(--accent,#fa1e4e);text-decoration:none;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;border:1px solid rgba(250,30,78,0.2);background:rgba(250,30,78,0.05);transition:all 0.2s" onmouseenter="this.style.background='rgba(250,30,78,0.15)'" onmouseleave="this.style.background='rgba(250,30,78,0.05)'">← Hub</a>
+  <div class="logo">📎</div>
+  <span class="title">Paperclip[DkZ]</span>
+  <span class="badge">LLM ORCH</span>
+ </div>
+ <div class="header-right">
+  <div class="api-status" id="apiStatus">
+   <div class="api-dot offline" id="apiDot"></div>
+   <span id="apiLabel">Pruefe API...</span>
+  </div>
+  <div class="heartbeat">
+   <div class="hb-dot"></div>
+   <span id="hbModel">gemma4:e2b</span>
+   <span style="color:var(--green);font-weight:600">ALWAYS-ON</span>
+  </div>
+ </div>
+</div>
+
+<!-- ═══ STATS BAR ═══ -->
+<div class="stats-bar" id="statsBar"></div>
+
+<!-- ═══ MAIN LAYOUT ═══ -->
+<div class="main-grid">
+
+ <!-- LEFT: Model Fleet + Ampel -->
+ <div>
+  <div class="panel">
+   <div class="panel-header">⚡ Modell-Fleet <span class="count" id="modelCount"></span></div>
+   <div class="panel-body">
+    <div class="model-list" id="modelList"></div>
+   </div>
+  </div>
+
+  <!-- Ampel -->
+  <div class="panel ampel-section">
+   <div class="panel-header">🚦 Ampel <span class="count">Builder / Plan</span></div>
+   <div class="panel-body">
+    <table class="ampel-table" id="ampelTable">
+     <tr><th>Modell</th><th>Build</th><th>Plan</th></tr>
+    </table>
+   </div>
+  </div>
+
+  <!-- Architecture -->
+  <div class="panel" style="margin-top:16px">
+   <div class="panel-header">🏗️ Architektur <span class="count">vLLM + llama-swap</span></div>
+   <div class="panel-body">
+    <div class="arch">     <span class="c">┌──────────────┐</span>
+      <span class="c">│  Desktop     │</span>
+      <span class="c">│  Copilot     │</span>
+      <span class="c">└──────┬───────┘</span>
+             <span class="c">│</span>
+      <span class="hl">┌──────▼───────┐</span>
+      <span class="hl">│  llama-swap  │</span>
+      <span class="hl">│  :8080       │</span>
+      <span class="hl">└──────┬───────┘</span>
+    <span class="y">┌──────┼──────────┐</span>
+ <span class="g">┌──▼──┐</span> <span class="y">┌──▼──┐</span>  <span class="hl">┌──▼──┐</span>
+ <span class="g">│ HB  │</span> <span class="y">│SWAP │</span>  <span class="hl">│SOLO │</span>
+ <span class="g">│e2b  │</span> <span class="y">│Q/M  │</span>  <span class="hl">│26b+ │</span>
+ <span class="g">│-1   │</span> <span class="y">│300s │</span>  <span class="hl">│180s │</span>
+ <span class="g">└─────┘</span> <span class="y">└─────┘</span>  <span class="hl">└─────┘</span></div>
+   </div>
+  </div>
+ </div>
+
+ <!-- RIGHT: Kanban Board -->
+ <div class="panel">
+  <div class="kanban-header">
+   <span class="kanban-title">📋 Kanban — Task Tickets</span>
+   <button class="btn-new-task" onclick="PaperclipApp.openModal()">＋ Neuer Task</button>
+  </div>
+  <div class="kanban-board" id="kanbanBoard">
+   <div class="kanban-col col-queued" data-col="queued">
+    <div class="col-header">⏳ Queued <span class="col-count" id="countQueued">0</span></div>
+    <div class="col-body" id="colQueued"></div>
+   </div>
+   <div class="kanban-col col-running" data-col="running">
+    <div class="col-header">▶ Running <span class="col-count" id="countRunning">0</span></div>
+    <div class="col-body" id="colRunning"></div>
+   </div>
+   <div class="kanban-col col-done" data-col="done">
+    <div class="col-header">✅ Done <span class="col-count" id="countDone">0</span></div>
+    <div class="col-body" id="colDone"></div>
+   </div>
+   <div class="kanban-col col-failed" data-col="failed">
+    <div class="col-header">❌ Failed <span class="col-count" id="countFailed">0</span></div>
+    <div class="col-body" id="colFailed"></div>
+   </div>
+  </div>
+ </div>
+
+</div>
+
+<!-- ═══ MODAL: Neuer Task ═══ -->
+<div class="modal-overlay" id="taskModal">
+ <div class="modal">
+  <button class="modal-close" onclick="PaperclipApp.closeModal()">✕</button>
+  <div class="modal-title">📎 Neues Ticket erstellen</div>
+  <form id="taskForm" onsubmit="return PaperclipApp.handleSubmit(event)">
+   <div class="form-group">
+    <label class="form-label">Titel *</label>
+    <input class="form-input" id="fTitle" type="text" required placeholder="Task-Titel eingeben..." maxlength="100">
+   </div>
+   <div class="form-group">
+    <label class="form-label">Beschreibung</label>
+    <textarea class="form-textarea" id="fDesc" placeholder="Optional: Details zum Task..." maxlength="500"></textarea>
+   </div>
+   <div class="form-group">
+    <label class="form-label">Modell zuweisen</label>
+    <select class="form-select" id="fModel"></select>
+   </div>
+   <div class="form-group">
+    <label class="form-label">Prioritaet</label>
+    <select class="form-select" id="fPriority">
+     <option value="medium">Mittel</option>
+     <option value="high">Hoch</option>
+     <option value="low">Niedrig</option>
+    </select>
+   </div>
+   <button type="submit" class="btn-submit">Ticket erstellen →</button>
+  </form>
+ </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+ *  Paperclip[DkZ] — LLM Orchestrierung v2.0
+ *  Kanban + Tickets + Drag&Drop + API-Check + localStorage
+ *  @DKZ:RULES → R1(esc), R5(localStorage), R8(no-umlauts)
+ * ═══════════════════════════════════════════════════════════════ */
+const PaperclipApp = (() => {
+'use strict';
+
+// ═══ XSS PROTECTION ═══
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = String(s);
+  return d.innerHTML;
+}
+
+// ═══ STORAGE KEYS ═══
+const STORAGE = {
+  TASKS: 'dkz-paperclip-tasks',
+  MODELS: 'dkz-paperclip-models',
+  COUNTER: 'dkz-paperclip-counter',
+  API_MODELS: 'dkz-paperclip-api-models'
+};
+
+// ═══ DEFAULT MODELS ═══
+const DEFAULT_MODELS = [
+  {id:'gemma4-e2b',name:'Gemma4 E2B',icon:'❤️',tier:'quick',role:'Heartbeat',enabled:true,heartbeat:true,ram:'~2 GB',ampelBuild:'red',ampelPlan:'red'},
+  {id:'gemma4-e4b',name:'Gemma4 E4B',icon:'⚡',tier:'quick',role:'Balance',enabled:false,ram:'~3 GB',ampelBuild:'yellow',ampelPlan:'yellow'},
+  {id:'qwen3-4b',name:'Qwen3 4B',icon:'🚀',tier:'quick',role:'Quick',enabled:false,ram:'~3 GB',ampelBuild:'yellow',ampelPlan:'red'},
+  {id:'qwen3-5-9b',name:'Qwen3.5 9B Coder',icon:'💻',tier:'medium',role:'Coder',enabled:false,ram:'~6 GB',ampelBuild:'green',ampelPlan:'yellow'},
+  {id:'qwen3-14b',name:'Qwen3 14B',icon:'🧠',tier:'medium',role:'Standard',enabled:false,ram:'~10 GB',ampelBuild:'green',ampelPlan:'yellow'},
+  {id:'gemma4-26b',name:'Gemma4 26B MoE',icon:'⚡',tier:'large',role:'Frontend Hermes',enabled:false,ram:'~16 GB',ampelBuild:'yellow',ampelPlan:'green'},
+  {id:'qwen3-6-27b',name:'Qwen3.6 27B Dense',icon:'🔬',tier:'large',role:'Dense Test',enabled:false,ram:'~17 GB',ampelBuild:'green',ampelPlan:'green'},
+  {id:'qwen3-6-35b',name:'Qwen3.6 35B MoE',icon:'🏆',tier:'large',role:'Backend Hermes',enabled:false,ram:'~22 GB',ampelBuild:'green',ampelPlan:'green'}
+];
+
+// ═══ DEFAULT TASKS ═══
+const DEFAULT_TASKS = [
+  {id:'TKT-001',title:'VPS Health Check',desc:'Heartbeat-Pruefung aller VPS Endpoints',model:'gemma4-e2b',priority:'high',col:'queued',created:Date.now()-300000},
+  {id:'TKT-002',title:'Code Review: llm-arena',desc:'Review der LLM Arena Codebase auf Qualitaet',model:'qwen3-5-9b',priority:'medium',col:'queued',created:Date.now()-200000},
+  {id:'TKT-003',title:'Kanban Task Planning',desc:'Sprint-Planung fuer naechste Iteration',model:'gemma4-26b',priority:'low',col:'running',created:Date.now()-150000},
+  {id:'TKT-004',title:'API Endpoint Generator',desc:'Automatische REST-API Generierung aus Schema',model:'qwen3-6-35b',priority:'high',col:'done',created:Date.now()-100000},
+  {id:'TKT-005',title:'README aktualisieren',desc:'Projektdokumentation auf neuesten Stand bringen',model:'qwen3-4b',priority:'low',col:'done',created:Date.now()-50000}
+];
+
+// ═══ STATE ═══
+let tasks = [];
+let models = [];
+let ticketCounter = 0;
+let apiOnline = false;
+let draggedTaskId = null;
+
+// ═══ PERSISTENCE ═══
+function loadTasks() {
+  try {
+    const raw = localStorage.getItem(STORAGE.TASKS);
+    if (raw) { tasks = JSON.parse(raw); return; }
+  } catch(e) { /* fallback */ }
+  tasks = [...DEFAULT_TASKS];
+  saveTasks();
+}
+function saveTasks() { localStorage.setItem(STORAGE.TASKS, JSON.stringify(tasks)); }
+
+function loadModels() {
+  try {
+    const raw = localStorage.getItem(STORAGE.MODELS);
+    if (raw) { models = JSON.parse(raw); return; }
+  } catch(e) { /* fallback */ }
+  models = DEFAULT_MODELS.map(m => ({...m}));
+  saveModels();
+}
+function saveModels() { localStorage.setItem(STORAGE.MODELS, JSON.stringify(models)); }
+
+function loadCounter() {
+  try {
+    const raw = localStorage.getItem(STORAGE.COUNTER);
+    if (raw) { ticketCounter = parseInt(raw, 10); return; }
+  } catch(e) { /* fallback */ }
+  ticketCounter = tasks.length > 0 ? Math.max(...tasks.map(t => parseInt(t.id.replace('TKT-',''),10) || 0)) : 0;
+  saveCounter();
+}
+function saveCounter() { localStorage.setItem(STORAGE.COUNTER, String(ticketCounter)); }
+
+function nextTicketId() {
+  ticketCounter++;
+  saveCounter();
+  return 'TKT-' + String(ticketCounter).padStart(3, '0');
+}
+
+// ═══ API CHECK ═══
+async function checkApi() {
+  const dot = document.getElementById('apiDot');
+  const label = document.getElementById('apiLabel');
+  try {
+    const resp = await fetch('http://localhost:8080/v1/models', { signal: AbortSignal.timeout(3000) });
+    if (resp.ok) {
+      const data = await resp.json();
+      apiOnline = true;
+      dot.className = 'api-dot online';
+      const modelNames = (data.data || []).map(m => m.id);
+      label.textContent = modelNames.length + ' Modelle live';
+      localStorage.setItem(STORAGE.API_MODELS, JSON.stringify(modelNames));
+      return;
+    }
+  } catch(e) { /* offline */ }
+  apiOnline = false;
+  dot.className = 'api-dot offline';
+  label.textContent = 'Offline — Lokal';
+}
+
+// ═══ RENDER MODELS ═══
+function renderModels() {
+  const el = document.getElementById('modelList');
+  const enabledCount = models.filter(m => m.enabled).length;
+  document.getElementById('modelCount').textContent = enabledCount + '/' + models.length + ' aktiv';
+
+  el.innerHTML = models.map((m, i) => `
+   <div class="model-card${m.enabled ? ' active' : ''}${m.heartbeat ? ' heartbeat-card' : ''}">
+    <div class="model-icon">${m.icon}</div>
+    <div class="model-info">
+     <div class="model-name">${esc(m.name)}</div>
+     <div class="model-meta"><span>${esc(m.tier)}</span><span>${esc(m.role)}</span><span>${esc(m.ram)}</span></div>
+    </div>
+    <button class="model-toggle ${m.enabled?'on':'off'}" data-idx="${i}"
+      title="${m.enabled?'Deaktivieren':'Aktivieren'}" onclick="PaperclipApp.toggleModel(${i})"></button>
+   </div>`).join('');
+
+  // Populate modal select
+  const sel = document.getElementById('fModel');
+  sel.innerHTML = models.map(m =>
+    `<option value="${esc(m.id)}">${esc(m.name)} (${esc(m.role)})</option>`
+  ).join('');
+}
+
+// ═══ RENDER AMPEL ═══
+function renderAmpel() {
+  const el = document.getElementById('ampelTable');
+  let html = '<tr><th>Modell</th><th>Build</th><th>Plan</th></tr>';
+  models.forEach(m => {
+    html += `<tr>
+      <td>${esc(m.name)}</td>
+      <td><span class="ampel ${m.ampelBuild || 'yellow'}"></span></td>
+      <td><span class="ampel ${m.ampelPlan || 'yellow'}"></span></td>
+    </tr>`;
+  });
+  el.innerHTML = html;
+}
+
+// ═══ RENDER KANBAN ═══
+function renderKanban() {
+  const cols = { queued: [], running: [], done: [], failed: [] };
+  tasks.forEach(t => {
+    if (!cols[t.col]) t.col = 'queued';
+    cols[t.col].push(t);
+  });
+
+  ['queued','running','done','failed'].forEach(colId => {
+    const body = document.getElementById('col' + colId.charAt(0).toUpperCase() + colId.slice(1));
+    const count = document.getElementById('count' + colId.charAt(0).toUpperCase() + colId.slice(1));
+    count.textContent = cols[colId].length;
+
+    body.innerHTML = cols[colId].map(t => {
+      const timeStr = formatTime(t.created);
+      const prioLabel = t.priority === 'high' ? 'HOCH' : t.priority === 'low' ? 'NIEDRIG' : 'MITTEL';
+      return `<div class="task-card" draggable="true" data-task-id="${esc(t.id)}"
+        ondragstart="PaperclipApp.onDragStart(event,'${esc(t.id)}')"
+        ondragend="PaperclipApp.onDragEnd(event)">
+        <button class="task-delete" onclick="PaperclipApp.deleteTask('${esc(t.id)}')" title="Loeschen">✕</button>
+        <div class="task-id"><span>${esc(t.id)}</span><span class="task-time">${esc(timeStr)}</span></div>
+        <div class="task-title">${esc(t.title)}</div>
+        ${t.desc ? '<div class="task-desc">' + esc(t.desc) + '</div>' : ''}
+        <div class="task-footer">
+         <span class="task-model">${esc(t.model)}</span>
+         <span class="task-priority ${t.priority}">${prioLabel}</span>
+        </div>
+       </div>`;
+    }).join('');
+  });
+
+  renderStats();
+}
+
+// ═══ STATS ═══
+function renderStats() {
+  const cols = { queued:0, running:0, done:0, failed:0 };
+  tasks.forEach(t => { if (cols[t.col] !== undefined) cols[t.col]++; });
+
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-chip">📊 Total <span class="num">${tasks.length}</span></div>
+    <div class="stat-chip">⏳ Queued <span class="num">${cols.queued}</span></div>
+    <div class="stat-chip">▶ Running <span class="num">${cols.running}</span></div>
+    <div class="stat-chip">✅ Done <span class="num">${cols.done}</span></div>
+    <div class="stat-chip">❌ Failed <span class="num">${cols.failed}</span></div>
+    <div class="stat-chip">🤖 Fleet <span class="num">${models.filter(m=>m.enabled).length}/${models.length}</span></div>
+  `;
+}
+
+// ═══ DRAG & DROP ═══
+function onDragStart(e, taskId) {
+  draggedTaskId = taskId;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', taskId);
+  setTimeout(() => {
+    const card = document.querySelector(`[data-task-id="${taskId}"]`);
+    if (card) card.classList.add('dragging');
+  }, 0);
+}
+
+function onDragEnd(e) {
+  document.querySelectorAll('.task-card.dragging').forEach(c => c.classList.remove('dragging'));
+  document.querySelectorAll('.kanban-col.drag-over').forEach(c => c.classList.remove('drag-over'));
+  draggedTaskId = null;
+}
+
+function initDragDrop() {
+  document.querySelectorAll('.kanban-col').forEach(col => {
+    col.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      col.classList.add('drag-over');
+    });
+    col.addEventListener('dragleave', e => {
+      if (!col.contains(e.relatedTarget)) col.classList.remove('drag-over');
+    });
+    col.addEventListener('drop', e => {
+      e.preventDefault();
+      col.classList.remove('drag-over');
+      const taskId = e.dataTransfer.getData('text/plain');
+      const newCol = col.dataset.col;
+      if (!taskId || !newCol) return;
+      const task = tasks.find(t => t.id === taskId);
+      if (task && task.col !== newCol) {
+        task.col = newCol;
+        saveTasks();
+        renderKanban();
+      }
+    });
+  });
+}
+
+// ═══ MODEL TOGGLE ═══
+function toggleModel(idx) {
+  if (models[idx].heartbeat) return; // Heartbeat bleibt immer an
+  models[idx].enabled = !models[idx].enabled;
+  saveModels();
+  renderModels();
+  renderAmpel();
+  renderStats();
+}
+
+// ═══ MODAL ═══
+function openModal() {
+  document.getElementById('taskModal').classList.add('open');
+  document.getElementById('fTitle').focus();
+}
+function closeModal() {
+  document.getElementById('taskModal').classList.remove('open');
+  document.getElementById('taskForm').reset();
+}
+
+function handleSubmit(e) {
+  e.preventDefault();
+  const title = document.getElementById('fTitle').value.trim();
+  const desc = document.getElementById('fDesc').value.trim();
+  const model = document.getElementById('fModel').value;
+  const priority = document.getElementById('fPriority').value;
+
+  if (!title) return false;
+
+  const task = {
+    id: nextTicketId(),
+    title: title,
+    desc: desc,
+    model: model,
+    priority: priority,
+    col: 'queued',
+    created: Date.now()
+  };
+
+  tasks.unshift(task);
+  saveTasks();
+  renderKanban();
+  closeModal();
+  return false;
+}
+
+// ═══ DELETE TASK ═══
+function deleteTask(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  saveTasks();
+  renderKanban();
+}
+
+// ═══ UTILS ═══
+function formatTime(ts) {
+  const d = new Date(ts);
+  const pad = n => String(n).padStart(2, '0');
+  return pad(d.getDate()) + '.' + pad(d.getMonth()+1) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
+// ═══ KEYBOARD ═══
+function initKeyboard() {
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+    if (e.key === 'n' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT'
+        && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'SELECT') {
+      openModal();
+    }
+  });
+}
+
+// ═══ MODAL OVERLAY CLICK ═══
+function initModalOverlay() {
+  document.getElementById('taskModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('taskModal')) closeModal();
+  });
+}
+
+// ═══ INIT ═══
+async function init() {
+  loadModels();
+  loadTasks();
+  loadCounter();
+  renderModels();
+  renderAmpel();
+  renderKanban();
+  initDragDrop();
+  initKeyboard();
+  initModalOverlay();
+  await checkApi();
+}
+
+init();
+
+// ═══ PUBLIC API ═══
+return {
+  toggleModel,
+  openModal,
+  closeModal,
+  handleSubmit,
+  deleteTask,
+  onDragStart,
+  onDragEnd
+};
+
+})();
+</script>
+<script src="../../shared/dkz-debug.js"></script>
+<script src="../../shared/dkz-navbar.js"></script>
+</body>
+</html>

@@ -1,0 +1,1132 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../shared/dkz-theme.css">
+    <link rel="manifest" href="../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DkZ Ecosystem  Datensicht</title>
+    <meta name="description" content="Interaktive Datensicht des kompletten DkZ DEVKiTZ kosystems">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        :root {
+            --bg: #0e0e10;
+            --bg2: #16161a;
+            --bg3: #1a1a1e;
+            --bg4: #222226;
+            --accent: #fa1e4e;
+            --accent2: #0f3460;
+            --accent3: #533483;
+            --neon: #00f5d4;
+            --neon2: #7b2ff7;
+            --neon3: #f72585;
+            --text: #e8e8e8;
+            --text2: #a0a0b8;
+            --text3: #6c6c80;
+            --card: #ffffff08;
+            --border: #ffffff12;
+            --glow: 0 0 30px #fa1e4e30;
+        }
+
+        html {
+            scroll-behavior: smooth
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            min-height: 100vh
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at 20% 50%, #fa1e4e08 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, #7b2ff708 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, #00f5d406 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0
+        }
+
+        /* HEADER */
+        .hero {
+            position: relative;
+            padding: 60px 40px 40px;
+            text-align: center;
+            z-index: 1
+        }
+
+        .hero h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, #fa1e4e, #f72585, #7b2ff7, #00f5d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+            margin-bottom: 8px
+        }
+
+        .hero .sub {
+            font-size: 1.1rem;
+            color: var(--text2);
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase
+        }
+
+        .hero .version {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 4px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            font-size: .75rem;
+            font-family: 'JetBrains Mono', monospace
+        }
+
+        .hero .pulse-ring {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 2px solid var(--accent);
+            opacity: .15;
+            animation: pulse-ring 3s ease-out infinite
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: translateX(-50%) scale(.8);
+                opacity: .3
+            }
+
+            100% {
+                transform: translateX(-50%) scale(2);
+                opacity: 0
+            }
+        }
+
+        /* STATS BAR */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            padding: 20px 40px 40px;
+            z-index: 1;
+            position: relative
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--bg3), var(--bg2));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px 28px;
+            min-width: 160px;
+            text-align: center;
+            transition: all .3s;
+            position: relative;
+            overflow: hidden
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent);
+            box-shadow: var(--glow)
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--neon2))
+        }
+
+        .stat-card .num {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), var(--neon3));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-family: 'JetBrains Mono', monospace
+        }
+
+        .stat-card .label {
+            font-size: .75rem;
+            color: var(--text2);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px
+        }
+
+        /* SECTIONS */
+        .section {
+            padding: 40px;
+            position: relative;
+            z-index: 1
+        }
+
+        .section-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
+
+        .section-title .icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem
+        }
+
+        .section-title .line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--border), transparent)
+        }
+
+        /* GRID CARDS */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px
+        }
+
+        .card {
+            background: var(--card);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all .4s cubic-bezier(.4, 0, .2, 1);
+            position: relative;
+            overflow: hidden;
+            cursor: default
+        }
+
+        .card:hover {
+            border-color: var(--accent);
+            transform: translateY(-3px);
+            box-shadow: var(--glow)
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, #ffffff06, transparent);
+            transition: left .6s
+        }
+
+        .card:hover::after {
+            left: 100%
+        }
+
+        .card .card-icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+            display: block
+        }
+
+        .card .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 6px
+        }
+
+        .card .card-desc {
+            font-size: .8rem;
+            color: var(--text2);
+            line-height: 1.5;
+            margin-bottom: 12px
+        }
+
+        .card .card-meta {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap
+        }
+
+        .tag {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: .65rem;
+            font-family: 'JetBrains Mono', monospace;
+            border: 1px solid var(--border);
+            color: var(--text2)
+        }
+
+        .tag.active {
+            border-color: var(--neon);
+            color: var(--neon)
+        }
+
+        .tag.dev {
+            border-color: #f0ad4e;
+            color: #f0ad4e
+        }
+
+        .tag.planned {
+            border-color: var(--accent2);
+            color: #5dade2
+        }
+
+        /* LAYER VIZ */
+        .layers {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-width: 900px;
+            margin: 0 auto
+        }
+
+        .layer {
+            padding: 20px 28px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: all .3s;
+            position: relative;
+            overflow: hidden
+        }
+
+        .layer:hover {
+            transform: scale(1.01);
+            border-color: var(--accent)
+        }
+
+        .layer .l-num {
+            font-size: .7rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text3);
+            width: 60px;
+            flex-shrink: 0
+        }
+
+        .layer .l-name {
+            font-weight: 700;
+            font-size: .95rem;
+            min-width: 200px
+        }
+
+        .layer .l-tech {
+            font-size: .75rem;
+            color: var(--text2);
+            flex: 1
+        }
+
+        .l5 {
+            background: linear-gradient(90deg, #1a0a2e, var(--bg2))
+        }
+
+        .l4 {
+            background: linear-gradient(90deg, #0a1628, var(--bg2))
+        }
+
+        .l3 {
+            background: linear-gradient(90deg, #0a1a1a, var(--bg2))
+        }
+
+        .l2 {
+            background: linear-gradient(90deg, #1a0a18, var(--bg2))
+        }
+
+        .l1 {
+            background: linear-gradient(90deg, #1a1010, var(--bg2))
+        }
+
+        .l0 {
+            background: linear-gradient(90deg, #0d1a0d, var(--bg2));
+            border-style: dashed
+        }
+
+        /* TREE */
+        .tree {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .82rem;
+            line-height: 2;
+            color: var(--text2);
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 32px;
+            max-width: 700px;
+            overflow-x: auto
+        }
+
+        .tree .dir {
+            color: var(--neon);
+            font-weight: 700
+        }
+
+        .tree .file {
+            color: var(--text3)
+        }
+
+        .tree .hl {
+            color: var(--accent);
+            font-weight: 600
+        }
+
+        /* LOOP VIZ */
+        .loops {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            max-width: 900px;
+            margin: 0 auto
+        }
+
+        .loop-card {
+            text-align: center;
+            padding: 28px 20px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            position: relative;
+            transition: all .3s
+        }
+
+        .loop-card:hover {
+            transform: translateY(-4px)
+        }
+
+        .loop-card .loop-dot {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            animation: spin 8s linear infinite
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg)
+            }
+
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        .loop-card:nth-child(1) .loop-dot {
+            background: linear-gradient(135deg, #fa1e4e, #f72585);
+            animation-duration: 2s
+        }
+
+        .loop-card:nth-child(2) .loop-dot {
+            background: linear-gradient(135deg, #f0ad4e, #ff6b35);
+            animation-duration: 5s
+        }
+
+        .loop-card:nth-child(3) .loop-dot {
+            background: linear-gradient(135deg, #00f5d4, #00bfa6);
+            animation-duration: 10s
+        }
+
+        .loop-card:nth-child(4) .loop-dot {
+            background: linear-gradient(135deg, #5dade2, #0f3460);
+            animation-duration: 20s
+        }
+
+        .loop-card .loop-name {
+            font-weight: 700;
+            font-size: .9rem;
+            margin-bottom: 4px
+        }
+
+        .loop-card .loop-desc {
+            font-size: .72rem;
+            color: var(--text3)
+        }
+
+        /* STATUS DOT */
+        .status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+            flex-shrink: 0
+        }
+
+        .status.green {
+            background: #00f5d4;
+            box-shadow: 0 0 8px #00f5d4
+        }
+
+        .status.yellow {
+            background: #f0ad4e;
+            box-shadow: 0 0 8px #f0ad4e
+        }
+
+        .status.blue {
+            background: #5dade2;
+            box-shadow: 0 0 8px #5dade2
+        }
+
+        /* COMPLIANCE TABLE */
+        .c-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .82rem;
+            max-width: 900px;
+            margin: 0 auto
+        }
+
+        .c-table th {
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 2px solid var(--accent);
+            color: var(--accent);
+            font-weight: 600;
+            font-size: .7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px
+        }
+
+        .c-table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text2)
+        }
+
+        .c-table tr:hover td {
+            background: var(--card);
+            color: var(--text)
+        }
+
+        /* FOOTER */
+        .footer {
+            text-align: center;
+            padding: 40px;
+            color: var(--text3);
+            font-size: .75rem;
+            border-top: 1px solid var(--border);
+            margin-top: 40px
+        }
+
+        .footer a {
+            color: var(--accent);
+            text-decoration: none
+        }
+
+        /* FILTER TABS */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap
+        }
+
+        .tab {
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            font-size: .75rem;
+            cursor: pointer;
+            transition: all .3s;
+            color: var(--text2);
+            background: transparent
+        }
+
+        .tab:hover,
+        .tab.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent)10
+        }
+
+        @media(max-width:768px) {
+            .stats-bar {
+                gap: 12px
+            }
+
+            .stat-card {
+                min-width: 120px;
+                padding: 14px 18px
+            }
+
+            .stat-card .num {
+                font-size: 1.6rem
+            }
+
+            .section {
+                padding: 24px 16px
+            }
+
+            .grid {
+                grid-template-columns: 1fr
+            }
+
+            .layer {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px
+            }
+
+            .layer .l-name {
+                min-width: unset
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
+
+    <!-- HERO -->
+    <header class="hero">
+        <div class="pulse-ring"></div>
+        <h1>DkZ KOSYSTEM  DATENSICHT</h1>
+        <p class="sub">Komplette &#252;bersicht  DEVKiTZ  v2.01</p>
+        <span class="version">Stand: 08.03.2026  Codename: NEW EUROP ORDER</span>
+    </header>
+
+    <!-- STATS -->
+    <section class="stats-bar" id="stats">
+        <div class="stat-card">
+            <div class="num" data-count="11">0</div>
+            <div class="label">Projekte</div>
+        </div>
+        <div class="stat-card">
+            <div class="num" data-count="8">0</div>
+            <div class="label">Module</div>
+        </div>
+        <div class="stat-card">
+            <div class="num" data-count="8">0</div>
+            <div class="label">DEVKiTZ Apps</div>
+        </div>
+        <div class="stat-card">
+            <div class="num" data-count="5">0</div>
+            <div class="label">Layer</div>
+        </div>
+        <div class="stat-card">
+            <div class="num" data-count="4">0</div>
+            <div class="label">Loops</div>
+        </div>
+        <div class="stat-card">
+            <div class="num" data-count="100">0</div>
+            <div class="label">Workflows</div>
+        </div>
+        <div class="stat-card">
+            <div class="num" data-count="13">0</div>
+            <div class="label">Nexus Nodes</div>
+        </div>
+    </section>
+
+    <!-- PROJEKTE -->
+    <section class="section">
+        <div class="section-title">
+            <div class="icon" style="background:linear-gradient(135deg,#fa1e4e,#f72585)">??</div>
+            <span>01_PROJECTS  Kernprojekte</span>
+            <div class="line"></div>
+        </div>
+        <div class="tabs">
+            <div class="tab active" onclick="filterCards(this,'all')">Alle</div>
+            <div class="tab" onclick="filterCards(this,'active')">?? Aktiv</div>
+            <div class="tab" onclick="filterCards(this,'dev')">?? In Dev</div>
+            <div class="tab" onclick="filterCards(this,'planned')">?? Geplant</div>
+        </div>
+        <div class="grid" id="projects">
+            <div class="card" data-status="active">
+                <span class="card-icon">??</span>
+                <div class="card-title"><span class="status green"></span>Dashboard Hub</div>
+                <div class="card-desc">Zentrales Dashboard mit 8 Modulen: AI Chat, Analyser, Converter, HTML Viewer,
+                    Markdown, Speech-to-Text, Text Summary, TTS. Inkl. SEO-Dashboard, Drive-Organizer,
+                    Agenten-Dashboard.</div>
+                <div class="card-meta"><span class="tag active">AKTIV</span><span class="tag">8 Module</span><span
+                        class="tag">HTML/JS</span></div>
+            </div>
+            <div class="card" data-status="dev">
+                <span class="card-icon">???</span>
+                <div class="card-title"><span class="status yellow"></span>DataLakehouse</div>
+                <div class="card-desc">Enterprise-grade Data Lakehouse mit Apache Iceberg-Konzept, Chaos Monkey
+                    Stress-Tests, System-Metriken und DuckDB-Wasm Analytics.</div>
+                <div class="card-meta"><span class="tag dev">IN DEV</span><span class="tag">React</span><span
+                        class="tag">DuckDB</span></div>
+            </div>
+            <div class="card" data-status="dev">
+                <span class="card-icon">??</span>
+                <div class="card-title"><span class="status yellow"></span>FlyerBuilder PRO</div>
+                <div class="card-desc">Modularer Flyer-Builder mit Photoshop-like Editor, AI Auto-Correction, OCR, Color
+                    Engine, Free Photo DB Integration. Tauri + React + Supabase.</div>
+                <div class="card-meta"><span class="tag dev">IN DEV</span><span class="tag">Tauri</span><span
+                        class="tag">React</span></div>
+            </div>
+            <div class="card" data-status="planned">
+                <span class="card-icon">??</span>
+                <div class="card-title"><span class="status blue"></span>Flyer Engine</div>
+                <div class="card-desc">Lightweight Flyer-Engine f&#252;r schnelle Template-basierte Erstellung. Erg&#228;nzung zum
+                    PRO Builder.</div>
+                <div class="card-meta"><span class="tag planned">GEPLANT</span><span class="tag">HTML/JS</span></div>
+            </div>
+            <div class="card" data-status="active">
+                <span class="card-icon">??</span>
+                <div class="card-title"><span class="status green"></span>DomainControl</div>
+                <div class="card-desc">Domain-Management f&#252;r Hostinger. SMART + MASTER Modus, Subdomain-Verwaltung,
+                    Redirect-Rules, Chat-Assistent, CSV-Export. Supabase Backend.</div>
+                <div class="card-meta"><span class="tag active">AKTIV</span><span class="tag">Supabase</span><span
+                        class="tag">CSV</span></div>
+            </div>
+            <div class="card" data-status="planned">
+                <span class="card-icon">??</span>
+                <div class="card-title"><span class="status blue"></span>DocEngine</div>
+                <div class="card-desc">Automatisierte Dokumentations-Engine f&#252;r alle Projekte. Markdown-basiert mit
+                    Auto-Indexierung und Template-System.</div>
+                <div class="card-meta"><span class="tag planned">GEPLANT</span><span class="tag">Markdown</span></div>
+            </div>
+            <div class="card" data-status="active">
+                <span class="card-icon">?</span>
+                <div class="card-title"><span class="status green"></span>DkZ Core</div>
+                <div class="card-desc">Wiki-System, OpenClaw Integration, Blueprint-Builder, HTML Release Builder,
+                    ASSI-Alfred Agent, OUT4FAME Module.</div>
+                <div class="card-meta"><span class="tag active">AKTIV</span><span class="tag">OpenClaw</span><span
+                        class="tag">Wiki</span></div>
+            </div>
+            <div class="card" data-status="active">
+                <span class="card-icon">??</span>
+                <div class="card-title"><span class="status green"></span>AiAiKirk</div>
+                <div class="card-desc">AI Assistant Platform mit BOB-Agent, NotebookLM MCP Integration, Wiki-System mit
+                    70+ Eintr&#228;gen, Claude-Code Handbuch.</div>
+                <div class="card-meta"><span class="tag active">AKTIV</span><span class="tag">MCP</span><span
+                        class="tag">NLM</span></div>
+            </div>
+            <div class="card" data-status="planned">
+                <span class="card-icon">??</span>
+                <div class="card-title"><span class="status blue"></span>Hostinger</div>
+                <div class="card-desc">Hosting-Management und Deployment Pipeline f&#252;r EU-basierte Webprojekte auf
+                    Hostinger Infrastructure.</div>
+                <div class="card-meta"><span class="tag planned">GEPLANT</span><span class="tag">Hosting</span></div>
+            </div>
+            <div class="card" data-status="dev">
+                <span class="card-icon">??</span>
+                <div class="card-title"><span class="status yellow"></span>Prompt Builder</div>
+                <div class="card-desc">3 Varianten: SMART/WEB, PRO Rust, ENTERPRISE React. 23-Wort-Regel, XML-lite
+                    Blocks, Mistral OCR, DkZ Cyberclean Design.</div>
+                <div class="card-meta"><span class="tag dev">IN DEV</span><span class="tag">3 Varianten</span><span
+                        class="tag">OCR</span></div>
+            </div>
+            <div class="card" data-status="active">
+                <span class="card-icon">??</span>
+                <div class="card-title"><span class="status green"></span>SEO Dashboard</div>
+                <div class="card-desc">SEO Analyser, Google AdSense, Business Profile, Maps Integration, AI Console, DNS
+                    Chain-Builder V2.1.</div>
+                <div class="card-meta"><span class="tag active">AKTIV</span><span class="tag">SEO</span><span
+                        class="tag">Google</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DASHBOARD MODULE -->
+    <section class="section">
+        <div class="section-title">
+            <div class="icon" style="background:linear-gradient(135deg,#7b2ff7,#533483)">??</div>
+            <span>Dashboard Module  Plug & Play</span>
+            <div class="line"></div>
+        </div>
+        <div class="grid">
+            <div class="card"><span class="card-icon">??</span>
+                <div class="card-title">AI Chat</div>
+                <div class="card-desc">Multi-AI Chat (V1 Core + V2 Multi Core). Mistral, Gemma Fallback. Local Node.js
+                    Backend.</div>
+                <div class="card-meta"><span class="tag active">AKTIV</span><span class="tag">2 Versionen</span></div>
+            </div>
+            <div class="card"><span class="card-icon">??</span>
+                <div class="card-title">Analyser</div>
+                <div class="card-desc">Text- & Code-Analyse mit Scoring, Empfehlungen und Export.</div>
+                <div class="card-meta"><span class="tag active">AKTIV</span></div>
+            </div>
+            <div class="card"><span class="card-icon">??</span>
+                <div class="card-title">Converter</div>
+                <div class="card-desc">Format-Konvertierung: JSON, CSV, YAML, XML, Markdown und mehr.</div>
+                <div class="card-meta"><span class="tag active">AKTIV</span></div>
+            </div>
+            <div class="card"><span class="card-icon">??</span>
+                <div class="card-title">HTML Viewer</div>
+                <div class="card-desc">Live HTML/CSS/JS Preview mit Syntax-Highlighting.</div>
+                <div class="card-meta"><span class="tag active">AKTIV</span></div>
+            </div>
+            <div class="card"><span class="card-icon">??</span>
+                <div class="card-title">Markdown Converter</div>
+                <div class="card-desc">Markdown ? HTML Konvertierung mit Live-Preview.</div>
+                <div class="card-meta"><span class="tag active">AKTIV</span></div>
+            </div>
+            <div class="card"><span class="card-icon">??</span>
+                <div class="card-title">Speech-to-Text</div>
+                <div class="card-desc">Browser-basierte Spracherkennung mit Web Speech API.</div>
+                <div class="card-meta"><span class="tag active">AKTIV</span></div>
+            </div>
+            <div class="card"><span class="card-icon">??</span>
+                <div class="card-title">Text Summary</div>
+                <div class="card-desc">AI-gesttzte Textzusammenfassung mit konfigurierbarer L&#246;nge.</div>
+                <div class="card-meta"><span class="tag active">AKTIV</span></div>
+            </div>
+            <div class="card"><span class="card-icon">??</span>
+                <div class="card-title">Text-to-Speech</div>
+                <div class="card-desc">TTS-Engine mit Stimmenauswahl, Geschwindigkeit, Pitch-Control.</div>
+                <div class="card-meta"><span class="tag active">AKTIV</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- LAYER ARCHITEKTUR -->
+    <section class="section">
+        <div class="section-title">
+            <div class="icon" style="background:linear-gradient(135deg,#00f5d4,#00bfa6)">???</div>
+            <span>5-Layer-Architektur</span>
+            <div class="line"></div>
+        </div>
+        <div class="layers">
+            <div class="layer l5">
+                <div class="l-num">LAYER 5</div>
+                <div class="l-name">??? Governance & Compliance</div>
+                <div class="l-tech">EU AI Act  DSGVO  Audit Logs  LiteLLM  Guardrails AI</div>
+            </div>
+            <div class="layer l4">
+                <div class="l-num">LAYER 4</div>
+                <div class="l-name">?? Infrastruktur & Deploy</div>
+                <div class="l-tech">Docker  Cloudflare Workers  GitHub CI/CD  Self-Hosted</div>
+            </div>
+            <div class="layer l3">
+                <div class="l-num">LAYER 3</div>
+                <div class="l-name">??? Storage & Retrieval</div>
+                <div class="l-tech">PostgreSQL  DuckDB-Wasm  FAISS  R2/MinIO  localStorage</div>
+            </div>
+            <div class="layer l2">
+                <div class="l-num">LAYER 2</div>
+                <div class="l-name">?? Orchestration & Logic</div>
+                <div class="l-tech">OpenClaw  PicoClaws  NanoBots  Kirk AI  Workflows</div>
+            </div>
+            <div class="layer l1">
+                <div class="l-num">LAYER 1</div>
+                <div class="l-name">??? Frontend & UI</div>
+                <div class="l-tech">HTML/CSS/JS  DkZ Design System  Responsive  Modules</div>
+            </div>
+            <div class="layer l0">
+                <div class="l-num">FOUND.</div>
+                <div class="l-name">?? Selbstreparatur</div>
+                <div class="l-tech">Watchdog  Health Checks  Auto-Repair  Incident Response</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEEDBACK LOOPS -->
+    <section class="section">
+        <div class="section-title">
+            <div class="icon" style="background:linear-gradient(135deg,#f0ad4e,#ff6b35)">??</div>
+            <span>Feedback-Loop-System</span>
+            <div class="line"></div>
+        </div>
+        <div class="loops">
+            <div class="loop-card">
+                <div class="loop-dot">?</div>
+                <div class="loop-name">MICRO Loop</div>
+                <div class="loop-desc">Sekunden  User Input ? AI Processing ? Output ? Feedback</div>
+            </div>
+            <div class="loop-card">
+                <div class="loop-dot">??</div>
+                <div class="loop-name">MESO Loop</div>
+                <div class="loop-desc">Minuten  Task Queue ? Agent Dispatch ? Execution ? Quality Gate</div>
+            </div>
+            <div class="loop-card">
+                <div class="loop-dot">??</div>
+                <div class="loop-name">MACRO Loop</div>
+                <div class="loop-desc">Stunden  Health Check ? Metrics ? Auto-Optimization ? Report</div>
+            </div>
+            <div class="loop-card">
+                <div class="loop-dot">???</div>
+                <div class="loop-name">META Loop</div>
+                <div class="loop-desc">Tage  Blueprint Review ? Audit ? Module Updates ? Version Bump</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- VERZEICHNISSTRUKTUR -->
+    <section class="section">
+        <div class="section-title">
+            <div class="icon" style="background:linear-gradient(135deg,#5dade2,#0f3460)">??</div>
+            <span>Verzeichnisstruktur  C:\DEVKiTZ</span>
+            <div class="line"></div>
+        </div>
+        <div class="tree">
+            <span class="dir">C:\DEVKiTZ\</span>
+            +-- <span class="dir">00_INBOX/</span> <span class="file"> Eingangsordner</span>
+            +-- <span class="dir">01_PROJECTS/</span> <span class="hl"> 11 Kernprojekte (294 Dateien)</span>
+             +-- <span class="dir">01_dashboard/</span> <span class="file"> Hub + 8 Module + SEO + Drive</span>
+             +-- <span class="dir">02_datalakehouse/</span> <span class="file"> Enterprise Analytics</span>
+             +-- <span class="dir">03_flyer_pro/</span> <span class="file"> Tauri + React Builder</span>
+             +-- <span class="dir">04_flyer_engine/</span> <span class="file"> Template Engine</span>
+             +-- <span class="dir">05_domain_control/</span> <span class="file"> Hostinger Management</span>
+             +-- <span class="dir">06_doc_engine/</span> <span class="file"> Auto-Dokumentation</span>
+             +-- <span class="dir">07_dkz/</span> <span class="file"> Core: Wiki, OpenClaw, Blueprint</span>
+             +-- <span class="dir">08_aiaikirk/</span> <span class="file"> AI Platform + BOB Agent</span>
+             +-- <span class="dir">09_hostinger/</span> <span class="file"> Hosting Pipeline</span>
+             +-- <span class="dir">10_prompt_builder/</span> <span class="file"> 3 Varianten:
+                Smart/Pro/Enterprise</span>
+            +-- <span class="dir">02_RESEARCH/</span> <span class="hl"> Wissen & Docs (153 Dateien)</span>
+             +-- <span class="dir">01_podcasts/</span> <span class="file"> 30 Audio-Research</span>
+             +-- <span class="dir">02_wiki/</span> <span class="file"> Wiki System</span>
+             +-- <span class="dir">03_docs/</span> <span class="file"> 22 Dokumentationen</span>
+             +-- <span class="dir">04_blogger/</span> <span class="file"> Blog Content</span>
+             +-- <span class="dir">05_staff/DkZ-STAFF/</span> <span class="hl"> Nexus Nodes, DevKits, Guides</span>
+            +-- <span class="dir">03_MEDIA/</span> <span class="file"> 134 Assets</span>
+             +-- <span class="dir">01_images/</span> <span class="dir">02_video/</span> <span
+                class="dir">03_audio/</span> <span class="dir">04_ai_generated/</span>
+            +-- <span class="dir">04_SYSTEM/</span> <span class="hl"> Configs, Blueprint, Playbook</span>
+             +-- <span class="file">DKZ_ECOSYSTEM_BLUEPRINT_V2.md</span>
+             +-- <span class="file">DKZ_PLAYBOOK.md</span>
+             +-- <span class="dir">01_installers/</span> <span class="dir">02_configs/</span> <span
+                class="dir">03_shortcuts/</span>
+            +-- <span class="dir">99_ARCHIVE/</span> <span class="file"> Archivierte Versionen</span>
+            +-- <span class="dir">DEVKiTZ/</span> <span class="hl"> 8 Mirror-Apps</span>
+             +-- <span class="dir">DataLakehouse/</span> <span class="dir">DkZ/</span> <span
+                class="dir">DomainControl/</span>
+             +-- <span class="dir">FlyerBuilder_PRO/</span> <span class="dir">FlyerEngine/</span> <span
+                class="dir">DocEngine/</span>
+             +-- <span class="dir">CODE_CONVERTER/</span> <span class="dir">hostinger/</span>
+            +-- <span class="dir">[HELLO WORLD]/</span> <span class="file"> 1545 Dateien (Downloads, Assets,
+                Libs)</span>
+        </div>
+    </section>
+
+    <!-- RESEARCH & NEXUS -->
+    <section class="section">
+        <div class="section-title">
+            <div class="icon" style="background:linear-gradient(135deg,#533483,#7b2ff7)">??</div>
+            <span>Research & Nexus-Knoten</span>
+            <div class="line"></div>
+        </div>
+        <div class="grid">
+            <div class="card"><span class="card-icon">???</span>
+                <div class="card-title">Podcasts</div>
+                <div class="card-desc">30 Research-Podcasts: KI-Agenten, DSGVO, RAG-Systeme, Cloud-Strategie, NotebookLM
+                    Deep Dives.</div>
+                <div class="card-meta"><span class="tag">30 Eintr&#228;ge</span><span class="tag">m4a/mp3</span></div>
+            </div>
+            <div class="card"><span class="card-icon">??</span>
+                <div class="card-title">DkZ-STAFF</div>
+                <div class="card-desc">99 Dateien: DevKit Templates, Guides, Datasheets, AI-Hub Docs, Brokoli-Master,
+                    Nexus Nodes, Lizenzen.</div>
+                <div class="card-meta"><span class="tag">99 Dateien</span><span class="tag">Nexus</span></div>
+            </div>
+            <div class="card"><span class="card-icon">???</span>
+                <div class="card-title">Nexus Nodes</div>
+                <div class="card-desc">13 Nexus-Knoten f&#252;r YouTube-Videos, DkZ-Integration, NanoBots, PicoClaws,
+                    OpenRouter Bindings, CLI System.</div>
+                <div class="card-meta"><span class="tag">13 Nodes</span><span class="tag">V02-V04</span></div>
+            </div>
+            <div class="card"><span class="card-icon">??</span>
+                <div class="card-title">Wiki & Docs</div>
+                <div class="card-desc">22 Dokumentationen, Wiki-System, Claude-Code Handbuch, SEO-Guides, BMAD-Method,
+                    Prompt-Engineering.</div>
+                <div class="card-meta"><span class="tag">22+ Docs</span><span class="tag">md/html</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- EU AI ACT COMPLIANCE -->
+    <section class="section">
+        <div class="section-title">
+            <div class="icon" style="background:linear-gradient(135deg,#0f3460,#222226)">????</div>
+            <span>EU AI Act  Compliance Matrix</span>
+            <div class="line"></div>
+        </div>
+        <table class="c-table">
+            <thead>
+                <tr>
+                    <th>Anforderung</th>
+                    <th>EU AI Act</th>
+                    <th>DkZ Implementation</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Transparenz</td>
+                    <td>Art. 52</td>
+                    <td>AI-Outputs als AI-generiert kennzeichnen</td>
+                    <td><span class="status green"></span>Erf&#252;llt</td>
+                </tr>
+                <tr>
+                    <td>Risikobewertung</td>
+                    <td>Art. 9</td>
+                    <td>Risk Assessment pro AI-Modul</td>
+                    <td><span class="status yellow"></span>In Arbeit</td>
+                </tr>
+                <tr>
+                    <td>Menschliche Aufsicht</td>
+                    <td>Art. 14</td>
+                    <td>Human-in-the-Loop bei kritischen Entscheidungen</td>
+                    <td><span class="status green"></span>Erf&#252;llt</td>
+                </tr>
+                <tr>
+                    <td>Daten-Governance</td>
+                    <td>Art. 10</td>
+                    <td>EU-only Datenverarbeitung, DSGVO-konform</td>
+                    <td><span class="status green"></span>Erf&#252;llt</td>
+                </tr>
+                <tr>
+                    <td>Robustheit</td>
+                    <td>Art. 15</td>
+                    <td>Self-Repair-System + Monitoring</td>
+                    <td><span class="status yellow"></span>In Arbeit</td>
+                </tr>
+                <tr>
+                    <td>Dokumentation</td>
+                    <td>Art. 11</td>
+                    <td>Automatische Audit-Logs pro AI-Interaktion</td>
+                    <td><span class="status yellow"></span>In Arbeit</td>
+                </tr>
+                <tr>
+                    <td>Registrierung</td>
+                    <td>Art. 51</td>
+                    <td>EU-Datenbank-Registrierung f&#252;r High-Risk AI</td>
+                    <td><span class="status blue"></span>Geplant</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- TECH STACK -->
+    <section class="section">
+        <div class="section-title">
+            <div class="icon" style="background:linear-gradient(135deg,#fa1e4e,#f72585)">??</div>
+            <span>Open-Source Tech Stack</span>
+            <div class="line"></div>
+        </div>
+        <div class="grid">
+            <div class="card"><span class="card-icon">??</span>
+                <div class="card-title">Runtime</div>
+                <div class="card-desc">Node.js / Deno  Server-Side Execution</div>
+                <div class="card-meta"><span class="tag">MIT</span></div>
+            </div>
+            <div class="card"><span class="card-icon">???</span>
+                <div class="card-title">Database</div>
+                <div class="card-desc">PostgreSQL + Supabase  DuckDB-Wasm  FAISS Vector</div>
+                <div class="card-meta"><span class="tag">MIT</span><span class="tag">PostgreSQL</span></div>
+            </div>
+            <div class="card"><span class="card-icon">??</span>
+                <div class="card-title">Auth</div>
+                <div class="card-desc">SimpleWebAuthn  Passkeys/FIDO2  Zero-Password</div>
+                <div class="card-meta"><span class="tag">MIT</span></div>
+            </div>
+            <div class="card"><span class="card-icon">??</span>
+                <div class="card-title">Messaging</div>
+                <div class="card-desc">Matrix (Synapse)  E2E Encrypted  Federated</div>
+                <div class="card-meta"><span class="tag">Apache 2.0</span></div>
+            </div>
+            <div class="card"><span class="card-icon">??</span>
+                <div class="card-title">Container</div>
+                <div class="card-desc">Docker / Podman  K8s EU Cluster  Cloudflare Workers</div>
+                <div class="card-meta"><span class="tag">Apache 2.0</span></div>
+            </div>
+            <div class="card"><span class="card-icon">??</span>
+                <div class="card-title">AI Gateway</div>
+                <div class="card-desc">LiteLLM + OpenRouter  Multi-Provider Routing  Guardrails AI</div>
+                <div class="card-meta"><span class="tag">MIT</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <p>DkZ DEVKiTZ kosystem  Datensicht v2.01.1_01  <a href="#">NEW EUROP ORDER</a></p>
+        <p style="margin-top:6px">???? 100% EU-Souvern  Open Source  DSGVO-konform  AI Act Ready</p>
+    </footer>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        // COUNT-UP ANIMATION
+        function animateCounters() {
+            document.querySelectorAll('.stat-card .num').forEach(el => {
+                const target = parseInt(el.dataset.count);
+                let current = 0;
+                const step = Math.max(1, Math.floor(target / 40));
+                const timer = setInterval(() => {
+                    current += step;
+                    if (current >= target) { current = target; clearInterval(timer) }
+                    el.textContent = current;
+                }, 30);
+            });
+        }
+
+        // INTERSECTION OBSERVER FOR FADE-IN
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(e => { if (e.isIntersecting) { e.target.style.opacity = '1'; e.target.style.transform = 'translateY(0)' } });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.card,.layer,.loop-card,.tree').forEach(el => {
+            el.style.opacity = '0'; el.style.transform = 'translateY(20px)'; el.style.transition = 'all .6s cubic-bezier(.4,0,.2,1)';
+            observer.observe(el);
+        });
+
+        // FILTER TABS
+        function filterCards(tab, status) {
+            tab.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            document.querySelectorAll('#projects .card').forEach(card => {
+                if (status === 'all' || card.dataset.status === status) {
+                    card.style.display = ''; card.style.opacity = '1'; card.style.transform = 'translateY(0)';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // INIT
+        window.addEventListener('load', () => { setTimeout(animateCounters, 300) });
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    <script src="../shared/dkz-debug.js"></script>
+    <script src="../shared/dkz-guide.js"></script>
+    <script src="../shared/dkz-copilot.js"></script>
+    <script src="../shared/dkz-shortcuts.js"></script>
+    <script src="../shared/dkz-export.js"></script>
+    <script src="../shared/dkz-crosslinks.js"></script>
+    <script src="../shared/dkz-a11y.js"></script>
+    <script src="../shared/dkz-test.js"></script>
+    <script src="../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../shared/sw.js").catch(()=>{});</script>
+</body>
+
+</html>

@@ -1,0 +1,308 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💰 DkZâ„¢ Cost Calculator — LLM & Infrastruktur</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+    <style>
+        :root{--bg:#060608;--card:rgba(18,18,24,.85);--card2:rgba(28,28,36,.7);--border:rgba(255,255,255,.04);--border-h:rgba(255,255,255,.10);--text:#e8e8ec;--muted:#8a8a9a;--accent:#fa1e4e;--accent-soft:rgba(250,30,78,.10);--green:#00ff88;--yellow:#ffb800;--red:#ff3b5c;--blue:#3b82f6;--purple:#a855f7;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;--radius:12px;--glass:rgba(14,14,22,.78);--blur:blur(24px);--shadow:0 8px 32px rgba(0,0,0,.4)}
+        *{margin:0;padding:0;box-sizing:border-box}body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh}
+        ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.06);border-radius:6px}
+        .bg-mesh{position:fixed;inset:0;z-index:0;pointer-events:none}.bg-blob{position:absolute;border-radius:50%;filter:blur(140px);opacity:.05;animation:bf 25s ease-in-out infinite}
+        .bg-blob:nth-child(1){width:500px;height:500px;background:var(--yellow);top:-10%;left:10%}.bg-blob:nth-child(2){width:400px;height:400px;background:var(--accent);bottom:10%;right:15%;animation-delay:-8s}.bg-blob:nth-child(3){width:300px;height:300px;background:var(--green);top:50%;left:55%;animation-delay:-15s}
+        @keyframes bf{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,-40px) scale(1.1)}}
+        .app{position:relative;z-index:1}
+        .header{padding:12px 20px;border-bottom:1px solid var(--border);background:var(--glass);backdrop-filter:var(--blur);display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100}
+        .back-btn{padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,.03);color:var(--muted);font-size:11px;cursor:pointer;text-decoration:none;font-family:var(--font);transition:all .2s}.back-btn:hover{border-color:var(--accent);color:var(--accent)}
+        .header h1{font-size:18px;font-weight:900;background:linear-gradient(135deg,var(--yellow),var(--accent));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+        .hdr-right{margin-left:auto;display:flex;gap:6px;align-items:center}
+        .ver{font-size:9px;color:var(--muted);font-family:var(--mono);background:rgba(255,255,255,.04);padding:2px 8px;border-radius:6px}
+        .hdr-btn{padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,.03);color:var(--muted);font-size:10px;cursor:pointer;font-family:var(--font);transition:all .2s}.hdr-btn:hover{border-color:var(--accent);color:var(--text)}
+        .tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 16px}
+        .tab{padding:10px 18px;font-size:11px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted);transition:all .2s}.tab:hover{color:var(--text)}.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+        .tab-panel{display:none;padding:20px;overflow-y:auto;height:calc(100vh - 100px)}.tab-panel.active{display:block}
+        .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px;transition:all .25s;backdrop-filter:blur(10px)}.card:hover{border-color:rgba(250,30,78,.12)}
+        .card h2{font-size:14px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+        .card h3{font-size:11px;font-weight:700;color:var(--accent);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.5px}
+        .stats{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+        .stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 18px;flex:1;min-width:130px;text-align:center;transition:all .2s}.stat:hover{transform:translateY(-2px);border-color:var(--border-h)}
+        .stat-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px}
+        .stat-val{font-size:22px;font-weight:900;font-family:var(--mono);margin-top:2px}
+        /* SLIDERS */
+        .slider-group{margin-bottom:16px}
+        .slider-label{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px}
+        .slider-label .val{font-family:var(--mono);font-weight:700;color:var(--green)}
+        input[type=range]{width:100%;height:6px;-webkit-appearance:none;background:var(--card2);border-radius:6px;outline:none;margin:4px 0}
+        input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 8px rgba(250,30,78,.3)}
+        /* COMPARE TABLE */
+        .compare{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin:10px 0}
+        .cc{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;transition:all .2s}.cc:hover{border-color:var(--border-h)}
+        .cc .cl{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+        .cc .cv{font-size:14px;font-weight:800;font-family:var(--mono);margin-top:3px}
+        .cc .cv.g{color:var(--green)}.cc .cv.y{color:var(--yellow)}.cc .cv.r{color:var(--red)}.cc .cv.b{color:var(--blue)}
+        /* BUDGET AMPEL */
+        .ampel{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;margin:10px auto;border:3px solid var(--border);transition:all .3s}
+        .ampel.green{background:rgba(0,255,136,.15);border-color:var(--green);box-shadow:0 0 20px rgba(0,255,136,.2)}
+        .ampel.yellow{background:rgba(255,184,0,.15);border-color:var(--yellow);box-shadow:0 0 20px rgba(255,184,0,.2)}
+        .ampel.red{background:rgba(255,59,92,.15);border-color:var(--red);box-shadow:0 0 20px rgba(255,59,92,.2)}
+        /* PROVIDER */
+        .provider{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+        .prov-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;transition:all .2s}.prov-card:hover{border-color:var(--border-h);transform:translateY(-2px)}
+        .prov-name{font-size:13px;font-weight:800;margin-bottom:6px}.prov-price{font-size:18px;font-weight:900;font-family:var(--mono);color:var(--green)}
+        .prov-feat{font-size:10px;color:var(--muted);line-height:1.7}
+        .badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:8px;font-weight:700;font-family:var(--mono)}
+        .badge.eu{background:rgba(59,130,246,.1);color:var(--blue)}.badge.free{background:rgba(0,255,136,.1);color:var(--green)}
+        .btn{padding:8px 16px;border:none;border-radius:8px;background:linear-gradient(135deg,var(--accent),#c4174a);color:#fff;font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer;transition:transform .15s}.btn:hover{transform:scale(1.03)}
+        .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);padding:12px 24px;background:var(--green);color:#000;font-size:12px;font-weight:700;border-radius:12px;z-index:300;opacity:0;transition:all .3s;pointer-events:none}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+        @media(max-width:768px){.stats{flex-direction:column}.compare{grid-template-columns:1fr}.provider{grid-template-columns:1fr}}
+    </style>
+    <script src="../../shared/dkz-updater.js"></script>
+</head>
+<body data-dkz-module="cost-calculator" data-dkz-appid="DKZ-MOD-COS" data-dkz-version="v0.01" data-dkz-title="💰 Cost Calculator — LLM & Infrastruktur" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div><div class="bg-blob"></div></div>
+    <div class="app">
+        <div class="header">
+            <a href="../../hub/index.html" class="back-btn">← Hub</a>
+            <h1 id="hdr-title">💰 DkZ Cost Calculator</h1>
+            <div class="hdr-right">
+                <button class="hdr-btn" onclick="exportCalc()" id="btn-export" title="Konfiguration als JSON exportieren">📤 Export</button>
+                <span class="ver">v1.0 · MOD-083</span>
+            </div>
+        </div>
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('llm',this)">🤖 LLM Kosten</div>
+            <div class="tab" onclick="switchTab('infra',this)">🏗️ Infrastruktur</div>
+            <div class="tab" onclick="switchTab('budget',this)">📊 Budget</div>
+        </div>
+        <!-- LLM TAB -->
+        <div class="tab-panel active" id="panel-llm">
+            <div class="stats" id="llmStats"></div>
+            <div class="card" id="card-tokens">
+                <h2>🎚️ Token-Verbrauch konfigurieren</h2>
+                <div class="slider-group"><div class="slider-label"><span>Tokens pro Tag (Input)</span><span class="val" id="tokInVal">100K</span></div><input type="range" id="tokIn" min="10" max="5000" value="100" oninput="calc()"></div>
+                <div class="slider-group"><div class="slider-label"><span>Tokens pro Tag (Output)</span><span class="val" id="tokOutVal">30K</span></div><input type="range" id="tokOut" min="5" max="2000" value="30" oninput="calc()"></div>
+            </div>
+            <div class="card" id="card-tiers">
+                <h2>🎯 Tiered Routing — Verteilung</h2>
+                <div class="slider-group"><div class="slider-label"><span>Tier 1 — Gemini Flash / DeepSeek (Günstig)</span><span class="val" id="t1Val">70%</span></div><input type="range" id="t1" min="0" max="100" value="70" oninput="balanceTiers(1)"></div>
+                <div class="slider-group"><div class="slider-label"><span>Tier 2 — Claude Haiku / GPT-4o-mini (Balanced)</span><span class="val" id="t2Val">20%</span></div><input type="range" id="t2" min="0" max="100" value="20" oninput="balanceTiers(2)"></div>
+                <div class="slider-group"><div class="slider-label"><span>Tier 3 — Claude Sonnet / Gemini Pro (Premium)</span><span class="val" id="t3Val">8%</span></div><input type="range" id="t3" min="0" max="100" value="8" oninput="balanceTiers(3)"></div>
+                <div class="slider-group"><div class="slider-label"><span>Tier 4 — Claude Opus / GPT-5 (Max Power)</span><span class="val" id="t4Val">2%</span></div><input type="range" id="t4" min="0" max="100" value="2" oninput="balanceTiers(4)"></div>
+            </div>
+            <div class="card"><h2>📊 Modell-Vergleich</h2><div class="compare" id="modelCompare"></div></div>
+        </div>
+        <!-- INFRA TAB -->
+        <div class="tab-panel" id="panel-infra">
+            <div class="card"><h2>🏗️ Hosting-Provider Vergleich</h2>
+                <div class="provider" id="providerGrid"></div>
+            </div>
+            <div class="card"><h2>📋 DkZ Kosten-Phasenplan</h2>
+                <div class="compare">
+                    <div class="cc"><div class="cl">Phase 1 (jetzt)</div><div class="cv g">€0/mo</div><div style="font-size:9px;color:var(--muted);margin-top:4px">Lokal + Cloudflare</div></div>
+                    <div class="cc"><div class="cl">Phase 2 (Launch)</div><div class="cv g">€0/mo</div><div style="font-size:9px;color:var(--muted);margin-top:4px">+ Supabase Free</div></div>
+                    <div class="cc"><div class="cl">Phase 3 (Scale)</div><div class="cv y">€4/mo</div><div style="font-size:9px;color:var(--muted);margin-top:4px">+ Hetzner VPS</div></div>
+                    <div class="cc"><div class="cl">Phase 4 (Grow)</div><div class="cv y">€29/mo</div><div style="font-size:9px;color:var(--muted);margin-top:4px">+ Supabase Pro + CDN</div></div>
+                </div>
+            </div>
+        </div>
+        <!-- BUDGET TAB -->
+        <div class="tab-panel" id="panel-budget">
+            <div class="card" style="text-align:center" id="card-budget-ampel">
+                <h2 style="justify-content:center">📊 Budget-Ampel</h2>
+                <div class="ampel" id="ampel">🟢</div>
+                <div id="budgetStatus" style="font-size:13px;font-weight:700;margin:10px 0"></div>
+            </div>
+            <div class="card">
+                <h2>⚙️ Budget konfigurieren</h2>
+                <div class="slider-group"><div class="slider-label"><span>Tages-Budget (€)</span><span class="val" id="dayBudgetVal">€5.00</span></div><input type="range" id="dayBudget" min="1" max="100" value="5" oninput="calcBudget()"></div>
+                <div class="slider-group"><div class="slider-label"><span>Monats-Budget (€)</span><span class="val" id="monthBudgetVal">€50.00</span></div><input type="range" id="monthBudget" min="10" max="1000" value="50" oninput="calcBudget()"></div>
+            </div>
+            <div class="card"><h2>📈 Was-wäre-wenn Szenarien</h2><div id="scenarios"></div></div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+    function esc(s){const d=document.createElement('div');d.appendChild(document.createTextNode(s));return d.innerHTML}
+
+    const MODELS=[
+        {name:'Gemini 2.0 Flash',inP:0,outP:0,tier:1,tag:'FREE'},
+        {name:'DeepSeek V3',inP:0.27,outP:1.10,tier:1},
+        {name:'Claude Haiku',inP:0.25,outP:1.25,tier:2},
+        {name:'GPT-4o-mini',inP:0.15,outP:0.60,tier:2},
+        {name:'Gemini 2.5 Pro',inP:1.25,outP:5.00,tier:3},
+        {name:'Claude 4 Sonnet',inP:3.00,outP:15.00,tier:3},
+        {name:'GPT-5',inP:5.00,outP:15.00,tier:4},
+        {name:'Claude 4 Opus',inP:15.00,outP:75.00,tier:4}
+    ];
+    const PROVIDERS=[
+        {name:'Cloudflare Pages',price:'€0/mo',flag:'🌍',dsgvo:false,free:true,feat:'Static Hosting, Unlimited Bandwidth, Workers, KV Store'},
+        {name:'Hetzner Cloud',price:'€3.79/mo',flag:'🇩🇪',dsgvo:true,free:false,feat:'2 vCPU, 4GB RAM, 40GB SSD, DE Rechenzentrum'},
+        {name:'Supabase',price:'€0/mo Free',flag:'🌍',dsgvo:false,free:true,feat:'500MB Postgres, 1GB Storage, Auth, Realtime, Edge Functions'},
+        {name:'Vercel',price:'€0/mo Free',flag:'🌍',dsgvo:false,free:true,feat:'100GB Bandwidth, Serverless Functions, Edge Network'},
+        {name:'Fly.io',price:'€0-5/mo',flag:'🌍',dsgvo:false,free:true,feat:'3 shared VMs, Edge Compute, Persistent Volumes'},
+        {name:'OVHcloud',price:'€5/mo',flag:'🇫🇷',dsgvo:true,free:false,feat:'Bare Metal, Object Storage, FR Rechenzentrum'},
+        {name:'Ionos',price:'€4/mo',flag:'🇩🇪',dsgvo:true,free:false,feat:'Cloud Server, Managed DB, DE Infrastruktur'},
+        {name:'Uberspace',price:'€1+/mo',flag:'🇩🇪',dsgvo:true,free:false,feat:'Pay-what-you-want, DE, SSH, Node.js Support'}
+    ];
+
+    function calc(){
+        const tokIn=parseInt(document.getElementById('tokIn').value);
+        const tokOut=parseInt(document.getElementById('tokOut').value);
+        document.getElementById('tokInVal').textContent=tokIn+'K';
+        document.getElementById('tokOutVal').textContent=tokOut+'K';
+        const tiers=[0,1,2,3,4].map(i=>i?parseInt(document.getElementById('t'+i).value)/100:0);
+        // Calculate costs per model
+        let html='';let totalDay=0;let onlyT4Day=0;
+        MODELS.forEach(m=>{
+            const pct=tiers[m.tier];
+            const dayIn=(tokIn*1000*pct)/1e6*m.inP;
+            const dayOut=(tokOut*1000*pct)/1e6*m.outP;
+            const day=dayIn+dayOut;totalDay+=day;
+            const allIn=(tokIn*1000)/1e6*m.inP;const allOut=(tokOut*1000)/1e6*m.outP;
+            if(m.tier===4)onlyT4Day+=allIn+allOut;
+            const mo=day*30;
+            const colorClass=mo<1?'g':mo<10?'y':'r';
+            html+=`<div class="cc"><div class="cl">${m.name}${m.tag?' <span class="badge free">'+m.tag+'</span>':''}</div><div class="cv ${colorClass}">$${mo.toFixed(2)}/mo</div><div style="font-size:8px;color:var(--muted);margin-top:2px">${(pct*100).toFixed(0)}% Anteil · $${day.toFixed(3)}/Tag</div></div>`;
+        });
+        document.getElementById('modelCompare').innerHTML=html;
+        const moTotal=totalDay*30;const onlyT4Mo=onlyT4Day*30;
+        const savings=onlyT4Mo>0?((1-moTotal/onlyT4Mo)*100).toFixed(0):0;
+        document.getElementById('llmStats').innerHTML=`
+            <div class="stat"><div class="stat-label">Kosten / Tag</div><div class="stat-val" style="color:${totalDay<2?'var(--green)':totalDay<10?'var(--yellow)':'var(--red)'}">$${totalDay.toFixed(2)}</div></div>
+            <div class="stat"><div class="stat-label">Kosten / Monat</div><div class="stat-val" style="color:${moTotal<30?'var(--green)':moTotal<100?'var(--yellow)':'var(--red)'}">$${moTotal.toFixed(2)}</div></div>
+            <div class="stat"><div class="stat-label">Kosten / Jahr</div><div class="stat-val" style="color:var(--blue)">$${(moTotal*12).toFixed(0)}</div></div>
+            <div class="stat"><div class="stat-label">Ersparnis vs. nur Tier 4</div><div class="stat-val" style="color:var(--green)">${savings}%</div></div>`;
+        calcBudget();
+    }
+
+    function balanceTiers(changed){
+        const vals=[1,2,3,4].map(i=>parseInt(document.getElementById('t'+i).value));
+        const sum=vals.reduce((a,b)=>a+b,0);
+        if(sum>100){
+            const diff=sum-100;const others=[1,2,3,4].filter(i=>i!==changed);
+            let remaining=diff;
+            others.forEach(i=>{
+                const reduce=Math.min(vals[i-1],Math.ceil(remaining/others.length));
+                vals[i-1]-=reduce;remaining-=reduce;
+                document.getElementById('t'+i).value=vals[i-1];
+            });
+        }
+        [1,2,3,4].forEach(i=>document.getElementById('t'+i+'Val').textContent=document.getElementById('t'+i).value+'%');
+        calc();
+    }
+
+    function calcBudget(){
+        const dayB=parseInt(document.getElementById('dayBudget').value);
+        const moB=parseInt(document.getElementById('monthBudget').value);
+        document.getElementById('dayBudgetVal').textContent='€'+dayB.toFixed(2);
+        document.getElementById('monthBudgetVal').textContent='€'+moB.toFixed(2);
+        const statEl=document.getElementById('llmStats');
+        const moText=statEl?statEl.querySelectorAll('.stat-val')[1]:null;
+        const moCost=moText?parseFloat(moText.textContent.replace('$','')):0;
+        const pct=moB>0?(moCost/moB*100):0;
+        const ampel=document.getElementById('ampel');
+        const status=document.getElementById('budgetStatus');
+        if(pct<=60){ampel.className='ampel green';ampel.textContent='🟢';status.innerHTML=`<span style="color:var(--green)">Budget OK — ${pct.toFixed(0)}% verbraucht</span><br><span style="font-size:10px;color:var(--muted)">€${(moB-moCost).toFixed(2)} verbleibend</span>`}
+        else if(pct<=90){ampel.className='ampel yellow';ampel.textContent='🟡';status.innerHTML=`<span style="color:var(--yellow)">Achtung — ${pct.toFixed(0)}% verbraucht</span><br><span style="font-size:10px;color:var(--muted)">€${(moB-moCost).toFixed(2)} verbleibend</span>`}
+        else{ampel.className='ampel red';ampel.textContent='🔴';status.innerHTML=`<span style="color:var(--red)">Budget ${pct>100?'überschritten':'kritisch'} — ${pct.toFixed(0)}%</span><br><span style="font-size:10px;color:var(--muted)">${moCost>moB?'€'+(moCost-moB).toFixed(2)+' über Budget':'€'+(moB-moCost).toFixed(2)+' verbleibend'}</span>`}
+        // Scenarios
+        document.getElementById('scenarios').innerHTML=`<div class="compare">
+            <div class="cc"><div class="cl">Nur Free Tier</div><div class="cv g">$0/mo</div><div style="font-size:9px;color:var(--muted);margin-top:3px">100% Gemini Flash</div></div>
+            <div class="cc"><div class="cl">Budget-Optimiert</div><div class="cv g">~$${moCost.toFixed(0)}/mo</div><div style="font-size:9px;color:var(--muted);margin-top:3px">Aktuelles Tiered Routing</div></div>
+            <div class="cc"><div class="cl">Quality-First</div><div class="cv y">~$${(moCost*3).toFixed(0)}/mo</div><div style="font-size:9px;color:var(--muted);margin-top:3px">50% Sonnet + 50% Pro</div></div>
+            <div class="cc"><div class="cl">Nur Premium</div><div class="cv r">~$${(moCost*8).toFixed(0)}/mo</div><div style="font-size:9px;color:var(--muted);margin-top:3px">100% Claude Opus</div></div>
+        </div>`;
+    }
+
+    function renderProviders(){
+        document.getElementById('providerGrid').innerHTML=PROVIDERS.map(p=>`<div class="prov-card">
+            <div class="prov-name">${p.flag} ${p.name} ${p.dsgvo?'<span class="badge eu">EU-DSGVO</span>':''}${p.free?'<span class="badge free">FREE</span>':''}</div>
+            <div class="prov-price">${p.price}</div>
+            <div class="prov-feat">${p.feat}</div>
+        </div>`).join('');
+    }
+
+    function switchTab(id,el){
+        document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+        document.getElementById('panel-'+id).classList.add('active');if(el)el.classList.add('active');
+    }
+
+    function exportCalc(){
+        const data={tokens:{input:document.getElementById('tokIn').value+'K',output:document.getElementById('tokOut').value+'K'},tiers:{t1:document.getElementById('t1').value+'%',t2:document.getElementById('t2').value+'%',t3:document.getElementById('t3').value+'%',t4:document.getElementById('t4').value+'%'},budget:{day:document.getElementById('dayBudget').value,month:document.getElementById('monthBudget').value}};
+        const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='dkz-cost-calc.json';a.click();showToast('📤 Exportiert!');
+    }
+    function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
+
+    calc();renderProviders();
+
+    // ═══ DkZ Guide Integration ═══
+    document.addEventListener('DOMContentLoaded', () => {
+        if (typeof DkzGuide === 'undefined') return;
+
+        DkzGuide.addInfo('hdr-title', {
+            title: 'Cost Calculator — LLM & Infrastruktur',
+            text: 'Interaktiver Kostenrechner für 8 LLM-Modelle mit Tiered Routing, 8 Hosting-Provider im Vergleich und Budget-Ampel mit Was-wäre-wenn-Szenarien.',
+            steps: ['Token-Slider einstellen', 'Tiered Routing konfigurieren', 'Modell-Vergleich prüfen', 'Budget-Limits setzen'],
+            links: [
+                { icon: '📖', label: 'Playbook', href: '../playbook-archiv/index.html', hint: 'Kosten-Strategien im Detail' },
+                { icon: '🧠', label: 'Second Brain', href: '../second-brain/index.html', hint: 'Wissen sammeln' }
+            ]
+        });
+
+        DkzGuide.addInfo('card-tokens', {
+            title: 'Token-Konfiguration',
+            text: 'Stelle die durchschnittliche tägliche Token-Nutzung ein. Input = Anfrage-Tokens (Kontext), Output = Antwort-Tokens (generiert). Die Kosten berechnen sich automatisch.',
+            steps: ['Input-Slider: Tokens die du sendest (Prompts, Kontext)', 'Output-Slider: Tokens die zurückkommen (Antworten)', 'Kosten werden live in den Stats-Karten angezeigt']
+        });
+
+        DkzGuide.addInfo('card-tiers', {
+            title: 'Tiered Routing — 4 Stufen',
+            text: 'Verteile Anfragen auf 4 Qualitätsstufen: Tier 1 (billig: Flash/DeepSeek), Tier 2 (ausgewogen: Haiku/GPT-4o-mini), Tier 3 (premium: Sonnet/Pro), Tier 4 (max: Opus/GPT-5). Die Summe muss 100% ergeben.',
+            steps: ['Tier 1 für einfache Aufgaben hoch setzen (70-80%)', 'Tier 2 für Standard-Tasks (15-25%)', 'Tier 3+4 nur für komplexe Aufgaben (5-10%)']
+        });
+
+        DkzGuide.addInfo('card-budget-ampel', {
+            title: 'Budget-Ampel',
+            text: 'Grün = unter 60% verbraucht, Gelb = 60-90%, Rot = über 90%. Die Ampel reagiert live auf deine Token- und Budget-Einstellungen.',
+            steps: ['Tages- und Monats-Budget setzen', 'Ampelfarbe zeigt Status an', 'Szenarien vergleichen: Free vs. Premium']
+        });
+
+        DkzGuide.addInfo('btn-export', {
+            title: 'JSON Export',
+            text: 'Exportiert die aktuelle Konfiguration (Tokens, Tiers, Budget) als JSON-Datei. Ideal zum Archivieren oder Teilen.'
+        });
+
+        DkzGuide.registerTour('cost-tour', [
+            { target: '#hdr-title', title: '💰 Cost Calculator', text: 'Berechne LLM-Kosten, vergleiche Hosting-Provider und überwache dein Budget — alles live und interaktiv.' },
+            { target: '#card-tokens', title: '🏚️ Token-Slider', text: 'Stelle Input- und Output-Tokens pro Tag ein. Die Kosten werden sofort für alle 8 Modelle berechnet.' },
+            { target: '#card-tiers', title: '🎯 Tiered Routing', text: '4 Qualitätsstufen für Smart Routing: Einfache Anfragen gehen an günstige Modelle, komplexe an Premium.' },
+            { target: '.tab[onclick*="infra"]', title: '🏗️ Infrastruktur', text: '8 Hosting-Provider im Vergleich mit EU-DSGVO Badges und Kosten-Phasenplan von €0 bis €29/mo.' },
+            { target: '.tab[onclick*="budget"]', title: '📊 Budget Tab', text: 'Budget-Ampel mit Was-wäre-wenn-Szenarien: Free Tier vs. Premium — finde den besten Mix.' },
+            { target: '#btn-export', title: '📤 Export', text: 'Exportiere deine Konfiguration als JSON-Datei für spätere Referenz.' }
+        ]);
+
+        DkzGuide.injectGuideFAB({ defaultTour: 'cost-tour' });
+
+        if (!DkzGuide.isTourCompleted('cost-tour')) {
+            DkzGuide.highlight('card-tokens', 'glow');
+        }
+    });
+    </script>
+    <!-- DkZ Shared Scripts -->
+    <script src="../../shared/dkz-auth.js"></script><script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script><script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script><script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-guide.js"></script><script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script><script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-export.js"></script><script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</body>
+</html>

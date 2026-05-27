@@ -1,0 +1,683 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 DkZâ„¢ Search™ — Intelligente Suche</title>
+    <meta name="description" content="DkZ Search Engine — Multi-Source Suche über Module, Web, Docs und KI-Wissen">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #060608;
+            --bg2: #0c0c10;
+            --card: rgba(14, 14, 22, .85);
+            --border: rgba(255, 255, 255, .06);
+            --border2: rgba(255, 255, 255, .12);
+            --text: #e8e8f0;
+            --muted: #6e6e8a;
+            --accent: #fa1e4e;
+            --cyan: #00d4ff;
+            --purple: #a855f7;
+            --green: #00ff88;
+            --red: #ff3b5c;
+            --yellow: #ffb800;
+            --blue: #55acee;
+            --orange: #ff8c42;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(14, 14, 22, .72);
+            --blur: blur(24px);
+            --radius: 16px;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        a { color: var(--cyan); text-decoration: none; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 6px; }
+
+        /* ═══ ANIMATED BACKGROUND ═══ */
+        .bg-mesh { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+        .bg-blob {
+            position: absolute; border-radius: 50%; filter: blur(140px); opacity: .06;
+            animation: blobFloat 25s ease-in-out infinite;
+        }
+        .bg-blob:nth-child(1) { width: 700px; height: 700px; background: var(--cyan); top: -15%; left: -10%; }
+        .bg-blob:nth-child(2) { width: 500px; height: 500px; background: var(--accent); bottom: -10%; right: -5%; animation-delay: -8s; }
+        .bg-blob:nth-child(3) { width: 400px; height: 400px; background: var(--purple); top: 50%; left: 40%; animation-delay: -16s; }
+        @keyframes blobFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(40px, -50px) scale(1.1); }
+            66% { transform: translate(-30px, 40px) scale(.9); }
+        }
+
+        /* ═══ SCAN LINES ═══ */
+        .scanlines {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,212,255,.008) 2px, rgba(0,212,255,.008) 4px);
+        }
+
+        /* ═══ LAYOUT ═══ */
+        .app { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
+        /* ═══ HEADER ═══ */
+        .header {
+            padding: 16px 28px; border-bottom: 1px solid var(--border);
+            background: var(--glass); backdrop-filter: var(--blur);
+            display: flex; align-items: center; gap: 14px;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .header-logo { font-size: 36px; filter: drop-shadow(0 0 16px rgba(0,212,255,.4)); }
+        .header h1 {
+            font-size: 24px; font-weight: 900;
+            background: linear-gradient(135deg, var(--cyan), var(--blue), var(--purple));
+            background-size: 200% 200%;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: gradShift 4s ease infinite;
+        }
+        @keyframes gradShift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+        .header .sub { font-size: 9px; color: var(--muted); font-family: var(--mono); letter-spacing: 1.5px; }
+        .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+        .hdr-btn {
+            padding: 7px 14px; border: 1px solid var(--border); border-radius: 10px;
+            background: rgba(255,255,255,.03); color: var(--muted); font-family: var(--font);
+            font-size: 11px; cursor: pointer; transition: all .25s; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .hdr-btn:hover { color: var(--text); border-color: var(--cyan); box-shadow: 0 0 16px rgba(0,212,255,.1); transform: translateY(-1px); }
+
+        /* ═══ SEARCH HERO ═══ */
+        .search-hero {
+            padding: 60px 28px 40px; text-align: center;
+            position: relative;
+        }
+        .search-hero h2 {
+            font-size: 42px; font-weight: 900; margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--text) 0%, var(--cyan) 50%, var(--purple) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .search-hero .tagline {
+            font-size: 14px; color: var(--muted); margin-bottom: 32px;
+            font-family: var(--mono); letter-spacing: 1px;
+        }
+
+        /* ═══ SEARCH BAR ═══ */
+        .search-container {
+            max-width: 720px; margin: 0 auto; position: relative;
+        }
+        .search-bar {
+            display: flex; align-items: center; gap: 0;
+            background: var(--glass); backdrop-filter: var(--blur);
+            border: 2px solid var(--border2); border-radius: 20px;
+            padding: 4px; transition: all .4s cubic-bezier(.4,0,.2,1);
+            box-shadow: 0 8px 40px rgba(0,0,0,.4);
+        }
+        .search-bar:focus-within {
+            border-color: var(--cyan);
+            box-shadow: 0 0 40px rgba(0,212,255,.12), 0 8px 40px rgba(0,0,0,.5);
+            transform: translateY(-2px);
+        }
+        .search-icon {
+            width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0; color: var(--muted);
+            transition: color .3s;
+        }
+        .search-bar:focus-within .search-icon { color: var(--cyan); }
+        .search-input {
+            flex: 1; padding: 14px 0; background: none; border: none; outline: none;
+            color: var(--text); font-family: var(--font); font-size: 16px; font-weight: 500;
+        }
+        .search-input::placeholder { color: var(--muted); }
+        .search-btn {
+            padding: 12px 28px; border: none; border-radius: 16px;
+            background: linear-gradient(135deg, var(--cyan), var(--blue));
+            color: #fff; font-family: var(--font); font-size: 14px; font-weight: 700;
+            cursor: pointer; transition: all .3s; letter-spacing: .5px;
+            text-transform: uppercase;
+        }
+        .search-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 20px rgba(0,212,255,.3);
+        }
+        .search-btn:active { transform: scale(.98); }
+
+        /* ═══ SOURCE TABS ═══ */
+        .source-tabs {
+            display: flex; gap: 6px; justify-content: center; margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .src-tab {
+            padding: 8px 18px; border: 1px solid var(--border); border-radius: 24px;
+            background: transparent; color: var(--muted); font-family: var(--font);
+            font-size: 12px; font-weight: 600; cursor: pointer; transition: all .25s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .src-tab:hover { border-color: var(--cyan); color: var(--text); transform: translateY(-1px); }
+        .src-tab.active {
+            background: linear-gradient(135deg, rgba(0,212,255,.15), rgba(85,172,238,.1));
+            border-color: var(--cyan); color: var(--cyan);
+            box-shadow: 0 0 16px rgba(0,212,255,.08);
+        }
+        .src-tab .dot {
+            width: 6px; height: 6px; border-radius: 50%;
+        }
+
+        /* ═══ QUICK ACTIONS ═══ */
+        .quick-actions {
+            display: flex; gap: 10px; justify-content: center; margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        .qk-btn {
+            padding: 10px 18px; border: 1px solid var(--border); border-radius: 14px;
+            background: var(--glass); backdrop-filter: blur(12px);
+            color: var(--muted); font-family: var(--font); font-size: 11px;
+            cursor: pointer; transition: all .25s; display: flex; align-items: center; gap: 8px;
+        }
+        .qk-btn:hover { border-color: var(--border2); color: var(--text); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.3); }
+        .qk-btn .qk-icon { font-size: 16px; }
+
+        /* ═══ RESULTS AREA ═══ */
+        .results-area {
+            max-width: 860px; margin: 0 auto; padding: 20px 28px 60px;
+            width: 100%;
+        }
+        .results-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 16px; padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .results-header .rh-title {
+            font-size: 12px; font-weight: 700; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .results-header .rh-count {
+            font-family: var(--mono); font-size: 10px;
+            padding: 3px 10px; border-radius: 10px;
+            background: rgba(0,212,255,.08); color: var(--cyan);
+        }
+        .results-header .rh-time {
+            font-family: var(--mono); font-size: 10px; color: var(--muted);
+        }
+
+        /* ═══ RESULT CARD ═══ */
+        .result-card {
+            background: var(--glass); backdrop-filter: var(--blur);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 20px 22px; margin-bottom: 12px;
+            transition: all .3s cubic-bezier(.4,0,.2,1);
+            cursor: pointer; position: relative; overflow: hidden;
+            opacity: 0; transform: translateY(20px);
+            animation: cardIn .5s forwards;
+        }
+        .result-card:nth-child(2) { animation-delay: .08s; }
+        .result-card:nth-child(3) { animation-delay: .16s; }
+        .result-card:nth-child(4) { animation-delay: .24s; }
+        .result-card:nth-child(5) { animation-delay: .32s; }
+        @keyframes cardIn { to { opacity: 1; transform: translateY(0); } }
+
+        .result-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+            opacity: 0; transition: opacity .3s;
+        }
+        .result-card:hover {
+            border-color: var(--border2); transform: translateY(-3px);
+            box-shadow: 0 8px 32px rgba(0,0,0,.4), 0 0 20px rgba(0,212,255,.04);
+        }
+        .result-card:hover::before { opacity: 1; }
+
+        .rc-source {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 10px; font-family: var(--mono); color: var(--muted);
+            padding: 3px 10px; border-radius: 8px; background: rgba(255,255,255,.03);
+            margin-bottom: 10px; letter-spacing: .5px;
+        }
+        .rc-source .src-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .rc-title {
+            font-size: 16px; font-weight: 700; color: var(--text);
+            margin-bottom: 6px; line-height: 1.4;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .rc-title:hover { color: var(--cyan); }
+        .rc-url {
+            font-size: 11px; font-family: var(--mono); color: var(--green);
+            margin-bottom: 8px; opacity: .7;
+        }
+        .rc-desc {
+            font-size: 13px; color: var(--muted); line-height: 1.65;
+        }
+        .rc-desc mark {
+            background: rgba(0,212,255,.15); color: var(--cyan);
+            border-radius: 2px; padding: 0 2px;
+        }
+        .rc-tags {
+            display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap;
+        }
+        .rc-tag {
+            font-size: 9px; font-family: var(--mono); padding: 3px 10px;
+            border-radius: 10px; border: 1px solid var(--border);
+            color: var(--muted); letter-spacing: .5px;
+            transition: all .2s;
+        }
+        .rc-tag:hover { border-color: var(--cyan); color: var(--cyan); }
+
+        /* ═══ EMPTY STATE ═══ */
+        .empty-state {
+            text-align: center; padding: 60px 20px;
+        }
+        .empty-state .es-icon { font-size: 64px; margin-bottom: 16px; opacity: .5; }
+        .empty-state .es-title { font-size: 18px; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
+        .empty-state .es-sub { font-size: 12px; color: rgba(110,110,138,.6); max-width: 400px; margin: 0 auto; line-height: 1.6; }
+
+        /* ═══ STATS FOOTER ═══ */
+        .stats-footer {
+            max-width: 860px; margin: 0 auto; padding: 0 28px 40px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px; width: 100%;
+        }
+        .sf-card {
+            background: var(--glass); backdrop-filter: blur(12px);
+            border: 1px solid var(--border); border-radius: 14px;
+            padding: 16px; transition: all .3s;
+        }
+        .sf-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+        .sf-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 4px; }
+        .sf-value { font-size: 22px; font-weight: 800; font-family: var(--mono); }
+        .sf-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+        /* ═══ KEYBOARD SHORTCUT HINT ═══ */
+        .kbd-hint {
+            position: fixed; bottom: 20px; right: 20px; z-index: 50;
+            display: flex; gap: 12px; align-items: center;
+        }
+        .kbd {
+            font-size: 9px; font-family: var(--mono); padding: 4px 8px;
+            border: 1px solid var(--border); border-radius: 6px;
+            color: var(--muted); background: var(--glass);
+        }
+
+        /* ═══ LOADING ═══ */
+        .loading-bar {
+            height: 2px; background: var(--border); border-radius: 2px;
+            max-width: 720px; margin: 12px auto 0; overflow: hidden;
+            opacity: 0; transition: opacity .3s;
+        }
+        .loading-bar.active { opacity: 1; }
+        .loading-bar .fill {
+            height: 100%; width: 0;
+            background: linear-gradient(90deg, var(--cyan), var(--blue), var(--purple));
+            border-radius: 2px; transition: width .3s;
+            animation: loadPulse 1.5s ease-in-out infinite;
+        }
+        @keyframes loadPulse {
+            0% { width: 0; }
+            50% { width: 70%; }
+            100% { width: 100%; }
+        }
+
+        /* ═══ RESPONSIVE ═══ */
+        @media (max-width: 640px) {
+            .search-hero h2 { font-size: 28px; }
+            .search-hero { padding: 40px 16px 24px; }
+            .results-area, .stats-footer { padding-left: 16px; padding-right: 16px; }
+            .search-bar { border-radius: 16px; }
+        }
+    </style>
+</head>
+<body data-dkz-module="dkz-search" data-dkz-appid="DKZ-MOD-DKZ" data-dkz-version="v0.01" data-dkz-title="🔍 Search™ — Intelligente Suche" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+    </div>
+    <div class="scanlines"></div>
+
+    <div class="app">
+        <!-- HEADER -->
+        <header class="header">
+            <div class="header-logo">🔍</div>
+            <div>
+                <h1>DkZ Search™</h1>
+                <div class="sub">MULTI-SOURCE · INTELLIGENT · FAST</div>
+            </div>
+            <div class="header-right">
+                <a href="../../hub/index.html" class="hdr-btn">⚡ Hub</a>
+                <a href="../wissen-hub/index.html" class="hdr-btn">📚 Wissen</a>
+                <a href="#" class="hdr-btn" onclick="openSettings()">⚙️ Config</a>
+            </div>
+        </header>
+
+        <!-- SEARCH HERO -->
+        <section class="search-hero">
+            <h2>Suche. Finde. Baue.</h2>
+            <div class="tagline">Module · Dokumentation · Web · KI-Wissen — alles an einem Ort</div>
+
+            <div class="search-container">
+                <div class="search-bar" id="searchBar">
+                    <div class="search-icon">🔎</div>
+                    <input type="text" class="search-input" id="searchInput"
+                           placeholder="Was suchst du? Module, Docs, Code..."
+                           autocomplete="off" spellcheck="false">
+                    <button class="search-btn" id="searchBtn" onclick="performSearch()">Suchen</button>
+                </div>
+                <div class="loading-bar" id="loadingBar"><div class="fill"></div></div>
+            </div>
+
+            <!-- SOURCE TABS -->
+            <div class="source-tabs">
+                <button class="src-tab active" data-source="all" onclick="setSource(this)">
+                    <span class="dot" style="background:var(--cyan)"></span> Alles
+                </button>
+                <button class="src-tab" data-source="modules" onclick="setSource(this)">
+                    <span class="dot" style="background:var(--green)"></span> Module
+                </button>
+                <button class="src-tab" data-source="docs" onclick="setSource(this)">
+                    <span class="dot" style="background:var(--blue)"></span> Dokumentation
+                </button>
+                <button class="src-tab" data-source="web" onclick="setSource(this)">
+                    <span class="dot" style="background:var(--purple)"></span> Web
+                </button>
+                <button class="src-tab" data-source="ki" onclick="setSource(this)">
+                    <span class="dot" style="background:var(--yellow)"></span> KI-Wissen
+                </button>
+                <button class="src-tab" data-source="code" onclick="setSource(this)">
+                    <span class="dot" style="background:var(--orange)"></span> Code
+                </button>
+            </div>
+
+            <!-- QUICK ACTIONS -->
+            <div class="quick-actions">
+                <button class="qk-btn" onclick="quickSearch('prompt-generator')"><span class="qk-icon">🎯</span> Prompt Generator</button>
+                <button class="qk-btn" onclick="quickSearch('builder chain')"><span class="qk-icon">🔗</span> Builder Chain</button>
+                <button class="qk-btn" onclick="quickSearch('CSS Variablen')"><span class="qk-icon">🎨</span> CSS Variables</button>
+                <button class="qk-btn" onclick="quickSearch('Ralph Loop')"><span class="qk-icon">🔄</span> Ralph Loop</button>
+                <button class="qk-btn" onclick="quickSearch('Iceberg archiv')"><span class="qk-icon">🧊</span> Iceberg</button>
+            </div>
+        </section>
+
+        <!-- RESULTS -->
+        <div class="results-area" id="resultsArea"></div>
+
+        <!-- STATS FOOTER -->
+        <div class="stats-footer">
+            <div class="sf-card">
+                <div class="sf-label">Module indexiert</div>
+                <div class="sf-value" style="color:var(--green)" id="statModules">84</div>
+                <div class="sf-sub">im Dashboard</div>
+            </div>
+            <div class="sf-card">
+                <div class="sf-label">Suchanfragen</div>
+                <div class="sf-value" style="color:var(--cyan)" id="statQueries">0</div>
+                <div class="sf-sub">diese Session</div>
+            </div>
+            <div class="sf-card">
+                <div class="sf-label">Treffer</div>
+                <div class="sf-value" style="color:var(--yellow)" id="statHits">0</div>
+                <div class="sf-sub">gefunden</div>
+            </div>
+            <div class="sf-card">
+                <div class="sf-label">Ø Antwortzeit</div>
+                <div class="sf-value" style="color:var(--purple)" id="statTime">—</div>
+                <div class="sf-sub">Millisekunden</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KEYBOARD HINT -->
+    <div class="kbd-hint">
+        <span class="kbd">Ctrl+K</span>
+        <span style="font-size:9px;color:var(--muted)">Suche fokussieren</span>
+    </div>
+
+    <script>
+    /* ═══ DkZ Search™ Engine ═══
+       © DEVKiTZ™ 2026 — Multi-Source Search Module
+    */
+
+    // ── Module Registry (simulated index) ──
+    const MODULE_INDEX = [
+        { name: 'Hub', icon: '⚡', path: '../../hub/', desc: 'Auto-Discovery Dashboard mit Modul-Management, Error-Detection und Health-Checks', tags: ['core', 'navigation', 'dashboard'], source: 'modules' },
+        { name: 'Mainboard', icon: '🖥️', path: '../mainboard/', desc: 'Zentrales Command Center — Morpheus Blueprint für System-Steuerung', tags: ['core', 'system', 'control'], source: 'modules' },
+        { name: 'Prompt Generator', icon: '🎯', path: '../prompt-generator/', desc: '344 Templates in 35 Kategorien — KI-Prompt Werkstatt mit Source Tags', tags: ['ki', 'prompts', 'templates'], source: 'modules' },
+        { name: 'AI Chat', icon: '🤖', path: '../ai_chat/', desc: 'KI-Chat Interface für direkte Kommunikation mit AI-Modellen', tags: ['ki', 'chat', 'ai'], source: 'modules' },
+        { name: 'Iceberg', icon: '🧊', path: '../iceberg/', desc: 'DataLakeHouse — Backup, Google Drive Sync, Real-Time Logging, Archivierung', tags: ['daten', 'backup', 'archiv'], source: 'modules' },
+        { name: 'WissenHub', icon: '📚', path: '../wissen-hub/', desc: 'Iceberg Archiv mit Catalog, Tag-System und Rubrik-Navigation', tags: ['wissen', 'archiv', 'docs'], source: 'modules' },
+        { name: 'Ruleboard', icon: '📋', path: '../ruleboard/', desc: '25 Regeln, Ordnerstruktur-Viewer, integrierter KI-Assistant', tags: ['regeln', 'system', 'docs'], source: 'modules' },
+        { name: 'Agent Builder', icon: '🤖', path: '../agent-builder/', desc: 'JAMEZ™ Builder — Agenten konfigurieren mit Templates und 5 Tools', tags: ['builder', 'agenten', 'ki'], source: 'modules' },
+        { name: 'Action Builder', icon: '⚡', path: '../action-builder/', desc: 'Visual Action Builder mit Drag & Drop für atomare Aktionen', tags: ['builder', 'actions', 'visual'], source: 'modules' },
+        { name: 'Skill Builder', icon: '🛠️', path: '../skill-builder/', desc: 'Skills zusammensetzen und kategorisieren', tags: ['builder', 'skills'], source: 'modules' },
+        { name: 'Workflow Builder', icon: '🔄', path: '../workflow-builder/', desc: 'Flow Builder für verkettete Skill-Workflows', tags: ['builder', 'workflow', 'automation'], source: 'modules' },
+        { name: 'Image Forge', icon: '🖼️', path: '../image-forge/', desc: 'Bild-Generierung mit KI, Gallery-Export und Prompt-Optimierung', tags: ['kreativ', 'bilder', 'ki'], source: 'modules' },
+        { name: 'Color Picker', icon: '🎨', path: '../color-picker/', desc: 'Professioneller Farb-Picker mit Paletten und DkZ™ Design System', tags: ['design', 'farben', 'tools'], source: 'modules' },
+        { name: 'QR Generator', icon: '📱', path: '../qr-generator/', desc: 'QR-Code Generator mit SVG-Export und Custom Styling', tags: ['tools', 'generator', 'export'], source: 'modules' },
+        { name: 'Snippet Manager', icon: '📝', path: '../snippet-manager/', desc: 'Code-Snippets verwalten, taggen und wiederverwenden', tags: ['code', 'snippets', 'tools'], source: 'modules' },
+        { name: 'Loop Dashboard', icon: '🔄', path: '../loop-dashboard/', desc: 'Ralph-Loop™ Monitoring — Status aller 6 Loop-Phasen', tags: ['monitoring', 'ralph-loop', 'system'], source: 'modules' },
+        { name: 'Agenten Dashboard', icon: '👾', path: '../../agenten_dashboard/', desc: 'Wiki, Pixel Office, 8-Bit Monitoring, 5-Tab Interface', tags: ['agenten', 'wiki', 'monitoring'], source: 'modules' },
+        { name: 'Black8 Builder', icon: '🕸️', path: '../black8-builder/', desc: 'Node-basierter Builder für Telegram, Email und Multi-Channel', tags: ['builder', 'nodes', 'channels'], source: 'modules' },
+        { name: 'Team Builder', icon: '👥', path: '../team-builder/', desc: 'Agenten-Teams zusammenstellen und orchestrieren', tags: ['builder', 'teams', 'agenten'], source: 'modules' },
+        { name: 'Hood Builder', icon: '🏘️', path: '../hood-builder/', desc: 'Nachbarschaften und Agenten-Netzwerke konfigurieren', tags: ['builder', 'netzwerk'], source: 'modules' },
+        // Docs
+        { name: 'CLAUDE.md', icon: '📖', path: '../../CLAUDE.md', desc: 'Hauptkonfiguration — Regeln, Tech-Stack, Module, Workflow-Definitionen', tags: ['config', 'regeln', 'core'], source: 'docs' },
+        { name: 'REGELWERK.md', icon: '⚖️', path: '../../REGELWERK.md', desc: 'Detailliertes Regelwerk mit allen §-Paragraphen für DkZ™ Entwicklung', tags: ['regeln', 'paragraphen'], source: 'docs' },
+        { name: 'BLAUPAUSE.md', icon: '🏗️', path: '../../BLAUPAUSE.md', desc: 'Architektur-Blueprint für das Dashboard mit Modul-Spezifikationen', tags: ['architektur', 'plan'], source: 'docs' },
+        // KI-Wissen
+        { name: 'BMAD™ Methodik', icon: '🧠', path: '#', desc: 'Blueprint → Mapping → Analyse → Design — 7-Agenten Entwicklungsmethodik', tags: ['methodik', 'bmad', 'agenten'], source: 'ki' },
+        { name: 'Ralph-Loop™', icon: '🔁', path: '#', desc: '6-Phasen Loop: LESEN → SPAWN → EXECUTE → VERIFY → COMMIT → LOOP', tags: ['workflow', 'ralph-loop', 'core'], source: 'ki' },
+        { name: 'DkZ Design System v2', icon: '🎨', path: '#', desc: 'CSS Custom Properties, Inter + JetBrains Mono, Accent #fa1e4e, Dark Theme', tags: ['design', 'css', 'theme'], source: 'ki' },
+        { name: 'Builder Chain Pattern', icon: '🔗', path: '#', desc: 'Action → Skill → Workflow → Agent → Team → Hood → Leadership', tags: ['pattern', 'builder', 'chain'], source: 'ki' },
+        // Code
+        { name: 'dkz-theme.css', icon: '🎨', path: '../../shared/dkz-theme.css', desc: 'Shared CSS Theme — Custom Properties, Reset, Glassmorphism Utilities', tags: ['css', 'shared', 'theme'], source: 'code' },
+        { name: 'dkz-navbar.js', icon: '🧭', path: '../../shared/dkz-navbar.js', desc: 'Shared Navigation Bar Component für alle Module', tags: ['js', 'shared', 'navigation'], source: 'code' },
+        { name: 'dkz-debug.js', icon: '🐛', path: '../../shared/dkz-debug.js', desc: 'Debug-Overlay mit Console, Performance Metrics und Error Tracking', tags: ['js', 'shared', 'debug'], source: 'code' },
+        { name: 'dkz-james.js', icon: '🎯', path: '../../shared/dkz-james.js', desc: 'James™ Guardian Script — Block-System, Metadaten-Header, Überwachung', tags: ['js', 'shared', 'guardian'], source: 'code' },
+    ];
+
+    let currentSource = 'all';
+    let searchCount = 0;
+    let totalHits = 0;
+
+    // ── Escape Function (XSS-Schutz § Regel 1) ──
+    function esc(str) {
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
+
+    // ── Set Source Tab ──
+    function setSource(el) {
+        document.querySelectorAll('.src-tab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+        currentSource = el.dataset.source;
+        // Re-run search if there's a query
+        const q = document.getElementById('searchInput').value.trim();
+        if (q) performSearch();
+    }
+
+    // ── Quick Search ──
+    function quickSearch(term) {
+        document.getElementById('searchInput').value = term;
+        performSearch();
+    }
+
+    // ── MAIN SEARCH ──
+    function performSearch() {
+        const query = document.getElementById('searchInput').value.trim().toLowerCase();
+        if (!query) {
+            showEmpty();
+            return;
+        }
+
+        const startTime = performance.now();
+
+        // Show loading
+        document.getElementById('loadingBar').classList.add('active');
+
+        // Simulate search delay for realism
+        setTimeout(() => {
+            const results = MODULE_INDEX.filter(item => {
+                // Source filter
+                if (currentSource !== 'all' && item.source !== currentSource) return false;
+
+                // Text match
+                const haystack = `${item.name} ${item.desc} ${item.tags.join(' ')}`.toLowerCase();
+                const words = query.split(/\s+/);
+                return words.every(w => haystack.includes(w));
+            });
+
+            const searchTime = Math.round(performance.now() - startTime);
+            searchCount++;
+            totalHits += results.length;
+
+            // Update stats
+            document.getElementById('statQueries').textContent = searchCount;
+            document.getElementById('statHits').textContent = totalHits;
+            document.getElementById('statTime').textContent = searchTime + 'ms';
+
+            // Hide loading
+            document.getElementById('loadingBar').classList.remove('active');
+
+            // Render results
+            renderResults(results, query, searchTime);
+        }, 180 + Math.random() * 120);
+    }
+
+    // ── Render Results ──
+    function renderResults(results, query, time) {
+        const area = document.getElementById('resultsArea');
+
+        if (results.length === 0) {
+            area.innerHTML = `
+                <div class="empty-state">
+                    <div class="es-icon">🔍</div>
+                    <div class="es-title">Keine Treffer für "${esc(query)}"</div>
+                    <div class="es-sub">Versuche andere Suchbegriffe oder wechsle die Quelle. Tipp: Nutze einzelne Schlüsselwörter.</div>
+                </div>`;
+            return;
+        }
+
+        const sourceColors = {
+            modules: 'var(--green)',
+            docs: 'var(--blue)',
+            ki: 'var(--yellow)',
+            code: 'var(--orange)',
+            web: 'var(--purple)'
+        };
+
+        const sourceLabels = {
+            modules: 'MODUL',
+            docs: 'DOKUMENTATION',
+            ki: 'KI-WISSEN',
+            code: 'CODE',
+            web: 'WEB'
+        };
+
+        let html = `
+            <div class="results-header">
+                <div class="rh-title">
+                    Ergebnisse <span class="rh-count">${results.length}</span>
+                </div>
+                <div class="rh-time">⚡ ${time}ms</div>
+            </div>`;
+
+        results.forEach(r => {
+            const color = sourceColors[r.source] || 'var(--muted)';
+            const label = sourceLabels[r.source] || r.source.toUpperCase();
+
+            // Highlight matches in description
+            let desc = esc(r.desc);
+            const words = query.split(/\s+/);
+            words.forEach(w => {
+                if (w.length > 1) {
+                    const re = new RegExp(`(${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                    desc = desc.replace(re, '<mark>$1</mark>');
+                }
+            });
+
+            const tags = r.tags.map(t => `<span class="rc-tag">${esc(t)}</span>`).join('');
+
+            html += `
+                <div class="result-card" onclick="window.open('${esc(r.path)}', '_self')">
+                    <div class="rc-source">
+                        <span class="src-dot" style="background:${color}"></span>
+                        ${label}
+                    </div>
+                    <div class="rc-title">${esc(r.icon)} ${esc(r.name)}</div>
+                    <div class="rc-url">${esc(r.path)}</div>
+                    <div class="rc-desc">${desc}</div>
+                    <div class="rc-tags">${tags}</div>
+                </div>`;
+        });
+
+        area.innerHTML = html;
+    }
+
+    // ── Show Empty State ──
+    function showEmpty() {
+        document.getElementById('resultsArea').innerHTML = `
+            <div class="empty-state">
+                <div class="es-icon">🌐</div>
+                <div class="es-title">Bereit zum Suchen</div>
+                <div class="es-sub">Durchsuche 84+ Module, Dokumentation, KI-Wissen und Code. Tippe deine Anfrage ein oder nutze die Quick-Actions oben.</div>
+            </div>`;
+    }
+
+    // ── Keyboard Shortcuts ──
+    document.addEventListener('keydown', e => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            document.getElementById('searchInput').focus();
+        }
+        if (e.key === 'Enter' && document.activeElement === document.getElementById('searchInput')) {
+            performSearch();
+        }
+        if (e.key === 'Escape') {
+            document.getElementById('searchInput').blur();
+        }
+    });
+
+    // ── Settings Modal (placeholder) ──
+    function openSettings() {
+        alert('⚙️ DkZ Search™ Config\n\n• Google CSE API Key: [nicht konfiguriert]\n• Programmable Search Engine ID: [nicht konfiguriert]\n\nKonfiguriere in features.json für Live-Web-Suche.');
+    }
+
+    // ── Initialize ──
+    showEmpty();
+
+    // ── Live-Search (type-ahead) ──
+    let debounce;
+    document.getElementById('searchInput').addEventListener('input', () => {
+        clearTimeout(debounce);
+        debounce = setTimeout(() => {
+            const q = document.getElementById('searchInput').value.trim();
+            if (q.length >= 2) performSearch();
+            else if (q.length === 0) showEmpty();
+        }, 250);
+    });
+
+    console.log('🔍 DkZ Search™ initialized — 84+ Module indexiert');
+    </script>
+<!-- Shared Scripts (portable: optional) -->
+<script>
+(function(){
+    const base='../../shared/';
+    const scripts=['dkz-headbar.js','dkz-navbar.js','dkz-debug.js','dkz-guide.js','dkz-crosslinks.js','dkz-copilot.js','dkz-console.js'];
+    scripts.forEach(s=>{
+        const el=document.createElement('script');
+        el.src=base+s;
+        el.onerror=()=>{};
+        document.body.appendChild(el);
+    });
+})();
+</script>
+</body>
+</html>

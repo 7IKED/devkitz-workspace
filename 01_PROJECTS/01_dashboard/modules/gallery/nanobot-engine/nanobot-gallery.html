@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEVKiTZ™ — Nanobot Gallery · Art 6</title>
+<meta name="description" content="VipeCoding Nanobot Gallery — 13.319+ Assets mit Dissolve/Reassemble FX Engine">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--accent:#fa1e4e;--accent-soft:rgba(250,30,78,0.12);--bg:#060608;
+--bg-card:rgba(18,18,24,0.85);--text-primary:#e8e8ec;--text-secondary:#8a8a9a;
+--green:#00ff88;--yellow:#ffb800;--red:#ff3b5c;--blue:#3b82f6;--cyan:#00ffff;
+--font-main:'Inter',sans-serif;--font-mono:'JetBrains Mono',monospace;
+--radius-md:12px;--radius-lg:16px;--shadow-card:0 8px 32px rgba(0,0,0,0.4);
+}
+html,body{height:100%;overflow-x:hidden}
+body{font-family:var(--font-main);background:var(--bg);color:var(--text-primary)}
+
+/* Canvas BG */
+#nanobotCanvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* Content Layer */
+.content{position:relative;z-index:10;min-height:100vh}
+
+/* Hero */
+.hero{padding:80px 40px 50px;text-align:center;position:relative}
+.hero h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;
+background:linear-gradient(135deg,var(--accent),var(--yellow),var(--green));
+-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+background-clip:text;letter-spacing:-1px;margin-bottom:12px}
+.hero .sub{color:var(--text-secondary);font-size:1rem;max-width:600px;margin:0 auto}
+.hero .stats{display:flex;gap:24px;justify-content:center;margin-top:24px;flex-wrap:wrap}
+.hero .stat{background:var(--bg-card);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.06);
+border-radius:var(--radius-md);padding:12px 20px;text-align:center}
+.hero .stat .num{font-size:1.5rem;font-weight:700;color:var(--green);font-family:var(--font-mono)}
+.hero .stat .lbl{font-size:0.7rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+
+/* Controls */
+.controls{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;padding:0 40px 30px}
+.controls select,.controls input{background:var(--bg-card);backdrop-filter:blur(20px);
+border:1px solid rgba(255,255,255,0.08);color:var(--text-primary);padding:10px 16px;
+border-radius:var(--radius-md);font-family:var(--font-main);font-size:0.85rem;outline:none;
+transition:border-color 0.3s}
+.controls select:focus,.controls input:focus{border-color:var(--accent)}
+.controls input{min-width:240px}
+.controls select{cursor:pointer;min-width:160px}
+
+/* Grid */
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+gap:20px;padding:0 40px 60px;max-width:1600px;margin:0 auto}
+
+/* Card — Nanobot Tile */
+.tile{background:var(--bg-card);backdrop-filter:blur(20px);
+border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius-lg);
+overflow:hidden;cursor:pointer;transition:transform 0.4s cubic-bezier(0.16,1,0.3,1),
+box-shadow 0.4s,border-color 0.3s;position:relative}
+.tile:hover{transform:translateY(-6px) scale(1.02);
+box-shadow:0 16px 48px rgba(250,30,78,0.15);border-color:rgba(250,30,78,0.3)}
+.tile::after{content:'';position:absolute;inset:0;
+background:linear-gradient(180deg,transparent 50%,rgba(6,6,8,0.8));pointer-events:none}
+.tile img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;
+transition:transform 0.5s cubic-bezier(0.16,1,0.3,1)}
+.tile:hover img{transform:scale(1.08)}
+.tile .info{position:relative;z-index:2;padding:14px 16px}
+.tile .info h3{font-size:0.9rem;font-weight:600;margin-bottom:4px;
+white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .info .cat{font-size:0.7rem;color:var(--accent);text-transform:uppercase;
+letter-spacing:1px;font-weight:600}
+.tile .info .prompt-preview{font-size:0.65rem;color:var(--text-secondary);
+margin-top:6px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;
+-webkit-box-orient:vertical;overflow:hidden;font-family:var(--font-mono)}
+.tile .badge{position:absolute;top:12px;right:12px;z-index:3;
+background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);color:var(--green);
+font-size:0.6rem;font-weight:600;padding:4px 8px;border-radius:6px;
+border:1px solid rgba(0,255,136,0.3);text-transform:uppercase;letter-spacing:0.5px}
+
+/* Lightbox */
+.lightbox{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.92);
+backdrop-filter:blur(30px);display:none;align-items:center;justify-content:center;
+flex-direction:column;padding:40px}
+.lightbox.active{display:flex}
+.lightbox img{max-width:90vw;max-height:65vh;border-radius:var(--radius-lg);
+box-shadow:0 24px 80px rgba(0,0,0,0.6)}
+.lightbox .lb-info{margin-top:20px;text-align:center;max-width:700px}
+.lightbox .lb-title{font-size:1.2rem;font-weight:700}
+.lightbox .lb-prompt{font-family:var(--font-mono);font-size:0.75rem;
+color:var(--text-secondary);margin-top:10px;line-height:1.6;max-height:120px;
+overflow-y:auto;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;
+border:1px solid rgba(255,255,255,0.06)}
+.lightbox .lb-actions{display:flex;gap:12px;margin-top:16px;justify-content:center}
+.lightbox .lb-btn{padding:8px 20px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);
+background:rgba(255,255,255,0.05);color:var(--text-primary);cursor:pointer;
+font-size:0.8rem;transition:all 0.3s}
+.lightbox .lb-btn:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.lightbox .lb-close{position:absolute;top:20px;right:30px;font-size:2rem;
+color:var(--text-secondary);cursor:pointer;background:none;border:none;
+transition:color 0.3s}
+.lightbox .lb-close:hover{color:var(--accent)}
+
+/* Toast */
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);
+background:var(--green);color:#000;padding:10px 24px;border-radius:8px;
+font-size:0.85rem;font-weight:600;z-index:2000;transition:transform 0.4s cubic-bezier(0.16,1,0.3,1);
+pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* Responsive */
+@media(max-width:768px){
+.gallery-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;padding:0 16px 40px}
+.hero{padding:60px 20px 30px}
+.controls{padding:0 16px 20px}
+}
+</style>
+</head>
+<body>
+<canvas id="nanobotCanvas"></canvas>
+
+<div class="content">
+    <!-- Hero -->
+    <section class="hero">
+        <h1>🧬 Nanobot Gallery</h1>
+        <p class="sub">VipeCoding Art 6 — 13.319+ Assets mit Dissolve/Reassemble FX · Klick auf Kacheln für Nanobot-Explosion</p>
+        <div class="stats">
+            <div class="stat"><div class="num" id="totalCount">0</div><div class="lbl">Assets</div></div>
+            <div class="stat"><div class="num">9</div><div class="lbl">Kategorien</div></div>
+            <div class="stat"><div class="num">76</div><div class="lbl">MIT Prompts</div></div>
+            <div class="stat"><div class="num">4K+</div><div class="lbl">Resolution</div></div>
+        </div>
+    </section>
+
+    <!-- Controls -->
+    <div class="controls">
+        <select id="filterCategory">
+            <option value="all">Alle Kategorien</option>
+            <option value="obs-fx">🎬 OBS FX (56)</option>
+            <option value="geek">💀 Geek Culture (20)</option>
+            <option value="backgrounds">🎨 DkZ Backgrounds (302)</option>
+            <option value="templates">📐 Templates (250)</option>
+            <option value="flyer">🖨️ Flyer (200)</option>
+            <option value="icons">🏷️ Icons & Logos (190+)</option>
+            <option value="nlm">🧠 NotebookLM (11)</option>
+            <option value="brain">🧠 Brain (1.500+)</option>
+            <option value="stitch">🤖 Stitch (8 Skills)</option>
+        </select>
+        <input type="search" id="searchInput" placeholder="🔍 Assets durchsuchen...">
+        <select id="sortOrder">
+            <option value="name">Name A-Z</option>
+            <option value="category">Kategorie</option>
+            <option value="newest">Neueste</option>
+        </select>
+    </div>
+
+    <!-- Gallery Grid -->
+    <div class="gallery-grid" id="galleryGrid"></div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+    <button class="lb-close" id="lbClose">&times;</button>
+    <img id="lbImg" src="" alt="">
+    <div class="lb-info">
+        <div class="lb-title" id="lbTitle"></div>
+        <div class="lb-prompt" id="lbPrompt"></div>
+        <div class="lb-actions">
+            <button class="lb-btn" id="btnCopyPrompt">📋 Prompt kopieren</button>
+            <button class="lb-btn" id="btnDissolve">🧬 Dissolve FX</button>
+            <button class="lb-btn" id="btnDownload">⬇ Download</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="nanobot-fx.js"></script>
+<script>
+/* ═══════════════════════════════════════════ */
+/* Nanobot Gallery Engine                      */
+/* ═══════════════════════════════════════════ */
+function esc(str){const d=document.createElement('div');d.textContent=str;return d.innerHTML}
+
+// ─── Asset Database ───
+const ASSETS = [
+    // OBS FX Basis
+    {id:'B1',name:'Neon Hexagon BG',cat:'obs-fx',img:'../assets/obs_neon_hexagon_bg.png',prompt:'High-end abstract neon green and black honeycomb hexagon matrix background, 3D render, glowing volumetric light, streaming overlay background, premium 8k resolution'},
+    {id:'B3',name:'Hexagon Neon Grid',cat:'obs-fx',img:'../assets/obs_hexagon_neon_grid.png',prompt:'Ultra high definition 8K cinematic render of a futuristic honeycomb hexagonal grid structure, glowing neon green (#00ff88) edges on pure black background, volumetric fog, cyberpunk aesthetic'},
+    {id:'B4',name:'Scene Transition Wipe',cat:'obs-fx',img:'../assets/obs_scene_transition_wipe.png',prompt:'Ultra high definition cinematic 8K render of a dramatic scene transition effect, shattered glass fragments with neon green and hot pink glowing edges flying across black void'},
+    {id:'B5',name:'Hearts Love Burst',cat:'obs-fx',img:'../assets/obs_hearts_love_burst.png',prompt:'Ultra high definition 8K cinematic render of exploding luminous neon hearts in hot pink and magenta, sparkling particle trails, bokeh light effects'},
+    {id:'B6',name:'Hype Fire Explosion',cat:'obs-fx',img:'../assets/obs_hype_fire_explosion.png',prompt:'Ultra high definition 8K cinematic render of an epic fire and energy explosion, neon orange and gold flames mixed with electric blue lightning bolts'},
+    // OBS FX 01-10
+    {id:'FX01',name:'Neon Hearts Rain',cat:'obs-fx',img:'../assets/fx_01_neon_hearts_rain.png',prompt:'Dozens of glowing neon pink hearts falling like rain from top, sparkling trails, isolated on pure black background, 4K, volumetric glow'},
+    {id:'FX02',name:'Gold Confetti Burst',cat:'obs-fx',img:'../assets/fx_02_gold_confetti_burst.png',prompt:'Explosive burst of golden metallic confetti and glitter particles radiating from center, isolated on pure black background, 4K, celebration effect'},
+    {id:'FX03',name:'Electric Lightning',cat:'obs-fx',img:'../assets/fx_03_electric_lightning.png',prompt:'Multiple electric blue and purple lightning bolts branching across frame, plasma energy crackling, isolated on pure black background, 4K'},
+    {id:'FX08',name:'Matrix Rain',cat:'obs-fx',img:'../assets/fx_08_matrix_rain.png',prompt:'Green digital matrix code rain falling vertically, glowing characters and symbols, cyberpunk hacker aesthetic, isolated on pure black background, 4K'},
+    {id:'FX09',name:'Galaxy Dust',cat:'obs-fx',img:'../assets/fx_09_galaxy_dust.png',prompt:'Swirling galaxy stardust and cosmic nebula particles, purple blue and pink cosmic clouds, isolated on pure black background, 4K'},
+    // Geek Gallery
+    {id:'G01',name:'DEVKiTZ Logo Neon',cat:'geek',img:'../assets/devkitz_logo_neon.png',prompt:'Ultra high definition 8K render of the text DEVKiTZ as a futuristic neon sign, glowing hot pink and cyan neon tubes, dark black background, cyberpunk aesthetic'},
+    {id:'G02',name:'DEVKiTZ Logo Cyber',cat:'geek',img:'../assets/devkitz_logo_cyber.png',prompt:'8K holographic cyber logo DEVKiTZ floating in dark void, scanning laser lines, digital glitch effects, transparent glass material'},
+    {id:'G03',name:'DEVKiTZ Logo Gold',cat:'geek',img:'../assets/devkitz_logo_gold.png',prompt:'8K premium gold embossed DEVKiTZ logo on black marble surface, luxury branding, reflective metallic gold, subtle spotlight'},
+    {id:'G06',name:'Circuit Skull',cat:'geek',img:'../assets/geek_circuit_skull.png',prompt:'8K render of a human skull made entirely of glowing circuit board traces, neon green pathways, microchip eyes, cyberpunk aesthetic'},
+    {id:'G07',name:'Hacker Terminal',cat:'geek',img:'../assets/geek_hacker_terminal.png',prompt:'8K cinematic render of a hacker dual-monitor setup with green terminal code scrolling, dark room, keyboard RGB glow'},
+    {id:'G09',name:'Retro Arcade',cat:'geek',img:'../assets/geek_retro_arcade.png',prompt:'8K isometric render of a retro arcade cabinet with pixel art screen, neon glow, synthwave colors, 80s nostalgia'},
+    {id:'G12',name:'Docker Whale',cat:'geek',img:'../assets/geek_docker_whale.png',prompt:'8K stylized Docker whale made of glowing blue containers, neon shipping containers stacked on its back'},
+    {id:'G13',name:'Git Tree',cat:'geek',img:'../assets/geek_git_tree.png',prompt:'8K visualization of a Git commit tree as a bioluminescent tree, branches as code branches, glowing nodes'},
+    {id:'G15',name:'Neural Chip',cat:'geek',img:'../assets/geek_neural_chip.png',prompt:'8K close-up of a neural processing chip with visible AI neural pathways, golden traces, quantum computing aesthetic'},
+    {id:'G19',name:'AI Brain Network',cat:'geek',img:'../assets/ai_brain_network.png',prompt:'8K artificial intelligence brain visualization, neural network connections glowing in blue and purple, synaptic activity'},
+    // Category placeholders for massive collections
+    {id:'BG-L',name:'Landscape Collection',cat:'backgrounds',img:'',prompt:'30 Multi-Color 16:9 Backgrounds — DkZ Design System v2',count:30},
+    {id:'BG-P',name:'Portrait Collection',cat:'backgrounds',img:'',prompt:'30 Multi-Color 9:16 Portrait Backgrounds',count:30},
+    {id:'BG-R',name:'Red Neon Collection',cat:'backgrounds',img:'',prompt:'77 DkZ Branded Red Backgrounds — Matt & Neon Variants',count:77},
+    {id:'TPL',name:'Coding Templates',cat:'templates',img:'',prompt:'150 UI-Vorlagen, Layout-Muster, Component Templates',count:150},
+    {id:'ELM',name:'UI Elements',cat:'templates',img:'',prompt:'100 Buttons, Cards, Widgets, Interactive Components',count:100},
+    {id:'FLY-P',name:'Product Flyers',cat:'flyer',img:'',prompt:'150 Produkt-Flyer, Print-Designs, Vordrucke',count:150},
+    {id:'FLY-S',name:'Social Media',cat:'flyer',img:'',prompt:'50 Social Media Posts, Banners, Stories',count:50},
+    {id:'NLM',name:'NotebookLM Mind Maps',cat:'nlm',img:'',prompt:'11 Mind Maps + 394 MB JSON Exports',count:11},
+];
+
+const CAT_LABELS = {
+    'obs-fx':'🎬 OBS FX','geek':'💀 Geek','backgrounds':'🎨 Backgrounds',
+    'templates':'📐 Templates','flyer':'🖨️ Flyer','icons':'🏷️ Icons',
+    'nlm':'🧠 NLM','brain':'🧠 Brain','stitch':'🤖 Stitch'
+};
+
+// ─── Render ───
+const grid = document.getElementById('galleryGrid');
+const searchInput = document.getElementById('searchInput');
+const filterCat = document.getElementById('filterCategory');
+const totalEl = document.getElementById('totalCount');
+
+function renderGallery() {
+    const cat = filterCat.value;
+    const q = searchInput.value.toLowerCase().trim();
+    let filtered = ASSETS;
+    if (cat !== 'all') filtered = filtered.filter(a => a.cat === cat);
+    if (q) filtered = filtered.filter(a => a.name.toLowerCase().includes(q) || (a.prompt && a.prompt.toLowerCase().includes(q)));
+
+    let total = 0;
+    grid.innerHTML = filtered.map(a => {
+        total += a.count || 1;
+        const hasImg = a.img && a.img !== '';
+        const imgHtml = hasImg
+            ? `<img src="${esc(a.img)}" alt="${esc(a.name)}" loading="lazy" onerror="this.style.display='none'">`
+            : `<div style="aspect-ratio:16/10;background:linear-gradient(135deg,rgba(250,30,78,0.15),rgba(0,255,136,0.08));display:flex;align-items:center;justify-content:center;font-size:3rem">${(CAT_LABELS[a.cat]||'📦').split(' ')[0]}</div>`;
+        const badge = a.count ? `<span class="badge">${a.count} Files</span>` : hasImg ? '<span class="badge">4K+</span>' : '';
+        return `<div class="tile" data-id="${esc(a.id)}" onclick="openLightbox('${esc(a.id)}')">
+            ${badge}${imgHtml}
+            <div class="info">
+                <div class="cat">${esc(CAT_LABELS[a.cat]||a.cat)}</div>
+                <h3>${esc(a.name)}</h3>
+                ${a.prompt ? `<div class="prompt-preview">${esc(a.prompt.substring(0,100))}...</div>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+    totalEl.textContent = total.toLocaleString();
+}
+
+filterCat.addEventListener('change', renderGallery);
+searchInput.addEventListener('input', renderGallery);
+
+// ─── Lightbox ───
+const lightbox = document.getElementById('lightbox');
+let currentAsset = null;
+
+window.openLightbox = function(id) {
+    currentAsset = ASSETS.find(a => a.id === id);
+    if (!currentAsset) return;
+
+    // Nanobot explode effect on tile
+    const tile = document.querySelector(`.tile[data-id="${id}"]`);
+    if (tile && typeof NanobotFX !== 'undefined') {
+        NanobotFX.dissolveElement(tile, { particles: 400 });
+        setTimeout(() => NanobotFX.reassembleElement(tile, { particles: 400 }), 1500);
+    }
+
+    const img = document.getElementById('lbImg');
+    if (currentAsset.img) { img.src = currentAsset.img; img.style.display = 'block'; }
+    else { img.style.display = 'none'; }
+    document.getElementById('lbTitle').textContent = currentAsset.name;
+    document.getElementById('lbPrompt').textContent = currentAsset.prompt || 'Kein Prompt verfügbar';
+    lightbox.classList.add('active');
+};
+
+document.getElementById('lbClose').addEventListener('click', () => lightbox.classList.remove('active'));
+lightbox.addEventListener('click', e => { if (e.target === lightbox) lightbox.classList.remove('active'); });
+
+// Copy prompt
+document.getElementById('btnCopyPrompt').addEventListener('click', () => {
+    if (currentAsset && currentAsset.prompt) {
+        navigator.clipboard.writeText(currentAsset.prompt).then(() => showToast('✅ Prompt kopiert!'));
+    }
+});
+
+// Dissolve FX button
+document.getElementById('btnDissolve').addEventListener('click', () => {
+    const img = document.getElementById('lbImg');
+    if (typeof NanobotFX !== 'undefined') NanobotFX.explodeTile(img);
+});
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── Init ───
+document.addEventListener('DOMContentLoaded', () => {
+    NanobotFX.init(document.getElementById('nanobotCanvas'));
+    renderGallery();
+});
+
+// Keyboard
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') lightbox.classList.remove('active');
+});
+</script>
+</body>
+</html>

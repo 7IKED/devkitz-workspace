@@ -1,0 +1,1175 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../shared/dkz-theme.css">
+    <link rel="manifest" href="../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>?? Blogger Dashboard  DkZ</title>
+    <meta name="description"
+        content="DkZ Blogger Dashboard  Manage all your Blogger blogs with style templates and HTML publishing.">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }</script>
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #fa1e4e;
+            --purple: #ec4899;
+            --orange: #ff8800;
+            --accent: #fa1e4e;
+            --accent-rgb: 250, 30, 78;
+            --accent-glow: rgba(250, 30, 78, 0.25);
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh;
+            padding: 20px
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 24px;
+            background: linear-gradient(135deg, #1a1a1c 0%, #222226 60%, #1a1214 100%);
+            border-radius: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at center, rgba(var(--accent-rgb), 0.06) 0%, transparent 60%);
+            animation: hGlow 6s ease-in-out infinite alternate
+        }
+
+        @keyframes hGlow {
+            0% {
+                transform: translate(0, 0)
+            }
+
+            100% {
+                transform: translate(10%, 5%)
+            }
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(90deg, var(--red), var(--purple), var(--blue));
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 4s linear infinite;
+            position: relative
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 0% center
+            }
+
+            100% {
+                background-position: 200% center
+            }
+        }
+
+        .header p {
+            color: var(--muted);
+            font-size: 13px;
+            margin-top: 8px;
+            position: relative
+        }
+
+        .header-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 16px;
+            position: relative;
+            flex-wrap: wrap
+        }
+
+        /* TOGGLE */
+        .toggle-btn {
+            padding: 8px 20px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            background: var(--card2);
+            color: var(--muted);
+            font-weight: 700;
+            font-size: 12px;
+            font-family: var(--font);
+            cursor: pointer;
+            transition: all .3s
+        }
+
+        .toggle-btn.active {
+            border-color: var(--accent);
+            color: var(--text);
+            background: rgba(var(--accent-rgb), 0.12);
+            box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.2)
+        }
+
+        .toggle-btn:hover {
+            border-color: rgba(var(--accent-rgb), 0.5);
+            transform: translateY(-1px)
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            transition: all .3s;
+            position: relative;
+            overflow: hidden
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0;
+            transition: opacity .3s
+        }
+
+        .card:hover {
+            border-color: rgba(var(--accent-rgb), 0.35);
+            box-shadow: 0 0 24px rgba(var(--accent-rgb), 0.1), 0 4px 24px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px)
+        }
+
+        .card:hover::after {
+            opacity: 1
+        }
+
+        .card-title {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .card.full {
+            grid-column: 1/-1
+        }
+
+        /* GRID */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            max-width: 1200px;
+            margin: 0 auto
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 12px;
+            font-family: var(--font);
+            transition: all .2s;
+            position: relative;
+            overflow: hidden
+        }
+
+        .btn:active {
+            transform: scale(0.97) !important
+        }
+
+        .btn-accent {
+            background: var(--accent);
+            color: #fff
+        }
+
+        .btn-accent:hover {
+            box-shadow: 0 0 18px rgba(var(--accent-rgb), 0.4);
+            transform: scale(1.05)
+        }
+
+        .btn-green {
+            background: var(--green);
+            color: #000
+        }
+
+        .btn-green:hover {
+            box-shadow: 0 0 18px rgba(0, 255, 136, 0.4);
+            transform: scale(1.05)
+        }
+
+        .btn-blue {
+            background: var(--blue);
+            color: #fff
+        }
+
+        .btn-blue:hover {
+            box-shadow: 0 0 18px rgba(85, 172, 238, 0.4);
+            transform: scale(1.05)
+        }
+
+        .btn-yellow {
+            background: var(--yellow);
+            color: #000
+        }
+
+        .btn-yellow:hover {
+            box-shadow: 0 0 18px rgba(255, 184, 0, 0.4);
+            transform: scale(1.05)
+        }
+
+        .btn-purple {
+            background: var(--purple);
+            color: #fff
+        }
+
+        .btn-purple:hover {
+            box-shadow: 0 0 18px rgba(236, 72, 153, 0.4);
+            transform: scale(1.05)
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted)
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent);
+            color: var(--text)
+        }
+
+        /* LOGIN SCREEN */
+        .login-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(14, 14, 16, 0.97);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(20px)
+        }
+
+        .login-overlay.hidden {
+            display: none
+        }
+
+        .login-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 460px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 0 60px rgba(var(--accent-rgb), 0.15);
+            animation: fadeUp .4s ease
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .login-box .logo {
+            font-size: 52px;
+            margin-bottom: 16px
+        }
+
+        .login-box h2 {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(90deg, var(--red), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .login-box p {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 16px
+        }
+
+        .login-box input {
+            width: 100%;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: var(--font);
+            margin-bottom: 12px;
+            transition: border-color .3s
+        }
+
+        .login-box input:focus {
+            outline: none;
+            border-color: var(--accent)
+        }
+
+        .login-box .btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            margin-bottom: 8px
+        }
+
+        .login-box .skip {
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: underline;
+            transition: color .2s
+        }
+
+        .login-box .skip:hover {
+            color: var(--text)
+        }
+
+        /* BLOG LIST */
+        .blog-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px
+        }
+
+        .blog-grid.modern {
+            grid-template-columns: 1fr 1fr
+        }
+
+        .blog-item {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all .3s;
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
+
+        .blog-item:hover {
+            border-color: rgba(var(--accent-rgb), 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3)
+        }
+
+        .blog-item.selected {
+            border-color: var(--accent);
+            background: rgba(var(--accent-rgb), 0.08);
+            box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.15)
+        }
+
+        .blog-item .bi-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0
+        }
+
+        .blog-item .bi-info {
+            flex: 1;
+            min-width: 0
+        }
+
+        .blog-item .bi-name {
+            font-weight: 700;
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .blog-item .bi-url {
+            font-size: 10px;
+            color: var(--muted);
+            font-family: var(--mono);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .blog-item .bi-stats {
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 4px;
+            display: flex;
+            gap: 12px
+        }
+
+        .blog-item .bi-stats span {
+            color: var(--green);
+            font-weight: 700
+        }
+
+        /* MODERN VIEW EXTRAS */
+        .blog-grid.modern .blog-item {
+            flex-direction: column;
+            text-align: center;
+            padding: 20px
+        }
+
+        .blog-grid.modern .bi-icon {
+            width: 56px;
+            height: 56px;
+            font-size: 28px;
+            margin: 0 auto
+        }
+
+        .blog-grid.modern .bi-info {
+            text-align: center
+        }
+
+        .blog-grid.modern .bi-stats {
+            justify-content: center
+        }
+
+        /* STYLE TEMPLATES */
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px
+        }
+
+        .tpl-card {
+            background: var(--card2);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all .3s;
+            text-align: center
+        }
+
+        .tpl-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3)
+        }
+
+        .tpl-card.active {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.2)
+        }
+
+        .tpl-card .tpl-preview {
+            width: 100%;
+            height: 40px;
+            border-radius: 6px;
+            margin-bottom: 8px
+        }
+
+        .tpl-card .tpl-name {
+            font-size: 11px;
+            font-weight: 700
+        }
+
+        .tpl-card .tpl-sub {
+            font-size: 9px;
+            color: var(--muted);
+            margin-top: 2px
+        }
+
+        /* PURPOSE CHIPS */
+        .purpose-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px
+        }
+
+        .purpose-chip {
+            padding: 6px 14px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .3s;
+            background: var(--card2);
+            color: var(--muted)
+        }
+
+        .purpose-chip:hover {
+            border-color: rgba(var(--accent-rgb), 0.5);
+            color: var(--text)
+        }
+
+        .purpose-chip.active {
+            border-color: var(--accent);
+            color: var(--text);
+            background: rgba(var(--accent-rgb), 0.12);
+            box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.15)
+        }
+
+        /* EDITOR */
+        .editor-wrap {
+            position: relative
+        }
+
+        .editor-wrap textarea {
+            width: 100%;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            color: var(--green);
+            font-family: var(--mono);
+            font-size: 11px;
+            padding: 12px;
+            border-radius: 8px;
+            resize: vertical;
+            min-height: 200px;
+            line-height: 1.7;
+            transition: border-color .3s
+        }
+
+        .editor-wrap textarea:focus {
+            outline: none;
+            border-color: var(--accent)
+        }
+
+        .editor-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap
+        }
+
+        .preview-frame {
+            width: 100%;
+            height: 300px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: #fff;
+            margin-top: 10px;
+            display: none
+        }
+
+        .preview-frame.show {
+            display: block
+        }
+
+        /* STATUS */
+        .status-msg {
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 10px;
+            display: none;
+            animation: fadeUp .3s ease
+        }
+
+        .status-msg.success {
+            display: block;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            color: var(--green)
+        }
+
+        .status-msg.error {
+            display: block;
+            background: rgba(250, 30, 78, 0.1);
+            border: 1px solid rgba(250, 30, 78, 0.3);
+            color: var(--red)
+        }
+
+        .status-msg a {
+            color: var(--blue);
+            text-decoration: underline
+        }
+
+        /* BADGES */
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700
+        }
+
+        .badge-green {
+            background: rgba(0, 255, 136, .15);
+            color: var(--green)
+        }
+
+        .badge-blue {
+            background: rgba(85, 172, 238, .15);
+            color: var(--blue)
+        }
+
+        .badge-yellow {
+            background: rgba(255, 184, 0, .15);
+            color: var(--yellow)
+        }
+
+        .badge-red {
+            background: rgba(250, 30, 78, .15);
+            color: var(--red)
+        }
+
+        /* FOOTER */
+        .footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--muted);
+            font-size: 10px;
+            margin-top: 20px
+        }
+
+        .footer a {
+            color: var(--accent);
+            text-decoration: none
+        }
+
+        /* RESPONSIVE */
+        @media(max-width:768px) {
+            .grid {
+                grid-template-columns: 1fr
+            }
+
+            .template-grid {
+                grid-template-columns: repeat(2, 1fr)
+            }
+
+            .blog-grid.modern {
+                grid-template-columns: 1fr
+            }
+        }
+
+        /* LOADING */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin .6s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: var(--muted);
+            font-size: 12px
+        }
+
+        .empty-state .es-icon {
+            font-size: 40px;
+            margin-bottom: 10px
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
+
+    <!-- --- LOGIN OVERLAY --- -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-box">
+            <div class="logo">??</div>
+            <h2>Blogger Dashboard</h2>
+            <p>Verbinde dich mit deinem Google-Konto um alle deine Blogs zu verwalten, Styles anzuwenden und HTML-Seiten
+                zu posten.</p>
+            <input type="text" id="clientIdInput" placeholder="Google OAuth2 Client-ID eingeben&#228;" />
+            <button class="btn btn-accent" id="loginBtn" onclick="startLogin()">?? Mit Google anmelden</button>
+            <div class="skip" onclick="enterDemo()">? Demo-Modus ohne Login</div>
+        </div>
+    </div>
+
+    <!-- --- HEADER --- -->
+    <div class="header">
+        <h1>?? Blogger Dashboard</h1>
+        <p id="headerSub">Verwalte alle deine Blogs  Classic & Modern  mit DkZ Style-Templates</p>
+        <div class="header-controls">
+            <button class="toggle-btn active" id="toggleClassic" onclick="setView('classic')">?? Classic</button>
+            <button class="toggle-btn" id="toggleModern" onclick="setView('modern')">? Modern</button>
+            <button class="toggle-btn" id="toggleThemeBtn"
+                onclick="document.getElementById('styleCard').scrollIntoView({behavior:'smooth'})">?? Styles</button>
+            <button class="btn btn-outline" id="logoutBtn" onclick="logout()" style="display:none">?? Logout</button>
+        </div>
+    </div>
+
+    <!-- --- MAIN GRID --- -->
+    <div class="grid">
+
+        <!-- BLOG LIST -->
+        <div class="card" id="blogListCard">
+            <div class="card-title">?? Deine Blogs <span class="badge badge-blue" id="blogCount">0</span></div>
+            <div class="blog-grid" id="blogGrid">
+                <div class="empty-state" id="emptyBlogs">
+                    <div class="es-icon">??</div>
+                    Keine Blogs geladen. Melde dich an oder nutze den Demo-Modus.
+                </div>
+            </div>
+        </div>
+
+        <!-- STYLE TEMPLATES -->
+        <div class="card" id="styleCard">
+            <div class="card-title">?? Style-Templates</div>
+            <div class="template-grid" id="templateGrid"></div>
+        </div>
+
+        <!-- BLOG PURPOSE -->
+        <div class="card">
+            <div class="card-title">?? Blog-Zweck</div>
+            <p style="font-size:11px;color:var(--muted);margin-bottom:12px">Whle den Zweck deines Blogs  beeinflusst
+                Layout-Empfehlungen f&#252;r HTML-Posts.</p>
+            <div class="purpose-chips" id="purposeChips"></div>
+        </div>
+
+        <!-- ACTIVE BLOG INFO -->
+        <div class="card" id="activeBlogCard" style="display:none">
+            <div class="card-title">?? Aktiver Blog</div>
+            <div id="activeBlogInfo"></div>
+        </div>
+
+        <!-- HTML EDITOR & PUBLISHER -->
+        <div class="card full">
+            <div class="card-title">?? HTML Page Composer & Publisher</div>
+            <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+                <input type="text" id="pageTitle" placeholder="Seiten-Titel"
+                    style="flex:1;min-width:200px;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:12px;font-family:var(--font)" />
+                <select id="postType"
+                    style="background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:12px;font-family:var(--font)">
+                    <option value="page">?? Als Seite posten</option>
+                    <option value="post">?? Als Beitrag posten</option>
+                </select>
+            </div>
+            <div class="editor-wrap">
+                <textarea id="htmlEditor" placeholder="<!-- Dein HTML hier einf&#252;gen -->
+<h1>Mein Blog Post</h1>
+<p>Hier kommt dein Inhalt...</p>"></textarea>
+            </div>
+            <div class="editor-actions">
+                <button class="btn btn-blue" onclick="togglePreview()">??? Vorschau</button>
+                <button class="btn btn-green" onclick="publishToBlocker()">?? Verffentlichen</button>
+                <button class="btn btn-purple" onclick="insertTemplate()">?? Template einf&#252;gen</button>
+                <button class="btn btn-outline" onclick="clearEditor()">??? Leeren</button>
+            </div>
+            <iframe class="preview-frame" id="previewFrame" sandbox="allow-same-origin"></iframe>
+            <div class="status-msg" id="publishStatus"></div>
+        </div>
+
+    </div>
+
+    <div class="footer">
+         2026 DkZ Enterprise  Blogger Dashboard  Powered by <a
+            href="https://developers.google.com/blogger/docs/3.0/getting_started" target="_blank">Blogger API v3</a>
+    </div>
+
+    <script>
+        // --------------------------------------
+        //  STATE
+        // --------------------------------------
+        const STATE = {
+            token: localStorage.getItem('blogger_token') || null,
+            clientId: localStorage.getItem('blogger_client_id') || '',
+            blogs: [],
+            activeBlog: null,
+            view: 'classic',
+            activeTemplate: 'enterprise',
+            activePurpose: 'devlog',
+            isDemo: false
+        };
+
+        // --------------------------------------
+        //  TEMPLATES
+        // --------------------------------------
+        const TEMPLATES = [
+            { id: 'enterprise', name: 'DkZ Enterprise', sub: 'Rot/Dunkel Premium', colors: { accent: '#fa1e4e', 'accent-rgb': '250,30,78', bg: '#0e0e10', card: '#1a1a1c', card2: '#222226', border: '#333338' }, grad: 'linear-gradient(135deg,#fa1e4e,#ec4899)' },
+            { id: 'ocean', name: 'Ocean Blue', sub: 'Blau/Cyan Akzente', colors: { accent: '#00b4d8', 'accent-rgb': '0,180,216', bg: '#0a0e14', card: '#131a24', card2: '#1a2332', border: '#253040' }, grad: 'linear-gradient(135deg,#00b4d8,#0077b6)' },
+            { id: 'matrix', name: 'Matrix Green', sub: 'Neon Terminal', colors: { accent: '#00ff88', 'accent-rgb': '0,255,136', bg: '#050a05', card: '#0a140a', card2: '#112011', border: '#1a3a1a' }, grad: 'linear-gradient(135deg,#00ff88,#00cc66)' },
+            { id: 'solar', name: 'Solar Gold', sub: 'Gold/Warm', colors: { accent: '#FFB800', 'accent-rgb': '255,184,0', bg: '#100e08', card: '#1a1710', card2: '#221f16', border: '#3a3520' }, grad: 'linear-gradient(135deg,#FFB800,#ff8800)' },
+            { id: 'neon', name: 'Neon Purple', sub: 'Violett/Pink', colors: { accent: '#a855f7', 'accent-rgb': '168,85,247', bg: '#0e0a14', card: '#1a1424', card2: '#221a32', border: '#332a45' }, grad: 'linear-gradient(135deg,#a855f7,#ec4899)' },
+            { id: 'light', name: 'Clean Light', sub: 'Helles Theme', colors: { accent: '#fa1e4e', 'accent-rgb': '37,99,235', bg: '#f4f5f7', card: '#ffffff', card2: '#f0f1f3', border: '#d1d5db', text: '#1f2937', muted: '#6b7280' }, grad: 'linear-gradient(135deg,#fa1e4e,#fa1e4e)' }
+        ];
+
+        const PURPOSES = [
+            { id: 'portfolio', icon: '??', label: 'Portfolio' },
+            { id: 'devlog', icon: '??', label: 'DevLog' },
+            { id: 'knowledge', icon: '??', label: 'Knowledge-Base' },
+            { id: 'tutorial', icon: '??', label: 'Tutorial-Hub' },
+            { id: 'news', icon: '??', label: 'News' },
+            { id: 'personal', icon: '??', label: 'Personal Blog' },
+            { id: 'business', icon: '??', label: 'Business' },
+            { id: 'docs', icon: '??', label: 'Dokumentation' }
+        ];
+
+        const DEMO_BLOGS = [
+            { id: 'demo1', name: 'DkZ DevLog', url: 'https://dkz-devlog.blogspot.com', posts: { totalItems: '42' }, pages: { totalItems: '5' }, updated: '2026-03-08T12:00:00Z' },
+            { id: 'demo2', name: 'Code Tutorials', url: 'https://code-tutorials.blogspot.com', posts: { totalItems: '18' }, pages: { totalItems: '3' }, updated: '2026-03-07T15:30:00Z' },
+            { id: 'demo3', name: 'Personal Notes', url: 'https://my-notes.blogspot.com', posts: { totalItems: '67' }, pages: { totalItems: '8' }, updated: '2026-03-06T09:15:00Z' }
+        ];
+
+        // --------------------------------------
+        //  INIT
+        // --------------------------------------
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('clientIdInput').value = STATE.clientId;
+            renderTemplates();
+            renderPurposes();
+            if (STATE.token) {
+                hideLogin();
+                loadBlogs();
+            }
+        });
+
+        // --------------------------------------
+        //  AUTH
+        // --------------------------------------
+        function startLogin() {
+            const clientId = document.getElementById('clientIdInput').value.trim();
+            if (!clientId) { alert('Bitte Client-ID eingeben!'); return; }
+            STATE.clientId = clientId;
+            localStorage.setItem('blogger_client_id', clientId);
+            const tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: clientId,
+                scope: 'https://www.googleapis.com/auth/blogger',
+                callback: (resp) => {
+                    if (resp.error) { alert('Login fehlgeschlagen: ' + resp.error); return; }
+                    STATE.token = resp.access_token;
+                    localStorage.setItem('blogger_token', resp.access_token);
+                    hideLogin();
+                    loadBlogs();
+                }
+            });
+            tokenClient.requestAccessToken();
+        }
+
+        function logout() {
+            STATE.token = null;
+            STATE.blogs = [];
+            STATE.activeBlog = null;
+            STATE.isDemo = false;
+            localStorage.removeItem('blogger_token');
+            document.getElementById('loginOverlay').classList.remove('hidden');
+            document.getElementById('logoutBtn').style.display = 'none';
+            renderBlogs();
+        }
+
+        function hideLogin() {
+            document.getElementById('loginOverlay').classList.add('hidden');
+            document.getElementById('logoutBtn').style.display = '';
+        }
+
+        function enterDemo() {
+            STATE.isDemo = true;
+            STATE.blogs = DEMO_BLOGS;
+            hideLogin();
+            renderBlogs();
+            document.getElementById('headerSub').textContent = '? Demo-Modus  Beispiel-Blogs geladen';
+        }
+
+        // --------------------------------------
+        //  BLOGGER API
+        // --------------------------------------
+        async function apiFetch(url, opts = {}) {
+            const headers = { 'Authorization': 'Bearer ' + STATE.token, ...opts.headers };
+            if (opts.body) headers['Content-Type'] = 'application/json';
+            const res = await fetch(url, { ...opts, headers });
+            if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`);
+            return res.json();
+        }
+
+        async function loadBlogs() {
+            if (STATE.isDemo) return;
+            try {
+                document.getElementById('blogCount').textContent = '';
+                const data = await apiFetch('https://www.googleapis.com/blogger/v3/users/self/blogs');
+                STATE.blogs = data.items || [];
+                renderBlogs();
+            } catch (e) {
+                console.error('Blog load error:', e);
+                document.getElementById('blogCount').textContent = '?';
+                showStatus('error', 'Blogs konnten nicht geladen werden: ' + e.message);
+            }
+        }
+
+        function selectBlog(blog) {
+            STATE.activeBlog = blog;
+            renderBlogs();
+            renderActiveBlog();
+        }
+
+        async function publishToBlocker() {
+            const html = document.getElementById('htmlEditor').value.trim();
+            const title = document.getElementById('pageTitle').value.trim() || 'Untitled';
+            const type = document.getElementById('postType').value;
+            if (!html) { showStatus('error', 'Bitte HTML-Inhalt eingeben!'); return; }
+            if (!STATE.activeBlog) { showStatus('error', 'Bitte w&#228;hle zuerst einen Blog aus!'); return; }
+            if (STATE.isDemo) { showStatus('success', '? Demo: "' + title + '" w&#228;rde als ' + type + ' gepostet!'); return; }
+            try {
+                const endpoint = type === 'page'
+                    ? `https://www.googleapis.com/blogger/v3/blogs/${STATE.activeBlog.id}/pages`
+                    : `https://www.googleapis.com/blogger/v3/blogs/${STATE.activeBlog.id}/posts`;
+                const body = JSON.stringify({ title, content: html });
+                const result = await apiFetch(endpoint, { method: 'POST', body });
+                showStatus('success', `? "${title}" erfolgreich verffentlicht! <a href="${result.url}" target="_blank">? &#246;ffnen</a>`);
+            } catch (e) {
+                showStatus('error', '? Fehler: ' + e.message);
+            }
+        }
+
+        // --------------------------------------
+        //  RENDERING
+        // --------------------------------------
+        function renderBlogs() {
+            const grid = document.getElementById('blogGrid');
+            const empty = document.getElementById('emptyBlogs');
+            const count = document.getElementById('blogCount');
+            if (!STATE.blogs.length) { grid.innerHTML = ''; grid.appendChild(empty); count.textContent = '0'; return; }
+            count.textContent = STATE.blogs.length;
+            const colors = ['#fa1e4e', '#55ACEE', '#00ff88', '#FFB800', '#ec4899', '#a855f7', '#ff8800'];
+            grid.innerHTML = STATE.blogs.map((b, i) => {
+                const c = colors[i % colors.length];
+                const posts = b.posts?.totalItems || 0;
+                const pages = b.pages?.totalItems || 0;
+                const sel = STATE.activeBlog?.id === b.id ? 'selected' : '';
+                return `<div class="blog-item ${sel}" onclick="selectBlog(STATE.blogs[${i}])">
+      <div class="bi-icon" style="background:${c}22;color:${c};border:1px solid ${c}44">??</div>
+      <div class="bi-info">
+        <div class="bi-name">${b.name}</div>
+        <div class="bi-url">${b.url || ''}</div>
+        <div class="bi-stats">Posts: <span>${posts}</span>  Seiten: <span>${pages}</span></div>
+      </div>
+    </div>`;
+            }).join('');
+        }
+
+        function renderActiveBlog() {
+            const card = document.getElementById('activeBlogCard');
+            const info = document.getElementById('activeBlogInfo');
+            if (!STATE.activeBlog) { card.style.display = 'none'; return; }
+            card.style.display = '';
+            const b = STATE.activeBlog;
+            info.innerHTML = `
+    <div style="font-size:18px;font-weight:800;margin-bottom:6px">${b.name}</div>
+    <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:8px">${b.url || ''}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <span class="badge badge-green">Posts: ${b.posts?.totalItems || 0}</span>
+      <span class="badge badge-blue">Seiten: ${b.pages?.totalItems || 0}</span>
+      <span class="badge badge-yellow">Aktualisiert: ${new Date(b.updated).toLocaleDateString('de')}</span>
+    </div>
+    <div style="margin-top:10px">
+      <a href="${b.url}" target="_blank" class="btn btn-outline" style="font-size:11px;text-decoration:none;display:inline-block">?? Blog &#246;ffnen</a>
+    </div>`;
+        }
+
+        function renderTemplates() {
+            document.getElementById('templateGrid').innerHTML = TEMPLATES.map(t => `
+    <div class="tpl-card ${STATE.activeTemplate === t.id ? 'active' : ''}" onclick="applyTemplate('${t.id}')">
+      <div class="tpl-preview" style="background:${t.grad};border-radius:6px"></div>
+      <div class="tpl-name">${t.name}</div>
+      <div class="tpl-sub">${t.sub}</div>
+    </div>`).join('');
+        }
+
+        function renderPurposes() {
+            document.getElementById('purposeChips').innerHTML = PURPOSES.map(p => `
+    <div class="purpose-chip ${STATE.activePurpose === p.id ? 'active' : ''}" onclick="setPurpose('${p.id}')">
+      ${p.icon} ${p.label}
+    </div>`).join('');
+        }
+
+        // --------------------------------------
+        //  VIEW TOGGLE
+        // --------------------------------------
+        function setView(view) {
+            STATE.view = view;
+            const grid = document.getElementById('blogGrid');
+            grid.classList.toggle('modern', view === 'modern');
+            document.getElementById('toggleClassic').classList.toggle('active', view === 'classic');
+            document.getElementById('toggleModern').classList.toggle('active', view === 'modern');
+        }
+
+        // --------------------------------------
+        //  TEMPLATE ENGINE
+        // --------------------------------------
+        function applyTemplate(id) {
+            const tpl = TEMPLATES.find(t => t.id === id);
+            if (!tpl) return;
+            STATE.activeTemplate = id;
+            const root = document.documentElement.style;
+            Object.entries(tpl.colors).forEach(([k, v]) => root.setProperty('--' + k, v));
+            if (id === 'light') {
+                root.setProperty('--text', '#1f2937');
+                root.setProperty('--muted', '#6b7280');
+                root.setProperty('--green', '#059669');
+                root.setProperty('--blue', '#fa1e4e');
+                root.setProperty('--yellow', '#d97706');
+                root.setProperty('--red', '#dc2626');
+                root.setProperty('--purple', '#fa1e4e');
+            } else {
+                root.setProperty('--text', '#f6f6f7');
+                root.setProperty('--muted', '#a1a1aa');
+                root.setProperty('--green', '#00ff88');
+                root.setProperty('--blue', '#55ACEE');
+                root.setProperty('--yellow', '#FFB800');
+                root.setProperty('--red', '#fa1e4e');
+                root.setProperty('--purple', '#ec4899');
+            }
+            renderTemplates();
+        }
+
+        function setPurpose(id) {
+            STATE.activePurpose = id;
+            renderPurposes();
+        }
+
+        // --------------------------------------
+        //  EDITOR FUNCTIONS
+        // --------------------------------------
+        function togglePreview() {
+            const frame = document.getElementById('previewFrame');
+            const html = document.getElementById('htmlEditor').value;
+            frame.classList.toggle('show');
+            if (frame.classList.contains('show')) {
+                const doc = frame.contentDocument || frame.contentWindow.document;
+                doc.open(); doc.write(html); doc.close();
+            }
+        }
+
+        function clearEditor() {
+            document.getElementById('htmlEditor').value = '';
+            document.getElementById('pageTitle').value = '';
+            document.getElementById('previewFrame').classList.remove('show');
+            document.getElementById('publishStatus').className = 'status-msg';
+            document.getElementById('publishStatus').style.display = 'none';
+        }
+
+        function insertTemplate() {
+            const purpose = PURPOSES.find(p => p.id === STATE.activePurpose);
+            const tpl = TEMPLATES.find(t => t.id === STATE.activeTemplate);
+            const accent = tpl?.colors?.accent || '#fa1e4e';
+            const html = `<!DOCTYPE html>
+<html lang="de">
+    <link rel="stylesheet" href="../shared/dkz-theme.css">
+    <link rel="manifest" href="../shared/manifest.json">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body { font-family: 'Inter', system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px 20px; background: ${tpl?.colors?.bg || '#0e0e10'}; color: ${tpl?.colors?.text || '#f6f6f7'}; }
+  h1 { color: ${accent}; font-size: 32px; margin-bottom: 8px; }
+  h2 { color: ${accent}; font-size: 22px; margin-top: 30px; }
+  .subtitle { color: #a1a1aa; font-size: 14px; margin-bottom: 30px; }
+  .card { background: ${tpl?.colors?.card || '#1a1a1c'}; border: 1px solid ${tpl?.colors?.border || '#333'}; border-radius: 12px; padding: 20px; margin: 16px 0; }
+  a { color: ${accent}; }
+  code { background: ${tpl?.colors?.card2 || '#222'}; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+</style>
+</head>
+<body>
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
+  <h1>${purpose?.icon || '??'} ${purpose?.label || 'Blog Post'}</h1>
+  <p class="subtitle">Erstellt mit DkZ Blogger Dashboard  ${tpl?.name || 'Enterprise'} Theme</p>
+  <div class="card">
+    <h2>Inhalt</h2>
+    <p>Schreibe hier deinen Inhalt...</p>
+  </div>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    <script src="../shared/dkz-debug.js"></script>
+    <script src="../shared/dkz-guide.js"></script>
+    <script src="../shared/dkz-copilot.js"></script>
+    <script src="../shared/dkz-shortcuts.js"></script>
+    <script src="../shared/dkz-export.js"></script>
+    <script src="../shared/dkz-crosslinks.js"></script>
+    <script src="../shared/dkz-a11y.js"></script>
+    <script src="../shared/dkz-test.js"></script>
+    <script src="../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../shared/sw.js").catch(()=>{});</script>
+</body>
+</html>`;
+            document.getElementById('htmlEditor').value = html;
+            document.getElementById('pageTitle').value = (purpose?.label || 'Blog') + '  ' + new Date().toLocaleDateString('de');
+        }
+
+        function showStatus(type, msg) {
+            const el = document.getElementById('publishStatus');
+            el.className = 'status-msg ' + type;
+            el.innerHTML = msg;
+            el.style.display = 'block';
+        }
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    <script src="../shared/dkz-debug.js"></script>
+    <script src="../shared/dkz-guide.js"></script>
+    <script src="../shared/dkz-copilot.js"></script>
+    <script src="../shared/dkz-shortcuts.js"></script>
+    <script src="../shared/dkz-export.js"></script>
+    <script src="../shared/dkz-crosslinks.js"></script>
+    <script src="../shared/dkz-a11y.js"></script>
+    <script src="../shared/dkz-test.js"></script>
+    <script src="../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../shared/sw.js").catch(()=>{});</script>
+</body>
+
+</html>

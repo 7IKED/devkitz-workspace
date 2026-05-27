@@ -1,0 +1,229 @@
+# CodeRabbit "Ralph Loop" — Continuous Bug Scanner
+# Runs every 30 minutes, scans all modules, auto-creates Issues, verifies fixes
+# Named after the concept: Endlos-Schleife (Dauerschleife) für Qualitätssicherung
+
+name: "🐰 CodeRabbit Ralph Loop"
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'   # Every 30 minutes
+  workflow_dispatch:          # Manual trigger
+    inputs:
+      mode:
+        description: 'Scan mode: full | single'
+        default: 'full'
+      module:
+        description: 'Module name (for single mode)'
+        default: ''
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  ralph-loop:
+    name: "🐰 Ralph Loop Scan"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "📂 Discover Modules"
+        id: discover
+        run: |
+          MODULES=$(ls -d 01_PROJECTS/01_dashboard/modules/*/index.html 2>/dev/null | sed 's|/index.html||' | sed 's|01_PROJECTS/01_dashboard/modules/||' | tr '\n' ',')
+          echo "modules=$MODULES" >> $GITHUB_OUTPUT
+          echo "count=$(echo $MODULES | tr ',' '\n' | wc -l)" >> $GITHUB_OUTPUT
+          echo "🐰 Found $(echo $MODULES | tr ',' '\n' | wc -l) modules"
+
+      - name: "🔍 CodeRabbit Scan — Design & Security"
+        id: scan
+        run: |
+          ISSUES=""
+          PASS=0
+          FAIL=0
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          for MODULE_DIR in 01_PROJECTS/01_dashboard/modules/*/; do
+            MODULE=$(basename "$MODULE_DIR")
+            INDEX="$MODULE_DIR/index.html"
+            [ ! -f "$INDEX" ] && continue
+
+            CONTENT=$(cat "$INDEX")
+
+            # A01: DkZ Accent #fa1e4e
+            if echo "$CONTENT" | grep -q "fa1e4e"; then ((PASS++)); else
+              ISSUES="${ISSUES}A01|${MODULE}|Design|Accent #fa1e4e fehlt\n"
+              ((FAIL++))
+            fi
+
+            # A02: Font Inter
+            if echo "$CONTENT" | grep -qi "inter"; then ((PASS++)); else
+              ISSUES="${ISSUES}A02|${MODULE}|Design|Font Inter fehlt\n"
+              ((FAIL++))
+            fi
+
+            # A05: Responsive Viewport Meta
+            if echo "$CONTENT" | grep -q 'meta.*viewport'; then ((PASS++)); else
+              ISSUES="${ISSUES}A05|${MODULE}|Struktur|Viewport Meta fehlt\n"
+              ((FAIL++))
+            fi
+
+            # A06: XSS esc() function
+            if echo "$CONTENT" | grep -q 'function esc\|esc('; then ((PASS++)); else
+              ISSUES="${ISSUES}A06|${MODULE}|Security|XSS esc() fehlt\n"
+              ((FAIL++))
+            fi
+
+            # A08: Version Meta
+            if echo "$CONTENT" | grep -q 'dkz-version'; then ((PASS++)); else
+              ISSUES="${ISSUES}A08|${MODULE}|Struktur|Version Meta fehlt\n"
+              ((FAIL++))
+            fi
+
+            # A09: Hub Button
+            if echo "$CONTENT" | grep -qi 'hub'; then ((PASS++)); else
+              ISSUES="${ISSUES}A09|${MODULE}|Struktur|Hub Button fehlt\n"
+              ((FAIL++))
+            fi
+
+            # A12: Debug Script
+            if echo "$CONTENT" | grep -q 'dkz-debug'; then ((PASS++)); else
+              ISSUES="${ISSUES}A12|${MODULE}|Regeln|Debug Script fehlt\n"
+              ((FAIL++))
+            fi
+          done
+
+          echo "pass=$PASS" >> $GITHUB_OUTPUT
+          echo "fail=$FAIL" >> $GITHUB_OUTPUT
+          SCORE=$((PASS * 100 / (PASS + FAIL)))
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+
+          # Save issues to file
+          echo -e "$ISSUES" > /tmp/coderabbit-findings.txt
+          ISSUE_COUNT=$(echo -e "$ISSUES" | grep -c '|' || echo 0)
+          echo "issue_count=$ISSUE_COUNT" >> $GITHUB_OUTPUT
+
+          echo "🐰 Scan complete: $PASS pass, $FAIL fail, Score: ${SCORE}%"
+
+      - name: "📝 Create Issues for Findings"
+        if: steps.scan.outputs.fail > 0
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const findings = fs.readFileSync('/tmp/coderabbit-findings.txt', 'utf8')
+              .split('\n')
+              .filter(l => l.includes('|'));
+
+            // Group by module
+            const byModule = {};
+            for (const line of findings) {
+              const [checkId, module, cat, desc] = line.split('|');
+              if (!byModule[module]) byModule[module] = [];
+              byModule[module].push({ checkId, cat, desc });
+            }
+
+            // Check existing open issues
+            const { data: openIssues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'ralph-loop'
+            });
+            const existingTitles = openIssues.map(i => i.title);
+
+            for (const [module, checks] of Object.entries(byModule)) {
+              const title = `🐰 [Ralph Loop] ${module} — ${checks.length} Findings`;
+
+              // Skip if issue already exists
+              if (existingTitles.some(t => t.includes(module) && t.includes('Ralph Loop'))) {
+                console.log(`⏭️ Issue already exists for ${module}`);
+                continue;
+              }
+
+              const body = `## 🐰 CodeRabbit Ralph Loop — Auto-Scan\n\n` +
+                `**Modul:** \`${module}\`\n` +
+                `**Scan:** ${new Date().toISOString()}\n` +
+                `**Findings:** ${checks.length}\n\n` +
+                `| Check | Kategorie | Problem |\n|:---|:---|:---|\n` +
+                checks.map(c => `| ${c.checkId} | ${c.cat} | ${c.desc} |`).join('\n') +
+                `\n\n---\n> 🤖 _Auto-created by CodeRabbit Ralph Loop_\n` +
+                `> Will be auto-verified on next scan cycle.`;
+
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['ralph-loop', 'auto-created', 'coderabbit', checks.some(c => c.cat === 'Security') ? 'pf:kritisch' : 'pf:mittel']
+              });
+              console.log(`✅ Created issue for ${module}`);
+            }
+
+      - name: "✅ Verify Previously Fixed Issues"
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const findings = fs.readFileSync('/tmp/coderabbit-findings.txt', 'utf8')
+              .split('\n')
+              .filter(l => l.includes('|'))
+              .map(l => l.split('|')[1]); // module names with issues
+
+            // Get open ralph-loop issues
+            const { data: openIssues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'ralph-loop'
+            });
+
+            for (const issue of openIssues) {
+              // Extract module name from title
+              const match = issue.title.match(/\] (.+?) —/);
+              if (!match) continue;
+              const module = match[1];
+
+              // If module no longer has findings → close as fixed
+              if (!findings.includes(module)) {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  state: 'closed',
+                  labels: [...issue.labels.map(l => l.name), 'verified-fixed']
+                });
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: `## ✅ Verified Fixed\n\nCodeRabbit Ralph Loop has verified that all findings for \`${module}\` have been resolved.\n\n🐰 _Auto-closed by Ralph Loop verification cycle._`
+                });
+                console.log(`✅ Closed fixed issue: ${module}`);
+              } else {
+                // Still broken → add comment + re-open if needed
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: `## ⚠️ Still Open\n\nRalph Loop scan at ${new Date().toISOString()} — findings still present.\n\n🐰 _Issue remains open._`
+                });
+                console.log(`⚠️ Still open: ${module}`);
+              }
+            }
+
+      - name: "📊 Summary"
+        if: always()
+        run: |
+          echo "## 🐰 CodeRabbit Ralph Loop Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|:---|:---|" >> $GITHUB_STEP_SUMMARY
+          echo "| ✅ Pass | ${{ steps.scan.outputs.pass }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ❌ Fail | ${{ steps.scan.outputs.fail }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Score | ${{ steps.scan.outputs.score }}% |" >> $GITHUB_STEP_SUMMARY
+          echo "| Modules | ${{ steps.discover.outputs.count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Issues | ${{ steps.scan.outputs.issue_count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Time | ${{ steps.scan.outputs.timestamp }} |" >> $GITHUB_STEP_SUMMARY

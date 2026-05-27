@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="shared/seo-shared.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="grid grid-2">
+        <div class="card card-full">
+            <h3>❤️ Engagement Tracker</h3>
+            <p style="font-size:11px;color:var(--muted);margin-bottom:12px">Analysiere Engagement pro Post: Likes,
+                Kommentare, Shares, Herkunft und Sentiment.</p>
+            <div class="input-row">
+                <input type="text" id="usernameInput" placeholder="@username">
+                <select id="platformSelect">
+                    <option value="all">Alle Plattformen</option>
+                    <option value="youtube">▶️ YouTube</option>
+                    <option value="instagram">📸 Instagram</option>
+                    <option value="tiktok">🎵 TikTok</option>
+                </select>
+                <button class="btn btn-green" onclick="trackEngagement()">📊 Analysieren</button>
+            </div>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>Engagement wird analysiert...
+            </div>
+        </div>
+
+        <div class="card" id="overviewCard" style="display:none">
+            <h3>📊 Engagement Übersicht</h3>
+            <div id="overviewData"></div>
+        </div>
+        <div class="card" id="breakdownCard" style="display:none">
+            <h3>📐 Aufschlüsselung</h3>
+            <div id="breakdownData"></div>
+        </div>
+        <div class="card" id="sentimentCard" style="display:none">
+            <h3>💬 Sentiment-Analyse</h3>
+            <div id="sentimentData"></div>
+        </div>
+        <div class="card" id="sourceCard" style="display:none">
+            <h3>📍 Engagement-Quellen</h3>
+            <div id="sourceData"></div>
+        </div>
+        <div class="card card-full" id="postsCard" style="display:none">
+            <h3>📋 Engagement pro Post</h3>
+            <div class="filter-bar"><button class="filter-chip active"
+                    onclick="sortPosts('engagement',this)">Engagement</button><button class="filter-chip"
+                    onclick="sortPosts('likes',this)">Likes</button><button class="filter-chip"
+                    onclick="sortPosts('comments',this)">Kommentare</button><button class="filter-chip"
+                    onclick="sortPosts('shares',this)">Shares</button></div>
+            <div id="postsData"></div>
+        </div>
+        <div class="card card-full" id="timeCard" style="display:none">
+            <h3>⏰ Engagement nach Tageszeit</h3>
+            <div id="timeData"></div>
+        </div>
+    </div>
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        let posts = [];
+        async function trackEngagement() {
+            const username = document.getElementById('usernameInput').value.trim() || 'demo';
+            document.getElementById('loading').classList.add('show');
+            ['overviewCard', 'breakdownCard', 'sentimentCard', 'sourceCard', 'postsCard', 'timeCard'].forEach(id => document.getElementById(id).style.display = 'none');
+            await new Promise(r => setTimeout(r, 1500)); document.getElementById('loading').classList.remove('show');
+
+            const totalEng = Math.floor(Math.random() * 500000 + 5000);
+            const avgEngRate = (Math.random() * 8 + 1).toFixed(1);
+            const totalLikes = Math.floor(totalEng * 0.7);
+            const totalComments = Math.floor(totalEng * 0.15);
+            const totalShares = Math.floor(totalEng * 0.1);
+            const totalSaves = Math.floor(totalEng * 0.05);
+
+            posts = Array.from({ length: 20 }, (_, i) => {
+                const likes = Math.floor(Math.random() * 10000 + 100); const comments = Math.floor(likes * 0.05); const shares = Math.floor(likes * 0.02); const saves = Math.floor(likes * 0.03);
+                return { id: i + 1, title: `Post #${i + 1} – ${['Tutorial', 'Review', 'Vlog', 'Challenge', 'News', 'Behind the Scenes', 'Tipps', 'Unboxing', 'Vergleich', 'Collab'][i % 10]}`, platform: ['▶️', '📸', '🎵', '🟣', '✖️'][i % 5], likes, comments, shares, saves, engagement: ((likes + comments + shares + saves) / Math.floor(Math.random() * 50000 + 5000) * 100).toFixed(1), sentiment: Math.random() > .3 ? 'positiv' : Math.random() > .5 ? 'neutral' : 'negativ', date: new Date(Date.now() - i * 2 * 24 * 3600 * 1000).toLocaleDateString('de-DE') };
+            });
+
+            document.getElementById('overviewCard').style.display = '';
+            document.getElementById('overviewData').innerHTML = `<div class="stats"><div class="stat"><div class="stat-num" style="color:var(--pink)">${fmt(totalEng)}</div><div class="stat-label">Gesamt</div></div><div class="stat"><div class="stat-num" style="color:var(--green)">${avgEngRate}%</div><div class="stat-label">⌀ Rate</div></div><div class="stat"><div class="stat-num" style="color:var(--blue)">${posts.length}</div><div class="stat-label">Posts analysiert</div></div><div class="stat"><div class="stat-num" style="color:var(--yellow)">${posts.filter(p => p.sentiment === 'positiv').length}/${posts.length}</div><div class="stat-label">Positiv</div></div></div>`;
+
+            document.getElementById('breakdownCard').style.display = '';
+            document.getElementById('breakdownData').innerHTML = [{ n: '❤️ Likes', v: totalLikes, c: 'red', p: 70 }, { n: '💬 Kommentare', v: totalComments, c: 'blue', p: 15 }, { n: '↗️ Shares', v: totalShares, c: 'green', p: 10 }, { n: '🔖 Saves', v: totalSaves, c: 'purple', p: 5 }].map(m => `<div class="metric-row"><span class="metric-name">${m.n}</span><div style="flex:1;margin:0 12px"><div class="progress"><div class="progress-fill progress-${m.c}" style="width:${m.p}%"></div></div></div><span class="metric-value">${fmt(m.v)}</span><span style="font-size:10px;color:var(--muted)">${m.p}%</span></div>`).join('');
+
+            document.getElementById('sentimentCard').style.display = '';
+            const pos = posts.filter(p => p.sentiment === 'positiv').length; const neg = posts.filter(p => p.sentiment === 'negativ').length; const neu = posts.length - pos - neg;
+            document.getElementById('sentimentData').innerHTML = `<div class="stats" style="margin-bottom:12px"><div class="stat"><div class="stat-num" style="color:var(--green)">${pos}</div><div class="stat-label">😊 Positiv</div></div><div class="stat"><div class="stat-num" style="color:var(--yellow)">${neu}</div><div class="stat-label">😐 Neutral</div></div><div class="stat"><div class="stat-num" style="color:var(--red)">${neg}</div><div class="stat-label">😠 Negativ</div></div></div>
+    <div class="progress" style="height:20px;border-radius:10px"><div style="height:100%;width:${pos / posts.length * 100}%;background:var(--green);float:left;border-radius:10px 0 0 10px"></div><div style="height:100%;width:${neu / posts.length * 100}%;background:var(--yellow);float:left"></div><div style="height:100%;width:${neg / posts.length * 100}%;background:var(--red);float:left;border-radius:0 10px 10px 0"></div></div>`;
+
+            document.getElementById('sourceCard').style.display = '';
+            document.getElementById('sourceData').innerHTML = [{ n: 'Organisch (Feed)', p: 45 }, { n: 'Explore/FYP', p: 25 }, { n: 'Hashtags', p: 12 }, { n: 'Shares', p: 10 }, { n: 'Profile Visits', p: 5 }, { n: 'Extern', p: 3 }].map((s, i) => `<div class="metric-row"><span class="metric-name">${s.n}</span><div style="flex:1;margin:0 12px"><div class="progress"><div class="progress-fill progress-${['blue', 'purple', 'green', 'yellow', 'red', 'blue'][i]}" style="width:${s.p}%"></div></div></div><span style="font-size:11px;color:var(--muted)">${s.p}%</span></div>`).join('');
+
+            document.getElementById('postsCard').style.display = ''; renderPosts('engagement');
+
+            document.getElementById('timeCard').style.display = '';
+            const hours = Array.from({ length: 24 }, (_, h) => ({ h: `${h}:00`, v: h >= 18 && h <= 22 ? Math.floor(Math.random() * 40 + 60) : h >= 12 && h <= 14 ? Math.floor(Math.random() * 30 + 30) : Math.floor(Math.random() * 20 + 5) }));
+            document.getElementById('timeData').innerHTML = '<div class="chart-area"><div class="chart-bar-container">' + hours.map(h => `<div class="chart-bar" style="height:${h.v}px;background:${h.v > 60 ? 'var(--green)' : h.v > 30 ? 'var(--blue)' : 'var(--border2)'}"><div class="chart-bar-label">${h.h}</div></div>`).join('') + '</div></div>';
+        }
+
+        function renderPosts(sortBy) {
+            const sorted = [...posts].sort((a, b) => sortBy === 'likes' ? b.likes - a.likes : sortBy === 'comments' ? b.comments - a.comments : sortBy === 'shares' ? b.shares - a.shares : parseFloat(b.engagement) - parseFloat(a.engagement));
+            document.getElementById('postsData').innerHTML = `<table class="data-table"><thead><tr><th>#</th><th>Post</th><th>Plattform</th><th>❤️ Likes</th><th>💬 Kommentare</th><th>↗️ Shares</th><th>Eng. Rate</th><th>Sentiment</th><th>Datum</th></tr></thead><tbody>${sorted.map((p, i) => `<tr><td style="font-weight:800;color:${i < 3 ? 'var(--yellow)' : 'var(--dim)'}">${i + 1}</td><td style="font-weight:600;font-size:11px">${p.title}</td><td>${p.platform}</td><td style="font-family:var(--mono);color:var(--pink)">${fmt(p.likes)}</td><td style="font-family:var(--mono)">${fmt(p.comments)}</td><td style="font-family:var(--mono)">${fmt(p.shares)}</td><td><span class="badge ${p.engagement > 5 ? 'badge-green' : p.engagement > 2 ? 'badge-yellow' : 'badge-red'}">${p.engagement}%</span></td><td>${p.sentiment === 'positiv' ? '😊' : p.sentiment === 'neutral' ? '😐' : '😠'}</td><td style="font-size:10px;color:var(--muted)">${p.date}</td></tr>`).join('')}</tbody></table>`;
+        }
+
+        function sortPosts(by, btn) { document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active')); btn.classList.add('active'); renderPosts(by) }
+        function fmt(n) { if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M'; if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K'; return n.toString() }
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

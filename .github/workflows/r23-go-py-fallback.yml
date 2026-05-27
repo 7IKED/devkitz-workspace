@@ -1,0 +1,97 @@
+name: Go→Python Fallback Scan (R23)
+# @DKZ:RULES → R23 Go→Python Fallback
+# Copilot-Aufgabe: Jede .go Datei braucht eine .py Fallback-Datei
+# Wenn eine .go ohne identische .py gefunden wird → Issue erstellen
+
+on:
+  push:
+    paths: ['**/*.go']
+  schedule:
+    - cron: '0 */6 * * *'  # Alle 6 Stunden
+  workflow_dispatch:
+
+jobs:
+  check-py-fallbacks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan for .go files without .py fallback
+        id: scan
+        run: |
+          echo "🔍 R23-Scan: Go-Dateien ohne Python-Fallback..."
+          MISSING=""
+          COUNT=0
+          
+          for gofile in $(find . -name "*.go" -not -path "./.git/*" -not -path "./vendor/*"); do
+            dir=$(dirname "$gofile")
+            base=$(basename "$gofile" .go)
+            
+            # Prüfe ob eine .py Datei im selben Verzeichnis existiert
+            # server.py ist der Standard-Name für Python-Fallback
+            if [ ! -f "$dir/server.py" ] && [ ! -f "$dir/${base}.py" ]; then
+              MISSING="$MISSING\n- $gofile (braucht: $dir/server.py)"
+              COUNT=$((COUNT + 1))
+            fi
+          done
+          
+          echo "missing_count=$COUNT" >> $GITHUB_OUTPUT
+          if [ $COUNT -gt 0 ]; then
+            echo "🟡 $COUNT Go-Dateien ohne Python-Fallback gefunden"
+            echo -e "$MISSING"
+            
+            # Issue-Body für GitHub
+            BODY="## R23 Go→Python Fallback — Fehlende Python-Server\n\n"
+            BODY="$BODY**DkZ Standard-Regel R23:** Jeder Go-Server braucht einen Python-Fallback.\n"
+            BODY="$BODY- Go vorhanden: 🟢 GRÜN (schnell, nativ)\n"
+            BODY="$BODY- Python Fallback: 🟡 GELB (funktional, etwas langsamer)\n"
+            BODY="$BODY- Nichts: 🔴 ROT (offline)\n\n"
+            BODY="$BODY### Fehlende Fallbacks:\n$MISSING\n\n"
+            BODY="$BODY### Copilot-Aufgabe:\n"
+            BODY="$BODY1. Erstelle \`server.py\` im selben Verzeichnis\n"
+            BODY="$BODY2. Spiegele alle Go-API-Endpoints 1:1\n"
+            BODY="$BODY3. Verwende \`sqlite3\` + \`http.server\`\n"
+            BODY="$BODY4. Erstelle \`start.bat\` + \`start.sh\` (Go→Python Auto-Fallback)\n"
+            BODY="$BODY5. Status-Response muss \`runtime: 'python'\` enthalten\n"
+            
+            echo -e "$BODY" > /tmp/issue_body.txt
+          else
+            echo "✅ Alle Go-Dateien haben Python-Fallback!"
+          fi
+
+      - name: Create Issue if missing
+        if: steps.scan.outputs.missing_count > 0
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('/tmp/issue_body.txt', 'utf8');
+            const count = '${{ steps.scan.outputs.missing_count }}';
+            
+            // Prüfe ob Issue bereits existiert
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'R23-fallback',
+              state: 'open'
+            });
+            
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `[R23] ${count} Go-Server ohne Python-Fallback`,
+                body: body,
+                labels: ['R23-fallback', 'copilot-aufgabe', 'automation']
+              });
+              console.log(`📌 Issue erstellt: ${count} fehlende Fallbacks`);
+            } else {
+              // Update existierendes Issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                body: body
+              });
+              console.log('📝 Existierendes Issue aktualisiert');
+            }

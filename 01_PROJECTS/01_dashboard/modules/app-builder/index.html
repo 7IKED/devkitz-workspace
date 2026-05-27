@@ -1,0 +1,791 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v1.02.0_01">
+    <meta name="dkz-module" content="app-builder">
+    <meta name="description" content="DkZ App Builder -- Chat-Export Setup fuer 6 AI-Plattformen">
+    <title>DkZâ„¢ App Builder</title>
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --bg2: #111116;
+            --bg3: #1a1a20;
+            --bg4: #222228;
+            --accent: #fa1e4e;
+            --accentGlow: rgba(250, 30, 78, .15);
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --border: #2a2a2e;
+            --card: #18181b;
+            --radius: 12px;
+            --font: 'Inter', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--bg2);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .header h1 span {
+            color: var(--accent);
+        }
+
+        .back-btn {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 20px;
+        }
+
+        .back-btn:hover {
+            color: var(--accent);
+        }
+
+        .header-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            background: var(--bg3);
+            color: var(--text);
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .btn:hover {
+            border-color: var(--accent);
+            background: var(--accentGlow);
+        }
+
+        .btn-accent {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .btn-accent:hover {
+            background: #d91843;
+        }
+
+        .main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 11px;
+        }
+
+        .stat b {
+            color: var(--accent);
+            font-size: 14px;
+        }
+
+        /* Platforms */
+        .platforms {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .platform-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            transition: all .3s;
+        }
+
+        .platform-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .platform-card.active {
+            border-color: var(--accent);
+            box-shadow: 0 0 16px var(--accentGlow);
+        }
+
+        .platform-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .platform-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .platform-name {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .platform-toggle {
+            margin-left: auto;
+        }
+
+        .toggle {
+            width: 40px;
+            height: 22px;
+            border-radius: 11px;
+            background: var(--bg4);
+            position: relative;
+            cursor: pointer;
+            transition: background .2s;
+        }
+
+        .toggle.on {
+            background: var(--accent);
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            top: 2px;
+            left: 2px;
+            transition: transform .2s;
+        }
+
+        .toggle.on::after {
+            transform: translateX(18px);
+        }
+
+        .platform-api {
+            margin-top: 8px;
+        }
+
+        .platform-api input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px;
+            color: var(--text);
+            font-size: 11px;
+            font-family: monospace;
+        }
+
+        .platform-api label {
+            font-size: 10px;
+            color: var(--muted);
+            font-weight: 600;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        /* Config Section */
+        .config-section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .config-title {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .config-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            background: var(--bg);
+        }
+
+        .config-option label {
+            font-size: 11px;
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .config-option input[type=checkbox] {
+            accent-color: var(--accent);
+        }
+
+        .config-option select {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 4px;
+            padding: 4px;
+            font-size: 11px;
+        }
+
+        /* Presets */
+        .presets {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .preset-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all .2s;
+            text-align: center;
+        }
+
+        .preset-card:hover {
+            border-color: var(--accent);
+            background: var(--accentGlow);
+        }
+
+        .preset-card h4 {
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .preset-card p {
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        /* Setups */
+        .setups-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin: 12px 0;
+        }
+
+        .setup-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            background: var(--bg);
+            border-radius: 6px;
+        }
+
+        .setup-item span {
+            flex: 1;
+            font-size: 12px;
+        }
+
+        .setup-item small {
+            color: var(--muted);
+            font-size: 10px;
+        }
+
+        .setup-item button {
+            padding: 4px 8px;
+            font-size: 10px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .modal textarea {
+            width: 100%;
+            min-height: 120px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            color: var(--text);
+            font-size: 12px;
+            resize: vertical;
+        }
+
+        .modal input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px;
+            color: var(--text);
+            font-size: 12px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--card);
+            border: 1px solid var(--accent);
+            color: var(--text);
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 9999;
+            animation: fadeInUp .3s;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #james-panel {
+            left: auto !important;
+            right: 12px !important;
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="app-builder" data-dkz-appid="DKZ-MOD-APP" data-dkz-version="v0.01" data-dkz-title="App Builder" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="header">
+        <a href="../../hub/index.html" class="back-btn" title="Zurueck zum Hub">&#8592;</a>
+        <h1><span>App</span> Builder</h1>
+        <span style="font-size:10px;color:var(--muted)">Chat-Export Setup | 6 Plattformen</span>
+        <div class="header-actions">
+            <button class="btn" onclick="showPresets()">Presets</button>
+            <button class="btn" onclick="showSetups()">Setups</button>
+            <button class="btn" onclick="exportSetup()">Export</button>
+            <button class="btn" onclick="showImportModal()">Import</button>
+            <button class="btn btn-accent" onclick="saveSetup()">Speichern</button>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="stats-bar">
+            <div class="stat">Plattformen: <b id="stat-platforms">0</b>/6</div>
+            <div class="stat">Setups: <b id="stat-setups">0</b></div>
+            <div class="stat">NEXUZ-API: <b id="stat-nexuz">--</b></div>
+            <div class="stat">James: <b id="stat-james">--</b></div>
+        </div>
+
+        <!-- Presets Section -->
+        <div id="presets-section" style="display:none">
+            <div class="config-section">
+                <div class="config-title">Preset-Templates</div>
+                <div class="presets" id="presets-grid"></div>
+            </div>
+        </div>
+
+        <!-- Platforms -->
+        <div class="platforms" id="platforms"></div>
+
+        <!-- Export Config -->
+        <div class="config-section">
+            <div class="config-title">Export-Konfiguration</div>
+            <div class="config-grid">
+                <div class="config-option">
+                    <label>Format</label>
+                    <select id="cfg-format">
+                        <option value="jsonl">JSONL</option>
+                        <option value="markdown">Markdown</option>
+                        <option value="both" selected>Beide</option>
+                    </select>
+                </div>
+                <div class="config-option"><input type="checkbox" id="cfg-messages" checked><label
+                        for="cfg-messages">Nachrichten</label></div>
+                <div class="config-option"><input type="checkbox" id="cfg-media"><label for="cfg-media">Medien</label>
+                </div>
+                <div class="config-option"><input type="checkbox" id="cfg-metadata" checked><label
+                        for="cfg-metadata">Metadaten</label></div>
+                <div class="config-option"><input type="checkbox" id="cfg-artifacts"><label
+                        for="cfg-artifacts">Artifacts (Claude)</label></div>
+                <div class="config-option"><input type="checkbox" id="cfg-sources"><label for="cfg-sources">Quellen
+                        (Perplexity)</label></div>
+                <div class="config-option"><input type="checkbox" id="cfg-dedup"><label
+                        for="cfg-dedup">Duplikat-Erkennung</label></div>
+                <div class="config-option"><input type="checkbox" id="cfg-history"><label
+                        for="cfg-history">Export-Verlauf</label></div>
+            </div>
+        </div>
+
+        <!-- Advanced -->
+        <div class="config-section">
+            <div class="config-title">Erweitert</div>
+            <div class="config-grid">
+                <div class="config-option">
+                    <label>Zielordner</label>
+                    <input type="text" id="cfg-target" value="exports/" style="width:120px;font-size:10px;padding:4px">
+                </div>
+                <div class="config-option">
+                    <label>Rate-Limit (req/s)</label>
+                    <input type="number" id="cfg-ratelimit" value="5" min="1" max="20"
+                        style="width:60px;font-size:10px;padding:4px">
+                </div>
+                <div class="config-option"><input type="checkbox" id="cfg-progress" checked><label
+                        for="cfg-progress">Fortschrittsbalken</label></div>
+                <div class="config-option"><input type="checkbox" id="cfg-organize"><label
+                        for="cfg-organize">Projekt-Organisation</label></div>
+            </div>
+        </div>
+
+        <!-- Saved Setups -->
+        <div id="setups-section" style="display:none">
+            <div class="config-section">
+                <div class="config-title">Gespeicherte Setups</div>
+                <div class="setups-list" id="setups-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div class="modal-overlay" id="import-modal">
+        <div class="modal">
+            <h3>Setup importieren</h3>
+            <div style="margin-bottom:10px"><label style="font-size:11px;color:var(--muted)">Name
+                    (optional)</label><input id="import-name" placeholder="Neuer Name"></div>
+            <div style="margin-bottom:10px"><label style="font-size:11px;color:var(--muted)">JSON
+                    einfuegen</label><textarea id="import-json" placeholder='{"name":"...","config":{...}}'></textarea>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn"
+                    onclick="closeModal('import-modal')">Abbrechen</button><button class="btn btn-accent"
+                    onclick="importSetup()">Importieren</button></div>
+        </div>
+    </div>
+
+    <!-- Save Modal -->
+    <div class="modal-overlay" id="save-modal">
+        <div class="modal">
+            <h3>Setup speichern</h3>
+            <div style="margin-bottom:10px"><label style="font-size:11px;color:var(--muted)">Name</label><input
+                    id="save-name" placeholder="Mein Setup"></div>
+            <div style="margin-bottom:10px"><label style="font-size:11px;color:var(--muted)">Beschreibung</label><input
+                    id="save-desc" placeholder="Kurze Beschreibung"></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn"
+                    onclick="closeModal('save-modal')">Abbrechen</button><button class="btn btn-accent"
+                    onclick="doSave()">Speichern</button></div>
+        </div>
+    </div>
+
+        <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/nexuz.js"></script>
+    <script>
+        const PLATFORMS = [
+            { id: 'openai', name: 'OpenAI / ChatGPT', icon: 'O', color: '#00A67E', apiUrl: 'https://platform.openai.com/api-keys' },
+            { id: 'gemini', name: 'Google Gemini', icon: 'G', color: '#4285F4', apiUrl: 'https://aistudio.google.com/apikey' },
+            { id: 'claude', name: 'Anthropic Claude', icon: 'C', color: '#D97706', apiUrl: 'https://console.anthropic.com/account/keys', extras: ['artifacts'] },
+            { id: 'deepseek', name: 'DeepSeek', icon: 'D', color: '#6366f1', apiUrl: 'https://platform.deepseek.com/api-keys' },
+            { id: 'perplexity', name: 'Perplexity AI', icon: 'P', color: '#55ACEE', apiUrl: 'https://www.perplexity.ai/settings/api', extras: ['sources'] },
+            { id: 'grok', name: 'Grok (X.AI)', icon: 'X', color: '#000', apiUrl: 'https://console.x.ai/', borderColor: '#fff' }
+        ];
+
+        const PRESETS = [
+            { name: 'Basic Export', desc: 'Nur Nachrichten + Metadaten', config: { format: 'jsonl', messages: true, metadata: true } },
+            { name: 'Vollstaendiges Backup', desc: 'Alles exportieren', config: { format: 'both', messages: true, media: true, metadata: true, artifacts: true, sources: true, history: true, organize: true } },
+            { name: 'Claude Artifacts', desc: 'Speziell fuer Claude', config: { format: 'markdown', messages: true, artifacts: true, metadata: true }, platforms: ['claude'] },
+            { name: 'Research & Analysis', desc: 'Perplexity mit Quellen', config: { format: 'both', messages: true, sources: true, metadata: true }, platforms: ['perplexity'] },
+            { name: 'Quick Sync', desc: 'Schneller Sync mit Dedup', config: { format: 'jsonl', messages: true, dedup: true } },
+            { name: 'Datenanalyse', desc: 'JSONL fuer Analyse', config: { format: 'jsonl', messages: true, metadata: true, organize: true } }
+        ];
+
+        const STORAGE_KEY = 'dkz-app-builder';
+        let state = { active: {}, setups: [] };
+
+        function init() {
+            var saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) { try { state = JSON.parse(saved); } catch (e) { } }
+
+            renderPlatforms();
+            renderPresets();
+            updateStats();
+
+            // NEXUZ status
+            if (typeof NEXUZ !== 'undefined') {
+                NEXUZ.checkHealth().then(function (h) {
+                    document.getElementById('stat-nexuz').textContent = h - 'Online' : 'Offline';
+                    document.getElementById('stat-nexuz').style.color = h - '#00ff88' : '#fa1e4e';
+                });
+            }
+        }
+
+        function renderPlatforms() {
+            var html = '';
+            PLATFORMS.forEach(function (p) {
+                var isActive = state.active[p.id];
+                var apiKey = (typeof NEXUZ !== 'undefined') - NEXUZ.getToken(p.id) : '';
+                html += '<div class="platform-card' + (isActive - ' active' : '') + '" id="plat-' + p.id + '">';
+                html += '<div class="platform-header">';
+                html += '<div class="platform-icon" style="background:' + (p.color) + ';color:#fff;border:1px solid ' + (p.borderColor || p.color) + '">' + p.icon + '</div>';
+                html += '<div class="platform-name">' + p.name + '</div>';
+                html += '<div class="platform-toggle"><div class="toggle' + (isActive - ' on' : '') + '" onclick="togglePlatform(\'' + p.id + '\')"></div></div>';
+                html += '</div>';
+                html += '<div class="platform-api"><label>API Key <a href="' + p.apiUrl + '" target="_blank" style="color:var(--accent);font-size:9px">holen</a></label>';
+                html += '<input type="password" id="key-' + p.id + '" value="' + (apiKey || '') + '" placeholder="sk-... oder API Key" onchange="saveKey(\'' + p.id + '\',this.value)"></div>';
+                if (p.extras) {
+                    p.extras.forEach(function (ex) {
+                        html += '<div style="margin-top:6px;font-size:10px;color:var(--accent)">+ ' + ex.charAt(0).toUpperCase() + ex.slice(1) + ' Support</div>';
+                    });
+                }
+                html += '</div>';
+            });
+            document.getElementById('platforms').innerHTML = html;
+        }
+
+        function togglePlatform(id) {
+            state.active[id] = !state.active[id];
+            save(); renderPlatforms(); updateStats();
+        }
+
+        function saveKey(provider, key) {
+            if (typeof NEXUZ !== 'undefined') NEXUZ.setToken(provider, key);
+        }
+
+        function renderPresets() {
+            var html = '';
+            PRESETS.forEach(function (p, i) {
+                html += '<div class="preset-card" onclick="loadPreset(' + i + ')"><h4>' + p.name + '</h4><p>' + p.desc + '</p></div>';
+            });
+            document.getElementById('presets-grid').innerHTML = html;
+        }
+
+        function loadPreset(idx) {
+            var p = PRESETS[idx]; if (!p) return;
+            var c = p.config;
+            if (c.format) document.getElementById('cfg-format').value = c.format;
+            ['messages', 'media', 'metadata', 'artifacts', 'sources', 'dedup', 'history', 'organize', 'progress'].forEach(function (k) {
+                var el = document.getElementById('cfg-' + k);
+                if (el) el.checked = !!c[k];
+            });
+            if (p.platforms) {
+                PLATFORMS.forEach(function (pl) { state.active[pl.id] = p.platforms.indexOf(pl.id) !== -1; });
+            }
+            save(); renderPlatforms(); updateStats();
+            toast('Preset "' + p.name + '" geladen');
+        }
+
+        function getConfig() {
+            var cfg = { format: document.getElementById('cfg-format').value };
+            ['messages', 'media', 'metadata', 'artifacts', 'sources', 'dedup', 'history', 'organize', 'progress'].forEach(function (k) {
+                var el = document.getElementById('cfg-' + k);
+                if (el) cfg[k] = el.checked;
+            });
+            cfg.target = document.getElementById('cfg-target').value;
+            cfg.rateLimit = parseInt(document.getElementById('cfg-ratelimit').value) || 5;
+            cfg.platforms = state.active;
+            return cfg;
+        }
+
+        function saveSetup() {
+            document.getElementById('save-modal').classList.add('show');
+        }
+
+        function doSave() {
+            var name = document.getElementById('save-name').value || 'Setup ' + (state.setups.length + 1);
+            var desc = document.getElementById('save-desc').value || '';
+            var setup = { name: name, description: desc, config: getConfig(), created: new Date().toISOString(), version: '2.0.0' };
+            state.setups.push(setup);
+            save(); closeModal('save-modal'); updateStats();
+            toast('Setup "' + name + '" gespeichert');
+        }
+
+        function exportSetup() {
+            var cfg = getConfig();
+            var data = JSON.stringify({ name: 'DkZ Export', config: cfg, version: '2.0.0', created: new Date().toISOString() }, null, 2);
+            var blob = new Blob([data], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a'); a.href = url; a.download = 'dkz-app-builder-setup.json'; a.click();
+            URL.revokeObjectURL(url);
+            toast('Setup exportiert');
+        }
+
+        function showImportModal() { document.getElementById('import-modal').classList.add('show'); }
+
+        function importSetup() {
+            var json = document.getElementById('import-json').value;
+            try {
+                var data = JSON.parse(json);
+                var name = document.getElementById('import-name').value || data.name || 'Importiert';
+                data.name = name;
+                state.setups.push(data);
+                save(); closeModal('import-modal'); updateStats();
+                toast('Setup "' + name + '" importiert');
+            } catch (e) { toast('Ungueltige JSON-Daten'); }
+        }
+
+        function showPresets() {
+            var el = document.getElementById('presets-section');
+            el.style.display = el.style.display === 'none' - 'block' : 'none';
+        }
+
+        function showSetups() {
+            var el = document.getElementById('setups-section');
+            el.style.display = el.style.display === 'none' - 'block' : 'none';
+            renderSetups();
+        }
+
+        function renderSetups() {
+            var html = '';
+            if (state.setups.length === 0) { html = '<div style="color:var(--muted);font-size:11px;padding:8px">Keine gespeicherten Setups</div>'; }
+            state.setups.forEach(function (s, i) {
+                html += '<div class="setup-item"><span>' + esc(s.name) + '</span><small>' + (s.created || '').substring(0, 10) + '</small>';
+                html += '<button class="btn" style="font-size:9px;padding:3px 8px" onclick="loadSetup(' + i + ')">Laden</button>';
+                html += '<button class="btn" style="font-size:9px;padding:3px 8px" onclick="deleteSetup(' + i + ')">X</button></div>';
+            });
+            document.getElementById('setups-list').innerHTML = html;
+        }
+
+        function loadSetup(idx) {
+            var s = state.setups[idx]; if (!s || !s.config) return;
+            var c = s.config;
+            if (c.format) document.getElementById('cfg-format').value = c.format;
+            ['messages', 'media', 'metadata', 'artifacts', 'sources', 'dedup', 'history', 'organize', 'progress'].forEach(function (k) {
+                var el = document.getElementById('cfg-' + k);
+                if (el) el.checked = !!c[k];
+            });
+            if (c.target) document.getElementById('cfg-target').value = c.target;
+            if (c.rateLimit) document.getElementById('cfg-ratelimit').value = c.rateLimit;
+            if (c.platforms) state.active = c.platforms;
+            save(); renderPlatforms(); updateStats();
+            toast('Setup "' + s.name + '" geladen');
+        }
+
+        function deleteSetup(idx) {
+            state.setups.splice(idx, 1);
+            save(); renderSetups(); updateStats();
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+        function updateStats() {
+            var active = Object.keys(state.active).filter(function (k) { return state.active[k]; }).length;
+            document.getElementById('stat-platforms').textContent = active;
+            document.getElementById('stat-setups').textContent = state.setups.length;
+            if (typeof DkzJames !== 'undefined') {
+                var r = DkzJames.evaluate(document.documentElement.outerHTML, 'html');
+                document.getElementById('stat-james').textContent = r.grade + ' ' + r.score;
+                document.getElementById('stat-james').style.color = r.color;
+            }
+        }
+
+        function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+        function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+        function toast(msg) { var t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(function () { t.remove(); }, 3000); }
+
+        init();
+    </script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">App builder</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Erstelle Web-Applikationen visuell.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">App builder</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Erstelle Web-Applikationen visuell.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-app-builder-onboarded','1')}if(!localStorage.getItem('dkz-app-builder-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>
+
+<!-- DkZ Shared Scripts (R21) -->
+<script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+<script src="../../shared/dkz-guide.js"></script>
+<script src="../../shared/dkz-copilot.js"></script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+</html>
+
+

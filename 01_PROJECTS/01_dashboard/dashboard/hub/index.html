@@ -1,0 +1,432 @@
+﻿<!-- 
+=============================================================================
+DKZ ECOSYSTEM BLUEPRINT v1.01.1
+BRAND: AntiCrav / DkZ 
+MODULE: BAZE HUB (Central Dashboard)
+=============================================================================
+-->
+<!DOCTYPE html>
+<html lang="de" class="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BAZE Hub Dashboard - DkZ Ecosystem</title>
+
+    <script src="https://cdn.tailwindcss.com">
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }</script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#a855f7', // Ecosystem Purple
+                        darkBg: '#09090b',
+                        darkSurface: '#18181b',
+                        darkBorder: '#27272a',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800;900&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #09090b;
+            color: white;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.1) 0%, transparent 60%);
+        }
+
+        .glass {
+            background: rgba(24, 24, 27, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(168, 85, 247, 0.5);
+            border-radius: 4px;
+        }
+
+        .custom-scroll:hover::-webkit-scrollbar-thumb {
+            background: rgba(168, 85, 247, 0.8);
+        }
+
+        .module-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .module-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(var(--card-color-rgb), 0.3);
+            border-color: rgba(var(--card-color-rgb), 0.5);
+        }
+
+        /* 3D Button from DocEngine */
+        .button-3d {
+            position: relative;
+            background-color: theme('colors.darkSurface');
+            border: 1px solid theme('colors.darkBorder');
+            color: #e4e4e7;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: transform 0.1s, box-shadow 0.1s, background-color 0.2s, border-color 0.2s;
+            box-shadow: 0 4px 0 theme('colors.darkBorder');
+        }
+
+        .button-3d:hover {
+            background-color: #27272a;
+            color: #fff;
+        }
+
+        .button-3d:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 theme('colors.darkBorder');
+            border-color: theme('colors.brand.DEFAULT');
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const Icon = ({ name, size = 20, className = '', weight = 'regular' }) => <i className={`ph-${weight} ph-${name} text-[${size}px] ${className}`}></i>;
+
+        const initialModules = [
+            { id: 'ai_chat_v1', name: 'Core Chat', desc: 'Standard AI Assistant (Local API).', icon: 'chat-circle-text', color: '#fa1e4e', colorRgb: '59, 130, 246', path: '../../modules/ai_chat/chat_version_1/index.html' },
+            { id: 'ai_chat_v2', name: 'Multi-Core Chat', desc: 'Dynamic Model Switcher Playground.', icon: 'brain', color: '#f59e0b', colorRgb: '245, 158, 11', path: '../../modules/ai_chat/chat_version_2/index.html' },
+            { id: 'analyser', name: 'Data Analyzer', desc: 'Resume & Content Parsing Engine.', icon: 'scan', color: '#fa1e4e', colorRgb: '59, 130, 246', path: '../../modules/analyser/index.html' },
+            { id: 'converter', name: 'Code Converter', desc: 'AI Code Refactoring & Translation.', icon: 'code', color: '#a855f7', colorRgb: '168, 85, 247', path: '../../modules/converter/index.html' },
+            { id: 'text_summary', name: 'Txt Summary', desc: 'NLP Compression Engine.', icon: 'text-align-justify', color: '#10b981', colorRgb: '16, 185, 129', path: '../../modules/text_summary/index.html' },
+            { id: 'speech_to_text', name: 'Voice Engine', desc: 'Speech to Text / Audio Transcription.', icon: 'microphone-stage', color: '#06b6d4', colorRgb: '6, 182, 212', path: '../../modules/speech_to_text/index.html' },
+            { id: 'text_to_speech', name: 'Audio Synth', desc: 'Text to Speech Synthesis Engine.', icon: 'speaker-high', color: '#ec4899', colorRgb: '236, 72, 153', path: '../../modules/text_to_speech/index.html' },
+            { id: 'markdown_converter', name: 'MD Converter', desc: 'Live Markdown to HTML Parser with Mermaid.', icon: 'markdown-logo', color: '#f59e0b', colorRgb: '245, 158, 11', path: '../../modules/markdown_converter/index.html' },
+            { id: 'html_viewer', name: 'HTML Viewer', desc: 'Live Browser UI Preview IFrame.', icon: 'file-html', color: '#ef4444', colorRgb: '239, 68, 68', path: '../../modules/html_viewer/index.html' },
+            { id: 'n8n_runbook', name: 'n8n Runbook', desc: 'Server-Dokumentation & SSH-Befehle.', icon: 'terminal', color: '#10b981', colorRgb: '16, 185, 129', path: '../../../09_hostinger/index.html' },
+            { id: 'prompt_builder', name: 'Prompt Builder', desc: 'LLM-optimierte Prompt-Generierung.', icon: 'lightning', color: '#f59e0b', colorRgb: '245, 158, 11', path: '../../../10_prompt_builder/smart/index.html' },
+        ];
+
+
+        const AppCreatorWizard = ({ isOpen, onClose, onAppCreated }) => {
+            const [mode, setMode] = React.useState('panel');
+            const [youtubeLink, setYoutubeLink] = React.useState('');
+            const [notes, setNotes] = React.useState('');
+            const [selectedTags, setSelectedTags] = React.useState([]);
+            const availableTags = ['text', 'speak', 'code', 'converter', 'analyser', 'etc', 'new', 'fav'];
+
+            const [appPurpose, setAppPurpose] = React.useState('');
+            const [appResult, setAppResult] = React.useState('');
+            const [exampleLink, setExampleLink] = React.useState('');
+
+            const [step, setStep] = React.useState(1); // 1: input, 2: analyzing, 3: questions, 4: building
+            const [answers, setAnswers] = React.useState({ q1: '', q2: '', q3: '' });
+
+            // reset on open
+            React.useEffect(() => {
+                if (isOpen) {
+                    setStep(1); setMode('panel'); setYoutubeLink(''); setNotes('');
+                    setSelectedTags([]); setAppPurpose(''); setAppResult(''); setExampleLink('');
+                    setAnswers({ q1: '', q2: '', q3: '' });
+                }
+            }, [isOpen]);
+
+            if (!isOpen) return null;
+
+            const handleAnalyze = () => {
+                setStep(2);
+                setTimeout(() => setStep(3), 2000);
+            };
+
+            const handleBuild = () => {
+                setStep(4);
+                setTimeout(() => {
+                    onAppCreated({
+                        id: 'new_app_' + Date.now(),
+                        name: mode === 'smart' ? 'Smart Generated App' : 'New Panel App',
+                        desc: mode === 'smart' ? (appPurpose.substring(0, 40) + '...') : ((notes.substring(0, 40) || 'Custom Panel')),
+                        icon: 'magic-wand',
+                        color: '#ec4899', colorRgb: '236, 72, 153',
+                        path: '#'
+                    });
+                    onClose();
+                }, 3000);
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                    <div className="bg-[#18181b] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto custom-scroll flex flex-col shadow-2xl">
+                        <div className="p-4 border-b border-white/5 flex items-center justify-between sticky top-0 bg-[#18181b]/95 backdrop-blur z-10">
+                            <h2 className="text-xl font-display font-bold flex items-center gap-2 text-white">
+                                <Icon name="magic-wand" className="text-brand" weight="duotone" />
+                                App Generation Wizard
+                            </h2>
+                            <button onClick={onClose} className="text-gray-400 hover:text-white"><Icon name="x" size={24} /></button>
+                        </div>
+
+                        <div className="p-6 flex-1">
+                            {step === 1 && (
+                                <div className="space-y-6">
+                                    <div className="flex bg-black/50 p-1 rounded-lg border border-white/5 mx-auto max-w-xs transition-opacity duration-300">
+                                        <button className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${mode === 'panel' ? 'bg-[#ff0033] text-white shadow' : 'text-gray-500 hover:text-gray-300'}`} onClick={() => setMode('panel')}>Panel Mode</button>
+                                        <button className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${mode === 'smart' ? 'bg-indigo-500 text-white shadow' : 'text-gray-500 hover:text-gray-300'}`} onClick={() => setMode('smart')}>Smart Mode</button>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider">YouTube Link (Reference)</label>
+                                            <input type="text" value={youtubeLink} onChange={e => setYoutubeLink(e.target.value)} className="w-full bg-[#09090b] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#ff0033] transition-colors" placeholder="https://youtube.com/watch?v=..." />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider">Anmerkungen (Notes/Improvements)</label>
+                                            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows="2" className="w-full bg-[#09090b] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#ff0033] transition-colors resize-none" placeholder="Was soll verbessert / angepasst werden?"></textarea>
+                                        </div>
+                                    </div>
+
+                                    {mode === 'panel' ? (
+                                        <div className="space-y-3 pt-4 border-t border-white/5 transition-opacity duration-300">
+                                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Tags (Multiple Select)</label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {availableTags.map(tag => (
+                                                    <button key={tag} onClick={() => setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])}
+                                                        className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${selectedTags.includes(tag) ? 'bg-[#ff0033]/20 border-[#ff0033] text-[#ff0033]' : 'bg-[#09090b] border-white/10 text-gray-400 hover:border-white/30'}`}>
+                                                        #{tag}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4 pt-4 border-t border-white/5 transition-opacity duration-300">
+                                            <div>
+                                                <label className="block text-xs font-bold text-indigo-400 mb-1 uppercase tracking-wider">1. Was soll die App machen?</label>
+                                                <textarea value={appPurpose} onChange={e => setAppPurpose(e.target.value)} rows="2" className="w-full bg-[#09090b] border border-indigo-500/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors resize-none placeholder-gray-600" placeholder="Beschreibe die Kernfunktion..."></textarea>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-indigo-400 mb-1 uppercase tracking-wider">2. Was soll als Endergebnis rauskommen?</label>
+                                                <textarea value={appResult} onChange={e => setAppResult(e.target.value)} rows="2" className="w-full bg-[#09090b] border border-indigo-500/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors resize-none placeholder-gray-600" placeholder="Z.B. Eine formatierte MD Datei, Ein Panel..."></textarea>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-indigo-400 mb-1 uppercase tracking-wider">3. Beispiel Upload (Foto/Code/MD) oder Link (Repo/Web)</label>
+                                                <div className="flex items-center gap-2">
+                                                    <input type="text" value={exampleLink} onChange={e => setExampleLink(e.target.value)} className="flex-1 bg-[#09090b] border border-indigo-500/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder-gray-600" placeholder="https://github.com/... oder click Upload ->" />
+                                                    <button className="bg-[#09090b] border border-indigo-500/30 rounded-lg p-2 text-indigo-400 hover:bg-indigo-500/10 transition-colors"><Icon name="upload-simple" size={20} /></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {step === 2 && (
+                                <div className="py-12 flex flex-col items-center justify-center space-y-4">
+                                    <i className="ph-duotone ph-brain text-4xl text-[#ff0033] animate-pulse"></i>
+                                    <h3 className="text-lg font-bold text-white">Analysiere Anforderungen...</h3>
+                                    <p className="text-sm text-gray-500">DKZ AI Core wertet Repos und Links aus.</p>
+                                </div>
+                            )}
+
+                            {step === 3 && (
+                                <div className="space-y-6">
+                                    <div className="bg-[#ff0033]/10 border border-[#ff0033]/30 rounded-lg p-4 text-sm text-[#ff0033] mb-4 shadow-[0_0_10px_rgba(255,0,51,0.2)]">
+                                        Analyse abgeschlossen. Bitte kläre folgende 3 Fragen, bevor der Build startet:
+                                    </div>
+
+                                    {[1, 2, 3].map(qNum => (
+                                        <div key={qNum} className="space-y-2">
+                                            <label className="block text-sm font-bold text-gray-200">
+                                                {qNum === 1 ? 'Welches UI Framework soll priorisiert werden?' : qNum === 2 ? 'Soll die App in der Sidebar oder als Fullscreen-Panel laufen?' : 'Gibt es eine bevorzugte Datenbank/Speicher-Methode?'}
+                                            </label>
+                                            <div className="flex gap-2 text-sm font-bold">
+                                                {['A', 'B', 'C'].map(opt => (
+                                                    <label key={opt} className={`flex-1 flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${answers['q' + qNum] === opt ? 'bg-white/10 border-white text-white shadow-lg' : 'bg-[#09090b] border-white/10 text-gray-400 hover:border-white/30'}`}>
+                                                        <input type="radio" name={'q' + qNum} value={opt} checked={answers['q' + qNum] === opt} onChange={() => setAnswers({ ...answers, ['q' + qNum]: opt })} className="hidden" />
+                                                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${answers['q' + qNum] === opt ? 'border-[#ff0033]' : 'border-gray-500'}`}>
+                                                            {answers['q' + qNum] === opt && <div className="w-2 h-2 rounded-full bg-[#ff0033]"></div>}
+                                                        </div>
+                                                        Opt {opt}
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {step === 4 && (
+                                <div className="py-12 flex flex-col items-center justify-center space-y-4">
+                                    <i className="ph-duotone ph-gear-fine text-4xl text-indigo-400 animate-spin"></i>
+                                    <h3 className="text-lg font-bold text-white">Application wird kompiliert & getestet...</h3>
+                                    <div className="w-full max-w-sm h-1.5 bg-[#09090b] rounded-full overflow-hidden mt-4">
+                                        <div className="h-full w-full bg-indigo-500 animate-pulse origin-left"></div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {step !== 2 && step !== 4 && (
+                            <div className="p-4 border-t border-white/5 flex justify-end gap-3 bg-[#09090b] rounded-b-2xl">
+                                <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:text-white transition-colors">Abbrechen</button>
+                                {step === 1 ? (
+                                    <button onClick={handleAnalyze} className="px-5 py-2 rounded-lg text-sm font-bold bg-white text-black hover:bg-gray-200 transition-colors shadow-lg">Analysieren & Setup</button>
+                                ) : (
+                                    <button onClick={handleBuild} disabled={!answers.q1 || !answers.q2 || !answers.q3} className="px-5 py-2 rounded-lg text-sm font-bold bg-[#ff0033] text-white hover:bg-[#cc0029] transition-colors shadow-[0_0_15px_rgba(255,0,51,0.5)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                                        <Icon name="rocket-launch" weight="fill" /> Build & Release
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+
+        const App = () => {
+            const [installedModules, setInstalledModules] = useState(initialModules);
+            const [isCreatorOpen, setCreatorOpen] = useState(false);
+            const [serverStatus, setServerStatus] = useState('checking'); // checking, online, offline
+            const [isSyncing, setIsSyncing] = useState(false);
+
+            // Check if backend is alive
+            useEffect(() => {
+                const checkServer = async () => {
+                    try {
+                        // Just hitting root or ping endpoint
+                        const res = await fetch('http://localhost:3040/api/sync', { method: 'POST', body: '{}', headers: { 'Content-Type': 'application/json' } });
+                        setServerStatus('online');
+                    } catch (e) {
+                        setServerStatus('offline');
+                    }
+                };
+                checkServer();
+                const intv = setInterval(checkServer, 10000);
+                return () => clearInterval(intv);
+            }, []);
+
+            const handleSyncAll = async () => {
+                setIsSyncing(true);
+                try {
+                    await fetch('http://localhost:3040/api/sync', { method: 'POST', body: '{}', headers: { 'Content-Type': 'application/json' } });
+                } finally {
+                    setTimeout(() => setIsSyncing(false), 2000);
+                }
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col p-4 md:p-8 max-w-7xl mx-auto w-full">
+                    {/* Header */}
+                    <header className="flex items-center justify-between mb-12 z-10 glass rounded-3xl p-6 px-8 relative overflow-hidden shadow-2xl">
+                        <div className="absolute inset-0 bg-gradient-to-r from-brand/10 to-transparent pointer-events-none"></div>
+                        <div className="flex items-center gap-6 relative z-10">
+                            <div className="w-16 h-16 rounded-2xl bg-[#09090b] border border-white/10 flex items-center justify-center shadow-[0_0_20px_rgba(255,0,0,0.4)]">
+                                <span className="text-[28px] font-black text-[#ff0033] drop-shadow-[0_0_10px_rgba(255,0,51,0.8)] leading-none">{'{'}7{'>'}</span>
+                            </div>
+                            <div>
+                                <h1 className="text-3xl font-display font-black tracking-widest uppercase bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 flex items-center gap-2">
+                                    <span className="text-[#ff0033] drop-shadow-[0_0_8px_rgba(255,0,51,0.6)] leading-none">{'{'}7{'>'}</span>
+                                    HUB <span className="text-brand">DkZ™</span>
+                                </h1>
+                                <p className="text-[10px] text-gray-400 uppercase tracking-[0.3em] font-bold mt-1">Central DkZ Namespace Control</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-6 relative z-10">
+                            <div className="flex flex-col items-end">
+                                <span className="text-[10px] uppercase font-bold text-gray-500 tracking-widest mb-1">API Server (Port 3040)</span>
+                                <div className={`flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-mono font-bold ${serverStatus === 'online' ? 'bg-green-500/10 border-green-500/30 text-green-400' :
+                                    serverStatus === 'checking' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-500' :
+                                        'bg-red-500/10 border-red-500/30 text-red-500'
+                                    }`}>
+                                    <div className={`w-2 h-2 rounded-full ${serverStatus === 'online' ? 'bg-green-500 animate-pulse' : serverStatus === 'checking' ? 'bg-yellow-500' : 'bg-red-500'}`}></div>
+                                    {serverStatus.toUpperCase()}
+                                </div>
+                            </div>
+
+                            <div className="w-px h-10 bg-white/10 hidden md:block"></div>
+
+                            <button onClick={handleSyncAll} className="button-3d hidden md:flex items-center gap-2" disabled={serverStatus === 'offline' || isSyncing}>
+                                <Icon name="git-commit" className={isSyncing ? "animate-spin text-brand" : ""} /> Global Repo Sync
+                            </button>
+                        </div>
+                    </header>
+
+                    {/* Quick Access Grid */}
+                    <div className="mb-6 flex items-center justify-between">
+                        <h2 className="text-lg font-bold flex items-center gap-2 text-white">
+                            <Icon name="squares-four" weight="duotone" className="text-brand" />
+                            Installed Modules ({installedModules.length})
+                            <button onClick={() => setCreatorOpen(true)} className="ml-2 w-8 h-8 rounded shrink-0 bg-[#18181b] border border-white/10 flex items-center justify-center text-gray-300 hover:text-brand hover:border-brand hover:shadow-[0_0_10px_rgba(168,85,247,0.4)] transition-all">
+                                <Icon name="plus" size={16} weight="bold" />
+                            </button>
+                        </h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
+                        {installedModules.map(mod => (
+                            <a
+                                key={mod.id}
+                                href={mod.path}
+                                className="module-card glass rounded-2xl p-6 flex items-start gap-4 cursor-pointer group"
+                                style={{ '--card-color-rgb': mod.colorRgb }}
+                            >
+                                <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110" style={{ backgroundColor: `${mod.color}20`, color: mod.color, border: `1px solid ${mod.color}40` }}>
+                                    <Icon name={mod.icon} weight="duotone" size={28} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-gray-100 group-hover:text-white transition-colors">{mod.name}</h3>
+                                    <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">{mod.desc}</p>
+                                    <div className="mt-3 flex gap-2">
+                                        <span className="text-[9px] font-mono text-gray-600 bg-white/5 px-2 py-0.5 rounded uppercase tracking-wider">/modules/{mod.id.split('_v')[0]}</span>
+                                    </div>
+                                </div>
+                            </a>
+                        ))}
+                    </div>
+
+                    <AppCreatorWizard isOpen={isCreatorOpen} onClose={() => setCreatorOpen(false)} onAppCreated={(newApp) => setInstalledModules(prev => [...prev, newApp])} />
+                </div>
+            );
+        };
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

@@ -1,0 +1,91 @@
+homio_light:
+  template:
+    - homio_entity
+  show_last_changed: false
+  state_display: |
+    [[[ if (entity.state === "on" && entity.attributes.brightness) 
+      {return "Brightness - " + Math.round((entity.attributes.brightness / 255) * 100) +
+      "%"} else return "Off"
+    ]]]
+  tap_action:
+    action: |
+      [[[
+        if(entity.state === "off") 
+        return "toggle"
+        else return "none"
+      ]]]
+  hold_action:
+    action: |
+      [[[
+        if(entity.state === "on") 
+        return "toggle"
+        else return "none"
+      ]]]
+  styles:
+    label:
+      - position: absolute
+      - bottom: 25px
+      - font-size: 10px
+      - text-transform: uppercase
+      - color: white
+      - letter-spacing: 2px
+      - font-weight: 600
+      - opacity: 1
+      - justify-self: start
+    custom_fields:
+      light-slider:
+        - position: absolute
+        - bottom: 30px
+        - height: 8px
+        - right: 0
+        - left: 0
+        - padding: 0 40px
+        - transition: |
+            [[[
+              if(entity.state === "off" || entity.state === "unavailable")
+              return "transform 0s"
+              else
+              return "transform 0.6s"
+            ]]]
+        - transform: |
+            [[[
+              if(entity.state === "off" || entity.state === "unavailable")
+              return "translateY(45px)"
+              else
+              return "translateY(0)"
+            ]]]
+  custom_fields:
+    light-slider:
+      card:
+        type: "custom:my-slider-v2"
+        entity: |
+          [[[
+            return entity.entity_id;
+          ]]]
+        allowTapping: false
+        allowSliding: true
+        styles:
+          card:
+            - height: 100%
+            - margin: 0
+            - border-radius: 0px
+            - border: none
+            - background: transparent
+          track:
+            - background: hsl(0 0% 98%)
+            - border-radius: 20px
+          container:
+            - border-radius: 0
+            - overflow: visible
+          progress:
+            - background: hsl(0 0% 75%)
+            - border-top-left-radius: 20px
+            - border-bottom-left-radius: 20px
+          thumb:
+            - display: block
+            - width: 16px
+            - height: 16px
+            - border-radius: 50%
+            - background: white
+            - transform: translateY(-4px)
+            - box-shadow: 2px 0 8px 2px rgba(0, 0, 0, 0.15)

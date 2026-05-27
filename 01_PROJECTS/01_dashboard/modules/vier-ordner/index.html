@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DkZ™ 4-Ordner-System — TODO · MEETING · IDEA · USE CASE</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--accent:#fa1e4e;--bg:#060608;--card:rgba(18,18,24,.85);--card2:rgba(24,24,36,.7);--text:#e8e8ec;--text2:#8a8a9a;--green:#00ff88;--yellow:#ffb800;--red:#ff3b5c;--blue:#3b82f6;--purple:#a855f7;--orange:#f97316;--r:12px;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh}
+.wrap{max-width:1200px;margin:0 auto;padding:20px}
+
+/* Header */
+.hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+h1{font-size:1.4rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.badge{font-size:.58rem;padding:3px 10px;border-radius:20px;background:rgba(250,30,78,.12);color:var(--accent);font-weight:700}
+
+/* Stats Bar */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px}
+.stat{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:var(--r);padding:14px;text-align:center;backdrop-filter:blur(16px);transition:.2s}
+.stat:hover{border-color:rgba(250,30,78,.3);transform:translateY(-2px)}
+.stat .num{font-size:1.6rem;font-weight:900;font-family:var(--mono)}
+.stat .lbl{font-size:.62rem;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+
+/* Tabs */
+.tabs{display:flex;gap:2px;margin-bottom:0}
+.tab{flex:1;padding:10px;background:var(--card2);border:1px solid rgba(255,255,255,.06);border-bottom:none;border-radius:var(--r) var(--r) 0 0;font-size:.72rem;font-weight:700;cursor:pointer;text-align:center;transition:.2s;color:var(--text2)}
+.tab:hover{color:var(--text)}
+.tab.active{background:var(--card);color:var(--text);border-bottom:2px solid var(--accent)}
+.tab .icon{font-size:1.2rem;display:block;margin-bottom:2px}
+
+/* Panel */
+.panel{background:var(--card);border:1px solid rgba(255,255,255,.06);border-top:none;border-radius:0 0 var(--r) var(--r);padding:20px;backdrop-filter:blur(16px);display:none;min-height:400px}
+.panel.active{display:block}
+
+/* Items */
+.item{background:var(--card2);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;transition:.2s;cursor:pointer}
+.item:hover{border-color:rgba(250,30,78,.25);transform:translateX(4px)}
+.item .left{flex:1}
+.item .title{font-size:.78rem;font-weight:600;margin-bottom:2px}
+.item .meta{font-size:.6rem;color:var(--text2)}
+.item .right{display:flex;gap:6px;align-items:center}
+.prio{font-size:.56rem;padding:2px 8px;border-radius:10px;font-weight:700}
+.p-high{background:rgba(255,59,92,.15);color:var(--red)}
+.p-med{background:rgba(255,184,0,.12);color:var(--yellow)}
+.p-low{background:rgba(0,255,136,.1);color:var(--green)}
+.timer{font-size:.62rem;font-family:var(--mono);color:var(--yellow);padding:2px 6px;background:rgba(255,184,0,.08);border-radius:6px}
+
+/* Add Bar */
+.add-bar{display:flex;gap:8px;margin-bottom:16px}
+.add-bar input{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px 14px;color:var(--text);font-family:var(--font);font-size:.74rem;outline:none}
+.add-bar input:focus{border-color:var(--accent)}
+.add-bar select{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px;color:var(--text);font-size:.68rem;cursor:pointer}
+.add-bar button{background:var(--accent);border:none;border-radius:8px;padding:8px 16px;color:#fff;font-weight:700;font-size:.72rem;cursor:pointer;transition:.2s}
+.add-bar button:hover{filter:brightness(1.2);transform:scale(1.02)}
+
+/* Time Triggers */
+.triggers{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:var(--r);padding:16px;margin-top:16px}
+.triggers h3{font-size:.82rem;font-weight:700;margin-bottom:10px;color:var(--purple)}
+.trigger-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.trigger-row:last-child{border:none}
+.trigger-row .name{font-size:.7rem;font-weight:500}
+.trigger-row .desc{font-size:.6rem;color:var(--text2)}
+.trigger-row .freq{font-size:.6rem;font-family:var(--mono);color:var(--green);background:rgba(0,255,136,.08);padding:2px 8px;border-radius:6px}
+.switch{width:36px;height:20px;background:rgba(255,255,255,.1);border-radius:10px;position:relative;cursor:pointer;transition:.2s}
+.switch.on{background:rgba(0,255,136,.3)}
+.switch::after{content:'';width:16px;height:16px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;transition:.2s}
+.switch.on::after{left:18px}
+
+/* Apps Script */
+pre{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:14px;font-family:var(--mono);font-size:.64rem;overflow-x:auto;line-height:1.6;margin:10px 0}
+.section-title{font-size:.9rem;font-weight:700;margin:20px 0 10px;padding-left:12px;border-left:3px solid var(--accent)}
+.empty{text-align:center;padding:40px;color:var(--text2);font-size:.74rem}
+.empty .big{font-size:2rem;margin-bottom:8px}
+
+/* Footer */
+.foot{text-align:center;color:var(--text2);font-size:.58rem;margin-top:24px;padding:12px}
+.foot a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hdr">
+<div><h1>📂 DkZ™ 4-Ordner-System</h1>
+<p style="color:var(--text2);font-size:.68rem">TODO · MEETING · IDEA · USE CASE + ARCHIVE · Zeit-Trigger</p></div>
+<span class="badge">MOD-094 · v1.0</span>
+</div>
+
+<!-- Stats -->
+<div class="stats" id="stats">
+<div class="stat"><div class="num" style="color:var(--red)" id="s-todo">0</div><div class="lbl">📋 Todo</div></div>
+<div class="stat"><div class="num" style="color:var(--blue)" id="s-meeting">0</div><div class="lbl">📅 Meeting</div></div>
+<div class="stat"><div class="num" style="color:var(--yellow)" id="s-idea">0</div><div class="lbl">💡 Idea</div></div>
+<div class="stat"><div class="num" style="color:var(--purple)" id="s-usecase">0</div><div class="lbl">🎯 Use Case</div></div>
+<div class="stat"><div class="num" style="color:var(--text2)" id="s-archive">0</div><div class="lbl">🗄️ Archiv</div></div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+<div class="tab active" onclick="switchTab('todo')"><span class="icon">📋</span>TODO</div>
+<div class="tab" onclick="switchTab('meeting')"><span class="icon">📅</span>MEETING</div>
+<div class="tab" onclick="switchTab('idea')"><span class="icon">💡</span>IDEA</div>
+<div class="tab" onclick="switchTab('usecase')"><span class="icon">🎯</span>USE CASE</div>
+<div class="tab" onclick="switchTab('archive')"><span class="icon">🗄️</span>ARCHIV</div>
+</div>
+
+<!-- TODO Panel -->
+<div class="panel active" id="p-todo">
+<div class="add-bar">
+<input id="add-todo" placeholder="Neuer TODO-Eintrag..." onkeydown="if(event.key==='Enter')addItem('todo')">
+<select id="prio-todo"><option value="high">🔴 Hoch</option><option value="med" selected>🟡 Mittel</option><option value="low">🟢 Niedrig</option></select>
+<select id="timer-todo"><option value="0">⏰ Kein Timer</option><option value="1">1 Tag</option><option value="3">3 Tage</option><option value="7">1 Woche</option><option value="14">2 Wochen</option><option value="30">1 Monat</option></select>
+<button onclick="addItem('todo')">+ Hinzufügen</button>
+</div>
+<div id="list-todo"></div>
+</div>
+
+<!-- MEETING Panel -->
+<div class="panel" id="p-meeting">
+<div class="add-bar">
+<input id="add-meeting" placeholder="Neues Meeting..." onkeydown="if(event.key==='Enter')addItem('meeting')">
+<input type="datetime-local" id="date-meeting" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px;color:var(--text);font-size:.68rem">
+<button onclick="addItem('meeting')">+ Hinzufügen</button>
+</div>
+<div id="list-meeting"></div>
+</div>
+
+<!-- IDEA Panel -->
+<div class="panel" id="p-idea">
+<div class="add-bar">
+<input id="add-idea" placeholder="Neue Idee..." onkeydown="if(event.key==='Enter')addItem('idea')">
+<select id="cat-idea"><option value="feature">🚀 Feature</option><option value="design">🎨 Design</option><option value="research">🔬 Research</option><option value="business">💼 Business</option></select>
+<button onclick="addItem('idea')">+ Hinzufügen</button>
+</div>
+<div id="list-idea"></div>
+</div>
+
+<!-- USE CASE Panel -->
+<div class="panel" id="p-usecase">
+<div class="add-bar">
+<input id="add-usecase" placeholder="Neuer Use Case..." onkeydown="if(event.key==='Enter')addItem('usecase')">
+<select id="status-usecase"><option value="draft">📝 Draft</option><option value="active">🟢 Aktiv</option><option value="testing">🧪 Testing</option></select>
+<button onclick="addItem('usecase')">+ Hinzufügen</button>
+</div>
+<div id="list-usecase"></div>
+</div>
+
+<!-- ARCHIVE Panel -->
+<div class="panel" id="p-archive">
+<div id="list-archive"></div>
+</div>
+
+<!-- Zeit-Trigger -->
+<div class="triggers">
+<h3>⏰ Zeit-Trigger (Auto-Archivierung)</h3>
+<div class="trigger-row">
+<div><div class="name">📋 TODO Auto-Archiv</div><div class="desc">Erledigte TODOs nach 7 Tagen → Archiv</div></div>
+<div style="display:flex;gap:10px;align-items:center"><span class="freq">7 Tage</span><div class="switch on" onclick="toggleSwitch(this)" data-trigger="todo-archive"></div></div>
+</div>
+<div class="trigger-row">
+<div><div class="name">📅 Meeting Cleanup</div><div class="desc">Vergangene Meetings nach 3 Tagen → Archiv</div></div>
+<div style="display:flex;gap:10px;align-items:center"><span class="freq">3 Tage</span><div class="switch on" onclick="toggleSwitch(this)" data-trigger="meeting-archive"></div></div>
+</div>
+<div class="trigger-row">
+<div><div class="name">💡 Idea Review</div><div class="desc">Unbearbeitete Ideen nach 30 Tagen markieren</div></div>
+<div style="display:flex;gap:10px;align-items:center"><span class="freq">30 Tage</span><div class="switch on" onclick="toggleSwitch(this)" data-trigger="idea-review"></div></div>
+</div>
+<div class="trigger-row">
+<div><div class="name">🎯 Use Case Expire</div><div class="desc">Inaktive Use Cases nach 90 Tagen → Archiv</div></div>
+<div style="display:flex;gap:10px;align-items:center"><span class="freq">90 Tage</span><div class="switch" onclick="toggleSwitch(this)" data-trigger="usecase-expire"></div></div>
+</div>
+<div class="trigger-row">
+<div><div class="name">🗄️ Archiv Backup</div><div class="desc">Wöchentlicher JSON-Export nach [DEEPKEEP]</div></div>
+<div style="display:flex;gap:10px;align-items:center"><span class="freq">Wöchentl.</span><div class="switch on" onclick="toggleSwitch(this)" data-trigger="backup"></div></div>
+</div>
+</div>
+
+<!-- Apps Script -->
+<h2 class="section-title" style="margin-top:28px">⚙️ Google Apps Script — Drive 4-Ordner-System</h2>
+<pre>
+// DkZ™ 4-Ordner-System — Google Drive Automatisierung
+// Erstellt die 4 Ordner + Archiv und sortiert automatisch
+
+function init4FolderSystem() {
+  const FOLDERS = ['📋 TODO','📅 MEETING','💡 IDEA','🎯 USE_CASE','🗄️ ARCHIVE'];
+  const root = DriveApp.getRootFolder();
+  let base = root.getFoldersByName('DkZ_4-Ordner');
+  base = base.hasNext() ? base.next() : root.createFolder('DkZ_4-Ordner');
+
+  FOLDERS.forEach(name =&gt; {
+    if (!base.getFoldersByName(name).hasNext()) {
+      base.createFolder(name);
+      Logger.log('✅ Erstellt: ' + name);
+    }
+  });
+  Logger.log('═══ 4-Ordner-System bereit ═══');
+}
+
+// Zeit-Trigger: Alte Dateien → ARCHIVE (mit Verify!)
+function autoArchiveTrigger() {
+  const RULES = [
+    { folder: '📋 TODO',     days: 7,  label: 'erledigt' },
+    { folder: '📅 MEETING',  days: 3,  label: 'vergangen' },
+    { folder: '💡 IDEA',     days: 30, label: 'unbearbeitet' },
+    { folder: '🎯 USE_CASE', days: 90, label: 'inaktiv' }
+  ];
+
+  const base = findFolder('DkZ_4-Ordner');
+  if (!base) return;
+  const archive = base.getFoldersByName('🗄️ ARCHIVE').next();
+  const now = new Date();
+  let moved = 0;
+
+  RULES.forEach(rule =&gt; {
+    const src = base.getFoldersByName(rule.folder);
+    if (!src.hasNext()) return;
+    const folder = src.next();
+    const files = folder.getFiles();
+
+    while (files.hasNext()) {
+      const f = files.next();
+      const age = (now - f.getLastUpdated()) / 86400000;
+      if (age &gt; rule.days) {
+        // COPY-VERIFY-REMOVE Pattern!
+        archive.addFile(f);
+        const verify = archive.getFilesByName(f.getName());
+        if (verify.hasNext()) {
+          folder.removeFile(f);
+          moved++;
+          log('🗄️ Archiviert (' + rule.label + ')', f.getName(), rule.folder);
+        }
+      }
+    }
+  });
+  Logger.log('Archiviert: ' + moved + ' Dateien');
+}
+
+// Wöchentlicher Backup-Export
+function weeklyBackup() {
+  const base = findFolder('DkZ_4-Ordner');
+  if (!base) return;
+  const data = { exported: new Date().toISOString(), folders: {} };
+  const subs = base.getFolders();
+
+  while (subs.hasNext()) {
+    const sub = subs.next();
+    const files = sub.getFiles();
+    data.folders[sub.getName()] = [];
+    while (files.hasNext()) {
+      const f = files.next();
+      data.folders[sub.getName()].push({
+        name: f.getName(), size: f.getSize(),
+        modified: f.getLastUpdated().toISOString()
+      });
+    }
+  }
+
+  // Backup als JSON in DEEPKEEP
+  const deepkeep = findOrCreate('[DEEPKEEP]/session-db');
+  const filename = 'backup_4ordner_' + new Date().toISOString().slice(0,10) + '.json';
+  deepkeep.createFile(filename, JSON.stringify(data, null, 2), 'application/json');
+  Logger.log('💾 Backup: ' + filename);
+}
+</pre>
+
+<p class="foot">DkZ™ 4-Ordner-System v1.0 — MOD-094 · 2026-05-17 · <a href="../ordner-blaupause/index.html">Blaupause ansehen</a></p>
+</div>
+
+<script>
+// ═══ XSS-Schutz ═══
+function esc(str){const d=document.createElement('div');d.textContent=str;return d.innerHTML}
+
+// ═══ Data Store ═══
+const STORE_KEY='dkz-4ordner';
+let data={todo:[],meeting:[],idea:[],usecase:[],archive:[]};
+
+function loadData(){
+  try{const s=localStorage.getItem(STORE_KEY);if(s)data=JSON.parse(s)}catch(e){}
+  renderAll();
+}
+function saveData(){localStorage.setItem(STORE_KEY,JSON.stringify(data))}
+
+// ═══ Tab Navigation ═══
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    const panels=['todo','meeting','idea','usecase','archive'];
+    t.classList.toggle('active',panels[i]===id);
+  });
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+}
+
+// ═══ Add Items ═══
+function addItem(type){
+  const input=document.getElementById('add-'+type);
+  const text=input.value.trim();
+  if(!text)return;
+
+  const item={id:Date.now(),text,created:new Date().toISOString(),done:false};
+
+  if(type==='todo'){
+    item.prio=document.getElementById('prio-todo').value;
+    const days=parseInt(document.getElementById('timer-todo').value);
+    item.deadline=days?new Date(Date.now()+days*86400000).toISOString():null;
+  }else if(type==='meeting'){
+    item.date=document.getElementById('date-meeting').value;
+  }else if(type==='idea'){
+    item.category=document.getElementById('cat-idea').value;
+  }else if(type==='usecase'){
+    item.status=document.getElementById('status-usecase').value;
+  }
+
+  data[type].push(item);
+  input.value='';
+  saveData();
+  renderAll();
+}
+
+// ═══ Archive Item ═══
+function archiveItem(type,id){
+  const idx=data[type].findIndex(i=>i.id===id);
+  if(idx===-1)return;
+  const item=data[type].splice(idx,1)[0];
+  item.archivedFrom=type;
+  item.archivedAt=new Date().toISOString();
+  data.archive.push(item);
+  saveData();
+  renderAll();
+}
+
+// ═══ Toggle Done ═══
+function toggleDone(type,id){
+  const item=data[type].find(i=>i.id===id);
+  if(item)item.done=!item.done;
+  saveData();
+  renderAll();
+}
+
+// ═══ Delete from Archive ═══
+function restoreItem(id){
+  const idx=data.archive.findIndex(i=>i.id===id);
+  if(idx===-1)return;
+  const item=data.archive.splice(idx,1)[0];
+  const dest=item.archivedFrom||'todo';
+  delete item.archivedFrom;delete item.archivedAt;
+  data[dest].push(item);
+  saveData();
+  renderAll();
+}
+
+// ═══ Render ═══
+function renderAll(){
+  renderList('todo');renderList('meeting');renderList('idea');renderList('usecase');renderArchive();
+  updateStats();
+  checkTimeTriggers();
+}
+
+function renderList(type){
+  const el=document.getElementById('list-'+type);
+  if(data[type].length===0){
+    el.innerHTML='<div class="empty"><div class="big">'+(type==='todo'?'📋':type==='meeting'?'📅':type==='idea'?'💡':'🎯')+'</div>Noch keine Einträge</div>';
+    return;
+  }
+  el.innerHTML=data[type].map(item=>{
+    const age=Math.floor((Date.now()-new Date(item.created).getTime())/86400000);
+    let extra='';
+    if(type==='todo'){
+      const pc=item.prio==='high'?'p-high':item.prio==='low'?'p-low':'p-med';
+      extra=`<span class="prio ${pc}">${item.prio==='high'?'🔴 HOCH':item.prio==='low'?'🟢 NIEDRIG':'🟡 MITTEL'}</span>`;
+      if(item.deadline){
+        const left=Math.ceil((new Date(item.deadline)-Date.now())/86400000);
+        extra+=`<span class="timer">${left>0?left+'d':'⏰ FÄLLIG!'}</span>`;
+      }
+    }else if(type==='meeting'&&item.date){
+      extra=`<span class="timer">📅 ${new Date(item.date).toLocaleDateString('de')}</span>`;
+    }else if(type==='idea'){
+      const cats={feature:'🚀',design:'🎨',research:'🔬',business:'💼'};
+      extra=`<span class="prio p-med">${cats[item.category]||'💡'} ${esc(item.category||'')}</span>`;
+    }else if(type==='usecase'){
+      const sc=item.status==='active'?'p-low':item.status==='testing'?'p-med':'p-high';
+      extra=`<span class="prio ${sc}">${esc(item.status||'draft')}</span>`;
+    }
+    return `<div class="item" style="${item.done?'opacity:.5;text-decoration:line-through':''}">
+      <div class="left" onclick="toggleDone('${type}',${item.id})">
+        <div class="title">${item.done?'✅ ':''}${esc(item.text)}</div>
+        <div class="meta">${age}d alt · ${new Date(item.created).toLocaleDateString('de')}</div>
+      </div>
+      <div class="right">${extra}
+        <button onclick="archiveItem('${type}',${item.id})" style="background:none;border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:4px 8px;color:var(--text2);font-size:.6rem;cursor:pointer" title="Archivieren">🗄️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderArchive(){
+  const el=document.getElementById('list-archive');
+  if(data.archive.length===0){
+    el.innerHTML='<div class="empty"><div class="big">🗄️</div>Archiv ist leer</div>';return;
+  }
+  el.innerHTML=data.archive.map(item=>{
+    const src=item.archivedFrom||'?';
+    const icons={todo:'📋',meeting:'📅',idea:'💡',usecase:'🎯'};
+    return `<div class="item">
+      <div class="left"><div class="title">${esc(item.text)}</div>
+      <div class="meta">${icons[src]||'📄'} aus ${esc(src)} · archiviert ${item.archivedAt?new Date(item.archivedAt).toLocaleDateString('de'):''}</div></div>
+      <div class="right"><button onclick="restoreItem(${item.id})" style="background:none;border:1px solid rgba(0,255,136,.2);border-radius:6px;padding:4px 8px;color:var(--green);font-size:.6rem;cursor:pointer">♻️ Restore</button></div>
+    </div>`;
+  }).join('');
+}
+
+function updateStats(){
+  document.getElementById('s-todo').textContent=data.todo.length;
+  document.getElementById('s-meeting').textContent=data.meeting.length;
+  document.getElementById('s-idea').textContent=data.idea.length;
+  document.getElementById('s-usecase').textContent=data.usecase.length;
+  document.getElementById('s-archive').textContent=data.archive.length;
+}
+
+// ═══ Zeit-Trigger Simulation ═══
+function checkTimeTriggers(){
+  const triggers=JSON.parse(localStorage.getItem('dkz-4ordner-triggers')||'{"todo-archive":true,"meeting-archive":true,"idea-review":true,"usecase-expire":false,"backup":true}');
+  const now=Date.now();
+  if(triggers['todo-archive']){
+    data.todo.filter(i=>i.done&&(now-new Date(i.created).getTime())>7*86400000).forEach(i=>archiveItem('todo',i.id));
+  }
+  if(triggers['meeting-archive']){
+    data.meeting.filter(i=>i.date&&new Date(i.date).getTime()<now-3*86400000).forEach(i=>archiveItem('meeting',i.id));
+  }
+}
+
+function toggleSwitch(el){
+  el.classList.toggle('on');
+  const triggers=JSON.parse(localStorage.getItem('dkz-4ordner-triggers')||'{}');
+  triggers[el.dataset.trigger]=el.classList.contains('on');
+  localStorage.setItem('dkz-4ordner-triggers',JSON.stringify(triggers));
+}
+
+// ═══ Init ═══
+loadData();
+</script>
+</body>
+</html>

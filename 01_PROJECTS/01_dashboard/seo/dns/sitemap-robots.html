@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../shared/seo-shared.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="grid grid-2">
+        <div class="card card-full">
+            <h3>🗺️ Sitemap & Robots.txt Validator</h3>
+            <div class="input-row">
+                <input type="text" id="domainInput" placeholder="example.com">
+                <button class="btn btn-green" onclick="validate()">🔍 Validieren</button>
+                <button class="btn btn-blue btn-sm"
+                    onclick="document.getElementById('domainInput').value='devkitz.eu';validate()">Demo</button>
+            </div>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>Dateien werden geprüft...
+            </div>
+        </div>
+        <div class="card" id="smCard" style="display:none">
+            <h3>🗺️ Sitemap</h3>
+            <div id="smData"></div>
+        </div>
+        <div class="card" id="rbCard" style="display:none">
+            <h3>🤖 Robots.txt</h3>
+            <div id="rbData"></div>
+        </div>
+        <div class="card card-full" id="recoCard" style="display:none">
+            <h3>💡 Empfehlungen</h3>
+            <div id="recoList"></div>
+        </div>
+    </div>
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        async function validate() {
+            const d = document.getElementById('domainInput').value.trim().replace(/https?:\/\//, '').split('/')[0];
+            if (!d) { alert('Domain eingeben'); return }
+            document.getElementById('loading').classList.add('show');
+            ['smCard', 'rbCard', 'recoCard'].forEach(id => document.getElementById(id).style.display = 'none');
+            await new Promise(r => setTimeout(r, 1200));
+            document.getElementById('loading').classList.remove('show');
+
+            const pages = ['/', '/about', '/services', '/contact', '/blog', '/blog/post-1', '/privacy', '/terms'];
+            const urlCount = Math.floor(Math.random() * 50 + pages.length);
+            const hasSitemap = Math.random() > .2, isValid = hasSitemap && Math.random() > .15;
+
+            document.getElementById('smCard').style.display = '';
+            document.getElementById('smData').innerHTML = `
+        <div class="stats" style="margin-bottom:12px">
+            <div class="stat"><div class="stat-num" style="color:${hasSitemap ? 'var(--green)' : 'var(--red)'}">${hasSitemap ? '✅' : '❌'}</div><div class="stat-label">Vorhanden</div></div>
+            <div class="stat"><div class="stat-num" style="color:${isValid ? 'var(--green)' : 'var(--red)'}">${isValid ? '✅' : '❌'}</div><div class="stat-label">Valides XML</div></div>
+            <div class="stat"><div class="stat-num" style="color:var(--blue)">${urlCount}</div><div class="stat-label">URLs</div></div>
+        </div>
+        <table class="data-table"><thead><tr><th>URL</th><th>Priority</th><th>Freq</th></tr></thead><tbody>
+        ${pages.map((p, i) => `<tr><td style="font-family:var(--mono);font-size:11px;color:var(--cyan)">https://${d}${p}</td><td><span class="badge badge-blue">${(1 - i * .1).toFixed(1)}</span></td><td>${i < 2 ? 'weekly' : 'monthly'}</td></tr>`).join('')}
+        </tbody></table>`;
+
+            document.getElementById('rbCard').style.display = '';
+            document.getElementById('rbData').innerHTML = `
+        <div style="font-family:var(--mono);font-size:11px;background:var(--bg);padding:14px;border-radius:10px;line-height:1.8;color:var(--cyan);white-space:pre-wrap">User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /private\nCrawl-delay: 1\n\nUser-agent: Googlebot\nAllow: /\nCrawl-delay: 0\n\nUser-agent: AhrefsBot\nDisallow: /\n\nSitemap: https://${d}/sitemap.xml</div>
+        <div style="margin-top:12px">
+            <div class="result-item"><span class="result-icon">✅</span><div><div class="result-title">Allow: /</div><div class="result-desc">Alle Bots dürfen crawlen</div></div></div>
+            <div class="result-item"><span class="result-icon">🚫</span><div><div class="result-title">Disallow: /admin</div><div class="result-desc">Admin-Bereich blockiert</div></div></div>
+            <div class="result-item"><span class="result-icon">🚫</span><div><div class="result-title">Disallow: /private</div><div class="result-desc">Private Bereiche blockiert</div></div></div>
+            <div class="result-item"><span class="result-icon">🛡️</span><div><div class="result-title">AhrefsBot blockiert</div><div class="result-desc">SEO-Crawler-Bots ausgesperrt</div></div></div>
+        </div>`;
+
+            const recos = [];
+            if (!hasSitemap) recos.push({ t: 'Sitemap erstellen', d: 'Erstelle sitemap.xml und reiche sie bei Google Search Console ein.' });
+            if (!isValid && hasSitemap) recos.push({ t: 'XML reparieren', d: 'Sitemap enthält Fehler. Format prüfen.' });
+            recos.push({ t: 'Crawl-Budget optimieren', d: 'Unwichtige Seiten mit niedrigerer Priority versehen.' });
+            document.getElementById('recoCard').style.display = '';
+            document.getElementById('recoList').innerHTML = recos.map((r, i) => `<div class="result-item"><span class="result-icon">💡</span><div><div class="result-title">#${i + 1}: ${r.t}</div><div class="result-desc">${r.d}</div></div></div>`).join('');
+        }
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

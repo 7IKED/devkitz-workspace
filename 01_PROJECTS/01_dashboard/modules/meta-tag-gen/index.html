@@ -1,0 +1,524 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏷️ Meta Tag Generator — DkZâ„¢</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #fa1e4e;
+            --accent: #fa1e4e;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(14, 14, 22, .72);
+            --blur: blur(24px)
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .08);
+            border-radius: 6px
+        }
+
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .06;
+            animation: bf 20s ease-in-out infinite
+        }
+
+        .bg-blob:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: var(--blue);
+            top: -10%;
+            left: 10%
+        }
+
+        .bg-blob:nth-child(2) {
+            width: 350px;
+            height: 350px;
+            background: var(--accent);
+            bottom: 10%;
+            right: 10%;
+            animation-delay: -8s
+        }
+
+        @keyframes bf {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(30px, -40px) scale(1.1)
+            }
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        .header {
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .back-btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: none;
+            font-family: var(--font)
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--blue), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .hdr-right {
+            margin-left: auto
+        }
+
+        .ver {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono)
+        }
+
+        .content {
+            padding: 20px 28px;
+            flex: 1;
+            display: flex;
+            gap: 20px
+        }
+
+        .left {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px
+        }
+
+        .right {
+            width: 420px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px
+        }
+
+        .card h3 {
+            font-size: 13px;
+            font-weight: 800;
+            margin-bottom: 12px
+        }
+
+        .field {
+            margin-bottom: 12px
+        }
+
+        .field label {
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: block;
+            margin-bottom: 4px
+        }
+
+        .field input,
+        .field textarea,
+        .field select {
+            width: 100%;
+            padding: 10px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            outline: none
+        }
+
+        .field input:focus,
+        .field textarea:focus {
+            border-color: var(--accent)
+        }
+
+        .field textarea {
+            min-height: 60px;
+            resize: vertical;
+            font-family: var(--font)
+        }
+
+        .char-count {
+            font-size: 9px;
+            color: var(--muted);
+            text-align: right;
+            margin-top: 2px;
+            font-family: var(--mono)
+        }
+
+        .char-count.warn {
+            color: var(--yellow)
+        }
+
+        .char-count.bad {
+            color: var(--red)
+        }
+
+        .preview-card {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 12px
+        }
+
+        .goog-prev {
+            font-family: Arial, sans-serif
+        }
+
+        .goog-prev .gp-title {
+            color: #1a0dab;
+            font-size: 18px;
+            margin-bottom: 2px;
+            text-decoration: underline;
+            cursor: pointer
+        }
+
+        .goog-prev .gp-url {
+            color: #006621;
+            font-size: 13px;
+            margin-bottom: 2px
+        }
+
+        .goog-prev .gp-desc {
+            color: #545454;
+            font-size: 13px;
+            line-height: 1.4
+        }
+
+        .social-prev {
+            display: flex;
+            flex-direction: column;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border)
+        }
+
+        .social-prev .sp-img {
+            height: 120px;
+            background: var(--card2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--muted)
+        }
+
+        .social-prev .sp-body {
+            padding: 10px
+        }
+
+        .social-prev .sp-url {
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase
+        }
+
+        .social-prev .sp-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin: 4px 0
+        }
+
+        .social-prev .sp-desc {
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        .code-output {
+            font-family: var(--mono);
+            font-size: 10px;
+            padding: 12px;
+            background: #0a0a0c;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--green);
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            cursor: pointer;
+            line-height: 1.5
+        }
+
+        .code-output:hover {
+            border-color: var(--accent)
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: #fff;
+            font-family: var(--font);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        .btn.secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text)
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: var(--green);
+            color: #000;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 10px;
+            z-index: 300;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all .3s;
+            pointer-events: none
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0)
+        }
+
+        @media(max-width:900px) {
+            .content {
+                flex-direction: column
+            }
+
+            .right {
+                width: 100%
+            }
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="meta-tag-gen" data-dkz-appid="DKZ-MOD-MET" data-dkz-version="v0.01" data-dkz-title="🏷️ Meta Tag Generator —" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+    </div>
+    <div class="app">
+        <div class="header"><a href="../../hub/index.html" class="back-btn">← Hub</a>
+            <h1>🏷️ Meta Tag Generator</h1>
+            <div class="hdr-right"><span class="ver">v0.01</span></div>
+        </div>
+        <div class="content">
+            <div class="left">
+                <div class="card">
+                    <h3>📝 Basis</h3>
+                    <div class="field"><label>Seitentitel</label><input id="mTitle" value="DkZ Framework — Dev Toolkit"
+                            oninput="gen()">
+                        <div class="char-count" id="mcTitle"></div>
+                    </div>
+                    <div class="field"><label>Beschreibung</label><textarea id="mDesc"
+                            oninput="gen()">DkZ ist ein modulares Developer-Toolkit mit 50+ Tools für Webentwicklung, Design und Produktivität.</textarea>
+                        <div class="char-count" id="mcDesc"></div>
+                    </div>
+                    <div class="field"><label>Keywords</label><input id="mKeys"
+                            value="dkz, framework, tools, dashboard, webdev" oninput="gen()"></div>
+                    <div class="field"><label>URL</label><input id="mUrl" value="https://devkitz.com" oninput="gen()">
+                    </div>
+                    <div class="field"><label>Autor</label><input id="mAuthor" value="DkZ Team" oninput="gen()"></div>
+                </div>
+                <div class="card">
+                    <h3>🐦 Social (OG / Twitter)</h3>
+                    <div class="field"><label>OG Titel (leer = Seitentitel)</label><input id="ogTitle" oninput="gen()">
+                    </div>
+                    <div class="field"><label>OG Beschreibung</label><textarea id="ogDesc" oninput="gen()"></textarea>
+                    </div>
+                    <div class="field"><label>OG Bild URL</label><input id="ogImage" placeholder="https://..."
+                            oninput="gen()"></div>
+                    <div class="field"><label>OG Typ</label><select id="ogType" onchange="gen()">
+                            <option>website</option>
+                            <option>article</option>
+                            <option>blog</option>
+                            <option>product</option>
+                        </select></div>
+                    <div class="field"><label>Twitter Card</label><select id="twCard" onchange="gen()">
+                            <option value="summary_large_image">Summary Large Image</option>
+                            <option value="summary">Summary</option>
+                        </select></div>
+                </div>
+            </div>
+            <div class="right">
+                <div class="card">
+                    <h3>👁️ Google Vorschau</h3>
+                    <div class="preview-card">
+                        <div class="goog-prev">
+                            <div class="gp-title" id="gpTitle"></div>
+                            <div class="gp-url" id="gpUrl"></div>
+                            <div class="gp-desc" id="gpDesc"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>📱 Social Vorschau</h3>
+                    <div class="social-prev">
+                        <div class="sp-img" id="spImg">🖼️ Kein Bild</div>
+                        <div class="sp-body">
+                            <div class="sp-url" id="spUrl"></div>
+                            <div class="sp-title" id="spTitle"></div>
+                            <div class="sp-desc" id="spDesc"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>📋 Generierter Code</h3>
+                    <div class="code-output" id="codeOut"
+                        onclick="navigator.clipboard.writeText(this.textContent);showToast('📋 Code kopiert!')"></div>
+                    <div style="display:flex;gap:8px;margin-top:8px"><button class="btn"
+                            onclick="navigator.clipboard.writeText(document.getElementById('codeOut').textContent);showToast('📋 Kopiert!')">📋
+                            Kopieren</button><button class="btn secondary" onclick="downloadHTML()">📥 Download</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+        function gen() {
+            const title = document.getElementById('mTitle').value, desc = document.getElementById('mDesc').value, keys = document.getElementById('mKeys').value, url = document.getElementById('mUrl').value, author = document.getElementById('mAuthor').value;
+            const ogT = document.getElementById('ogTitle').value || title, ogD = document.getElementById('ogDesc').value || desc, ogImg = document.getElementById('ogImage').value, ogType = document.getElementById('ogType').value, twCard = document.getElementById('twCard').value;
+            // Char counts
+            charCount('mcTitle', title.length, 60); charCount('mcDesc', desc.length, 160);
+            // Google preview
+            document.getElementById('gpTitle').textContent = title.substring(0, 60); document.getElementById('gpUrl').textContent = url; document.getElementById('gpDesc').textContent = desc.substring(0, 160);
+            // Social preview
+            if (ogImg) { const img = document.getElementById('spImg'); img.innerHTML = `<img src="${ogImg}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='🖼️ Bild nicht ladbar'">` } else { document.getElementById('spImg').textContent = '🖼️ Kein Bild' }
+            document.getElementById('spUrl').textContent = url.replace('https://', '').replace('http://', ''); document.getElementById('spTitle').textContent = ogT; document.getElementById('spDesc').textContent = ogD.substring(0, 100);
+            // Generate code
+            let code = `<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>${esc(title)}</title>\n<meta name="description" content="${esc(desc)}">\n<meta name="keywords" content="${esc(keys)}">\n<meta name="author" content="${esc(author)}">\n<link rel="canonical" href="${esc(url)}">\n\n<!-- Open Graph -->\n<meta property="og:title" content="${esc(ogT)}">\n<meta property="og:description" content="${esc(ogD)}">\n<meta property="og:type" content="${ogType}">\n<meta property="og:url" content="${esc(url)}">`;
+            if (ogImg) code += `\n<meta property="og:image" content="${esc(ogImg)}">`;
+            code += `\n\n<!-- Twitter -->\n<meta name="twitter:card" content="${twCard}">\n<meta name="twitter:title" content="${esc(ogT)}">\n<meta name="twitter:description" content="${esc(ogD)}">`;
+            if (ogImg) code += `\n<meta name="twitter:image" content="${esc(ogImg)}">`;
+            code += `\n\n<!-- Robots -->\n<meta name="robots" content="index, follow">`;
+            document.getElementById('codeOut').textContent = code;
+        }
+        function charCount(id, len, max) { const el = document.getElementById(id); el.textContent = `${len}/${max}`; el.className = 'char-count' + (len > max - ' bad' : len > max * .8 - ' warn' : '') }
+        function downloadHTML() { const code = document.getElementById('codeOut').textContent; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([code], { type: 'text/html' })); a.download = 'meta-tags.html'; a.click(); showToast('📥 Download!') }
+        function esc(s) { return String(s).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') }
+        function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500) }
+        gen();
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Meta tag gen</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Meta-Tags fuer SEO generieren.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Meta tag gen</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Meta-Tags fuer SEO generieren.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-meta-tag-gen-onboarded','1')}if(!localStorage.getItem('dkz-meta-tag-gen-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>
+
+

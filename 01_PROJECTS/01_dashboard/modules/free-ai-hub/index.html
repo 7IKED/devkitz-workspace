@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="de" prefix="og: https://ogp.me/ns#">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DkZ™ Free AI Hub — Kostenlose KI-Tools für Chat, Bild, Video & Audio</title>
+    <meta name="description" content="DkZ™ Free AI Hub: 11 kostenlose KI-Provider für Chat, Bildgenerierung, Video und Text-to-Speech. Kein API-Key nötig. Privacy-First, Open Source.">
+    <meta name="keywords" content="free ai, kostenlose ki, ai chat, bildgenerierung, text-to-speech, pollinations, groq, openrouter, devkitz">
+    <meta name="author" content="DkZ™ DEVKiTZ">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://ui.devkitz.eu/hub/">
+    <!-- AI SEO -->
+    <meta name="ai:description" content="Free AI Hub with 11 providers for chat, image generation, video creation, and TTS. No API keys required for basic usage.">
+    <meta name="ai:model" content="multi-provider-cascade">
+    <!-- Open Graph -->
+    <meta property="og:title" content="DkZ™ Free AI Hub — Kostenlose KI-Tools">
+    <meta property="og:description" content="11 kostenlose KI-Provider für Chat, Bild, Video & Audio. Kein API-Key nötig.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ui.devkitz.eu/hub/">
+    <meta property="og:site_name" content="DEVKiTZ™">
+    <meta property="og:locale" content="de_DE">
+    <meta property="og:image" content="https://devkitz.eu/assets/og-free-ai-hub.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="DkZ™ Free AI Hub — Kostenlose KI-Tools">
+    <meta name="twitter:description" content="11 kostenlose KI-Provider. Kein API-Key nötig. Privacy-First.">
+    <meta name="twitter:image" content="https://devkitz.eu/assets/og-free-ai-hub.png">
+    <!-- JSON-LD -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "DkZ™ Free AI Hub",
+        "description": "Kostenlose KI-Tools für Chat, Bildgenerierung, Video und Text-to-Speech mit 11 Providern.",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Web",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+        "author": { "@type": "Organization", "name": "DEVKiTZ™", "url": "https://devkitz.eu" },
+        "url": "https://ui.devkitz.eu/hub/"
+    }
+    </script>
+    <!-- Performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://text.pollinations.ai">
+    <link rel="dns-prefetch" href="https://image.pollinations.ai">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #060608; --surface: #0d0d12; --card: #12121a;
+            --border: #1a1a2e; --text: #e2e2e8; --text-dim: #8888a0;
+            --accent: #fa1e4e; --green: #00ff88; --yellow: #ffb800;
+            --blue: #4488ff; --purple: #9966ff; --cyan: #00d4ff;
+            --radius: 12px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+        
+        .header {
+            background: linear-gradient(135deg, #0d0d12 0%, #1a0a1a 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 24px 32px; display:flex; align-items:center; gap:16px;
+        }
+        .header h1 { font-size:24px; font-weight:700; }
+        .header h1 span { color:var(--accent); }
+        .header .badge { background:var(--green); color:#000; font-size:11px; font-weight:700;
+            padding:3px 8px; border-radius:20px; }
+        .header .stats { margin-left:auto; display:flex; gap:16px; font-size:13px; color:var(--text-dim); }
+        .header .stats b { color:var(--green); }
+        
+        .tabs { display:flex; gap:4px; padding:0 32px; background:var(--surface); border-bottom:1px solid var(--border); }
+        .tab { padding:12px 20px; font-size:13px; font-weight:500; color:var(--text-dim); cursor:pointer;
+            border-bottom:2px solid transparent; transition:all .2s; }
+        .tab:hover { color:var(--text); }
+        .tab.active { color:var(--accent); border-color:var(--accent); }
+        
+        .content { padding:24px 32px; }
+        
+        .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(340px,1fr)); gap:16px; }
+        
+        .provider-card {
+            background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+            padding:20px; transition:all .3s; position:relative; overflow:hidden;
+        }
+        .provider-card:hover { border-color:var(--accent); transform:translateY(-2px);
+            box-shadow:0 8px 32px rgba(250,30,78,.1); }
+        .provider-card .status { position:absolute; top:16px; right:16px; width:10px; height:10px;
+            border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); }
+        .provider-card .status.offline { background:#ff3b5c; box-shadow:0 0 8px #ff3b5c; }
+        .provider-card .status.unknown { background:var(--yellow); box-shadow:0 0 8px var(--yellow); }
+        
+        .provider-card h3 { font-size:16px; font-weight:600; margin-bottom:4px; }
+        .provider-card .type { font-size:11px; color:var(--accent); font-weight:600; text-transform:uppercase;
+            letter-spacing:1px; margin-bottom:12px; }
+        .provider-card .info { font-size:12px; color:var(--text-dim); line-height:1.8; }
+        .provider-card .info code { font-family:'JetBrains Mono',monospace; background:rgba(255,255,255,.06);
+            padding:2px 6px; border-radius:4px; font-size:11px; color:var(--cyan); }
+        .provider-card .cost { display:inline-block; margin-top:10px; background:rgba(0,255,136,.1);
+            color:var(--green); font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; }
+        .provider-card .cost.paid { background:rgba(255,184,0,.1); color:var(--yellow); }
+        
+        .models-list { margin-top:12px; display:flex; flex-wrap:wrap; gap:4px; }
+        .model-tag { font-size:10px; font-family:'JetBrains Mono',monospace; background:rgba(255,255,255,.04);
+            border:1px solid var(--border); padding:2px 8px; border-radius:6px; color:var(--text-dim); }
+        
+        .chat-section { margin-top:24px; }
+        .chat-box { background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+            padding:20px; }
+        .chat-box h3 { font-size:14px; margin-bottom:12px; }
+        .chat-input-row { display:flex; gap:8px; }
+        .chat-input-row input { flex:1; background:var(--surface); border:1px solid var(--border);
+            border-radius:8px; padding:10px 14px; color:var(--text); font-family:'Inter',sans-serif;
+            font-size:13px; outline:none; }
+        .chat-input-row input:focus { border-color:var(--accent); }
+        .chat-input-row select { background:var(--surface); border:1px solid var(--border);
+            border-radius:8px; padding:10px 12px; color:var(--text); font-size:12px; outline:none; }
+        .chat-input-row button { background:var(--accent); border:none; border-radius:8px;
+            padding:10px 20px; color:#fff; font-weight:600; font-size:13px; cursor:pointer;
+            transition:all .2s; }
+        .chat-input-row button:hover { opacity:.85; transform:scale(1.02); }
+        .chat-output { margin-top:12px; min-height:80px; background:var(--surface);
+            border-radius:8px; padding:14px; font-family:'JetBrains Mono',monospace; font-size:12px;
+            white-space:pre-wrap; line-height:1.6; color:var(--text-dim); max-height:300px; overflow-y:auto; }
+        .chat-output .provider-tag { color:var(--accent); font-weight:600; }
+        
+        .image-section { margin-top:24px; }
+        .image-box { background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+            padding:20px; }
+        .image-preview { margin-top:12px; text-align:center; }
+        .image-preview img { max-width:100%; max-height:400px; border-radius:8px; border:1px solid var(--border); }
+        
+        .hidden { display:none; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 <span>DkZ™</span> Free AI Hub</h1>
+        <span class="badge">ALL FREE</span>
+        <div class="stats">
+            <span><b id="totalProviders">0</b> Provider</span>
+            <span><b id="totalModels">0</b> Modelle</span>
+            <span><b>$0.00</b> Kosten</span>
+        </div>
+    </div>
+    
+    <div class="tabs">
+        <div class="tab active" data-tab="providers">🌐 Provider</div>
+        <div class="tab" data-tab="chat">💬 Chat</div>
+        <div class="tab" data-tab="image">🎨 Bild</div>
+        <div class="tab" data-tab="video">🎬 Video</div>
+        <div class="tab" data-tab="audio">🔊 Audio</div>
+        <div class="tab" data-tab="stt">🎙️ STT</div>
+        <div class="tab" data-tab="ocr">📷 OCR</div>
+        <div class="tab" data-tab="music">🎵 Musik</div>
+        <div class="tab" data-tab="research">🔬 Research</div>
+        <div class="tab" data-tab="commerce">🛒 Commerce</div>
+    </div>
+    
+    <div class="content">
+        <!-- PROVIDER TAB -->
+        <div id="tab-providers" class="tab-content">
+            <div class="grid" id="providerGrid"></div>
+        </div>
+        
+        <!-- CHAT TAB -->
+        <div id="tab-chat" class="tab-content hidden">
+            <div class="chat-box">
+                <h3>💬 Free LLM Chat — 8 Provider Cascade</h3>
+                <div class="chat-input-row">
+                    <select id="chatProvider">
+                        <option value="auto">🔄 Auto (Cascade)</option>
+                        <option value="vps">📡 VPS Ollama</option>
+                        <option value="groq">⚡ Groq</option>
+                        <option value="cerebras">🧠 Cerebras</option>
+                        <option value="sambanova">🚀 SambaNova</option>
+                        <option value="openrouter">🌐 OpenRouter</option>
+                        <option value="github">🐙 GitHub Models</option>
+                        <option value="huggingface">🤗 HuggingFace</option>
+                    </select>
+                    <input type="text" id="chatInput" placeholder="Nachricht eingeben..." />
+                    <button onclick="sendChat()">Senden ▶</button>
+                </div>
+                <div class="chat-output" id="chatOutput">Warte auf Eingabe...</div>
+            </div>
+        </div>
+        
+        <!-- IMAGE TAB -->
+        <div id="tab-image" class="tab-content hidden">
+            <div class="image-box">
+                <h3>🎨 Free Bild-Generierung</h3>
+                <div class="chat-input-row">
+                    <select id="imgProvider">
+                        <option value="pollinations">🌸 Pollinations (kein Key)</option>
+                        <option value="huggingface">🤗 HuggingFace SDXL</option>
+                        <option value="together">🔥 Together FLUX</option>
+                    </select>
+                    <input type="text" id="imgPrompt" placeholder="Bild-Beschreibung..." />
+                    <button onclick="generateImage()">Generieren 🎨</button>
+                </div>
+                <div class="image-preview" id="imagePreview">
+                    <p style="color:var(--text-dim);font-size:13px;padding:40px">Prompt eingeben und Bild generieren</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- VIDEO TAB -->
+        <div id="tab-video" class="tab-content hidden">
+            <div class="chat-box">
+                <h3>🎬 Free Video-Generierung</h3>
+                <div class="chat-input-row">
+                    <input type="text" id="vidPrompt" placeholder="Video-Beschreibung..." />
+                    <button onclick="generateVideo()">Generieren 🎬</button>
+                </div>
+                <div class="chat-output" id="videoOutput">Prompt eingeben — Video wird via Pollinations generiert</div>
+            </div>
+        </div>
+        
+        <!-- AUDIO TAB -->
+        <div id="tab-audio" class="tab-content hidden">
+            <div class="chat-box">
+                <h3>🔊 Free Text-to-Speech</h3>
+                <div class="chat-input-row">
+                    <select id="ttsLang">
+                        <option value="de">🇩🇪 Deutsch</option>
+                        <option value="en">🇬🇧 English</option>
+                        <option value="fr">🇫🇷 Français</option>
+                        <option value="es">🇪🇸 Español</option>
+                    </select>
+                    <input type="text" id="ttsText" placeholder="Text zum Vorlesen..." />
+                    <button onclick="generateTTS()">Vorlesen 🔊</button>
+                </div>
+                <div class="chat-output" id="ttsOutput">Text eingeben — Audio wird via HuggingFace generiert</div>
+            </div>
+        </div>
+
+        <!-- STT TAB -->
+        <div id="tab-stt" class="tab-content hidden">
+            <div class="chat-box">
+                <h3>🎙️ Speech-to-Text — Whisper + HuggingFace</h3>
+                <div class="chat-input-row">
+                    <select id="sttModel">
+                        <option value="whisper-large-v3">🎯 Whisper Large v3 (Best)</option>
+                        <option value="whisper-medium">⚡ Whisper Medium (Schnell)</option>
+                        <option value="seamless">🌍 SeamlessM4T (Multilingual)</option>
+                    </select>
+                    <input type="file" id="sttFile" accept="audio/*,.mp3,.wav,.ogg,.m4a" style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:12px" />
+                    <button onclick="runSTT()">Transkribieren 🎙️</button>
+                </div>
+                <div class="chat-output" id="sttOutput">Audio-Datei auswählen — Transkription via HuggingFace Whisper (Free)</div>
+            </div>
+        </div>
+
+        <!-- OCR TAB -->
+        <div id="tab-ocr" class="tab-content hidden">
+            <div class="chat-box">
+                <h3>📷 OCR — Texterkennung aus Bildern</h3>
+                <div class="chat-input-row">
+                    <select id="ocrModel">
+                        <option value="trocr">🔤 TrOCR (Microsoft)</option>
+                        <option value="got-ocr">📄 GOT-OCR2 (Best)</option>
+                        <option value="qwen-vl">👁️ Qwen2-VL (Multimodal)</option>
+                    </select>
+                    <input type="file" id="ocrFile" accept="image/*,.png,.jpg,.jpeg,.webp,.pdf" style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:12px" />
+                    <button onclick="runOCR()">Erkennen 📷</button>
+                </div>
+                <div class="chat-output" id="ocrOutput">Bild auswählen — OCR via HuggingFace (Free Inference API)</div>
+            </div>
+        </div>
+
+        <!-- MUSIC TAB -->
+        <div id="tab-music" class="tab-content hidden">
+            <div class="chat-box">
+                <h3>🎵 Musik & Sound — Free AI Produktion</h3>
+                <div class="chat-input-row">
+                    <select id="musicType">
+                        <option value="beats">🥁 Beats / Instrumentals</option>
+                        <option value="sfx">💥 Sound-Effekte</option>
+                        <option value="song">🎤 Song (mit Vocals)</option>
+                        <option value="ambient">🌊 Ambient / Hintergrund</option>
+                    </select>
+                    <input type="text" id="musicPrompt" placeholder="z.B. Dark Trap Beat 140 BPM, Cinematic Trailer Sound..." />
+                    <button onclick="generateMusic()">Generieren 🎵</button>
+                </div>
+                <div class="chat-output" id="musicOutput">Prompt eingeben — Musik via Pollinations Audio / Suno / MusicGen</div>
+                <div id="musicPlayer" style="margin-top:12px"></div>
+            </div>
+        </div>
+
+        <!-- RESEARCH TAB -->
+        <div id="tab-research" class="tab-content hidden">
+            <div class="chat-box">
+                <h3>🔬 Research LLMs — Tiefenanalyse & Wissenschaft</h3>
+                <div class="chat-input-row">
+                    <select id="researchModel">
+                        <option value="deepseek-r1">🧠 DeepSeek-R1 (Reasoning)</option>
+                        <option value="qwq">🤔 QwQ-32B (Chain-of-Thought)</option>
+                        <option value="gemini-thinking">💎 Gemini 2.5 Flash (Thinking)</option>
+                        <option value="perplexity">🔍 Perplexity-Style Search</option>
+                    </select>
+                    <input type="text" id="researchPrompt" placeholder="Forschungsfrage oder Deep Analysis..." />
+                    <button onclick="runResearch()">Analysieren 🔬</button>
+                </div>
+                <div class="chat-output" id="researchOutput" style="max-height:500px">Frage eingeben — Deep Reasoning mit Chain-of-Thought</div>
+            </div>
+        </div>
+
+        <!-- COMMERCE TAB -->
+        <div id="tab-commerce" class="tab-content hidden">
+            <div class="chat-box">
+                <h3>🛒 AiCo Commerce — Qwen Shop-Assistent</h3>
+                <div class="chat-input-row">
+                    <select id="commerceMode">
+                        <option value="product">📦 Produktbeschreibung</option>
+                        <option value="email">📧 Kunden-E-Mail</option>
+                        <option value="seo-shop">🏷️ Shop-SEO Optimierung</option>
+                        <option value="inventory">📊 Bestands-Analyse</option>
+                        <option value="translation">🌍 Produktübersetzung</option>
+                    </select>
+                    <input type="text" id="commercePrompt" placeholder="z.B. Schreibe Produktbeschreibung für LED-Lampe..." />
+                    <button onclick="runCommerce()">Generieren 🛒</button>
+                </div>
+                <div class="chat-output" id="commerceOutput">Prompt eingeben — Commerce AI via Qwen3 / Alibaba AiCo</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    // ═══ Provider Data ═══
+    const PROVIDERS = [
+        { name:'VPS Ollama', type:'LLM', icon:'📡', status:'online', cost:'$0', url:'http://72.61.93.129:8811',
+          models:['qwen2.5:32b','qwen2.5-coder:7b','gemma2:2b','qwen2.5:3b','qwen2.5:7b','qwen3:14b'], limit:'Unbegrenzt', info:'Eigene CPU, volle Kontrolle' },
+        { name:'Groq', type:'LLM', icon:'⚡', status:'online', cost:'$0', url:'https://api.groq.com',
+          models:['llama-3.3-70b','gemma2-9b','mixtral-8x7b'], limit:'30 req/min', info:'Ultra-schnell (300 tok/s)' },
+        { name:'Cerebras', type:'LLM', icon:'🧠', status:'online', cost:'$0', url:'https://api.cerebras.ai',
+          models:['llama-3.3-70b','qwen-3-32b'], limit:'~1M tok/Tag', info:'Schnellstes Inference weltweit' },
+        { name:'SambaNova', type:'LLM', icon:'🚀', status:'online', cost:'$0', url:'https://api.sambanova.ai',
+          models:['Llama-3.3-70B','DeepSeek-R1'], limit:'20 req/min', info:'Enterprise-Grade Free' },
+        { name:'OpenRouter', type:'LLM', icon:'🌐', status:'online', cost:'$0', url:'https://openrouter.ai',
+          models:['qwen3-coder:free','deepseek-r1:free','gemma-4-31b:free','llama-3.3-70b:free','gpt-oss-120b:free'],
+          limit:'~200 req/Tag', info:'30+ Modelle, Auto-Routing' },
+        { name:'GitHub Models', type:'LLM', icon:'🐙', status:'online', cost:'$0', url:'https://models.inference.ai.azure.com',
+          models:['gpt-4o-mini','Llama-3.3-70B','Mistral-large'], limit:'150 req/Tag', info:'GitHub Account reicht' },
+        { name:'HuggingFace', type:'LLM + Bild + Audio', icon:'🤗', status:'online', cost:'$0', url:'https://huggingface.co',
+          models:['Qwen3-8B','SDXL','MMS-TTS'], limit:'Rate-Limited', info:'Community Free Tier' },
+        { name:'Google AI Studio', type:'LLM', icon:'💎', status:'online', cost:'$0', url:'https://ai.google.dev',
+          models:['gemini-2.5-flash','gemini-2.5-pro'], limit:'1500 req/Tag', info:'Gemini Modelle' },
+        { name:'Mistral', type:'LLM', icon:'🔮', status:'online', cost:'$0', url:'https://api.mistral.ai',
+          models:['mistral-nemo','mistral-small'], limit:'1M tok/Monat', info:'La Plateforme Free' },
+        { name:'Pollinations', type:'Bild + Video', icon:'🌸', status:'online', cost:'$0', url:'https://pollinations.ai',
+          models:['FLUX','SDXL','Turbo'], limit:'Unbegrenzt', info:'KEIN API Key nötig!' },
+        { name:'NVIDIA NIM', type:'LLM', icon:'🟢', status:'online', cost:'$0', url:'https://build.nvidia.com',
+          models:['Nemotron-120B','Nemotron-Nano-12B','Gemma-3-27B'], limit:'Rate-Limited', info:'NVIDIA-gesponsert' },
+        { name:'Whisper STT', type:'Speech-to-Text', icon:'🎙️', status:'online', cost:'$0', url:'https://huggingface.co',
+          models:['whisper-large-v3','whisper-medium','seamlessM4T'], limit:'Rate-Limited', info:'OpenAI Whisper via HF' },
+        { name:'TrOCR / GOT-OCR', type:'OCR', icon:'📷', status:'online', cost:'$0', url:'https://huggingface.co',
+          models:['TrOCR-large','GOT-OCR2','Qwen2-VL'], limit:'Rate-Limited', info:'Bild→Text Erkennung' },
+        { name:'MusicGen / AudioCraft', type:'Musik', icon:'🎵', status:'online', cost:'$0', url:'https://huggingface.co',
+          models:['MusicGen-Large','AudioCraft','AudioLDM2'], limit:'Rate-Limited', info:'Meta Musik-AI' },
+        { name:'Suno AI', type:'Musik + Vocals', icon:'🎤', status:'online', cost:'$0', url:'https://aimusicapi.org',
+          models:['Suno-V5','Suno-V4.5'], limit:'5 Songs/Tag Free', info:'Vollständige Songs + Vocals' },
+        { name:'Sound FX AI', type:'SFX + Ambient', icon:'💥', status:'online', cost:'$0', url:'https://huggingface.co',
+          models:['AudioLDM2','Bark','Stable-Audio'], limit:'Rate-Limited', info:'Soundeffekte & Ambient' },
+        { name:'DeepSeek R1', type:'Research / Reasoning', icon:'🧠', status:'online', cost:'$0', url:'https://openrouter.ai',
+          models:['DeepSeek-R1','DeepSeek-V3'], limit:'~50 req/Tag', info:'Chain-of-Thought Reasoning' },
+        { name:'QwQ Research', type:'Research / CoT', icon:'🤔', status:'online', cost:'$0', url:'https://openrouter.ai',
+          models:['QwQ-32B'], limit:'Rate-Limited', info:'Qwen Thinking Model' },
+        { name:'Qwen AiCo', type:'Commerce / Shop', icon:'🛒', status:'online', cost:'$0', url:'https://openrouter.ai',
+          models:['qwen3-235b-a22b:free','qwen3-coder:free'], limit:'~200 req/Tag', info:'Alibaba E-Commerce AI' },
+    ];
+
+    // ═══ Render Providers ═══
+    function renderProviders() {
+        const grid = document.getElementById('providerGrid');
+        grid.innerHTML = PROVIDERS.map(p => `
+            <div class="provider-card">
+                <div class="status ${p.status}"></div>
+                <h3>${p.icon} ${esc(p.name)}</h3>
+                <div class="type">${esc(p.type)}</div>
+                <div class="info">
+                    ${esc(p.info)}<br>
+                    <code>${esc(p.url)}</code><br>
+                    Limit: ${esc(p.limit)}
+                </div>
+                <span class="cost">${esc(p.cost)} — Kostenlos</span>
+                <div class="models-list">
+                    ${p.models.map(m => `<span class="model-tag">${esc(m)}</span>`).join('')}
+                </div>
+            </div>
+        `).join('');
+        document.getElementById('totalProviders').textContent = PROVIDERS.length;
+        document.getElementById('totalModels').textContent = PROVIDERS.reduce((a,p) => a + p.models.length, 0);
+    }
+
+    // ═══ Chat ═══
+    const GATEWAY = location.port === '3040' ? '' : 'http://localhost:3040';
+    async function sendChat() {
+        const msg = document.getElementById('chatInput').value.trim();
+        const prov = document.getElementById('chatProvider').value;
+        if (!msg) return;
+        const out = document.getElementById('chatOutput');
+        out.textContent = '⏳ Sende an ' + prov + '...';
+        document.getElementById('chatInput').value = '';
+        try {
+            // Use free cascade for auto, specific provider for others
+            const endpoint = (prov === 'auto') ? '/api/v1/free-hub/cascade' : '/api/v1/chat';
+            const body = (prov === 'auto') ? { message: msg } : { message: msg, provider: prov };
+            const r = await fetch(GATEWAY + endpoint, {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify(body)
+            });
+            const d = await r.json();
+            const reply = d.response || d.reply || d.error || JSON.stringify(d);
+            const provName = d.provider || prov;
+            out.innerHTML = `<span class="provider-tag">[${esc(provName)}]</span> <span style="color:var(--green);font-size:10px">${esc(d.cost || '')}</span>\n\n${esc(reply)}`;
+        } catch(e) {
+            out.textContent = '❌ Gateway offline: ' + e.message + '\n\n💡 Starte: cd ONTHERUN && npm run gateway';
+        }
+    }
+
+    // ═══ Image ═══
+    async function generateImage() {
+        const prompt = document.getElementById('imgPrompt').value.trim();
+        const prov = document.getElementById('imgProvider').value;
+        if (!prompt) return;
+        const preview = document.getElementById('imagePreview');
+        preview.innerHTML = '<p style="color:var(--yellow);padding:40px">⏳ Generiere Bild...</p>';
+        if (prov === 'pollinations') {
+            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&model=flux&nologo=true`;
+            preview.innerHTML = `<img src="${url}" alt="${esc(prompt)}" onerror="this.parentElement.innerHTML='❌ Fehler beim Laden'" />`;
+        } else {
+            preview.innerHTML = '<p style="color:var(--text-dim);padding:40px">HuggingFace/Together: Über MCP Gateway (localhost:3040)</p>';
+        }
+    }
+
+    // ═══ Video ═══
+    function generateVideo() {
+        const prompt = document.getElementById('vidPrompt').value.trim();
+        if (!prompt) return;
+        const url = `https://video.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
+        document.getElementById('videoOutput').innerHTML = `🎬 Video-URL: <a href="${url}" target="_blank" style="color:var(--cyan)">${url}</a>\n⏳ Generierung dauert 30-60s`;
+    }
+
+    // ═══ TTS ═══
+    function generateTTS() {
+        const text = document.getElementById('ttsText').value.trim();
+        if (!text) return;
+        const lang = document.getElementById('ttsLang').value;
+        const out = document.getElementById('ttsOutput');
+        // Browser SpeechSynthesis Fallback (sofort, kein API nötig)
+        if ('speechSynthesis' in window) {
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = lang; u.rate = 0.9;
+            speechSynthesis.speak(u);
+            out.textContent = '🔊 Audio wird abgespielt (Browser TTS)...\n\nText: ' + text;
+        } else {
+            out.textContent = '❌ Browser unterstützt kein TTS.\nVerwende Gateway: cd ONTHERUN && npm run gateway';
+        }
+    }
+
+    // ═══ STT (Speech-to-Text) ═══
+    async function runSTT() {
+        const file = document.getElementById('sttFile').files[0];
+        if (!file) return alert('Bitte Audio-Datei auswählen');
+        const out = document.getElementById('sttOutput');
+        const model = document.getElementById('sttModel').value;
+        out.textContent = '⏳ Transkribiere mit ' + model + '... (' + (file.size/1024).toFixed(0) + ' KB)';
+        const modelMap = { 'whisper-large-v3': 'openai/whisper-large-v3', 'whisper-medium': 'openai/whisper-medium', 'seamless': 'facebook/seamless-m4t-v2-large' };
+        try {
+            const r = await fetch('https://router.huggingface.co/hf-inference/models/' + modelMap[model], {
+                method: 'POST', headers: { 'Content-Type': file.type || 'audio/mpeg' }, body: file
+            });
+            if (r.ok) {
+                const d = await r.json();
+                out.innerHTML = '<span class="provider-tag">[Whisper/' + esc(model) + ']</span> <span style="color:var(--green)">$0.00</span>\n\n' + esc(d.text || JSON.stringify(d));
+            } else { out.textContent = '⚠️ HF Rate-Limit. Versuche später oder nutze Gateway.\n' + (await r.text()); }
+        } catch(e) { out.textContent = '❌ Fehler: ' + e.message; }
+    }
+
+    // ═══ OCR ═══
+    async function runOCR() {
+        const file = document.getElementById('ocrFile').files[0];
+        if (!file) return alert('Bitte Bild auswählen');
+        const out = document.getElementById('ocrOutput');
+        out.textContent = '⏳ OCR läuft...';
+        const modelMap = { 'trocr': 'microsoft/trocr-large-handwritten', 'got-ocr': 'stepfun-ai/GOT-OCR-2.0-hf', 'qwen-vl': 'Qwen/Qwen2-VL-7B-Instruct' };
+        const model = document.getElementById('ocrModel').value;
+        try {
+            const r = await fetch('https://router.huggingface.co/hf-inference/models/' + modelMap[model], {
+                method: 'POST', headers: { 'Content-Type': file.type || 'image/png' }, body: file
+            });
+            if (r.ok) {
+                const d = await r.json();
+                const text = Array.isArray(d) ? d.map(x => x.generated_text || x.text || '').join('\n') : d.generated_text || d.text || JSON.stringify(d);
+                out.innerHTML = '<span class="provider-tag">[OCR/' + esc(model) + ']</span> <span style="color:var(--green)">$0.00</span>\n\n' + esc(text);
+            } else { out.textContent = '⚠️ HF Rate-Limit: ' + (await r.text()); }
+        } catch(e) { out.textContent = '❌ Fehler: ' + e.message; }
+    }
+
+    // ═══ Music ═══
+    async function generateMusic() {
+        const prompt = document.getElementById('musicPrompt').value.trim();
+        if (!prompt) return;
+        const type = document.getElementById('musicType').value;
+        const out = document.getElementById('musicOutput');
+        const player = document.getElementById('musicPlayer');
+        out.textContent = '⏳ Generiere ' + type + '...';
+        const sysPrompts = { beats:'Create a beat/instrumental track:', sfx:'Generate a sound effect:', song:'Create a full song with vocals:', ambient:'Generate ambient background music:' };
+        try {
+            // Try Pollinations Audio first
+            const r = await fetch('https://text.pollinations.ai/', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ messages: [{ role:'system', content:'You are a music production assistant. Describe the audio parameters.' }, { role:'user', content: sysPrompts[type] + ' ' + prompt }], model:'openai', stream:false }),
+                signal: AbortSignal.timeout(20000)
+            });
+            if (r.ok) {
+                const text = await r.text();
+                out.innerHTML = '<span class="provider-tag">[Music AI]</span> <span style="color:var(--green)">$0.00</span>\n\n' + esc(text) + '\n\n🎵 Für Audio-Dateien: HuggingFace MusicGen-Large oder Suno Free Tier nutzen';
+            }
+        } catch(e) { out.textContent = '❌ ' + e.message; }
+    }
+
+    // ═══ Research ═══
+    async function runResearch() {
+        const prompt = document.getElementById('researchPrompt').value.trim();
+        if (!prompt) return;
+        const model = document.getElementById('researchModel').value;
+        const out = document.getElementById('researchOutput');
+        out.textContent = '⏳ Deep Reasoning mit ' + model + '... (kann 30-60s dauern)';
+        const modelMap = { 'deepseek-r1':'deepseek/deepseek-r1:free', 'qwq':'qwen/qwq-32b:free', 'gemini-thinking':'google/gemini-2.5-flash-preview:free', 'perplexity':'qwen/qwen3-235b-a22b:free' };
+        const sysMap = { 'deepseek-r1':'Think step by step. Show your reasoning process.', 'qwq':'Analyze thoroughly using chain-of-thought reasoning.', 'gemini-thinking':'Provide deep research analysis with citations.', 'perplexity':'Research this topic comprehensively. Cite sources.' };
+        try {
+            const r = await fetch(GATEWAY + '/api/v1/free-hub/cascade', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ message: '[SYSTEM: ' + sysMap[model] + ']\n\n' + prompt })
+            });
+            const d = await r.json();
+            out.innerHTML = '<span class="provider-tag">[' + esc(d.provider || model) + ']</span> <span style="color:var(--green)">' + esc(d.cost||'$0.00') + '</span>\n\n' + esc(d.response || d.error || JSON.stringify(d));
+        } catch(e) { out.textContent = '❌ Gateway offline: ' + e.message; }
+    }
+
+    // ═══ Commerce (AiCo) ═══
+    async function runCommerce() {
+        const prompt = document.getElementById('commercePrompt').value.trim();
+        if (!prompt) return;
+        const mode = document.getElementById('commerceMode').value;
+        const out = document.getElementById('commerceOutput');
+        out.textContent = '⏳ AiCo Commerce generiert...';
+        const sysMap = { product:'Du bist ein E-Commerce Experte. Schreibe eine verkaufsstarke Produktbeschreibung mit Bullet Points, SEO-Keywords und emotionalem Hook.', email:'Du bist ein Kundenkommunikations-Experte. Schreibe eine professionelle, freundliche E-Mail.', 'seo-shop':'Du bist ein Shop-SEO Experte. Optimiere den folgenden Produkttext für maximale Sichtbarkeit. Liefere: Title Tag, Meta Description, H1, und Alt-Texte.', inventory:'Du bist ein Bestandsmanagement-Analyst. Analysiere die Daten und gib Empfehlungen für Nachbestellung und Optimierung.', translation:'Du bist ein E-Commerce Übersetzer. Übersetze den Produkttext professionell in Englisch, Französisch und Spanisch.' };
+        try {
+            const r = await fetch(GATEWAY + '/api/v1/free-hub/cascade', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ message: '[SYSTEM: ' + sysMap[mode] + ']\n\n' + prompt })
+            });
+            const d = await r.json();
+            out.innerHTML = '<span class="provider-tag">[AiCo/' + esc(d.provider||'Qwen') + ']</span> <span style="color:var(--green)">' + esc(d.cost||'$0.00') + '</span>\n\n' + esc(d.response || JSON.stringify(d));
+        } catch(e) { out.textContent = '❌ Gateway offline: ' + e.message; }
+    }
+
+    // ═══ Tabs ═══
+    document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(x => x.classList.add('hidden'));
+        t.classList.add('active');
+        document.getElementById('tab-' + t.dataset.tab).classList.remove('hidden');
+    }));
+
+    // Enter-Key für Chat
+    document.getElementById('chatInput')?.addEventListener('keydown', e => { if(e.key==='Enter') sendChat(); });
+    document.getElementById('imgPrompt')?.addEventListener('keydown', e => { if(e.key==='Enter') generateImage(); });
+
+    // XSS Protection
+    function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+    // Init
+    renderProviders();
+
+    // ═══ Gateway Health Check on Load ═══
+    (async () => {
+        try {
+            const r = await fetch(GATEWAY + '/api/v1/health');
+            if (r.ok) {
+                const badge = document.querySelector('.badge');
+                if (badge) { badge.textContent = 'GATEWAY ✓'; badge.style.background = 'var(--green)'; }
+            }
+        } catch { /* gateway offline */ }
+    })();
+    </script>
+    <!-- TestStraße Integration -->
+    <script src="/shared/dkz-test.js" defer></script>
+</body>
+</html>

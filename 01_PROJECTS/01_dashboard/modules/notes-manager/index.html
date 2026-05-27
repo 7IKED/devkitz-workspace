@@ -1,0 +1,368 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-module" content="notes-manager">
+    <meta name="dkz-version" content="v0.01.0">
+    <title>?? DkZâ„¢ Notes-Manager � 4-Ordner System</title>
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#060608;--card:#0d0d11;--card2:#141418;--brd:#1e1e24;--t:#f0f0f2;--m:#71717a;--accent:#fa1e4e;--g:#00ff88;--r:#fa1e4e;--y:#FFB800;--b:#55ACEE;--p:#a855f7;--c:#22d3ee;}
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;}
+        .bg-mesh{position:fixed;inset:0;z-index:0;background-image:radial-gradient(circle at 1px 1px,rgba(250,30,78,0.04) 1px,transparent 0);background-size:32px 32px;pointer-events:none;}
+        .blob{position:fixed;border-radius:50%;filter:blur(140px);opacity:0.08;pointer-events:none;z-index:0;}
+        .b1{width:500px;height:500px;background:var(--accent);top:-150px;right:-100px;}
+        .b2{width:400px;height:400px;background:var(--p);bottom:-100px;left:-100px;}
+
+        .header{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:rgba(6,6,8,0.85);backdrop-filter:blur(24px);border-bottom:1px solid var(--brd);}
+        .header a.back-btn{color:var(--accent);text-decoration:none;font-weight:800;font-size:12px;}
+        .header h1{font-size:15px;font-weight:900;display:flex;align-items:center;gap:8px;}
+        .header .ver{font-size:10px;color:var(--m);font-family:'JetBrains Mono',monospace;}
+
+        .main{display:grid;grid-template-columns:240px 1fr 280px;gap:0;min-height:calc(100vh - 50px);position:relative;z-index:1;}
+        @media(max-width:900px){.main{grid-template-columns:1fr;}}
+
+        /* SIDEBAR */
+        .sidebar{background:var(--card);border-right:1px solid var(--brd);padding:12px;overflow-y:auto;}
+        .folder{margin-bottom:4px;}
+        .folder-head{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:11px;font-weight:800;transition:0.2s;border:1px solid transparent;}
+        .folder-head:hover{background:rgba(250,30,78,0.06);}
+        .folder-head.active{background:rgba(250,30,78,0.1);border-color:rgba(250,30,78,0.2);color:var(--accent);}
+        .folder-icon{font-size:16px;}
+        .folder-count{margin-left:auto;font-size:9px;color:var(--m);font-family:'JetBrains Mono',monospace;background:rgba(255,255,255,0.04);padding:1px 6px;border-radius:4px;}
+        .note-list{padding-left:6px;}
+        .note-item{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:10px;transition:0.2s;border:1px solid transparent;margin:1px 0;}
+        .note-item:hover{background:rgba(255,255,255,0.03);}
+        .note-item.active{background:rgba(250,30,78,0.08);border-color:rgba(250,30,78,0.15);}
+        .note-prefix{font-size:8px;font-weight:900;padding:1px 5px;border-radius:3px;}
+        .pf-P{background:rgba(99,102,241,0.2);color:#6366f1;}
+        .pf-I{background:rgba(0,255,136,0.15);color:var(--g);}
+        .pf-R{background:rgba(255,184,0,0.15);color:var(--y);}
+
+        /* CONTENT */
+        .content{padding:20px;overflow-y:auto;}
+        .note-editor{background:var(--card);border:1px solid var(--brd);border-radius:12px;padding:16px;min-height:300px;}
+        .note-title-input{width:100%;background:transparent;border:none;color:var(--t);font-size:18px;font-weight:800;font-family:'Inter',sans-serif;outline:none;margin-bottom:12px;padding:4px 0;border-bottom:1px solid var(--brd);}
+        .note-body{width:100%;min-height:250px;background:transparent;border:none;color:var(--t);font-size:13px;font-family:'Inter',sans-serif;line-height:1.8;outline:none;resize:vertical;}
+        .note-meta{display:flex;gap:12px;margin-top:12px;padding-top:10px;border-top:1px solid var(--brd);font-size:9px;color:var(--m);}
+
+        /* TOOLBAR */
+        .toolbar{display:flex;gap:6px;margin-bottom:12px;}
+        .tb{padding:5px 12px;border-radius:6px;border:1px solid var(--brd);background:transparent;color:var(--m);font-size:10px;font-weight:700;cursor:pointer;transition:0.2s;font-family:'Inter',sans-serif;}
+        .tb:hover{border-color:var(--accent);color:var(--t);}
+        .tb.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+        /* RIGHT PANEL */
+        .panel-r{background:var(--card);border-left:1px solid var(--brd);padding:12px;overflow-y:auto;}
+        .pnl-sec{font-size:8px;font-weight:900;color:var(--m);text-transform:uppercase;letter-spacing:1.5px;padding:10px 0 4px;}
+        .pnl-kv{display:flex;justify-content:space-between;padding:4px 0;font-size:10px;border-bottom:1px solid rgba(255,255,255,0.03);}
+        .pnl-kv .k{color:var(--m);}
+        .pnl-kv .v{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:10px;}
+
+        /* MEETING BAR */
+        .meeting-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);border-radius:8px;margin-bottom:12px;}
+        .meeting-bar .mic{width:36px;height:36px;border-radius:50%;border:2px solid var(--p);background:rgba(168,85,247,0.1);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:0.2s;}
+        .meeting-bar .mic:hover{background:rgba(168,85,247,0.25);}
+        .meeting-bar .mic.recording{background:var(--r);border-color:var(--r);animation:rec-pulse 1.5s infinite;}
+        @keyframes rec-pulse{0%,100%{box-shadow:0 0 0 0 rgba(250,30,78,0.4);}70%{box-shadow:0 0 0 10px rgba(250,30,78,0);}}
+        .meeting-info{flex:1;font-size:10px;color:var(--m);}
+        .meeting-time{font-size:14px;font-weight:900;font-family:'JetBrains Mono',monospace;color:var(--p);}
+
+        /* TOAST */
+        .toast{position:fixed;bottom:24px;right:24px;background:var(--g);color:#000;padding:10px 20px;border-radius:8px;font-weight:800;font-size:12px;transform:translateY(100px);transition:0.3s;z-index:999;}
+        .toast.show{transform:translateY(0);}
+
+        /* SEARCH */
+        .search{width:100%;padding:7px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--brd);border-radius:8px;color:var(--t);font-size:11px;font-family:'Inter',sans-serif;outline:none;margin-bottom:10px;}
+        .search:focus{border-color:var(--accent);}
+
+        /* STATS */
+        .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;}
+        .stat-card{background:rgba(255,255,255,0.02);border:1px solid var(--brd);border-radius:8px;padding:8px;text-align:center;}
+        .stat-val{font-size:18px;font-weight:900;font-family:'JetBrains Mono',monospace;}
+        .stat-label{font-size:7px;color:var(--m);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+<body data-dkz-module="notes-manager" data-dkz-appid="DKZ-MOD-NOT" data-dkz-version="v0.01" data-dkz-title="?? Notes-Manager � 4-Ordner System" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh"></div>
+    <div class="blob b1"></div><div class="blob b2"></div>
+
+    <header class="header">
+        <a href="../../hub/index.html" class="back-btn">? Hub</a>
+        <h1>?? Notes-Manager <span class="ver">v0.01</span></h1>
+        <span style="font-size:10px;color:var(--m);font-family:'JetBrains Mono',monospace" id="clock"></span>
+    </header>
+
+    <div class="main">
+        <div class="sidebar" id="sidebar"></div>
+        <div class="content" id="content"></div>
+        <div class="panel-r" id="panelR"></div>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-notes-shared.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script>
+    (() => {
+    'use strict';
+
+    const S = {
+        folders: [
+            { id: 'inbox', icon: '??', name: 'Inbox', notes: [] },
+            { id: 'aktiv', icon: '??', name: 'Aktiv', notes: [] },
+            { id: 'archiv', icon: '??', name: 'Archiv', notes: [] },
+            { id: 'meeting', icon: '??', name: 'Meeting', notes: [] }
+        ],
+        activeFolder: 'inbox',
+        activeNote: null,
+        recording: false,
+        recTime: 0,
+        search: ''
+    };
+
+    // Demo data
+    function initDemoData() {
+        S.folders[0].notes = [
+            { id: 'n1', prefix: 'I', title: 'AI-Agent Marketplace Idee', body: 'Marketplace f�r spezialisierte KI-Agenten. Jeder Agent hat ein Karma-Score basierend auf Feedback.\n\nFeatures:\n- Self-Registration\n- Escrow Payment\n- Quality Rating\n- Skill-based Matching', created: '2026-03-10 14:22', modified: '2026-03-10 14:22' },
+            { id: 'n2', prefix: 'R', title: 'n8n Workflow Patterns', body: 'Referenz: https://n8n.io/workflows\n\nWichtige Patterns:\n- Webhook ? Transform ? DB Write\n- Schedule ? API Poll ? Notification\n- Form ? Validation ? Email', created: '2026-03-09 10:15', modified: '2026-03-09 10:15' }
+        ];
+        S.folders[1].notes = [
+            { id: 'n3', prefix: 'P', title: 'DkZ� Workflow Viewer', body: 'AKTIV � n8n-Style Live Monitor bauen\n\nAufgaben:\n? Node Canvas mit SVG Connectors\n? 4 View Modi (Workflow/Agent/Team/Loop)\n? 12 Builder Workflows\n? Real API Integration\n? WebSocket Live Events', created: '2026-03-11 13:55', modified: '2026-03-11 15:00' },
+            { id: 'n4', prefix: 'P', title: 'Notes-Manager� bauen', body: 'AKTIV � 4-Ordner System implementieren\n\n? index.html\n? Push-to-Talk\n? Voice Commands\n? DuckDB Integration\n? Google Sheets Sync', created: '2026-03-11 13:50', modified: '2026-03-11 15:05' },
+            { id: 'n5', prefix: 'P', title: 'R24 Archiv-Schutz', body: 'AKTIV � Eiserne Regel einbauen\n\n? REGELWERK.md R24 erstellt\n? R25 Naming Convention� erstellt\n? James� Guardian Prompt\n? Dashboard Alarm-Banner', created: '2026-03-11 15:07', modified: '2026-03-11 15:10' }
+        ];
+        S.folders[2].notes = [
+            { id: 'n6', prefix: 'R', title: 'Alte CSS-Variablen v1', body: 'Archiviert: Altes Design System v1 Variablen-Set.\nErsetzt durch DkZ� Design System v2 mit --accent: #fa1e4e.', created: '2026-03-05 09:00', modified: '2026-03-08 12:00' }
+        ];
+        S.folders[3].notes = [
+            { id: 'n7', prefix: 'P', title: 'Sprint Review 2026-03-11', body: '?? Meeting-Aufzeichnung\nDauer: 12:34\n\nThemen:\n- Workflow Viewer v2.0 Launch\n- R24 Archiv-Schutz implementiert\n- 72 Module erreicht\n- Browser-Fix steht noch aus', created: '2026-03-11 14:00', modified: '2026-03-11 14:12' }
+        ];
+    }
+
+    function renderSidebar() {
+        const el = document.getElementById('sidebar');
+        let h = '<input class="search" placeholder="?? Suche..." oninput="searchNotes(this.value)">';
+        S.folders.forEach(f => {
+            const isActive = S.activeFolder === f.id;
+            const filtered = filterNotes(f.notes);
+            h += `<div class="folder">
+                <div class="folder-head ${isActive - 'active' : ''}" onclick="setFolder('${f.id}')">
+                    <span class="folder-icon">${f.icon}</span> ${f.name}
+                    <span class="folder-count">${filtered.length}</span>
+                </div>`;
+            if (isActive) {
+                h += '<div class="note-list">';
+                filtered.forEach(n => {
+                    h += `<div class="note-item ${S.activeNote === n.id - 'active' : ''}" onclick="setNote('${n.id}')">
+                        <span class="note-prefix pf-${n.prefix}">${n.prefix}</span>
+                        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n.title)}</span>
+                    </div>`;
+                });
+                h += `<div class="note-item" onclick="newNote()" style="color:var(--accent);justify-content:center;opacity:0.6">+ Neue Notiz</div>`;
+                h += '</div>';
+            }
+            h += '</div>';
+        });
+        el.innerHTML = h;
+    }
+
+    function renderContent() {
+        const el = document.getElementById('content');
+        const note = findNote(S.activeNote);
+
+        // Meeting bar for meeting folder
+        let meetingH = '';
+        if (S.activeFolder === 'meeting') {
+            meetingH = `<div class="meeting-bar">
+                <div class="mic ${S.recording - 'recording' : ''}" onclick="toggleRecording()" title="Push-to-Talk">
+                    ${S.recording - '??' : '??'}
+                </div>
+                <div class="meeting-info">
+                    ${S.recording - '<span style="color:var(--r);font-weight:700">? Aufnahme laeuft</span>' : 'Gedrueckt halten = Push-to-Talk'}
+                </div>
+                <div class="meeting-time" id="recTimer">${S.recording - formatTime(S.recTime) : '00:00'}</div>
+            </div>`;
+        }
+
+        if (!note) {
+            el.innerHTML = meetingH + `<div style="display:flex;align-items:center;justify-content:center;height:60%;opacity:0.2;flex-direction:column;gap:12px">
+                <div style="font-size:40px">??</div>
+                <div style="font-size:13px;font-weight:700">Notiz auswaehlen oder neue erstellen</div>
+            </div>`;
+            return;
+        }
+
+        el.innerHTML = meetingH + `
+            <div class="toolbar">
+                <button class="tb" onclick="moveNote('inbox')">?? Inbox</button>
+                <button class="tb" onclick="moveNote('aktiv')">?? Aktiv</button>
+                <button class="tb" onclick="moveNote('archiv')">?? Archiv</button>
+                <button class="tb" onclick="moveNote('meeting')">?? Meeting</button>
+                <div style="flex:1"></div>
+                <button class="tb primary" onclick="saveNote()">?? Speichern</button>
+            </div>
+            <div class="note-editor">
+                <input class="note-title-input" id="noteTitle" value="${esc(note.title)}" placeholder="Titel...">
+                <textarea class="note-body" id="noteBody" placeholder="Schreibe hier...">${esc(note.body)}</textarea>
+                <div class="note-meta">
+                    <span>Praefig: <strong class="pf-${note.prefix}" style="padding:1px 5px;border-radius:3px">${note.prefix}</strong></span>
+                    <span>Erstellt: ${note.created}</span>
+                    <span>Geaendert: ${note.modified}</span>
+                </div>
+            </div>`;
+    }
+
+    function renderPanel() {
+        const el = document.getElementById('panelR');
+        const note = findNote(S.activeNote);
+        const folder = S.folders.find(f => f.id === S.activeFolder);
+        const totalNotes = S.folders.reduce((s, f) => s + f.notes.length, 0);
+
+        let h = `<div class="pnl-sec">?? Statistik</div>
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-val" style="color:var(--accent)">${totalNotes}</div><div class="stat-label">Notizen</div></div>
+                <div class="stat-card"><div class="stat-val" style="color:var(--g)">${S.folders[1].notes.length}</div><div class="stat-label">Aktiv</div></div>
+                <div class="stat-card"><div class="stat-val" style="color:var(--p)">${S.folders[3].notes.length}</div><div class="stat-label">Meetings</div></div>
+                <div class="stat-card"><div class="stat-val" style="color:var(--y)">${S.folders[2].notes.length}</div><div class="stat-label">Archiv</div></div>
+            </div>`;
+
+        if (note) {
+            h += `<div class="pnl-sec">?? Notiz-Info</div>
+                <div class="pnl-kv"><span class="k">Titel</span><span class="v">${esc(note.title).substring(0, 20)}</span></div>
+                <div class="pnl-kv"><span class="k">Praefig</span><span class="v">${note.prefix}</span></div>
+                <div class="pnl-kv"><span class="k">Ordner</span><span class="v">${folder?.name || '�'}</span></div>
+                <div class="pnl-kv"><span class="k">Zeichen</span><span class="v">${note.body.length}</span></div>
+                <div class="pnl-kv"><span class="k">Erstellt</span><span class="v">${note.created}</span></div>`;
+        }
+
+        h += `<div class="pnl-sec">? Quick Actions</div>
+            <div style="display:flex;flex-direction:column;gap:3px">
+                <button class="tb" onclick="newNote()" style="width:100%">?? Neue Notiz</button>
+                <button class="tb" onclick="exportAll()" style="width:100%">?? Alles exportieren</button>
+                <button class="tb" onclick="archiveOld()" style="width:100%">?? 30-Tage Auto-Archiv</button>
+            </div>`;
+
+        h += `<div class="pnl-sec">??? Praefix-Legende</div>
+            <div style="font-size:9px;line-height:2">
+                <span class="note-prefix pf-P">P</span> Projekt<br>
+                <span class="note-prefix pf-I">I</span> Idee<br>
+                <span class="note-prefix pf-R">R</span> Referenz
+            </div>`;
+
+        el.innerHTML = h;
+    }
+
+    // --- ACTIONS ---
+    window.setFolder = id => { S.activeFolder = id; S.activeNote = null; renderAll(); };
+    window.setNote = id => { S.activeNote = id; renderAll(); };
+    window.searchNotes = q => { S.search = q.toLowerCase(); renderSidebar(); };
+
+    window.newNote = () => {
+        const folder = S.folders.find(f => f.id === S.activeFolder);
+        const n = { id: 'n' + Date.now(), prefix: 'I', title: 'Neue Notiz', body: '', created: now(), modified: now() };
+        folder.notes.unshift(n);
+        S.activeNote = n.id;
+        renderAll();
+        setTimeout(() => document.getElementById('noteTitle')?.focus(), 100);
+        toast('?? Neue Notiz erstellt');
+    };
+
+    window.saveNote = () => {
+        const note = findNote(S.activeNote);
+        if (!note) return;
+        const title = document.getElementById('noteTitle').value;
+        note.title = title;
+        note.body = document.getElementById('noteBody').value;
+        note.modified = now();
+        if (title.startsWith('P-') || title.startsWith('P ')) note.prefix = 'P';
+        else if (title.startsWith('I-') || title.startsWith('I ')) note.prefix = 'I';
+        else if (title.startsWith('R-') || title.startsWith('R ')) note.prefix = 'R';
+        saveToLocal();
+        renderAll();
+        toast('?? Gespeichert');
+    };
+
+    window.moveNote = targetId => {
+        const note = findNote(S.activeNote);
+        if (!note) return;
+        S.folders.forEach(f => { f.notes = f.notes.filter(n => n.id !== note.id); });
+        S.folders.find(f => f.id === targetId).notes.unshift(note);
+        S.activeFolder = targetId;
+        note.modified = now();
+        saveToLocal();
+        renderAll();
+        toast(`? ${targetId}`);
+    };
+
+    window.toggleRecording = () => {
+        S.recording = !S.recording;
+        if (S.recording) { S.recTime = 0; recInterval = setInterval(() => { S.recTime++; const el = document.getElementById('recTimer'); if (el) el.textContent = formatTime(S.recTime); }, 1000); }
+        else { clearInterval(recInterval); toast(`?? Meeting: ${formatTime(S.recTime)}`); }
+        renderAll();
+    };
+
+    window.exportAll = () => {
+        const data = JSON.stringify(S.folders, null, 2);
+        navigator.clipboard.writeText(data).then(() => toast('?? Alle Notizen kopiert!'));
+    };
+
+    window.archiveOld = () => {
+        let moved = 0;
+        const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+        ['inbox', 'aktiv'].forEach(fid => {
+            const f = S.folders.find(x => x.id === fid);
+            const old = f.notes.filter(n => new Date(n.modified).getTime() < cutoff);
+            old.forEach(n => { f.notes = f.notes.filter(x => x.id !== n.id); S.folders.find(x => x.id === 'archiv').notes.push(n); moved++; });
+        });
+        toast(moved > 0 - `?? ${moved} Notizen archiviert` : '? Nichts zu archivieren');
+        renderAll();
+    };
+
+    // --- HELPERS ---
+    let recInterval;
+    function findNote(id) { for (const f of S.folders) { const n = f.notes.find(x => x.id === id); if (n) return n; } return null; }
+    function filterNotes(notes) { return S.search - notes.filter(n => n.title.toLowerCase().includes(S.search) || n.body.toLowerCase().includes(S.search)) : notes; }
+    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    function now() { return new Date().toISOString().slice(0, 16).replace('T', ' '); }
+    function formatTime(s) { return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`; }
+    function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
+    function saveToLocal() { DkzNotes.save(S.folders); }
+    function loadFromLocal() { S.folders = DkzNotes.load(); }
+
+    function renderAll() { renderSidebar(); renderContent(); renderPanel(); }
+
+    // INIT
+    loadFromLocal();
+    if (DkzNotes.allNotes(S.folders).length === 0) initDemoData();
+    renderAll();
+    setInterval(() => { document.getElementById('clock') && (document.getElementById('clock').textContent = '?? ' + new Date().toLocaleTimeString('de-DE')); }, 1000);
+    })();
+    </script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Notes manager</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Notizen verwalten und organisieren.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Notes manager</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Notizen verwalten und organisieren.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-notes-manager-onboarded','1')}if(!localStorage.getItem('dkz-notes-manager-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+</html>
+
+
+

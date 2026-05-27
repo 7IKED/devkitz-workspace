@@ -1,0 +1,6 @@
+- `[x]` Next.js Projekt `12_swarm-mission-control` initialisieren (Tailwind, App Router).
+- `[x]` Abhängigkeiten installieren (`framer-motion`, `lucide-react`).
+- `[x]` Globales DkZ-Styling in `globals.css` definieren.
+- `[x]` Client-Komponenten für Cinematic Video, Nanobot-Engine und Glassmorphism-UI in `page.tsx` bauen.
+- `[x]` Dashboard `MOD-088` (`index.html`) anpassen, um die Next.js App via iFrame einzubinden.
+- `[x]` Next.js Dev Server starten und Browser automatisch öffnen.

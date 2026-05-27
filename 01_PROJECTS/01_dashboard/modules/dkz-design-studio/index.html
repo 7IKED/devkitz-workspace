@@ -1,0 +1,2336 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎨 DkZ Design Studio v3 — Look Like · Be Unique · Import/Export</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../shared/dkz-theme.css" id="dkzThemeCSS">
+<style>
+  /* ===== DkZ™ Design System v2 (Playbook §26) ===== */
+  :root {
+    --accent: #fa1e4e;
+    --accent-rgb: 250,30,78;
+    --accent-soft: rgba(250,30,78,0.12);
+    --bg: #0e0e10;
+    --bg2: #121215;
+    --card: rgba(14,14,22,.85);
+    --card2: #1e1e24;
+    --card3: #28283a;
+    --border: rgba(255,255,255,.06);
+    --border2: rgba(255,255,255,.12);
+    --text: #e8e8f0;
+    --text-secondary: #8a8a9a;
+    --muted: #6e6e8a;
+    --green: #00ff88;
+    --blue: #3b82f6;
+    --purple: #a855f7;
+    --yellow: #ffb800;
+    --orange: #ff8c42;
+    --font-main: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --shadow-card: 0 8px 32px rgba(0,0,0,0.4);
+    --glass: rgba(14,14,22,.72);
+    --blur: blur(24px);
+
+    /* Dynamische Customizer-Vars */
+    --ds-accent: #fa1e4e;
+    --ds-accent-rgb: 250,30,78;
+    --ds-bg: #0e0e10;
+    --ds-glass-opacity: .72;
+    --ds-glass-blur: 24px;
+    --ds-radius: 14px;
+    --ds-font-display: 'Inter', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    font-family: var(--font-main);
+    color: var(--text);
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  a { color: var(--accent); text-decoration: none; }
+
+  /* ===== SCROLLBAR ===== */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 6px; }
+
+  /* ===== ANIMATED BACKGROUND (hyperreal-inspiriert) ===== */
+  .bg-mesh {
+    position: fixed; inset: 0; z-index: 0;
+    pointer-events: none; overflow: hidden;
+  }
+  .bg-blob {
+    position: absolute; border-radius: 50%;
+    filter: blur(120px); opacity: .06;
+    animation: blobFloat 20s ease-in-out infinite;
+  }
+  .bg-blob:nth-child(1) { width: 500px; height: 500px; background: var(--blue); top: -10%; left: 20%; }
+  .bg-blob:nth-child(2) { width: 350px; height: 350px; background: var(--purple); bottom: 10%; right: 10%; animation-delay: -8s; }
+  .bg-blob:nth-child(3) { width: 300px; height: 300px; background: var(--accent); top: 40%; left: 60%; animation-delay: -14s; opacity: .04; }
+  @keyframes blobFloat {
+    0%,100% { transform: translate(0,0) scale(1); }
+    50% { transform: translate(30px,-40px) scale(1.1); }
+  }
+
+  /* ===== HEADER (DkZ Standard) ===== */
+  .header {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--glass);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header h1 {
+    font-size: 18px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header .ver {
+    font-size: 9px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+  }
+  .header-right {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  /* ===== DkZ BUTTON SYSTEM (Playbook §26, hyperreal-pattern) ===== */
+  .dkz-btn {
+    position: relative;
+    overflow: hidden;
+    padding: 8px 16px;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: var(--radius-sm);
+    background: rgba(18,18,24,0.6);
+    backdrop-filter: blur(12px);
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font-main);
+    cursor: pointer;
+    outline: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+  }
+  .dkz-btn:hover {
+    transform: translateY(-1px);
+    border-color: rgba(var(--ds-accent-rgb),0.3);
+    box-shadow: 0 4px 12px rgba(var(--ds-accent-rgb),0.15);
+  }
+  .dkz-btn:active { transform: translateY(0px) scale(0.98); }
+
+  .dkz-btn--primary {
+    background: rgba(var(--ds-accent-rgb),0.15);
+    border-color: rgba(var(--ds-accent-rgb),0.25);
+  }
+  .dkz-btn--primary:hover {
+    background: rgba(var(--ds-accent-rgb),0.22);
+    box-shadow: 0 0 20px rgba(var(--ds-accent-rgb),0.3);
+  }
+  .dkz-btn--ghost {
+    background: transparent;
+    border-color: rgba(var(--ds-accent-rgb),0.3);
+  }
+  .dkz-btn--ghost:hover {
+    background: rgba(var(--ds-accent-rgb),0.08);
+  }
+  .dkz-btn--sm { padding: 5px 10px; font-size: 10px; min-height: 26px; }
+
+  /* RIPPLE (hyperreal-pattern) */
+  .ripple-container {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    overflow: hidden;
+  }
+  .ripple-effect {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(var(--ds-accent-rgb),0.2);
+    transform: scale(0);
+    animation: rippleAnim 0.6s ease-out forwards;
+    pointer-events: none;
+  }
+  @keyframes rippleAnim {
+    to { transform: scale(4); opacity: 0; }
+  }
+
+  /* ===== DkZ TAG SYSTEM (hyperreal-pattern) ===== */
+  .dkz-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+  .dkz-tag--red { background: rgba(250,30,78,0.12); color: #fa1e4e; }
+  .dkz-tag--green { background: rgba(0,255,136,0.12); color: #00ff88; }
+  .dkz-tag--blue { background: rgba(59,130,246,0.12); color: #3b82f6; }
+  .dkz-tag--purple { background: rgba(168,85,247,0.12); color: #a855f7; }
+
+  /* ===== APP LAYOUT ===== */
+  .app { position: relative; z-index: 1; flex: 1; }
+  .content {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 20px 24px;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* ===== SIDEBAR ===== */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: sticky;
+    top: 80px;
+  }
+
+  /* ===== PANEL (DkZ Card System) ===== */
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    transition: border-color 0.3s;
+  }
+  .panel:hover { border-color: rgba(var(--ds-accent-rgb),0.1); }
+  .panel h2 {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ===== CONTROLS ===== */
+  .ctrl-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+  .ctrl-group:last-child { margin-bottom: 0; }
+  .ctrl-label {
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+  }
+  .ctrl-label .val {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* ===== MODE SELECTOR ===== */
+  .mode-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .mode-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mode-option:hover {
+    border-color: rgba(var(--ds-accent-rgb),.3);
+    background: rgba(var(--ds-accent-rgb),.05);
+  }
+  .mode-option.active {
+    border-color: var(--ds-accent);
+    background: rgba(var(--ds-accent-rgb),.1);
+  }
+  .mode-option input[type="radio"] { accent-color: var(--ds-accent); }
+  .mode-option .mo-icon { font-size: 18px; }
+  .mode-option .mo-text { flex: 1; }
+  .mode-option .mo-title { font-size: 12px; font-weight: 600; }
+  .mode-option .mo-desc { font-size: 10px; color: var(--muted); }
+
+  /* ===== SELECT / RANGE ===== */
+  select, input[type="range"] { width: 100%; }
+  select {
+    padding: 8px 10px;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--font-main);
+    font-size: 11px;
+    outline: none;
+    cursor: pointer;
+  }
+  select:focus { border-color: var(--ds-accent); }
+  select option { background: var(--card2); color: var(--text); }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    height: 4px;
+    background: var(--card2);
+    border-radius: 4px;
+    outline: none;
+    border: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    background: var(--ds-accent);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  /* ===== TOGGLE ===== */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+  }
+  .toggle-row label { font-size: 11px; font-weight: 500; cursor: pointer; }
+  .toggle {
+    position: relative;
+    width: 34px; height: 20px;
+    flex-shrink: 0;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle .slider {
+    position: absolute; inset: 0;
+    background: var(--card2);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  .toggle .slider::before {
+    content: '';
+    position: absolute;
+    width: 14px; height: 14px;
+    left: 3px; bottom: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: 0.3s;
+  }
+  .toggle input:checked + .slider { background: var(--ds-accent); }
+  .toggle input:checked + .slider::before { transform: translateX(14px); }
+
+  /* ===== COLOR PICKER ===== */
+  .color-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .color-row input[type="color"] {
+    width: 32px; height: 32px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--card2);
+    cursor: pointer;
+    padding: 0;
+  }
+  .color-row .hex {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ===== GLASS VARIANT GRID ===== */
+  .glass-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .glass-variant {
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .glass-variant:hover { border-color: var(--ds-accent); }
+  .glass-variant.active {
+    border-color: var(--ds-accent);
+    background: rgba(var(--ds-accent-rgb),.1);
+  }
+
+  /* ===== BRAND PREVIEW ===== */
+  .brand-preview {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-top: 6px;
+  }
+  .brand-preview .bp-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .brand-preview .bp-name { font-size: 11px; font-weight: 600; }
+  .brand-preview .bp-hex {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  /* ===== MAIN — PREVIEW ===== */
+  .main-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .preview-area {
+    background: var(--ds-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    min-height: 500px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+  .preview-area.glass-light { --glass: rgba(14,14,22,.5); --blur: blur(12px); }
+  .preview-area.glass-strong { --glass: rgba(14,14,22,.88); --blur: blur(32px); }
+  .preview-area.glass-colored {
+    background: linear-gradient(135deg, rgba(var(--ds-accent-rgb),.05), rgba(168,85,247,.05));
+  }
+  .preview-area.glass-border-glow { --glass-border: rgba(var(--ds-accent-rgb),.15); }
+  .preview-area.glass-minimal { --glass: rgba(14,14,22,.25); --blur: blur(8px); --glass-border: transparent; }
+
+  .noise-overlay {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .noise-overlay.show {
+    opacity: .03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  }
+
+  .preview-content {
+    position: relative;
+    z-index: 1;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-height: 500px;
+  }
+  .preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: var(--glass);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--glass-border, rgba(255,255,255,.06));
+    border-radius: var(--radius-sm);
+  }
+  .preview-header .ph-brand { font-size: 15px; font-weight: 800; }
+  .preview-header .ph-nav { display: flex; gap: 16px; }
+  .preview-header .ph-nav a { font-size: 12px; color: var(--muted); }
+  .preview-header .ph-nav a:hover { color: var(--text); }
+
+  .preview-hero {
+    text-align: center;
+    padding: 48px 20px;
+  }
+  .preview-hero h2 {
+    font-size: 32px;
+    font-weight: 900;
+    font-family: var(--ds-font-display);
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, var(--ds-accent), var(--blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .preview-hero p {
+    font-size: 14px;
+    color: var(--muted);
+    max-width: 480px;
+    margin: 0 auto 24px;
+  }
+
+  .preview-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .preview-card {
+    padding: 18px;
+    background: var(--glass);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--glass-border, rgba(255,255,255,.06));
+    border-radius: var(--radius-sm);
+    text-align: center;
+    transition: transform 0.3s ease;
+  }
+  .preview-card:hover { transform: translateY(-2px); }
+  .preview-card .pc-icon { font-size: 28px; margin-bottom: 8px; }
+  .preview-card .pc-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .preview-card .pc-desc { font-size: 11px; color: var(--muted); }
+
+  /* ===== IMPORT / EXPORT PANEL (NEU in v3) ===== */
+  .io-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .io-card {
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: rgba(255,255,255,.02);
+  }
+  .io-card:hover {
+    border-color: var(--ds-accent);
+    background: rgba(var(--ds-accent-rgb),.05);
+    transform: translateY(-1px);
+  }
+  .io-card .io-icon { font-size: 24px; margin-bottom: 6px; }
+  .io-card .io-title { font-size: 12px; font-weight: 600; }
+  .io-card .io-desc { font-size: 9px; color: var(--muted); margin-top: 2px; }
+
+  /* File Input (unsichtbar) */
+  #fileInput { display: none; }
+
+  /* ===== EXPORT CODE BLOCK ===== */
+  .code-block {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    max-height: 180px;
+    overflow: auto;
+    white-space: pre;
+    line-height: 1.6;
+  }
+
+  /* ===== RESOURCE GRID (awesome-design) ===== */
+  .resource-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .resource-item {
+    padding: 8px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    text-align: center;
+    font-size: 10px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .resource-item:hover {
+    border-color: var(--ds-accent);
+    color: var(--text);
+  }
+  .resource-item .ri-icon { font-size: 20px; margin-bottom: 4px; }
+
+  /* ===== ACTIVITY LOG ===== */
+  .activity-log {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    max-height: 80px;
+    overflow-y: auto;
+    line-height: 1.6;
+  }
+
+  /* ===== TOAST (hyperreal-inspiriert) ===== */
+  .toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    padding: 12px 20px;
+    background: var(--green);
+    color: #000;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: var(--radius-sm);
+    z-index: 999;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.error { background: var(--accent); color: #fff; }
+
+  /* ===== RESPONSIVE (DkZ Standards) ===== */
+  @media (max-width: 1024px) {
+    .content { grid-template-columns: 260px 1fr; padding: 16px 20px; }
+  }
+  @media (max-width: 768px) {
+    .content { grid-template-columns: 1fr; padding: 12px 14px; }
+    .sidebar { position: static; }
+    .preview-cards { grid-template-columns: 1fr; }
+    .resource-grid { grid-template-columns: repeat(2, 1fr); }
+    .io-grid { grid-template-columns: 1fr; }
+    .header h1 { font-size: 15px; }
+  }
+  @media (max-width: 480px) {
+    .resource-grid { grid-template-columns: 1fr; }
+    .glass-grid { grid-template-columns: 1fr; }
+    .bg-blob { display: none; }
+  }
+
+  /* ===== CANVAS (hyperreal-pattern) ===== */
+  #particleCanvas {
+    position: fixed; top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0;
+    animation: introCanvas 1.5s ease 0.5s forwards;
+  }
+  @keyframes introCanvas {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  #hexCanvas {
+    position: fixed; top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0;
+    animation: introHex 2s ease 0.8s forwards;
+  }
+  @keyframes introHex {
+    from { opacity: 0; }
+    to { opacity: 0.5; }
+  }
+
+  /* ===== CORNER DOTS (hyperreal-pattern) ===== */
+  .corner-dot {
+    position: fixed;
+    width: 10px; height: 10px;
+    background: var(--ds-accent);
+    border-radius: 50%;
+    z-index: 3;
+    box-shadow: 0 0 24px rgba(var(--ds-accent-rgb),0.3);
+    opacity: 0;
+    animation: introCorner 0.6s ease 2.0s forwards;
+    pointer-events: none;
+    transition: background 0.5s ease;
+  }
+  .corner-dot:nth-child(1) { top: 24px; left: 24px; }
+  .corner-dot:nth-child(2) { top: 24px; right: 24px; }
+  .corner-dot:nth-child(3) { bottom: 24px; left: 24px; }
+  .corner-dot:nth-child(4) { bottom: 24px; right: 24px; }
+  @keyframes introCorner {
+    from { opacity: 0; transform: scale(0); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  /* ===== STANDBY OVERLAY (hyperreal-pattern) ===== */
+  #standbyOverlay {
+    position: fixed; inset: 0;
+    z-index: 50;
+    pointer-events: none;
+    background: rgba(4,4,6,0.6);
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    transition: opacity 1.5s ease;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
+  #standbyOverlay.active { opacity: 1; }
+  #standbyMarquee {
+    position: absolute;
+    white-space: nowrap;
+    color: rgba(232,232,236,0.35);
+    font-size: 18px;
+    font-weight: 300;
+    letter-spacing: 3px;
+    will-change: transform;
+    font-family: 'JetBrains Mono', monospace;
+    text-shadow: 0 0 40px rgba(var(--ds-accent-rgb),0.1);
+  }
+
+  /* ===== CONFETTI (hyperreal-pattern) ===== */
+  .confetti-piece {
+    position: fixed;
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  /* ===== PANEL ENTRANCE (nanobot-emergence) ===== */
+  .panel {
+    opacity: 0;
+    transform: translateY(12px);
+    animation: panelEnter 0.5s ease forwards;
+  }
+  .panel:nth-child(1) { animation-delay: 0.4s; }
+  .panel:nth-child(2) { animation-delay: 0.5s; }
+  .panel:nth-child(3) { animation-delay: 0.6s; }
+  .panel:nth-child(4) { animation-delay: 0.7s; }
+  .panel:nth-child(5) { animation-delay: 0.8s; }
+  .panel:nth-child(6) { animation-delay: 0.9s; }
+  .panel:nth-child(7) { animation-delay: 1.0s; }
+  @keyframes panelEnter {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== AKZENT-LINIE (hyperreal-pattern) ===== */
+  .accent-line-ds {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+    opacity: 0;
+    animation: introFadeDS 0.8s ease 1.2s forwards;
+  }
+  .accent-line-ds .line {
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ds-accent), transparent);
+  }
+  .accent-line-ds .dot {
+    width: 6px; height: 6px;
+    background: var(--ds-accent);
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(var(--ds-accent-rgb),0.4);
+    animation: dotPulseDS 2.5s ease-in-out infinite;
+  }
+  @keyframes dotPulseDS {
+    0%,100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.6); opacity: 1; }
+  }
+  @keyframes introFadeDS {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== ANIMATED SVG ICONS ===== */
+  .icon-svg {
+    width: 20px; height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+  }
+  .icon-svg--lg { width: 28px; height: 28px; }
+  .icon-svg--sm { width: 16px; height: 16px; }
+  .icon-svg--accent { color: var(--ds-accent); }
+  .icon-svg--spin { animation: iconSpin 4s linear infinite; }
+  @keyframes iconSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .icon-svg--pulse { animation: iconPulse 2s ease-in-out infinite; }
+  @keyframes iconPulse {
+    0%,100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.15); }
+  }
+  .icon-svg--float { animation: iconFloat 3s ease-in-out infinite; }
+  @keyframes iconFloat {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+  .icon-svg--glow {
+    filter: drop-shadow(0 0 8px rgba(var(--ds-accent-rgb),0.4));
+  }
+  .icon-svg--shimmer {
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: shimmerMove 2s ease-in-out infinite;
+    border-radius: 2px;
+  }
+  @keyframes shimmerMove {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* ===== MODE ICONS (animated) ===== */
+  .mode-icon-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: rgba(var(--ds-accent-rgb),0.08);
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+  }
+  .mode-option.active .mode-icon-wrap {
+    background: rgba(var(--ds-accent-rgb),0.18);
+    box-shadow: 0 0 20px rgba(var(--ds-accent-rgb),0.15);
+  }
+  .mode-icon-wrap .icon-svg { width: 18px; height: 18px; }
+
+  /* ===== GLASS VARIANT ICONS ===== */
+  .glass-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.04);
+    margin-bottom: 4px;
+    transition: all 0.3s ease;
+  }
+  .glass-icon .icon-svg { width: 16px; height: 16px; }
+  .glass-variant:hover .glass-icon {
+    background: rgba(var(--ds-accent-rgb),0.12);
+  }
+  .glass-variant.active .glass-icon {
+    background: rgba(var(--ds-accent-rgb),0.18);
+    box-shadow: 0 0 12px rgba(var(--ds-accent-rgb),0.12);
+  }
+
+  /* ===== GRADIENT TEXT (hyperreal) ===== */
+  .gradient-text {
+    background: linear-gradient(135deg, var(--ds-accent), var(--purple, #a855f7));
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradShiftDS 5s ease-in-out infinite;
+  }
+  @keyframes gradShiftDS {
+    0%,100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* ===== BUTTON GLOW ON HOVER ===== */
+  .dkz-btn:hover .icon-svg {
+    stroke: var(--ds-accent);
+    filter: drop-shadow(0 0 6px rgba(var(--ds-accent-rgb),0.4));
+  }
+
+  /* ===== LIGHTNING ENTRANCE (header) ===== */
+  .header {
+    opacity: 0;
+    animation: headerEnter 0.6s ease 0.2s forwards;
+  }
+  @keyframes headerEnter {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== IO CARD ICONS ===== */
+  .io-card .io-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: rgba(var(--ds-accent-rgb),0.06);
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
+  }
+  .io-card:hover .io-icon {
+    background: rgba(var(--ds-accent-rgb),0.15);
+    transform: scale(1.1) rotate(-5deg);
+  }
+  .io-card .io-icon .icon-svg { width: 22px; height: 22px; }
+
+  /* ===== RESOURCE GRID ICONS ===== */
+  .resource-item .ri-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+    margin-bottom: 6px;
+    transition: all 0.3s ease;
+  }
+  .resource-item:hover .ri-icon {
+    background: rgba(var(--ds-accent-rgb),0.1);
+    transform: scale(1.1);
+  }
+  .resource-item .ri-icon .icon-svg { width: 18px; height: 18px; }
+
+  /* ===== PREVIEW CARD ICON ===== */
+  .preview-card .pc-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    background: rgba(var(--ds-accent-rgb),0.06);
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+  }
+  .preview-card:hover .pc-icon {
+    background: rgba(var(--ds-accent-rgb),0.12);
+    transform: scale(1.08);
+    box-shadow: 0 0 20px rgba(var(--ds-accent-rgb),0.1);
+  }
+  .preview-card .pc-icon .icon-svg { width: 26px; height: 26px; }
+
+  /* ===== HEADER ICON ===== */
+  .header-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: rgba(var(--ds-accent-rgb),0.1);
+    transition: all 0.3s ease;
+    animation: iconFloat 3s ease-in-out infinite;
+  }
+  .header-icon .icon-svg { width: 20px; height: 20px; color: var(--ds-accent); }
+  .header-icon:hover {
+    background: rgba(var(--ds-accent-rgb),0.2);
+    transform: scale(1.1) rotate(-5deg);
+  }
+
+  /* ===== REDUCED MOTION (A11y) ===== */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ HYPERREAL CANVASES ═══ -->
+<canvas id="particleCanvas"></canvas>
+<canvas id="hexCanvas"></canvas>
+
+<!-- ═══ STANDBY OVERLAY (hyperreal) ═══ -->
+<div id="standbyOverlay">
+  <div id="standbyMarquee"></div>
+</div>
+
+<!-- ═══ CORNER DOTS (hyperreal) ═══ -->
+<div class="corner-dot"></div>
+<div class="corner-dot"></div>
+<div class="corner-dot"></div>
+<div class="corner-dot"></div>
+
+<!-- ═══ TOAST ═══ -->
+<div class="toast" id="toast">✅ Bereit</div>
+
+<!-- ═══ FILE INPUT (versteckt) ═══ -->
+<input type="file" id="fileInput" accept=".json,.md,.css">
+
+<!-- ═══ BACKGROUND (fallback blobs) ═══ -->
+<div class="bg-mesh">
+  <div class="bg-blob"></div>
+  <div class="bg-blob"></div>
+  <div class="bg-blob"></div>
+</div>
+
+<!-- ═══ HEADER ═══ -->
+<header class="header">
+  <span class="header-icon">
+    <svg class="icon-svg" viewBox="0 0 24 24" style="color:var(--ds-accent);">
+      <defs>
+        <linearGradient id="dsGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="var(--ds-accent)"/>
+          <stop offset="100%" stop-color="#a855f7"/>
+        </linearGradient>
+      </defs>
+      <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="url(#dsGrad)" fill="none"/>
+      <path d="M2 17l10 5 10-5" stroke="url(#dsGrad)" fill="none"/>
+      <path d="M2 12l10 5 10-5" stroke="url(#dsGrad)" fill="none"/>
+    </svg>
+  </span>
+  <h1>DkZ Design Studio</h1>
+  <span class="ver">v3.0.0</span>
+  <span class="dkz-tag dkz-tag--green" style="margin-left:4px;">● active</span>
+  <div class="header-right">
+    <a href="../../hub/index.html" class="dkz-btn dkz-btn--ghost dkz-btn--sm">← Hub</a>
+  </div>
+</header>
+
+<!-- ═══ AKZENT-LINIE UNTER HEADER ═══ -->
+<div style="position:relative;z-index:1;">
+  <div style="height:1px;background:linear-gradient(90deg,transparent,var(--ds-accent),transparent);opacity:0.3;"></div>
+</div>
+
+<!-- ═══ MAIN CONTENT ═══ -->
+<div class="app">
+  <div class="content">
+
+    <!-- ═══ SIDEBAR ═══ -->
+    <aside class="sidebar">
+
+      <!-- MODE SELECTOR -->
+      <div class="panel">
+        <h2>
+          <svg class="icon-svg icon-svg--accent icon-svg--sm" viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+          Design-Modus
+        </h2>
+        <div class="mode-group">
+          <label class="mode-option active" data-mode="look-like">
+            <input type="radio" name="designMode" value="look-like" checked>
+            <span class="mode-icon-wrap">
+              <svg class="icon-svg icon-svg--pulse" viewBox="0 0 24 24">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5"/>
+                <path d="M2 12l10 5 10-5"/>
+              </svg>
+            </span>
+            <span class="mo-text">
+              <div class="mo-title">Look Like</div>
+              <div class="mo-desc">Folge einem bestehenden Brand-Design</div>
+            </span>
+          </label>
+          <label class="mode-option" data-mode="be-unique">
+            <input type="radio" name="designMode" value="be-unique">
+            <span class="mode-icon-wrap">
+              <svg class="icon-svg icon-svg--float" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke-dasharray="31.4" stroke-dashoffset="0">
+                  <animate attributeName="stroke-dashoffset" values="0;62.8;0" dur="3s" repeatCount="indefinite"/>
+                </circle>
+                <path d="M12 6v6l4 2"/>
+              </svg>
+            </span>
+            <span class="mo-text">
+              <div class="mo-title">Don't Look Like Others</div>
+              <div class="mo-desc">Generiere einzigartiges, eigenes Design</div>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- DESIGN SYSTEM PRESETS -->
+      <div class="panel" id="presetPanel">
+        <h2>
+          <svg class="icon-svg icon-svg--accent icon-svg--sm" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="4"/>
+          </svg>
+          Design System
+        </h2>
+        <select id="designSystemSelect">
+          <option value="dkz">⚡ DkZ™ Eigen (Default)</option>
+          <option value="vercel">▲ Vercel / Geist</option>
+          <option value="linear">⛓️ Linear</option>
+          <option value="stripe">💳 Stripe</option>
+          <option value="github">🐙 GitHub Primer</option>
+          <option value="airbnb">🏠 Airbnb</option>
+          <option value="notion">📝 Notion</option>
+          <option value="anthropic">🤖 Anthropic</option>
+          <option value="apple">🍎 Apple</option>
+          <option value="cursor">↗️ Cursor</option>
+          <option value="supabase">▲ Supabase</option>
+          <option value="figma">🎨 Figma</option>
+          <option value="spotify">🎵 Spotify</option>
+          <option value="microsoft">🪟 Microsoft Fluent</option>
+          <option value="ibm">🔷 IBM Carbon</option>
+          <option value="shopify">🛍️ Shopify Polaris</option>
+        </select>
+        <div class="brand-preview" id="brandPreview">
+          <div class="bp-dot" style="background:var(--accent);"></div>
+          <span class="bp-name">DkZ™ Eigen</span>
+          <span class="bp-hex">#fa1e4e</span>
+        </div>
+      </div>
+
+      <!-- GLASSMORPHISM -->
+      <div class="panel">
+        <h2>
+          <svg class="icon-svg icon-svg--accent icon-svg--sm" viewBox="0 0 24 24">
+            <rect x="3" y="3" width="18" height="18" rx="3" opacity="0.6"/>
+            <rect x="6" y="6" width="12" height="12" rx="2" opacity="0.3"/>
+          </svg>
+          Glassmorphism
+        </h2>
+        <div class="glass-grid" id="glassGrid">
+          <div class="glass-variant active" data-glass="default">
+            <span class="glass-icon">
+              <svg class="icon-svg" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
+            </span>
+            Standard
+          </div>
+          <div class="glass-variant" data-glass="light">
+            <span class="glass-icon">
+              <svg class="icon-svg icon-svg--pulse" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" opacity="0.5"/><circle cx="12" cy="12" r="5" fill="none" opacity="0.3"/></svg>
+            </span>
+            Light
+          </div>
+          <div class="glass-variant" data-glass="strong">
+            <span class="glass-icon">
+              <svg class="icon-svg" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4" fill="none" opacity="0.8"/></svg>
+            </span>
+            Strong
+          </div>
+          <div class="glass-variant" data-glass="colored">
+            <span class="glass-icon">
+              <svg class="icon-svg icon-svg--spin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="20 10" stroke-width="2"/></svg>
+            </span>
+            Colored
+          </div>
+          <div class="glass-variant" data-glass="border-glow">
+            <span class="glass-icon">
+              <svg class="icon-svg icon-svg--pulse" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" fill="none" stroke-width="2" opacity="0.6"/><rect x="6" y="6" width="12" height="12" rx="2" fill="none" stroke-width="1" opacity="0.3"/></svg>
+            </span>
+            Border Glow
+          </div>
+          <div class="glass-variant" data-glass="minimal">
+            <span class="glass-icon">
+              <svg class="icon-svg" viewBox="0 0 24 24"><line x1="4" y1="4" x2="20" y2="20" opacity="0.3"/><line x1="4" y1="20" x2="20" y2="4" opacity="0.3"/></svg>
+            </span>
+            Minimal
+          </div>
+        </div>
+        <div class="ctrl-group" style="margin-top:10px;">
+          <div class="toggle-row">
+            <label>Noise Overlay</label>
+            <label class="toggle">
+              <input type="checkbox" id="noiseToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="ctrl-label">
+            <span>Glass Opacity</span>
+            <span class="val" id="glassOpacityVal">0.72</span>
+          </div>
+          <input type="range" id="glassOpacity" min="10" max="95" value="72">
+        </div>
+      </div>
+
+      <!-- THEME CUSTOMIZER -->
+      <div class="panel">
+        <h2>
+          <svg class="icon-svg icon-svg--accent icon-svg--sm" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="5" fill="currentColor" opacity="0.2"/>
+          </svg>
+          Theme Customizer
+        </h2>
+        <div class="ctrl-group">
+          <div class="ctrl-label"><span>Akzentfarbe</span></div>
+          <div class="color-row">
+            <input type="color" id="accentColor" value="#fa1e4e">
+            <span class="hex" id="accentHex">#fa1e4e</span>
+            <button class="dkz-btn dkz-btn--ghost dkz-btn--sm" id="randomAccentBtn">
+              <svg class="icon-svg icon-svg--sm icon-svg--spin" viewBox="0 0 24 24">
+                <polyline points="23 4 23 10 17 10"/>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="ctrl-group">
+          <div class="ctrl-label"><span>Hintergrund</span></div>
+          <div class="color-row">
+            <input type="color" id="bgColor" value="#0e0e10">
+            <span class="hex" id="bgHex">#0e0e10</span>
+          </div>
+        </div>
+        <div class="ctrl-group">
+          <div class="ctrl-label">
+            <span>Border Radius</span>
+            <span class="val" id="radiusVal">14px</span>
+          </div>
+          <input type="range" id="radiusSlider" min="4" max="28" value="14">
+        </div>
+        <div class="ctrl-group">
+          <div class="ctrl-label"><span>Display Font</span></div>
+          <select id="fontSelect">
+            <option value="'Inter', sans-serif">Inter</option>
+            <option value="'Space Grotesk', sans-serif">Space Grotesk</option>
+            <option value="'Cabinet Grotesk', sans-serif">Cabinet Grotesk</option>
+            <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans</option>
+            <option value="'SF Pro Display', sans-serif">SF Pro Display</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- ═══ IMPORT / EXPORT (NEU in v3) ═══ -->
+      <div class="panel">
+        <h2>
+          <svg class="icon-svg icon-svg--accent icon-svg--sm icon-svg--pulse" viewBox="0 0 24 24">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Import / Export
+        </h2>
+        <div class="io-grid">
+          <!-- Import -->
+          <div class="io-card" id="importDesignBtn">
+            <div class="io-icon">
+              <svg class="icon-svg icon-svg--pulse" viewBox="0 0 24 24">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </div>
+            <div class="io-title">Import</div>
+            <div class="io-desc">DESIGN.md / JSON / CSS</div>
+          </div>
+          <!-- Export CSS -->
+          <div class="io-card" id="exportCSSBtn">
+            <div class="io-icon">
+              <svg class="icon-svg" viewBox="0 0 24 24">
+                <path d="M4 4l16 4-4 12-8-4-4-12z" fill="none" stroke="currentColor"/>
+                <path d="M12 8l4 2-2 6" fill="none" stroke="currentColor" opacity="0.6"/>
+                <animate attributeName="opacity" values="0.3;1;0.3" dur="3s" repeatCount="indefinite"/>
+              </svg>
+            </div>
+            <div class="io-title">CSS</div>
+            <div class="io-desc">:root-Variablen</div>
+          </div>
+          <!-- Export DESIGN.md -->
+          <div class="io-card" id="exportDESIGNBtn">
+            <div class="io-icon">
+              <svg class="icon-svg icon-svg--float" viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </div>
+            <div class="io-title">DESIGN.md</div>
+            <div class="io-desc">Markdown System</div>
+          </div>
+          <!-- Export JSON -->
+          <div class="io-card" id="exportJSONBtn">
+            <div class="io-icon">
+              <svg class="icon-svg icon-svg--pulse" viewBox="0 0 24 24">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                <line x1="12" y1="22.08" x2="12" y2="12"/>
+              </svg>
+            </div>
+            <div class="io-title">JSON</div>
+            <div class="io-desc">Voller Config-State</div>
+          </div>
+          <!-- Kopieren -->
+          <div class="io-card" id="copyExportBtn">
+            <div class="io-icon">
+              <svg class="icon-svg" viewBox="0 0 24 24">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+            </div>
+            <div class="io-title">Kopieren</div>
+            <div class="io-desc">In Zwischenablage</div>
+          </div>
+          <!-- Download -->
+          <div class="io-card" id="downloadExportBtn">
+            <div class="io-icon">
+              <svg class="icon-svg icon-svg--float" viewBox="0 0 24 24">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </div>
+            <div class="io-title">Download</div>
+            <div class="io-desc">Als .md / .json / .css</div>
+          </div>
+        </div>
+        <div class="code-block" id="exportBlock" style="margin-top:10px;">/* Import/Export bereit — Klick auf eine Aktion */</div>
+      </div>
+
+      <!-- RESOURCES (awesome-design) -->
+      <div class="panel">
+        <h2>
+          <svg class="icon-svg icon-svg--accent icon-svg--sm" viewBox="0 0 24 24">
+            <rect x="3" y="3" width="7" height="7"/>
+            <rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+          </svg>
+          Design Resources
+        </h2>
+        <div class="resource-grid">
+          <div class="resource-item" data-resource="colors"><div class="ri-icon"><svg class="icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="5" fill="currentColor" opacity="0.3"/></svg></div>Farben</div>
+          <div class="resource-item" data-resource="icons"><div class="ri-icon"><svg class="icon-svg icon-svg--pulse" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>Icons</div>
+          <div class="resource-item" data-resource="fonts"><div class="ri-icon"><svg class="icon-svg" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg></div>Fonts</div>
+          <div class="resource-item" data-resource="stock"><div class="ri-icon"><svg class="icon-svg icon-svg--float" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>Stock</div>
+          <div class="resource-item" data-resource="templates"><div class="ri-icon"><svg class="icon-svg" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg></div>Templates</div>
+          <div class="resource-item" data-resource="tools"><div class="ri-icon"><svg class="icon-svg icon-svg--spin" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>Tools</div>
+          <div class="resource-item" data-resource="gradients"><div class="ri-icon"><svg class="icon-svg icon-svg--shimmer" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>Gradients</div>
+          <div class="resource-item" data-resource="mockups"><div class="ri-icon"><svg class="icon-svg" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>Mockups</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ═══ MAIN ═══ -->
+    <main class="main-panel">
+
+      <!-- LIVE PREVIEW -->
+      <div class="preview-area" id="previewArea">
+        <div class="noise-overlay" id="noiseOverlay"></div>
+        <div class="preview-content" id="previewContent">
+          <div class="preview-header">
+            <div class="ph-brand" style="color:var(--ds-accent);display:flex;align-items:center;gap:6px;">
+              <svg class="icon-svg icon-svg--lg" viewBox="0 0 24 24" style="color:var(--ds-accent);filter:drop-shadow(0 0 8px rgba(var(--ds-accent-rgb),0.4));">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5"/>
+                <path d="M2 12l10 5 10-5"/>
+                <animateTransform attributeName="transform" type="rotate" values="0 12 12;360 12 12" dur="30s" repeatCount="indefinite"/>
+              </svg>
+              DkZ™
+            </div>
+            <nav class="ph-nav">
+              <a href="#">Features</a>
+              <a href="#">Design</a>
+              <a href="#">Preise</a>
+              <a href="#">Docs</a>
+            </nav>
+          </div>
+          <div class="preview-hero">
+            <h2>Design Studio v3</h2>
+            <p>Import/Export · 16 Design-Systeme · Glassmorphism · Look Like / Be Unique<br>
+            Verschmolzen aus awesome-design + open-design (⭐77k)</p>
+            <button class="dkz-btn dkz-btn--primary" style="font-size:13px;padding:12px 28px;margin-top:8px;">
+              <svg class="icon-svg icon-svg--lg icon-svg--float" viewBox="0 0 24 24">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              Live-Demo starten
+            </button>
+          </div>
+          <div class="preview-cards">
+            <div class="preview-card">
+              <div class="pc-icon">
+                <svg class="icon-svg" viewBox="0 0 24 24">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                  <path d="M2 17l10 5 10-5"/>
+                  <path d="M2 12l10 5 10-5"/>
+                  <animateTransform attributeName="transform" type="rotate" values="0 12 12;360 12 12" dur="20s" repeatCount="indefinite"/>
+                </svg>
+              </div>
+              <div class="pc-title">Look Like</div>
+              <div class="pc-desc">Brand-Designs Stripe, Linear, Vercel, GitHub uvm.</div>
+            </div>
+            <div class="preview-card">
+              <div class="pc-icon">
+                <svg class="icon-svg" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" stroke-dasharray="31.4" stroke-dashoffset="20">
+                    <animate attributeName="stroke-dashoffset" values="20;0;20" dur="4s" repeatCount="indefinite"/>
+                  </circle>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+              </div>
+              <div class="pc-title">Don't Look Like Others</div>
+              <div class="pc-desc">Einzigartige UI mit KI-Zufalls-Paletten</div>
+            </div>
+            <div class="preview-card">
+              <div class="pc-icon">
+                <svg class="icon-svg icon-svg--pulse" viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="3" opacity="0.4"/>
+                  <rect x="6" y="6" width="12" height="12" rx="2" opacity="0.2"/>
+                </svg>
+              </div>
+              <div class="pc-title">Glassmorphism</div>
+              <div class="pc-desc">6 Varianten + Noise + Opacity-Regler</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AKZENT-LINIE -->
+      <div class="accent-line-ds">
+        <div class="line"></div>
+        <div class="dot"></div>
+        <div class="line"></div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="dkz-btn dkz-btn--primary" id="applyBtn">
+          <svg class="icon-svg icon-svg--pulse" viewBox="0 0 24 24">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Design anwenden
+        </button>
+        <button class="dkz-btn" id="randomizeBtn">
+          <svg class="icon-svg icon-svg--spin" viewBox="0 0 24 24">
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+          Zufalls-Design
+        </button>
+        <button class="dkz-btn dkz-btn--ghost" id="resetBtn">
+          <svg class="icon-svg" viewBox="0 0 24 24">
+            <polyline points="1 4 1 10 7 10"/>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+          </svg>
+          Zurücksetzen
+        </button>
+      </div>
+
+      <!-- ACTIVITY LOG -->
+      <div class="panel">
+        <h2>
+          <svg class="icon-svg icon-svg--accent icon-svg--sm icon-svg--float" viewBox="0 0 24 24">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          Aktivität
+        </h2>
+        <div class="activity-log" id="activityLog">
+          → Design Studio v3 gestartet · import/export bereit<br>
+          → Modus: Look Like (DkZ Eigen) · Glass: Standard
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+  // ================================================================
+  // HYPERREAL BACKGROUND SYSTEM — Partikel + Hexagons + Standby
+  // Portiert aus hyperreal-demo (DkZ™ Playbook §26)
+  // ================================================================
+
+  // --- MOUSE TRACKER ---
+  const mouse = { x: -1000, y: -1000, px: -1000, py: -1000, active: false };
+  document.addEventListener('mousemove', e => {
+    mouse.px = mouse.x;
+    mouse.py = mouse.y;
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+    mouse.active = true;
+  });
+  document.addEventListener('mouseleave', () => { mouse.active = false; });
+
+  // --- PARTICLE CANVAS ---
+  const pCvs = document.getElementById('particleCanvas');
+  const pCtx = pCvs.getContext('2d');
+  let pW, pH;
+
+  function resizeParticles() {
+    pW = pCvs.width = window.innerWidth;
+    pH = pCvs.height = window.innerHeight;
+  }
+  resizeParticles();
+  window.addEventListener('resize', resizeParticles);
+
+  const particles = [];
+  const PCOUNT = 120;
+  for (let i = 0; i < PCOUNT; i++) {
+    particles.push({
+      x: Math.random() * pW, y: Math.random() * pH,
+      r: Math.random() * 2 + 0.5,
+      dx: (Math.random() - 0.5) * 0.3,
+      dy: (Math.random() - 0.5) * 0.3,
+      life: Math.random() * 200,
+      maxLife: 200 + Math.random() * 300,
+      alpha: Math.random() * 0.3 + 0.05,
+      hue: Math.random() > 0.5 ? 348 : 250,
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+
+  let pTime = 0;
+  function drawParticles() {
+    pCtx.clearRect(0, 0, pW, pH);
+    pTime += 0.008;
+
+    // Ambient glow
+    const gx = pW/2 + Math.sin(pTime * 0.4) * 80;
+    const gy = pH/2 + Math.cos(pTime * 0.3) * 50;
+    const grad = pCtx.createRadialGradient(gx, gy, 0, gx, gy, 400);
+    grad.addColorStop(0, 'rgba(250,30,78,0.025)');
+    grad.addColorStop(0.5, 'rgba(59,130,246,0.01)');
+    grad.addColorStop(1, 'transparent');
+    pCtx.fillStyle = grad;
+    pCtx.fillRect(0, 0, pW, pH);
+
+    const mRad = 100;
+    for (const p of particles) {
+      p.x += p.dx + Math.sin(pTime * 0.5 + p.phase) * 0.06;
+      p.y += p.dy + Math.cos(pTime * 0.4 + p.phase) * 0.06;
+      p.life++;
+
+      if (p.x < -20) p.x = pW + 20;
+      if (p.x > pW + 20) p.x = -20;
+      if (p.y < -20) p.y = pH + 20;
+      if (p.y > pH + 20) p.y = -20;
+
+      const dmx = p.x - mouse.x;
+      const dmy = p.y - mouse.y;
+      const dmDist = Math.hypot(dmx, dmy);
+
+      if (dmDist < mRad && mouse.active) {
+        const force = (mRad - dmDist) / mRad;
+        const angle = Math.atan2(dmy, dmx);
+        p.x += Math.cos(angle) * force * 2;
+        p.y += Math.sin(angle) * force * 2;
+        // Glow halo
+        pCtx.beginPath();
+        pCtx.arc(p.x, p.y, p.r * 4, 0, Math.PI * 2);
+        pCtx.fillStyle = `rgba(250,30,78,${0.06 * force})`;
+        pCtx.fill();
+      }
+
+      // Draw
+      pCtx.beginPath();
+      pCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      const lifeAlpha = p.life < 20 ? p.life / 20 * p.alpha
+        : p.life > p.maxLife - 20 ? (p.maxLife - p.life) / 20 * p.alpha
+        : p.alpha;
+      const nearby = dmDist < mRad && mouse.active ? 1.5 : 1;
+      const col = p.hue === 348
+        ? `rgba(250,30,78,${lifeAlpha * nearby})`
+        : `rgba(120,80,255,${lifeAlpha * nearby * 0.6})`;
+      pCtx.fillStyle = col;
+      pCtx.fill();
+      if (p.life > p.maxLife) { p.life = 0; p.maxLife = 200 + Math.random() * 300; }
+    }
+
+    // Verbindungslinien
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j += 4) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 80) {
+          pCtx.beginPath();
+          pCtx.moveTo(particles[i].x, particles[i].y);
+          pCtx.lineTo(particles[j].x, particles[j].y);
+          pCtx.strokeStyle = `rgba(250,30,78,${0.015 * (1 - dist / 80)})`;
+          pCtx.lineWidth = 0.4;
+          pCtx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(drawParticles);
+  }
+  drawParticles();
+
+  // --- HEXAGON CANVAS ---
+  const hCvs = document.getElementById('hexCanvas');
+  const hCtx = hCvs.getContext('2d');
+  let hW, hH;
+
+  function resizeHex() {
+    hW = hCvs.width = window.innerWidth;
+    hH = hCvs.height = window.innerHeight;
+  }
+  resizeHex();
+  window.addEventListener('resize', resizeHex);
+
+  function drawHexagons() {
+    hCtx.clearRect(0, 0, hW, hH);
+    const size = 40;
+    const rows = Math.ceil(hH / (size * 1.5)) + 2;
+    const cols = Math.ceil(hW / (size * 1.75)) + 2;
+    const cx = hW / 2, cy = hH / 2;
+    const maxDist = Math.hypot(hW, hH) / 2;
+
+    for (let row = -1; row < rows; row++) {
+      for (let col = -1; col < cols; col++) {
+        const offsetX = (row % 2 === 0) ? 0 : size * 0.9;
+        const x = col * size * 1.75 + offsetX;
+        const y = row * size * 1.5;
+        const dist = Math.hypot(x - cx, y - cy) / maxDist;
+        if (dist < 0.15) continue;
+        const alpha = Math.min(1, Math.pow(Math.max(0, (dist - 0.15) / 0.7), 1.4)) * 0.12;
+        const skewX = (x - cx) / cx * 0.08;
+        const skewY = (y - cy) / cy * 0.05;
+
+        hCtx.save();
+        hCtx.translate(x, y);
+        hCtx.transform(1, skewY, skewX, 1, 0, 0);
+        hCtx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const angle = (Math.PI / 3) * i - Math.PI / 6;
+          const px = size * Math.cos(angle);
+          const py = size * Math.sin(angle);
+          i === 0 ? hCtx.moveTo(px, py) : hCtx.lineTo(px, py);
+        }
+        hCtx.closePath();
+        hCtx.strokeStyle = `rgba(250,30,78,${alpha})`;
+        hCtx.lineWidth = 0.6;
+        hCtx.stroke();
+        hCtx.fillStyle = `rgba(250,30,78,${alpha * 0.05})`;
+        hCtx.fill();
+        hCtx.restore();
+      }
+    }
+  }
+  drawHexagons();
+
+  // Hexagons bei resize neuzeichnen
+  window.addEventListener('resize', drawHexagons);
+
+  // --- STANDBY / AFK MODUS (hyperreal-pattern) ---
+  let standbyTimer = null;
+  let standbyActive = false;
+  const standbyEl = document.getElementById('standbyOverlay');
+  const marqueeEl = document.getElementById('standbyMarquee');
+
+  const standbyInfos = [
+    "⠿ DkZ DESIGN STUDIO v3  ⠿  MODULE: 89+  ⠿  DESIGN SYSTEMS: 16  ⠿  GLASS VARIANTS: 6  ⠿  STATUS: ● ALL SYSTEMS NOMINAL",
+    "⠿ IMPORT / EXPORT: CSS · JSON · DESIGN.md  ⠿  RESOURCES: 8 CATEGORIES  ⠿  MODE: LOOK LIKE / BE UNIQUE",
+    "⠿ FRAMERATE: 60 FPS  ⠿  PARTICLES: 120  ⠿  HEXAGONS: ACTIVE  ⠿  GLASSMORPHISM: 6 VARIANTS  ⠿  NOISE OVERLAY",
+    "⠿ DEVKiTZ ECOSYSTEM  ⠿  26 WORKFLOWS  ⠿  19 SKILLS  ⠿  344 PROMPT TEMPLATES  ⠿  HOST: BAZE²  ⠿  2026-05-10"
+  ];
+
+  function startStandby() {
+    if (standbyActive) return;
+    standbyActive = true;
+    standbyEl.classList.add('active');
+    let infoIdx = 0;
+    let pos = window.innerWidth;
+    marqueeEl.textContent = '   ' + standbyInfos[infoIdx] + '   ';
+    marqueeEl.style.left = pos + 'px';
+    marqueeEl.style.transform = 'translateY(-50%)';
+    marqueeEl.style.top = '50%';
+
+    function animateMarquee() {
+      if (!standbyActive) return;
+      pos -= 1.2;
+      marqueeEl.style.left = pos + 'px';
+      if (pos < -marqueeEl.offsetWidth) {
+        infoIdx = (infoIdx + 1) % standbyInfos.length;
+        marqueeEl.textContent = '   ' + standbyInfos[infoIdx] + '   ';
+        pos = window.innerWidth + 50;
+      }
+      requestAnimationFrame(animateMarquee);
+    }
+    animateMarquee();
+  }
+
+  function stopStandby() {
+    standbyActive = false;
+    standbyEl.classList.remove('active');
+  }
+
+  function resetStandbyTimer() {
+    clearTimeout(standbyTimer);
+    if (standbyActive) stopStandby();
+    standbyTimer = setTimeout(startStandby, 8000);
+  }
+  resetStandbyTimer();
+
+  document.addEventListener('mousemove', resetStandbyTimer);
+  document.addEventListener('click', resetStandbyTimer);
+  document.addEventListener('keydown', resetStandbyTimer);
+
+  // --- CONFETTI EXPLOSION (hyperreal-pattern) ---
+  function triggerExplosion(element, count) {
+    count = count || 50;
+    const rect = element.getBoundingClientRect();
+    const ex = rect.left + rect.width / 2;
+    const ey = rect.top + rect.height / 2;
+
+    for (let i = 0; i < count; i++) {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 150 + Math.random() * 350;
+      const dx = Math.cos(angle) * speed;
+      const dy = Math.sin(angle) * speed - 120;
+      const size = 3 + Math.random() * 7;
+      const colors = ['#fa1e4e', '#ff6b8a', '#00ff88', '#3b82f6', '#ffb800', '#a855f7'];
+      piece.style.width = size + 'px';
+      piece.style.height = size + 'px';
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      piece.style.left = ex + 'px';
+      piece.style.top = ey + 'px';
+      piece.style.boxShadow = `0 0 6px ${piece.style.background}`;
+      document.body.appendChild(piece);
+
+      const rotation = (Math.random() - 0.5) * 720;
+      piece.animate([
+        { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
+        { transform: `translate(${dx}px,${dy}px) rotate(${rotation}deg)`, opacity: 0 }
+      ], { duration: 700 + Math.random() * 500, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'forwards' })
+      .onfinish = () => piece.remove();
+    }
+  }
+
+  // ================================================================
+  // DkZ Design Studio v3 — JavaScript
+  // Verschmolzen: awesome-design + open-design + hyperreal Patterns
+  // ================================================================
+  (function() {
+    'use strict';
+
+    // ================================================================
+    // 1. DOM-REFERENZEN
+    // ================================================================
+    const $ = id => document.getElementById(id);
+    const qs = (el, sel) => (el || document).querySelector(sel);
+    const qsa = (el, sel) => (el || document).querySelectorAll(sel);
+
+    const previewArea = $('previewArea');
+    const previewContent = $('previewContent');
+    const noiseOverlay = $('noiseOverlay');
+    const fileInput = $('fileInput');
+
+    // ================================================================
+    // 2. DESIGN SYSTEM DATENBANK
+    // ================================================================
+    const DESIGN_SYSTEMS = {
+      dkz:        { name:'⚡ DkZ™ Eigen',       accent:'#fa1e4e', bg:'#0e0e10', font:"'Inter',sans-serif",    radius:14, desc:'Dark Cyberclean' },
+      vercel:     { name:'▲ Vercel/Geist',        accent:'#000000', bg:'#ffffff', font:"'Inter',sans-serif",    radius:8,  desc:'Minimal monochrom' },
+      linear:     { name:'⛓️ Linear',            accent:'#5E6AD2', bg:'#141418', font:"'Inter',sans-serif",    radius:8,  desc:'Dark purple accent' },
+      stripe:     { name:'💳 Stripe',             accent:'#635BFF', bg:'#0A0A0B', font:"'Inter',sans-serif",    radius:12, desc:'Vibrant indigo' },
+      github:     { name:'🐙 GitHub Primer',      accent:'#2D9BF0', bg:'#0D1117', font:"'Inter',sans-serif",    radius:6,  desc:'Blueprint for code' },
+      airbnb:     { name:'🏠 Airbnb',             accent:'#FF385C', bg:'#FFFFFF', font:"'Inter',sans-serif",    radius:12, desc:'Warm hospitality' },
+      notion:     { name:'📝 Notion',             accent:'#000000', bg:'#FFFFFF', font:"'Inter',sans-serif",    radius:4,  desc:'Clean document-first' },
+      anthropic:  { name:'🤖 Anthropic',          accent:'#D4A574', bg:'#1A1A1A', font:"'Inter',sans-serif",    radius:8,  desc:'Warm terracotta' },
+      apple:      { name:'🍎 Apple',              accent:'#007AFF', bg:'#F5F5F7', font:"'Inter',sans-serif",    radius:12, desc:'iOS HIG minimal' },
+      cursor:     { name:'↗️ Cursor',              accent:'#FF6B35', bg:'#0A0A0F', font:"'Inter',sans-serif",    radius:8,  desc:'Warm orange AI' },
+      supabase:   { name:'▲ Supabase',            accent:'#3ECF8E', bg:'#1A1A2E', font:"'Inter',sans-serif",    radius:8,  desc:'Dark purple green' },
+      figma:      { name:'🎨 Figma',              accent:'#A259FF', bg:'#2C2C2C', font:"'Inter',sans-serif",    radius:10, desc:'Purple design tool' },
+      spotify:    { name:'🎵 Spotify',            accent:'#1DB954', bg:'#121212', font:"'Inter',sans-serif",    radius:4,  desc:'Dark green music' },
+      microsoft:  { name:'🪟 Microsoft Fluent',   accent:'#0078D4', bg:'#1B1B1F', font:"'Inter',sans-serif",    radius:4,  desc:'Office productivity' },
+      ibm:        { name:'🔷 IBM Carbon',         accent:'#4589FF', bg:'#161616', font:"'Inter',sans-serif",    radius:0,  desc:'Enterprise carbon' },
+      shopify:    { name:'🛍️ Shopify Polaris',   accent:'#5C6AC4', bg:'#F6F6F7', font:"'Inter',sans-serif",    radius:4,  desc:'E-commerce admin' }
+    };
+
+    // ================================================================
+    // 3. STATE
+    // ================================================================
+    const state = {
+      mode: 'look-like',
+      currentSystem: 'dkz',
+      glassVariant: 'default',
+      glassOpacity: 0.72,
+      noiseEnabled: false,
+      accentColor: '#fa1e4e',
+      bgColor: '#0e0e10',
+      radius: 14,
+      fontDisplay: "'Inter', sans-serif",
+      exportFormat: 'css' // css | json | md
+    };
+
+    // ================================================================
+    // 4. MODE SELECTOR
+    // ================================================================
+    qsa(null, '.mode-option').forEach(el => {
+      el.addEventListener('click', function() {
+        qsa(null, '.mode-option').forEach(o => o.classList.remove('active'));
+        this.classList.add('active');
+        const radio = this.querySelector('input[type="radio"]');
+        radio.checked = true;
+        state.mode = radio.value;
+        log(`Modus → ${radio.value}`);
+        updateModeUI();
+        applyDesign();
+      });
+    });
+
+    function updateModeUI() {
+      const presetPanel = $('presetPanel');
+      if (state.mode === 'be-unique') {
+        presetPanel.style.opacity = '0.4';
+        presetPanel.style.pointerEvents = 'none';
+      } else {
+        presetPanel.style.opacity = '1';
+        presetPanel.style.pointerEvents = 'auto';
+      }
+    }
+
+    // ================================================================
+    // 5. DESIGN SYSTEM PRESETS
+    // ================================================================
+    const dsSelect = $('designSystemSelect');
+    dsSelect.addEventListener('change', function() {
+      state.currentSystem = this.value;
+      const ds = DESIGN_SYSTEMS[this.value];
+      if (!ds) return;
+      // Brand Preview updaten
+      const bp = $('brandPreview');
+      bp.querySelector('.bp-dot').style.background = ds.accent;
+      bp.querySelector('.bp-name').textContent = ds.name;
+      bp.querySelector('.bp-hex').textContent = ds.accent;
+      // State + Controls syncen
+      state.accentColor = ds.accent;
+      state.bgColor = ds.bg;
+      state.radius = ds.radius;
+      state.fontDisplay = ds.font;
+      $('accentColor').value = ds.accent;
+      $('accentHex').textContent = ds.accent;
+      $('bgColor').value = ds.bg;
+      $('bgHex').textContent = ds.bg;
+      $('radiusSlider').value = ds.radius;
+      $('radiusVal').textContent = ds.radius + 'px';
+      log(`Design-System: ${ds.name}`);
+      applyDesign();
+    });
+
+    // ================================================================
+    // 6. GLASSMORPHISM
+    // ================================================================
+    qsa(null, '.glass-variant').forEach(el => {
+      el.addEventListener('click', function() {
+        qsa(null, '.glass-variant').forEach(g => g.classList.remove('active'));
+        this.classList.add('active');
+        state.glassVariant = this.dataset.glass;
+        log(`Glass: ${this.textContent.trim()}`);
+        applyDesign();
+      });
+    });
+
+    $('glassOpacity').addEventListener('input', function() {
+      const val = this.value / 100;
+      state.glassOpacity = val;
+      $('glassOpacityVal').textContent = val.toFixed(2);
+      applyDesign();
+    });
+
+    $('noiseToggle').addEventListener('change', function() {
+      state.noiseEnabled = this.checked;
+      noiseOverlay.classList.toggle('show', this.checked);
+      log(`Noise: ${this.checked ? 'AN' : 'AUS'}`);
+    });
+
+    // ================================================================
+    // 7. THEME CUSTOMIZER
+    // ================================================================
+    $('accentColor').addEventListener('input', function() {
+      state.accentColor = this.value;
+      $('accentHex').textContent = this.value;
+      applyDesign();
+    });
+    $('bgColor').addEventListener('input', function() {
+      state.bgColor = this.value;
+      $('bgHex').textContent = this.value;
+      applyDesign();
+    });
+    $('radiusSlider').addEventListener('input', function() {
+      state.radius = parseInt(this.value);
+      $('radiusVal').textContent = this.value + 'px';
+      applyDesign();
+    });
+    $('fontSelect').addEventListener('change', function() {
+      state.fontDisplay = this.value;
+      applyDesign();
+    });
+
+    $('randomAccentBtn').addEventListener('click', function() {
+      const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6,'0');
+      state.accentColor = randomColor;
+      $('accentColor').value = randomColor;
+      $('accentHex').textContent = randomColor;
+      applyDesign();
+      log(`Zufalls-Akzent: ${randomColor}`);
+    });
+
+    // ================================================================
+    // 8. BUTTON RIPPLE (hyperreal-pattern)
+    // ================================================================
+    function triggerRipple(e) {
+      const btn = e.currentTarget;
+      const rect = btn.getBoundingClientRect();
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple-effect';
+      const size = Math.max(rect.width, rect.height);
+      ripple.style.width = ripple.style.height = size + 'px';
+      ripple.style.left = (e.clientX - rect.left - size/2) + 'px';
+      ripple.style.top = (e.clientY - rect.top - size/2) + 'px';
+      const container = btn.querySelector('.ripple-container') || (() => {
+        const c = document.createElement('span');
+        c.className = 'ripple-container';
+        btn.appendChild(c);
+        return c;
+      })();
+      container.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 700);
+    }
+
+    // Ripple an alle dkz-btn hängen
+    qsa(null, '.dkz-btn').forEach(btn => {
+      btn.addEventListener('click', triggerRipple);
+    });
+
+    // ================================================================
+    // 9. APPLY DESIGN
+    // ================================================================
+    function applyDesign() {
+      const root = document.documentElement;
+      const accent = state.accentColor;
+      const r = parseInt(accent.slice(1,3),16);
+      const g = parseInt(accent.slice(3,5),16);
+      const b = parseInt(accent.slice(5,7),16);
+
+      root.style.setProperty('--ds-accent', accent);
+      root.style.setProperty('--ds-accent-rgb', `${r},${g},${b}`);
+      root.style.setProperty('--ds-bg', state.bgColor);
+      root.style.setProperty('--ds-radius', state.radius + 'px');
+      root.style.setProperty('--ds-font-display', state.fontDisplay);
+      root.style.setProperty('--ds-glass-opacity', state.glassOpacity);
+
+      const blurVal = state.glassVariant === 'strong' ? '32px'
+                    : state.glassVariant === 'minimal' ? '8px' : '24px';
+      root.style.setProperty('--ds-glass-blur', blurVal);
+
+      // Corner Dots beim ersten applyDesign
+      if (!window._dotsInitialized) {
+        window._dotsInitialized = true;
+        document.querySelectorAll('.corner-dot').forEach(dot => {
+          dot.style.transition = 'background 0.5s ease, box-shadow 0.5s ease';
+        });
+      }
+
+      // Preview
+      previewArea.style.background = state.bgColor;
+      previewContent.style.background = state.bgColor;
+      previewArea.className = 'preview-area';
+      if (state.glassVariant !== 'default') {
+        previewArea.classList.add('glass-' + state.glassVariant);
+      }
+
+      // Brand im Preview
+      const brandEl = previewContent.querySelector('.ph-brand');
+      const ds = DESIGN_SYSTEMS[state.currentSystem];
+      if (ds && state.mode !== 'be-unique') {
+        brandEl.textContent = ds.name;
+      } else {
+        brandEl.textContent = '✨ Eigenes Design';
+      }
+
+      // Buttons im Preview
+      previewContent.querySelectorAll('.dkz-btn').forEach(btn => {
+        btn.style.setProperty('--ds-accent', accent);
+        btn.style.setProperty('--ds-accent-rgb', `${r},${g},${b}`);
+      });
+
+      // Hero Titel
+      const heroTitle = previewContent.querySelector('.preview-hero h2');
+      if (state.mode === 'be-unique') {
+        heroTitle.textContent = '✨ Einzigartiges Design';
+        heroTitle.style.background = `linear-gradient(135deg, ${accent}, #a855f7)`;
+      } else {
+        heroTitle.textContent = 'Design Studio v3';
+        heroTitle.style.background = `linear-gradient(135deg, ${accent}, #3b82f6)`;
+      }
+      heroTitle.style.webkitBackgroundClip = 'text';
+      heroTitle.style.webkitTextFillColor = 'transparent';
+      heroTitle.style.backgroundClip = 'text';
+
+      // Corner Dots Farbe mitanimieren
+      document.querySelectorAll('.corner-dot').forEach(dot => {
+        dot.style.background = accent;
+        dot.style.boxShadow = `0 0 24px rgba(${r},${g},${b},0.3)`;
+      });
+
+      // Accent Line anpassen
+      document.querySelectorAll('.accent-line-ds .line').forEach(line => {
+        line.style.background = `linear-gradient(90deg, transparent, ${accent}, transparent)`;
+      });
+      document.querySelectorAll('.accent-line-ds .dot').forEach(dot => {
+        dot.style.background = accent;
+        dot.style.boxShadow = `0 0 20px rgba(${r},${g},${b},0.4)`;
+      });
+
+      // SVG header icon gradient updaten
+      const headerIcon = document.querySelector('.header-icon svg defs linearGradient stop');
+      if (headerIcon) {
+        // Die Stop-Farbe für das SVG können wir nicht dynamisch ändern, aber der accent ändert sich visuell
+      }
+    }
+
+    // ================================================================
+    // 10. IMPORT / EXPORT SYSTEM (NEU in v3)
+    // ================================================================
+
+    // --- IMPORT ---
+    $('importDesignBtn').addEventListener('click', function() {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const content = ev.target.result;
+        try {
+          // JSON import
+          if (file.name.endsWith('.json')) {
+            const imported = JSON.parse(content);
+            if (imported.accentColor) {
+              Object.assign(state, imported);
+              syncStateToUI();
+              log(`📥 Importiert: ${file.name}`);
+              showToast(`✅ JSON importiert: ${file.name}`);
+            } else {
+              throw new Error('Kein gültiges Design-JSON');
+            }
+          }
+          // CSS import
+          else if (file.name.endsWith('.css')) {
+            const accentMatch = content.match(/--accent:\s*(#[0-9a-fA-F]{6})/);
+            const bgMatch = content.match(/--bg:\s*(#[0-9a-fA-F]{6})/);
+            if (accentMatch) state.accentColor = accentMatch[1];
+            if (bgMatch) state.bgColor = bgMatch[1];
+            syncStateToUI();
+            log(`📥 CSS importiert: ${file.name}`);
+            showToast(`✅ CSS importiert`);
+          }
+          // DESIGN.md import
+          else if (file.name.endsWith('.md')) {
+            const accentMatch = content.match(/\*\*Akzent:\*\*\s*(#[0-9a-fA-F]{6})/);
+            const bgMatch = content.match(/\*\*Hintergrund:\*\*\s*(#[0-9a-fA-F]{6})/);
+            const radiusMatch = content.match(/\*\*Border Radius:\*\*\s*(\d+)/);
+            if (accentMatch) state.accentColor = accentMatch[1];
+            if (bgMatch) state.bgColor = bgMatch[1];
+            if (radiusMatch) state.radius = parseInt(radiusMatch[1]);
+            syncStateToUI();
+            log(`📥 DESIGN.md importiert: ${file.name}`);
+            showToast(`✅ DESIGN.md importiert`);
+          }
+        } catch(err) {
+          log(`❌ Import fehlgeschlagen: ${err.message}`);
+          showToast(`❌ Import-Fehler: ${err.message}`, true);
+        }
+      };
+      reader.readAsText(file);
+      fileInput.value = '';
+    });
+
+    // State → UI syncen
+    function syncStateToUI() {
+      $('accentColor').value = state.accentColor;
+      $('accentHex').textContent = state.accentColor;
+      $('bgColor').value = state.bgColor;
+      $('bgHex').textContent = state.bgColor;
+      $('radiusSlider').value = state.radius;
+      $('radiusVal').textContent = state.radius + 'px';
+      applyDesign();
+    }
+
+    // --- EXPORT: CSS ---
+    $('exportCSSBtn').addEventListener('click', function() {
+      state.exportFormat = 'css';
+      const css = generateCSS();
+      $('exportBlock').textContent = css;
+      log('📤 CSS exportiert');
+      showToast('🎨 CSS exportiert');
+    });
+
+    // --- EXPORT: DESIGN.md ---
+    $('exportDESIGNBtn').addEventListener('click', function() {
+      state.exportFormat = 'md';
+      const md = generateDESIGNMD();
+      $('exportBlock').textContent = md;
+      log('📤 DESIGN.md exportiert');
+      showToast('📄 DESIGN.md exportiert');
+    });
+
+    // --- EXPORT: JSON ---
+    $('exportJSONBtn').addEventListener('click', function() {
+      state.exportFormat = 'json';
+      const json = JSON.stringify(state, null, 2);
+      $('exportBlock').textContent = json;
+      log('📤 JSON exportiert');
+      showToast('📊 JSON exportiert');
+    });
+
+    // --- KOPIEREN ---
+    $('copyExportBtn').addEventListener('click', function() {
+      const text = $('exportBlock').textContent;
+      if (!text || text === '/* Import/Export bereit — Klick auf eine Aktion */') {
+        showToast('⚠️ Erst exportieren, dann kopieren', true);
+        return;
+      }
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('📋 In Zwischenablage kopiert');
+        log('📋 In Zwischenablage kopiert');
+      }).catch(() => {
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        showToast('📋 Kopiert (Fallback)');
+      });
+    });
+
+    // --- DOWNLOAD ---
+    $('downloadExportBtn').addEventListener('click', function() {
+      const text = $('exportBlock').textContent;
+      if (!text || text === '/* Import/Export bereit — Klick auf eine Aktion */') {
+        showToast('⚠️ Erst exportieren, dann downloaden', true);
+        return;
+      }
+      const ext = state.exportFormat;
+      const mimeTypes = { css: 'text/css', json: 'application/json', md: 'text/markdown' };
+      const blob = new Blob([text], { type: mimeTypes[ext] || 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `dkz-design-studio.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(`💾 Downloads: dkz-design-studio.${ext}`);
+      log(`💾 Download: dkz-design-studio.${ext}`);
+    });
+
+    // --- Generatoren ---
+    function generateCSS() {
+      return `/* ===== DkZ Design Studio v3 — CSS Export ===== */
+/* Generiert: ${new Date().toISOString().slice(0,10)} */
+/* Modus: ${state.mode} · System: ${DESIGN_SYSTEMS[state.currentSystem]?.name || 'Custom'} */
+
+:root {
+  --accent: ${state.accentColor};
+  --accent-rgb: ${parseInt(state.accentColor.slice(1,3),16)}, ${parseInt(state.accentColor.slice(3,5),16)}, ${parseInt(state.accentColor.slice(5,7),16)};
+  --bg: ${state.bgColor};
+  --radius: ${state.radius}px;
+  --font-display: ${state.fontDisplay};
+  --glass-opacity: ${state.glassOpacity};
+  --glass-variant: ${state.glassVariant};
+}`;
+    }
+
+    function generateDESIGNMD() {
+      const ds = DESIGN_SYSTEMS[state.currentSystem];
+      return `# DESIGN.md — DkZ Design Studio v3
+
+> Generiert am ${new Date().toISOString().slice(0,10)}
+> Modus: **${state.mode}**
+> Basis: **${ds?.name || 'Custom'}**
+
+## Farben
+- **Akzent:** ${state.accentColor}
+- **Hintergrund:** ${state.bgColor}
+
+## Typografie
+- **Display:** ${state.fontDisplay}
+- **Body:** Inter, sans-serif
+
+## Layout & Glass
+- **Border Radius:** ${state.radius}px
+- **Glassmorphism:** ${state.glassVariant} (Opacity: ${state.glassOpacity})
+- **Noise Overlay:** ${state.noiseEnabled ? 'Ja' : 'Nein'}
+
+## Anti-Design-System
+${state.mode === 'be-unique' ? '- ✨ Einzigartiges Design — keine Standard-Vorlage\n- 🎲 KI-Zufalls-Palette aktiv' : '- Standard-Design-System aktiv'}
+
+## Über
+Dieses DESIGN.md wurde im DkZ Design Studio v3 erstellt.
+Verschmolzen aus: awesome-design ⭐17k · open-design ⭐35k · awesome-design-systems ⭐24k
+`;
+    }
+
+    // ================================================================
+    // 11. RANDOMIZE / RESET
+    // ================================================================
+    $('randomizeBtn').addEventListener('click', function() {
+      const keys = Object.keys(DESIGN_SYSTEMS);
+      const randomKey = keys[Math.floor(Math.random() * keys.length)];
+      dsSelect.value = randomKey;
+      dsSelect.dispatchEvent(new Event('change'));
+
+      const variants = ['default','light','strong','colored','border-glow','minimal'];
+      const randomV = variants[Math.floor(Math.random() * variants.length)];
+      state.glassVariant = randomV;
+      qsa(null, '.glass-variant').forEach(g => {
+        g.classList.toggle('active', g.dataset.glass === randomV);
+      });
+
+      const randomOp = (30 + Math.floor(Math.random() * 60)) / 100;
+      state.glassOpacity = randomOp;
+      $('glassOpacity').value = randomOp * 100;
+      $('glassOpacityVal').textContent = randomOp.toFixed(2);
+
+      applyDesign();
+      triggerExplosion($('randomizeBtn'), 30);
+      log('🎲 Zufalls-Design generiert');
+      showToast('🎲 Zufalls-Design!');
+    });
+
+    $('resetBtn').addEventListener('click', function() {
+      dsSelect.value = 'dkz';
+      dsSelect.dispatchEvent(new Event('change'));
+      state.glassVariant = 'default';
+      qsa(null, '.glass-variant').forEach(g => {
+        g.classList.toggle('active', g.dataset.glass === 'default');
+      });
+      state.glassOpacity = 0.72;
+      $('glassOpacity').value = 72;
+      $('glassOpacityVal').textContent = '0.72';
+      state.noiseEnabled = false;
+      $('noiseToggle').checked = false;
+      noiseOverlay.classList.remove('show');
+      state.accentColor = '#fa1e4e';
+      state.bgColor = '#0e0e10';
+      state.radius = 14;
+      state.fontDisplay = "'Inter', sans-serif";
+      $('accentColor').value = '#fa1e4e';
+      $('accentHex').textContent = '#fa1e4e';
+      $('bgColor').value = '#0e0e10';
+      $('bgHex').textContent = '#0e0e10';
+      $('radiusSlider').value = 14;
+      $('radiusVal').textContent = '14px';
+      $('fontSelect').value = "'Inter', sans-serif";
+      applyDesign();
+      log('↩️ Auf DkZ-Standard zurückgesetzt');
+      showToast('↩️ Zurückgesetzt');
+    });
+
+    $('applyBtn').addEventListener('click', function(e) {
+      applyDesign();
+      triggerExplosion(this, 40);
+      showToast('✅ Design angewendet');
+    });
+
+    // ================================================================
+    // 12. RESOURCE BROWSER (awesome-design)
+    // ================================================================
+    const RESOURCES = {
+      colors:    { name:'Farben',     items:[
+        { name:'Coolors', url:'https://coolors.co', desc:'Paletten-Generator' },
+        { name:'Color Hunt', url:'https://colorhunt.co', desc:'Kuratierte Paletten' },
+        { name:'uiGradients', url:'https://uigradients.com', desc:'Verlaufs-Generator' },
+        { name:'Brand Colors', url:'https://brandcolors.net', desc:'Marken-Farbcodes' }
+      ]},
+      icons:     { name:'Icons',      items:[
+        { name:'Font Awesome', url:'https://fontawesome.com', desc:'Web-Icons' },
+        { name:'Feather Icons', url:'https://feathericons.com', desc:'Open-Source SVG' },
+        { name:'Simple Icons', url:'https://simpleicons.org', desc:'Brand-SVGs' },
+        { name:'Lucide', url:'https://lucide.dev', desc:'Open-Source Icons' }
+      ]},
+      fonts:     { name:'Fonts',      items:[
+        { name:'Google Fonts', url:'https://fonts.google.com', desc:'Free Fonts' },
+        { name:'Font Squirrel', url:'https://fontsquirrel.com', desc:'Commercial-Free' },
+        { name:'Typewolf', url:'https://typewolf.com', desc:'Font-Inspiration' },
+        { name:'Brick', url:'https://brick.im', desc:'Open-Source Type' }
+      ]},
+      stock:     { name:'Stock',      items:[
+        { name:'Unsplash', url:'https://unsplash.com', desc:'Free Photos' },
+        { name:'Pexels', url:'https://pexels.com', desc:'Free Stock' },
+        { name:'Pixabay', url:'https://pixabay.com', desc:'Free Images' },
+        { name:'Lorem Picsum', url:'https://picsum.photos', desc:'Placeholder' }
+      ]},
+      templates: { name:'Templates',  items:[
+        { name:'Open Design', url:'https://github.com/nexu-io/open-design', desc:'35k★ 31 Skills' },
+        { name:'Awesome Design', url:'https://github.com/gztchan/awesome-design', desc:'17k★ Resources' },
+        { name:'Design Systems', url:'https://github.com/alexpate/awesome-design-systems', desc:'24k★ Systems' },
+        { name:'Awesome DESIGN.md', url:'https://github.com/VoltAgent/awesome-design-md', desc:'72 Brand-Docs' }
+      ]},
+      tools:     { name:'Tools',      items:[
+        { name:'Figma', url:'https://figma.com', desc:'UI Design Tool' },
+        { name:'Stitch', url:'https://stitch.withgoogle.com', desc:'AI Design' },
+        { name:'Open Design AI', url:'https://open-design.ai', desc:'Local-First' },
+        { name:'HyperUI', url:'https://hyperui.dev', desc:'Komponenten' }
+      ]},
+      gradients: { name:'Gradients',  items:[
+        { name:'WebGradients', url:'https://webgradients.com', desc:'180 Verläufe' },
+        { name:'Gradienta', url:'https://gradienta.io', desc:'Multi-Color' },
+        { name:'CSS Gradient', url:'https://cssgradient.io', desc:'Generator' },
+        { name:'Mesh Gradient', url:'https://meshgradient.com', desc:'Mesh-Tool' }
+      ]},
+      mockups:   { name:'Mockups',    items:[
+        { name:'Mockup World', url:'https://mockupworld.co', desc:'PSD Mockups' },
+        { name:'Placeit', url:'https://placeit.net', desc:'Device Mockups' },
+        { name:'Screely', url:'https://screely.com', desc:'Browser Frames' },
+        { name:'Device Shots', url:'https://deviceshots.com', desc:'Device Frames' }
+      ]}
+    };
+
+    qsa(null, '.resource-item').forEach(el => {
+      el.addEventListener('click', function() {
+        const key = this.dataset.resource;
+        const res = RESOURCES[key];
+        if (!res) return;
+        let html = `📦 **${res.name}** (awesome-design)\n\n`;
+        res.items.forEach(item => {
+          html += `• [${item.name}](${item.url}) — ${item.desc}\n`;
+        });
+        $('exportBlock').textContent = html;
+        log(`Ressource: ${res.name}`);
+        showToast(`📦 ${res.name} geladen`);
+      });
+    });
+
+    // ================================================================
+    // 13. LOG / TOAST
+    // ================================================================
+    function log(msg) {
+      const logEl = $('activityLog');
+      const time = new Date().toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      logEl.innerHTML += `<br>→ ${time} · ${msg}`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function showToast(msg, isError) {
+      const t = $('toast');
+      t.textContent = msg;
+      t.className = 'toast' + (isError ? ' error' : '');
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    // ================================================================
+    // 14. INIT
+    // ================================================================
+    applyDesign();
+    updateModeUI();
+    log('Design Studio v3 · 16 DS · 6 Glass · Import/Export bereit');
+    log('Hyperreal-Patterns: Ripple · Tags · Glass · Motion');
+
+  })();
+</script>
+</body>
+</html>

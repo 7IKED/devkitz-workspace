@@ -1,0 +1,449 @@
+# 🧠 DkZ Mainboard™ – HELP YOUR SELF™ Blueprint
+## "KI am Murksen hindern" → HELP YOUR SELF™ Integration
+
+> **Philosophie:** Die Erfahrung und Konzepte von Morpheus Tutorials NICHT als Ersatz,
+> sondern als **optionale Erweiterungen** und **dynamische Bausteine** im bestehenden
+> DkZ Ökosystem. Jeder Use Case ist ein eigenständiges Modul, das per Kachel im
+> Mainboard aktiviert oder deaktiviert werden kann.
+
+**Quelle:** [KI am Murksen hindern! – Morpheus Tutorials](https://www.youtube.com/watch?v=CEYDefSEDxY)
+
+---
+
+## 📋 Übersicht aller 7 Use Cases
+
+| # | Use Case | DkZ-Modul | Status | Priorität |
+|---|----------|-----------|--------|-----------|
+| UC-1 | RAG (Retrieval-Augmented Generation) | `heal_rag` | Optional | ⭐⭐⭐ |
+| UC-2 | High-Quality Training Data | `heal_data_quality` | Optional | ⭐⭐ |
+| UC-3 | Human-in-the-Loop (HITL) | `heal_hitl` | Optional | ⭐⭐⭐ |
+| UC-4 | Prompt Engineering (CoT) | `heal_prompt_engine` | Aktiv | ⭐⭐⭐ |
+| UC-5 | Uncertainty Scoring | `heal_confidence` | Optional | ⭐⭐ |
+| UC-6 | Model Selection & Fallback | `heal_model_router` | Aktiv | ⭐⭐⭐ |
+| UC-7 | Continuous Evaluation | `heal_eval_loop` | Optional | ⭐⭐ |
+
+---
+
+## UC-1: RAG – Retrieval-Augmented Generation
+
+### Morpheus-Konzept
+KI-Antworten mit externen, verifizierten Datenquellen anreichern statt sich nur
+auf Training Data zu verlassen. Reduziert Halluzinationen um bis zu 96%.
+
+### DkZ-Integration (Optional Extension)
+
+**Aktivierung:** Kachel "🔍 RAG Engine" im Mainboard → Toggle ON/OFF
+
+```
+┌─────────────────────────────────────────────┐
+│  DkZ Mainboard                              │
+│  ┌───────────┐  ┌───────────┐               │
+│  │ 🔍 RAG    │  │ Status:   │               │
+│  │ Engine    │  │ 🟢 AKTIV  │               │
+│  │ [Toggle]  │  │           │               │
+│  └───────────┘  └───────────┘               │
+│                                              │
+│  Quellen: ☑ Nexus-Wiki  ☑ NotebookLM        │
+│           ☑ DkZ-Docs    ☐ Web-Search         │
+└─────────────────────────────────────────────┘
+```
+
+**Implementierung:**
+- **Datenquellen:** DkZ Nexus-Knoten (`_NEXUS_REGELN.md`), PKM Second Brain (FAISS Index), NotebookLM Exports
+- **Technologie:** Python + FAISS / Meilisearch (bereits in PKM Second Brain Blueprint definiert)
+- **Docker:** `dkz-rag-engine` Container mit Health-Check
+- **API:** `/api/rag/query` → Input: Frage → Output: Antwort + Quellen-Referenzen
+
+**HELP YOUR SELF� Loop:**
+1. User stellt Frage → RAG Engine sucht in lokaler Wissensbasis
+2. Antwort wird mit Quellen-Referenz geliefert
+3. User bewertet Qualität (👍/👎)
+4. Feedback fließt in Self-Learning Loop → verbessert Retrieval-Ranking
+
+**Betroffene DkZ-Komponenten:**
+- `V02_PKM_SECOND_BRAIN.md` → FAISS Integration
+- `heal_rag` Kachel im Mainboard
+- AI Chat Module → RAG-Modus Toggle
+
+---
+
+## UC-2: High-Quality Training Data
+
+### Morpheus-Konzept
+Datenqualität ist entscheidend. Bias-freie, diverse und verifizierte Trainingsdaten
+sind die Grundlage für zuverlässige KI-Antworten.
+
+### DkZ-Integration (Optional Extension)
+
+**Aktivierung:** Kachel "📊 Data Quality" im Mainboard
+
+**Implementierung:**
+- **Data Lakehouse Integration:** Apache Iceberg Tabellen mit Qualitäts-Metriken
+- **DuckDB-Wasm Queries:** Inline-Analyse der Datenqualität
+- **Quality Score:** Jeder Datensatz bekommt einen Q-Score (0-100)
+- **Automatische Bereinigung:** PicoClaw Edge-Agent filtert low-quality data
+
+```python
+# dkz_data_quality.py – Docker Container
+class DataQualityChecker:
+    def __init__(self, iceberg_catalog):
+        self.catalog = iceberg_catalog
+        self.min_quality_score = 70
+
+    def validate(self, dataset):
+        """Prüft Datensatz auf Qualität, Bias, Vollständigkeit"""
+        scores = {
+            'completeness': self._check_completeness(dataset),
+            'consistency': self._check_consistency(dataset),
+            'bias_free': self._check_bias(dataset),
+            'freshness': self._check_freshness(dataset),
+        }
+        return sum(scores.values()) / len(scores)
+
+    def auto_heal(self, dataset):
+        """HELP YOUR SELF�: bereinigt oder markiert problematische Einträge"""
+        score = self.validate(dataset)
+        if score < self.min_quality_score:
+            self._quarantine(dataset)
+            self._notify_hitl(dataset)  # → UC-3
+        return score
+```
+
+**HELP YOUR SELF� Loop:**
+1. Neue Daten landen in Apache Iceberg
+2. DataQualityChecker prüft automatisch
+3. Score < 70 → Quarantäne + HITL-Benachrichtigung
+4. Ergebnis wird in Self-Learning Loop gespeichert
+
+---
+
+## UC-3: Human-in-the-Loop (HITL)
+
+### Morpheus-Konzept
+Menschliche Überprüfung bei kritischen KI-Entscheidungen. Wird impraktikabel
+bei großen Datenmengen → selektive HITL-Trigger.
+
+### DkZ-Integration (Optional Extension)
+
+**Aktivierung:** Kachel "👁️ HITL Monitor" im Mainboard
+
+**Implementierung:**
+- **Review Queue:** Seitenpanel im Mainboard mit pending Reviews
+- **Trigger-Regeln (deklarativ):**
+
+```json
+{
+  "hitl_rules": [
+    { "trigger": "confidence < 0.7", "action": "queue_review" },
+    { "trigger": "category == 'financial'", "action": "require_approval" },
+    { "trigger": "new_pattern_detected", "action": "notify_user" },
+    { "trigger": "error_rate > 5%", "action": "pause_and_escalate" }
+  ]
+}
+```
+
+- **BMAD Integration:** HITL als Persona "Quality Reviewer" im BMAD Workflow
+- **Ralph Loop:** Review-Feedback wird als Iteration gespeichert
+- **Notification:** Browser Push / Mainboard Badge Counter
+
+**HELP YOUR SELF� Loop:**
+1. KI-Output wird generiert → Confidence Score berechnet
+2. Score unter Threshold → HITL Queue
+3. Human reviewed → Feedback gespeichert
+4. Self-Learning: Threshold passt sich an basierend auf historischen Reviews
+
+---
+
+## UC-4: Prompt Engineering (Chain-of-Thought)
+
+### Morpheus-Konzept
+Strategisches Prompt Design: Chain-of-Thought (Schritt-für-Schritt-Denken),
+Quellen-Anforderung, Confidence-Level, "Sag ich weiß nicht" Regel.
+
+### DkZ-Integration (Aktiv – bereits im System)
+
+**Status:** Bereits integriert via Prompt Builder + JamesGPT Lite™
+
+**Erweiterungen (dynamisch dazu):**
+
+```
+┌──────────────────────────────────────────────────┐
+│  Prompt Builder PRO – Morpheus Extension          │
+│                                                    │
+│  ☑ Chain-of-Thought (CoT) erzwingen               │
+│  ☑ Quellen-Referenzen anfordern                    │
+│  ☑ Confidence-Level ausgeben lassen                │
+│  ☑ "Ich weiß nicht" Regel aktivieren               │
+│  ☐ Multi-Step Reasoning                            │
+│                                                    │
+│  [Template laden]  [Prompt testen]  [Speichern]    │
+└──────────────────────────────────────────────────┘
+```
+
+**Prompt Templates (Deklarativ):**
+
+```yaml
+# dkz_prompt_templates/morpheus_cot.yaml
+name: "Morpheus CoT Guard"
+version: "1.0"
+system_prompt: |
+  Du bist ein präziser Assistent. Befolge STRIKT diese Regeln:
+  1. Denke Schritt für Schritt (Chain-of-Thought)
+  2. Gib IMMER Quellen an für Fakten-Aussagen
+  3. Wenn du dir nicht sicher bist, sage "Ich bin nicht sicher"
+  4. Bewerte dein Confidence-Level: [HOCH|MITTEL|NIEDRIG]
+  5. Bei NIEDRIG: Schlage alternative Quellen vor
+guards:
+  - no_hallucination
+  - cite_sources
+  - confidence_rating
+fallback: "Ich kann diese Frage nicht zuverlässig beantworten."
+```
+
+**DkZ-Komponenten:**
+- Prompt Builder → neues Template-Pack "Morpheus Guards"
+- JamesGPT Lite → Prompt-Router erkennt relevante Guards
+- AI Chat → Toggle "Morpheus Mode" für striktere Antworten
+
+---
+
+## UC-5: Uncertainty Scoring
+
+### Morpheus-Konzept
+Wahrscheinlichkeits-Schätzungen für KI-Antworten. Niedrig = menschliche Review
+oder Verweigerung.
+
+### DkZ-Integration (Optional Extension)
+
+**Aktivierung:** Kachel "📈 Confidence" im Mainboard
+
+**Implementierung:**
+
+```python
+# dkz_confidence.py
+class ConfidenceScorer:
+    THRESHOLDS = {
+        'high': 0.85,     # 🟢 Automatisch akzeptieren
+        'medium': 0.60,   # 🟡 Warnung anzeigen
+        'low': 0.40,      # 🔴 HITL Queue → UC-3
+        'reject': 0.20,   # ⛔ Antwort verweigern
+    }
+
+    def score(self, response, context):
+        """Bewertet KI-Antwort basierend auf mehreren Signalen"""
+        signals = {
+            'source_match': self._check_rag_sources(response),    # UC-1
+            'consistency': self._check_self_consistency(response),
+            'known_pattern': self._check_training_data(response),  # UC-2
+            'hallucination_risk': self._detect_hallucination(response),
+        }
+        return weighted_average(signals)
+
+    def decide(self, score):
+        if score >= self.THRESHOLDS['high']:
+            return 'accept', '🟢'
+        elif score >= self.THRESHOLDS['medium']:
+            return 'warn', '🟡'
+        elif score >= self.THRESHOLDS['low']:
+            return 'review', '🔴'  # → HITL
+        else:
+            return 'reject', '⛔'
+```
+
+**Mainboard-Anzeige:**
+- Jede KI-Antwort zeigt Confidence Badge: 🟢🟡🔴⛔
+- HELP YOUR SELF� Monitor loggt alle Scoring-Events
+- Trend-Analyse: Confidence über Zeit (degradation detection)
+
+---
+
+## UC-6: Model Selection & Fallback Chain
+
+### Morpheus-Konzept
+Richtiges Modell für die richtige Aufgabe. Kleine Modelle für einfache Tasks,
+große für komplexe. Fallback bei Fehler.
+
+### DkZ-Integration (Aktiv – bereits im System)
+
+**Status:** Bereits integriert via OpenRouter + JamesGPT Lite™
+
+**Erweiterung – Fallback Chain (deklarativ):**
+
+```json
+{
+  "model_chain": {
+    "default": "gemini-2.0-flash",
+    "fallback_1": "gpt-4o-mini",
+    "fallback_2": "claude-3-haiku",
+    "fallback_3": "mistral-small",
+    "fallback_local": "ollama/llama3",
+    "rules": {
+      "code_generation": "gemini-2.0-flash",
+      "translation": "gpt-4o",
+      "creative_writing": "claude-3-sonnet",
+      "data_analysis": "deepseek-coder",
+      "edge_device": "picoclaw/phi-3-mini"
+    },
+    "auto_switch": {
+      "on_error": true,
+      "on_timeout_ms": 5000,
+      "on_confidence_below": 0.5,
+      "max_retries": 3,
+      "log_switches": true
+    }
+  }
+}
+```
+
+**HELP YOUR SELF� Loop:**
+1. Request → Primary Model → Antwort
+2. Confidence Check (UC-5) → Score zu niedrig?
+3. Auto-Switch zu Fallback Model → erneuter Versuch
+4. Alle Switches werden geloggt → Pattern-Analyse
+5. System lernt: "Für Task X ist Model Y 23% besser"
+
+**DkZ-Komponenten:**
+- AI Chat → Model Selector mit Auto-Switch
+- HELP YOUR SELF� Monitor → Fallback-Event-Log
+- Docker → jedes Model als eigener Container (optional)
+
+---
+
+## UC-7: Continuous Evaluation & Testing
+
+### Morpheus-Konzept
+Regelmäßiges Testen mit aktualisierten Daten. Schwachstellen frühzeitig
+erkennen und beheben.
+
+### DkZ-Integration (Optional Extension)
+
+**Aktivierung:** Kachel "🧪 Eval Loop" im Mainboard
+
+**Implementierung:**
+
+```python
+# dkz_eval_loop.py – Docker Container
+class ContinuousEvaluator:
+    def __init__(self):
+        self.test_suite = self._load_test_cases()
+        self.schedule = "*/30 * * * *"  # alle 30 min
+
+    def run_evaluation(self):
+        """Führt alle Test-Cases gegen aktuelles System aus"""
+        results = []
+        for test in self.test_suite:
+            actual = self.query_system(test['input'])
+            passed = self.compare(actual, test['expected'])
+            results.append({
+                'test_id': test['id'],
+                'passed': passed,
+                'confidence': self.score_confidence(actual),
+                'timestamp': datetime.now()
+            })
+        self._store_results(results)  # → Apache Iceberg
+        self._check_degradation(results)
+        return results
+
+    def _check_degradation(self, results):
+        """Erkennt Performance-Degradation über Zeit"""
+        current_pass_rate = sum(r['passed'] for r in results) / len(results)
+        historical = self._get_historical_rate()
+        if current_pass_rate < historical * 0.95:  # 5% Drop
+            self._trigger_alert('DEGRADATION_DETECTED')
+            self._trigger_hitl()  # → UC-3
+```
+
+**HELP YOUR SELF� Loop:**
+1. Scheduled Tests laufen automatisch (cron/Docker)
+2. Ergebnisse → Apache Iceberg Data Lakehouse
+3. Degradation erkannt → Alert im Mainboard HELP YOUR SELF� Monitor
+4. Auto-Recovery: Model-Switch (UC-6) oder RAG-Update (UC-1)
+5. Ergebnis wird als Pattern in Self-Learning Loop gespeichert
+
+---
+
+## 🔗 Integration Map – Alle Use Cases verbunden
+
+```
+                    ┌─────────────┐
+                    │  DkZ        │
+                    │  Mainboard™ │
+                    └──────┬──────┘
+                           │
+           ┌───────┬───────┼───────┬───────┐
+           │       │       │       │       │
+      ┌────┴──┐ ┌──┴───┐ ┌┴────┐ ┌┴────┐ ┌┴────┐
+      │UC-1   │ │UC-3  │ │UC-4 │ │UC-6 │ │UC-7 │
+      │RAG    │ │HITL  │ │CoT  │ │Model│ │Eval │
+      │Engine │ │Review│ │Guard│ │Route│ │Loop │
+      └───┬───┘ └──┬───┘ └┬────┘ └┬────┘ └┬────┘
+          │        │      │       │       │
+          │    ┌───┴──────┴───────┴───┐   │
+          │    │     HELP YOUR SELF�     │   │
+          └────┤     Monitor         ├───┘
+               │   (Mainboard™)      │
+               └─────────┬───────────┘
+                         │
+               ┌─────────┼────────┐
+               │         │        │
+          ┌────┴──┐ ┌────┴──┐ ┌──┴─────┐
+          │UC-2   │ │UC-5   │ │Apache  │
+          │Data   │ │Confid.│ │Iceberg │
+          │Quality│ │Score  │ │Storage │
+          └───────┘ └───────┘ └────────┘
+```
+
+---
+
+## 🐳 Docker Compose (Optional alle Module)
+
+```yaml
+# docker-compose.morpheus.yml
+version: '3.9'
+services:
+  rag-engine:
+    image: dkz/heal-rag:latest
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+    restart: unless-stopped
+
+  data-quality:
+    image: dkz/heal-data-quality:latest
+    depends_on: [rag-engine]
+    restart: unless-stopped
+
+  confidence-scorer:
+    image: dkz/heal-confidence:latest
+    restart: unless-stopped
+
+  eval-loop:
+    image: dkz/heal-eval:latest
+    depends_on: [rag-engine, confidence-scorer]
+    restart: unless-stopped
+
+  hitl-server:
+    image: dkz/heal-hitl:latest
+    ports: ["3080:3080"]
+    restart: unless-stopped
+```
+
+---
+
+## 📌 Dokumentierte Wege
+
+| Weg | Beschreibung | Komplexität |
+|-----|-------------|-------------|
+| **Weg A: Minimal** | Nur UC-4 (Prompt Guards) + UC-6 (Model Fallback) aktivieren. Kein Docker nötig. | ⭐ |
+| **Weg B: Standard** | UC-1 (RAG) + UC-4 + UC-5 (Confidence) + UC-6. Python + Docker. | ⭐⭐ |
+| **Weg C: Komplett** | Alle 7 Use Cases. Volles Docker Setup mit Iceberg + FAISS + HITL Server. | ⭐⭐⭐ |
+| **Weg D: Dynamisch** | Alle Use Cases als Kacheln im Mainboard. User aktiviert je nach Bedarf. | ⭐⭐ |
+
+> **Empfehlung für DkZ:** Weg D (Dynamisch) – passt zur Philosophie des
+> deklarativen Verwaltungssystems und der personalisierten Kachel-Architektur.
+
+---
+
+*Erstellt: 2026-03-08 | Version: 1.0 | Lizenz: MIT*
+*DkZ Mainboard™ – HELP YOUR SELF� Dashboard*
+

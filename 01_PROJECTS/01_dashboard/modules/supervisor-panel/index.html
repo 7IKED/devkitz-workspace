@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ Supervisor Panel — Pi Agent</title>
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root { --accent:#fa1e4e; --bg:#060608; --bg-card:rgba(18,18,24,0.85); --text-primary:#e8e8ec; --text-secondary:#8a8a9a; --green:#00ff88; --yellow:#ffb800; --red:#ff3b5c; --blue:#3b82f6; --font-main:'Inter',sans-serif; --font-mono:'JetBrains Mono',monospace; --radius:12px; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:var(--font-main); background:var(--bg); color:var(--text-primary); min-height:100vh; padding:20px; }
+        .header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+        .header h1 { font-size:1.8rem; font-weight:700; background:linear-gradient(135deg,var(--accent),#ff6b9d); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .header .status-badge { padding:6px 16px; border-radius:20px; font-size:0.8rem; font-weight:600; }
+        .badge-online { background:rgba(0,255,136,0.15); color:var(--green); border:1px solid rgba(0,255,136,0.3); }
+        .badge-offline { background:rgba(255,59,92,0.15); color:var(--red); border:1px solid rgba(255,59,92,0.3); }
+        .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:16px; margin-bottom:24px; }
+        .card { background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:var(--radius); padding:20px; backdrop-filter:blur(20px); transition:border-color 0.3s; }
+        .card:hover { border-color:rgba(250,30,78,0.3); }
+        .card-title { font-size:0.85rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+        .stat-value { font-size:2.2rem; font-weight:700; font-family:var(--font-mono); }
+        .stat-label { font-size:0.75rem; color:var(--text-secondary); margin-top:4px; }
+        .stat-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+        .stat-row:last-child { border:none; }
+        .agent-card { display:flex; align-items:center; gap:12px; padding:12px; background:rgba(255,255,255,0.03); border-radius:8px; margin-bottom:8px; }
+        .agent-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+        .dot-idle { background:var(--green); box-shadow:0 0 8px var(--green); }
+        .dot-busy { background:var(--yellow); box-shadow:0 0 8px var(--yellow); }
+        .dot-offline { background:var(--red); box-shadow:0 0 8px var(--red); }
+        .agent-info { flex:1; }
+        .agent-name { font-weight:600; font-size:0.9rem; }
+        .agent-meta { font-size:0.75rem; color:var(--text-secondary); }
+        .event-log { max-height:300px; overflow-y:auto; }
+        .event-item { display:flex; gap:10px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.03); font-size:0.8rem; }
+        .event-time { color:var(--text-secondary); font-family:var(--font-mono); font-size:0.7rem; white-space:nowrap; }
+        .event-type { padding:2px 8px; border-radius:4px; font-size:0.7rem; font-weight:600; }
+        .type-job { background:rgba(59,130,246,0.2); color:var(--blue); }
+        .type-agent { background:rgba(0,255,136,0.15); color:var(--green); }
+        .type-error { background:rgba(255,59,92,0.15); color:var(--red); }
+        .type-supervisor { background:rgba(250,30,78,0.15); color:var(--accent); }
+        .queue-bar { height:8px; background:rgba(255,255,255,0.05); border-radius:4px; overflow:hidden; margin-top:8px; }
+        .queue-fill { height:100%; border-radius:4px; transition:width 0.5s; }
+        .btn { padding:8px 20px; border:none; border-radius:8px; font-family:var(--font-main); font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s; }
+        .btn-primary { background:var(--accent); color:#fff; }
+        .btn-primary:hover { background:#e0163f; transform:translateY(-1px); }
+        .btn-secondary { background:rgba(255,255,255,0.08); color:var(--text-primary); border:1px solid rgba(255,255,255,0.1); }
+        .btn-secondary:hover { background:rgba(255,255,255,0.12); }
+        .controls { display:flex; gap:8px; flex-wrap:wrap; }
+        .n8n-workflow { display:flex; align-items:center; gap:10px; padding:10px; background:rgba(255,255,255,0.03); border-radius:8px; margin-bottom:6px; }
+        .n8n-icon { font-size:1.2rem; }
+        .n8n-name { font-weight:500; font-size:0.85rem; }
+        .n8n-tags { display:flex; gap:4px; margin-top:2px; }
+        .n8n-tag { font-size:0.65rem; padding:1px 6px; border-radius:4px; background:rgba(250,30,78,0.1); color:var(--accent); }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        .pulse { animation:pulse 2s infinite; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚡ Supervisor Panel</h1>
+        <div>
+            <span id="statusBadge" class="status-badge badge-offline">● Offline</span>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid">
+        <div class="card">
+            <div class="card-title">📊 Orchestrator</div>
+            <div class="stat-value" id="loopCount">0</div>
+            <div class="stat-label">Loops abgeschlossen</div>
+            <div class="stat-row"><span>Status</span><span id="orchStatus">idle</span></div>
+            <div class="stat-row"><span>Engine</span><span id="orchEngine">—</span></div>
+            <div class="stat-row"><span>Uptime</span><span id="orchUptime">—</span></div>
+        </div>
+        <div class="card">
+            <div class="card-title">📋 Job Queue</div>
+            <div class="stat-value" id="queueTotal">0</div>
+            <div class="stat-label">Jobs in Queue</div>
+            <div class="queue-bar"><div class="queue-fill" id="queueBar" style="width:0%;background:var(--green)"></div></div>
+            <div class="stat-row"><span>Queued</span><span id="queueQueued">0</span></div>
+            <div class="stat-row"><span>Processing</span><span id="queueProcessing">0</span></div>
+            <div class="stat-row"><span>Failed</span><span id="queueFailed">0</span></div>
+        </div>
+        <div class="card">
+            <div class="card-title">🤖 Agents</div>
+            <div class="stat-value" id="agentTotal">0</div>
+            <div class="stat-label">Registrierte Agents</div>
+            <div class="stat-row"><span>Online</span><span id="agentOnline" style="color:var(--green)">0</span></div>
+            <div class="stat-row"><span>Offline</span><span id="agentOffline" style="color:var(--red)">0</span></div>
+        </div>
+        <div class="card">
+            <div class="card-title">🔄 n8n Bridge</div>
+            <div class="stat-value" id="n8nEvents">0</div>
+            <div class="stat-label">Events empfangen</div>
+            <div class="stat-row"><span>Connected</span><span id="n8nConnected">—</span></div>
+            <div class="stat-row"><span>Workflows</span><span id="n8nWorkflows">0</span></div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="card" style="margin-bottom:16px">
+        <div class="card-title">⚙️ Steuerung</div>
+        <div class="controls">
+            <button class="btn btn-primary" onclick="controlSupervisor('start')">▶ Start</button>
+            <button class="btn btn-secondary" onclick="controlSupervisor('pause')">⏸ Pause</button>
+            <button class="btn btn-secondary" onclick="controlSupervisor('stop')">⏹ Stop</button>
+            <button class="btn btn-secondary" onclick="controlSupervisor('reset')">🔄 Reset</button>
+            <button class="btn btn-secondary" onclick="refreshAll()">↻ Refresh</button>
+        </div>
+    </div>
+
+    <!-- Agents + Events -->
+    <div class="grid">
+        <div class="card">
+            <div class="card-title">🤖 Agent Registry</div>
+            <div id="agentList"><div class="stat-label">Keine Agents registriert</div></div>
+        </div>
+        <div class="card">
+            <div class="card-title">📜 Event-Log</div>
+            <div class="event-log" id="eventLog"><div class="stat-label">Keine Events</div></div>
+        </div>
+    </div>
+
+    <!-- n8n Workflows -->
+    <div class="card" style="margin-top:16px">
+        <div class="card-title">🔗 n8n Workflows</div>
+        <div id="workflowList"><div class="stat-label">Lade...</div></div>
+    </div>
+
+    <script>
+        const API = 'http://localhost:3040/api/v1';
+        function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+        async function fetchJSON(url) {
+            try { const r=await fetch(url); return r.ok?await r.json():null; } catch { return null; }
+        }
+        async function postJSON(url, body) {
+            try { const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); return r.ok?await r.json():null; } catch { return null; }
+        }
+        async function putJSON(url, body) {
+            try { const r=await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); return r.ok?await r.json():null; } catch { return null; }
+        }
+
+        async function refreshStatus() {
+            const data = await fetchJSON(`${API}/pi-agent/status`);
+            if (!data) { document.getElementById('statusBadge').className='status-badge badge-offline'; document.getElementById('statusBadge').textContent='● Offline'; return; }
+            const o = data.orchestrator;
+            document.getElementById('statusBadge').className = 'status-badge badge-online';
+            document.getElementById('statusBadge').textContent = '● Online';
+            document.getElementById('loopCount').textContent = o.loopCount || 0;
+            document.getElementById('orchStatus').textContent = esc(o.status || 'idle');
+            document.getElementById('orchEngine').textContent = esc(o.engine || 'json');
+            document.getElementById('orchUptime').textContent = esc(o.uptime || '—');
+            if (o.queue) {
+                document.getElementById('queueTotal').textContent = o.queue.total || 0;
+                document.getElementById('queueQueued').textContent = o.queue.queued || 0;
+                document.getElementById('queueProcessing').textContent = o.queue.processing || 0;
+                document.getElementById('queueFailed').textContent = o.queue.failed || 0;
+                const pct = o.queue.total > 0 ? Math.min((o.queue.queued/Math.max(o.queue.total,1))*100, 100) : 0;
+                document.getElementById('queueBar').style.width = pct+'%';
+            }
+            document.getElementById('agentTotal').textContent = o.agentCount || 0;
+        }
+
+        async function refreshAgents() {
+            const data = await fetchJSON(`${API}/pi-agent/agents`);
+            if (!data) return;
+            document.getElementById('agentOnline').textContent = data.onlineAgents || 0;
+            document.getElementById('agentOffline').textContent = (data.totalAgents||0) - (data.onlineAgents||0);
+            const el = document.getElementById('agentList');
+            if (!data.agents || data.agents.length === 0) { el.innerHTML='<div class="stat-label">Keine Agents registriert</div>'; return; }
+            el.innerHTML = data.agents.map(a => `<div class="agent-card"><div class="agent-dot dot-${esc(a.status==='offline'?'offline':a.status==='busy'?'busy':'idle')}"></div><div class="agent-info"><div class="agent-name">${esc(a.name||a.id)}</div><div class="agent-meta">${esc(a.type)} · ${a.currentJobs}/${a.capacity} Jobs · ${a.totalProcessed} total</div></div></div>`).join('');
+        }
+
+        async function refreshEvents() {
+            const data = await fetchJSON(`${API}/pi-agent/supervisor/events?limit=30`);
+            if (!data || !data.events || data.events.length === 0) return;
+            const el = document.getElementById('eventLog');
+            el.innerHTML = data.events.map(e => {
+                const cls = e.type.includes('error')||e.type.includes('fail')?'type-error':e.type.includes('agent')?'type-agent':e.type.includes('job')?'type-job':'type-supervisor';
+                const t = new Date(e.timestamp).toLocaleTimeString('de-DE');
+                return `<div class="event-item"><span class="event-time">${esc(t)}</span><span class="event-type ${cls}">${esc(e.type)}</span><span>${esc(e.message)}</span></div>`;
+            }).join('');
+        }
+
+        async function refreshN8n() {
+            const [status, workflows] = await Promise.all([fetchJSON(`${API}/n8n/status`), fetchJSON(`${API}/n8n/workflows`)]);
+            if (status) {
+                document.getElementById('n8nConnected').textContent = status.connected ? '✅' : '❌';
+                document.getElementById('n8nEvents').textContent = status.stats?.eventsReceived || 0;
+            }
+            if (workflows) {
+                document.getElementById('n8nWorkflows').textContent = workflows.workflowCount || 0;
+                const el = document.getElementById('workflowList');
+                if (workflows.workflows && workflows.workflows.length > 0) {
+                    el.innerHTML = workflows.workflows.map(w => `<div class="n8n-workflow"><span class="n8n-icon">${w.enabled?'🟢':'🔴'}</span><div><div class="n8n-name">${esc(w.name)}</div><div class="n8n-tags">${(w.triggerOn||[]).map(t=>'<span class="n8n-tag">'+esc(t)+'</span>').join('')}</div></div></div>`).join('');
+                }
+            }
+        }
+
+        async function controlSupervisor(action) {
+            await putJSON(`${API}/pi-agent/orchestrator`, { action });
+            setTimeout(refreshAll, 500);
+        }
+
+        async function refreshAll() { await Promise.all([refreshStatus(), refreshAgents(), refreshEvents(), refreshN8n()]); }
+
+        refreshAll();
+        setInterval(refreshAll, 5000);
+    </script>
+    <script src="../../shared/dkz-navbar.js" defer onerror=""></script>
+</body>
+</html>

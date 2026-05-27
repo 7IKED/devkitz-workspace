@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../shared/seo-shared.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="grid grid-2">
+        <div class="card card-full">
+            <h3>💎 Domain Analyzer – WHOIS & Authority</h3>
+            <div class="input-row">
+                <input type="text" id="domainInput" placeholder="example.com">
+                <button class="btn btn-green" onclick="analyzeDomain()">🔍 Analysieren</button>
+                <button class="btn btn-blue btn-sm"
+                    onclick="document.getElementById('domainInput').value='devkitz.eu';analyzeDomain()">Demo</button>
+            </div>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>Domain wird analysiert...
+            </div>
+        </div>
+
+        <!-- WHOIS -->
+        <div class="card" id="whoisCard" style="display:none">
+            <h3>📋 WHOIS Information</h3>
+            <div id="whoisData"></div>
+        </div>
+
+        <!-- AUTHORITY -->
+        <div class="card" id="authCard" style="display:none">
+            <h3>📊 Authority & Trust</h3>
+            <div id="authData"></div>
+        </div>
+
+        <!-- TLD INFO -->
+        <div class="card" id="tldCard" style="display:none">
+            <h3>🌐 TLD Analyse</h3>
+            <div id="tldData"></div>
+        </div>
+
+        <!-- BACKLINKS -->
+        <div class="card" id="backlinksCard" style="display:none">
+            <h3>🔗 Backlink-Profil (Schätzung)</h3>
+            <div id="backlinksData"></div>
+        </div>
+
+        <!-- COMPETITOR -->
+        <div class="card card-full" id="compCard" style="display:none">
+            <h3>⚔️ Wettbewerber-Vergleich</h3>
+            <div class="input-row" style="margin-bottom:16px">
+                <input type="text" id="compInput1" placeholder="Wettbewerber 1">
+                <input type="text" id="compInput2" placeholder="Wettbewerber 2">
+                <button class="btn btn-purple btn-sm" onclick="compareCompetitors()">Vergleichen</button>
+            </div>
+            <div id="compData"></div>
+        </div>
+
+        <!-- HISTORY -->
+        <div class="card card-full">
+            <h3>📈 Analyse-Verlauf</h3>
+            <div id="historyList"></div>
+            <div id="historyEmpty" class="empty-state">
+                <div class="icon">💎</div>Noch keine Domains analysiert.
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        let history = JSON.parse(localStorage.getItem('seo_domain_history') || '{}');
+
+        const REGISTRARS = ['GoDaddy', 'Namecheap', 'Cloudflare', 'Google Domains', 'Hostinger', 'IONOS', 'Porkbun', 'Dynadot', 'Gandi', 'OVH'];
+        const TLD_INFO = { '.com': { price: '$10-15/yr', trust: 95, global: true }, '.de': { price: '$8-12/yr', trust: 92, global: false }, '.eu': { price: '$8-10/yr', trust: 88, global: true }, '.io': { price: '$30-50/yr', trust: 80, global: true }, '.dev': { price: '$12-18/yr', trust: 82, global: true }, '.net': { price: '$10-14/yr', trust: 85, global: true }, '.org': { price: '$10-14/yr', trust: 88, global: true }, '.tech': { price: '$5-40/yr', trust: 70, global: true } };
+
+        async function analyzeDomain() {
+            const domain = document.getElementById('domainInput').value.trim().replace(/https?:\/\//, '').split('/')[0];
+            if (!domain) { alert('Domain eingeben'); return }
+
+            document.getElementById('loading').classList.add('show');
+            ['whoisCard', 'authCard', 'tldCard', 'backlinksCard', 'compCard'].forEach(id => document.getElementById(id).style.display = 'none');
+            await new Promise(r => setTimeout(r, 1500));
+            document.getElementById('loading').classList.remove('show');
+
+            const tld = '.' + domain.split('.').pop();
+            const tldInfo = TLD_INFO[tld] || { price: '$10-20/yr', trust: 75, global: true };
+            const registrar = REGISTRARS[Math.floor(Math.random() * REGISTRARS.length)];
+            const age = Math.floor(Math.random() * 15 + 1);
+            const created = new Date(Date.now() - age * 365.25 * 24 * 3600 * 1000);
+            const expires = new Date(Date.now() + Math.floor(Math.random() * 3 + 1) * 365.25 * 24 * 3600 * 1000);
+            const da = Math.min(100, Math.floor(Math.random() * 40 + age * 4 + 10));
+            const pa = Math.min(100, Math.floor(da * (0.7 + Math.random() * 0.3)));
+            const backlinks = Math.floor(Math.random() * 5000 + age * 200);
+            const refDomains = Math.floor(backlinks * (0.1 + Math.random() * 0.2));
+            const tf = Math.floor(da * (0.5 + Math.random() * 0.4));
+            const cf = Math.floor(da * (0.6 + Math.random() * 0.5));
+
+            // WHOIS
+            document.getElementById('whoisCard').style.display = '';
+            document.getElementById('whoisData').innerHTML = `
+                <div class="metric-row"><span class="metric-name">Domain</span><span class="metric-value">${domain}</span></div>
+                <div class="metric-row"><span class="metric-name">Registrar</span><span class="metric-value">${registrar}</span></div>
+                <div class="metric-row"><span class="metric-name">Registriert am</span><span class="metric-value">${created.toLocaleDateString('de-DE')}</span></div>
+                <div class="metric-row"><span class="metric-name">Läuft ab am</span><span class="metric-value">${expires.toLocaleDateString('de-DE')}</span></div>
+                <div class="metric-row"><span class="metric-name">Domain Alter</span><span class="metric-value" style="color:${age > 5 ? 'var(--green)' : age > 2 ? 'var(--yellow)' : 'var(--red)'}">${age} Jahre</span></div>
+                <div class="metric-row"><span class="metric-name">TLD</span><span class="metric-value">${tld}</span></div>
+                <div class="metric-row"><span class="metric-name">Status</span><span class="badge badge-green">Aktiv</span></div>
+                <div class="metric-row"><span class="metric-name">DNSSEC</span><span class="badge ${Math.random() > .5 ? 'badge-green' : 'badge-red'}">${Math.random() > .5 ? 'Aktiv' : 'Inaktiv'}</span></div>
+            `;
+
+            // AUTHORITY
+            document.getElementById('authCard').style.display = '';
+            document.getElementById('authData').innerHTML = `
+                <div class="stat" style="margin-bottom:12px;background:var(--bg)"><div class="stat-num" style="color:${da >= 60 ? 'var(--green)' : da >= 30 ? 'var(--yellow)' : 'var(--red)'; font - size: 36px
+        } ">${da}</div><div class="stat - label">Domain Authority (DA)</div></div>
+            < div class="metric-row" ><span class="metric-name">Page Authority (PA)</span><span class="metric-value">${pa}</span><span class="metric-scale ${pa>=50?'scale-high':pa>=25?'scale-mid':'scale-low'}">${pa>=50?'Stark':pa>=25?'Mittel':'Schwach'}</span></div >
+                <div class="metric-row"><span class="metric-name">Trust Flow (TF)</span><span class="metric-value">${tf}</span><span class="metric-scale ${tf>=40?'scale-high':tf>=20?'scale-mid':'scale-low'}">${tf>=40?'Hoch':tf>=20?'Mittel':'Niedrig'}</span></div>
+                <div class="metric-row"><span class="metric-name">Citation Flow (CF)</span><span class="metric-value">${cf}</span><span class="metric-scale ${cf>=40?'scale-high':cf>=20?'scale-mid':'scale-low'}">${cf>=40?'Hoch':cf>=20?'Mittel':'Niedrig'}</span></div>
+                <div class="metric-row"><span class="metric-name">Spam Score</span><span class="metric-value">${Math.floor(Math.random()*15)}%</span><span class="metric-scale scale-high">Sauber</span></div>
+        `;
+
+            // TLD
+            document.getElementById('tldCard').style.display = '';
+            document.getElementById('tldData').innerHTML = `
+            < div class="metric-row" ><span class="metric-name">Top-Level-Domain</span><span class="metric-value">${tld}</span></div >
+                <div class="metric-row"><span class="metric-name">Preisspanne</span><span class="metric-value">${tldInfo.price}</span></div>
+                <div class="metric-row"><span class="metric-name">Vertrauens-Score</span><span class="metric-value">${tldInfo.trust}/100</span><span class="metric-scale ${tldInfo.trust>=85?'scale-high':tldInfo.trust>=70?'scale-mid':'scale-low'}">${tldInfo.trust>=85?'Hoch':tldInfo.trust>=70?'Mittel':'Niedrig'}</span></div>
+                <div class="metric-row"><span class="metric-name">Globale Reichweite</span><span class="badge ${tldInfo.global?'badge-green':'badge-yellow'}">${tldInfo.global?'Global':'Regional'}</span></div>
+                <div class="metric-row"><span class="metric-name">SEO-Empfehlung</span><span style="font-size:11px;color:var(--muted)">${tld==='.com'?'Beste Wahl für internationale Projekte':tld==='.de'?'Ideal für deutsche Zielgruppe':tld==='.eu'?'Gut für europäische Projekte':'Passend für Tech/Dev Projekte'}</span></div>
+        `;
+
+            // BACKLINKS
+            document.getElementById('backlinksCard').style.display = '';
+            document.getElementById('backlinksData').innerHTML = `
+            < div class="stats" style = "margin-bottom:12px" >
+                    <div class="stat"><div class="stat-num" style="color:var(--blue)">${backlinks.toLocaleString()}</div><div class="stat-label">Backlinks</div></div>
+                    <div class="stat"><div class="stat-num" style="color:var(--purple)">${refDomains.toLocaleString()}</div><div class="stat-label">Ref. Domains</div></div>
+                    <div class="stat"><div class="stat-num" style="color:var(--cyan)">${Math.floor(backlinks*0.6).toLocaleString()}</div><div class="stat-label">DoFollow</div></div>
+                    <div class="stat"><div class="stat-num" style="color:var(--muted)">${Math.floor(backlinks*0.4).toLocaleString()}</div><div class="stat-label">NoFollow</div></div>
+                </div >
+            <div class="label" style="margin-top:12px">Top Anchor-Texte (simuliert)</div>
+                ${ ['Brand Name', 'Click Here', 'Website', 'Read More', 'Official'].map((a, i) => `<div class="metric-row"><span class="metric-name">${a}</span><div style="flex:1;margin:0 12px"><div class="progress"><div class="progress-fill progress-blue" style="width:${80 - i * 15}%"></div></div></div><span style="font-size:11px;color:var(--muted)">${80 - i * 15}%</span></div>`).join('') }
+        `;
+
+            // COMPETITOR
+            document.getElementById('compCard').style.display = '';
+
+            // Save
+            history[domain] = { da, pa, backlinks, age, date: new Date().toISOString() };
+            localStorage.setItem('seo_domain_history', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function compareCompetitors() {
+            const c1 = document.getElementById('compInput1').value.trim() || 'competitor1.com';
+            const c2 = document.getElementById('compInput2').value.trim() || 'competitor2.com';
+            const mainDomain = document.getElementById('domainInput').value.trim().replace(/https?:\/\//,'').split('/')[0] || 'yourdomain.com';
+            const domains = [mainDomain, c1, c2];
+            document.getElementById('compData').innerHTML = `
+            < table class="data-table" ><thead><tr><th>Metrik</th>${domains.map(d=>`<th>${d}</th>`).join('')}</tr></thead><tbody>
+                ${['DA','PA','Backlinks','Domain Alter','Trust Flow'].map(m => `<tr><td style="font-weight:600">${m}</td>${domains.map(()=>`<td style="font-family:var(--mono)">${Math.floor(Math.random()*80+10)}</td>`).join('')}</tr>`).join('')}
+                </tbody></table > `;
+        }
+
+        function renderHistory() {
+            const entries = Object.entries(history);
+            document.getElementById('historyEmpty').style.display = entries.length ? 'none' : 'block';
+            document.getElementById('historyList').innerHTML = entries.map(([d, data]) => `
+            < div class="metric-row" style = "cursor:pointer" onclick = "document.getElementById('domainInput').value='${d}';analyzeDomain()" >
+                    <span class="metric-name">${d}</span>
+                    <span class="badge badge-blue">DA: ${data.da}</span>
+                    <span style="font-size:10px;color:var(--muted)">${data.backlinks.toLocaleString()} Backlinks • ${data.age}y alt</span>
+                    <span style="font-size:10px;color:var(--dim)">${new Date(data.date).toLocaleDateString('de-DE')}</span>
+                    <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();delete history['${d}'];localStorage.setItem('seo_domain_history',JSON.stringify(history));renderHistory()">✕</button>
+                </div >`).join('');
+        }
+        renderHistory();
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

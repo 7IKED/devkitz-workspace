@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paperless[DkZ] — Dokumenten-Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#060608;--surface:#0d0d12;--card:#111118;--border:#1a1a24;--text:#e8e8ed;--muted:#6b6b80;--accent:#fa1e4e;--green:#00ff88;--yellow:#ffb800;--blue:#3b82f6;--purple:#a855f7;--cyan:#06b6d4;--glass:rgba(17,17,24,0.85);--radius:12px}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(20px)}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700}
+.title{font-size:16px;font-weight:600}.badge{background:var(--accent);color:#fff;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.header-right{display:flex;align-items:center;gap:8px}
+.search{background:var(--card);border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:8px;font-size:13px;width:220px;outline:none;font-family:'Inter',sans-serif}
+.search:focus{border-color:var(--accent)}
+.btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;font-family:'Inter',sans-serif}
+.btn:hover{border-color:var(--accent);background:rgba(250,30,78,.1)}
+.btn-accent{background:var(--accent);border-color:var(--accent);color:#fff}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:16px 24px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;transition:all .3s}
+.stat:hover{border-color:var(--accent);transform:translateY(-2px)}
+.stat-val{font-size:28px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-label{font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+.filter-bar{display:flex;gap:6px;padding:12px 24px;border-bottom:1px solid var(--border);overflow-x:auto}
+.filter-tab{padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;background:transparent;color:var(--muted);border:none;transition:all .2s;white-space:nowrap;font-family:'Inter',sans-serif}
+.filter-tab.active,.filter-tab:hover{background:rgba(250,30,78,.15);color:var(--accent)}
+.doc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;padding:16px 24px}
+.doc-card{background:var(--glass);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all .3s;cursor:pointer;backdrop-filter:blur(12px)}
+.doc-card:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 8px 32px rgba(250,30,78,.12)}
+.doc-preview{height:120px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:42px;position:relative}
+.doc-type{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);padding:3px 8px;border-radius:6px;font-size:10px;font-weight:600;text-transform:uppercase}
+.doc-type.md{color:var(--green)}.doc-type.json{color:var(--yellow)}.doc-type.html{color:var(--blue)}.doc-type.js{color:var(--cyan)}.doc-type.css{color:var(--purple)}
+.doc-body{padding:14px}
+.doc-title{font-size:14px;font-weight:600;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-meta{font-size:11px;color:var(--muted);display:flex;gap:12px}
+.doc-path{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-tags{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.doc-tag{background:rgba(250,30,78,.1);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:10px;font-weight:500}
+.doc-tag.green{background:rgba(0,255,136,.1);color:var(--green)}
+.doc-tag.blue{background:rgba(59,130,246,.1);color:var(--blue)}
+.activity{padding:16px 24px}
+.activity h3{font-size:14px;font-weight:600;margin-bottom:12px;color:var(--muted)}
+.activity-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--card);border-radius:8px;font-size:12px;margin-bottom:4px;transition:all .2s}
+.activity-item:hover{border-left:3px solid var(--accent)}
+.activity-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.activity-time{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;margin-left:auto}
+/* Upload Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:460px;max-width:90vw}
+.modal h2{font-size:18px;margin-bottom:16px;color:var(--accent)}
+.drop-zone{border:2px dashed var(--border);border-radius:12px;padding:40px;text-align:center;color:var(--muted);transition:all .3s;cursor:pointer;margin-bottom:16px}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--accent);background:rgba(250,30,78,.05);color:var(--accent)}
+.drop-zone-icon{font-size:48px;margin-bottom:8px}
+.drop-zone-text{font-size:13px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.scan-progress{margin-top:12px;padding:12px;background:var(--card);border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green);max-height:200px;overflow-y:auto;display:none}
+/* Empty State */
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty-state-icon{font-size:64px;margin-bottom:16px;opacity:.5}
+.empty-state-text{font-size:14px}
+@media(max-width:768px){.stats{grid-template-columns:repeat(2,1fr)}.doc-grid{grid-template-columns:1fr}.header{flex-direction:column;gap:12px}}
+</style>
+</head>
+<body>
+<div class="header">
+ <div class="header-left">
+  <a href="../../hub/index.html" style="color:var(--accent,#fa1e4e);text-decoration:none;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;border:1px solid rgba(250,30,78,0.2);background:rgba(250,30,78,0.05);transition:all 0.2s" onmouseenter="this.style.background='rgba(250,30,78,0.15)'" onmouseleave="this.style.background='rgba(250,30,78,0.05)'">← Hub</a>
+  <div class="logo">📄</div>
+  <span class="title">Paperless[DkZ]</span>
+  <span class="badge">DOCS</span>
+  <span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace" id="docCountBadge"></span>
+ </div>
+ <div class="header-right">
+  <input class="search" id="searchInput" placeholder="Dokumente suchen..." oninput="filterDocs()">
+  <button class="btn" id="scanBtn" onclick="scanWorkspace()">🔍 Scan</button>
+  <button class="btn btn-accent" onclick="openUploadModal()">+ Upload</button>
+ </div>
+</div>
+<div class="stats" id="stats"></div>
+<div class="filter-bar" id="filterBar">
+ <button class="filter-tab active" onclick="setFilter('all',this)">📁 Alle</button>
+ <button class="filter-tab" onclick="setFilter('md',this)">📝 Markdown</button>
+ <button class="filter-tab" onclick="setFilter('json',this)">📊 JSON</button>
+ <button class="filter-tab" onclick="setFilter('html',this)">🌐 HTML</button>
+ <button class="filter-tab" onclick="setFilter('js',this)">⚡ JavaScript</button>
+ <button class="filter-tab" onclick="setFilter('css',this)">🎨 CSS</button>
+ <button class="filter-tab" onclick="setFilter('recent',this)">🕐 Zuletzt</button>
+</div>
+<div class="doc-grid" id="docGrid"></div>
+<div class="activity"><h3>📡 Letzte Aktivitaeten</h3><div id="activityList"></div></div>
+
+<!-- Upload Modal -->
+<div class="modal-overlay" id="uploadModal" onclick="if(event.target===this)closeUploadModal()">
+ <div class="modal">
+  <h2>📤 Dokument hinzufuegen</h2>
+  <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+   <div class="drop-zone-icon">📁</div>
+   <div class="drop-zone-text">Datei hierher ziehen oder klicken zum Auswaehlen</div>
+  </div>
+  <input type="file" id="fileInput" style="display:none" multiple accept=".md,.json,.html,.js,.css,.txt,.yaml,.yml">
+  <div class="scan-progress" id="scanLog"></div>
+  <div class="modal-actions">
+   <button class="btn" onclick="closeUploadModal()">Schliessen</button>
+  </div>
+ </div>
+</div>
+
+<script>
+// === STORAGE ===
+const STORAGE_KEY = 'dkz-paperless-docs';
+const ACTIVITY_KEY = 'dkz-paperless-activity';
+
+function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+// === SEED DATA ===
+const SEED_DOCS = [
+ {name:'REGELWERK.md',type:'md',size:'45 KB',date:'2026-05-23',tags:['system','regeln'],cat:'core',icon:'📜',path:'C:/DEVKiTZ/REGELWERK.md'},
+ {name:'BLAUPAUSE.md',type:'md',size:'38 KB',date:'2026-05-22',tags:['architektur'],cat:'core',icon:'🏗️',path:'C:/DEVKiTZ/01_PROJECTS/01_dashboard/BLAUPAUSE.md'},
+ {name:'LLM_BOOTSTRAP.md',type:'md',size:'12 KB',date:'2026-05-23',tags:['llm','bootstrap'],cat:'core',icon:'🚀',path:'C:/DEVKiTZ/LLM_BOOTSTRAP.md'},
+ {name:'features.json',type:'json',size:'156 KB',date:'2026-05-23',tags:['features','registry'],cat:'config',icon:'📋',path:'C:/DEVKiTZ/features.json'},
+ {name:'config.yaml',type:'yaml',size:'4 KB',date:'2026-05-23',tags:['llama-swap','vllm'],cat:'infra',icon:'⚙️',path:'C:/DEVKiTZ/04_SYSTEM/config.yaml'},
+ {name:'dkz-llm-registry.js',type:'js',size:'23 KB',date:'2026-05-23',tags:['llm','vllm'],cat:'shared',icon:'⚡',path:'C:/DEVKiTZ/01_PROJECTS/01_dashboard/shared/dkz-llm-registry.js'},
+ {name:'dkz-copilot.js',type:'js',size:'52 KB',date:'2026-05-22',tags:['copilot','ai'],cat:'shared',icon:'🤖',path:'C:/DEVKiTZ/01_PROJECTS/01_dashboard/shared/dkz-copilot.js'},
+ {name:'llm-arena/index.html',type:'html',size:'28 KB',date:'2026-05-23',tags:['llm','arena'],cat:'module',icon:'🏟️',path:'C:/DEVKiTZ/01_PROJECTS/01_dashboard/modules/llm-arena/index.html'},
+ {name:'kanban-board/index.html',type:'html',size:'18 KB',date:'2026-05-23',tags:['kanban','nexuzos'],cat:'module',icon:'📋',path:'C:/DEVKiTZ/01_PROJECTS/01_dashboard/modules/kanban-board/index.html'},
+ {name:'free-ai-hub/index.html',type:'html',size:'42 KB',date:'2026-05-22',tags:['ai','hub'],cat:'module',icon:'🆓',path:'C:/DEVKiTZ/01_PROJECTS/01_dashboard/modules/free-ai-hub/index.html'},
+ {name:'vps-monitor/index.html',type:'html',size:'35 KB',date:'2026-05-22',tags:['vps','monitor'],cat:'module',icon:'📡',path:'C:/DEVKiTZ/01_PROJECTS/01_dashboard/modules/vps-monitor/index.html'},
+ {name:'GEMINI.md',type:'md',size:'8 KB',date:'2026-05-25',tags:['gemini','agent'],cat:'core',icon:'🤖',path:'C:/DEVKiTZ/GEMINI.md'},
+ {name:'CLAUDE.md',type:'md',size:'15 KB',date:'2026-05-25',tags:['claude','agent'],cat:'core',icon:'🧠',path:'C:/DEVKiTZ/CLAUDE.md'},
+ {name:'HERMES_STARTUP.md',type:'md',size:'10 KB',date:'2026-05-25',tags:['hermes','startup'],cat:'core',icon:'🏛️',path:'C:/DEVKiTZ/HERMES_STARTUP.md'},
+];
+
+let docs = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || SEED_DOCS;
+let activities = JSON.parse(localStorage.getItem(ACTIVITY_KEY) || 'null') || [
+ {action:'Ollama → vLLM migriert',file:'dkz-llm-registry.js',dot:'var(--green)',time:'vor 2 Min'},
+ {action:'Paperclip LLM-Zuweisung',file:'kanban-board',dot:'var(--accent)',time:'vor 5 Min'},
+ {action:'LLM Arena erstellt',file:'llm-arena',dot:'var(--blue)',time:'vor 12 Min'},
+ {action:'llama-swap deployed',file:'config.yaml',dot:'var(--green)',time:'vor 15 Min'},
+ {action:'vLLM 0.21.0 installiert',file:'VPS',dot:'var(--cyan)',time:'vor 20 Min'},
+];
+let currentFilter = 'all';
+
+function save() {
+ localStorage.setItem(STORAGE_KEY, JSON.stringify(docs));
+ localStorage.setItem(ACTIVITY_KEY, JSON.stringify(activities));
+}
+
+function addActivity(action, file) {
+ const now = new Date();
+ const time = now.toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'});
+ activities.unshift({action, file, dot:'var(--green)', time});
+ if (activities.length > 20) activities.pop();
+ save();
+ renderActivity();
+}
+
+// === RENDER ===
+function init() { renderStats(); renderDocs(); renderActivity(); initDragDrop(); }
+
+function renderStats() {
+ const t = {};
+ docs.forEach(d => { const ext = d.type || 'other'; t[ext] = (t[ext]||0) + 1; });
+ const topTypes = Object.entries(t).sort((a,b) => b[1]-a[1]).slice(0,4);
+ document.getElementById('stats').innerHTML =
+  '<div class="stat"><div class="stat-val">' + docs.length + '</div><div class="stat-label">Dokumente</div></div>' +
+  topTypes.map(([k,v]) => '<div class="stat"><div class="stat-val">' + v + '</div><div class="stat-label">' + esc(k.toUpperCase()) + '</div></div>').join('');
+ document.getElementById('docCountBadge').textContent = docs.length + ' Dateien';
+}
+
+function renderDocs() {
+ const q = document.getElementById('searchInput').value.toLowerCase();
+ let filtered = currentFilter === 'all' ? docs :
+  currentFilter === 'recent' ? [...docs].sort((a,b) => (b.date||'').localeCompare(a.date||'')).slice(0,8) :
+  docs.filter(d => d.type === currentFilter);
+ if (q) filtered = filtered.filter(d =>
+  d.name.toLowerCase().includes(q) || (d.tags||[]).some(t => t.includes(q)) || (d.path||'').toLowerCase().includes(q)
+ );
+ const grid = document.getElementById('docGrid');
+ if (!filtered.length) {
+  grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">Keine Dokumente gefunden</div></div>';
+  return;
+ }
+ grid.innerHTML = filtered.map(d => `
+  <div class="doc-card" onclick="openDoc('${esc(d.path || d.name)}')">
+   <div class="doc-preview"><span>${d.icon || '📄'}</span><span class="doc-type ${d.type}">${esc((d.type||'').toUpperCase())}</span></div>
+   <div class="doc-body">
+    <div class="doc-title">${esc(d.name)}</div>
+    <div class="doc-meta"><span>📦 ${esc(d.size || '?')}</span><span>📅 ${esc(d.date || '?')}</span><span>📂 ${esc(d.cat || 'other')}</span></div>
+    <div class="doc-path" title="${esc(d.path || '')}">${esc(d.path || '')}</div>
+    <div class="doc-tags">${(d.tags||[]).map((t,i) => '<span class="doc-tag ' + (['green','blue'][i%2]) + '">' + esc(t) + '</span>').join('')}</div>
+   </div></div>`).join('');
+}
+
+function renderActivity() {
+ document.getElementById('activityList').innerHTML = activities.map(a => `
+  <div class="activity-item"><div class="activity-dot" style="background:${a.dot}"></div>
+  <span>${esc(a.action)}</span><span style="color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:11px">${esc(a.file)}</span>
+  <span class="activity-time">${esc(a.time)}</span></div>`).join('');
+}
+
+function setFilter(t, el) {
+ currentFilter = t;
+ document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+ if (el) el.classList.add('active');
+ renderDocs();
+}
+function filterDocs() { renderDocs(); }
+
+// === OPEN DOC ===
+function openDoc(path) {
+ if (!path) return;
+ // Try to open in new tab (works for file:// and http://)
+ const url = path.startsWith('http') ? path : 'file:///' + path.replace(/\\/g, '/');
+ window.open(url, '_blank');
+ addActivity('Geoeffnet', path.split('/').pop());
+}
+
+// === SCAN WORKSPACE ===
+async function scanWorkspace() {
+ const btn = document.getElementById('scanBtn');
+ btn.textContent = '⏳ Scanne...';
+ btn.disabled = true;
+
+ // Try ONTHERUN API first
+ try {
+  const res = await fetch('http://localhost:9900/api/scan-workspace', {method:'POST'});
+  if (res.ok) {
+   const data = await res.json();
+   if (data.files && data.files.length) {
+    data.files.forEach(f => {
+     if (!docs.find(d => d.path === f.path)) {
+      docs.push({name:f.name, type:f.type, size:f.size, date:f.date, tags:f.tags||[], cat:'scanned', icon:getIcon(f.type), path:f.path});
+     }
+    });
+    save(); renderStats(); renderDocs();
+    addActivity('Workspace gescannt', data.files.length + ' neue Dateien');
+    btn.textContent = '🔍 Scan'; btn.disabled = false;
+    return;
+   }
+  }
+ } catch(e) { /* API not available, use fallback */ }
+
+ // Fallback: Add well-known DEVKiTZ files that aren't in the index yet
+ const knownFiles = [
+  {name:'AGENTS.md',type:'md',path:'C:/DEVKiTZ/AGENTS.md',tags:['agents','bmad'],cat:'core'},
+  {name:'auto-release.yml',type:'yml',path:'C:/DEVKiTZ/.github/workflows/auto-release.yml',tags:['ci','github'],cat:'infra'},
+  {name:'dkz-navbar.js',type:'js',path:'C:/DEVKiTZ/01_PROJECTS/01_dashboard/shared/dkz-navbar.js',tags:['shared','nav'],cat:'shared'},
+  {name:'dkz-debug.js',type:'js',path:'C:/DEVKiTZ/01_PROJECTS/01_dashboard/shared/dkz-debug.js',tags:['shared','debug'],cat:'shared'},
+  {name:'dkz-guide.js',type:'js',path:'C:/DEVKiTZ/01_PROJECTS/01_dashboard/shared/dkz-guide.js',tags:['shared','guide'],cat:'shared'},
+  {name:'hermes-log-sync.js',type:'js',path:'C:/DEVKiTZ/01_PROJECTS/01_dashboard/shared/hermes-log-sync.js',tags:['hermes','sync'],cat:'shared'},
+  {name:'opencode-watchdog.ps1',type:'ps1',path:'C:/DEVKiTZ/04_SYSTEM/scripts/opencode-watchdog.ps1',tags:['opencode','watchdog'],cat:'infra'},
+ ];
+ let added = 0;
+ knownFiles.forEach(f => {
+  if (!docs.find(d => d.path === f.path)) {
+   docs.push({...f, size:'?', date:new Date().toISOString().slice(0,10), icon:getIcon(f.type)});
+   added++;
+  }
+ });
+ save(); renderStats(); renderDocs();
+ addActivity('Workspace gescannt (lokal)', added + ' neue Dateien');
+ btn.textContent = '🔍 Scan'; btn.disabled = false;
+}
+
+function getIcon(type) {
+ const map = {md:'📝',json:'📊',html:'🌐',js:'⚡',css:'🎨',yml:'⚙️',yaml:'⚙️',ps1:'🔧',txt:'📄',py:'🐍'};
+ return map[type] || '📄';
+}
+
+// === UPLOAD (Drag & Drop + File Input) ===
+function openUploadModal() { document.getElementById('uploadModal').classList.add('open'); }
+function closeUploadModal() { document.getElementById('uploadModal').classList.remove('open'); }
+
+function initDragDrop() {
+ const zone = document.getElementById('dropZone');
+ const input = document.getElementById('fileInput');
+
+ zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+ zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+ zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+ });
+ input.addEventListener('change', e => handleFiles(e.target.files));
+}
+
+function handleFiles(fileList) {
+ const log = document.getElementById('scanLog');
+ log.style.display = 'block';
+ log.textContent = '';
+
+ Array.from(fileList).forEach(file => {
+  const ext = file.name.split('.').pop().toLowerCase();
+  const entry = {
+   name: file.name,
+   type: ext,
+   size: formatSize(file.size),
+   date: new Date().toISOString().slice(0,10),
+   tags: [ext],
+   cat: 'upload',
+   icon: getIcon(ext),
+   path: 'upload/' + file.name
+  };
+
+  // Read file content for preview (optional)
+  const reader = new FileReader();
+  reader.onload = () => {
+   entry.preview = reader.result.substring(0, 500);
+   if (!docs.find(d => d.name === entry.name && d.cat === 'upload')) {
+    docs.push(entry);
+    save();
+    renderStats();
+    renderDocs();
+    log.textContent += '✅ ' + file.name + ' (' + entry.size + ')\n';
+    addActivity('Hochgeladen', file.name);
+   } else {
+    log.textContent += '⚠️ ' + file.name + ' existiert bereits\n';
+   }
+  };
+  reader.readAsText(file);
+ });
+}
+
+function formatSize(bytes) {
+ if (bytes < 1024) return bytes + ' B';
+ if (bytes < 1048576) return Math.round(bytes/1024) + ' KB';
+ return (bytes/1048576).toFixed(1) + ' MB';
+}
+
+// === INIT ===
+init();
+</script>
+<script src="../../shared/dkz-debug.js"></script>
+<script src="../../shared/dkz-navbar.js"></script>
+</body>
+</html>

@@ -1,0 +1,371 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUZ² MCP</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: #0e0e10;
+            color: #e8e8f0;
+            width: 100%;
+            min-height: 100vh;
+            overflow-x: hidden
+        }
+
+        .header {
+            padding: 16px;
+            border-bottom: 1px solid #1e1e2e;
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .header h1 {
+            font-size: 15px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fa1e4e, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .header .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00ff88;
+            animation: p 2s infinite
+        }
+
+        @keyframes p {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .3
+            }
+        }
+
+        .status-bar {
+            padding: 10px 16px;
+            background: #121215;
+            border-bottom: 1px solid #1e1e2e;
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            color: #6e6e8a;
+            display: flex;
+            gap: 12px
+        }
+
+        .status-bar .active {
+            color: #00ff88
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #1e1e2e
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: #6e6e8a;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all .2s
+        }
+
+        .tab:hover {
+            color: #e8e8f0
+        }
+
+        .tab.active {
+            color: #fa1e4e;
+            border-bottom-color: #fa1e4e
+        }
+
+        .panel {
+            padding: 16px;
+            display: none
+        }
+
+        .panel.active {
+            display: block
+        }
+
+        .chat-input-area {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 16px;
+            background: #121215;
+            border-top: 1px solid #1e1e2e
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 10px 12px;
+            background: #16161a;
+            border: 1px solid #1e1e2e;
+            border-radius: 10px;
+            color: #e8e8f0;
+            font-family: inherit;
+            font-size: 12px;
+            outline: none;
+            resize: none;
+            height: 38px
+        }
+
+        .chat-input:focus {
+            border-color: #fa1e4e
+        }
+
+        .chat-input::placeholder {
+            color: #6e6e8a
+        }
+
+        .messages {
+            padding-bottom: 70px
+        }
+
+        .msg {
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            line-height: 1.6
+        }
+
+        .msg.system {
+            background: rgba(250, 30, 78, .08);
+            border: 1px solid rgba(250, 30, 78, .15);
+            color: #e8e8f0
+        }
+
+        .msg.user {
+            background: #1a1a24;
+            border: 1px solid #2a2a3a
+        }
+
+        .backend-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .be-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: #16161a;
+            border: 1px solid #1e1e2e;
+            border-radius: 10px;
+            font-size: 11px
+        }
+
+        .be-item .icon {
+            font-size: 18px
+        }
+
+        .be-item .name {
+            font-weight: 600;
+            flex: 1
+        }
+
+        .be-item .st {
+            font-size: 9px;
+            font-family: monospace;
+            padding: 2px 6px;
+            border-radius: 4px
+        }
+
+        .st-on {
+            background: rgba(0, 255, 136, .1);
+            color: #00ff88
+        }
+
+        .st-off {
+            background: rgba(255, 68, 102, .1);
+            color: #ff4466
+        }
+
+        .st-dev {
+            background: rgba(255, 184, 0, .1);
+            color: #ffb800
+        }
+
+        .context-result {
+            padding: 12px;
+            background: #16161a;
+            border: 1px solid #1e1e2e;
+            border-radius: 10px;
+            margin-bottom: 8px
+        }
+
+        .context-result .label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6e6e8a;
+            margin-bottom: 6px;
+            font-weight: 700
+        }
+
+        .context-result .text {
+            font-size: 12px;
+            line-height: 1.6
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <div class="dot"></div>
+        <h1>⚡ NEXUZ² MCP</h1>
+    </div>
+
+    <div class="status-bar">
+        <span>Core: <span class="active">ONLINE</span></span>
+        <span>Backends: 6</span>
+        <span>Agents: 3</span>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="chat">💬 Chat</div>
+        <div class="tab" data-tab="backends">🔌 Backends</div>
+        <div class="tab" data-tab="context">📋 Kontext</div>
+    </div>
+
+    <!-- CHAT PANEL -->
+    <div class="panel active" id="panel-chat">
+        <div class="messages" id="chatMessages">
+            <div class="msg system">⚡ NEXUZ² MCP bereit. Markiere Text auf einer Seite und nutze das Rechtsklick-Menü,
+                oder chatte hier direkt mit deinen AI-Backends.</div>
+        </div>
+        <div class="chat-input-area">
+            <textarea class="chat-input" id="chatInput" placeholder="Nachricht an NEXUZ²..." rows="1"></textarea>
+        </div>
+    </div>
+
+    <!-- BACKENDS PANEL -->
+    <div class="panel" id="panel-backends">
+        <div class="backend-list">
+            <div class="be-item"><span class="icon">🖥️</span><span class="name">KVM8 VPS</span><span
+                    class="st st-off">GEPLANT</span></div>
+            <div class="be-item"><span class="icon">🧠</span><span class="name">Linux Dedicated (LLM)</span><span
+                    class="st st-on">AKTIV</span></div>
+            <div class="be-item"><span class="icon">📊</span><span class="name">Google Apps Script</span><span
+                    class="st st-off">GEPLANT</span></div>
+            <div class="be-item"><span class="icon">🌐</span><span class="name">Apache Server</span><span
+                    class="st st-on">AKTIV</span></div>
+            <div class="be-item"><span class="icon">⚡</span><span class="name">Cloudflare Worker</span><span
+                    class="st st-off">GEPLANT</span></div>
+            <div class="be-item"><span class="icon">🐙</span><span class="name">Nextcloud + PicoClaw</span><span
+                    class="st st-dev">DEV</span></div>
+        </div>
+    </div>
+
+    <!-- CONTEXT PANEL -->
+    <div class="panel" id="panel-context">
+        <div id="contextResults">
+            <div class="context-result">
+                <div class="label">Kein Kontext</div>
+                <div class="text" style="color:#6e6e8a">Markiere Text auf einer Webseite und wähle eine NEXUZ²-Aktion
+                    aus dem Rechtsklick-Menü.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Chat input
+        document.getElementById('chatInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const text = e.target.value.trim();
+                if (!text) return;
+                addMessage(text, 'user');
+                e.target.value = '';
+                // Simulate response
+                setTimeout(() => {
+                    addMessage('⚡ NEXUZ² verarbeitet: "' + text.substring(0, 50) + '..." — Backend-Routing wird konfiguriert. Verbinde mit LLM Server...', 'system');
+                }, 500);
+            }
+        });
+
+        function addMessage(text, type) {
+            const msg = document.createElement('div');
+            msg.className = 'msg ' + type;
+            msg.textContent = text;
+            document.getElementById('chatMessages').appendChild(msg);
+            msg.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Listen for context menu actions
+        if (typeof chrome !== 'undefined' && chrome.runtime) {
+            chrome.runtime.onMessage.addListener((msg) => {
+                if (msg.type === 'context-action') {
+                    // Switch to context tab
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                    document.querySelector('[data-tab="context"]').classList.add('active');
+                    document.getElementById('panel-context').classList.add('active');
+
+                    const results = document.getElementById('contextResults');
+                    const actionLabels = {
+                        'send-to-ai': '🧠 An AI gesendet',
+                        'analyze': '📊 Analyse',
+                        'summarize': '📋 Zusammenfassung',
+                        'translate': '🌐 Übersetzung'
+                    };
+                    results.innerHTML = `
+                <div class="context-result">
+                    <div class="label">${actionLabels[msg.action] || msg.action}</div>
+                    <div class="text">${msg.text}</div>
+                </div>
+                <div class="context-result">
+                    <div class="label">Quelle</div>
+                    <div class="text" style="font-size:10px;color:#6e6e8a">${msg.sourceTitle || msg.sourceUrl}</div>
+                </div>
+            `;
+                }
+            });
+        }
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

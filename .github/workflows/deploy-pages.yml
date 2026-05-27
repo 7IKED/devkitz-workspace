@@ -1,0 +1,51 @@
+name: 🌐 DkZ Dashboard → GitHub Pages (devkitz.sites)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '01_PROJECTS/01_dashboard/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: 📦 Deploy → devkitz.sites
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: ⬇️ Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            01_PROJECTS/01_dashboard
+
+      - name: 🏗️ Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: 📦 Upload Dashboard als Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 01_PROJECTS/01_dashboard
+
+      - name: 🚀 Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: 📢 Summary
+        if: always()
+        run: |
+          echo "::notice::✅ Dashboard deployed to GitHub Pages"
+          echo "::notice::🌐 https://devkitz.sites"
+          echo "::notice::📦 Auto-Update aktiv — push to main = live"

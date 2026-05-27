@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VPS Monitor — DEVKiTZ™</title>
+  <link rel="stylesheet" href="../../shared/css/dkz-design-system.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #fa1e4e;
+      --bg: #060608;
+      --surface: #0d0d12;
+      --card: #111118;
+      --border: #1a1a24;
+      --text: #e0e0e0;
+      --text-dim: #888;
+      --green: #00ff88;
+      --yellow: #ffb800;
+      --red: #ff3b5c;
+      --blue: #4a9eff;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .monitor-header {
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
+    }
+
+    .monitor-header h1 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .monitor-header h1 .tm { font-size: 0.7rem; color: var(--accent); vertical-align: super; }
+
+    .status-badge {
+      padding: 0.3rem 1rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      animation: pulse-glow 2s infinite;
+    }
+
+    .status-gruen { background: rgba(0, 255, 136, 0.15); color: var(--green); border: 1px solid var(--green); }
+    .status-gelb { background: rgba(255, 184, 0, 0.15); color: var(--yellow); border: 1px solid var(--yellow); }
+    .status-rot { background: rgba(255, 59, 92, 0.15); color: var(--red); border: 1px solid var(--red); }
+
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 5px currentColor; }
+      50% { box-shadow: 0 0 15px currentColor; }
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      padding: 1.5rem 2rem;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.2rem;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(250, 30, 78, 0.1);
+    }
+
+    .card-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-value {
+      font-size: 2.2rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1;
+    }
+
+    .card-sub {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-top: 0.4rem;
+    }
+
+    /* Gauge */
+    .gauge-container {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 0.5rem;
+    }
+
+    .gauge-bg, .gauge-fill {
+      fill: none;
+      stroke-width: 8;
+      stroke-linecap: round;
+    }
+
+    .gauge-bg { stroke: var(--border); }
+    .gauge-fill { transition: stroke-dashoffset 1s ease, stroke 0.5s ease; }
+
+    .gauge-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    /* Docker Grid */
+    .docker-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.5rem;
+      padding: 0 2rem 1.5rem;
+    }
+
+    .docker-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 0.8rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      transition: border-color 0.3s;
+    }
+
+    .docker-item:hover { border-color: var(--accent); }
+
+    .docker-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .docker-dot.up { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .docker-dot.down { background: var(--red); box-shadow: 0 0 6px var(--red); }
+
+    /* Score Section */
+    .score-section {
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .score-ring {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      margin: 0 auto 1rem;
+    }
+
+    .score-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .score-ring .bg { fill: none; stroke: var(--border); stroke-width: 6; }
+    .score-ring .fill { fill: none; stroke-width: 6; stroke-linecap: round; transition: all 1s ease; }
+    .score-number {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 3rem;
+      font-weight: 700;
+    }
+
+    .section-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--text-dim);
+      padding: 0 2rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .last-update {
+      text-align: center;
+      padding: 1rem;
+      color: var(--text-dim);
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .endpoint-list {
+      padding: 0 2rem 1.5rem;
+    }
+
+    .endpoint-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0.8rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 0.4rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+    }
+
+    .endpoint-method {
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-weight: 600;
+    }
+
+    .method-get { background: rgba(0, 255, 136, 0.15); color: var(--green); }
+    .method-post { background: rgba(74, 158, 255, 0.15); color: var(--blue); }
+
+    .error-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--red);
+    }
+
+    .loading { opacity: 0.5; animation: blink 1s infinite; }
+    @keyframes blink { 50% { opacity: 0.2; } }
+  </style>
+</head>
+<body>
+
+  <header class="monitor-header">
+    <h1>🖥️ VPS Monitor<span class="tm">™</span></h1>
+    <span id="statusBadge" class="status-badge loading">Laden...</span>
+  </header>
+
+  <!-- Score -->
+  <div class="score-section" id="scoreSection">
+    <div class="score-ring">
+      <svg viewBox="0 0 100 100">
+        <circle class="bg" cx="50" cy="50" r="42"></circle>
+        <circle class="fill" id="scoreFill" cx="50" cy="50" r="42"
+                stroke-dasharray="264" stroke-dashoffset="264"></circle>
+      </svg>
+      <div class="score-number" id="scoreNumber">—</div>
+    </div>
+  </div>
+
+  <!-- Metrics -->
+  <div class="dashboard" id="metricsGrid">
+    <div class="card" id="cpuCard">
+      <div class="card-title">⚡ CPU</div>
+      <div class="card-value" id="cpuValue">—</div>
+      <div class="card-sub" id="cpuSub"></div>
+    </div>
+    <div class="card" id="ramCard">
+      <div class="card-title">🧠 RAM</div>
+      <div class="card-value" id="ramValue">—</div>
+      <div class="card-sub" id="ramSub"></div>
+    </div>
+    <div class="card" id="diskCard">
+      <div class="card-title">💾 DISK</div>
+      <div class="card-value" id="diskValue">—</div>
+      <div class="card-sub" id="diskSub"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">⏱️ UPTIME</div>
+      <div class="card-value" id="uptimeValue">—</div>
+      <div class="card-sub" id="uptimeSub"></div>
+    </div>
+  </div>
+
+  <!-- Docker -->
+  <div class="section-title">🐳 Docker Container</div>
+  <div class="docker-grid" id="dockerGrid"></div>
+
+  <!-- Endpoints -->
+  <div class="section-title">🔗 API Endpoints</div>
+  <div class="endpoint-list" id="endpointList">
+    <div class="endpoint-item">
+      <span><span class="endpoint-method method-get">GET</span> /api/automation/health</span>
+      <span>Health Check</span>
+    </div>
+    <div class="endpoint-item">
+      <span><span class="endpoint-method method-get">GET</span> /api/automation/ssl</span>
+      <span>SSL Status</span>
+    </div>
+    <div class="endpoint-item">
+      <span><span class="endpoint-method method-get">GET</span> /api/automation/backup/trigger</span>
+      <span>Manual Backup</span>
+    </div>
+    <div class="endpoint-item">
+      <span><span class="endpoint-method method-get">GET</span> /api/health/dashboard</span>
+      <span>Dashboard API</span>
+    </div>
+    <div class="endpoint-item">
+      <span><span class="endpoint-method method-post">POST</span> /webhook/gmail-scan</span>
+      <span>Gmail Webhook</span>
+    </div>
+    <div class="endpoint-item">
+      <span><span class="endpoint-method method-post">POST</span> /webhook/drive-scan</span>
+      <span>Drive Webhook</span>
+    </div>
+  </div>
+
+  <div class="last-update" id="lastUpdate">Letztes Update: —</div>
+
+<script>
+// ═══════════════════════════════════════
+// DkZ VPS Monitor — Live Dashboard
+// ═══════════════════════════════════════
+
+const API_BASE = 'https://devkitz.eu/api/automation';
+const REFRESH_INTERVAL = 30000; // 30s
+
+function esc(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function getColor(percent, warn, crit) {
+  if (percent >= crit) return 'var(--red)';
+  if (percent >= warn) return 'var(--yellow)';
+  return 'var(--green)';
+}
+
+function updateScore(score, status) {
+  const fill = document.getElementById('scoreFill');
+  const num = document.getElementById('scoreNumber');
+  const badge = document.getElementById('statusBadge');
+  
+  const circumference = 2 * Math.PI * 42;
+  const offset = circumference - (score / 100) * circumference;
+  
+  const color = status === 'gruen' ? 'var(--green)' : 
+                status === 'gelb' ? 'var(--yellow)' : 'var(--red)';
+  
+  fill.style.strokeDashoffset = offset;
+  fill.style.stroke = color;
+  num.textContent = score;
+  num.style.color = color;
+  
+  badge.textContent = status.toUpperCase();
+  badge.className = 'status-badge status-' + status;
+}
+
+function updateMetrics(data) {
+  // CPU
+  document.getElementById('cpuValue').textContent = data.cpu + '%';
+  document.getElementById('cpuValue').style.color = getColor(data.cpu, 80, 95);
+  
+  // RAM
+  document.getElementById('ramValue').textContent = data.ram_percent + '%';
+  document.getElementById('ramValue').style.color = getColor(data.ram_percent, 85, 95);
+  document.getElementById('ramSub').textContent = data.ram_used_gb + ' / ' + data.ram_total_gb + ' GB';
+  
+  // Disk
+  document.getElementById('diskValue').textContent = data.disk_percent + '%';
+  document.getElementById('diskValue').style.color = getColor(data.disk_percent, 80, 90);
+  document.getElementById('diskSub').textContent = data.disk_used_gb + ' / ' + data.disk_total_gb + ' GB';
+  
+  // Uptime
+  const days = Math.floor(data.uptime_hours / 24);
+  const hours = Math.round(data.uptime_hours % 24);
+  document.getElementById('uptimeValue').textContent = days + 'd';
+  document.getElementById('uptimeSub').textContent = days + ' Tage, ' + hours + ' Stunden';
+}
+
+function updateDocker(containers) {
+  const grid = document.getElementById('dockerGrid');
+  const sorted = Object.entries(containers).sort((a, b) => {
+    if (a[1] === b[1]) return a[0].localeCompare(b[0]);
+    return a[1] === 'up' ? -1 : 1;
+  });
+  
+  grid.innerHTML = sorted.map(([name, status]) => 
+    '<div class="docker-item">' +
+    '<span class="docker-dot ' + esc(status) + '"></span>' +
+    '<span>' + esc(name) + '</span>' +
+    '</div>'
+  ).join('');
+}
+
+async function fetchHealth() {
+  try {
+    const resp = await fetch(API_BASE + '/health');
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    
+    updateScore(data.score, data.status);
+    updateMetrics(data);
+    updateDocker(data.docker || {});
+    
+    const ts = new Date(data.timestamp);
+    document.getElementById('lastUpdate').textContent = 
+      'Letztes Update: ' + ts.toLocaleString('de-DE');
+    
+  } catch (err) {
+    console.warn('Health fetch failed:', err);
+    document.getElementById('statusBadge').textContent = 'OFFLINE';
+    document.getElementById('statusBadge').className = 'status-badge status-rot';
+  }
+}
+
+// Initial + Auto-Refresh
+fetchHealth();
+setInterval(fetchHealth, REFRESH_INTERVAL);
+</script>
+
+</body>
+</html>

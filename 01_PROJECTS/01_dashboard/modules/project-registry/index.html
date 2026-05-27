@@ -1,0 +1,949 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🗂️ Project Registry — DkZâ„¢</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #fa1e4e;
+            --accent: #fa1e4e;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(14, 14, 22, .72);
+            --blur: blur(24px)
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .08);
+            border-radius: 6px
+        }
+
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .06;
+            animation: bf 20s ease-in-out infinite
+        }
+
+        .bg-blob:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: var(--green);
+            top: -10%;
+            left: 10%
+        }
+
+        .bg-blob:nth-child(2) {
+            width: 350px;
+            height: 350px;
+            background: var(--accent);
+            bottom: 10%;
+            right: 10%;
+            animation-delay: -8s
+        }
+
+        @keyframes bf {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(30px, -40px) scale(1.1)
+            }
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        .header {
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .back-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: none;
+            font-family: var(--font)
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--green), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .hdr-right {
+            margin-left: auto;
+            display: flex;
+            gap: 6px;
+            align-items: center
+        }
+
+        .ver {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono)
+        }
+
+        .hdr-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-size: 10px;
+            cursor: pointer;
+            font-family: var(--font);
+            transition: all .2s
+        }
+
+        .hdr-btn:hover {
+            border-color: var(--accent);
+            color: var(--text)
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 6px;
+            padding: 8px 24px;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap
+        }
+
+        .stat {
+            padding: 4px 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            font-size: 10px;
+            font-family: var(--mono)
+        }
+
+        .stat b {
+            color: var(--green)
+        }
+
+        .content {
+            display: flex;
+            flex: 1;
+            overflow: hidden
+        }
+
+        .sidebar {
+            width: 340px;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden
+        }
+
+        .search-bar {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 11px;
+            outline: none
+        }
+
+        .search-bar input:focus {
+            border-color: var(--accent)
+        }
+
+        .tree {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 0;
+            font-family: var(--mono);
+            font-size: 11px
+        }
+
+        .tree-item {
+            padding: 3px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            transition: background .1s;
+            border-left: 2px solid transparent
+        }
+
+        .tree-item:hover {
+            background: rgba(255, 255, 255, .03)
+        }
+
+        .tree-item.active {
+            background: rgba(250, 30, 78, .08);
+            border-left-color: var(--accent)
+        }
+
+        .tree-item.folder {
+            color: var(--yellow)
+        }
+
+        .tree-item.file {
+            color: var(--muted)
+        }
+
+        .tree-item.html {
+            color: var(--green)
+        }
+
+        .tree-item.json {
+            color: var(--blue)
+        }
+
+        .tree-item.md {
+            color: var(--accent)
+        }
+
+        .tree-indent {
+            display: inline-block;
+            width: 16px
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden
+        }
+
+        .tabs {
+            display: flex;
+            gap: 2px;
+            padding: 6px 12px;
+            background: var(--card);
+            border-bottom: 1px solid var(--border)
+        }
+
+        .tab {
+            padding: 6px 14px;
+            border: none;
+            background: none;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 700;
+            font-family: var(--font);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all .2s
+        }
+
+        .tab:hover {
+            color: var(--text)
+        }
+
+        .tab.active {
+            background: var(--accent);
+            color: #fff
+        }
+
+        .panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: none
+        }
+
+        .panel.active {
+            display: block
+        }
+
+        .detail-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px
+        }
+
+        .detail-card h3 {
+            font-size: 12px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 6px
+        }
+
+        .dg-item {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px
+        }
+
+        .dg-item .dgl {
+            font-size: 8px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px
+        }
+
+        .dg-item .dgv {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--green);
+            font-family: var(--mono);
+            margin-top: 2px
+        }
+
+        .feat-list {
+            display: flex;
+            flex-direction: column;
+            gap: 3px
+        }
+
+        .feat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 10px
+        }
+
+        .feat-item .fi-id {
+            font-family: var(--mono);
+            color: var(--muted);
+            min-width: 50px
+        }
+
+        .feat-item .fi-status {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 8px;
+            font-weight: 700
+        }
+
+        .fi-status.done {
+            background: rgba(0, 255, 136, .12);
+            color: var(--green)
+        }
+
+        .fi-status.wip {
+            background: rgba(255, 184, 0, .12);
+            color: var(--yellow)
+        }
+
+        .fi-status.planned {
+            background: rgba(85, 172, 238, .12);
+            color: var(--blue)
+        }
+
+        .code-block {
+            font-family: var(--mono);
+            font-size: 10px;
+            padding: 10px;
+            background: #0a0a0c;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--green);
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            line-height: 1.5;
+            cursor: pointer
+        }
+
+        .code-block:hover {
+            border-color: var(--accent)
+        }
+
+        .builder-form {
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .bf-row {
+            display: flex;
+            gap: 6px
+        }
+
+        .bf-row input,
+        .bf-row select {
+            flex: 1;
+            padding: 8px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 11px;
+            outline: none
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: #fff;
+            font-family: var(--font);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        .btn.sec {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text)
+        }
+
+        .chat-panel {
+            display: flex;
+            flex-direction: column;
+            height: 100%
+        }
+
+        .chat-msgs {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .chat-msg {
+            max-width: 85%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 11px;
+            line-height: 1.5
+        }
+
+        .chat-msg.bot {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            align-self: flex-start;
+            color: var(--text)
+        }
+
+        .chat-msg.user {
+            background: var(--accent);
+            color: #fff;
+            align-self: flex-end
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 6px;
+            padding: 12px;
+            border-top: 1px solid var(--border)
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            outline: none
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: var(--green);
+            color: #000;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 10px;
+            z-index: 300;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all .3s;
+            pointer-events: none
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0)
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="project-registry" data-dkz-appid="DKZ-MOD-PRO" data-dkz-version="v0.01" data-dkz-title="🗂️ Project Registry —" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+    </div>
+    <div class="app">
+        <div class="header">
+            <a href="../../hub/index.html" class="back-btn">← Hub</a>
+            <h1>🗂️ Project Registry</h1>
+            <div class="hdr-right">
+                <button class="hdr-btn" onclick="exportTree('json')">📤 JSON</button>
+                <button class="hdr-btn" onclick="exportTree('md')">📤 MD</button>
+                <button class="hdr-btn" onclick="exportTree('txt')">📤 TXT</button>
+                <button class="hdr-btn" onclick="copyTree()">📋 Copy</button>
+                <button class="hdr-btn" onclick="importFeatures()">📥 Import</button>
+                <span class="ver">v0.01</span>
+            </div>
+        </div>
+        <div class="stats-bar" id="statsBar"></div>
+        <div class="content">
+            <div class="sidebar">
+                <div class="search-bar"><input id="treeSearch" placeholder="🔍 Suche..." oninput="filterTree()"></div>
+                <div class="tree" id="tree"></div>
+            </div>
+            <div class="main">
+                <div class="tabs">
+                    <button class="tab active" onclick="showTab('details',this)">📋 Details</button>
+                    <button class="tab" onclick="showTab('features',this)">⚡ Features</button>
+                    <button class="tab" onclick="showTab('code',this)">💻 Code</button>
+                    <button class="tab" onclick="showTab('builder',this)">🔨 Builder</button>
+                    <button class="tab" onclick="showTab('chat',this)">💬 Assistent</button>
+                </div>
+                <div class="panel active" id="p-details"></div>
+                <div class="panel" id="p-features"></div>
+                <div class="panel" id="p-code"></div>
+                <div class="panel" id="p-builder">
+                    <div class="detail-card">
+                        <h3>🔨 Neues Modul erstellen</h3>
+                        <div class="builder-form">
+                            <div class="bf-row"><input id="bName" placeholder="Modul-Name"><input id="bFolder"
+                                    placeholder="ordner-name"></div>
+                            <div class="bf-row"><input id="bDesc" placeholder="Beschreibung"><select id="bCat">
+                                    <option>developer</option>
+                                    <option>design</option>
+                                    <option>content</option>
+                                    <option>ai</option>
+                                    <option>productivity</option>
+                                    <option>tools</option>
+                                    <option>network</option>
+                                    <option>security</option>
+                                    <option>media</option>
+                                    <option>seo</option>
+                                    <option>social</option>
+                                    <option>gaming</option>
+                                </select></div>
+                            <div class="bf-row"><input id="bFeat1" placeholder="Feature 1"><input id="bFeat2"
+                                    placeholder="Feature 2"><input id="bFeat3" placeholder="Feature 3"></div>
+                            <div class="bf-row"><button class="btn" onclick="buildModule()">🚀
+                                    Generieren</button><button class="btn sec" onclick="buildPrompt()">📝 Prompt
+                                    erzeugen</button></div>
+                            <div class="code-block" id="builderOutput" style="display:none"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel" id="p-chat">
+                    <div class="chat-panel">
+                        <div class="chat-msgs" id="chatMsgs">
+                            <div class="chat-msg bot">👋 Hallo! Ich bin der DkZ Registry-Assistent. Frag mich was über
+                                Module, Features, oder wie du was bauen kannst!</div>
+                        </div>
+                        <div class="chat-input">
+                            <input id="chatIn" placeholder="Frage stellen..."
+                                onkeydown="if(event.key==='Enter')sendChat()">
+                            <button class="btn" onclick="sendChat()">📤</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        const TREE_DATA = {
+            "📁 hub": { type: "dashboard", id: "DSH-001", files: ["index.html", "features.json"] },
+            "📁 action-deck": { type: "dashboard", id: "DSH-002", files: ["index.html", "features.json", "module.json"] },
+            "📁 agenten_dashboard": { type: "dashboard", id: "DSH-003", files: ["index.html", "features.json", "README.md", "styles-3d.css", "styles-v2.css", "tabs-v2.js", "updater.bat", "wiki-index.json", "build-wiki-index.js", "docs/BLUEPRINT.md", "docs/HANDBOOK.md", "docs/IMPLEMENTATION_PLAN.md", "docs/USE_CASES.md"] },
+            "📁 api-gateway": { type: "backend", id: "SRV-001", files: ["server.js", "package.json", "middleware/auth.js", "middleware/logger.js", "routes/chat.js", "routes/files.js", "routes/health.js", "routes/mcp.js", "routes/modules.js", "routes/seo.js", "routes/sync.js", "routes/tools.js"] },
+            "📁 auth-center": { type: "dashboard", id: "DSH-004", files: ["index.html", "features.json", "module.json"] },
+            "📁 blogger-dashboard": { type: "dashboard", id: "DSH-005", files: ["index.html", "features.json"] },
+            "📁 cicd-pipeline": { type: "dashboard", id: "DSH-006", files: ["index.html", "features.json", "module.json"] },
+            "📁 community": { type: "dashboard", id: "DSH-007", files: ["index.html", "features.json", "module.json"] },
+            "📁 dashboard/hub": { type: "dashboard", id: "DSH-014", files: ["index.html", "index_panel.html", "patch.js"] },
+            "📁 dokumentation": { type: "docs", id: "DOC-001", files: ["dokumentation.html"] },
+            "📁 drive-organizer": { type: "tool", id: "TOOL-001", files: ["dashboard.html", "organizer.gs", "README.md", "LICENSE"] },
+            "📁 ecosystem-datasight": { type: "dashboard", id: "DSH-008", files: ["index.html", "features.json"] },
+            "📁 eu-cloud": { type: "dashboard", id: "DSH-009", files: ["index.html", "features.json", "module.json"] },
+            "📁 knowledge-hub": { type: "dashboard", id: "DSH-010", files: ["index.html", "features.json", "module.json"] },
+            "📁 landing-pages": { type: "dashboard", id: "DSH-011", files: ["index.html", "features.json", "app.js", "detect.js", "landing.css", "manifest.json", "sw.js"] },
+            "📁 mainboard": { type: "dashboard", id: "DSH-012", files: ["index.html", "features.json", "BLUEPRINT_MORPHEUS_USE_CASES.md"] },
+            "📁 mcp-server": { type: "backend", id: "SRV-002", files: ["index.js", "package.json", "prompts/index.js", "resources/index.js", "tools/chat.js", "tools/files.js", "tools/health.js", "tools/modules.js", "tools/seo.js", "tools/system.js", "tools/workflow.js"] },
+            "📁 messenger": { type: "dashboard", id: "DSH-013", files: ["index.html", "features.json", "module.json"] },
+            "📁 modules/ai_chat": { type: "module", id: "MOD-021", files: ["features.json", "module.json", "chat_version_1/index.html", "chat_version_2/index.html"] },
+            "📁 modules/analyser": { type: "module", id: "MOD-022", files: ["index.html", "features.json", "module.json", "README.md", "INSTALL.md"] },
+            "📁 modules/api-tester": { type: "module", id: "MOD-013", files: ["index.html", "features.json"] },
+            "📁 modules/ascii-tool": { type: "module", id: "MOD-023", files: ["index.html", "features.json"] },
+            "📁 modules/base64-tools": { type: "module", id: "MOD-009", files: ["index.html", "features.json"] },
+            "📁 modules/blog-designer": { type: "module", id: "MOD-024", files: ["index.html", "features.json"] },
+            "📁 modules/changelog-builder": { type: "module", id: "MOD-012", files: ["index.html", "features.json"] },
+            "📁 modules/clipboard": { type: "module", id: "MOD-025", files: ["index.html", "features.json"] },
+            "📁 modules/code-differ": { type: "module", id: "MOD-020", files: ["index.html", "features.json"] },
+            "📁 modules/color-picker": { type: "module", id: "MOD-001", files: ["index.html", "features.json"] },
+            "📁 modules/converter": { type: "module", id: "MOD-026", files: ["index.html", "features.json"] },
+            "📁 modules/cron-builder": { type: "module", id: "MOD-010", files: ["index.html", "features.json"] },
+            "📁 modules/cs2-config": { type: "module", id: "MOD-027", files: ["index.html", "features.json"] },
+            "📁 modules/css-generator": { type: "module", id: "MOD-008", files: ["index.html", "features.json"] },
+            "📁 modules/devnotes": { type: "module", id: "MOD-028", files: ["index.html", "features.json"] },
+            "📁 modules/emoji-picker": { type: "module", id: "MOD-017", files: ["index.html", "features.json"] },
+            "📁 modules/favicon-gen": { type: "module", id: "MOD-019", files: ["index.html", "features.json"] },
+            "📁 modules/hash-generator": { type: "module", id: "MOD-007", files: ["index.html", "features.json"] },
+            "📁 modules/html_viewer": { type: "module", id: "MOD-029", files: ["index.html", "features.json"] },
+            "📁 modules/ip-tools": { type: "module", id: "MOD-016", files: ["index.html", "features.json"] },
+            "📁 modules/json-formatter": { type: "module", id: "MOD-002", files: ["index.html", "features.json"] },
+            "📁 modules/ki-lernplattform": { type: "module", id: "MOD-030", files: ["index.html", "features.json"] },
+            "📁 modules/link-generator": { type: "module", id: "MOD-031", files: ["index.html", "features.json"] },
+            "📁 modules/lorem-generator": { type: "module", id: "MOD-011", files: ["index.html", "features.json"] },
+            "📁 modules/markdown-gen": { type: "module", id: "MOD-032", files: ["index.html", "features.json"] },
+            "📁 modules/markdown_converter": { type: "module", id: "MOD-033", files: ["index.html", "features.json"] },
+            "📁 modules/meta-tag-gen": { type: "module", id: "MOD-015", files: ["index.html", "features.json"] },
+            "📁 modules/noter": { type: "module", id: "MOD-034", files: ["index.html", "features.json"] },
+            "📁 modules/password-gen": { type: "module", id: "MOD-004", files: ["index.html", "features.json"] },
+            "📁 modules/prompt-generator": { type: "module", id: "MOD-035", files: ["index.html", "features.json"] },
+            "📁 modules/prompt-viewer": { type: "module", id: "MOD-036", files: ["index.html", "features.json"] },
+            "📁 modules/prompter": { type: "module", id: "MOD-037", files: ["index.html", "features.json"] },
+            "📁 modules/qr-generator": { type: "module", id: "MOD-018", files: ["index.html", "features.json"] },
+            "📁 modules/rating-system": { type: "module", id: "MOD-038", files: ["index.html", "features.json"] },
+            "📁 modules/regex-tester": { type: "module", id: "MOD-003", files: ["index.html", "features.json"] },
+            "📁 modules/research": { type: "module", id: "MOD-039", files: ["index.html", "features.json"] },
+            "📁 modules/seo-toolkit": { type: "module", id: "MOD-040", files: ["index.html", "features.json"] },
+            "📁 modules/snippet-manager": { type: "module", id: "MOD-014", files: ["index.html", "features.json"] },
+            "📁 modules/social-dashboard": { type: "module", id: "MOD-041", files: ["index.html", "features.json"] },
+            "📁 modules/speech_to_text": { type: "module", id: "MOD-042", files: ["index.html", "features.json"] },
+            "📁 modules/split-browser": { type: "module", id: "MOD-043", files: ["index.html", "features.json"] },
+            "📁 modules/sportwetten": { type: "module", id: "MOD-044", files: ["index.html", "features.json"] },
+            "📁 modules/tasker": { type: "module", id: "MOD-045", files: ["index.html", "features.json"] },
+            "📁 modules/text_summary": { type: "module", id: "MOD-046", files: ["index.html", "features.json"] },
+            "📁 modules/text_to_speech": { type: "module", id: "MOD-047", files: ["index.html", "features.json"] },
+            "📁 modules/timer-tools": { type: "module", id: "MOD-005", files: ["index.html", "features.json"] },
+            "📁 modules/ttl-visualizer": { type: "module", id: "MOD-048", files: ["index.html", "features.json"] },
+            "📁 modules/unit-converter": { type: "module", id: "MOD-006", files: ["index.html", "features.json"] },
+            "📄 Root Files": { type: "root", id: "ROOT", files: [".env", ".env.example", ".gitignore", "BLAUPAUSE.md", "IMPLEMENTIERUNGSPLAN.md", "REGISTRY.json", "features.json", "api-server.js", "generate_meta.js", "generate_panels.js", "mcp-dashboard.html"] }
+        };
+
+        let activeItem = null;
+
+        function renderTree() {
+            const q = document.getElementById('treeSearch').value.toLowerCase();
+            let html = '';
+            Object.entries(TREE_DATA).forEach(([name, data]) => {
+                if (q && !name.toLowerCase().includes(q) && !data.files.some(f => f.toLowerCase().includes(q))) return;
+                const typeColor = data.type === 'module' - 'var(--green)' : data.type === 'dashboard' - 'var(--blue)' : data.type === 'backend' - 'var(--yellow)' : 'var(--muted)';
+                html += `<div class="tree-item folder ${activeItem === name - 'active' : ''}" onclick="selectItem('${name}')" style="color:${typeColor}">📁 ${name.replace('📁 ', '').replace('📄 ', '')} <span style="color:var(--muted);font-size:9px;margin-left:auto">${data.id} · ${data.files.length}</span></div>`;
+                if (activeItem === name) {
+                    data.files.forEach(f => {
+                        const ext = f.split('.').pop();
+                        const cls = ext === 'html' - 'html' : ext === 'json' - 'json' : ext === 'md' - 'md' : 'file';
+                        const icon = ext === 'html' - '🌐' : ext === 'json' - '📊' : ext === 'md' - '📝' : ext === 'js' - '⚡' : ext === 'css' - '🎨' : '📄';
+                        html += `<div class="tree-item ${cls}" style="padding-left:28px">${icon} ${f}</div>`;
+                    });
+                }
+            });
+            document.getElementById('tree').innerHTML = html;
+            renderStats();
+        }
+
+        function renderStats() {
+            const mods = Object.values(TREE_DATA).filter(d => d.type === 'module').length;
+            const dash = Object.values(TREE_DATA).filter(d => d.type === 'dashboard').length;
+            const back = Object.values(TREE_DATA).filter(d => d.type === 'backend').length;
+            const totalFiles = Object.values(TREE_DATA).reduce((s, d) => s + d.files.length, 0);
+            document.getElementById('statsBar').innerHTML = `<div class="stat">📦 Module: <b>${mods}</b></div><div class="stat">🖥️ Dashboards: <b>${dash}</b></div><div class="stat">⚙️ Backend: <b>${back}</b></div><div class="stat">📄 Dateien: <b>${totalFiles}</b></div><div class="stat">🏷️ IDs: <b>MOD-001…048 · DSH-001…014</b></div>`;
+        }
+
+        function selectItem(name) {
+            activeItem = activeItem === name - null : name;
+            renderTree();
+            if (activeItem) loadDetails(name, TREE_DATA[name]);
+        }
+
+        function loadDetails(name, data) {
+            const clean = name.replace('📁 ', '').replace('📄 ', '');
+            document.getElementById('p-details').innerHTML = `
+    <div class="detail-card"><h3>📋 ${clean} <span style="color:var(--muted);font-size:10px;font-family:var(--mono)">${data.id}</span></h3>
+      <div class="detail-grid">
+        <div class="dg-item"><div class="dgl">ID</div><div class="dgv">${data.id}</div></div>
+        <div class="dg-item"><div class="dgl">Typ</div><div class="dgv">${data.type}</div></div>
+        <div class="dg-item"><div class="dgl">Dateien</div><div class="dgv">${data.files.length}</div></div>
+        <div class="dg-item"><div class="dgl">Ordner</div><div class="dgv">${clean}</div></div>
+        <div class="dg-item"><div class="dgl">Version</div><div class="dgv">v0.01</div></div>
+        <div class="dg-item"><div class="dgl">features.json</div><div class="dgv">${data.files.includes('features.json') - '✅' : '❌'}</div></div>
+      </div>
+    </div>
+    <div class="detail-card"><h3>📄 Dateien</h3>
+      <div class="feat-list">${data.files.map(f => `<div class="feat-item"><span class="fi-id">${f.split('.').pop()}</span><span>${f}</span><span style="margin-left:auto;cursor:pointer" onclick="navigator.clipboard.writeText('${clean}/${f}');showToast('📋 Pfad kopiert!')">📋</span></div>`).join('')}</div>
+    </div>
+    <div class="detail-card"><h3>🤖 LLM Prompt für dieses Modul</h3>
+      <div class="code-block" onclick="navigator.clipboard.writeText(this.textContent);showToast('📋 Prompt kopiert!')">Lies zuerst BLAUPAUSE.md und REGISTRY.json im Projekt-Root.
+Dann öffne ${clean}/features.json für den aktuellen Feature-Status.
+Bearbeite ${clean}/index.html nach dem DkZ Design System:
+- Farben: #0e0e10 (bg), #fa1e4e (accent), #00ff88 (green)
+- Fonts: Inter + JetBrains Mono (Google Fonts CDN)
+- Glassmorphism Header, Background Blobs, Toast Notifications
+- Version: v0.01 im Header
+Erstelle _logs/ Ordner und logge Änderungen als JSON.
+Aktualisiere features.json mit neuen Feature-IDs nach Schema FT-XXX.</div>
+    </div>`;
+        }
+
+        function filterTree() { renderTree(); }
+
+        function showTab(id, btn) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('p-' + id).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        function getTreeText(format) {
+            let out = '';
+            if (format === 'json') return JSON.stringify(TREE_DATA, null, 2);
+            Object.entries(TREE_DATA).forEach(([name, data]) => {
+                const clean = name.replace('📁 ', '').replace('📄 ', '');
+                if (format === 'md') out += `### ${clean} (${data.id})\n${data.files.map(f => `- ${f}`).join('\n')}\n\n`;
+                else out += `${clean}/ [${data.id}]\n${data.files.map(f => `  └── ${f}`).join('\n')}\n\n`;
+            });
+            return out;
+        }
+
+        function exportTree(format) {
+            const ext = format === 'json' - 'json' : format === 'md' - 'md' : 'txt';
+            const blob = new Blob([getTreeText(format)], { type: 'text/plain' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = `dkz-registry.${ext}`; a.click();
+            showToast(`📤 Export als .${ext}!`);
+        }
+
+        function copyTree() {
+            navigator.clipboard.writeText(getTreeText('txt'));
+            showToast('📋 Baum kopiert!');
+        }
+
+        function importFeatures() {
+            const input = document.createElement('input'); input.type = 'file'; input.accept = '.json';
+            input.onchange = e => {
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    try {
+                        const data = JSON.parse(ev.target.result);
+                        showToast(`📥 ${Object.keys(data).length} Einträge importiert!`);
+                    } catch (e) { showToast('❌ Ungültiges JSON'); }
+                };
+                reader.readAsText(e.target.files[0]);
+            };
+            input.click();
+        }
+
+        function buildModule() {
+            const name = document.getElementById('bName').value, folder = document.getElementById('bFolder').value,
+                desc = document.getElementById('bDesc').value, cat = document.getElementById('bCat').value,
+                f1 = document.getElementById('bFeat1').value, f2 = document.getElementById('bFeat2').value, f3 = document.getElementById('bFeat3').value;
+            if (!name || !folder) return showToast('⚠️ Name + Ordner nötig!');
+            const id = 'MOD-' + String(Object.values(TREE_DATA).filter(d => d.type === 'module').length + 1).padStart(3, '0');
+            const json = {
+                id, name, folder, version: "0.01", description: desc, category: cat,
+                ui: { framework: "Vanilla HTML/CSS/JS", design: "DkZ Glassmorphism", fonts: ["Inter", "JetBrains Mono"], responsive: false },
+                features: [f1, f2, f3].filter(Boolean).map((f, i) => ({ id: `FT-NEW-${i + 1}`, name: f, status: "planned", type: "feature" })),
+                _llm: { contextFile: "features.json", noFullUpload: true, logTo: "_logs/" }
+            };
+            const el = document.getElementById('builderOutput');
+            el.style.display = 'block'; el.textContent = JSON.stringify(json, null, 2);
+            showToast(`🔨 ${id} ${name} generiert!`);
+        }
+
+        function buildPrompt() {
+            const name = document.getElementById('bName').value, folder = document.getElementById('bFolder').value,
+                desc = document.getElementById('bDesc').value, cat = document.getElementById('bCat').value,
+                f1 = document.getElementById('bFeat1').value, f2 = document.getElementById('bFeat2').value, f3 = document.getElementById('bFeat3').value;
+            const prompt = `Erstelle ein DkZ Dashboard Modul "${name}" (Ordner: modules/${folder}/index.html):
+Beschreibung: ${desc}
+Kategorie: ${cat}
+Features: ${[f1, f2, f3].filter(Boolean).join(', ')}
+
+Technische Anforderungen:
+- Vanilla HTML/CSS/JS in einer Datei
+- DkZ Design System: bg=#0e0e10, accent=#fa1e4e, green=#00ff88, blue=#55ACEE, yellow=#FFB800
+- Fonts: Inter + JetBrains Mono via Google Fonts CDN
+- Glassmorphism Header (sticky, backdrop-filter blur 24px)
+- Animierte Background Blobs
+- Toast Notifications für Aktionen
+- localStorage für Persistenz (Key: dkz-${folder})
+- "← Hub" Button zurück zu ../../hub/index.html
+- Version v0.01 im Header
+- Erstelle auch features.json im selben Ordner`;
+            const el = document.getElementById('builderOutput');
+            el.style.display = 'block'; el.textContent = prompt;
+            navigator.clipboard.writeText(prompt);
+            showToast('📝 Prompt generiert + kopiert!');
+        }
+
+        // Chat Assistant
+        const CHAT_KB = {
+            "module": "Es gibt 48 Module im Ordner modules/. Jedes hat eine index.html und features.json. IDs: MOD-001 bis MOD-048.",
+            "dashboard": "Es gibt 14 Dashboards: Hub, Action Deck, Auth Center, Blogger, CI/CD, Community, Datasight, EU Cloud, Knowledge Hub, Landing Pages, Mainboard, Messenger, Dashboard Hub.",
+            "design": "DkZ Design System: bg=#0e0e10, accent=#fa1e4e, green=#00ff88. Fonts: Inter + JetBrains Mono. Glassmorphism, Background Blobs, Cards mit border-radius 14px.",
+            "feature": "Features sind in features.json pro Modul. Jedes Feature hat eine ID (FT-XXX), Name, Status (done/wip/planned) und Typ.",
+            "export": "Jedes Modul sollte Copy-to-Clipboard, JSON Export und Download-Buttons haben. Der Registry Viewer bietet JSON/MD/TXT Export.",
+            "import": "Import via File-Picker für JSON Dateien. Drag & Drop wo möglich. Feature-JSONs können importiert werden.",
+            "prompt": "Jedes Modul hat einen generierten Prompt in der Details-Ansicht. Builder-Tab kann auch Custom Prompts erzeugen.",
+            "llm": "LLMs sollten ZUERST BLAUPAUSE.md und REGISTRY.json lesen. Dann nur die features.json des betroffenen Moduls laden. Logs in _logs/ schreiben.",
+            "version": "Alle Module sind auf v0.01. Versionierung startet erst wenn Git funktioniert.",
+            "git": "Git init ist blockiert durch Permission Denied. Wahrscheinlich Windows Controlled Folder Access.",
+            "hilfe": "Frag mich nach: module, dashboard, design, features, export, import, prompt, llm, version, git"
+        };
+
+        function sendChat() {
+            const input = document.getElementById('chatIn');
+            const msg = input.value.trim(); if (!msg) return;
+            input.value = '';
+            addChatMsg(msg, 'user');
+            const lower = msg.toLowerCase();
+            let response = "🤔 Da bin ich mir nicht sicher. Versuch mal: module, dashboard, design, features, export, import, prompt, llm, version, git";
+            for (const [key, val] of Object.entries(CHAT_KB)) {
+                if (lower.includes(key)) { response = val; break; }
+            }
+            if (lower.includes('wie viel') || lower.includes('wieviel') || lower.includes('anzahl')) {
+                response = `📊 48 Module + 14 Dashboards + 2 Backend-Services = 64 Komponenten. ${Object.values(TREE_DATA).reduce((s, d) => s + d.files.length, 0)} Dateien total.`;
+            }
+            if (lower.includes('bauen') || lower.includes('erstell') || lower.includes('neu')) {
+                response = "🔨 Geh zum Builder-Tab! Dort kannst du Name, Ordner, Beschreibung und Features eingeben. Der Builder generiert die features.json UND einen Copy-Paste-Prompt für ein LLM.";
+            }
+            setTimeout(() => addChatMsg(response, 'bot'), 300);
+        }
+
+        function addChatMsg(text, type) {
+            const msgs = document.getElementById('chatMsgs');
+            msgs.innerHTML += `<div class="chat-msg ${type}">${text}</div>`;
+            msgs.scrollTop = msgs.scrollHeight;
+        }
+
+        function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500) }
+
+        renderTree();
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Project registry</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Projekte registrieren und verwalten.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Project registry</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Projekte registrieren und verwalten.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-project-registry-onboarded','1')}if(!localStorage.getItem('dkz-project-registry-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>
+
+

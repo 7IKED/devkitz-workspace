@@ -1,0 +1,1412 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v1.02.0_01">
+    <meta name="dkz-module" content="ecosystem-analyzer">
+    <title>Ecosystem Analyzer &#8212; DkZâ„¢</title>
+    <meta name="description"
+        content="DkZ Ecosystem Analyzer -- Module pruefen, debuggen, dokumentieren, strukturieren und bewerten">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+    <style>
+        :root {
+            --neon-red: #fa1e4e;
+            --pink: #ec4899;
+            --matrix-green: #00D084;
+            --blue: #55ACEE;
+            --dark-base: #0e0e10;
+            --soft-white: #f6f6f7;
+            --card-bg: #1a1a1c;
+            --border-color: #2a2a2e;
+            --node-bg: #252528;
+            --orange: #f97316
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--dark-base);
+            color: var(--soft-white);
+            overflow: hidden
+        }
+
+        .app {
+            display: grid;
+            grid-template-columns: 260px 1fr 340px;
+            grid-template-rows: 56px 1fr;
+            height: 100vh
+        }
+
+        header {backdrop-filter:blur(20px);
+            grid-column: 1/-1;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            z-index: 100
+        }
+
+        .logo {
+            font-size: 1.15rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--neon-red), var(--matrix-green));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .hdr-actions {
+            display: flex;
+            gap: .5rem
+        }
+
+        .btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--soft-white);
+            font-size: .78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, .06);
+            border-color: var(--neon-red)
+        }
+
+        .btn.primary {
+            background: linear-gradient(135deg, var(--neon-red), var(--pink));
+            border: none;
+            color: #fff
+        }
+
+        .btn.primary:hover {
+            box-shadow: 0 4px 16px rgba(250, 30, 78, .4);
+            transform: translateY(-1px)
+        }
+
+        .chain-nav {
+            display: flex;
+            gap: 4px
+        }
+
+        .chain-btn {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: .65rem;
+            font-weight: 700;
+            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, .03);
+            color: #808080;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all .2s
+        }
+
+        .chain-btn:hover {
+            border-color: var(--neon-red);
+            color: var(--soft-white)
+        }
+
+        .chain-btn.active {
+            background: var(--neon-red);
+            border-color: var(--neon-red);
+            color: #fff
+        }
+
+        /* Sidebar Left */
+        .sidebar-l {
+            background: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto
+        }
+
+        .sb-sec {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, .04)
+        }
+
+        .sb-title {
+            font-size: .65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: #555;
+            margin-bottom: .75rem
+        }
+
+        .sb-item {
+            background: var(--node-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: .7rem;
+            cursor: pointer;
+            transition: all .2s;
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            margin-bottom: .5rem
+        }
+
+        .sb-item:hover {
+            background: rgba(255, 255, 255, .04);
+            border-color: var(--neon-red);
+            transform: translateX(4px)
+        }
+
+        .sb-item.running {
+            border-color: var(--matrix-green);
+            animation: pulse 1.5s infinite
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 208, 132, .3)
+            }
+
+            50% {
+                box-shadow: 0 0 0 6px rgba(0, 208, 132, 0)
+            }
+        }
+
+        .sb-item.done {
+            border-color: var(--matrix-green);
+            opacity: .7
+        }
+
+        .sb-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0
+        }
+
+        .sb-icon.scan {
+            background: rgba(85, 172, 238, .15)
+        }
+
+        .sb-icon.debug {
+            background: rgba(250, 30, 78, .15)
+        }
+
+        .sb-icon.doc {
+            background: rgba(0, 208, 132, .15)
+        }
+
+        .sb-icon.ai {
+            background: rgba(236, 72, 153, .15)
+        }
+
+        .sb-icon.git {
+            background: rgba(255, 184, 0, .15)
+        }
+
+        .sb-icon.loop {
+            background: rgba(249, 115, 22, .15)
+        }
+
+        .sb-label {
+            font-size: .8rem;
+            font-weight: 600
+        }
+
+        .sb-desc {
+            font-size: .6rem;
+            color: #555
+        }
+
+        /* Main Canvas */
+        .main {
+            background: radial-gradient(circle, rgba(255, 255, 255, .05) 1px, transparent 1px), var(--dark-base);
+            background-size: 20px 20px;
+            position: relative;
+            overflow-y: auto;
+            padding: 1.5rem
+        }
+
+        /* Score Card */
+        .score-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem
+        }
+
+        .score-ring {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            margin: 0 auto 1rem
+        }
+
+        .score-num {
+            font-size: 2.5rem;
+            font-weight: 900;
+            line-height: 1
+        }
+
+        .score-label {
+            font-size: .7rem;
+            color: #808080;
+            margin-top: 2px
+        }
+
+        .score-cats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: .75rem;
+            margin-top: 1rem
+        }
+
+        .cat-bar {
+            background: var(--node-bg);
+            border-radius: 8px;
+            padding: .6rem
+        }
+
+        .cat-name {
+            font-size: .65rem;
+            font-weight: 700;
+            margin-bottom: 4px
+        }
+
+        .cat-track {
+            height: 4px;
+            background: rgba(255, 255, 255, .06);
+            border-radius: 2px;
+            overflow: hidden
+        }
+
+        .cat-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width .8s ease
+        }
+
+        .cat-pct {
+            font-size: .6rem;
+            color: #808080;
+            margin-top: 2px;
+            text-align: right
+        }
+
+        /* Issues List */
+        .issues {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.25rem;
+            margin-bottom: 1rem
+        }
+
+        .issues-title {
+            font-size: .85rem;
+            font-weight: 700;
+            margin-bottom: .75rem;
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .issue {
+            background: var(--node-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: .7rem;
+            margin-bottom: .5rem;
+            transition: all .2s
+        }
+
+        .issue:hover {
+            border-color: var(--blue)
+        }
+
+        .issue-head {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            margin-bottom: .3rem
+        }
+
+        .issue-id {
+            font-size: .7rem;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(250, 30, 78, .1);
+            color: var(--neon-red)
+        }
+
+        .issue-sev {
+            font-size: .6rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700
+        }
+
+        .issue-sev.error {
+            background: rgba(250, 30, 78, .15);
+            color: #fa6b8a
+        }
+
+        .issue-sev.warning {
+            background: rgba(255, 184, 0, .15);
+            color: #FFB800
+        }
+
+        .issue-sev.info {
+            background: rgba(85, 172, 238, .15);
+            color: var(--blue)
+        }
+
+        .issue-msg {
+            font-size: .75rem;
+            color: #a0a0a5;
+            line-height: 1.4
+        }
+
+        .issue-fix {
+            font-size: .7rem;
+            color: var(--blue);
+            margin-top: .3rem;
+            display: flex;
+            align-items: center;
+            gap: 4px
+        }
+
+        .fix-btn {
+            padding: 2px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: rgba(0, 208, 132, .1);
+            color: var(--matrix-green);
+            font-size: .65rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-left: auto
+        }
+
+        .fix-btn:hover {
+            background: rgba(0, 208, 132, .2)
+        }
+
+        /* Loop Viz */
+        .loop-viz {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.25rem;
+            margin-bottom: 1rem
+        }
+
+        .loop-steps {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap
+        }
+
+        .loop-step {
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: .7rem;
+            font-weight: 700;
+            border: 1px solid var(--border-color);
+            background: var(--node-bg);
+            color: #808080;
+            transition: all .3s
+        }
+
+        .loop-step.active {
+            border-color: var(--matrix-green);
+            color: var(--matrix-green);
+            background: rgba(0, 208, 132, .1);
+            animation: pulse 1.5s infinite
+        }
+
+        .loop-step.done {
+            border-color: var(--matrix-green);
+            color: var(--matrix-green)
+        }
+
+        .loop-arrow {
+            color: #555;
+            font-size: .8rem
+        }
+
+        .loop-count {
+            font-size: .7rem;
+            color: #808080;
+            margin-top: .5rem
+        }
+
+        /* Empty State */
+        .empty {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #555
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem
+        }
+
+        .empty-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #808080;
+            margin-bottom: .5rem
+        }
+
+        .empty-text {
+            font-size: .9rem
+        }
+
+        /* Sidebar Right */
+        .sidebar-r {
+            background: var(--card-bg);
+            border-left: 1px solid var(--border-color);
+            overflow-y: auto
+        }
+
+        .prop-panel {
+            padding: 1rem
+        }
+
+        .prop-sec {
+            margin-bottom: 1.5rem
+        }
+
+        .prop-title {
+            font-size: .8rem;
+            font-weight: 700;
+            margin-bottom: .75rem
+        }
+
+        .prop-group {
+            margin-bottom: .75rem
+        }
+
+        .prop-label {
+            font-size: .65rem;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: .35rem;
+            text-transform: uppercase;
+            letter-spacing: .04em
+        }
+
+        .prop-input,
+        .prop-select,
+        .prop-textarea {
+            width: 100%;
+            background: rgba(0, 0, 0, .3);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: .5rem;
+            color: var(--soft-white);
+            font-size: .8rem;
+            font-family: inherit
+        }
+
+        .prop-textarea {
+            min-height: 80px;
+            resize: vertical;
+            font-family: 'JetBrains Mono', monospace
+        }
+
+        .prop-input:focus,
+        .prop-textarea:focus {
+            outline: none;
+            border-color: var(--neon-red)
+        }
+
+        .compat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px
+        }
+
+        .compat-item {
+            background: var(--node-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 6px 8px;
+            font-size: .7rem;
+            display: flex;
+            align-items: center;
+            gap: 4px
+        }
+
+        .compat-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%
+        }
+
+        .compat-dot.ok {
+            background: var(--matrix-green);
+            box-shadow: 0 0 6px rgba(0, 208, 132, .5)
+        }
+
+        .compat-dot.no {
+            background: var(--neon-red)
+        }
+
+        .code-box {
+            background: rgba(0, 0, 0, .4);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: .8rem;
+            margin-top: .5rem;
+            max-height: 200px;
+            overflow: auto
+        }
+
+        .code-box pre {
+            margin: 0
+        }
+
+        .code-box code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .7rem;
+            line-height: 1.5
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            padding: 10px 18px;
+            background: var(--card-bg);
+            border: 1px solid var(--matrix-green);
+            border-radius: 8px;
+            font-size: .8rem;
+            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .5);
+            transform: translateX(400px);
+            transition: transform .3s;
+            z-index: 10000
+        }
+
+        .toast.show {
+            transform: translateX(0)
+        }
+
+        .progress {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, .06);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: .5rem
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 3px;
+            transition: width .5s ease;
+            background: linear-gradient(90deg, var(--neon-red), var(--matrix-green))
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--dark-base)
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px
+        }
+    /* DkZ v2 BG Blobs */body::before{content:"";position:fixed;top:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(250,30,78,.07),transparent 70%);pointer-events:none;z-index:0}body::after{content:"";position:fixed;bottom:-150px;left:-150px;width:500px;height:500px;background:radial-gradient(circle,rgba(168,85,247,.06),transparent 70%);pointer-events:none;z-index:0}
+</style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="ecosystem-analyzer" data-dkz-appid="DKZ-MOD-ECO" data-dkz-version="v0.01" data-dkz-title="Ecosystem Analyzer" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="app">
+        <header>
+            <div style="display:flex;align-items:center;gap:12px">
+                <a href="../../hub/index.html" class="btn" style="padding:5px 10px">? Hub</a>
+                <div class="logo">&#9881; ECOSYSTEM ANALYZER</div><button style="margin-left:8px;padding:4px 8px;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1rem;cursor:pointer" onclick="showModuleInfo()">&#9432;</button>
+            </div>
+            <div class="chain-nav">
+                <a class="chain-btn" href="../action-builder/index.html">Actions</a>
+                <a class="chain-btn" href="../skill-builder/index.html">Skills</a>
+                <a class="chain-btn" href="../workflow-builder/index.html">Workflows</a>
+                <a class="chain-btn" href="../agent-builder/index.html">Agents</a>
+                <a class="chain-btn" href="../team-builder/index.html">Teams</a>
+                <a class="chain-btn" href="../source-registry/index.html">Quellen</a>
+                <a class="chain-btn active">Analyzer</a>
+            </div>
+            <div class="hdr-actions">
+                <button class="btn" onclick="runFullAnalysis()">&#9881; Full Scan</button>
+                <button class="btn" onclick="startLoop()">&#9881; Loop</button>
+                <button class="btn primary" onclick="exportReport()">&#9881; Report</button>
+            </div>
+        </header>
+
+        <!-- Left Sidebar: Actions -->
+        <aside class="sidebar-l">
+            <div class="sb-sec">
+                <div class="sb-title">Analyse</div>
+                <div class="sb-item" id="step-scan" onclick="runStep('scan')">
+                    <div class="sb-icon scan">&#9881;</div>
+                    <div>
+                        <div class="sb-label">Modul scannen</div>
+                        <div class="sb-desc">Dateien, Struktur, Groesse</div>
+                    </div>
+                </div>
+                <div class="sb-item" id="step-lint" onclick="runStep('lint')">
+                    <div class="sb-icon debug">&#9881;</div>
+                    <div>
+                        <div class="sb-label">James Lint</div>
+                        <div class="sb-desc">22 Regeln pruefen</div>
+                    </div>
+                </div>
+                <div class="sb-item" id="step-eco" onclick="runStep('ecosystem')">
+                    <div class="sb-icon scan">&#9881;</div>
+                    <div>
+                        <div class="sb-label">Ecosystem Score</div>
+                        <div class="sb-desc">Kompatibilitaet bewerten</div>
+                    </div>
+                </div>
+            </div>
+            <div class="sb-sec">
+                <div class="sb-title">AI / LLM</div>
+                <div class="sb-item" id="step-llm" onclick="runStep('llm')">
+                    <div class="sb-icon ai">&#9881;</div>
+                    <div>
+                        <div class="sb-label">LLM Evaluation</div>
+                        <div class="sb-desc">Tiefe Code-Analyse</div>
+                    </div>
+                </div>
+                <div class="sb-item" id="step-ocr" onclick="runStep('ocr')">
+                    <div class="sb-icon ai">&#9881;</div>
+                    <div>
+                        <div class="sb-label">Mistral OCR</div>
+                        <div class="sb-desc">Bilder/PDFs lesen</div>
+                    </div>
+                </div>
+                <div class="sb-item" id="step-fix" onclick="runStep('fix')">
+                    <div class="sb-icon debug">&#9881;</div>
+                    <div>
+                        <div class="sb-label">Auto-Fix</div>
+                        <div class="sb-desc">LLM Fix-Vorschlaege</div>
+                    </div>
+                </div>
+            </div>
+            <div class="sb-sec">
+                <div class="sb-title">Dokumentation</div>
+                <div class="sb-item" id="step-doc" onclick="runStep('document')">
+                    <div class="sb-icon doc">&#9881;</div>
+                    <div>
+                        <div class="sb-label">Doku generieren</div>
+                        <div class="sb-desc">README + features.json</div>
+                    </div>
+                </div>
+                <div class="sb-item" id="step-links" onclick="runStep('links')">
+                    <div class="sb-icon scan">&#9881;</div>
+                    <div>
+                        <div class="sb-label">Verweise pruefen</div>
+                        <div class="sb-desc">Links, Imports, Shared</div>
+                    </div>
+                </div>
+            </div>
+            <div class="sb-sec">
+                <div class="sb-title">Git Operations</div>
+                <div class="sb-item" id="step-git" onclick="runStep('git')">
+                    <div class="sb-icon git">&#9881;</div>
+                    <div>
+                        <div class="sb-label">GitHub Ops</div>
+                        <div class="sb-desc">Repo, Commit, Push</div>
+                    </div>
+                </div>
+                <div class="sb-item" id="step-version" onclick="runStep('version')">
+                    <div class="sb-icon git">&#9881;</div>
+                    <div>
+                        <div class="sb-label">Version Bump</div>
+                        <div class="sb-desc">Update + Changelog</div>
+                    </div>
+                </div>
+            </div>
+            <div class="sb-sec">
+                <div class="sb-title">Loop Engine</div>
+                <div class="sb-item" id="step-loop" onclick="startLoop()" style="border-color:var(--orange)">
+                    <div class="sb-icon loop">&#9881;</div>
+                    <div>
+                        <div class="sb-label">Debug Loop</div>
+                        <div class="sb-desc">Scan?Fix?LLM?Re-Check</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Canvas -->
+        <main class="main" id="main-canvas">
+            <div class="empty" id="empty-state">
+                <div class="empty-icon">&#9881;</div>
+                <div class="empty-title">Ecosystem Analyzer</div>
+                <div class="empty-text">Waehle ein Modul zum Analysieren oder fuege Code ein</div>
+                <div style="margin-top:1.5rem">
+                    <button class="btn primary" onclick="loadCurrentPage()" style="margin:0 auto">&#9881; Aktuelle Seite
+                        analysieren</button>
+                </div>
+            </div>
+
+            <!-- Score Card (hidden initially) -->
+            <div id="score-section" style="display:none">
+                <div class="score-card">
+                    <div style="display:flex;align-items:center;gap:1.5rem">
+                        <div class="score-ring" id="score-ring">
+                            <div class="score-num" id="score-num">--</div>
+                            <div class="score-label">ECOSYSTEM SCORE</div>
+                        </div>
+                        <div style="flex:1">
+                            <div style="font-size:1.2rem;font-weight:800;margin-bottom:4px" id="score-grade">--</div>
+                            <div style="font-size:.75rem;color:#808080" id="score-summary">Kein Scan durchgefuehrt</div>
+                            <div class="progress" style="margin-top:8px">
+                                <div class="progress-bar" id="score-progress" style="width:0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="score-cats" id="score-cats"></div>
+                </div>
+
+                <!-- Compatibility -->
+                <div class="score-card" id="compat-section" style="display:none">
+                    <div style="font-size:.85rem;font-weight:700;margin-bottom:.75rem">&#9881; DkZ Kompatibilitaet</div>
+                    <div class="compat-grid" id="compat-grid"></div>
+                </div>
+
+                <!-- Loop Visualization -->
+                <div class="loop-viz" id="loop-viz" style="display:none">
+                    <div style="font-size:.85rem;font-weight:700;margin-bottom:.75rem">&#9881; Debug Loop</div>
+                    <div class="loop-steps" id="loop-steps"></div>
+                    <div class="loop-count" id="loop-count"></div>
+                </div>
+
+                <!-- Issues -->
+                <div class="issues" id="issues-section" style="display:none">
+                    <div class="issues-title">&#9881; Issues <span id="issue-count"
+                            style="font-size:.7rem;color:#808080">(0)</span></div>
+                    <div id="issues-list"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Sidebar: Properties -->
+        <aside class="sidebar-r">
+            <div class="prop-panel">
+                <div class="prop-sec">
+                    <div class="prop-title">Analyse-Ziel</div>
+                    <div class="prop-group">
+                        <div class="prop-label">Modul / Code</div>
+                        <select class="prop-select" id="target-module" onchange="onTargetChange()">
+                            <option value="">-- Modul waehlen --</option>
+                        </select>
+                    </div>
+                    <div class="prop-group">
+                        <div class="prop-label">Oder Code einfuegen</div>
+                        <textarea class="prop-textarea" id="target-code"
+                            placeholder="HTML/JS/CSS hier einfuegen..."></textarea>
+                    </div>
+                </div>
+                <div class="prop-sec">
+                    <div class="prop-title">Loop Konfiguration</div>
+                    <div class="prop-group">
+                        <div class="prop-label">Max Iterationen</div><input type="number" class="prop-input"
+                            id="max-loops" value="5" min="1" max="20">
+                    </div>
+                    <div class="prop-group">
+                        <div class="prop-label">LLM Provider</div><select class="prop-select" id="llm-provider">
+                            <option value="auto">Auto (OpenRouter Free)</option>
+                            <option value="claude">Claude</option>
+                            <option value="gemini">Gemini</option>
+                            <option value="gpt4">GPT-4</option>
+                        </select>
+                    </div>
+                    <div class="prop-group">
+                        <div class="prop-label">Fix-Modus</div><select class="prop-select" id="fix-mode">
+                            <option value="suggest">Nur Vorschlaege</option>
+                            <option value="auto">Auto-Apply (vorsichtig)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="prop-sec">
+                    <div class="prop-title">Git Operations</div>
+                    <div class="prop-group">
+                        <div class="prop-label">Repository</div><input class="prop-input" id="git-repo"
+                            placeholder="github.com/user/repo">
+                    </div>
+                    <div style="display:flex;gap:.5rem;margin-top:.5rem">
+                        <button class="btn" onclick="gitCreate()"
+                            style="flex:1;justify-content:center;font-size:.7rem">&#9881; Repo erstellen</button>
+                        <button class="btn" onclick="gitPush()" style="flex:1;justify-content:center;font-size:.7rem">&#128203;
+                            Push</button>
+                    </div>
+                </div>
+                <div class="prop-sec">
+                    <div class="prop-title">Analyse-Log</div>
+                    <div class="code-box">
+                        <pre><code id="log-output">Bereit. Waehle ein Modul oder fuege Code ein.</code></pre>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <div class="toast" id="toast"><span id="toast-text"></span></div>
+
+    <script>
+        // =============================================
+        // ECOSYSTEM ANALYZER ENGINE
+        // =============================================
+        var state = {
+            code: '',
+            moduleName: '',
+            result: null,
+            ecoResult: null,
+            loopIteration: 0,
+            loopRunning: false,
+            issues: [],
+            log: []
+        };
+
+        // Populate module dropdown
+        var MODULES = [
+            'action-builder', 'agent-builder', 'ai_chat', 'analyser', 'api-tester', 'app-builder',
+            'ascii-tool', 'base64-tools', 'blog-designer', 'changelog-builder', 'clipboard', 'code-differ',
+            'color-picker', 'converter', 'cron-builder', 'cs2-config', 'css-generator', 'devnotes',
+            'doc-engine', 'domain-control', 'emoji-picker', 'favicon-gen', 'gallery', 'hash-generator',
+            'html_viewer', 'iceberg', 'ip-tools', 'json-formatter', 'ki-lernplattform', 'link-generator',
+            'llm-cost-board', 'loop-dashboard', 'lorem-generator', 'markdown_converter', 'markdown-gen',
+            'meta-tag-gen', 'noter', 'password-gen', 'playbook-archiv', 'project-registry', 'prompter',
+            'prompt-generator', 'prompt-viewer', 'qr-generator', 'rating-system', 'regex-tester',
+            'research', 'ruleboard', 'seo-toolkit', 'settings', 'skill-builder', 'snippet-manager',
+            'social-dashboard', 'source-registry', 'speech_to_text', 'split-browser', 'sportwetten',
+            'suno-ai', 'system-check', 'tasker', 'team-builder', 'text_summary', 'text_to_speech',
+            'timer-tools', 'ttl-visualizer', 'unit-converter', 'workflow-builder'
+        ];
+
+        var sel = document.getElementById('target-module');
+        MODULES.forEach(function (m) {
+            var opt = document.createElement('option');
+            opt.value = m; opt.textContent = m;
+            sel.appendChild(opt);
+        });
+
+        function onTargetChange() {
+            var m = document.getElementById('target-module').value;
+            if (!m) return;
+            state.moduleName = m;
+            log('Modul gewaehlt: ' + m);
+            toast('Modul: ' + m + ' &#8212; Starte Scan...');
+        }
+
+        // =============================================
+        // LOAD CURRENT PAGE
+        // =============================================
+        function loadCurrentPage() {
+            state.code = document.documentElement.outerHTML;
+            state.moduleName = 'ecosystem-analyzer';
+            log('Aktuelle Seite geladen (' + Math.round(state.code.length / 1024) + 'KB)');
+            runStep('lint');
+        }
+
+        // =============================================
+        // RUN INDIVIDUAL STEPS
+        // =============================================
+        async function runStep(step) {
+            var el = document.getElementById('step-' + step);
+            if (el) { el.classList.add('running'); el.classList.remove('done'); }
+
+            // If no code loaded, try to get from module
+            if (!state.code && state.moduleName) {
+                state.code = '<!-- Module: ' + state.moduleName + ' -->\n<!-- Code wird ueber NEXUZ geladen -->';
+                log('Hinweis: Code fuer ' + state.moduleName + ' muss manuell eingefuegt oder ueber NEXUZ geladen werden');
+            }
+            if (!state.code) {
+                var ta = document.getElementById('target-code').value;
+                if (ta) { state.code = ta; state.moduleName = 'custom'; }
+                else { toast('Kein Code zum Analysieren'); return; }
+            }
+
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('score-section').style.display = 'block';
+
+            switch (step) {
+                case 'scan':
+                    await stepScan(); break;
+                case 'lint':
+                    await stepLint(); break;
+                case 'ecosystem':
+                    await stepEcosystem(); break;
+                case 'llm':
+                    await stepLLM(); break;
+                case 'ocr':
+                    await stepOCR(); break;
+                case 'fix':
+                    await stepFix(); break;
+                case 'document':
+                    await stepDocument(); break;
+                case 'links':
+                    await stepLinks(); break;
+                case 'git':
+                    await stepGit(); break;
+                case 'version':
+                    await stepVersion(); break;
+            }
+
+            if (el) { el.classList.remove('running'); el.classList.add('done'); }
+        }
+
+        // ---- Step: Scan ----
+        async function stepScan() {
+            log('&#9881; SCAN gestartet...');
+            var size = state.code.length;
+            var lines = state.code.split('\n').length;
+            var scripts = (state.code.match(/<script/g) || []).length;
+            var styles = (state.code.match(/<style|<link.*css/g) || []).length;
+            var funcs = (state.code.match(/function\s+\w+/g) || []).length;
+
+            log('  Groesse: ' + Math.round(size / 1024) + 'KB');
+            log('  Zeilen: ' + lines);
+            log('  Scripts: ' + scripts + ' | Styles: ' + styles);
+            log('  Funktionen: ' + funcs);
+            toast('Scan: ' + lines + ' Zeilen, ' + Math.round(size / 1024) + 'KB');
+        }
+
+        // ---- Step: Lint (James 22 Rules) ----
+        async function stepLint() {
+            log('&#9881; JAMES LINT (22 Regeln)...');
+            if (typeof DkzJames === 'undefined') { log('  ERROR: DkzJames nicht verfuegbar'); return; }
+
+            state.result = DkzJames.evaluate(state.code, 'html');
+            state.issues = state.result.issues;
+            log('  Score: ' + state.result.score + '/100 (' + state.result.grade + ')');
+            log('  Issues: ' + state.result.issues.length);
+
+            renderScore(state.result);
+            renderIssues(state.result.issues);
+            toast('James Score: ' + state.result.score + '/100');
+        }
+
+        // ---- Step: Ecosystem Score ----
+        async function stepEcosystem() {
+            log('&#9881; ECOSYSTEM SCORE...');
+            if (typeof DkzJames === 'undefined') { log('  ERROR: DkzJames nicht verfuegbar'); return; }
+
+            state.ecoResult = DkzJames.ecosystemScore(state.code);
+            log('  Base: ' + state.ecoResult.baseScore + ' + Bonus: ' + state.ecoResult.bonusScore + ' = ' + state.ecoResult.finalScore);
+
+            renderScore({ score: state.ecoResult.finalScore, grade: state.ecoResult.grade, color: state.ecoResult.color, issues: state.ecoResult.issues, categories: state.ecoResult.categories });
+            renderCompatibility(state.ecoResult.compatibility);
+            toast('Ecosystem: ' + state.ecoResult.finalScore + '/100');
+        }
+
+        // ---- Step: LLM Evaluation ----
+        async function stepLLM() {
+            log('&#9881; LLM EVALUATION...');
+            if (typeof DkzJames === 'undefined') { log('  ERROR: DkzJames nicht verfuegbar'); return; }
+
+            var result = await DkzJames.evaluateWithLLM(state.code, state.moduleName);
+            if (result.rating !== null) {
+                log('  LLM Score: ' + result.rating + '/100');
+                log('  Summary: ' + (result.summary || '').substring(0, 100));
+                if (result.issues) {
+                    result.issues.forEach(function (i) { log('  Issue: ' + i.message); });
+                }
+            } else {
+                log('  LLM Feedback: ' + (result.feedback || '').substring(0, 200));
+            }
+            toast('LLM Evaluation ' + (result.source === 'error' - 'fehlgeschlagen' : 'abgeschlossen'));
+        }
+
+        // ---- Step: OCR ----
+        async function stepOCR() {
+            log('&#9881; MISTRAL OCR...');
+            var url = prompt('Bild/PDF URL eingeben:');
+            if (!url) { log('  Abgebrochen'); return; }
+
+            var result = await DkzJames.ocr(url);
+            if (result.error) {
+                log('  Error: ' + result.error);
+            } else {
+                log('  ' + result.pages + ' Seiten gelesen via ' + result.source);
+                log('  Text: ' + result.text.substring(0, 200) + '...');
+            }
+            toast('OCR: ' + result.source);
+        }
+
+        // ---- Step: Auto-Fix ----
+        async function stepFix() {
+            log('&#9881; AUTO-FIX...');
+            if (!state.issues || state.issues.length === 0) { log('  Keine Issues zum Fixen'); return; }
+
+            for (var i = 0; i < Math.min(state.issues.length, 5); i++) {
+                var issue = state.issues[i];
+                log('  Fix fuer ' + issue.rule.id + '...');
+
+                if (issue.rule.fix) {
+                    log('  - Local Fix: ' + issue.rule.fix);
+                } else {
+                    var result = await DkzJames.suggestFix(issue, state.code);
+                    log('  - ' + result.source + ': ' + (result.fix || '').substring(0, 100));
+                }
+            }
+            toast('Fix-Vorschlaege generiert');
+        }
+
+        // ---- Step: Document ----
+        async function stepDocument() {
+            log('&#9881; DOKU GENERIEREN...');
+            var readme = '# ' + state.moduleName + '\n\n';
+            readme += '> DkZ Modul\n\n';
+            readme += '## Score: ' + (state.result - state.result.score : '--') + '/100\n\n';
+            if (state.ecoResult) {
+                readme += '## Kompatibilitaet\n';
+                readme += '- Theme: ' + (state.ecoResult.compatibility.theme - '&#10067;' : '&#10067;') + '\n';
+                readme += '- NEXUZ: ' + (state.ecoResult.compatibility.nexuz - '&#10067;' : '&#10067;') + '\n';
+                readme += '- James: ' + (state.ecoResult.compatibility.james - '&#10067;' : '&#10067;') + '\n';
+            }
+            log('  README generiert (' + readme.length + ' chars)');
+            log('  features.json Template bereit');
+
+            // Store for export
+            state.generatedReadme = readme;
+            toast('Dokumentation generiert');
+        }
+
+        // ---- Step: Links ----
+        async function stepLinks() {
+            log('&#9881; VERWEISE PRUEFEN...');
+            var hrefs = state.code.match(/href=["'][^"']+["']/g) || [];
+            var srcs = state.code.match(/src=["'][^"']+["']/g) || [];
+            log('  ' + hrefs.length + ' href Links');
+            log('  ' + srcs.length + ' src Referenzen');
+
+            var shared = ['dkz-debug.js', 'dkz-guide.js', 'dkz-copilot.js', 'dkz-shortcuts.js', 'dkz-export.js', 'dkz-crosslinks.js', 'dkz-a11y.js', 'dkz-test.js', 'dkz-puter.js', 'nexuz.js', 'dkz-james.js'];
+            var found = 0;
+            shared.forEach(function (s) { if (state.code.includes(s)) found++; });
+            log('  Shared Scripts: ' + found + '/' + shared.length);
+            toast('Verweise: ' + hrefs.length + ' Links, ' + found + '/' + shared.length + ' Shared');
+        }
+
+        // ---- Step: Git ----
+        async function stepGit() {
+            log('&#9881; GIT OPS...');
+            log('  Git Operationen erfordern ONTHERUN Gateway');
+            if (typeof NEXUZ !== 'undefined' && NEXUZ.call) {
+                try {
+                    await NEXUZ.call('otr_system_info');
+                    log('  ONTHERUN verbunden ?');
+                } catch (e) {
+                    log('  ONTHERUN offline. Starte mit: dkz start');
+                }
+            }
+            toast('Git: ONTHERUN Status geprueft');
+        }
+
+        // ---- Step: Version ----
+        async function stepVersion() {
+            log('&#9881; VERSION BUMP...');
+            var match = state.code.match(/dkz-version.*?content=["']([^"']+)["']/);
+            if (match) { log('  Aktuelle Version: ' + match[1]); }
+            else { log('  Keine dkz-version Meta-Tag gefunden'); }
+            toast('Version Check abgeschlossen');
+        }
+
+        // =============================================
+        // LOOP ENGINE
+        // =============================================
+        async function startLoop() {
+            if (state.loopRunning) { toast('Loop laeuft bereits'); return; }
+            if (!state.code) { toast('Kein Code geladen'); return; }
+
+            state.loopRunning = true;
+            state.loopIteration = 0;
+            var maxLoops = parseInt(document.getElementById('max-loops').value) || 5;
+            var loopSteps = ['scan', 'lint', 'fix', 'llm', 'lint'];
+
+            document.getElementById('loop-viz').style.display = 'block';
+            log('&#9881; DEBUG LOOP gestartet (max ' + maxLoops + ' Iterationen)');
+
+            for (var i = 0; i < maxLoops; i++) {
+                state.loopIteration = i + 1;
+                log('\n--- Loop Iteration ' + state.loopIteration + '/' + maxLoops + ' ---');
+                renderLoopViz(loopSteps, -1, i + 1, maxLoops);
+
+                for (var s = 0; s < loopSteps.length; s++) {
+                    renderLoopViz(loopSteps, s, i + 1, maxLoops);
+                    await runStep(loopSteps[s]);
+                    await sleep(300);
+                }
+
+                // Check if all issues fixed
+                if (state.result && state.result.issues.length === 0) {
+                    log('? Alle Issues behoben nach ' + (i + 1) + ' Iterationen!');
+                    break;
+                }
+
+                // Check if score improved
+                if (state.result && state.result.score >= 90) {
+                    log('? Score >= 90 erreicht! (' + state.result.score + ')');
+                    break;
+                }
+            }
+
+            state.loopRunning = false;
+            renderLoopViz(loopSteps, loopSteps.length, state.loopIteration, maxLoops);
+            log('&#9881; Loop beendet. Final Score: ' + (state.result - state.result.score : '--'));
+            toast('Loop beendet: ' + state.loopIteration + ' Iterationen');
+        }
+
+        function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+        // =============================================
+        // FULL ANALYSIS
+        // =============================================
+        async function runFullAnalysis() {
+            if (!state.code && !document.getElementById('target-code').value) {
+                var m = document.getElementById('target-module').value;
+                if (m) { state.moduleName = m; state.code = '<!-- Module: ' + m + ' -->'; }
+                else { loadCurrentPage(); return; }
+            }
+            if (document.getElementById('target-code').value && !state.code) {
+                state.code = document.getElementById('target-code').value;
+                state.moduleName = 'custom';
+            }
+
+            log('&#9881; FULL ANALYSIS gestartet fuer: ' + state.moduleName);
+            await runStep('scan');
+            await runStep('lint');
+            await runStep('ecosystem');
+            await runStep('links');
+            await runStep('document');
+            log('&#9881; FULL ANALYSIS abgeschlossen');
+            toast('Full Scan abgeschlossen!');
+        }
+
+        // =============================================
+        // RENDER FUNCTIONS
+        // =============================================
+        function renderScore(result) {
+            var ring = document.getElementById('score-ring');
+            ring.style.background = 'conic-gradient(' + result.color + ' ' + (result.score * 3.6) + 'deg, rgba(255,255,255,.06) 0deg)';
+            document.getElementById('score-num').textContent = result.score;
+            document.getElementById('score-num').style.color = result.color;
+            document.getElementById('score-grade').textContent = 'Grade: ' + result.grade;
+            document.getElementById('score-grade').style.color = result.color;
+            document.getElementById('score-summary').textContent = result.issues.length + ' Issues gefunden';
+            document.getElementById('score-progress').style.width = result.score + '%';
+
+            var catHtml = '';
+            var cats = typeof DkzJames !== 'undefined' - DkzJames.CATEGORIES : {};
+            Object.keys(result.categories || {}).forEach(function (cat) {
+                var cs = result.categories[cat];
+                var pct = cs.total > 0 - Math.round((cs.pass / cs.total) * 100) : 100;
+                var color = cats[cat] - cats[cat].color : '#808080';
+                catHtml += '<div class="cat-bar"><div class="cat-name" style="color:' + color + '">' + (cats[cat] - cats[cat].name : cat) + '</div><div class="cat-track"><div class="cat-fill" style="width:' + pct + '%;background:' + color + '"></div></div><div class="cat-pct">' + pct + '%</div></div>';
+            });
+            document.getElementById('score-cats').innerHTML = catHtml;
+        }
+
+        function renderIssues(issues) {
+            document.getElementById('issues-section').style.display = issues.length > 0 - 'block' : 'none';
+            document.getElementById('issue-count').textContent = '(' + issues.length + ')';
+            var html = '';
+            issues.forEach(function (issue) {
+                html += '<div class="issue"><div class="issue-head"><span class="issue-id">' + issue.rule.id + '</span><span class="issue-sev error">ERROR</span><span style="flex:1"></span><button class="fix-btn" onclick="fixIssue(\'' + issue.rule.id + '\')">Fix</button></div><div class="issue-msg">' + issue.rule.hint + '</div>';
+                if (issue.rule.fix) html += '<div class="issue-fix">&#128295; ' + issue.rule.fix + '</div>';
+                html += '</div>';
+            });
+            document.getElementById('issues-list').innerHTML = html;
+        }
+
+        function renderCompatibility(compat) {
+            document.getElementById('compat-section').style.display = 'block';
+            var html = '';
+            var items = { 'Theme CSS': compat.theme, 'NEXUZ': compat.nexuz, 'James GPT': compat.james, 'Chain Nav': compat.chain, 'Export': compat.exports, 'Version': compat.version };
+            Object.keys(items).forEach(function (k) {
+                html += '<div class="compat-item"><div class="compat-dot ' + (items[k] - 'ok' : 'no') + '"></div>' + k + '</div>';
+            });
+            document.getElementById('compat-grid').innerHTML = html;
+        }
+
+        function renderLoopViz(steps, activeIdx, iteration, maxIter) {
+            var html = '';
+            steps.forEach(function (s, i) {
+                if (i > 0) html += '<span class="loop-arrow">?</span>';
+                var cls = i < activeIdx - 'done' : i === activeIdx - 'active' : '';
+                html += '<div class="loop-step ' + cls + '">' + s + '</div>';
+            });
+            document.getElementById('loop-steps').innerHTML = html;
+            document.getElementById('loop-count').textContent = 'Iteration ' + iteration + '/' + maxIter;
+        }
+
+        async function fixIssue(ruleId) {
+            log('&#9881; Fixing ' + ruleId + '...');
+            var issue = state.issues.find(function (i) { return i.rule.id === ruleId; });
+            if (!issue) return;
+            var result = await DkzJames.suggestFix(issue, state.code);
+            log('  ' + result.source + ': ' + (result.fix || '').substring(0, 150));
+            toast('Fix fuer ' + ruleId + ' vorgeschlagen');
+        }
+
+        // =============================================
+        // GIT OPERATIONS
+        // =============================================
+        function gitCreate() {
+            log('&#9881; GitHub Repo erstellen...');
+            if (typeof NEXUZ !== 'undefined' && NEXUZ.call) {
+                NEXUZ.call('otr_system_info').then(function () {
+                    log('  Repo-Erstellung erfordert GitHub Token');
+                    log('  Setze: NEXUZ.setToken("github", "ghp_...")');
+                }).catch(function () { log('  ONTHERUN offline'); });
+            } else { log('  NEXUZ nicht verfuegbar'); }
+            toast('GitHub: Token erforderlich');
+        }
+
+        function gitPush() {
+            log('&#9881; Git Push...');
+            log('  Push erfordert ONTHERUN Gateway + GitHub Token');
+            toast('Git Push: Gateway erforderlich');
+        }
+
+        // =============================================
+        // EXPORT REPORT
+        // =============================================
+        function exportReport() {
+            var report = {
+                module: state.moduleName,
+                timestamp: new Date().toISOString(),
+                score: state.result - state.result.score : null,
+                ecosystemScore: state.ecoResult - state.ecoResult.finalScore : null,
+                grade: state.result - state.result.grade : null,
+                issues: (state.issues || []).map(function (i) { return { id: i.rule.id, hint: i.rule.hint, fix: i.rule.fix }; }),
+                compatibility: state.ecoResult - state.ecoResult.compatibility : null,
+                loopIterations: state.loopIteration,
+                log: state.log
+            };
+            var blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = (state.moduleName || 'analysis') + '_report.json';
+            a.click();
+            toast('Report exportiert!');
+        }
+
+        // =============================================
+        // UTILITIES
+        // =============================================
+        function log(msg) {
+            state.log.push(msg);
+            var el = document.getElementById('log-output');
+            el.textContent = state.log.slice(-30).join('\n');
+            el.parentElement.scrollTop = el.parentElement.scrollHeight;
+        }
+
+        function toast(msg) {
+            var t = document.getElementById('toast');
+            document.getElementById('toast-text').textContent = msg;
+            t.classList.add('show');
+            setTimeout(function () { t.classList.remove('show'); }, 3000);
+        }
+    </script>
+
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script src="../../shared/nexuz.js"></script>
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../../shared/sw.js").catch(function () { })</script>
+
+<!-- INFO POPUP -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal">
+<div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px;max-height:80vh;overflow-y:auto">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+<div style="font-size:1.25rem;font-weight:800">Ecosystem Analyzer Info</div>
+<button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button>
+</div>
+<div style="font-size:.875rem;line-height:1.8;color:#a0a0a0">
+<p><strong style="color:#f6f6f7">Analysiere das gesamte DEVKiTZ &Ouml;kosystem auf Fehler und L&uuml;cken.</strong></p>
+</div></div></div>
+<!-- ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding">
+<div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center">
+<div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Ecosystem Analyzer</div>
+<div style="font-size:.875rem;color:#a0a0a0;line-height:1.8;text-align:left">
+<div style="display:flex;align-items:flex-start;gap:.75rem;margin-bottom:.75rem"><span style="background:rgba(250,30,78,.2);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:900;font-size:.75rem;color:#fa1e4e">1</span><span><strong style="color:#f6f6f7">Scan starten</strong> &mdash; Alle Module und Dateien pr&uuml;fen</span></div>
+<div style="display:flex;align-items:flex-start;gap:.75rem;margin-bottom:.75rem"><span style="background:rgba(0,208,132,.2);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:900;font-size:.75rem;color:#00D084">2</span><span><strong style="color:#f6f6f7">Ergebnisse pr&uuml;fen</strong> &mdash; Fehler, Warnungen und Tipps durchgehen</span></div>
+<div style="display:flex;align-items:flex-start;gap:.75rem"><span style="background:rgba(85,172,238,.2);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:900;font-size:.75rem;color:#55ACEE">3</span><span><strong style="color:#f6f6f7">Fixes anwenden</strong> &mdash; Automatische Korrekturen ausf&uuml;hren</span></div>
+</div>
+<button style="margin-top:1.25rem;width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button>
+<div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div>
+</div></div>
+<script>
+function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}
+function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-ecosystem-analyzer-onboarded','1')}
+if(!localStorage.getItem('dkz-ecosystem-analyzer-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}
+</script>
+
+<script src="../../shared/dkz-chain-nav.js"></script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+</html>
+
+

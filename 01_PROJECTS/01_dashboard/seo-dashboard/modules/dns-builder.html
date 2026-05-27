@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #1a1a1e;
+            --border2: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --cyan: #00FFD5;
+            --purple: #ec4899;
+            --yellow: #FFB800;
+            --orange: #ff8844;
+            --red: #fa1e4e;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            padding: 20px;
+            overflow-y: auto
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg)
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 3px
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 5fr 7fr;
+            gap: 16px;
+            max-width: 1400px;
+            margin: 0 auto
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px
+        }
+
+        .card-full {
+            grid-column: 1/-1
+        }
+
+        .card h3 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        input[type=text],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card2);
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            outline: none;
+            transition: border .2s
+        }
+
+        input:focus {
+            border-color: var(--blue)
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-family: var(--font);
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all .25s
+        }
+
+        .btn:hover {
+            transform: translateY(-2px)
+        }
+
+        .btn-dark {
+            background: #111;
+            color: #fff;
+            border: 1px solid var(--border2)
+        }
+
+        .btn-dark:hover {
+            background: var(--blue);
+            border-color: var(--blue)
+        }
+
+        .label {
+            font-size: 10px;
+            color: var(--muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px
+        }
+
+        /* MODE TABS */
+        .mode-tabs {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 16px
+        }
+
+        .mode-tab {
+            padding: 14px;
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            cursor: pointer;
+            text-align: center;
+            transition: all .25s;
+            background: var(--card2)
+        }
+
+        .mode-tab:hover {
+            border-color: var(--border2)
+        }
+
+        .mode-tab.active {
+            border-color: var(--blue);
+            background: rgba(68, 136, 255, .06);
+            box-shadow: 0 0 20px rgba(68, 136, 255, .08)
+        }
+
+        .mode-icon {
+            font-size: 22px;
+            margin-bottom: 4px
+        }
+
+        .mode-title {
+            font-weight: 800;
+            font-size: 12px
+        }
+
+        .mode-desc {
+            font-size: 9px;
+            color: var(--muted);
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: .5px
+        }
+
+        /* CHAIN HOPS */
+        .hop-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+            animation: fadeIn .2s
+        }
+
+        .hop-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: rgba(153, 68, 255, .1);
+            color: var(--purple);
+            font-weight: 800;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0
+        }
+
+        .hop-remove {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all .2s
+        }
+
+        .hop-remove:hover {
+            color: var(--red);
+            border-color: var(--red)
+        }
+
+        .add-hop {
+            width: 100%;
+            padding: 10px;
+            border: 2px dashed var(--border2);
+            border-radius: 10px;
+            background: transparent;
+            color: var(--muted);
+            font-family: var(--font);
+            font-weight: 700;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .add-hop:hover {
+            border-color: var(--blue);
+            color: var(--blue)
+        }
+
+        /* RECORD CARDS */
+        .record {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 10px;
+            transition: all .25s
+        }
+
+        .record:hover {
+            border-color: var(--blue);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, .3)
+        }
+
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px
+        }
+
+        .record-domain {
+            font-weight: 800;
+            font-size: 14px;
+            letter-spacing: -.3px
+        }
+
+        .record-type {
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 9px;
+            font-weight: 800;
+            background: #111;
+            color: #fff;
+            text-transform: uppercase
+        }
+
+        .record-target {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--cyan);
+            padding: 8px;
+            background: var(--bg);
+            border-radius: 8px;
+            margin-top: 6px;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .record-meta {
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 6px;
+            display: flex;
+            gap: 12px
+        }
+
+        /* CHAIN VIS */
+        .chain-vis {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            padding: 8px;
+            background: var(--bg);
+            border-radius: 8px;
+            margin-top: 6px
+        }
+
+        .chain-hop {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--card);
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-size: 10px;
+            font-family: var(--mono)
+        }
+
+        .chain-hop .num {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: rgba(153, 68, 255, .15);
+            color: var(--purple);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 800
+        }
+
+        .chain-arrow {
+            color: var(--muted);
+            font-size: 12px
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            display: inline-block;
+            animation: pulse 2s infinite
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .3
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px)
+            }
+
+            to {
+                opacity: 1;
+                transform: none
+            }
+        }
+
+        .config-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 10px
+        }
+
+        .field {
+            background: var(--card2);
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border)
+        }
+
+        .record-delete {
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 10px;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .record-delete:hover {
+            color: var(--red);
+            border-color: var(--red)
+        }
+
+        .live-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--green);
+            background: rgba(0, 255, 136, .06);
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 136, .2)
+        }
+
+        @media(max-width:768px) {
+            .grid {
+                grid-template-columns: 1fr
+            }
+
+            .mode-tabs {
+                grid-template-columns: repeat(2, 1fr)
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="grid">
+        <!-- LEFT: CONFIG -->
+        <div class="card">
+            <h3>🌐 DNS Chain-Builder V2.1</h3>
+            <div class="mode-tabs">
+                <div class="mode-tab active" onclick="setMode('A',this)">
+                    <div class="mode-icon">🖥️</div>
+                    <div class="mode-title">Direct</div>
+                    <div class="mode-desc">IP-Fix</div>
+                </div>
+                <div class="mode-tab" onclick="setMode('REDIRECT',this)">
+                    <div class="mode-icon">↗️</div>
+                    <div class="mode-title">Forward</div>
+                    <div class="mode-desc">Simple</div>
+                </div>
+                <div class="mode-tab" onclick="setMode('CHAIN',this)">
+                    <div class="mode-icon">⛓️</div>
+                    <div class="mode-title">Chain</div>
+                    <div class="mode-desc">Multi-Hop</div>
+                </div>
+                <div class="mode-tab" onclick="setMode('TXT',this)">
+                    <div class="mode-icon">📄</div>
+                    <div class="mode-title">Text</div>
+                    <div class="mode-desc">Metadata</div>
+                </div>
+            </div>
+
+            <div style="margin-bottom:12px">
+                <div class="label">Entry Subdomain</div>
+                <div style="position:relative"><input type="text" id="subDomain" placeholder="app, dashboard, staging">
+                    <div
+                        style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:11px;font-weight:700;background:var(--card);padding:2px 8px;border-radius:6px;border:1px solid var(--border)">
+                        .devkitz.eu</div>
+                </div>
+            </div>
+
+            <div id="valueField">
+                <div class="label" id="valueLabel">Target IP</div>
+                <input type="text" id="targetValue" value="187.77.70.115">
+            </div>
+
+            <div id="chainField" style="display:none;margin-top:10px">
+                <div class="label">Domain Redirect Chain (Hops)</div>
+                <div id="hops"></div>
+                <button class="add-hop" onclick="addHop()">+ Hop hinzufügen</button>
+            </div>
+
+            <div class="config-row" style="margin-top:12px">
+                <div class="field">
+                    <div class="label">Path Context</div><input type="text" id="pathCtx" value="/"
+                        style="background:transparent;border:none;border-bottom:2px solid var(--border2);border-radius:0;padding:6px 0">
+                </div>
+                <div class="field">
+                    <div class="label">TTL Cache</div><select id="ttlVal" style="background:transparent;border:none">
+                        <option value="60">60s (Instant)</option>
+                        <option value="300" selected>300s (Default)</option>
+                        <option value="3600">1h (Stable)</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn btn-dark" style="width:100%;padding:16px;font-size:13px;margin-top:8px"
+                onclick="deploy()">⚡ Deploy Configuration</button>
+
+            <div id="statusMsg"
+                style="margin-top:10px;display:none;padding:10px;border-radius:10px;font-size:11px;font-weight:700">
+            </div>
+        </div>
+
+        <!-- RIGHT: LIVE DASHBOARD -->
+        <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                <h3 style="margin:0">📡 Active Infrastructure</h3>
+                <div class="live-badge"><span class="status-dot"></span> Live Assets: <span id="assetCount">0</span>
+                </div>
+            </div>
+            <div id="records"></div>
+            <div id="emptyState" style="text-align:center;padding:40px;color:var(--muted);font-size:12px">
+                <div style="font-size:40px;margin-bottom:10px">🌐</div>
+                Noch keine DNS-Einträge konfiguriert.<br>Erstelle links deinen ersten Eintrag!
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        let activeMode = 'A';
+        let hops = ['https://'];
+        let records = JSON.parse(localStorage.getItem('dns_records') || '[]');
+
+        function setMode(mode, el) {
+            activeMode = mode;
+            document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            const vf = document.getElementById('valueField');
+            const cf = document.getElementById('chainField');
+            const lbl = document.getElementById('valueLabel');
+            if (mode === 'CHAIN') { vf.style.display = 'none'; cf.style.display = 'block'; renderHops() }
+            else { vf.style.display = 'block'; cf.style.display = 'none'; lbl.textContent = mode === 'A' ? 'Target IP' : mode === 'REDIRECT' ? 'Forward URL' : 'TXT Content'; document.getElementById('targetValue').value = mode === 'A' ? '187.77.70.115' : mode === 'REDIRECT' ? 'https://' : 'v=spf1 ...' }
+        }
+
+        function addHop() { hops.push('https://'); renderHops() }
+        function removeHop(i) { if (hops.length > 1) { hops.splice(i, 1); renderHops() } }
+        function updateHop(i, v) { hops[i] = v }
+
+        function renderHops() {
+            document.getElementById('hops').innerHTML = hops.map((h, i) => `
+    <div class="hop-row"><div class="hop-num">${i + 1}</div><input type="text" value="${h}" onchange="updateHop(${i},this.value)" placeholder="https://next-hop.com" style="flex:1"><button class="hop-remove" onclick="removeHop(${i})">✕</button></div>`).join('');
+        }
+
+        function deploy() {
+            const sub = document.getElementById('subDomain').value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+            if (!sub) { alert('Subdomain eingeben'); return }
+            const record = {
+                id: sub + '-' + Date.now(),
+                subdomain: sub,
+                type: activeMode,
+                value: activeMode === 'CHAIN' ? null : document.getElementById('targetValue').value,
+                hops: activeMode === 'CHAIN' ? [...hops] : null,
+                path: document.getElementById('pathCtx').value,
+                ttl: document.getElementById('ttlVal').value,
+                status: 'active',
+                createdAt: new Date().toISOString()
+            };
+            records.unshift(record);
+            localStorage.setItem('dns_records', JSON.stringify(records));
+            renderRecords();
+            const msg = document.getElementById('statusMsg');
+            msg.style.display = 'block'; msg.style.background = 'rgba(0,255,136,.1)'; msg.style.color = 'var(--green)'; msg.style.border = '1px solid rgba(0,255,136,.2)';
+            msg.innerHTML = `✅ Deployment für <strong>${sub}.devkitz.eu</strong> erfolgreich!`;
+            setTimeout(() => msg.style.display = 'none', 4000);
+            document.getElementById('subDomain').value = '';
+        }
+
+        function deleteRecord(id) {
+            records = records.filter(r => r.id !== id);
+            localStorage.setItem('dns_records', JSON.stringify(records));
+            renderRecords();
+        }
+
+        function renderRecords() {
+            document.getElementById('assetCount').textContent = records.length;
+            document.getElementById('emptyState').style.display = records.length ? 'none' : 'block';
+            document.getElementById('records').innerHTML = records.map(r => `
+    <div class="record">
+      <div class="record-header">
+        <span class="record-domain">${r.subdomain}.devkitz.eu</span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="record-type">${r.type}</span>
+          <button class="record-delete" onclick="deleteRecord('${r.id}')">✕</button>
+        </div>
+      </div>
+      ${r.type === 'CHAIN' ? `
+        <div class="chain-vis">${r.hops.map((h, i) => `<div class="chain-hop"><span class="num">${i + 1}</span>${h.replace('https://', '').substring(0, 25)}</div>${i < r.hops.length - 1 ? '<span class="chain-arrow">→</span>' : ''}`).join('')}</div>
+      `: `<div class="record-target">${r.value}</div>`}
+      <div class="record-meta"><span>TTL: ${r.ttl}s</span><span>Path: ${r.path}</span><span><span class="status-dot" style="width:6px;height:6px"></span> Active</span><span>${new Date(r.createdAt).toLocaleString('de-DE')}</span></div>
+    </div>`).join('');
+        }
+
+        renderHops(); renderRecords();
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

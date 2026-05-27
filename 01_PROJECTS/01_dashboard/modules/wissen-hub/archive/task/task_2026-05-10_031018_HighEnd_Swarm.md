@@ -1,0 +1,5 @@
+- `[x]` 8K Video-Hintergrund in HTML integrieren (`<video>`).
+- `[x]` Nanobot Particle Engine (Canvas) in `index.html` implementieren.
+- `[x]` HUD Popups (Glassmorphism Modal) für Agenten-Details entwickeln.
+- `[x]` Drag & Drop Funktionalität anpassen, um Nanobot-Cluster zu bewegen.
+- `[x]` Testen und im Browser öffnen (Regel R44).

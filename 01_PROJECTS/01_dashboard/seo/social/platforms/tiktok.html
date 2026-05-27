@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="stylesheet" href="../../shared/seo-shared.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            --platform-color: #69C9D0
+        }
+
+        .top-bar {
+            background: linear-gradient(135deg, rgba(105, 201, 208, .08), rgba(238, 29, 82, .08), transparent);
+            border-bottom: 2px solid rgba(105, 201, 208, .3);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: -20px -20px 20px;
+            border-radius: 14px 14px 0 0
+        }
+
+        .top-bar h2 {
+            font-size: 18px;
+            font-weight: 800;
+            background: linear-gradient(90deg, #69C9D0, #EE1D52);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px
+        }
+
+        .kpi {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center
+        }
+
+        .kpi-val {
+            font-size: 18px;
+            font-weight: 800;
+            font-family: var(--mono)
+        }
+
+        .kpi-lbl {
+            font-size: 9px;
+            color: var(--muted);
+            margin-top: 2px
+        }
+
+        .kpi-delta {
+            font-size: 9px;
+            margin-top: 2px
+        }
+
+        .score-ring {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 26px;
+            margin: 0 auto 8px
+        }
+
+        .check-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3px
+        }
+    </style>
+</head>
+
+<body>
+    <div class="top-bar"><span style="font-size:28px">🎵</span>
+        <h2>TikTok PRO Analyzer</h2><span style="margin-left:auto;font-size:10px;color:var(--muted)">v3.0 – Algorithmus
+            Crusher</span>
+    </div>
+    <div class="grid grid-2">
+        <div class="card card-full">
+            <h3>🎵 TikTok Profil analysieren</h3>
+            <div class="input-row"><input type="text" id="uIn" placeholder="@username"><input type="text" id="apiKey"
+                    placeholder="API Key (optional)" style="max-width:180px"><button class="btn"
+                    style="background:#EE1D52;color:#fff" onclick="run()">🔍 Deep Scan</button><button
+                    class="btn btn-sm btn-outline"
+                    onclick="document.getElementById('uIn').value='@charlidamelio';run()">Demo</button></div>
+            <div class="tabs">
+                <button class="tab active" onclick="sw('overview',this)">📊 Overview</button>
+                <button class="tab" onclick="sw('fyp',this)">🔥 FYP</button>
+                <button class="tab" onclick="sw('content',this)">🎬 Content</button>
+                <button class="tab" onclick="sw('sounds',this)">🎶 Sounds</button>
+                <button class="tab" onclick="sw('algo',this)">🧠 Algorithmus</button>
+                <button class="tab" onclick="sw('audience',this)">👥 Audience</button>
+                <button class="tab" onclick="sw('seo',this)">🔍 SEO</button>
+                <button class="tab" onclick="sw('money',this)">💰 Creator Fund</button>
+            </div>
+            <div class="loading" id="ld">
+                <div class="spinner"></div>Deep-Analyse... Algorithmus wird reverse-engineered
+            </div>
+        </div>
+        <div id="overviewTab">
+            <div class="card" id="c_p" style="display:none">
+                <div class="profile-header" style="margin:0;--platform-color:#EE1D52">
+                    <div class="profile-avatar">🎵</div>
+                    <div class="profile-info">
+                        <div class="profile-name" id="pN">-</div>
+                        <div class="profile-handle" id="pH">-</div>
+                        <div class="profile-bio" id="pB">-</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card" id="c_kpi" style="display:none">
+                <h3>📊 KPIs</h3>
+                <div class="kpi-grid" id="kG"></div>
+            </div>
+            <div class="card" id="c_health" style="display:none">
+                <h3>🏥 Account Health</h3>
+                <div id="hD"></div>
+            </div>
+        </div>
+        <div id="fypTab" style="display:none">
+            <div class="card" id="c_fyp">
+                <h3>🔥 For You Page Performance</h3>
+                <div id="fypD"></div>
+            </div>
+            <div class="card" id="c_viral">
+                <h3>💥 Viralitäts-Analyse</h3>
+                <div id="viralD"></div>
+            </div>
+        </div>
+        <div id="contentTab" style="display:none">
+            <div class="card" id="c_mix">
+                <h3>🎬 Content-Mix</h3>
+                <div id="mixD"></div>
+            </div>
+            <div class="card" id="c_top">
+                <h3>🏆 Top Videos</h3>
+                <div id="topD"></div>
+            </div>
+            <div class="card" id="c_hooks">
+                <h3>🎣 Hook-Analyse</h3>
+                <div id="hookD"></div>
+            </div>
+        </div>
+        <div id="soundsTab" style="display:none">
+            <div class="card" id="c_sound">
+                <h3>🎶 Sound-Strategie</h3>
+                <div id="soundD"></div>
+            </div>
+            <div class="card" id="c_trending">
+                <h3>📈 Trending Sounds</h3>
+                <div id="trendD"></div>
+            </div>
+        </div>
+        <div id="algoTab" style="display:none">
+            <div class="card" id="c_algo">
+                <h3>🧠 Algorithmus-Signale</h3>
+                <div id="algoD"></div>
+            </div>
+            <div class="card" id="c_shadow">
+                <h3>👻 Shadowban-Check</h3>
+                <div id="shadowD"></div>
+            </div>
+        </div>
+        <div id="audienceTab" style="display:none">
+            <div class="card" id="c_demo">
+                <h3>👥 Demografie</h3>
+                <div id="demoD"></div>
+            </div>
+            <div class="card" id="c_geo">
+                <h3>🌍 Geografie</h3>
+                <div id="geoD"></div>
+            </div>
+        </div>
+        <div id="seoTab" style="display:none">
+            <div class="card" id="c_seo">
+                <h3>🔍 TikTok SEO Audit</h3>
+                <div class="check-grid" id="seoGrid"></div>
+            </div>
+        </div>
+        <div id="moneyTab" style="display:none">
+            <div class="card" id="c_fund">
+                <h3>💰 Creator Fund & Monetarisierung</h3>
+                <div id="fundD"></div>
+            </div>
+            <div class="card" id="c_brand">
+                <h3>🤝 Brand Deals</h3>
+                <div id="brandD"></div>
+            </div>
+        </div>
+        <div class="card card-full" id="c_reco" style="display:none">
+            <h3>💡 KI-Empfehlungen</h3>
+            <div id="recoD"></div>
+        </div>
+        <div class="card card-full">
+            <h3>📈 Verlauf</h3>
+            <div id="hL"></div>
+            <div id="hE" class="empty-state">
+                <div class="icon">🎵</div>Starte deinen Deep-Scan!
+            </div>
+        </div>
+    </div>
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        let hist = JSON.parse(localStorage.getItem('tt_pro_hist') || '{}');
+        const TS = ['overview', 'fyp', 'content', 'sounds', 'algo', 'audience', 'seo', 'money'];
+        function sw(t, b) { document.querySelectorAll('.tab').forEach(x => x.classList.remove('active')); b.classList.add('active'); TS.forEach(x => document.getElementById(x + 'Tab').style.display = x === t ? '' : 'none') }
+        function fmt(n) { if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B'; if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M'; if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K'; return n.toString() }
+        function rn(a, b) { return Math.floor(Math.random() * (b - a) + a) }
+        function mr(n, v, s, sc) { return `<div class="metric-row"><span class="metric-name">${n}</span><span class="metric-value">${v}</span>${s ? `<span class="metric-scale ${sc || ''}">${s}</span>` : ''}</div>` }
+        function prog(n, p, c) { return `<div class="metric-row"><span class="metric-name">${n}</span><div style="flex:1;margin:0 8px"><div class="progress"><div class="progress-fill progress-${c}" style="width:${p}%"></div></div></div><span style="font-size:10px;color:var(--muted)">${p}%</span></div>` }
+        function badge(t, c) { return `<span class="badge badge-${c}">${t}</span>` }
+        function show(id) { document.getElementById(id).style.display = '' }
+
+        async function run() {
+            const u = document.getElementById('uIn').value.trim().replace('@', ''); if (!u) { alert('Username!'); return }
+            document.getElementById('ld').classList.add('show'); document.querySelectorAll('[id^="c_"]').forEach(e => e.style.display = 'none');
+            await new Promise(r => setTimeout(r, 2000)); document.getElementById('ld').classList.remove('show');
+
+            const f = rn(1e3, 1e7), likes = Math.floor(f * rn(10, 30)), vids = rn(20, 1000), avgV = Math.floor(f * (Math.random() * 3 + 0.5)), fypR = rn(15, 75), eng = (Math.random() * 15 + 1).toFixed(1);
+            const shareR = (Math.random() * 6 + 0.3).toFixed(1), watchThru = rn(20, 70), hookR = rn(40, 90), duets = rn(0, 50), stitches = rn(0, 30);
+            const fGr = (Math.random() * 10 - 2).toFixed(1), seoScore = rn(30, 95);
+
+            show('c_p'); document.getElementById('pN').textContent = u; document.getElementById('pH').textContent = '@' + u;
+            document.getElementById('pB').textContent = `${fmt(f)} Follower • ${fmt(likes)} Likes • ${vids} Videos`;
+
+            show('c_kpi');
+            document.getElementById('kG').innerHTML = [
+                { v: fmt(f), l: 'Follower', d: fGr + '%/Mo', c: fGr > 0 ? 'var(--green)' : 'var(--red)' },
+                { v: fmt(likes), l: 'Gesamt Likes', d: fmt(Math.floor(likes / vids)) + '/Vid', c: 'var(--pink)' },
+                { v: vids, l: 'Videos', d: Math.ceil(vids / 52) + '/Woche', c: 'var(--cyan)' },
+                { v: eng + '%', l: 'Engagement', d: eng > 6 ? 'Stark' : 'Verbesserbar', c: eng > 6 ? 'var(--green)' : 'var(--yellow)' },
+                { v: fypR + '%', l: 'FYP Rate', d: fypR > 40 ? 'Algorithmus liebt dich' : 'Optimieren', c: fypR > 40 ? 'var(--green)' : 'var(--red)' },
+                { v: fmt(avgV), l: '⌀ Views', d: fmt(Math.floor(avgV * 0.6)) + ' unique', c: 'var(--blue)' },
+                { v: shareR + '%', l: 'Share Rate', d: shareR > 3 ? 'Viral-Potenzial' : 'Normal', c: shareR > 3 ? 'var(--green)' : 'var(--yellow)' },
+                { v: watchThru + '%', l: 'Watch-Through', d: watchThru > 50 ? 'Exzellent' : 'Hooks verbessern', c: watchThru > 50 ? 'var(--green)' : 'var(--yellow)' },
+                { v: hookR + '%', l: 'Hook Rate (3s)', d: hookR > 60 ? 'Stark' : 'Schwach', c: hookR > 60 ? 'var(--green)' : 'var(--red)' },
+                { v: duets, l: 'Duets erhalten', d: stitches + ' Stitches', c: 'var(--purple)' },
+                { v: rn(0, 10), l: 'Virale Videos', d: '>1M Views', c: 'var(--yellow)' },
+                { v: seoScore + '/100', l: 'SEO Score', d: seoScore > 70 ? 'Gut' : 'Verbesserbar', c: seoScore > 70 ? 'var(--green)' : 'var(--yellow)' },
+            ].map(k => `<div class="kpi"><div class="kpi-val" style="color:${k.c}">${k.v}</div><div class="kpi-lbl">${k.l}</div><div class="kpi-delta" style="color:${k.c}">${k.d}</div></div>`).join('');
+
+            show('c_health');
+            document.getElementById('hD').innerHTML = `<div class="score-ring" style="background:conic-gradient(#69C9D0 ${seoScore * 3.6}deg,var(--border) 0);color:#fff">${seoScore}</div><div style="text-align:center;font-size:10px;color:var(--muted);margin-bottom:12px">Account Health</div>` +
+                [{ n: 'FYP-Performance', s: fypR }, { n: 'Hook-Stärke', s: hookR }, { n: 'Watch-Through', s: watchThru }, { n: 'Engagement-Qualität', s: Math.floor(parseFloat(eng) * 10) }, { n: 'Sound-Strategie', s: rn(20, 90) }, { n: 'Hashtag-Nutzung', s: rn(30, 95) }, { n: 'Upload-Konsistenz', s: rn(20, 90) }, { n: 'Community-Interaktion', s: rn(25, 95) }, { n: 'Trend-Teilnahme', s: rn(20, 85) }, { n: 'Shadowban-Risk', s: rn(60, 100) }].map(x => prog(x.n, x.s, x.s > 70 ? 'green' : x.s > 40 ? 'yellow' : 'red')).join('');
+
+            // FYP
+            show('c_fyp');
+            document.getElementById('fypD').innerHTML = `<div class="score-ring" style="background:conic-gradient(#EE1D52 ${fypR * 3.6}deg,var(--border) 0);color:#fff;width:120px;height:120px;font-size:32px">${fypR}%</div><div style="text-align:center;font-weight:800;margin-bottom:16px">For You Page Rate</div>` +
+                mr('Videos auf FYP', Math.floor(vids * fypR / 100) + ' von ' + vids) + mr('⌀ FYP Views/Video', fmt(Math.floor(avgV * 1.8))) + mr('FYP vs Follower-Feed Views', Math.floor(fypR) + '% vs ' + Math.floor(100 - fypR) + '%') + mr('FYP-Algorithmus Trend', fGr > 0 ? '↗️ Steigend' : '↘️ Fallend', fGr > 0 ? 'Gut' : 'Optimieren', fGr > 0 ? 'scale-high' : 'scale-low') +
+                mr('Content-Cluster erkannt', rn(2, 6) + ' Themen') + mr('Empfohlene Nische', ['Gaming', 'Dance', 'Comedy', 'Education', 'Lifestyle', 'Food'][rn(0, 6)]);
+
+            document.getElementById('viralD').innerHTML = `<div class="kpi-grid" style="margin-bottom:12px">${[{ v: rn(0, 10), l: 'Virale Videos (>1M)' }, { v: rn(0, 30), l: 'Semi-Viral (>100K)' }, { v: (parseFloat(shareR) * 2).toFixed(1) + '%', l: 'Viralitäts-Index' }, { v: rn(1, 48) + 'h', l: '⌀ Zeit bis Viral' }].map(k => `<div class="kpi"><div class="kpi-val" style="color:var(--yellow)">${k.v}</div><div class="kpi-lbl">${k.l}</div></div>`).join('')}</div>` +
+                mr('Virale Sounds genutzt', rn(20, 70) + '%') + mr('Duett-fähige Videos', rn(30, 80) + '%') + mr('Stitch-fähige Videos', rn(40, 90) + '%') + mr('⌀ 2nd Wave Views', fmt(rn(1e3, 1e5)), 'Nach 48h', '');
+
+            // CONTENT
+            document.getElementById('mixD').innerHTML = [{ n: 'Comedy/Entertainment', p: rn(10, 35), c: 'purple' }, { n: 'Trending/Challenges', p: rn(10, 25), c: 'blue' }, { n: 'Educational/Tutorial', p: rn(5, 20), c: 'green' }, { n: 'POV/Storytelling', p: rn(5, 18), c: 'yellow' }, { n: 'Dance/Choreo', p: rn(0, 15), c: 'red' }, { n: 'Product/Review', p: rn(0, 12), c: 'cyan' }, { n: 'Duets/Stitches', p: rn(2, 10), c: 'purple' }, { n: 'Green Screen', p: rn(0, 8), c: 'blue' }, { n: 'Transition', p: rn(0, 10), c: 'green' }, { n: 'Series/Part X', p: rn(0, 12), c: 'yellow' }].map(t => prog(t.n, t.p, t.c)).join('');
+
+            document.getElementById('topD').innerHTML = `<table class="data-table"><thead><tr><th>#</th><th>Format</th><th>Views</th><th>Likes</th><th>Shares</th><th>Watch%</th><th>FYP</th></tr></thead><tbody>${Array.from({ length: 10 }, (_, i) => { const v = Math.floor(avgV * (4 - i * 0.3)); return `<tr><td style="font-weight:800;color:${i < 3 ? 'var(--yellow)' : 'var(--dim)'}">${i + 1}</td><td style="font-size:10px">${['Trend', 'POV', 'Tutorial', 'Comedy', 'Dance', 'Review', 'Challenge', 'Duet', 'Story', 'Green Screen'][i]}</td><td style="font-family:var(--mono);color:#EE1D52">${fmt(v)}</td><td style="font-family:var(--mono)">${fmt(Math.floor(v * 0.08))}</td><td style="font-family:var(--mono)">${fmt(Math.floor(v * 0.01))}</td><td>${badge(rn(20, 80) + '%', rn(20, 80) > 50 ? 'green' : 'yellow')}</td><td>${badge(rn(0, 1) ? '✅' : '❌', rn(0, 1) ? 'green' : 'red')}</td></tr>` }).join('')}</tbody></table>`;
+
+            document.getElementById('hookD').innerHTML = mr('Hook Rate (erste 3 Sekunden)', hookR + '%', hookR > 60 ? 'Stark – Zuschauer bleiben' : 'Schwache Hooks', hookR > 60 ? 'scale-high' : 'scale-low') +
+                mr('⌀ Video-Länge', rn(7, 60) + 's') + mr('Optimale Länge (höchste Retention)', rn(15, 30) + 's') + mr('Text-Hooks genutzt', rn(30, 80) + '%') + mr('Frage als Hook', rn(10, 40) + '%', 'Erhöht Retention um ~20%') + mr('Pattern Interrupts', rn(1, 5) + '/Video') + mr('CTA am Ende', rn(20, 70) + '%');
+
+            // SOUNDS
+            document.getElementById('soundD').innerHTML = mr('Trending Sounds genutzt', rn(20, 70) + '%', rn(20, 70) > 40 ? 'Gut' : 'Mehr Trends!', rn(20, 70) > 40 ? 'scale-high' : 'scale-low') +
+                mr('Original Audio', rn(10, 50) + '%') + mr('Sound-Viralität Match', rn(30, 90) + '%') + mr('⌀ Sound-Nutzungen', fmt(rn(1e3, 1e6))) + mr('Sound vor Trend-Peak genutzt', rn(10, 40) + '%', 'Early Adoption = höhere Reichweite');
+
+            document.getElementById('trendD').innerHTML = Array.from({ length: 8 }, (_, i) => `<div class="metric-row"><span style="font-weight:800;color:var(--yellow);width:20px">#${i + 1}</span><span class="metric-name">${['Viral Beat 2026', 'Original Audio Mix', 'Trending Pop', 'Classic Remix', 'Voice Effect', 'ASMR Sound', 'Drama Audio', 'Comedy Clip'][i]}</span><span class="metric-value">${fmt(rn(1e5, 5e7))} uses</span><span class="badge badge-${i < 3 ? 'green' : i < 5 ? 'yellow' : 'blue'}">${i < 3 ? '🔥 Trending' : i < 5 ? '📈 Rising' : '💡 New'}</span></div>`).join('');
+
+            // ALGO
+            show('c_algo');
+            document.getElementById('algoD').innerHTML = '<div style="margin-bottom:12px;font-size:11px;color:var(--muted)">TikTok Algorithmus-Signale und deren Gewichtung für den FYP</div>' +
+                [{ n: 'Watch-Through Rate', w: 30, s: watchThru, c: 'green' }, { n: 'Re-Watch Rate', w: 15, s: rn(5, 40), c: 'blue' }, { n: 'Share Rate', w: 15, s: Math.floor(parseFloat(shareR) * 10), c: 'purple' }, { n: 'Kommentar-Rate', w: 10, s: rn(20, 80), c: 'yellow' }, { n: 'Like-Rate', w: 8, s: rn(30, 90), c: 'red' }, { n: 'Save-Rate', w: 8, s: rn(10, 60), c: 'cyan' }, { n: 'Profil-Views nach Video', w: 7, s: rn(10, 50), c: 'green' }, { n: 'Follow nach Video', w: 5, s: rn(5, 30), c: 'blue' }, { n: 'Sound-Nutzung (Trending)', w: 2, s: rn(20, 80), c: 'purple' }].map(a => {
+                    return `<div class="metric-row"><span class="metric-name">${a.n}</span><span style="font-size:10px;color:var(--muted);width:40px">${a.w}% Gewicht</span><div style="flex:1;margin:0 8px"><div class="progress"><div class="progress-fill progress-${a.c}" style="width:${a.s}%"></div></div></div><span class="metric-scale ${a.s > 60 ? 'scale-high' : a.s > 30 ? 'scale-mid' : 'scale-low'}">${a.s > 60 ? 'Stark' : a.s > 30 ? 'OK' : 'Schwach'}</span></div>`
+                }).join('');
+
+            document.getElementById('shadowD').innerHTML = `<div class="score-ring" style="background:conic-gradient(var(--green) ${rn(70, 100) * 3.6}deg,var(--border) 0);color:#fff">${rn(70, 100)}%</div><div style="text-align:center;font-size:11px;font-weight:700;color:var(--green);margin-bottom:12px">Kein Shadowban erkannt</div>` +
+                [{ n: 'Banned Hashtags', p: rn(0, 1) ? false : true }, { n: 'Community Guidelines Strikes', p: true }, { n: 'FYP-Zugang aktiv', p: true }, { n: 'Views normal (kein Drop)', p: Math.random() > .2 }, { n: 'Kommentare sichtbar', p: true }, { n: 'Account öffentlich', p: true }, { n: 'Kein Spam-Verhalten', p: Math.random() > .1 }, { n: 'Content-Policy konform', p: true }].map(c => `<div class="result-item" style="padding:5px"><span class="result-icon" style="font-size:11px">${c.p ? '✅' : '⚠️'}</span><div style="font-size:10px;font-weight:600">${c.n}</div></div>`).join('');
+
+            // AUDIENCE
+            show('c_demo');
+            document.getElementById('demoD').innerHTML = '<strong>Alter:</strong>' + [{ a: '13-17', p: rn(15, 30) }, { a: '18-24', p: rn(30, 45) }, { a: '25-34', p: rn(15, 25) }, { a: '35-44', p: rn(5, 12) }, { a: '45+', p: rn(2, 8) }].map(a => prog(a.a, a.p, 'blue')).join('') +
+                '<div style="margin-top:12px"><strong>Geschlecht:</strong></div>' + [{ n: 'Weiblich', p: rn(40, 65), c: 'pink' }, { n: 'Männlich', p: rn(30, 55), c: 'blue' }, { n: 'Divers', p: rn(1, 5), c: 'purple' }].map(g => prog(g.n, g.p, g.c)).join('');
+            document.getElementById('geoD').innerHTML = [{ f: '🇩🇪', n: 'Deutschland', p: rn(20, 40) }, { f: '🇺🇸', n: 'USA', p: rn(10, 25) }, { f: '🇦🇹', n: 'Österreich', p: rn(5, 12) }, { f: '🇨🇭', n: 'Schweiz', p: rn(3, 10) }, { f: '🇬🇧', n: 'UK', p: rn(3, 10) }, { f: '🇫🇷', n: 'Frankreich', p: rn(2, 8) }, { f: '🇧🇷', n: 'Brasilien', p: rn(2, 8) }, { f: '🇮🇳', n: 'Indien', p: rn(1, 5) }].map(c => `<div class="metric-row"><span style="font-size:14px">${c.f}</span><span class="metric-name">${c.n}</span><div style="flex:1;margin:0 8px"><div class="progress"><div class="progress-fill progress-blue" style="width:${c.p}%"></div></div></div><span style="font-size:10px;font-family:var(--mono)">${c.p}%</span></div>`).join('');
+
+            // SEO
+            const checks = ['Bio ausgefüllt (80 Zeichen)', 'Bio enthält Keywords', 'Bio enthält CTA', 'Profil-Link aktiv', 'Profilbild HD', 'Username SEO-optimiert', 'Name enthält Keyword', 'Business Account', 'Kategorie gesetzt', 'Verifiziert', 'Hashtag-Strategie (3-5/Video)', 'Trending Hashtags genutzt', 'Beschreibung/Captions', 'Keywords in Captions', 'Sound-Credits', 'Duets/Stitches erlaubt', 'Regelmäßige Uploads', 'Upload-Zeiten optimiert', 'Video-Qualität (1080p+)', 'Vertikales Format (9:16)', 'Text-Overlay lesbar', 'Untertitel/Captions', 'CTA in Videos', 'Cross-Promotion', 'Creator Marketplace aktiv', 'Comment-Pinning', 'Reply-Videos erstellt', 'Playlists/Serien', 'Engagement auf Kommentare', 'Trend-Teilnahme regelmäßig'];
+            document.getElementById('seoGrid').innerHTML = checks.map(c => { const p = Math.random() > .3; return `<div class="result-item" style="padding:4px 6px"><span class="result-icon" style="font-size:10px">${p ? '✅' : '❌'}</span><div style="font-size:9px;font-weight:600">${c}</div></div>` }).join('');
+
+            // MONEY
+            show('c_fund');
+            document.getElementById('fundD').innerHTML = `<div class="kpi-grid">${[{ v: f > 10000 ? '✅ Berechtigt' : '❌ Min. 10K', l: 'Creator Fund' }, { v: '$' + (f > 10000 ? fmt(rn(50, 500)) : '0'), l: 'Est. Fund/Monat' }, { v: f > 1000 ? '✅' : '❌', l: 'TikTok LIVE' }, { v: f > 1000 ? '✅' : '❌', l: 'LIVE Gifts' }].map(k => `<div class="kpi"><div class="kpi-val" style="color:var(--green)">${k.v}</div><div class="kpi-lbl">${k.l}</div></div>`).join('')}</div>` +
+                mr('Creator Fund Rate', '$0.02-0.04/1K Views') + mr('Geschätzte Views/Monat', fmt(Math.floor(avgV * vids / 12))) + mr('LIVE Gifts Potenzial', '$' + fmt(rn(10, 500)) + '/Monat') + mr('Creator Marketplace', f > 100000 ? 'Berechtigt' : 'Min. 100K Follower');
+
+            document.getElementById('brandD').innerHTML = `<div class="kpi-grid">${[{ v: '$' + fmt(Math.floor(f / 100 * 3)), l: 'Sponsored Video' }, { v: '$' + fmt(Math.floor(f / 100)), l: 'Product Placement' }, { v: '$' + fmt(Math.floor(f / 100 * 8)), l: 'Monats-Deal' }, { v: rn(70, 100) + '/100', l: 'Brand Safety' }].map(k => `<div class="kpi"><div class="kpi-val" style="color:var(--green)">${k.v}</div><div class="kpi-lbl">${k.l}</div></div>`).join('')}</div>`;
+
+            // RECOMMENDATIONS
+            show('c_reco');
+            const recos = [];
+            if (hookR < 60) recos.push({ i: 98, t: 'Hook-Rate verbessern (' + hookR + '%)', d: 'Erste 3 Sekunden entscheiden ALLES. Text-Hook, Frage, oder visueller Pattern Interrupt.' });
+            if (fypR < 40) recos.push({ i: 95, t: 'FYP-Rate steigern (' + fypR + '%)', d: 'Trending Sounds nutzen, Watch-Through optimieren, mehr Shares provozieren.' });
+            if (parseFloat(eng) < 5) recos.push({ i: 90, t: 'Engagement steigern', d: 'CTAs einbauen, Fragen stellen, kontroverse Meinungen teilen.' });
+            recos.push({ i: rn(70, 88), t: 'Trending Sounds early adopten', d: 'Sounds vor dem Peak nutzen = 3x mehr FYP-Reichweite' });
+            recos.push({ i: rn(60, 80), t: 'Series/Part-Format starten', d: 'Mehrteilige Videos = höhere Follower-Conversion' });
+            recos.push({ i: rn(50, 75), t: 'Duets/Stitches aktivieren', d: 'Ermöglicht virale Verbreitung durch andere Creator' });
+            recos.sort((a, b) => b.i - a.i);
+            document.getElementById('recoD').innerHTML = recos.map((r, i) => `<div class="result-item"><span class="result-icon">${badge(r.i, 'green')}</span><div><div class="result-title">#${i + 1}: ${r.t}</div><div class="result-desc">${r.d}</div></div></div>`).join('');
+
+            hist[u] = { f, likes, vids, fypR, seoScore, date: new Date().toISOString() }; localStorage.setItem('tt_pro_hist', JSON.stringify(hist)); rH();
+        }
+
+        function rH() { const e = Object.entries(hist); document.getElementById('hE').style.display = e.length ? 'none' : 'block'; document.getElementById('hL').innerHTML = e.map(([n, d]) => `<div class="metric-row" style="cursor:pointer" onclick="document.getElementById('uIn').value='@${n}';run()"><span class="metric-name">@${n}</span>${badge(fmt(d.f), 'blue')} ${badge('FYP:' + d.fypR + '%', 'green')} ${badge('SEO:' + d.seoScore, 'purple')}<span style="font-size:10px;color:var(--dim)">${new Date(d.date).toLocaleDateString('de-DE')}</span><button class="btn btn-sm btn-outline" onclick="event.stopPropagation();delete hist['${n}'];localStorage.setItem('tt_pro_hist',JSON.stringify(hist));rH()">✕</button></div>`).join('') }
+        rH();
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

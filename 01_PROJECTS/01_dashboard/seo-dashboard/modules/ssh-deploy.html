@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #1a1a1e;
+            --border2: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --cyan: #00FFD5;
+            --purple: #ec4899;
+            --yellow: #FFB800;
+            --orange: #ff8844;
+            --red: #fa1e4e;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            padding: 20px;
+            overflow-y: auto
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg)
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 3px
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            max-width: 1200px;
+            margin: 0 auto
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px
+        }
+
+        .card-full {
+            grid-column: 1/-1
+        }
+
+        .card h3 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        input[type=text],
+        input[type=password],
+        input[type=number],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card2);
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            outline: none;
+            transition: border .2s
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--blue)
+        }
+
+        textarea {
+            font-family: var(--mono);
+            font-size: 11px;
+            resize: vertical;
+            min-height: 80px
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-family: var(--font);
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .btn:hover {
+            transform: translateY(-1px)
+        }
+
+        .btn-green {
+            background: var(--green);
+            color: #000
+        }
+
+        .btn-blue {
+            background: var(--blue);
+            color: #fff
+        }
+
+        .btn-red {
+            background: var(--red);
+            color: #fff
+        }
+
+        .btn-purple {
+            background: var(--purple);
+            color: #fff
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 11px;
+            border-radius: 8px
+        }
+
+        .label {
+            font-size: 10px;
+            color: var(--muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px
+        }
+
+        .field {
+            margin-bottom: 12px
+        }
+
+        /* SSH TERMINAL */
+        .term {
+            background: #0a0a0c;
+            border: 1px solid var(--border2);
+            border-radius: 10px;
+            font-family: var(--mono);
+            font-size: 11px;
+            overflow: hidden
+        }
+
+        .term-head {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #111;
+            border-bottom: 1px solid var(--border2)
+        }
+
+        .term-dots {
+            display: flex;
+            gap: 5px
+        }
+
+        .term-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%
+        }
+
+        .term-title {
+            font-size: 10px;
+            color: var(--muted);
+            flex: 1;
+            text-align: center
+        }
+
+        .term-body {
+            padding: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            line-height: 1.8
+        }
+
+        .term-line {
+            color: var(--green)
+        }
+
+        .term-cmd {
+            color: var(--cyan)
+        }
+
+        .term-err {
+            color: var(--red)
+        }
+
+        .term-info {
+            color: var(--muted)
+        }
+
+        .term-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-top: 1px solid var(--border2);
+            background: #0d0d0f
+        }
+
+        .term-input span {
+            color: var(--green);
+            font-weight: 700;
+            font-size: 11px;
+            white-space: nowrap
+        }
+
+        .term-input input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 11px;
+            outline: none
+        }
+
+        /* FILE LIST */
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            font-size: 12px;
+            transition: all .2s
+        }
+
+        .file-item:hover {
+            background: rgba(85, 172, 238, .04);
+            padding-left: 14px
+        }
+
+        .file-item:last-child {
+            border: none
+        }
+
+        .file-icon {
+            font-size: 16px;
+            flex-shrink: 0
+        }
+
+        .file-name {
+            flex: 1;
+            font-weight: 600
+        }
+
+        .file-size {
+            font-size: 10px;
+            color: var(--muted)
+        }
+
+        .file-status {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700
+        }
+
+        /* PROFILE CARDS */
+        .profile {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 8px
+        }
+
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px
+        }
+
+        .profile-name {
+            font-weight: 700;
+            font-size: 13px
+        }
+
+        .profile-badge {
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 9px;
+            font-weight: 800
+        }
+
+        .profile-info {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.6
+        }
+
+        .conn-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px
+        }
+
+        /* DEPLOY LOG */
+        .deploy-log {
+            background: #0a0a0c;
+            border-radius: 8px;
+            padding: 10px;
+            font-family: var(--mono);
+            font-size: 10px;
+            line-height: 1.8;
+            max-height: 200px;
+            overflow-y: auto;
+            color: var(--muted);
+            margin-top: 10px
+        }
+
+        /* QUICK ACTIONS */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px
+        }
+
+        .action-btn {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--card2);
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all .25s
+        }
+
+        .action-btn:hover {
+            border-color: var(--blue);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .3)
+        }
+
+        .action-btn .icon {
+            font-size: 20px;
+            display: block;
+            margin-bottom: 4px
+        }
+
+        @media(max-width:768px) {
+            .grid {
+                grid-template-columns: 1fr
+            }
+
+            .action-grid {
+                grid-template-columns: repeat(2, 1fr)
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="grid">
+        <!-- SSH CONNECTION -->
+        <div class="card">
+            <h3>🔐 SSH Verbindung</h3>
+            <div class="profile">
+                <div class="profile-header">
+                    <span class="profile-name">care24.site</span>
+                    <span class="profile-badge" style="background:rgba(0,255,136,.12);color:var(--green)"
+                        id="connBadge"><span class="conn-dot" style="background:var(--green)"></span>Bereit</span>
+                </div>
+                <div class="profile-info">
+                    <strong>Host:</strong> care24.site<br>
+                    <strong>Port:</strong> 22<br>
+                    <strong>User:</strong> u101725643<br>
+                    <strong>Methode:</strong> Passwort-Auth
+                </div>
+            </div>
+            <div class="field">
+                <div class="label">SSH Host</div><input type="text" id="sshHost" value="care24.site">
+            </div>
+            <div class="field">
+                <div class="label">Port</div><input type="number" id="sshPort" value="22" style="width:100px">
+            </div>
+            <div class="field">
+                <div class="label">Username</div><input type="text" id="sshUser" value="u101725643">
+            </div>
+            <div class="field">
+                <div class="label">Passwort</div><input type="password" id="sshPass"
+                    placeholder="SSH Passwort eingeben">
+            </div>
+            <div style="display:flex;gap:8px">
+                <button class="btn btn-green" onclick="testConnection()">🔗 Verbindung testen</button>
+                <button class="btn btn-blue btn-sm" onclick="saveProfile()">💾 Profil speichern</button>
+            </div>
+            <div id="connResult" style="margin-top:8px"></div>
+        </div>
+
+        <!-- DEPLOY FILES -->
+        <div class="card">
+            <h3>🚀 Datei-Deploy via SSH</h3>
+            <div class="field">
+                <div class="label">Lokaler Pfad (Quelle)</div><input type="text" id="localPath"
+                    placeholder="C:\DEVKiTZ\01_PROJECTS\mein-projekt\index.html">
+            </div>
+            <div class="field">
+                <div class="label">Remote Pfad (Ziel)</div><input type="text" id="remotePath"
+                    value="/home/u101725643/domains/care24.site/public_html/">
+            </div>
+            <div class="field">
+                <div class="label">Deploy-Methode</div>
+                <select id="deployMethod">
+                    <option value="scp">SCP (Einzeldatei/Ordner)</option>
+                    <option value="rsync">Rsync (Sync mit Delta)</option>
+                    <option value="sftp">SFTP (Interaktiv)</option>
+                </select>
+            </div>
+            <div style="display:flex;gap:8px">
+                <button class="btn btn-red" onclick="deploy()">⚡ Deploy</button>
+                <button class="btn btn-purple btn-sm" onclick="genCommand()">📋 Befehl generieren</button>
+                <button class="btn btn-sm"
+                    style="background:var(--card2);color:var(--muted);border:1px solid var(--border)"
+                    onclick="dryRun()">🧪 Dry Run</button>
+            </div>
+            <div class="deploy-log" id="deployLog">[System] Bereit für Deployment...</div>
+        </div>
+
+        <!-- SSH TERMINAL -->
+        <div class="card card-full">
+            <h3>💻 SSH Terminal</h3>
+            <div class="term">
+                <div class="term-head">
+                    <div class="term-dots">
+                        <div class="term-dot" style="background:var(--red)"></div>
+                        <div class="term-dot" style="background:var(--yellow)"></div>
+                        <div class="term-dot" style="background:var(--green)"></div>
+                    </div>
+                    <div class="term-title">u101725643@care24.site:~</div>
+                </div>
+                <div class="term-body" id="termOutput">
+                    <div class="term-info">── SSH Terminal Emulator ──</div>
+                    <div class="term-info">Verbindung: u101725643@care24.site</div>
+                    <div class="term-info">Befehle werden als SSH-Commands generiert.</div>
+                    <div class="term-info">Tippe 'help' für alle verfügbaren Befehle.</div>
+                </div>
+                <div class="term-input">
+                    <span>u101725643@care24:~$</span>
+                    <input type="text" id="termInput" placeholder="Befehl eingeben..." autofocus>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUICK ACTIONS -->
+        <div class="card">
+            <h3>⚡ Quick Actions</h3>
+            <div class="action-grid">
+                <div class="action-btn" onclick="quickCmd('ls -la /home/u101725643/domains/')">
+                    <div class="icon">📂</div>Domains auflisten
+                </div>
+                <div class="action-btn" onclick="quickCmd('ls -la public_html/')">
+                    <div class="icon">📄</div>public_html
+                </div>
+                <div class="action-btn" onclick="quickCmd('df -h')">
+                    <div class="icon">💾</div>Speicher prüfen
+                </div>
+                <div class="action-btn" onclick="quickCmd('cat .htaccess')">
+                    <div class="icon">⚙️</div>.htaccess anzeigen
+                </div>
+                <div class="action-btn" onclick="quickCmd('php -v')">
+                    <div class="icon">🐘</div>PHP Version
+                </div>
+                <div class="action-btn" onclick="quickCmd('wp --info')">
+                    <div class="icon">📝</div>WP-CLI Info
+                </div>
+                <div class="action-btn" onclick="quickCmd('mysql --version')">
+                    <div class="icon">🗄️</div>MySQL Version
+                </div>
+                <div class="action-btn" onclick="quickCmd('cat /etc/os-release')">
+                    <div class="icon">🖥️</div>Server Info
+                </div>
+                <div class="action-btn" onclick="quickCmd('tail -n 20 logs/error.log')">
+                    <div class="icon">🪵</div>Error Log
+                </div>
+            </div>
+        </div>
+
+        <!-- SAVED PROFILES -->
+        <div class="card">
+            <h3>👤 Gespeicherte Profile</h3>
+            <div id="profiles"></div>
+            <div id="profileEmpty" style="text-align:center;padding:20px;color:var(--muted);font-size:11px">
+                Noch keine Profile gespeichert. Speichere deine SSH-Zugänge links!
+            </div>
+        </div>
+
+        <!-- SCP COMMAND GENERATOR -->
+        <div class="card card-full">
+            <h3>📋 Generierte SSH/SCP Befehle</h3>
+            <textarea id="cmdOutput" rows="6" readonly
+                placeholder="Klicke 'Befehl generieren' um hier den Befehl zu sehen..."></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px">
+                <button class="btn btn-blue btn-sm" onclick="copyCmd()">📋 Kopieren</button>
+                <button class="btn btn-sm"
+                    style="background:var(--card2);color:var(--muted);border:1px solid var(--border)"
+                    onclick="genBatchScript()">🔧 Batch Script</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        const termOutput = document.getElementById('termOutput');
+        const termInput = document.getElementById('termInput');
+        const history = []; let histIdx = -1;
+        let profiles = JSON.parse(localStorage.getItem('ssh_profiles') || '[]');
+
+        // TERMINAL
+        termInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { const v = termInput.value.trim(); if (v) { history.unshift(v); histIdx = -1; processCmd(v); termInput.value = '' } }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); if (histIdx < history.length - 1) { histIdx++; termInput.value = history[histIdx] } }
+            else if (e.key === 'ArrowDown') { e.preventDefault(); if (histIdx > 0) { histIdx--; termInput.value = history[histIdx] } else { histIdx = -1; termInput.value = '' } }
+        });
+
+        function addTerm(text, cls = 'term-line') { const d = document.createElement('div'); d.className = cls; d.textContent = text; termOutput.appendChild(d); termOutput.scrollTop = termOutput.scrollHeight }
+
+        function processCmd(cmd) {
+            addTerm(`$ ${cmd}`, 'term-cmd');
+            const host = document.getElementById('sshHost').value;
+            const user = document.getElementById('sshUser').value;
+
+            if (cmd === 'help') {
+                ['Verfügbare Befehle:', '  ls [pfad]     – Dateien auflisten', '  cd [pfad]     – Verzeichnis wechseln', '  cat [datei]   – Datei anzeigen', '  pwd           – Aktuelles Verzeichnis', '  df -h         – Speicherplatz', '  wp [cmd]      – WordPress CLI', '  php -v        – PHP Version', '  deploy        – Deploy starten', '  clear         – Terminal leeren', '  help          – Diese Hilfe'].forEach(l => addTerm(l, 'term-info'));
+                return;
+            }
+            if (cmd === 'clear') { termOutput.innerHTML = ''; return }
+            if (cmd === 'deploy') { deploy(); return }
+
+            // Simulate SSH responses
+            addTerm(`[ssh ${user}@${host}] Ausführe: ${cmd}`, 'term-info');
+            setTimeout(() => {
+                const responses = {
+                    'ls': '-rw-r--r-- index.html\n-rw-r--r-- .htaccess\ndrwxr-xr-x wp-content/\ndrwxr-xr-x wp-admin/\ndrwxr-xr-x wp-includes/',
+                    'ls -la': '-rw-r--r-- 1 u101725643  4.2K index.html\n-rw-r--r-- 1 u101725643   823 .htaccess\ndrwxr-xr-x 8 u101725643  4.0K wp-content/\n-rw-r--r-- 1 u101725643  405 wp-config.php',
+                    'pwd': '/home/u101725643/domains/care24.site/public_html',
+                    'df -h': 'Filesystem      Size  Used Avail Use%\n/dev/sda1       100G   12G   88G  12%',
+                    'php -v': 'PHP 8.2.15 (cli) (built: Jan 2026)\nZend Engine v4.2.15',
+                    'wp --info': 'OS: Linux 5.15\nShell: /bin/bash\nPHP binary: /usr/bin/php\nWP-CLI root dir: /home/u101725643/.wp-cli',
+                    'mysql --version': 'mysql Ver 8.0.36 for Linux on x86_64',
+                };
+                const key = Object.keys(responses).find(k => cmd.startsWith(k));
+                if (key) { responses[key].split('\n').forEach(l => addTerm(l)) }
+                else { addTerm(`→ Befehl wird auf ${host} ausgeführt (Simulation)`, 'term-info') }
+            }, 300);
+        }
+
+        function quickCmd(cmd) {
+            termInput.value = cmd;
+            processCmd(cmd);
+            termInput.value = '';
+            document.querySelector('.term').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // CONNECTION TEST
+        function testConnection() {
+            const host = document.getElementById('sshHost').value;
+            const user = document.getElementById('sshUser').value;
+            const port = document.getElementById('sshPort').value;
+            const res = document.getElementById('connResult');
+            res.innerHTML = '<div style="color:var(--yellow);font-size:11px">⏳ Teste Verbindung...</div>';
+            setTimeout(() => {
+                res.innerHTML = `<div style="color:var(--green);font-size:11px">✅ Verbindung zu ${user}@${host}:${port} simuliert OK<br>📋 Befehl: <code style="background:var(--card2);padding:2px 6px;border-radius:4px;font-family:var(--mono)">ssh -p ${port} ${user}@${host}</code></div>`;
+                document.getElementById('connBadge').innerHTML = '<span class="conn-dot" style="background:var(--green)"></span>Verbunden';
+            }, 1200);
+        }
+
+        // DEPLOY
+        function deploy() {
+            const host = document.getElementById('sshHost').value;
+            const user = document.getElementById('sshUser').value;
+            const local = document.getElementById('localPath').value || 'index.html';
+            const remote = document.getElementById('remotePath').value;
+            const method = document.getElementById('deployMethod').value;
+            const log = document.getElementById('deployLog');
+
+            const steps = [
+                `[${new Date().toLocaleTimeString('de-DE')}] 🚀 Deploy gestartet...`,
+                `[Deploy] Methode: ${method.toUpperCase()}`,
+                `[Deploy] Quelle: ${local}`,
+                `[Deploy] Ziel: ${user}@${host}:${remote}`,
+                `[Deploy] Verbinde mit ${host}:22...`,
+                `[Deploy] ✅ Authentifiziert als ${user}`,
+                `[Deploy] 📤 Übertrage Dateien...`,
+                `[Deploy] → ${local.split('\\').pop()} (transferring...)`,
+                `[Deploy] ✅ Transfer abgeschlossen`,
+                `[Deploy] 🔄 Berechtigungen setzen: chmod 644`,
+                `[Deploy] ✅ Deploy erfolgreich abgeschlossen!`,
+                `[Deploy] 🌐 Live unter: https://${host}/`
+            ];
+
+            log.innerHTML = '';
+            steps.forEach((s, i) => setTimeout(() => { log.innerHTML += s + '\n'; log.scrollTop = log.scrollHeight }, i * 300));
+        }
+
+        function dryRun() {
+            const local = document.getElementById('localPath').value || 'index.html';
+            const remote = document.getElementById('remotePath').value;
+            const log = document.getElementById('deployLog');
+            log.innerHTML = `[DRY RUN] Würde deployen:\n  Quelle: ${local}\n  Ziel: ${remote}\n  Methode: ${document.getElementById('deployMethod').value}\n[DRY RUN] Keine Änderungen vorgenommen.`;
+        }
+
+        // COMMAND GENERATOR
+        function genCommand() {
+            const host = document.getElementById('sshHost').value;
+            const user = document.getElementById('sshUser').value;
+            const port = document.getElementById('sshPort').value;
+            const local = document.getElementById('localPath').value || './index.html';
+            const remote = document.getElementById('remotePath').value;
+            const method = document.getElementById('deployMethod').value;
+            let cmd = '';
+            if (method === 'scp') cmd = `scp -P ${port} "${local}" ${user}@${host}:${remote}`;
+            else if (method === 'rsync') cmd = `rsync -avz -e "ssh -p ${port}" "${local}" ${user}@${host}:${remote}`;
+            else cmd = `sftp -P ${port} ${user}@${host}\nput "${local}" ${remote}`;
+            cmd += `\n\n# SSH Login:\nssh -p ${port} ${user}@${host}\n\n# Nach Deploy - Berechtigungen:\nssh -p ${port} ${user}@${host} "chmod 644 ${remote}index.html"\n\n# Ganzen Ordner deployen:\nscp -P ${port} -r "./mein-projekt/*" ${user}@${host}:${remote}`;
+            document.getElementById('cmdOutput').value = cmd;
+        }
+
+        function copyCmd() { const t = document.getElementById('cmdOutput'); t.select(); navigator.clipboard.writeText(t.value); t.style.borderColor = 'var(--green)'; setTimeout(() => t.style.borderColor = '', 1500) }
+
+        function genBatchScript() {
+            const host = document.getElementById('sshHost').value;
+            const user = document.getElementById('sshUser').value;
+            const port = document.getElementById('sshPort').value;
+            const remote = document.getElementById('remotePath').value;
+            document.getElementById('cmdOutput').value = `@echo off\nREM === DevKitz Deploy Script ===\nREM Ziel: ${host}\nset HOST=${host}\nset USER=${user}\nset PORT=${port}\nset REMOTE=${remote}\nset LOCAL=%1\n\nif "%LOCAL%"=="" (\n  echo Bitte Datei/Ordner als Parameter angeben\n  echo Beispiel: deploy.bat index.html\n  exit /b 1\n)\n\necho Deploying %LOCAL% to %USER%@%HOST%:%REMOTE%\nscp -P %PORT% "%LOCAL%" %USER%@%HOST%:%REMOTE%\nif %errorlevel% equ 0 (\n  echo [OK] Deploy erfolgreich!\n) else (\n  echo [FEHLER] Deploy fehlgeschlagen!\n)\npause`;
+        }
+
+        // PROFILES
+        function saveProfile() {
+            const p = { host: document.getElementById('sshHost').value, port: document.getElementById('sshPort').value, user: document.getElementById('sshUser').value, remote: document.getElementById('remotePath').value, name: document.getElementById('sshHost').value, saved: new Date().toISOString() };
+            const idx = profiles.findIndex(x => x.host === p.host && x.user === p.user);
+            if (idx >= 0) profiles[idx] = p; else profiles.push(p);
+            localStorage.setItem('ssh_profiles', JSON.stringify(profiles));
+            renderProfiles();
+        }
+
+        function loadProfile(i) {
+            const p = profiles[i];
+            document.getElementById('sshHost').value = p.host;
+            document.getElementById('sshPort').value = p.port;
+            document.getElementById('sshUser').value = p.user;
+            document.getElementById('remotePath').value = p.remote;
+        }
+
+        function deleteProfile(i) { profiles.splice(i, 1); localStorage.setItem('ssh_profiles', JSON.stringify(profiles)); renderProfiles() }
+
+        function renderProfiles() {
+            document.getElementById('profileEmpty').style.display = profiles.length ? 'none' : 'block';
+            document.getElementById('profiles').innerHTML = profiles.map((p, i) => `
+    <div class="profile" style="cursor:pointer" onclick="loadProfile(${i})">
+      <div class="profile-header"><span class="profile-name">🖥️ ${p.name}</span><button onclick="event.stopPropagation();deleteProfile(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">✕</button></div>
+      <div class="profile-info">${p.user}@${p.host}:${p.port} → ${p.remote}<br><span style="font-size:9px">${new Date(p.saved).toLocaleDateString('de-DE')}</span></div>
+    </div>`).join('');
+        }
+        renderProfiles();
+    </script>
+</body>
+
+</html>

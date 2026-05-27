@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v1.0.0_01">
+    <meta name="dkz-module" content="whisper-tts">
+    <title>🎧 Whisper TTS — DkZ™ Audio Studio</title>
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #fa1e4e;
+            --bg: #060608;
+            --bg2: #0e0e12;
+            --bg3: #1a1a20;
+            --text: #e8e8ec;
+            --muted: #8a8a9a;
+            --border: rgba(255,255,255,.06);
+            --green: #00ff88;
+            --yellow: #ffb800;
+            --red: #ff3b5c;
+            --blue: #6366f1;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; }
+
+        /* Background */
+        .bg-mesh { position:fixed; inset:0; z-index:-1; overflow:hidden; }
+        .bg-mesh .blob { position:absolute; border-radius:50%; filter:blur(120px); opacity:.15; }
+        .bg-mesh .blob-1 { width:600px; height:600px; background:#fa1e4e; top:-200px; right:-100px; }
+        .bg-mesh .blob-2 { width:500px; height:500px; background:#6366f1; bottom:-200px; left:-100px; }
+        .bg-mesh .blob-3 { width:400px; height:400px; background:#00ff88; top:50%; left:50%; transform:translate(-50%,-50%); opacity:.06; }
+
+        /* Header */
+        .header { background:rgba(14,14,18,.85); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-bottom:1px solid var(--border); padding:14px 24px; display:flex; align-items:center; gap:14px; position:sticky; top:0; z-index:100; }
+        .header h1 { font-size:18px; font-weight:800; }
+        .header h1 span { color:var(--accent); }
+        .back-btn { color:var(--muted); text-decoration:none; font-size:20px; transition:color .2s; }
+        .back-btn:hover { color:var(--accent); }
+        .ver { font-size:10px; color:var(--muted); margin-left:auto; font-family:var(--mono); }
+
+        /* Content */
+        .content { max-width:900px; margin:0 auto; padding:24px; }
+        .section { background:rgba(18,18,24,.85); border:1px solid var(--border); border-radius:16px; padding:20px; margin-bottom:20px; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
+        .section-title { font-size:14px; font-weight:800; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+        .section-desc { font-size:11px; color:var(--muted); margin-bottom:14px; line-height:1.6; }
+
+        /* TTS Input */
+        .tts-input { width:100%; min-height:160px; padding:16px; background:var(--bg); border:1px solid var(--border); border-radius:12px; color:var(--text); font-family:var(--font); font-size:13px; resize:vertical; outline:none; transition:border-color .2s; }
+        .tts-input:focus { border-color:rgba(250,30,78,.4); }
+        .tts-input::placeholder { color:rgba(255,255,255,.2); }
+
+        /* Controls */
+        .controls { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+        .ctrl-btn { padding:10px 20px; border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,.03); color:var(--text); font-size:12px; font-weight:700; cursor:pointer; transition:all .2s; font-family:var(--font); display:flex; align-items:center; gap:6px; }
+        .ctrl-btn:hover { border-color:rgba(250,30,78,.4); background:rgba(250,30,78,.06); }
+        .ctrl-btn.primary { background:linear-gradient(135deg,#fa1e4e,#ec4899); border:none; color:white; }
+        .ctrl-btn.primary:hover { transform:translateY(-1px); box-shadow:0 4px 20px rgba(250,30,78,.3); }
+        .ctrl-btn.active { border-color:var(--green); color:var(--green); background:rgba(0,255,136,.06); }
+
+        /* Voice Grid */
+        .voice-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:10px; }
+        .voice-card { padding:12px; background:rgba(255,255,255,.02); border:1px solid var(--border); border-radius:10px; cursor:pointer; transition:all .2s; }
+        .voice-card:hover { border-color:rgba(250,30,78,.3); }
+        .voice-card.selected { border-color:var(--accent); background:rgba(250,30,78,.06); }
+        .voice-name { font-size:12px; font-weight:700; }
+        .voice-lang { font-size:10px; color:var(--muted); }
+
+        /* Slider */
+        .slider-row { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+        .slider-label { font-size:11px; color:var(--muted); min-width:90px; font-weight:600; }
+        .slider-val { font-size:11px; color:var(--accent); font-weight:700; min-width:40px; text-align:right; font-family:var(--mono); }
+        input[type="range"] { flex:1; accent-color:var(--accent); }
+
+        /* History */
+        .history-item { padding:10px 14px; border-bottom:1px solid rgba(255,255,255,.03); display:flex; justify-content:space-between; align-items:center; cursor:pointer; transition:background .2s; }
+        .history-item:hover { background:rgba(250,30,78,.04); }
+        .history-text { font-size:11px; color:var(--muted); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .history-date { font-size:9px; color:rgba(255,255,255,.2); font-family:var(--mono); margin-left:10px; }
+
+        /* Status */
+        .status-bar { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:rgba(0,255,136,.04); border:1px solid rgba(0,255,136,.1); border-radius:10px; margin-bottom:14px; }
+        .status-dot { width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 8px rgba(0,255,136,.4); }
+        .status-text { font-size:11px; color:var(--green); font-weight:600; }
+
+        /* Responsive */
+        @media (max-width:768px) {
+            .content { padding:14px; }
+            .controls { flex-direction:column; }
+            .voice-grid { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-mesh">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <header class="header">
+        <a href="../../hub/index.html" class="back-btn" title="← Hub">←</a>
+        <h1>🎧 Whisper <span>TTS</span></h1>
+        <span class="ver">v1.0.0</span>
+    </header>
+
+    <div class="content">
+        <!-- Status -->
+        <div class="status-bar">
+            <div style="display:flex;align-items:center;gap:8px">
+                <div class="status-dot" id="statusDot"></div>
+                <span class="status-text" id="statusText">Bereit — Web Speech API verfügbar</span>
+            </div>
+            <span style="font-size:10px;color:var(--muted)" id="voiceCount">0 Stimmen</span>
+        </div>
+
+        <!-- Text Input -->
+        <div class="section">
+            <div class="section-title">📝 Text eingeben oder einfügen</div>
+            <textarea class="tts-input" id="ttsInput" placeholder="Text hier eingeben oder einfügen... 
+
+Tipp: Du kannst auch auf einer beliebigen Seite Text markieren und den 🎧 Button drücken."></textarea>
+            <div class="controls">
+                <button class="ctrl-btn primary" onclick="speakInput()">▶ Vorlesen</button>
+                <button class="ctrl-btn" onclick="pauseResume()" id="pauseBtn">⏸ Pause</button>
+                <button class="ctrl-btn" onclick="stopSpeech()">⏹ Stop</button>
+                <button class="ctrl-btn" onclick="clearInput()">🗑 Leeren</button>
+                <button class="ctrl-btn" id="micBtn" onclick="startWhisper()">🎤 Whisper STT</button>
+            </div>
+        </div>
+
+        <!-- Voice Selection -->
+        <div class="section">
+            <div class="section-title">🗣️ Stimmen-Auswahl</div>
+            <div class="section-desc">Wähle eine Stimme. Klick auf eine Karte zum Auswählen, Doppelklick zum Testen.</div>
+            <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+                <button class="ctrl-btn active" onclick="filterVoices('all',this)" data-filter="all">🌐 Alle</button>
+                <button class="ctrl-btn" onclick="filterVoices('de',this)" data-filter="de">🇩🇪 Deutsch</button>
+                <button class="ctrl-btn" onclick="filterVoices('en',this)" data-filter="en">🇬🇧 English</button>
+                <button class="ctrl-btn" onclick="filterVoices('fr',this)" data-filter="fr">🇫🇷 Français</button>
+                <button class="ctrl-btn" onclick="filterVoices('es',this)" data-filter="es">🇪🇸 Español</button>
+            </div>
+            <div class="voice-grid" id="voiceGrid"></div>
+        </div>
+
+        <!-- Speed & Pitch -->
+        <div class="section">
+            <div class="section-title">⚙️ Einstellungen</div>
+            <div class="slider-row">
+                <span class="slider-label">Geschwindigkeit</span>
+                <input type="range" id="rateSlider" min="0.3" max="2.5" step="0.1" value="1.0" oninput="updateRate(this.value)">
+                <span class="slider-val" id="rateVal">1.0x</span>
+            </div>
+            <div class="slider-row">
+                <span class="slider-label">Tonhöhe</span>
+                <input type="range" id="pitchSlider" min="0.3" max="2.0" step="0.1" value="1.0" oninput="updatePitch(this.value)">
+                <span class="slider-val" id="pitchVal">1.0</span>
+            </div>
+            <div class="slider-row">
+                <span class="slider-label">Sprache</span>
+                <select id="langSelect" onchange="updateLang(this.value)" style="flex:1;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:11px;font-family:var(--font)">
+                    <option value="de-DE">🇩🇪 Deutsch</option>
+                    <option value="en-US">🇬🇧 English (US)</option>
+                    <option value="en-GB">🇬🇧 English (UK)</option>
+                    <option value="fr-FR">🇫🇷 Français</option>
+                    <option value="es-ES">🇪🇸 Español</option>
+                    <option value="it-IT">🇮🇹 Italiano</option>
+                    <option value="pt-BR">🇧🇷 Português</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- History -->
+        <div class="section">
+            <div class="section-title">📜 Verlauf (letzte 20)</div>
+            <div id="historyList" style="max-height:300px;overflow-y:auto">
+                <div style="font-size:11px;color:var(--muted);padding:14px;text-align:center">Noch keine Einträge</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shared Scripts Loader -->
+    <script>
+        // ═══ STATE ═══
+        let currentVoice = null;
+        let rate = 1.0;
+        let pitch = 1.0;
+        let lang = 'de-DE';
+        let speaking = false;
+        let paused = false;
+
+        function esc(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function showToast(msg) {
+            const t = document.createElement('div');
+            t.textContent = msg;
+            Object.assign(t.style, { position:'fixed', bottom:'20px', left:'50%', transform:'translateX(-50%)', padding:'10px 20px', background:'#1a1a20', border:'1px solid rgba(250,30,78,.3)', borderRadius:'10px', color:'#f6f6f7', fontSize:'.8rem', fontFamily:'Inter,sans-serif', zIndex:'99999', boxShadow:'0 8px 30px rgba(0,0,0,.5)', transition:'opacity .3s' });
+            document.body.appendChild(t);
+            setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+        }
+
+        // ═══ VOICES ═══
+        function loadVoices() {
+            const voices = speechSynthesis.getVoices();
+            document.getElementById('voiceCount').textContent = voices.length + ' Stimmen';
+            renderVoices(voices);
+        }
+
+        function renderVoices(voices, filter) {
+            const grid = document.getElementById('voiceGrid');
+            let filtered = voices;
+            if (filter && filter !== 'all') {
+                filtered = voices.filter(v => v.lang.toLowerCase().startsWith(filter));
+            }
+
+            grid.innerHTML = filtered.map(v => {
+                const flag = v.lang.startsWith('de') ? '🇩🇪' : v.lang.startsWith('en') ? '🇬🇧' : v.lang.startsWith('fr') ? '🇫🇷' : v.lang.startsWith('es') ? '🇪🇸' : v.lang.startsWith('it') ? '🇮🇹' : '🌐';
+                const sel = currentVoice && currentVoice.voiceURI === v.voiceURI ? ' selected' : '';
+                return '<div class="voice-card' + sel + '" onclick="selectVoice(\'' + esc(v.voiceURI) + '\')" ondblclick="testVoice(\'' + esc(v.voiceURI) + '\')">' +
+                    '<div class="voice-name">' + flag + ' ' + esc(v.name) + '</div>' +
+                    '<div class="voice-lang">' + esc(v.lang) + (v.default ? ' (Standard)' : '') + '</div>' +
+                    '</div>';
+            }).join('');
+        }
+
+        function filterVoices(filter, btn) {
+            document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderVoices(speechSynthesis.getVoices(), filter);
+        }
+
+        function selectVoice(uri) {
+            currentVoice = speechSynthesis.getVoices().find(v => v.voiceURI === uri);
+            renderVoices(speechSynthesis.getVoices());
+            showToast('🗣️ Stimme: ' + (currentVoice ? currentVoice.name : 'Standard'));
+        }
+
+        function testVoice(uri) {
+            const v = speechSynthesis.getVoices().find(v => v.voiceURI === uri);
+            if (!v) return;
+            speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance('Hallo, ich bin ' + v.name);
+            u.voice = v;
+            u.lang = v.lang;
+            u.rate = rate;
+            u.pitch = pitch;
+            speechSynthesis.speak(u);
+        }
+
+        // ═══ SPEECH ═══
+        function speakInput() {
+            const text = document.getElementById('ttsInput').value.trim();
+            if (!text) { showToast('⚠️ Bitte Text eingeben'); return; }
+            speechSynthesis.cancel();
+
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = lang;
+            u.rate = rate;
+            u.pitch = pitch;
+            if (currentVoice) u.voice = currentVoice;
+
+            u.onstart = () => { speaking = true; paused = false; updateStatus('speaking'); };
+            u.onend = () => { speaking = false; paused = false; updateStatus('idle'); };
+            u.onerror = () => { speaking = false; updateStatus('error'); };
+
+            speechSynthesis.speak(u);
+            saveHistory(text);
+        }
+
+        function pauseResume() {
+            if (speaking && !paused) {
+                speechSynthesis.pause();
+                paused = true;
+                document.getElementById('pauseBtn').innerHTML = '▶ Weiter';
+                updateStatus('paused');
+            } else if (paused) {
+                speechSynthesis.resume();
+                paused = false;
+                document.getElementById('pauseBtn').innerHTML = '⏸ Pause';
+                updateStatus('speaking');
+            }
+        }
+
+        function stopSpeech() {
+            speechSynthesis.cancel();
+            speaking = false;
+            paused = false;
+            document.getElementById('pauseBtn').innerHTML = '⏸ Pause';
+            updateStatus('idle');
+        }
+
+        function clearInput() {
+            document.getElementById('ttsInput').value = '';
+            showToast('🗑 Text geleert');
+        }
+
+        function updateStatus(state) {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            switch(state) {
+                case 'speaking':
+                    dot.style.background = 'var(--accent)';
+                    dot.style.boxShadow = '0 0 8px rgba(250,30,78,.5)';
+                    text.textContent = '🔊 Wird vorgelesen...';
+                    text.style.color = 'var(--accent)';
+                    break;
+                case 'paused':
+                    dot.style.background = 'var(--yellow)';
+                    dot.style.boxShadow = '0 0 8px rgba(255,184,0,.4)';
+                    text.textContent = '⏸ Pausiert';
+                    text.style.color = 'var(--yellow)';
+                    break;
+                case 'error':
+                    dot.style.background = 'var(--red)';
+                    text.textContent = '❌ Fehler';
+                    text.style.color = 'var(--red)';
+                    break;
+                default:
+                    dot.style.background = 'var(--green)';
+                    dot.style.boxShadow = '0 0 8px rgba(0,255,136,.4)';
+                    text.textContent = 'Bereit — Web Speech API verfügbar';
+                    text.style.color = 'var(--green)';
+            }
+        }
+
+        // ═══ SETTINGS ═══
+        function updateRate(val) {
+            rate = parseFloat(val);
+            document.getElementById('rateVal').textContent = rate.toFixed(1) + 'x';
+            saveSettings();
+        }
+        function updatePitch(val) {
+            pitch = parseFloat(val);
+            document.getElementById('pitchVal').textContent = pitch.toFixed(1);
+            saveSettings();
+        }
+        function updateLang(val) {
+            lang = val;
+            saveSettings();
+        }
+
+        function saveSettings() {
+            localStorage.setItem('dkz-whisper-tts', JSON.stringify({ rate, pitch, lang, voiceURI: currentVoice ? currentVoice.voiceURI : '' }));
+        }
+        function loadSettings() {
+            try {
+                const s = JSON.parse(localStorage.getItem('dkz-whisper-tts'));
+                if (s) {
+                    rate = s.rate || 1.0; pitch = s.pitch || 1.0; lang = s.lang || 'de-DE';
+                    document.getElementById('rateSlider').value = rate;
+                    document.getElementById('rateVal').textContent = rate.toFixed(1) + 'x';
+                    document.getElementById('pitchSlider').value = pitch;
+                    document.getElementById('pitchVal').textContent = pitch.toFixed(1);
+                    document.getElementById('langSelect').value = lang;
+                    if (s.voiceURI) {
+                        setTimeout(() => {
+                            currentVoice = speechSynthesis.getVoices().find(v => v.voiceURI === s.voiceURI);
+                        }, 500);
+                    }
+                }
+            } catch(e) {}
+        }
+
+        // ═══ HISTORY ═══
+        function saveHistory(text) {
+            const key = 'dkz-tts-history';
+            const h = JSON.parse(localStorage.getItem(key) || '[]');
+            h.unshift({ text: text.substring(0, 300), date: new Date().toISOString() });
+            while (h.length > 20) h.pop();
+            localStorage.setItem(key, JSON.stringify(h));
+            renderHistory();
+        }
+        function renderHistory() {
+            const h = JSON.parse(localStorage.getItem('dkz-tts-history') || '[]');
+            const list = document.getElementById('historyList');
+            if (!h.length) { list.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:14px;text-align:center">Noch keine Einträge</div>'; return; }
+            list.innerHTML = h.map(item => {
+                const d = new Date(item.date);
+                return '<div class="history-item" onclick="document.getElementById(\'ttsInput\').value=this.querySelector(\'.history-text\').textContent">' +
+                    '<span class="history-text">' + esc(item.text) + '</span>' +
+                    '<span class="history-date">' + d.toLocaleDateString('de-DE') + ' ' + d.toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'}) + '</span>' +
+                    '</div>';
+            }).join('');
+        }
+
+        // ═══ WHISPER STT ═══
+        function startWhisper() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                // Fallback: Web Speech Recognition
+                if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    const recognition = new SR();
+                    recognition.lang = lang;
+                    recognition.continuous = true;
+                    recognition.interimResults = true;
+                    const btn = document.getElementById('micBtn');
+                    btn.classList.add('active');
+                    btn.innerHTML = '🔴 Aufnahme...';
+                    recognition.onresult = (e) => {
+                        let transcript = '';
+                        for (let i = 0; i < e.results.length; i++) {
+                            transcript += e.results[i][0].transcript;
+                        }
+                        document.getElementById('ttsInput').value = transcript;
+                    };
+                    recognition.onend = () => {
+                        btn.classList.remove('active');
+                        btn.innerHTML = '🎤 Whisper STT';
+                        showToast('🎤 Aufnahme beendet');
+                    };
+                    recognition.onerror = (e) => {
+                        btn.classList.remove('active');
+                        btn.innerHTML = '🎤 Whisper STT';
+                        showToast('❌ ' + e.error);
+                    };
+                    recognition.start();
+                    showToast('🎤 Sprich jetzt...');
+                    // Stop nach 30s
+                    setTimeout(() => recognition.stop(), 30000);
+                } else {
+                    showToast('❌ Spracherkennung nicht verfügbar');
+                }
+                return;
+            }
+            showToast('🎤 Whisper STT — benötigt ONTHERUN™ Server');
+        }
+
+        // ═══ INIT ═══
+        function init() {
+            if (!window.speechSynthesis) {
+                updateStatus('error');
+                document.getElementById('statusText').textContent = '❌ Web Speech API nicht verfügbar';
+                return;
+            }
+            loadSettings();
+            loadVoices();
+            speechSynthesis.onvoiceschanged = loadVoices;
+            renderHistory();
+
+            // Alt+T Shortcut
+            document.addEventListener('keydown', (e) => {
+                if (e.altKey && e.key === 't') {
+                    e.preventDefault();
+                    if (speaking) stopSpeech();
+                    else speakInput();
+                }
+            });
+        }
+
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+        else init();
+    </script>
+
+    <!-- Shared Scripts Portable Loader -->
+    <script>
+        ['dkz-headbar.js','dkz-console.js','dkz-tts.js'].forEach(s => {
+            const el = document.createElement('script');
+            el.src = '../../shared/' + s;
+            el.onerror = () => console.warn('[Portable] ' + s + ' nicht verfuegbar');
+            document.body.appendChild(el);
+        });
+    </script>
+</body>
+</html>

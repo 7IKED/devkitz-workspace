@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #1a1a1e;
+            --border2: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --cyan: #00FFD5;
+            --purple: #ec4899;
+            --yellow: #FFB800;
+            --orange: #ff8844;
+            --red: #fa1e4e;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            padding: 20px;
+            overflow-y: auto
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg)
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 3px
+        }
+
+        .top-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap
+        }
+
+        .top-bar input {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--card);
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 13px;
+            outline: none
+        }
+
+        .top-bar input:focus {
+            border-color: var(--blue)
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-family: var(--font);
+            font-weight: 700;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .btn:hover {
+            transform: translateY(-1px)
+        }
+
+        .btn-green {
+            background: var(--green);
+            color: #000
+        }
+
+        .btn-blue {
+            background: var(--blue);
+            color: #fff
+        }
+
+        .btn-red {
+            background: var(--red);
+            color: #fff
+        }
+
+        .btn-purple {
+            background: var(--purple);
+            color: #fff
+        }
+
+        .btn-sm {
+            padding: 6px 10px;
+            font-size: 10px
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px
+        }
+
+        .stat-card {
+            flex: 1;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center
+        }
+
+        .stat-num {
+            font-size: 28px;
+            font-weight: 800;
+            line-height: 1
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 4px
+        }
+
+        /* DOMAIN TABLE */
+        .domain-table {
+            width: 100%;
+            border-collapse: collapse
+        }
+
+        .domain-table th {
+            text-align: left;
+            padding: 10px;
+            font-size: 10px;
+            color: var(--muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid var(--border2);
+            position: sticky;
+            top: 0;
+            background: var(--bg);
+            z-index: 5
+        }
+
+        .domain-table td {
+            padding: 10px;
+            font-size: 12px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle
+        }
+
+        .domain-table tr {
+            transition: background .15s
+        }
+
+        .domain-table tr:hover {
+            background: rgba(85, 172, 238, .03)
+        }
+
+        .domain-name {
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: color .2s
+        }
+
+        .domain-name:hover {
+            color: var(--cyan)
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700
+        }
+
+        .badge-active {
+            background: rgba(0, 255, 136, .12);
+            color: var(--green)
+        }
+
+        .badge-parked {
+            background: rgba(255, 184, 0, .12);
+            color: var(--yellow)
+        }
+
+        .badge-redirect {
+            background: rgba(85, 172, 238, .12);
+            color: var(--blue)
+        }
+
+        .badge-wp {
+            background: rgba(236, 72, 153, .12);
+            color: var(--purple)
+        }
+
+        .badge-static {
+            background: rgba(255, 77, 122, .12);
+            color: var(--cyan)
+        }
+
+        .badge-inactive {
+            background: rgba(161, 161, 170, .12);
+            color: var(--muted)
+        }
+
+        .badge-expiring {
+            background: rgba(250, 30, 78, .12);
+            color: var(--red)
+        }
+
+        .domain-actions {
+            display: flex;
+            gap: 4px
+        }
+
+        .domain-actions button {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--card2);
+            color: var(--muted);
+            transition: all .2s;
+            font-family: var(--font)
+        }
+
+        .domain-actions button:hover {
+            border-color: var(--blue);
+            color: var(--blue)
+        }
+
+        /* FILTER TABS */
+        .filter-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 14px;
+            flex-wrap: wrap
+        }
+
+        .filter-tab {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 700;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all .2s;
+            font-family: var(--font)
+        }
+
+        .filter-tab:hover {
+            border-color: var(--border2);
+            color: var(--text)
+        }
+
+        .filter-tab.active {
+            border-color: var(--red);
+            color: var(--red);
+            background: rgba(250, 30, 78, .06)
+        }
+
+        /* MODAL */
+        .modal-bg {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .7);
+            z-index: 100;
+            backdrop-filter: blur(6px);
+            align-items: center;
+            justify-content: center
+        }
+
+        .modal-bg.show {
+            display: flex
+        }
+
+        .modal {
+            background: var(--card);
+            border: 1px solid var(--border2);
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto
+        }
+
+        .modal h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .modal .field {
+            margin-bottom: 12px
+        }
+
+        .modal .label {
+            font-size: 10px;
+            color: var(--muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px
+        }
+
+        .modal input,
+        .modal select,
+        .modal textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card2);
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            outline: none
+        }
+
+        .modal textarea {
+            font-family: var(--mono);
+            font-size: 11px;
+            min-height: 60px;
+            resize: vertical
+        }
+
+        .modal-close {
+            float: right;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 32px;
+            height: 32px;
+            color: var(--muted);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .modal-close:hover {
+            color: var(--red);
+            border-color: var(--red)
+        }
+
+        .table-wrap {
+            max-height: calc(100vh - 280px);
+            overflow-y: auto;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px
+        }
+
+        @media(max-width:768px) {
+            .stats-row {
+                flex-wrap: wrap
+            }
+
+            .stats-row .stat-card {
+                min-width: 45%
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="top-bar">
+        <input type="text" id="searchInput" placeholder="🔍 Domain suchen (75 Domains)..." oninput="filterDomains()">
+        <button class="btn btn-green" onclick="openModal('add')">+ Domain hinzufügen</button>
+        <button class="btn btn-blue" onclick="exportCSV()">📥 CSV Export</button>
+        <button class="btn btn-purple" onclick="importCSV()">📤 CSV Import</button>
+        <button class="btn btn-sm" style="background:var(--card);color:var(--muted);border:1px solid var(--border)"
+            onclick="bulkAction()">⚙️ Bulk</button>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-num" style="color:var(--text)" id="totalCount">0</div>
+            <div class="stat-label">Domains Gesamt</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" style="color:var(--green)" id="activeCount">0</div>
+            <div class="stat-label">Aktiv</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" style="color:var(--purple)" id="wpCount">0</div>
+            <div class="stat-label">WordPress</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" style="color:var(--yellow)" id="parkedCount">0</div>
+            <div class="stat-label">Geparkt</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" style="color:var(--red)" id="expCount">0</div>
+            <div class="stat-label">Läuft ab</div>
+        </div>
+    </div>
+
+    <div class="filter-tabs" id="filterTabs">
+        <button class="filter-tab active" onclick="setFilter('all',this)">Alle</button>
+        <button class="filter-tab" onclick="setFilter('active',this)">✅ Aktiv</button>
+        <button class="filter-tab" onclick="setFilter('wordpress',this)">📝 WordPress</button>
+        <button class="filter-tab" onclick="setFilter('static',this)">📄 Statisch</button>
+        <button class="filter-tab" onclick="setFilter('parked',this)">🅿️ Geparkt</button>
+        <button class="filter-tab" onclick="setFilter('redirect',this)">↗️ Redirect</button>
+        <button class="filter-tab" onclick="setFilter('inactive',this)">⏸️ Inaktiv</button>
+        <button class="filter-tab" onclick="setFilter('expiring',this)">⚠️ Ablaufend</button>
+    </div>
+
+    <div class="table-wrap">
+        <table class="domain-table">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+                    <th>Domain</th>
+                    <th>Typ</th>
+                    <th>Status</th>
+                    <th>SSL</th>
+                    <th>Ablauf</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody id="domainList"></tbody>
+        </table>
+    </div>
+
+    <!-- DOMAIN MODAL -->
+    <div class="modal-bg" id="domainModal">
+        <div class="modal">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <h3 id="modalTitle">Domain verwalten</h3>
+            <div class="field">
+                <div class="label">Domain</div><input type="text" id="mDomain" placeholder="example.com">
+            </div>
+            <div class="field">
+                <div class="label">Typ</div><select id="mType">
+                    <option value="active">Aktiv</option>
+                    <option value="wordpress">WordPress</option>
+                    <option value="static">Statisch (HTML)</option>
+                    <option value="parked">Geparkt</option>
+                    <option value="redirect">Redirect</option>
+                    <option value="inactive">Inaktiv</option>
+                </select>
+            </div>
+            <div class="field">
+                <div class="label">SSL</div><select id="mSSL">
+                    <option value="active">✅ Aktiv</option>
+                    <option value="pending">⏳ Pending</option>
+                    <option value="none">❌ Kein SSL</option>
+                </select>
+            </div>
+            <div class="field">
+                <div class="label">Ablaufdatum</div><input type="text" id="mExpiry" placeholder="2026-12-31">
+            </div>
+            <div class="field">
+                <div class="label">Redirect Ziel (falls Redirect)</div><input type="text" id="mRedirect"
+                    placeholder="https://ziel.com">
+            </div>
+            <div class="field">
+                <div class="label">Notizen</div><textarea id="mNotes" placeholder="Notizen zur Domain..."></textarea>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+                <button class="btn btn-green" onclick="saveDomain()">💾 Speichern</button>
+                <button class="btn btn-red btn-sm" id="deleteBtn" style="display:none" onclick="deleteDomain()">🗑️
+                    Löschen</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        let domains = JSON.parse(localStorage.getItem('hostinger_domains') || '[]');
+        let currentFilter = 'all';
+        let editingIdx = -1;
+
+        // SEED DEMO DATA if empty
+        if (!domains.length) {
+            const demoNames = ['care24.site', 'devkitz.eu', 'devkitz.de', 'devkitz.com', 'mein-shop.de', 'portfolio-baze.com', 'baze-studio.de', 'tech-blog24.de', 'app-builder.io', 'startup-hub.eu', 'code-lab.de', 'digital-agency.eu', 'creative-space.de', 'web-forge.com', 'data-nexus.io', 'cloud-sync.eu', 'smart-tools.de', 'ai-helper.com', 'design-flow.de', 'brand-craft.eu', 'pixel-art.de', 'code-ninja.com', 'dev-stack.de', 'app-forge.eu', 'web-master.de', 'seo-boost.com', 'ad-metrics.de', 'lead-gen.eu', 'click-flow.de', 'sales-pro.com', 'market-hub.de', 'growth-lab.eu', 'roi-track.de', 'funnel-pro.com', 'convert-plus.de', 'email-blast.eu', 'social-link.de', 'content-hub.com', 'blog-master.de', 'news-feed.eu', 'video-hub.de', 'stream-pro.com', 'media-mix.de', 'audio-lab.eu', 'podcast-hub.de', 'photo-pro.com', 'gallery-one.de', 'print-shop.eu', 'card-design.de', 'logo-maker.com', 'font-hub.de', 'color-lab.eu', 'icon-set.de', 'ui-kit.com', 'ux-flow.de', 'proto-lab.eu', 'test-stage.de', 'beta-app.com', 'dev-server.de', 'staging-env.eu', 'api-hub.de', 'micro-svc.com', 'node-app.de', 'react-hub.eu', 'vue-lab.de', 'next-app.com', 'nuxt-pro.de', 'svelte-ui.eu', 'tailwind-pro.de', 'css-magic.com', 'html-base.de', 'js-power.eu', 'ts-dev.de', 'py-lab.com', 'rust-hub.de'];
+            domains = demoNames.map((d, i) => {
+                const types = ['active', 'wordpress', 'static', 'parked', 'redirect', 'inactive'];
+                const type = i < 5 ? 'active' : i < 15 ? 'wordpress' : i < 25 ? 'static' : i < 40 ? 'parked' : i < 55 ? 'redirect' : 'inactive';
+                const ssl = type === 'inactive' ? 'none' : Math.random() > .2 ? 'active' : 'pending';
+                const year = 2026 + Math.floor(Math.random() * 3);
+                const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
+                return { domain: d, type, ssl, expiry: `${year}-${month}-15`, redirect: type === 'redirect' ? 'https://devkitz.eu' : '', notes: '', selected: false };
+            });
+            localStorage.setItem('hostinger_domains', JSON.stringify(domains));
+        }
+
+        function render() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = domains.filter(d => {
+                if (search && !d.domain.toLowerCase().includes(search)) return false;
+                if (currentFilter === 'all') return true;
+                if (currentFilter === 'expiring') { const exp = new Date(d.expiry); const now = new Date(); const diff = (exp - now) / (1000 * 60 * 60 * 24); return diff < 90 }
+                return d.type === currentFilter;
+            });
+
+            document.getElementById('totalCount').textContent = domains.length;
+            document.getElementById('activeCount').textContent = domains.filter(d => d.type === 'active' || d.type === 'wordpress' || d.type === 'static').length;
+            document.getElementById('wpCount').textContent = domains.filter(d => d.type === 'wordpress').length;
+            document.getElementById('parkedCount').textContent = domains.filter(d => d.type === 'parked').length;
+            const now = new Date();
+            document.getElementById('expCount').textContent = domains.filter(d => { const diff = (new Date(d.expiry) - now) / (1000 * 60 * 60 * 24); return diff < 90 }).length;
+
+            document.getElementById('domainList').innerHTML = filtered.map((d, i) => {
+                const realIdx = domains.indexOf(d);
+                const badgeClass = { 'active': 'badge-active', 'wordpress': 'badge-wp', 'static': 'badge-static', 'parked': 'badge-parked', 'redirect': 'badge-redirect', 'inactive': 'badge-inactive' }[d.type] || 'badge-inactive';
+                const typeLabel = { 'active': 'Aktiv', 'wordpress': 'WordPress', 'static': 'Statisch', 'parked': 'Geparkt', 'redirect': 'Redirect', 'inactive': 'Inaktiv' }[d.type] || d.type;
+                const sslIcon = d.ssl === 'active' ? '🔒' : d.ssl === 'pending' ? '⏳' : '❌';
+                const exp = new Date(d.expiry); const diff = Math.floor((exp - now) / (1000 * 60 * 60 * 24));
+                const expClass = diff < 30 ? 'color:var(--red)' : diff < 90 ? 'color:var(--yellow)' : 'color:var(--muted)';
+                return `<tr>
+      <td><input type="checkbox" ${d.selected ? 'checked' : ''} onchange="toggleSelect(${realIdx})"></td>
+      <td><span class="domain-name" onclick="openModal('edit',${realIdx})">${d.domain}</span></td>
+      <td><span class="badge ${badgeClass}">${typeLabel}</span></td>
+      <td><span class="badge badge-active">Live</span></td>
+      <td>${sslIcon}</td>
+      <td style="${expClass};font-size:11px">${d.expiry} <span style="font-size:9px">(${diff}d)</span></td>
+      <td><div class="domain-actions">
+        <button onclick="openModal('edit',${realIdx})">✏️</button>
+        <button onclick="window.open('https://'+domains[${realIdx}].domain,'_blank')">🌐</button>
+        <button onclick="window.open('https://hpanel.hostinger.com/hosting/'+domains[${realIdx}].domain,'_blank')">⚙️</button>
+      </div></td></tr>`;
+            }).join('');
+        }
+
+        function filterDomains() { render() }
+        function setFilter(f, el) { currentFilter = f; document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); render() }
+        function toggleSelect(i) { domains[i].selected = !domains[i].selected; save(); render() }
+        function toggleSelectAll() { const c = document.getElementById('selectAll').checked; domains.forEach(d => d.selected = c); save(); render() }
+
+        function openModal(mode, idx) {
+            editingIdx = mode === 'edit' ? idx : -1;
+            document.getElementById('domainModal').classList.add('show');
+            document.getElementById('modalTitle').textContent = mode === 'edit' ? `✏️ ${domains[idx].domain} bearbeiten` : '+ Neue Domain';
+            document.getElementById('deleteBtn').style.display = mode === 'edit' ? '' : 'none';
+            if (mode === 'edit') { const d = domains[idx]; document.getElementById('mDomain').value = d.domain; document.getElementById('mType').value = d.type; document.getElementById('mSSL').value = d.ssl; document.getElementById('mExpiry').value = d.expiry; document.getElementById('mRedirect').value = d.redirect || ''; document.getElementById('mNotes').value = d.notes || '' }
+            else { ['mDomain', 'mRedirect', 'mNotes'].forEach(id => document.getElementById(id).value = ''); document.getElementById('mExpiry').value = '2027-03-15' }
+        }
+        function closeModal() { document.getElementById('domainModal').classList.remove('show'); editingIdx = -1 }
+
+        function saveDomain() {
+            const d = { domain: document.getElementById('mDomain').value, type: document.getElementById('mType').value, ssl: document.getElementById('mSSL').value, expiry: document.getElementById('mExpiry').value, redirect: document.getElementById('mRedirect').value, notes: document.getElementById('mNotes').value, selected: false };
+            if (!d.domain) { alert('Domain eingeben'); return }
+            if (editingIdx >= 0) domains[editingIdx] = d; else domains.push(d);
+            save(); closeModal(); render();
+        }
+
+        function deleteDomain() { if (editingIdx >= 0 && confirm('Domain wirklich löschen?')) { domains.splice(editingIdx, 1); save(); closeModal(); render() } }
+
+        function save() { localStorage.setItem('hostinger_domains', JSON.stringify(domains)) }
+
+        function exportCSV() {
+            let csv = 'Domain,Typ,SSL,Ablauf,Redirect,Notizen\n';
+            domains.forEach(d => csv += `${d.domain},${d.type},${d.ssl},${d.expiry},"${d.redirect || ''}","${d.notes || ''}"\n`);
+            const blob = new Blob([csv], { type: 'text/csv' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'hostinger-domains-' + Date.now() + '.csv'; a.click();
+        }
+
+        function importCSV() {
+            const input = document.createElement('input'); input.type = 'file'; input.accept = '.csv';
+            input.onchange = e => {
+                const f = e.target.files[0]; const r = new FileReader(); r.onload = ev => {
+                    const lines = ev.target.result.split('\n').slice(1);
+                    lines.forEach(l => {
+                        const [domain, type, ssl, expiry, redirect, notes] = l.split(',');
+                        if (domain && domain.includes('.')) { domains.push({ domain: domain.trim(), type: type?.trim() || 'active', ssl: ssl?.trim() || 'none', expiry: expiry?.trim() || '2027-01-01', redirect: redirect?.replace(/"/g, '').trim() || '', notes: notes?.replace(/"/g, '').trim() || '', selected: false }) }
+                    });
+                    save(); render();
+                }; r.readAsText(f)
+            }; input.click();
+        }
+
+        function bulkAction() {
+            const selected = domains.filter(d => d.selected);
+            if (!selected.length) { alert('Keine Domains ausgewählt'); return }
+            const action = prompt(`${selected.length} Domains ausgewählt.\n\nAktion wählen:\n1 = Typ ändern (active/parked/redirect/inactive)\n2 = SSL aktivieren\n3 = Löschen`);
+            if (action === '1') { const t = prompt('Neuer Typ (active/wordpress/static/parked/redirect/inactive):'); if (t) domains.forEach(d => { if (d.selected) d.type = t }) }
+            else if (action === '2') { domains.forEach(d => { if (d.selected) d.ssl = 'active' }) }
+            else if (action === '3' && confirm(`${selected.length} Domains wirklich löschen?`)) { domains = domains.filter(d => !d.selected) }
+            domains.forEach(d => d.selected = false);
+            save(); render();
+        }
+
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal() });
+        render();
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

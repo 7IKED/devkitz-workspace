@@ -1,0 +1,471 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v0.01">
+    <meta name="dkz-module" content="black8-builder">
+    <title>BLACK8™ (n8n) — ComfyUI Visual Workflow Builder</title>
+    <meta name="description" content="BLACK8™ n8n Workflow Builder im ComfyUI-Style — Node Editor, 4600+ Templates, Docker Integrations, Chat Assistant">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <style>
+:root{--n8:rgb(234,76,46);--n8g:rgba(234,76,46,.15);--n8d:#ff6f47;--dock:#2496ed;--pg:#336791;--node-bg:#1e1e22;--wire:#555;--sel:#ea4c2e;--bg:#111113;--card:#1a1a1e;--brd:#2a2a2e;--txt:#e8e8f0;--mt:#707078}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);overflow:hidden}
+.app{display:grid;grid-template-columns:260px 1fr 300px;grid-template-rows:52px 1fr;height:100vh}
+header{grid-column:1/-1;background:linear-gradient(90deg,#1a1a1e,#222228);border-bottom:2px solid var(--n8);display:flex;align-items:center;justify-content:space-between;padding:0 1rem}
+.logo{font-size:1.1rem;font-weight:900;display:flex;align-items:center;gap:.4rem}
+.logo-n8{color:var(--n8);font-family:'JetBrains Mono',monospace}
+.chain-nav{display:flex;gap:.25rem}
+.chain-btn{padding:.25rem .5rem;border-radius:5px;font-size:.55rem;font-weight:700;border:1px solid var(--brd);background:rgba(255,255,255,.02);color:var(--mt);cursor:pointer;text-decoration:none;transition:all .2s}
+.chain-btn:hover{border-color:var(--n8);color:var(--txt)}.chain-btn.active{background:var(--n8);border-color:var(--n8);color:#fff}
+.tools{display:flex;gap:.3rem}
+.btn{padding:.35rem .65rem;border:none;border-radius:5px;font-size:.65rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;display:inline-flex;align-items:center;gap:.25rem}
+.btn-n8{background:var(--n8);color:#fff}.btn-n8:hover{background:var(--n8d)}
+.btn-s{background:rgba(255,255,255,.05);color:var(--txt);border:1px solid var(--brd)}.btn-s:hover{background:rgba(255,255,255,.1)}
+/* LEFT: Node Library */
+.lib{background:#141416;border-right:1px solid var(--brd);overflow-y:auto;padding:.75rem}
+.lib-search{width:100%;background:rgba(0,0,0,.4);border:1px solid var(--brd);border-radius:6px;padding:.4rem .6rem;color:var(--txt);font-size:.75rem;font-family:inherit;margin-bottom:.6rem}
+.lib-search:focus{outline:none;border-color:var(--n8)}
+.lib-cat{margin-bottom:.5rem}
+.cat-head{display:flex;align-items:center;gap:.4rem;padding:.3rem .4rem;cursor:pointer;border-radius:5px;transition:background .2s}
+.cat-head:hover{background:rgba(234,76,46,.05)}
+.cat-icon{font-size:.85rem}.cat-name{font-size:.7rem;font-weight:700;flex:1}.cat-count{font-size:.6rem;color:var(--mt);font-weight:600}
+.cat-arrow{font-size:.55rem;color:var(--mt);transition:transform .2s}
+.cat-body{display:none;padding-left:.5rem}
+.cat-body.open{display:block}
+.lib-node{display:flex;align-items:center;gap:.4rem;padding:.35rem .5rem;border-radius:5px;cursor:grab;transition:all .15s;margin-bottom:2px}
+.lib-node:hover{background:var(--n8g);transform:translateX(3px)}
+.ln-icon{font-size:.8rem;flex-shrink:0}.ln-name{font-size:.68rem;font-weight:600}.ln-badge{font-size:.5rem;padding:1px 4px;border-radius:3px;font-weight:700}
+.badge-docker{background:rgba(36,150,237,.15);color:var(--dock)}.badge-api{background:rgba(234,76,46,.15);color:var(--n8)}.badge-db{background:rgba(51,103,145,.15);color:var(--pg)}.badge-ai{background:rgba(168,85,247,.15);color:#a855f7}
+.divider{height:1px;background:var(--brd);margin:.6rem 0}
+/* CENTER: ComfyUI Canvas */
+.canvas-wrap{position:relative;overflow:hidden;background:#0d0d0f}
+.canvas{position:absolute;inset:0;cursor:grab}
+.canvas.grabbing{cursor:grabbing}
+.grid-bg{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.03) 1px,transparent 1px);background-size:20px 20px}
+.c-node{position:absolute;background:var(--node-bg);border:2px solid var(--brd);border-radius:10px;min-width:180px;box-shadow:0 4px 20px rgba(0,0,0,.5);transition:box-shadow .2s;cursor:move;z-index:10}
+.c-node:hover{box-shadow:0 8px 30px rgba(234,76,46,.15);z-index:20}
+.c-node.selected{border-color:var(--n8);box-shadow:0 0 20px var(--n8g)}
+.cn-head{padding:.4rem .6rem;background:linear-gradient(135deg,rgba(234,76,46,.15),transparent);border-bottom:1px solid var(--brd);border-radius:8px 8px 0 0;display:flex;align-items:center;gap:.4rem}
+.cn-icon{font-size:.9rem}.cn-title{font-size:.7rem;font-weight:800;flex:1}.cn-del{width:18px;height:18px;border:none;background:rgba(255,255,255,.05);border-radius:3px;color:var(--mt);cursor:pointer;font-size:.6rem;opacity:0;transition:opacity .2s}
+.c-node:hover .cn-del{opacity:1}.cn-del:hover{background:var(--n8);color:#fff}
+.cn-body{padding:.5rem .6rem}
+.cn-port{display:flex;align-items:center;gap:.3rem;margin-bottom:.25rem;position:relative}
+.port-dot{width:10px;height:10px;border-radius:50%;border:2px solid var(--brd);background:var(--node-bg);cursor:crosshair;transition:all .15s;flex-shrink:0}
+.port-dot:hover{border-color:var(--n8);background:var(--n8);box-shadow:0 0 8px var(--n8g)}
+.port-label{font-size:.6rem;color:var(--mt)}
+.port-in .port-dot{margin-left:-17px}
+.port-out{justify-content:flex-end}
+.port-out .port-dot{margin-right:-17px}
+.cn-config{padding:.3rem .6rem;border-top:1px solid rgba(255,255,255,.03)}
+.cn-sel{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--brd);border-radius:4px;padding:.25rem;color:var(--txt);font-size:.6rem;font-family:inherit}
+.cn-tag{font-size:.5rem;padding:1px 4px;border-radius:3px;margin-top:.2rem;display:inline-block}
+/* Wires (SVG) */
+.wire-layer{position:absolute;inset:0;pointer-events:none;z-index:5}
+.wire{stroke:var(--wire);stroke-width:2;fill:none;transition:stroke .2s}
+.wire:hover{stroke:var(--n8)}
+.wire-active{stroke:var(--n8);stroke-width:2.5;filter:drop-shadow(0 0 4px var(--n8g));animation:wireFlow 2s linear infinite}
+@keyframes wireFlow{0%{stroke-dashoffset:0}100%{stroke-dashoffset:-20}}
+/* RIGHT: Properties + Chat */
+.props{background:#141416;border-left:1px solid var(--brd);overflow-y:auto;display:flex;flex-direction:column}
+.props-tabs{display:flex;border-bottom:1px solid var(--brd)}
+.pt{flex:1;padding:.5rem;font-size:.65rem;font-weight:700;text-align:center;cursor:pointer;border:none;background:none;color:var(--mt);transition:all .2s;font-family:inherit}
+.pt.active{color:var(--n8);border-bottom:2px solid var(--n8);background:rgba(234,76,46,.03)}
+.props-panel{flex:1;overflow-y:auto;padding:.75rem;display:none}
+.props-panel.active{display:block}
+.stit{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--mt);margin-bottom:.4rem;display:flex;align-items:center;gap:.3rem}
+.prop-row{margin-bottom:.5rem}
+.prop-row label{font-size:.6rem;font-weight:600;color:var(--mt);display:block;margin-bottom:.2rem}
+.prop-inp{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--brd);border-radius:5px;padding:.35rem .5rem;color:var(--txt);font-size:.7rem;font-family:inherit}
+.prop-inp:focus{outline:none;border-color:var(--n8)}
+/* Repo Cards */
+.repo-card{background:rgba(0,0,0,.2);border:1px solid var(--brd);border-radius:8px;padding:.5rem;margin-bottom:.4rem;cursor:pointer;transition:all .2s}
+.repo-card:hover{border-color:var(--n8);background:rgba(234,76,46,.03)}
+.repo-name{font-size:.7rem;font-weight:800}.repo-desc{font-size:.6rem;color:var(--mt);margin-top:.1rem}
+.repo-meta{display:flex;gap:.5rem;margin-top:.2rem;font-size:.55rem;font-weight:600}
+.repo-stars{color:#ffc107}.repo-lang{color:var(--dock)}
+/* Chat */
+.chat-area{flex:1;overflow-y:auto;padding:.5rem}
+.chat-msg{margin-bottom:.4rem;padding:.4rem .6rem;border-radius:8px;font-size:.7rem;line-height:1.4;max-width:90%}
+.chat-bot{background:rgba(234,76,46,.08);border:1px solid rgba(234,76,46,.15);border-radius:8px 8px 8px 2px}
+.chat-user{background:rgba(255,255,255,.05);border:1px solid var(--brd);border-radius:8px 8px 2px 8px;margin-left:auto}
+.chat-input-row{display:flex;gap:.3rem;padding:.5rem;border-top:1px solid var(--brd)}
+.chat-inp{flex:1;background:rgba(0,0,0,.3);border:1px solid var(--brd);border-radius:6px;padding:.4rem .6rem;color:var(--txt);font-size:.7rem;font-family:inherit}
+.chat-inp:focus{outline:none;border-color:var(--n8)}
+/* Stats */
+.stat-row{display:flex;justify-content:space-between;padding:.2rem 0;font-size:.6rem}
+.stat-l{color:var(--mt)}.stat-v{font-weight:700;color:var(--n8)}
+/* Mini-map */
+.minimap{height:80px;background:rgba(0,0,0,.3);border:1px solid var(--brd);border-radius:6px;margin-top:.5rem;position:relative;overflow:hidden}
+.minimap-dot{width:6px;height:6px;background:var(--n8);border-radius:50%;position:absolute}
+/* Docker icons */
+.docker-row{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.3rem}
+.docker-badge{padding:2px 6px;border-radius:4px;font-size:.5rem;font-weight:700;display:inline-flex;align-items:center;gap:2px}
+.db-n8n{background:rgba(234,76,46,.12);color:var(--n8)}.db-pg{background:rgba(51,103,145,.12);color:var(--pg)}.db-docker{background:rgba(36,150,237,.12);color:var(--dock)}.db-redis{background:rgba(220,38,38,.12);color:#ef4444}.db-mongo{background:rgba(0,128,0,.12);color:#00c853}
+/* Toast */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--card);border:1px solid var(--n8);border-radius:8px;padding:.6rem 1rem;transform:translateX(400px);transition:transform .3s;z-index:10000;font-size:.75rem;font-weight:600}
+.toast.show{transform:translateX(0)}
+/* Animations */
+@keyframes nodeAppear{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+.c-node{animation:nodeAppear .3s ease}
+body::before{content:"";position:fixed;top:-200px;left:-200px;width:500px;height:500px;background:radial-gradient(circle,rgba(234,76,46,.04),transparent 70%);pointer-events:none;z-index:0}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+    
+        /* DkZ Builder Fix — Canvas min-height (R36) */
+        #canvas, .canvas, .workspace, .builder-canvas, .editor-area {
+            min-height: calc(100vh - 100px) !important;
+        }
+        /* Overlay-Cleanup — leere Modals entfernen */
+        .pg-overlay:empty, .modal:empty { display: none !important; }
+    </style>
+</head>
+<body data-dkz-module="black8-builder" data-dkz-appid="DKZ-MOD-BLA" data-dkz-version="v0.01" data-dkz-title="BLACK8™ (n8n) — ComfyUI Visual Workflow Builder" data-dkz-icon="📦" data-dkz-separable="true">
+<div class="app">
+    <header>
+        <div style="display:flex;align-items:center;gap:.6rem">
+            <a href="../../hub/index.html" style="color:var(--mt);text-decoration:none;font-size:1rem">&#8592;</a>
+            <div class="logo"><span style="font-size:1.2rem">⬛</span> <span class="logo-n8">BLACK8™</span> <span style="font-size:.7rem;color:var(--mt)">(n8n)</span></div>
+            <span style="font-size:.5rem;color:var(--mt);padding:2px 5px;border:1px solid #333;border-radius:3px">v0.01</span>
+        </div>
+        <div class="chain-nav">
+            <a class="chain-btn" href="../action-builder/index.html">Actions</a>
+            <a class="chain-btn" href="../workflow-builder/index.html">Workflows</a>
+            <a class="chain-btn" href="../agent-builder/index.html">Agents</a>
+            <a class="chain-btn" href="../tenor-builder/index.html" style="color:#00e5ff;border-color:#00e5ff">TEN0R™</a>
+            <a class="chain-btn active">BLACK8™</a>
+            <a class="chain-btn" href="../nexuz-builder/index.html">NEXUZ²</a>
+        </div>
+        <div class="tools">
+            <button class="btn btn-s" onclick="clearCanvas()">🗑️</button>
+            <button class="btn btn-s" onclick="autoConnect()">🔗 Auto</button>
+            <button class="btn btn-s" onclick="exportWorkflow()">📦 Export</button>
+            <button class="btn btn-n8" onclick="runWorkflow()">▶ Run</button>
+        </div>
+    </header>
+    <!-- LEFT: Node Library -->
+    <div class="lib" id="node-lib">
+        <input class="lib-search" placeholder="🔍 Nodes suchen..." oninput="filterNodes(this.value)">
+        <div id="categories"></div>
+    </div>
+    <!-- CENTER: Canvas -->
+    <div class="canvas-wrap">
+        <div class="canvas" id="canvas" onmousedown="canvasDown(event)" onmousemove="canvasMove(event)" onmouseup="canvasUp()">
+            <div class="grid-bg"></div>
+            <svg class="wire-layer" id="wires"></svg>
+            <div id="nodes-container"></div>
+        </div>
+        <div style="position:absolute;bottom:.6rem;left:.6rem;display:flex;gap:.3rem;z-index:50">
+            <button class="btn btn-s" onclick="zoomIn()" style="font-size:.7rem">+</button>
+            <button class="btn btn-s" onclick="zoomOut()" style="font-size:.7rem">−</button>
+            <span style="font-size:.55rem;color:var(--mt);padding:.3rem .5rem;background:rgba(0,0,0,.5);border-radius:4px" id="zoom-level">100%</span>
+            <span style="font-size:.55rem;color:var(--n8);padding:.3rem .5rem;background:rgba(0,0,0,.5);border-radius:4px" id="node-count">0 Nodes</span>
+        </div>
+    </div>
+    <!-- RIGHT: Props + Chat -->
+    <div class="props">
+        <div class="props-tabs">
+            <button class="pt active" onclick="showTab('props')">⚙ Properties</button>
+            <button class="pt" onclick="showTab('repos')">📦 Repos</button>
+            <button class="pt" onclick="showTab('chat')">💬 Chat</button>
+        </div>
+        <div class="props-panel active" id="tab-props">
+            <div class="stit">📊 Workflow Stats</div>
+            <div class="stat-row"><span class="stat-l">Nodes</span><span class="stat-v" id="s-nodes">0</span></div>
+            <div class="stat-row"><span class="stat-l">Connections</span><span class="stat-v" id="s-wires">0</span></div>
+            <div class="stat-row"><span class="stat-l">Templates</span><span class="stat-v">4.600+</span></div>
+            <div class="stat-row"><span class="stat-l">Docker Services</span><span class="stat-v">12</span></div>
+            <div class="divider"></div>
+            <div class="stit">🐳 Docker Services</div>
+            <div class="docker-row">
+                <span class="docker-badge db-n8n">⬛ n8n</span><span class="docker-badge db-pg">🐘 PostgreSQL</span>
+                <span class="docker-badge db-docker">🐳 Docker</span><span class="docker-badge db-redis">🔴 Redis</span>
+                <span class="docker-badge db-mongo">🍃 MongoDB</span><span class="docker-badge" style="background:rgba(255,193,7,.12);color:#ffc107">🐬 MySQL</span>
+                <span class="docker-badge" style="background:rgba(0,150,136,.12);color:#26a69a">📨 RabbitMQ</span><span class="docker-badge" style="background:rgba(255,87,34,.12);color:#ff5722">🔥 Traefik</span>
+                <span class="docker-badge" style="background:rgba(33,150,243,.12);color:#2196f3">📊 Grafana</span><span class="docker-badge" style="background:rgba(76,175,80,.12);color:#4caf50">🟢 Caddy</span>
+                <span class="docker-badge" style="background:rgba(156,39,176,.12);color:#ab47bc">🔮 Qdrant</span><span class="docker-badge" style="background:rgba(255,152,0,.12);color:#ff9800">⚡ Minio</span>
+            </div>
+            <div class="divider"></div>
+            <div class="stit" id="sel-title">⚙ Node Properties</div>
+            <div id="sel-props"><div style="text-align:center;color:var(--mt);font-size:.65rem;padding:1rem">Klicke auf einen Node um Properties zu sehen</div></div>
+            <div class="divider"></div>
+            <div class="stit">🗺️ Minimap</div>
+            <div class="minimap" id="minimap"></div>
+        </div>
+        <div class="props-panel" id="tab-repos">
+            <div class="stit">📦 Top 5 n8n Repos (GitHub)</div>
+            <div class="repo-card" onclick="loadRepo('awesome')"><div class="repo-name">⭐ enescingoz/awesome-n8n-templates</div><div class="repo-desc">Largest open-source n8n template collection — 280+ workflows</div><div class="repo-meta"><span class="repo-stars">⭐ 19.000+</span><span class="repo-lang">📄 JSON</span></div></div>
+            <div class="repo-card" onclick="loadRepo('zie')"><div class="repo-name">📂 Zie619/n8n-workflows</div><div class="repo-desc">4.343 community workflows — alle Plattformen</div><div class="repo-meta"><span class="repo-stars">⭐ 2.100+</span><span class="repo-lang">📄 JSON</span></div></div>
+            <div class="repo-card" onclick="loadRepo('official')"><div class="repo-name">🏢 n8n-io/n8n</div><div class="repo-desc">Official n8n — workflow automation platform</div><div class="repo-meta"><span class="repo-stars">⭐ 50.000+</span><span class="repo-lang">TypeScript</span></div></div>
+            <div class="repo-card" onclick="loadRepo('community')"><div class="repo-name">🌐 n8n-io/n8n-docs</div><div class="repo-desc">Official docs — 400+ integrations documented</div><div class="repo-meta"><span class="repo-stars">⭐ 800+</span><span class="repo-lang">Markdown</span></div></div>
+            <div class="repo-card" onclick="loadRepo('hackers')"><div class="repo-name">🔧 n8nhackers/n8n-nodes</div><div class="repo-desc">Community nodes collection — 150+ custom nodes</div><div class="repo-meta"><span class="repo-stars">⭐ 1.500+</span><span class="repo-lang">TypeScript</span></div></div>
+            <div class="divider"></div>
+            <div class="stit">📊 Repo Content</div>
+            <div id="repo-content"><div style="text-align:center;color:var(--mt);font-size:.65rem;padding:1rem">Klicke auf ein Repo um Inhalte zu laden</div></div>
+        </div>
+        <div class="props-panel" id="tab-chat" style="display:none;flex-direction:column">
+            <div class="chat-area" id="chat-msgs">
+                <div class="chat-msg chat-bot">👋 Hallo! Ich bin dein <b>BLACK8™</b> Assistent. Ich helfe dir n8n-Workflows zu bauen. Frag mich nach Templates, Node-Konfiguration oder Docker-Setup!</div>
+            </div>
+            <div class="chat-input-row">
+                <input class="chat-inp" id="chat-input" placeholder="Frage stellen..." onkeydown="if(event.key==='Enter')sendChat()">
+                <button class="btn btn-n8" onclick="sendChat()">→</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"><span id="tt"></span></div>
+<script>
+// ═══════════════════════════════════════
+// BLACK8™ (n8n) Builder — CORE
+// ═══════════════════════════════════════
+var NODES=[], WIRES=[], nextId=1, selNode=null, dragNode=null, dragOff={x:0,y:0}, zoom=1;
+
+// ── NODE CATEGORIES (from top 5 repos) ──
+var CATS=[
+{name:'🔄 Trigger',icon:'⚡',nodes:[
+  {n:'Webhook',icon:'🌐',badge:'api',desc:'HTTP Webhook Trigger',ports:{in:[],out:['main']}},
+  {n:'Schedule',icon:'⏰',badge:'api',desc:'Cron/Intervall Trigger',ports:{in:[],out:['main']}},
+  {n:'Email Trigger',icon:'📧',badge:'api',desc:'IMAP Email Trigger',ports:{in:[],out:['main']}},
+  {n:'Telegram Trigger',icon:'✈️',badge:'api',desc:'Telegram Bot Update',ports:{in:[],out:['main']}},
+  {n:'Discord Trigger',icon:'🎮',badge:'api',desc:'Discord Bot Events',ports:{in:[],out:['main']}}
+]},
+{name:'🤖 AI & LLM',icon:'🧠',nodes:[
+  {n:'OpenAI GPT',icon:'🟢',badge:'ai',desc:'GPT-4o / GPT-4.5',ports:{in:['prompt'],out:['response']}},
+  {n:'Anthropic Claude',icon:'🟤',badge:'ai',desc:'Claude Sonnet 4',ports:{in:['prompt'],out:['response']}},
+  {n:'Google Gemini',icon:'🔵',badge:'ai',desc:'Gemini 2.5 Pro',ports:{in:['prompt'],out:['response']}},
+  {n:'Mistral OCR',icon:'🟠',badge:'ai',desc:'Mistral Vision + OCR',ports:{in:['image'],out:['text']}},
+  {n:'LangChain',icon:'🦜',badge:'ai',desc:'LangChain Agent Chain',ports:{in:['input'],out:['output']}},
+  {n:'Vector Store',icon:'🔮',badge:'ai',desc:'Qdrant/Pinecone Embeddings',ports:{in:['doc'],out:['results']}}
+]},
+{name:'🐳 Docker & Infra',icon:'🐳',nodes:[
+  {n:'Docker Run',icon:'🐳',badge:'docker',desc:'Container starten/stoppen',ports:{in:['trigger'],out:['status']}},
+  {n:'PostgreSQL',icon:'🐘',badge:'db',desc:'SQL Query ausführen',ports:{in:['query'],out:['rows']}},
+  {n:'Redis',icon:'🔴',badge:'db',desc:'Cache Get/Set/Pub',ports:{in:['key'],out:['value']}},
+  {n:'MongoDB',icon:'🍃',badge:'db',desc:'Document CRUD',ports:{in:['filter'],out:['docs']}},
+  {n:'MySQL',icon:'🐬',badge:'db',desc:'MySQL Query',ports:{in:['query'],out:['rows']}},
+  {n:'RabbitMQ',icon:'📨',badge:'docker',desc:'Message Queue',ports:{in:['msg'],out:['ack']}},
+  {n:'Minio S3',icon:'⚡',badge:'docker',desc:'Object Storage',ports:{in:['file'],out:['url']}}
+]},
+{name:'📱 Communication',icon:'💬',nodes:[
+  {n:'Telegram Send',icon:'✈️',badge:'api',desc:'Nachricht senden',ports:{in:['msg'],out:['sent']}},
+  {n:'WhatsApp',icon:'💚',badge:'api',desc:'WhatsApp Business API',ports:{in:['msg'],out:['sent']}},
+  {n:'Slack',icon:'💜',badge:'api',desc:'Slack Message/Channel',ports:{in:['msg'],out:['sent']}},
+  {n:'Discord',icon:'🎮',badge:'api',desc:'Discord Bot Message',ports:{in:['msg'],out:['sent']}},
+  {n:'Email Send',icon:'📧',badge:'api',desc:'SMTP Email senden',ports:{in:['mail'],out:['sent']}},
+  {n:'SMS Twilio',icon:'📱',badge:'api',desc:'SMS via Twilio',ports:{in:['msg'],out:['sent']}}
+]},
+{name:'📊 Data & Tools',icon:'🛠️',nodes:[
+  {n:'Google Sheets',icon:'📊',badge:'api',desc:'Spreadsheet CRUD',ports:{in:['data'],out:['rows']}},
+  {n:'Airtable',icon:'📋',badge:'api',desc:'Airtable Records',ports:{in:['data'],out:['records']}},
+  {n:'Notion',icon:'📝',badge:'api',desc:'Notion Pages/Databases',ports:{in:['data'],out:['pages']}},
+  {n:'HTTP Request',icon:'🌐',badge:'api',desc:'REST API Call',ports:{in:['config'],out:['response']}},
+  {n:'Code (JS)',icon:'💻',badge:'api',desc:'Custom JavaScript',ports:{in:['input'],out:['output']}},
+  {n:'Set Data',icon:'📦',badge:'api',desc:'Daten transformieren',ports:{in:['input'],out:['output']}},
+  {n:'IF Condition',icon:'🔀',badge:'api',desc:'Bedingung prüfen',ports:{in:['input'],out:['true','false']}},
+  {n:'Merge',icon:'🔗',badge:'api',desc:'Daten zusammenführen',ports:{in:['in1','in2'],out:['merged']}}
+]},
+{name:'🔧 DevOps',icon:'⚙️',nodes:[
+  {n:'GitHub',icon:'🐙',badge:'api',desc:'GitHub API Actions',ports:{in:['trigger'],out:['data']}},
+  {n:'GitLab',icon:'🦊',badge:'api',desc:'GitLab CI/CD',ports:{in:['trigger'],out:['data']}},
+  {n:'Jenkins',icon:'🔧',badge:'docker',desc:'Jenkins Build Job',ports:{in:['trigger'],out:['result']}},
+  {n:'Kubernetes',icon:'☸️',badge:'docker',desc:'K8s Pod/Service',ports:{in:['config'],out:['status']}},
+  {n:'Traefik',icon:'🔥',badge:'docker',desc:'Reverse Proxy',ports:{in:['route'],out:['status']}}
+]},
+{name:'🌐 Web & CMS',icon:'🌍',nodes:[
+  {n:'WordPress',icon:'📰',badge:'api',desc:'WP REST API',ports:{in:['post'],out:['result']}},
+  {n:'Webflow',icon:'🎨',badge:'api',desc:'Webflow CMS',ports:{in:['data'],out:['item']}},
+  {n:'Strapi',icon:'🚀',badge:'api',desc:'Headless CMS',ports:{in:['data'],out:['entry']}},
+  {n:'Scraper',icon:'🕷️',badge:'api',desc:'Web Page Scraping',ports:{in:['url'],out:['html']}}
+]}
+];
+
+// ── RENDER LIBRARY ──
+function renderLib(filter){
+  var h='';
+  CATS.forEach(function(c,ci){
+    var nodes=c.nodes.filter(function(n){return !filter||n.n.toLowerCase().includes(filter.toLowerCase())});
+    if(nodes.length===0)return;
+    h+='<div class="lib-cat"><div class="cat-head" onclick="toggleCat('+ci+')">';
+    h+='<span class="cat-icon">'+c.icon+'</span><span class="cat-name">'+c.name+'</span>';
+    h+='<span class="cat-count">'+nodes.length+'</span><span class="cat-arrow" id="arrow-'+ci+'">▸</span></div>';
+    h+='<div class="cat-body'+(ci<3?' open':'')+'" id="cat-'+ci+'">';
+    nodes.forEach(function(n){
+      h+='<div class="lib-node" onclick="addNode(\''+esc(n.n)+'\',\''+n.icon+'\',\''+n.badge+'\',\''+esc(n.desc)+'\','+JSON.stringify(n.ports).replace(/"/g,"&quot;")+')">';
+      h+='<span class="ln-icon">'+n.icon+'</span><span class="ln-name">'+esc(n.n)+'</span>';
+      h+='<span class="ln-badge badge-'+n.badge+'">'+n.badge.toUpperCase()+'</span></div>';
+    });
+    h+='</div></div>';
+  });
+  document.getElementById('categories').innerHTML=h;
+}
+function toggleCat(i){
+  var b=document.getElementById('cat-'+i), a=document.getElementById('arrow-'+i);
+  b.classList.toggle('open'); a.textContent=b.classList.contains('open')?'▾':'▸';
+}
+function filterNodes(v){renderLib(v);}
+
+// ── ADD NODE TO CANVAS ──
+function addNode(name,icon,badge,desc,ports){
+  var x=200+Math.random()*300, y=100+Math.random()*200;
+  var node={id:nextId++, name:name, icon:icon, badge:badge, desc:desc, ports:ports, x:x, y:y};
+  NODES.push(node);
+  renderNodes();
+  toast('⬛ '+name+' hinzugefügt');
+}
+function renderNodes(){
+  var h='';
+  NODES.forEach(function(n){
+    var cls=n.id===selNode?'c-node selected':'c-node';
+    h+='<div class="'+cls+'" id="n-'+n.id+'" style="left:'+n.x+'px;top:'+n.y+'px" onmousedown="nodeDown(event,'+n.id+')" onclick="selectNode('+n.id+')">';
+    h+='<div class="cn-head"><span class="cn-icon">'+n.icon+'</span><span class="cn-title">'+esc(n.name)+'</span>';
+    h+='<button class="cn-del" onclick="event.stopPropagation();removeNode('+n.id+')">✕</button></div>';
+    h+='<div class="cn-body">';
+    (n.ports.in||[]).forEach(function(p){h+='<div class="cn-port port-in"><div class="port-dot" data-node="'+n.id+'" data-port="'+p+'" data-dir="in"></div><span class="port-label">'+p+'</span></div>';});
+    (n.ports.out||[]).forEach(function(p){h+='<div class="cn-port port-out"><span class="port-label">'+p+'</span><div class="port-dot" data-node="'+n.id+'" data-port="'+p+'" data-dir="out"></div></div>';});
+    h+='</div>';
+    h+='<div class="cn-config"><span class="cn-tag badge-'+n.badge+'">'+n.badge.toUpperCase()+'</span></div></div>';
+  });
+  document.getElementById('nodes-container').innerHTML=h;
+  document.getElementById('node-count').textContent=NODES.length+' Nodes';
+  document.getElementById('s-nodes').textContent=NODES.length;
+  updateMinimap();
+}
+function removeNode(id){NODES=NODES.filter(function(n){return n.id!==id});WIRES=WIRES.filter(function(w){return w.from!==id&&w.to!==id});renderNodes();renderWires();toast('Node entfernt');}
+function selectNode(id){selNode=id;renderNodes();showNodeProps(id);}
+function showNodeProps(id){
+  var n=NODES.find(function(x){return x.id===id});
+  if(!n)return;
+  document.getElementById('sel-title').textContent='⚙ '+n.name;
+  var h='<div class="prop-row"><label>Name</label><input class="prop-inp" value="'+esc(n.name)+'"></div>';
+  h+='<div class="prop-row"><label>Beschreibung</label><div style="font-size:.65rem;color:var(--mt)">'+esc(n.desc)+'</div></div>';
+  h+='<div class="prop-row"><label>Typ</label><span class="ln-badge badge-'+n.badge+'" style="font-size:.6rem">'+n.badge.toUpperCase()+'</span></div>';
+  h+='<div class="prop-row"><label>Inputs</label><div style="font-size:.65rem;color:var(--mt)">'+(n.ports.in.join(', ')||'—')+'</div></div>';
+  h+='<div class="prop-row"><label>Outputs</label><div style="font-size:.65rem;color:var(--mt)">'+(n.ports.out.join(', ')||'—')+'</div></div>';
+  document.getElementById('sel-props').innerHTML=h;
+}
+
+// ── DRAG NODES ──
+function nodeDown(e,id){e.stopPropagation();dragNode=id;var n=document.getElementById('n-'+id);dragOff={x:e.clientX-n.offsetLeft,y:e.clientY-n.offsetTop};}
+function canvasDown(e){if(!dragNode)document.getElementById('canvas').classList.add('grabbing');}
+function canvasMove(e){
+  if(dragNode){var nd=NODES.find(function(n){return n.id===dragNode});if(nd){nd.x=e.clientX-dragOff.x;nd.y=e.clientY-dragOff.y;var el=document.getElementById('n-'+dragNode);if(el){el.style.left=nd.x+'px';el.style.top=nd.y+'px';}renderWires();updateMinimap();}}
+}
+function canvasUp(){dragNode=null;document.getElementById('canvas').classList.remove('grabbing');}
+
+// ── WIRES ──
+function autoConnect(){
+  WIRES=[];
+  for(var i=0;i<NODES.length-1;i++){
+    var a=NODES[i],b=NODES[i+1];
+    if(a.ports.out.length>0&&b.ports.in.length>0)WIRES.push({from:a.id,fPort:a.ports.out[0],to:b.id,tPort:b.ports.in[0]});
+  }
+  renderWires();toast('🔗 '+WIRES.length+' Verbindungen erstellt');
+}
+function renderWires(){
+  var svg='';
+  WIRES.forEach(function(w){
+    var fe=document.getElementById('n-'+w.from),te=document.getElementById('n-'+w.to);
+    if(!fe||!te)return;
+    var x1=fe.offsetLeft+fe.offsetWidth,y1=fe.offsetTop+fe.offsetHeight/2;
+    var x2=te.offsetLeft,y2=te.offsetTop+te.offsetHeight/2;
+    var cx=(x1+x2)/2;
+    svg+='<path class="wire wire-active" d="M'+x1+','+y1+' C'+cx+','+y1+' '+cx+','+y2+' '+x2+','+y2+'" stroke-dasharray="5,5"/>';
+  });
+  document.getElementById('wires').innerHTML=svg;
+  document.getElementById('s-wires').textContent=WIRES.length;
+}
+
+// ── MINIMAP ──
+function updateMinimap(){
+  var mm=document.getElementById('minimap'),h='';
+  NODES.forEach(function(n){var x=n.x/10,y=n.y/8;h+='<div class="minimap-dot" style="left:'+Math.min(x,250)+'px;top:'+Math.min(y,70)+'px"></div>';});
+  mm.innerHTML=h;
+}
+
+// ── ZOOM ──
+function zoomIn(){zoom=Math.min(zoom+.1,2);applyZoom();}
+function zoomOut(){zoom=Math.max(zoom-.1,.3);applyZoom();}
+function applyZoom(){document.getElementById('canvas').style.transform='scale('+zoom+')';document.getElementById('zoom-level').textContent=Math.round(zoom*100)+'%';}
+
+// ── TABS ──
+function showTab(t){
+  document.querySelectorAll('.pt').forEach(function(b){b.classList.remove('active')});
+  document.querySelectorAll('.props-panel').forEach(function(p){p.style.display='none';p.classList.remove('active')});
+  event.target.classList.add('active');
+  var p=document.getElementById('tab-'+t);p.style.display=t==='chat'&#10067;'flex':'block';p.classList.add('active');
+}
+
+// ── REPO CONTENT ──
+function loadRepo(key){
+  var data={
+    awesome:{title:'awesome-n8n-templates',items:['📧 Gmail Auto-Reply','📊 Google Sheets Sync','🤖 OpenAI Chat Bot','✈️ Telegram Bot','💚 WhatsApp Notifier','📰 WordPress Auto-Post','🎮 Discord Webhook','🔍 SEO Checker','📦 Shopify Orders','🐙 GitHub Actions','📋 Airtable Sync','🔔 Slack Alerts','📸 Instagram Scraper','📈 Analytics Dashboard','🎯 Lead Generation']},
+    zie:{title:'Zie619/n8n-workflows',items:['🔄 Data Pipeline ETL','🗃️ Database Backup','📱 Multi-Channel Notify','🤖 AI Content Generator','📊 Report Builder','🔐 Security Scanner','📧 Email Marketing','🕷️ Web Scraper Pro','📦 E-Commerce Sync','🎨 Image Processing']},
+    official:{title:'n8n-io/n8n Core',items:['⚙️ Workflow Engine','📡 Webhook Handler','🔌 400+ Integrations','🔑 OAuth2 Manager','📊 Execution Logs','🐳 Docker Compose','💾 PostgreSQL Backend','🔄 Queue Mode','📈 Scaling Guide','🛡️ Security Hardening']},
+    community:{title:'n8n-io/n8n-docs',items:['📖 Node Reference','🔧 API Documentation','🎓 Getting Started','🐳 Docker Setup Guide','☁️ Cloud Deployment','🔌 Custom Node Dev','📊 Workflow Templates','🔐 Authentication','🌐 REST API','📋 Best Practices']},
+    hackers:{title:'n8nhackers/n8n-nodes',items:['🕷️ Apify Scraper','💚 Evolution API (WhatsApp)','🔍 ScrapeNinja','📄 PDF Generator','🎯 ChatWoot Integration','📊 Tesseract OCR','📱 Push Notifications','🔮 Qdrant Vector DB','📧 Advanced IMAP','⏱️ Advanced Cron']}
+  };
+  var d=data[key]; if(!d)return;
+  var h='<div style="font-size:.75rem;font-weight:800;margin-bottom:.4rem">'+d.title+'</div>';
+  d.items.forEach(function(i){h+='<div style="font-size:.65rem;padding:.25rem .4rem;border-radius:4px;margin-bottom:2px;cursor:pointer;transition:background .15s" onmouseover="this.style.background=\'rgba(234,76,46,.08)\'" onmouseout="this.style.background=\'none\'">'+i+'</div>';});
+  document.getElementById('repo-content').innerHTML=h;
+  toast('📦 '+d.title+' geladen — '+d.items.length+' Items');
+}
+
+// ── CHAT ──
+function sendChat(){
+  var inp=document.getElementById('chat-input'),v=inp.value.trim();if(!v)return;
+  addChatMsg(v,'user');inp.value='';
+  setTimeout(function(){
+    var responses=['Ich empfehle einen Webhook → OpenAI GPT → Telegram Send Workflow!','Für Docker-Setup: n8n + PostgreSQL + Redis compose nutzen.','Template-Tipp: awesome-n8n-templates hat 280+ fertige Workflows!','Verbinde die Nodes mit "Auto Connect" für schnellen Setup.','Für AI-Workflows: Google Gemini oder Claude verwenden, dann Vector Store für RAG.'];
+    addChatMsg('🤖 '+responses[Math.floor(Math.random()*responses.length)],'bot');
+  },800);
+}
+function addChatMsg(m,type){
+  var c=document.getElementById('chat-msgs');
+  c.innerHTML+='<div class="chat-msg chat-'+type+'">'+m+'</div>';
+  c.scrollTop=c.scrollHeight;
+}
+
+// ── WORKFLOW ACTIONS ──
+function clearCanvas(){NODES=[];WIRES=[];selNode=null;renderNodes();renderWires();toast('🗑️ Canvas geleert');}
+function runWorkflow(){if(NODES.length===0)return toast('⚠️ Keine Nodes vorhanden');toast('▶ Workflow wird ausgeführt... '+NODES.length+' Nodes');}
+function exportWorkflow(){
+  var wf={name:'BLACK8 Workflow',version:'0.01',nodes:NODES,wires:WIRES,created:new Date().toISOString()};
+  var blob=new Blob([JSON.stringify(wf,null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='BLACK8_Workflow_'+Date.now()+'.json';a.click();
+  toast('📦 Workflow exportiert');
+}
+
+// ── UTILS ──
+function esc(s){return s?s.replace(/</g,'&lt;').replace(/'/g,"\\'"):''}
+function toast(m){var t=document.getElementById('toast');document.getElementById('tt').textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},3000);}
+
+// ── INIT ──
+renderLib();
+// Add default starter nodes
+setTimeout(function(){
+  addNode('Webhook','🌐','api','HTTP Webhook Trigger',{in:[],out:['main']});
+  NODES[0].x=80;NODES[0].y=120;
+  addNode('OpenAI GPT','🟢','ai','GPT-4o / GPT-4.5',{in:['prompt'],out:['response']});
+  NODES[1].x=350;NODES[1].y=120;
+  addNode('Telegram Send','✈️','api','Nachricht senden',{in:['msg'],out:['sent']});
+  NODES[2].x=620;NODES[2].y=120;
+  renderNodes();
+  autoConnect();
+},300);
+</script>
+<script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+<script src="../../shared/dkz-guide.js"></script>
+<script src="../../shared/nexuz.js"></script>
+
+<script src="../../shared/dkz-chain-nav.js"></script>
+
+    <script src="../../shared/dkz-prompt-hub.js"></script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+</html>
+

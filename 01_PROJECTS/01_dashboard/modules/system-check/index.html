@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v2.0">
+    <title>DkZ™ Health Monitor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+    <style>
+        :root{--bg:#060608;--bg2:#0e0e12;--bg3:#16161d;--accent:#fa1e4e;--green:#00ff88;--yellow:#ffb800;--red:#ff3b5c;--blue:#818cf8;--ice:#38bdf8;--text:#f0f0f2;--text2:#a1a1aa;--text3:#52525b;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;--r:14px;--glow-g:0 0 20px rgba(0,255,136,.15);--glow-r:0 0 20px rgba(255,59,92,.15);--glow-y:0 0 20px rgba(255,184,0,.15)}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+
+        /* Animated Background */
+        .bg-grid{position:fixed;inset:0;background-image:radial-gradient(rgba(250,30,78,.03) 1px,transparent 1px);background-size:32px 32px;pointer-events:none;z-index:0}
+
+        /* Header */
+        header{background:var(--bg2);border-bottom:1px solid rgba(255,255,255,.04);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+        .logo{font-weight:800;font-size:1rem;display:flex;align-items:center;gap:10px}
+        .logo span{color:var(--green)}
+        .header-actions{display:flex;gap:8px;align-items:center}
+        .hub-btn{background:rgba(250,30,78,.08);color:var(--accent);border:1px solid rgba(250,30,78,.2);padding:6px 14px;border-radius:8px;cursor:pointer;font-family:var(--mono);font-size:.7rem;font-weight:600;text-decoration:none;transition:all .2s}
+        .hub-btn:hover{background:rgba(250,30,78,.15)}
+
+        main{max-width:960px;margin:0 auto;padding:24px;position:relative;z-index:1}
+
+        /* Ampel Hero */
+        .ampel-hero{text-align:center;padding:32px 0 24px;position:relative}
+        .ampel-circle{width:120px;height:120px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:3rem;transition:all .6s ease;position:relative}
+        .ampel-circle.green{background:rgba(0,255,136,.08);border:3px solid rgba(0,255,136,.3);box-shadow:var(--glow-g)}
+        .ampel-circle.yellow{background:rgba(255,184,0,.08);border:3px solid rgba(255,184,0,.3);box-shadow:var(--glow-y)}
+        .ampel-circle.red{background:rgba(255,59,92,.08);border:3px solid rgba(255,59,92,.3);box-shadow:var(--glow-r)}
+        .ampel-circle.scanning{animation:ampelPulse 1.2s ease-in-out infinite}
+        @keyframes ampelPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.08);opacity:.7}}
+        .ampel-label{font-size:.85rem;font-weight:700;color:var(--text2)}
+        .ampel-sub{font-size:.65rem;color:var(--text3);font-family:var(--mono);margin-top:4px}
+
+        /* Summary Cards */
+        .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px}
+        .s-card{background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:var(--r);padding:14px;text-align:center;transition:all .3s}
+        .s-card:hover{border-color:rgba(255,255,255,.08);transform:translateY(-2px)}
+        .s-val{font-size:1.8rem;font-weight:800}
+        .s-lbl{font-size:.55rem;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-top:3px}
+
+        /* Check Groups */
+        .check-group{background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:var(--r);padding:18px;margin-bottom:14px;transition:all .3s}
+        .check-group:hover{border-color:rgba(255,255,255,.06)}
+        .cg-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+        .cg-header h3{font-size:.8rem;font-weight:700;display:flex;align-items:center;gap:8px}
+        .cg-btn{padding:4px 12px;border-radius:6px;border:1px solid rgba(56,189,248,.2);background:rgba(56,189,248,.06);color:var(--ice);font-size:.6rem;font-weight:600;cursor:pointer;font-family:var(--mono);transition:all .2s}
+        .cg-btn:hover{background:rgba(56,189,248,.12)}
+        .cg-btn.running{animation:ampelPulse 1s infinite;pointer-events:none}
+
+        /* Check Rows */
+        .check-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.02);gap:10px;animation:fadeSlide .3s ease-out both}
+        .check-row:last-child{border-bottom:none}
+        @keyframes fadeSlide{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+        .c-icon{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0}
+        .c-icon.ok{background:rgba(0,255,136,.08);color:var(--green)}
+        .c-icon.warn{background:rgba(255,184,0,.08);color:var(--yellow)}
+        .c-icon.err{background:rgba(255,59,92,.08);color:var(--red)}
+        .c-icon.load{background:rgba(129,140,248,.08);color:var(--blue);animation:ampelPulse 1s infinite}
+        .c-info{flex:1}
+        .c-name{font-weight:600;font-size:.75rem}
+        .c-detail{font-size:.58rem;color:var(--text3);font-family:var(--mono);margin-top:1px}
+        .c-badge{font-size:.55rem;font-family:var(--mono);font-weight:700;padding:2px 8px;border-radius:5px}
+        .c-badge.ok{background:rgba(0,255,136,.08);color:var(--green)}
+        .c-badge.warn{background:rgba(255,184,0,.08);color:var(--yellow)}
+        .c-badge.err{background:rgba(255,59,92,.08);color:var(--red)}
+
+        /* Buttons */
+        .btn-main{background:linear-gradient(135deg,var(--accent),#ec4899);color:#fff;border:none;padding:10px 24px;border-radius:10px;cursor:pointer;font-weight:700;font-size:.8rem;transition:all .2s;font-family:var(--font)}
+        .btn-main:hover{transform:scale(1.03);box-shadow:0 4px 20px rgba(250,30,78,.3)}
+        .btn-main.scanning{animation:ampelPulse 1s infinite}
+
+        /* History & Reports */
+        .history-bar{display:flex;gap:4px;align-items:flex-end;height:40px;margin-top:12px}
+        .h-bar{flex:1;border-radius:3px 3px 0 0;min-height:4px;transition:all .3s;cursor:pointer;position:relative}
+        .h-bar:hover{opacity:.8}
+        .h-bar .tooltip{display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--bg3);padding:4px 8px;border-radius:4px;font-size:.55rem;white-space:nowrap;color:var(--text);z-index:10}
+        .h-bar:hover .tooltip{display:block}
+
+        /* NanoChat Widget */
+        .nano-widget{background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:var(--r);padding:14px;margin-top:14px}
+        .nano-input{display:flex;gap:8px}
+        .nano-input input{flex:1;background:var(--bg3);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--mono);font-size:.7rem;outline:none}
+        .nano-input input:focus{border-color:var(--accent)}
+        .nano-input button{padding:8px 16px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-weight:700;font-size:.7rem;cursor:pointer}
+        .nano-log{max-height:120px;overflow-y:auto;margin-top:8px;font-size:.6rem;font-family:var(--mono);color:var(--text2);line-height:1.6}
+
+        /* Clock */
+        #clock{font-size:.6rem;color:var(--text3);font-family:var(--mono)}
+
+        @media(max-width:768px){.summary{grid-template-columns:1fr 1fr}.check-group{padding:14px}}
+    </style>
+</head>
+<body data-dkz-module="system-check" data-dkz-appid="DKZ-MOD-HEALTH" data-dkz-version="v2.0" data-dkz-title="Health Monitor" data-dkz-icon="🏥" data-dkz-separable="true">
+    <div class="bg-grid"></div>
+    <header>
+        <div class="logo">🏥 <span>Health Monitor</span> v2.0</div>
+        <div class="header-actions">
+            <span id="clock"></span>
+            <button class="btn-main" id="btnRunAll" onclick="runAllChecks()">🔄 Alle pruefen</button>
+            <a href="../../hub/index.html" class="hub-btn">← Hub</a>
+        </div>
+    </header>
+
+    <main>
+        <!-- Ampel Hero -->
+        <div class="ampel-hero">
+            <div class="ampel-circle" id="ampelCircle">⏳</div>
+            <div class="ampel-label" id="ampelLabel">Bereit</div>
+            <div class="ampel-sub" id="ampelSub">Klicke "Alle pruefen" zum Starten</div>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary">
+            <div class="s-card"><div class="s-val" style="color:var(--green)" id="sOk">–</div><div class="s-lbl">OK</div></div>
+            <div class="s-card"><div class="s-val" style="color:var(--yellow)" id="sWarn">–</div><div class="s-lbl">Warnungen</div></div>
+            <div class="s-card"><div class="s-val" style="color:var(--red)" id="sErr">–</div><div class="s-lbl">Fehler</div></div>
+            <div class="s-card"><div class="s-val" style="color:var(--ice)" id="sTotal">–</div><div class="s-lbl">Gesamt</div></div>
+        </div>
+
+        <!-- Check Groups -->
+        <div class="check-group"><div class="cg-header"><h3>🖥️ Infrastruktur</h3><button class="cg-btn" onclick="runGroup('infra')">Pruefen</button></div><div id="grp-infra"></div></div>
+        <div class="check-group"><div class="cg-header"><h3>🔗 Verbindungen</h3><button class="cg-btn" onclick="runGroup('conn')">Pruefen</button></div><div id="grp-conn"></div></div>
+        <div class="check-group"><div class="cg-header"><h3>📂 Daten</h3><button class="cg-btn" onclick="runGroup('data')">Pruefen</button></div><div id="grp-data"></div></div>
+        <div class="check-group"><div class="cg-header"><h3>📦 Module</h3><button class="cg-btn" onclick="runGroup('mods')">Pruefen</button></div><div id="grp-mods"></div></div>
+        <div class="check-group"><div class="cg-header"><h3>🤖 Agenten & Skills</h3><button class="cg-btn" onclick="runGroup('agents')">Pruefen</button></div><div id="grp-agents"></div></div>
+
+        <!-- History -->
+        <div class="check-group">
+            <div class="cg-header"><h3>📊 Check-Historie</h3><button class="cg-btn" onclick="exportReport()">📥 Export</button></div>
+            <div class="history-bar" id="historyBar"></div>
+            <div style="font-size:.55rem;color:var(--text3);margin-top:6px;font-family:var(--mono)" id="historyInfo">Letzte 10 Checks</div>
+        </div>
+
+        <!-- NanoChat Widget -->
+        <div class="nano-widget">
+            <div class="cg-header"><h3>💬 NanoChat System-Anfrage</h3></div>
+            <div class="nano-input">
+                <input type="text" id="nanoInput" placeholder="/checkup:ssh oder Freitext..." onkeydown="if(event.key==='Enter')sendNano()">
+                <button onclick="sendNano()">Senden</button>
+            </div>
+            <div class="nano-log" id="nanoLog"></div>
+        </div>
+    </main>
+
+    <script src="../../shared/dkz-updater.js"></script>
+    <script>
+    // @DKZ:TAG [MOD:system-check-v2]
+    function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+    // Clock
+    setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString('de-DE')},1000);
+
+    // ═══════════════════════════════════════
+    // State
+    // ═══════════════════════════════════════
+    let results={ok:0,warn:0,err:0,total:0,items:[]};
+    const NANOCHAT_URL='http://localhost:3040';
+
+    // ═══════════════════════════════════════
+    // HTTP Helper
+    // ═══════════════════════════════════════
+    async function probe(url,timeout=3000){
+        try{const c=new AbortController();const t=setTimeout(()=>c.abort(),timeout);const r=await fetch(url,{signal:c.signal});clearTimeout(t);return{ok:true,data:await r.json().catch(()=>null),status:r.status}}catch{return{ok:false}}
+    }
+
+    // ═══════════════════════════════════════
+    // Render
+    // ═══════════════════════════════════════
+    function addCheck(containerId,name,detail,status){
+        const icons={ok:'✅',warn:'⚠️',err:'❌',load:'⏳'};
+        const cls={ok:'ok',warn:'warn',err:'err',load:'load'};
+        const el=document.createElement('div');
+        el.className='check-row';
+        el.style.animationDelay=(results.total*0.05)+'s';
+        el.innerHTML=`<div class="c-icon ${cls[status]}">${icons[status]}</div><div class="c-info"><div class="c-name">${esc(name)}</div><div class="c-detail">${esc(detail)}</div></div><span class="c-badge ${cls[status]}">${status.toUpperCase()}</span>`;
+        document.getElementById(containerId).appendChild(el);
+        if(status==='ok')results.ok++;else if(status==='warn')results.warn++;else if(status==='err')results.err++;
+        results.total++;
+        results.items.push({name,detail,status,time:new Date().toISOString()});
+        updateSummary();
+    }
+
+    function updateSummary(){
+        document.getElementById('sOk').textContent=results.ok;
+        document.getElementById('sWarn').textContent=results.warn;
+        document.getElementById('sErr').textContent=results.err;
+        document.getElementById('sTotal').textContent=results.total;
+    }
+
+    function setAmpel(status,label,sub){
+        const circle=document.getElementById('ampelCircle');
+        const icons={green:'🟢',yellow:'🟡',red:'🔴',scanning:'🔄'};
+        circle.className='ampel-circle '+status;
+        circle.textContent=icons[status]||'⏳';
+        document.getElementById('ampelLabel').textContent=label;
+        document.getElementById('ampelSub').textContent=sub;
+    }
+
+    // ═══════════════════════════════════════
+    // Check Groups
+    // ═══════════════════════════════════════
+    async function checkInfra(){
+        const c='grp-infra';document.getElementById(c).innerHTML='';
+        // NanoChat Bridge
+        const nc=await probe(NANOCHAT_URL+'/api/status');
+        addCheck(c,'NanoChat Bridge',nc.ok?'Port 3040 antwortet':'Port 3040 offline',nc.ok?'ok':'err');
+        // ONTHERUN
+        const ot=await probe(NANOCHAT_URL+'/api/v1/health');
+        addCheck(c,'ONTHERUN Gateway',ot.ok?'Health OK':'Offline',ot.ok?'ok':'warn');
+        // VPS (via proxy check - can't SSH from browser)
+        addCheck(c,'VPS KVM8','SSH Check nur via CLI/Python Chain moeglich','warn');
+    }
+
+    async function checkConn(){
+        const c='grp-conn';document.getElementById(c).innerHTML='';
+        // Free API Cascade
+        try{
+            const r=await fetch(NANOCHAT_URL+'/api/v1/free-hub/cascade',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:'health-ping'}),signal:AbortSignal.timeout(5000)});
+            addCheck(c,'Free API Cascade',r.ok?'Antwortet':'HTTP '+r.status,r.ok?'ok':'warn');
+        }catch{addCheck(c,'Free API Cascade','Nicht erreichbar','err')}
+        // GitHub (can't check from browser, note it)
+        addCheck(c,'GitHub Auth','Pruefung via CLI: gh auth status','warn');
+        // MCP Config
+        addCheck(c,'MCP Config','Pruefung via Python Chain empfohlen','warn');
+    }
+
+    async function checkData(){
+        const c='grp-data';document.getElementById(c).innerHTML='';
+        // REDNOTE
+        try{
+            const r=await fetch('/04_SYSTEM/REDNOTE.json');
+            if(r.ok){const d=await r.json();addCheck(c,'REDNOTE DB',`${d.stats?.totalErrors||0} Fehler, ${d.stats?.critical||0} kritisch`,d.stats?.critical>0?'err':d.stats?.totalErrors>0?'warn':'ok')}
+            else{addCheck(c,'REDNOTE DB','Nicht ladbar (normaler Dateizugriff)','warn')}
+        }catch{addCheck(c,'REDNOTE DB','Nicht via HTTP ladbar — Python Chain nutzen','warn')}
+        addCheck(c,'SecondBrain','Git Status nur via CLI pruefbar','warn');
+        addCheck(c,'Drive Sync','sync-report.json nur via CLI pruefbar','warn');
+    }
+
+    async function checkMods(){
+        const c='grp-mods';document.getElementById(c).innerHTML='';
+        // Features Registry
+        try{
+            const r=await fetch('../../features.json');
+            if(r.ok){const d=await r.json();const cnt=Object.keys(d.modules||{}).length;addCheck(c,'Features Registry',`${cnt} Module registriert`,cnt>100?'ok':cnt>0?'warn':'err')}
+        }catch{addCheck(c,'Features Registry','Nicht ladbar','err')}
+        // Stichprobe: eigenes Modul
+        addCheck(c,'Health Monitor (self)','index.html + esc() + v2.0','ok');
+        addCheck(c,'Modul-Scan (122)','Vollscan via: python health-check-chain.py modules','warn');
+    }
+
+    async function checkAgents(){
+        const c='grp-agents';document.getElementById(c).innerHTML='';
+        // NanoBots
+        const bots=['nanobot-antigravity.js','nanobot-opencode.js'];
+        for(const bot of bots){addCheck(c,bot,'Datei-Check via CLI','warn')}
+        addCheck(c,'Skills Registry','Vollcheck via: /health skill','warn');
+        addCheck(c,'AGENTS.md','Pruefung via CLI empfohlen','warn');
+    }
+
+    async function runGroup(group){
+        const btn=event?.target;if(btn){btn.classList.add('running');btn.textContent='⏳'}
+        if(group==='infra')await checkInfra();
+        else if(group==='conn')await checkConn();
+        else if(group==='data')await checkData();
+        else if(group==='mods')await checkMods();
+        else if(group==='agents')await checkAgents();
+        if(btn){btn.classList.remove('running');btn.textContent='✅ Fertig';setTimeout(()=>{btn.textContent='Pruefen'},2000)}
+    }
+
+    async function runAllChecks(){
+        results={ok:0,warn:0,err:0,total:0,items:[]};
+        const btn=document.getElementById('btnRunAll');
+        btn.classList.add('scanning');btn.textContent='⏳ Scanne...';
+        setAmpel('scanning','Scanne...','Bitte warten');
+
+        await checkInfra();await checkConn();await checkData();await checkMods();await checkAgents();
+
+        btn.classList.remove('scanning');btn.textContent='🔄 Alle pruefen';
+        const ampel=results.err>0?'red':results.warn>2?'yellow':'green';
+        const labels={green:'Alles OK',yellow:'Warnungen vorhanden',red:'Fehler gefunden'};
+        setAmpel(ampel,labels[ampel],`${results.ok} OK · ${results.warn} Warn · ${results.err} Err · ${new Date().toLocaleTimeString('de-DE')}`);
+
+        saveHistory();
+    }
+
+    // ═══════════════════════════════════════
+    // History
+    // ═══════════════════════════════════════
+    function saveHistory(){
+        let hist=JSON.parse(localStorage.getItem('dkz-health-history')||'[]');
+        hist.push({date:new Date().toISOString(),ok:results.ok,warn:results.warn,err:results.err,total:results.total});
+        if(hist.length>10)hist=hist.slice(-10);
+        localStorage.setItem('dkz-health-history',JSON.stringify(hist));
+        renderHistory();
+    }
+
+    function renderHistory(){
+        const hist=JSON.parse(localStorage.getItem('dkz-health-history')||'[]');
+        const bar=document.getElementById('historyBar');
+        bar.innerHTML='';
+        if(hist.length===0){document.getElementById('historyInfo').textContent='Noch keine Checks durchgefuehrt';return}
+        const maxT=Math.max(...hist.map(h=>h.total),1);
+        hist.forEach((h,i)=>{
+            const pct=Math.max((h.total/maxT)*100,10);
+            const color=h.err>0?'var(--red)':h.warn>2?'var(--yellow)':'var(--green)';
+            const d=new Date(h.date);
+            const el=document.createElement('div');
+            el.className='h-bar';
+            el.style.cssText=`height:${pct}%;background:${color}`;
+            el.innerHTML=`<div class="tooltip">${d.toLocaleDateString('de-DE')} ${d.toLocaleTimeString('de-DE')}<br>✅${h.ok} ⚠️${h.warn} ❌${h.err}</div>`;
+            bar.appendChild(el);
+        });
+        const last=hist[hist.length-1];
+        document.getElementById('historyInfo').textContent=`${hist.length} Checks · Letzter: ${new Date(last.date).toLocaleString('de-DE')}`;
+    }
+
+    function exportReport(){
+        const hist=JSON.parse(localStorage.getItem('dkz-health-history')||'[]');
+        const report={exported:new Date().toISOString(),current:results,history:hist};
+        const blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json'});
+        const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+        a.download=`dkz-health-report-${new Date().toISOString().slice(0,10)}.json`;a.click();
+    }
+
+    // ═══════════════════════════════════════
+    // NanoChat Widget
+    // ═══════════════════════════════════════
+    function sendNano(){
+        const input=document.getElementById('nanoInput');
+        const msg=input.value.trim();if(!msg)return;
+        const log=document.getElementById('nanoLog');
+        log.innerHTML+=`<div style="color:var(--ice)">→ ${esc(msg)}</div>`;
+        input.value='';
+
+        fetch(NANOCHAT_URL+'/api/message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,from:'health-dashboard'})})
+        .then(r=>r.json()).then(d=>{log.innerHTML+=`<div style="color:var(--green)">← ${esc(JSON.stringify(d))}</div>`})
+        .catch(()=>{log.innerHTML+=`<div style="color:var(--red)">← NanoChat offline — starte Bridge mit: node 04_SYSTEM/scripts/nanochat-bridge.js</div>`});
+        log.scrollTop=log.scrollHeight;
+    }
+
+    // Init
+    renderHistory();
+    </script>
+
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+    <script src="../../shared/dkz-headbar.js"></script>
+</body>
+</html>

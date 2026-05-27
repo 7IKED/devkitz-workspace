@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Wispe™ — Voice Agent Framework</title>
+    <meta name="description" content="Wispe™ Voice-Notizen Agent Framework — Notizen, Ideen, Meetings automatisch klassifiziert">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="src/css/variables.css">
+    <link rel="stylesheet" href="src/css/base.css">
+    <link rel="stylesheet" href="src/css/canvas.css">
+    <link rel="stylesheet" href="src/css/mic-button.css">
+    <link rel="stylesheet" href="src/css/topbar.css">
+    <link rel="stylesheet" href="src/css/modals.css">
+    <link rel="stylesheet" href="src/css/setup-panel.css">
+    <link rel="stylesheet" href="src/css/rules-panel.css">
+    <link rel="stylesheet" href="src/css/console-bar.css">
+    <link rel="stylesheet" href="src/css/animations.css">
+</head>
+<body>
+    <!-- Background Canvases -->
+    <canvas id="gridCanvas"></canvas>
+    <canvas id="particleCanvas"></canvas>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- TOP BAR                                    -->
+    <!-- ═══════════════════════════════════════════ -->
+    <header id="topBar">
+        <div class="top-left">
+            <div class="storage-badge">
+                <span class="pulse-dot"></span>
+                <span class="storage-text">Cloudflare / Oracle</span>
+                <span class="storage-tag">TXT</span>
+            </div>
+        </div>
+        <div class="top-center">
+            <h1 class="brand-title">
+                <span class="brand-icon">◆</span>
+                WISPE<span class="tm">™</span>
+            </h1>
+            <span class="brand-sub">Agent Framework</span>
+        </div>
+        <div class="top-right">
+            <button id="btnSetup" class="icon-btn" title="Setup Panel">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+            <button id="btnQR" class="icon-btn" title="Mobile Sync">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/>
+                    <rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/>
+                    <rect x="14" y="14" width="3" height="3"/>
+                    <line x1="21" y1="14" x2="21" y2="21"/>
+                    <line x1="14" y1="21" x2="21" y2="21"/>
+                </svg>
+            </button>
+            <button id="btnDevice" class="icon-btn" title="Audio-Gerät">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M3 18v-6a9 9 0 0118 0v6"/>
+                    <path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- MAIN CANVAS                                -->
+    <!-- ═══════════════════════════════════════════ -->
+    <main id="canvasView">
+        <div id="statusArea">
+            <div class="status-label" id="statusLabel">Bereit zum Aufnehmen</div>
+            <div class="status-category" id="statusCategory">
+                <span class="cat-dot"></span>
+                <span id="categoryText">Nanobot wartet...</span>
+            </div>
+            <div class="audio-bars" id="audioBars">
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+            </div>
+        </div>
+
+        <div id="categoryChips" class="category-chips hidden">
+            <button class="chip active" data-cat="notiz">📋 Notiz</button>
+            <button class="chip" data-cat="idee">💡 Idee</button>
+            <button class="chip" data-cat="meeting">🎙️ Meeting</button>
+            <button class="chip" data-cat="archiv">📦 Archiv</button>
+        </div>
+
+        <div id="recordTimer" class="hidden">
+            <span class="rec-dot"></span>
+            <span id="timerText">00:00</span>
+        </div>
+
+        <!-- MIC BUTTON (Bottom Right — Daumen) -->
+        <div id="micContainer">
+            <div class="pulse-ring ring-1"></div>
+            <div class="pulse-ring ring-2"></div>
+            <div class="pulse-ring ring-3"></div>
+            <button id="micBtn" aria-label="Aufnahme starten">
+                <svg id="micIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+                    <path d="M19 10v2a7 7 0 01-14 0v-2"/>
+                    <line x1="12" y1="19" x2="12" y2="23"/>
+                    <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+                <svg id="stopIcon" class="hidden" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="6" width="12" height="12" rx="2"/>
+                </svg>
+            </button>
+        </div>
+    </main>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- ESC CONSOLE BAR                            -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div id="consoleBar" class="console-bar hidden">
+        <div class="console-header">
+            <span class="console-title">
+                <span class="console-key">ESC</span>
+                WISPE™ Console
+            </span>
+            <button id="consoleClose" class="console-close-btn">&times;</button>
+        </div>
+        <nav class="console-tabs">
+            <button class="console-tab active" data-panel="terminal">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16">
+                    <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+                </svg>
+                Terminal
+            </button>
+            <button class="console-tab" data-panel="guide">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16">
+                    <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
+                </svg>
+                Guide
+            </button>
+            <button class="console-tab" data-panel="opencode">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16">
+                    <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+                </svg>
+                OpenCode
+            </button>
+            <button class="console-tab" data-panel="playbook">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                Playbook
+            </button>
+            <button class="console-tab" data-panel="setup">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16">
+                    <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+                </svg>
+                Setup
+            </button>
+        </nav>
+
+        <!-- Console Panels -->
+        <div class="console-panels">
+            <!-- Terminal Panel -->
+            <div class="console-panel active" id="panelTerminal">
+                <div class="terminal-output" id="terminalOutput">
+                    <div class="term-line system">
+                        <span class="term-prompt">wispe™</span> Agent Framework v1.0 · Nanobot aktiv
+                    </div>
+                    <div class="term-line system">
+                        <span class="term-prompt">wispe™</span> Bereit — Tippe 'help' für Befehle
+                    </div>
+                </div>
+                <div class="terminal-input-row">
+                    <span class="term-prompt-input">❯</span>
+                    <input type="text" id="terminalInput" placeholder="Befehl eingeben..." spellcheck="false" autocomplete="off">
+                </div>
+            </div>
+
+            <!-- Guide Panel -->
+            <div class="console-panel" id="panelGuide">
+                <div class="guide-content">
+                    <h3>📖 Wispe™ Quick Guide</h3>
+                    <div class="guide-section">
+                        <h4>🎙️ Aufnahme</h4>
+                        <ul>
+                            <li>Mic-Button (unten rechts) drücken zum Starten</li>
+                            <li>Nochmal drücken zum Stoppen</li>
+                            <li>Nanobot klassifiziert automatisch (Notiz/Idee/Meeting)</li>
+                            <li>Bei Meeting: Kein 5-Sek-Split — bleibt ein Block</li>
+                        </ul>
+                    </div>
+                    <div class="guide-section">
+                        <h4>📱 Mobile Sync</h4>
+                        <ul>
+                            <li>QR-Code scannen → Mic-Freigabe auf Handy</li>
+                            <li>Bluetooth-Headset wird automatisch bevorzugt</li>
+                            <li>7-Tage-Daten → Auto-Sync bei WLAN</li>
+                        </ul>
+                    </div>
+                    <div class="guide-section">
+                        <h4>⌨️ Shortcuts</h4>
+                        <ul>
+                            <li><kbd>ESC</kbd> — Console öffnen/schließen</li>
+                            <li><kbd>Space</kbd> — Aufnahme Start/Stop</li>
+                            <li><kbd>1-4</kbd> — Kategorie wechseln</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OpenCode Panel -->
+            <div class="console-panel" id="panelOpencode">
+                <div class="opencode-content">
+                    <h3>💻 OpenCode IDE</h3>
+                    <div class="code-editor">
+                        <div class="code-tabs">
+                            <button class="code-tab active">app.js</button>
+                            <button class="code-tab">nanobot.js</button>
+                            <button class="code-tab">config.json</button>
+                        </div>
+                        <div class="code-area">
+                            <pre id="codePreview"><code>// Wispe™ Agent Framework
+// Nanobot Auto-Classifier
+
+const CATEGORIES = {
+  notiz:   { icon: '📋', label: 'Notiz',   keywords: ['todo','aufgabe','merken'] },
+  idee:    { icon: '💡', label: 'Idee',    keywords: ['idee','was wäre','könnte'] },
+  meeting: { icon: '🎙️', label: 'Meeting', keywords: ['treffen','call','besprochen'] },
+  archiv:  { icon: '📦', label: 'Archiv',  keywords: [] }
+};
+
+function classify(transcript) {
+  for (const [cat, data] of Object.entries(CATEGORIES)) {
+    if (data.keywords.some(k => transcript.toLowerCase().includes(k))) {
+      return cat;
+    }
+  }
+  return 'notiz'; // default
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Playbook Panel -->
+            <div class="console-panel" id="panelPlaybook">
+                <div class="playbook-content">
+                    <h3>▶️ Playbook — Automatisierungen</h3>
+                    <div class="playbook-list">
+                        <div class="playbook-item">
+                            <div class="pb-header">
+                                <span class="pb-status active"></span>
+                                <strong>Auto-Archiv (Desktop)</strong>
+                                <span class="pb-badge">Aktiv</span>
+                            </div>
+                            <p>30 Tage ungeöffnet → Archiv · +3 Mon. → Cloud</p>
+                        </div>
+                        <div class="playbook-item">
+                            <div class="pb-header">
+                                <span class="pb-status active"></span>
+                                <strong>Mobile Sync (Jimny)</strong>
+                                <span class="pb-badge">Aktiv</span>
+                            </div>
+                            <p>7 Tage intern · WLAN → Supabase/DuckDB · 30T → Archiv</p>
+                        </div>
+                        <div class="playbook-item">
+                            <div class="pb-header">
+                                <span class="pb-status standby"></span>
+                                <strong>Nanobot Klassifikation</strong>
+                                <span class="pb-badge standby">Standby</span>
+                            </div>
+                            <p>Transcript → Notiz/Idee/Meeting/Lead auto-routing</p>
+                        </div>
+                        <div class="playbook-item">
+                            <div class="pb-header">
+                                <span class="pb-status standby"></span>
+                                <strong>Token Refresh (Google)</strong>
+                                <span class="pb-badge standby">24h Cycle</span>
+                            </div>
+                            <p>OAuth Token alle 24h automatisch erneuern</p>
+                        </div>
+                        <div class="playbook-item">
+                            <div class="pb-header">
+                                <span class="pb-status standby"></span>
+                                <strong>AppScript Bridge</strong>
+                                <span class="pb-badge standby">Bidirektional</span>
+                            </div>
+                            <p>Google Apps Script ⟷ Wispe — Daten in beide Richtungen</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Setup Panel (inline) -->
+            <div class="console-panel" id="panelSetup">
+                <div class="setup-inline-content">
+                    <h3>⚙️ Quick Setup</h3>
+                    <p class="setup-hint">Vollständiges Setup → Button oben rechts (≡) oder hier konfigurieren:</p>
+                    <div class="quick-setup-grid">
+                        <div class="qs-card" data-service="supabase">
+                            <span class="qs-icon">🟢</span>
+                            <span class="qs-name">Supabase</span>
+                            <span class="qs-status" id="qsSupabase">—</span>
+                        </div>
+                        <div class="qs-card" data-service="openmanus">
+                            <span class="qs-icon">🤖</span>
+                            <span class="qs-name">OpenManus</span>
+                            <span class="qs-status" id="qsManus">—</span>
+                        </div>
+                        <div class="qs-card" data-service="assistant">
+                            <span class="qs-icon">🧠</span>
+                            <span class="qs-name">Assistant</span>
+                            <span class="qs-status" id="qsAssist">—</span>
+                        </div>
+                        <div class="qs-card" data-service="ontherun">
+                            <span class="qs-icon">🔴</span>
+                            <span class="qs-name">ONTHERUN™</span>
+                            <span class="qs-status" id="qsOtr">—</span>
+                        </div>
+                        <div class="qs-card" data-service="google">
+                            <span class="qs-icon">🔑</span>
+                            <span class="qs-name">Google Auth</span>
+                            <span class="qs-status" id="qsGoogle">—</span>
+                        </div>
+                        <div class="qs-card" data-service="agents">
+                            <span class="qs-icon">⚡</span>
+                            <span class="qs-name">Agenten</span>
+                            <span class="qs-status" id="qsAgents">—</span>
+                        </div>
+                    </div>
+                    <button class="btn-primary" id="btnOpenFullSetup" style="margin-top:16px">Vollständiges Setup öffnen ↗</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ESC Hint -->
+        <div class="console-esc-hint">Drücke <kbd>ESC</kbd> zum Schließen</div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SETUP PANEL (Full Slide-in)                -->
+    <!-- ═══════════════════════════════════════════ -->
+    <aside id="setupPanel" class="setup-panel hidden">
+        <div class="setup-header">
+            <h2>⚙️ Setup & API-Konfiguration</h2>
+            <button id="setupClose" class="modal-close">&times;</button>
+        </div>
+        <div class="setup-scroll">
+            <!-- Supabase -->
+            <section class="setup-section">
+                <div class="section-head" data-toggle="supabase">
+                    <span class="sec-icon">🟢</span>
+                    <span class="sec-title">Supabase</span>
+                    <span class="sec-status" id="supabaseStatus">Nicht verbunden</span>
+                    <span class="sec-chevron">›</span>
+                </div>
+                <div class="section-body collapsed" id="bodySupabase">
+                    <div class="field-group">
+                        <label for="supaUrl">Supabase URL</label>
+                        <input type="url" id="supaUrl" placeholder="https://xxxxx.supabase.co" spellcheck="false">
+                    </div>
+                    <div class="field-group">
+                        <label for="supaKey">Anon Key</label>
+                        <input type="password" id="supaKey" placeholder="eyJhbGciOi..." spellcheck="false">
+                    </div>
+                    <div class="field-actions">
+                        <button class="btn-primary" id="btnSupaConnect">Verbinden</button>
+                        <a href="https://supabase.com/dashboard" target="_blank" class="btn-link">↗ Dashboard</a>
+                    </div>
+                    <div class="pro-tips">
+                        <h4>💡 Pro-Tipps & Vorlagen</h4>
+                        <div class="tip-card">
+                            <strong>SQL Template — Grundausstattung:</strong>
+                            <pre><code>CREATE TABLE wispe_notes (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  category TEXT CHECK (category IN
+    ('notiz','idee','meeting','archiv')),
+  content TEXT NOT NULL,
+  speaker TEXT,
+  device TEXT DEFAULT 'desktop',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  opened_at TIMESTAMPTZ DEFAULT now(),
+  archived_at TIMESTAMPTZ,
+  cloud_archived BOOLEAN DEFAULT false
+);
+
+ALTER TABLE wispe_notes ENABLE ROW LEVEL SECURITY;
+CREATE INDEX idx_opened ON wispe_notes(opened_at);
+CREATE INDEX idx_category ON wispe_notes(category);</code></pre>
+                        </div>
+                        <div class="tip-card">
+                            <strong>📐 Anleitung:</strong>
+                            <ol>
+                                <li>Dashboard → New Project → Frankfurt</li>
+                                <li>SQL Editor → Template einfügen → Run</li>
+                                <li>Settings → API → URL + Key eintragen</li>
+                                <li>Auth → Google Provider aktivieren</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- OpenManus -->
+            <section class="setup-section">
+                <div class="section-head" data-toggle="manus">
+                    <span class="sec-icon">🤖</span>
+                    <span class="sec-title">OpenManus</span>
+                    <span class="sec-status" id="manusStatus">Nicht verbunden</span>
+                    <span class="sec-chevron">›</span>
+                </div>
+                <div class="section-body collapsed" id="bodyManus">
+                    <div class="field-group">
+                        <label for="manusApi">API Key</label>
+                        <input type="password" id="manusApi" placeholder="manus_xxxxxxxxx" spellcheck="false">
+                    </div>
+                    <div class="field-group">
+                        <label for="manusModel">Model Name</label>
+                        <input type="text" id="manusModel" placeholder="z.B. manus-1-preview" spellcheck="false">
+                    </div>
+                    <div class="field-group">
+                        <label for="manusSpeech">Sprachchat Endpoint</label>
+                        <input type="url" id="manusSpeech" placeholder="wss://manus.api/v1/speech" spellcheck="false">
+                    </div>
+                    <div class="field-actions">
+                        <button class="btn-primary" id="btnManusConnect">Verbinden</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Assistant Agent -->
+            <section class="setup-section">
+                <div class="section-head" data-toggle="assistant">
+                    <span class="sec-icon">🧠</span>
+                    <span class="sec-title">Assistant Agent</span>
+                    <span class="sec-status" id="assistantStatus">Nicht verbunden</span>
+                    <span class="sec-chevron">›</span>
+                </div>
+                <div class="section-body collapsed" id="bodyAssistant">
+                    <div class="field-group">
+                        <label for="assistApi">API Key</label>
+                        <input type="password" id="assistApi" placeholder="sk-xxxxxxxxx" spellcheck="false">
+                    </div>
+                    <div class="field-group">
+                        <label for="assistModel">Model Name</label>
+                        <input type="text" id="assistModel" placeholder="z.B. gpt-4o, gemini-2.5-pro" spellcheck="false">
+                    </div>
+                    <div class="field-group">
+                        <label for="assistSpeech">Sprachchat Endpoint</label>
+                        <input type="url" id="assistSpeech" placeholder="wss://api.example.com/v1/realtime" spellcheck="false">
+                    </div>
+                    <div class="field-actions">
+                        <button class="btn-primary" id="btnAssistConnect">Verbinden</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ONTHERUN (DkZ-MCP) -->
+            <section class="setup-section">
+                <div class="section-head" data-toggle="ontherun">
+                    <span class="sec-icon">🔴</span>
+                    <span class="sec-title">ONTHERUN™ (DkZ-MCP)</span>
+                    <span class="sec-status" id="ontherunStatus">Nicht verbunden</span>
+                    <span class="sec-chevron">›</span>
+                </div>
+                <div class="section-body collapsed" id="bodyOntherun">
+                    <div class="field-group">
+                        <label for="ontherunApi">MCP Server URL</label>
+                        <input type="url" id="ontherunApi" placeholder="http://localhost:3100/mcp" spellcheck="false">
+                    </div>
+                    <p class="field-hint">Keine Modellauswahl — ONTHERUN™ routet automatisch.</p>
+                    <div class="field-actions">
+                        <button class="btn-primary" id="btnOntherunConnect">Verbinden</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Google Login + AppScript -->
+            <section class="setup-section">
+                <div class="section-head" data-toggle="google">
+                    <span class="sec-icon">🔑</span>
+                    <span class="sec-title">Google Login & AppScript</span>
+                    <span class="sec-status" id="googleStatus">Nicht eingeloggt</span>
+                    <span class="sec-chevron">›</span>
+                </div>
+                <div class="section-body collapsed" id="bodyGoogle">
+                    <button class="btn-google" id="btnGoogleLogin">
+                        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                        Mit Google anmelden
+                    </button>
+                    <div id="googleTokenInfo" class="token-info hidden">
+                        <div class="token-row">
+                            <span class="token-label">Token</span>
+                            <code id="googleToken" class="token-value">—</code>
+                        </div>
+                        <div class="token-row">
+                            <span class="token-label">Refresh</span>
+                            <span id="googleRefresh" class="token-refresh">Auto alle 24h</span>
+                        </div>
+                        <div class="token-row">
+                            <span class="token-label">AppScript</span>
+                            <span id="appscriptLinked" class="token-appscript">⟷ Bidirektional aktiv</span>
+                        </div>
+                    </div>
+                    <div class="field-group">
+                        <label for="appscriptUrl">AppScript Web-App URL</label>
+                        <input type="url" id="appscriptUrl" placeholder="https://script.google.com/macros/s/.../exec" spellcheck="false">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Agenten -->
+            <section class="setup-section">
+                <div class="section-head" data-toggle="agents">
+                    <span class="sec-icon">⚡</span>
+                    <span class="sec-title">Nanobot · Ralph-Loop · James™</span>
+                    <span class="sec-status" id="agentsStatus">Standby</span>
+                    <span class="sec-chevron">›</span>
+                </div>
+                <div class="section-body collapsed" id="bodyAgents">
+                    <div class="agent-grid">
+                        <div class="agent-card">
+                            <div class="agent-name">🤖 Nanobot</div>
+                            <div class="agent-desc">Auto-Klassifikation</div>
+                            <label class="switch"><input type="checkbox" id="nanobotToggle" checked><span class="slider"></span></label>
+                        </div>
+                        <div class="agent-card">
+                            <div class="agent-name">🔄 Ralph-Loop™</div>
+                            <div class="agent-desc">6-Phasen Executor</div>
+                            <label class="switch"><input type="checkbox" id="ralphToggle"><span class="slider"></span></label>
+                        </div>
+                        <div class="agent-card">
+                            <div class="agent-name">🎯 James™</div>
+                            <div class="agent-desc">Guardian Agent</div>
+                            <label class="switch"><input type="checkbox" id="jamesToggle"><span class="slider"></span></label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══ USER RULES / LEGEND ═══ -->
+            <section class="setup-section">
+                <div class="section-head" data-toggle="userrules">
+                    <span class="sec-icon">📜</span>
+                    <span class="sec-title">User Rules / Legend</span>
+                    <span class="sec-status">Konfigurierbar</span>
+                    <span class="sec-chevron">›</span>
+                </div>
+                <div class="section-body collapsed" id="bodyUserrules">
+                    <p class="field-hint">Eigene Regeln für die Wispe™ Engine definieren:</p>
+                    <div class="field-group">
+                        <label>Regel-Name</label>
+                        <input type="text" placeholder="z.B. Auto-Tag Meeting ab 2 Min." spellcheck="false">
+                    </div>
+                    <div class="field-group">
+                        <label>Bedingung</label>
+                        <input type="text" placeholder="z.B. duration > 120 && speakers > 1" spellcheck="false">
+                    </div>
+                    <div class="field-group">
+                        <label>Aktion</label>
+                        <input type="text" placeholder="z.B. category = meeting, notify = true" spellcheck="false">
+                    </div>
+                    <div class="field-actions">
+                        <button class="btn-primary">+ Regel hinzufügen</button>
+                    </div>
+                    <div class="pro-tips">
+                        <h4>📖 Legend — Variablen</h4>
+                        <div class="tip-card">
+                            <pre><code>duration    — Aufnahme-Dauer in Sekunden
+speakers    — Erkannte Sprecher-Anzahl
+category    — notiz | idee | meeting | lead | archiv
+keywords    — Array der erkannten Schlüsselwörter
+device      — desktop | mobile | bluetooth
+transcript  — Volltext des Transkripts
+confidence  — Nanobot-Sicherheit (0-1)</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══ API GALLERY & DB-LISTEN ═══ -->
+            <section class="setup-section">
+                <div class="section-head" data-toggle="apigallery">
+                    <span class="sec-icon">🔌</span>
+                    <span class="sec-title">API Gallery & Datenbanken</span>
+                    <span class="sec-status">Frei einstellbar</span>
+                    <span class="sec-chevron">›</span>
+                </div>
+                <div class="section-body collapsed" id="bodyApigallery">
+                    <h4>🆓 Free & Quality APIs</h4>
+                    <div class="agent-grid">
+                        <div class="agent-card"><div class="agent-name">🟢 Groq</div><div class="agent-desc">Free Tier · Llama 3, Mixtral</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🟢 Together.ai</div><div class="agent-desc">Free Credits · 200+ Modelle</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🟢 OpenRouter</div><div class="agent-desc">Free Tier · Multi-Provider</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🟡 Mistral</div><div class="agent-desc">Free API · Mistral Large</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🟡 Cerebras</div><div class="agent-desc">Free · Schnellste Inferenz</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🔵 Deepseek</div><div class="agent-desc">Günstig · Deepseek-V3</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                    </div>
+                    <h4 style="margin-top:16px">💾 Datenbank-Empfehlungen</h4>
+                    <div class="agent-grid">
+                        <div class="agent-card"><div class="agent-name">🦆 DuckDB</div><div class="agent-desc">Lokal · Analytics · Free</div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🟢 Supabase</div><div class="agent-desc">Postgres · Free Tier 500MB</div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🔥 Firebase</div><div class="agent-desc">Google · Realtime · Free</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🧊 Turso</div><div class="agent-desc">libSQL · Edge · Free Tier</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🍃 MongoDB</div><div class="agent-desc">Atlas Free 512MB</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🐘 Neon</div><div class="agent-desc">Serverless Postgres · Free</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                    </div>
+                    <div class="field-group" style="margin-top:16px">
+                        <label>Eigene API hinzufügen</label>
+                        <input type="text" placeholder="API Name" spellcheck="false">
+                    </div>
+                    <div class="field-group">
+                        <label>Endpoint URL</label>
+                        <input type="url" placeholder="https://api.example.com/v1" spellcheck="false">
+                    </div>
+                    <div class="field-group">
+                        <label>API Key</label>
+                        <input type="password" placeholder="sk-..." spellcheck="false">
+                    </div>
+                    <div class="field-actions">
+                        <button class="btn-primary">+ API speichern</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══ MCP STORE ═══ -->
+            <section class="setup-section">
+                <div class="section-head" data-toggle="mcpstore">
+                    <span class="sec-icon">🔗</span>
+                    <span class="sec-title">MCP Store</span>
+                    <span class="sec-status">1-Klick Verbindung</span>
+                    <span class="sec-chevron">›</span>
+                </div>
+                <div class="section-body collapsed" id="bodyMcpstore">
+                    <p class="field-hint">Model Context Protocol — gängige Server zur Auswahl:</p>
+                    <div class="agent-grid">
+                        <div class="agent-card"><div class="agent-name">📂 Filesystem</div><div class="agent-desc">Dateien lesen/schreiben</div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🐙 GitHub</div><div class="agent-desc">Repos, Issues, PRs</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🌐 Brave Search</div><div class="agent-desc">Web-Suche</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🧠 Memory</div><div class="agent-desc">Persistentes Gedächtnis</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🐘 PostgreSQL</div><div class="agent-desc">DB-Zugriff via MCP</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🔴 ONTHERUN™</div><div class="agent-desc">DkZ-MCP Server</div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">📊 Google Drive</div><div class="agent-desc">App Data Folder</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🔧 Sequential</div><div class="agent-desc">Thinking / Chain</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🐳 Docker</div><div class="agent-desc">Container-Steuerung</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                    </div>
+                    <div class="field-group" style="margin-top:16px">
+                        <label>Custom MCP Server URL</label>
+                        <input type="url" placeholder="http://localhost:3100/mcp" spellcheck="false">
+                    </div>
+                    <div class="field-actions">
+                        <button class="btn-primary">+ MCP verbinden</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══ DOCKER TOOLS ═══ -->
+            <section class="setup-section">
+                <div class="section-head" data-toggle="docker">
+                    <span class="sec-icon">🐳</span>
+                    <span class="sec-title">Docker Tools</span>
+                    <span class="sec-status">Vorinstalliert</span>
+                    <span class="sec-chevron">›</span>
+                </div>
+                <div class="section-body collapsed" id="bodyDocker">
+                    <p class="field-hint">Vorinstallierte Container-Tools zur Auswahl:</p>
+                    <div class="agent-grid">
+                        <div class="agent-card"><div class="agent-name">🦙 Ollama</div><div class="agent-desc">Lokale LLMs (Llama, Gemma)</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🔍 Whisper</div><div class="agent-desc">OpenAI Speech-to-Text</div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">📡 n8n</div><div class="agent-desc">Workflow Automation</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🗄️ Supabase</div><div class="agent-desc">Self-hosted (Docker)</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🦆 DuckDB</div><div class="agent-desc">Analytics Engine</div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🔒 Vault</div><div class="agent-desc">HashiCorp Secrets</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">📊 Grafana</div><div class="agent-desc">Monitoring Dashboard</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🧊 Iceberg</div><div class="agent-desc">Apache Table Format</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                        <div class="agent-card"><div class="agent-name">🤖 OpenManus</div><div class="agent-desc">Agent Container</div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+                    </div>
+                    <div class="field-group" style="margin-top:16px">
+                        <label>Docker Host</label>
+                        <input type="url" id="dockerHost" placeholder="unix:///var/run/docker.sock" spellcheck="false">
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══ LLM COSTS CALCULATOR ═══ -->
+            <section class="setup-section">
+                <div class="section-head" data-toggle="costs">
+                    <span class="sec-icon">💰</span>
+                    <span class="sec-title">LLM Kosten-Rechner</span>
+                    <span class="sec-status">Calculator</span>
+                    <span class="sec-chevron">›</span>
+                </div>
+                <div class="section-body collapsed" id="bodyCosts">
+                    <p class="field-hint">Geschätzte Kosten pro Modell (je 1M Tokens):</p>
+                    <div class="cost-table" style="font-family:var(--font-mono);font-size:var(--fs-xs);color:var(--text-secondary)">
+                        <div style="display:grid;grid-template-columns:1fr 80px 80px;gap:4px;padding:4px 0;border-bottom:1px solid var(--border);color:var(--text-primary);font-weight:600">
+                            <span>Modell</span><span>Input</span><span>Output</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 80px 80px;gap:4px;padding:6px 0;border-bottom:1px solid var(--border)">
+                            <span>GPT-4o</span><span style="color:var(--yellow)">$2.50</span><span style="color:var(--yellow)">$10.00</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 80px 80px;gap:4px;padding:6px 0;border-bottom:1px solid var(--border)">
+                            <span>GPT-4o-mini</span><span style="color:var(--green)">$0.15</span><span style="color:var(--green)">$0.60</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 80px 80px;gap:4px;padding:6px 0;border-bottom:1px solid var(--border)">
+                            <span>Gemini 2.5 Pro</span><span style="color:var(--yellow)">$1.25</span><span style="color:var(--yellow)">$10.00</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 80px 80px;gap:4px;padding:6px 0;border-bottom:1px solid var(--border)">
+                            <span>Gemini 2.0 Flash</span><span style="color:var(--green)">$0.10</span><span style="color:var(--green)">$0.40</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 80px 80px;gap:4px;padding:6px 0;border-bottom:1px solid var(--border)">
+                            <span>Claude 3.5 Sonnet</span><span style="color:var(--yellow)">$3.00</span><span style="color:var(--yellow)">$15.00</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 80px 80px;gap:4px;padding:6px 0;border-bottom:1px solid var(--border)">
+                            <span>Claude 3.5 Haiku</span><span style="color:var(--green)">$0.80</span><span style="color:var(--green)">$4.00</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 80px 80px;gap:4px;padding:6px 0;border-bottom:1px solid var(--border)">
+                            <span>Deepseek V3</span><span style="color:var(--green)">$0.27</span><span style="color:var(--green)">$1.10</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 80px 80px;gap:4px;padding:6px 0;border-bottom:1px solid var(--border)">
+                            <span>Mistral Large</span><span style="color:var(--yellow)">$2.00</span><span style="color:var(--yellow)">$6.00</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 80px 80px;gap:4px;padding:6px 0;border-bottom:1px solid var(--border)">
+                            <span style="color:var(--green)">Groq (Free)</span><span style="color:var(--green)">$0.00</span><span style="color:var(--green)">$0.00</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 80px 80px;gap:4px;padding:6px 0;">
+                            <span style="color:var(--green)">Ollama (Local)</span><span style="color:var(--green)">$0.00</span><span style="color:var(--green)">$0.00</span>
+                        </div>
+                    </div>
+                    <div class="field-group" style="margin-top:16px">
+                        <label>Monatliches Budget ($)</label>
+                        <input type="number" id="llmBudget" placeholder="z.B. 20" min="0" step="1">
+                    </div>
+                    <p class="field-hint" style="margin-top:8px">💡 Tipp: Groq + Ollama für 0€, GPT-4o-mini für ~$5/Monat bei normaler Nutzung</p>
+                </div>
+            </section>
+
+            <!-- ═══ QUELLEN (Sources) ═══ -->
+            <section class="setup-section">
+                <div class="section-head" data-toggle="quellen">
+                    <span class="sec-icon">📚</span>
+                    <span class="sec-title">Quellen & Ressourcen</span>
+                    <span class="sec-status">Verzeichnis</span>
+                    <span class="sec-chevron">›</span>
+                </div>
+                <div class="section-body collapsed" id="bodyQuellen">
+                    <h4>📖 Dokumentationen</h4>
+                    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
+                        <a href="https://supabase.com/docs" target="_blank" class="btn-link">↗ Supabase Docs</a>
+                        <a href="https://modelcontextprotocol.io" target="_blank" class="btn-link">↗ MCP Protocol Docs</a>
+                        <a href="https://docs.docker.com" target="_blank" class="btn-link">↗ Docker Documentation</a>
+                        <a href="https://duckdb.org/docs" target="_blank" class="btn-link">↗ DuckDB Docs</a>
+                        <a href="https://iceberg.apache.org/docs" target="_blank" class="btn-link">↗ Apache Iceberg</a>
+                        <a href="https://platform.openai.com/docs" target="_blank" class="btn-link">↗ OpenAI API</a>
+                        <a href="https://ai.google.dev/docs" target="_blank" class="btn-link">↗ Google AI Docs</a>
+                    </div>
+                    <h4>🔧 Tools & Services</h4>
+                    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
+                        <a href="https://github.com/mannaandpoem/OpenManus" target="_blank" class="btn-link">↗ OpenManus GitHub</a>
+                        <a href="https://n8n.io" target="_blank" class="btn-link">↗ n8n Workflow Automation</a>
+                        <a href="https://ollama.com" target="_blank" class="btn-link">↗ Ollama (Local LLMs)</a>
+                        <a href="https://openrouter.ai" target="_blank" class="btn-link">↗ OpenRouter (Multi-Provider)</a>
+                        <a href="https://console.groq.com" target="_blank" class="btn-link">↗ Groq Console (Free)</a>
+                    </div>
+                    <h4>📋 DEVKiTZ™ Intern</h4>
+                    <div style="display:flex;flex-direction:column;gap:6px">
+                        <a href="#" class="btn-link">📂 REGELWERK.md</a>
+                        <a href="#" class="btn-link">📐 BLAUPAUSE.md</a>
+                        <a href="#" class="btn-link">🤖 AGENTS.md</a>
+                        <a href="#" class="btn-link">📊 features.json</a>
+                        <a href="#" class="btn-link">🔄 Ralph-Loop™ Docs</a>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </aside>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- MODALS: QR + Device                        -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div id="qrModal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content glass-card">
+            <button class="modal-close" id="qrClose">&times;</button>
+            <h2>📱 Mobile Sync</h2>
+            <p class="modal-sub">Scanne den QR-Code mit deinem Handy</p>
+            <div id="qrCodeBox" class="qr-box"></div>
+            <p class="modal-hint">Mic wird automatisch angefragt · Bluetooth bevorzugt</p>
+        </div>
+    </div>
+    <div id="deviceModal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content glass-card">
+            <button class="modal-close" id="deviceClose">&times;</button>
+            <h2>🎧 Audio-Gerät</h2>
+            <p class="modal-sub">Mikrofon / Bluetooth Headset wählen</p>
+            <div id="deviceList" class="device-list">
+                <div class="device-placeholder">Auf Berechtigung warten...</div>
+            </div>
+            <button id="btnRefreshDevices" class="btn-secondary">↻ Geräte aktualisieren</button>
+        </div>
+    </div>
+
+    <!-- Rules Panel -->
+    <div id="rulesPanel" class="rules-panel hidden">
+        <div class="rules-inner glass-card">
+            <button class="modal-close" id="rulesClose">&times;</button>
+            <h2>📐 Wispe-Regeln</h2>
+            <div class="rules-section">
+                <h3>📂 Die 4 Orte</h3>
+                <div class="rule-grid">
+                    <div class="rule-card"><span class="rule-icon">📋</span><strong>Notizen</strong><p>Kurze Gedanken · To-dos</p></div>
+                    <div class="rule-card"><span class="rule-icon">💡</span><strong>Ideen</strong><p>Brainstorming · kreativ</p></div>
+                    <div class="rule-card"><span class="rule-icon">🎙️</span><strong>Meeting</strong><p>Protokolle + Speaker</p></div>
+                    <div class="rule-card"><span class="rule-icon">📦</span><strong>Archiv</strong><p>Auto-Ablage + Vorschau</p></div>
+                </div>
+            </div>
+            <div class="rules-section">
+                <h3>🖥️ Desktop</h3>
+                <div class="timeline">
+                    <div class="tl-item"><span class="tl-time">30T</span><span class="tl-desc">Aktiv</span></div>
+                    <div class="tl-arrow">→</div>
+                    <div class="tl-item"><span class="tl-time">+3M</span><span class="tl-desc">Archiv</span></div>
+                    <div class="tl-arrow">→</div>
+                    <div class="tl-item"><span class="tl-time">∞</span><span class="tl-desc">Cloud</span></div>
+                </div>
+            </div>
+            <div class="rules-section">
+                <h3>📱 Mobile</h3>
+                <div class="timeline">
+                    <div class="tl-item"><span class="tl-time">7T</span><span class="tl-desc">Intern</span></div>
+                    <div class="tl-arrow">→</div>
+                    <div class="tl-item"><span class="tl-time">30T</span><span class="tl-desc">Link</span></div>
+                    <div class="tl-arrow">→</div>
+                    <div class="tl-item"><span class="tl-time">+3M</span><span class="tl-desc">Cloud</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button id="btnRules" class="rules-toggle" title="Wispe-Regeln">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+    </button>
+
+    <!-- QR Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <!-- Modular JS -->
+    <script src="src/js/modules/canvas-bg.js"></script>
+    <script src="src/js/modules/mic-engine.js"></script>
+    <script src="src/js/modules/qr-sync.js"></script>
+    <script src="src/js/modules/device-manager.js"></script>
+    <script src="src/js/modules/nanobot.js"></script>
+    <script src="src/js/modules/setup.js"></script>
+    <script src="src/js/modules/console-bar.js"></script>
+    <script src="src/js/app.js"></script>
+</body>
+</html>

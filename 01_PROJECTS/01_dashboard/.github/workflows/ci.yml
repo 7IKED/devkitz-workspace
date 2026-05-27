@@ -1,0 +1,75 @@
+name: DkZ CI — Lint & Validate
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  validate:
+    name: 🔍 Validate DkZ Standards
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 📋 Check features.json files
+        run: |
+          echo "=== Validating features.json ==="
+          find modules -name "features.json" | while read f; do
+            if jq empty "$f" 2>/dev/null; then
+              echo "✅ $f"
+            else
+              echo "❌ INVALID JSON: $f"
+              exit 1
+            fi
+          done
+
+      - name: 📜 Check REGISTRY.json
+        run: |
+          echo "=== Validating REGISTRY.json ==="
+          if jq empty REGISTRY.json 2>/dev/null; then
+            TOTAL=$(jq '.totalModules' REGISTRY.json)
+            FOLDERS=$(find modules -maxdepth 1 -type d | wc -l)
+            FOLDERS=$((FOLDERS - 1))
+            echo "REGISTRY totalModules: $TOTAL"
+            echo "Actual folders: $FOLDERS"
+            if [ "$TOTAL" != "$FOLDERS" ]; then
+              echo "⚠️ WARNING: Module count mismatch!"
+            fi
+          else
+            echo "❌ INVALID JSON"
+            exit 1
+          fi
+
+      - name: 🎨 Check DkZ Design (accent color)
+        run: |
+          echo "=== Checking #fa1e4e accent ==="
+          MISSING=$(find modules -name "index.html" -exec grep -L "fa1e4e" {} \; 2>/dev/null || true)
+          if [ -n "$MISSING" ]; then
+            echo "⚠️ Modules missing DkZ accent:"
+            echo "$MISSING"
+          else
+            echo "✅ All modules use #fa1e4e"
+          fi
+
+      - name: 🛡️ Check XSS Protection
+        run: |
+          echo "=== Checking esc() function ==="
+          MISSING=$(find modules -name "index.html" -exec grep -L "function esc\|const esc" {} \; 2>/dev/null || true)
+          if [ -n "$MISSING" ]; then
+            echo "⚠️ Modules missing XSS esc():"
+            echo "$MISSING"
+          fi
+
+      - name: 📊 Summary
+        run: |
+          MODULES=$(find modules -maxdepth 1 -type d | wc -l)
+          MODULES=$((MODULES - 1))
+          INDEX=$(find modules -name "index.html" | wc -l)
+          FEATURES=$(find modules -name "features.json" | wc -l)
+          echo "📊 DkZ Dashboard Status:"
+          echo "  Modules: $MODULES"
+          echo "  With index.html: $INDEX"
+          echo "  With features.json: $FEATURES"

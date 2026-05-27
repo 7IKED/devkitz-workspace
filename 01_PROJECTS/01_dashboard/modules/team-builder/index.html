@@ -1,0 +1,322 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v1.00.0_01">
+    <meta name="dkz-module" content="team-builder">
+    <title>Team Builder — DkZâ„¢</title>
+    <meta name="description" content="DkZ Team Builder — Multi-Agenten-Teams nach BMAD-Methodik koordinieren, konfigurieren und analysieren">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+    <style>
+:root{--neon-red:#fa1e4e;--pink:#ec4899;--matrix-green:#00D084;--blue:#55ACEE;--purple:#a855f7;--gold:#f59e0b;--dark-base:#0e0e10;--soft-white:#f6f6f7;--card-bg:#1a1a1c;--border-color:#2a2a2e;--node-bg:#252528}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--dark-base);color:var(--soft-white);overflow:hidden}
+.app{display:grid;grid-template-columns:300px 1fr 360px;grid-template-rows:60px 1fr;height:100vh}
+header{grid-column:1/-1;background:var(--card-bg);border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;backdrop-filter:blur(20px)}
+.logo{font-size:1.2rem;font-weight:800;background:linear-gradient(135deg,var(--neon-red),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.chain-nav{display:flex;gap:.4rem}
+.chain-btn{padding:.35rem .7rem;border-radius:6px;font-size:.65rem;font-weight:700;border:1px solid var(--border-color);background:rgba(255,255,255,.03);color:#808080;cursor:pointer;text-decoration:none;transition:all .2s}
+.chain-btn:hover{border-color:var(--neon-red);color:var(--soft-white)}
+.chain-btn.active{background:var(--neon-red);border-color:var(--neon-red);color:#fff}
+/* LEFT SIDEBAR — Agent Pool */
+.sidebar-left{background:var(--card-bg);border-right:1px solid var(--border-color);overflow-y:auto;display:flex;flex-direction:column}
+.pool-header{padding:1rem;border-bottom:1px solid var(--border-color)}
+.pool-header h3{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#808080;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between}
+.pool-search{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border-color);border-radius:6px;padding:.5rem;color:var(--soft-white);font-size:.8rem;font-family:inherit;margin-bottom:.5rem}
+.pool-search:focus{outline:none;border-color:var(--neon-red)}
+.pool-tag-filter{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border-color);border-radius:6px;padding:.4rem;color:var(--soft-white);font-size:.75rem;font-family:inherit}
+.pool-body{flex:1;overflow-y:auto;padding:.5rem}
+.pool-group{margin-bottom:1rem}
+.pool-group-title{font-size:.7rem;font-weight:700;text-transform:uppercase;color:#606060;padding:.25rem .5rem;margin-bottom:.4rem;display:flex;align-items:center;justify-content:space-between}
+.pool-count{background:rgba(255,255,255,.05);padding:.1rem .4rem;border-radius:4px;font-size:.65rem}
+.pool-agent{background:var(--node-bg);border:1px solid var(--border-color);border-radius:8px;padding:.625rem;cursor:pointer;transition:all .25s;display:flex;gap:.625rem;margin-bottom:.4rem}
+.pool-agent:hover{background:rgba(255,255,255,.05);transform:translateX(4px);border-color:var(--blue)}
+.pool-agent.in-team{opacity:.4;pointer-events:none;border-color:var(--matrix-green)}
+.pool-agent-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.pool-agent-info{min-width:0}
+.pool-agent-name{font-size:.8rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pool-agent-desc{font-size:.65rem;color:#808080;margin-top:.15rem}
+.pool-agent-tags{display:flex;flex-wrap:wrap;gap:.25rem;margin-top:.3rem}
+.tag{font-size:.6rem;padding:.1rem .35rem;background:rgba(85,172,238,.1);border:1px solid rgba(85,172,238,.2);border-radius:4px;color:var(--blue)}
+.empty-pool{text-align:center;color:#606060;padding:2rem;font-size:.8rem}
+/* CENTER — Team Canvas */
+.canvas{background:repeating-linear-gradient(0deg,transparent,transparent 19px,rgba(255,255,255,.02) 19px,rgba(255,255,255,.02) 20px),repeating-linear-gradient(90deg,transparent,transparent 19px,rgba(255,255,255,.02) 19px,rgba(255,255,255,.02) 20px);position:relative;overflow:auto;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.empty-canvas{text-align:center;color:#808080}
+.ec-icon{font-size:4rem;margin-bottom:.75rem;animation:float 3s ease-in-out infinite}
+.ec-title{font-size:1.5rem;font-weight:800;margin-bottom:.5rem;background:linear-gradient(135deg,var(--neon-red),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.ec-text{font-size:.9rem;color:#606060;line-height:1.8}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.team-grid{padding:2rem;width:100%;display:flex;flex-direction:column;align-items:center;gap:.5rem}
+.team-leader-row,.team-members-row{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center}
+.team-connector{display:flex;justify-content:center}
+.team-node{background:var(--node-bg);border:2px solid var(--border-color);border-radius:12px;padding:.875rem;width:180px;transition:all .3s;position:relative}
+.team-node:hover{box-shadow:0 5px 25px rgba(0,0,0,.4);transform:translateY(-3px)}
+.leader-node{width:220px;box-shadow:0 0 20px rgba(250,30,78,.15)}
+.tn-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
+.tn-icon{font-size:1.3rem}
+.tn-badge{font-size:.6rem;font-weight:700;padding:.2rem .5rem;border-radius:4px;color:#fff}
+.tn-remove{position:absolute;top:4px;right:4px;width:20px;height:20px;border:none;background:rgba(255,255,255,.05);border-radius:4px;color:#808080;cursor:pointer;font-size:.7rem;transition:all .2s;opacity:0}
+.team-node:hover .tn-remove{opacity:1}
+.tn-remove:hover{background:var(--neon-red);color:#fff}
+.tn-name{font-size:.8rem;font-weight:700;margin-bottom:.25rem}
+.tn-tokens{font-size:.65rem;color:#808080}
+.tn-model{font-size:.6rem;color:#606060}
+.tn-status{font-size:.65rem;margin-top:.4rem;min-height:1em;transition:all .3s}
+.tn-status.active{color:var(--gold);animation:pulse .8s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.team-stats-bar{position:absolute;bottom:0;left:0;right:0;background:var(--card-bg);border-top:1px solid var(--border-color);display:flex;justify-content:space-around;padding:.75rem 1rem}
+.stat{text-align:center}
+.stat-label{display:block;font-size:.6rem;color:#808080;text-transform:uppercase;letter-spacing:.05em}
+.stat-value{display:block;font-size:1rem;font-weight:800;margin-top:.15rem}
+.cost-pulse{color:var(--matrix-green)}
+/* RIGHT SIDEBAR — Properties */
+.sidebar-right{background:var(--card-bg);border-left:1px solid var(--border-color);overflow-y:auto;padding:1rem}
+.prop-section{margin-bottom:1.25rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border-color)}
+.prop-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#808080;margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
+.info-btn{width:20px;height:20px;border:1px solid var(--border-color);border-radius:50%;background:rgba(255,255,255,.03);color:var(--blue);cursor:pointer;font-size:.7rem;display:flex;align-items:center;justify-content:center;transition:all .2s;padding:0;font-family:inherit}
+.info-btn:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+.prop-group{margin-bottom:.75rem}
+.prop-group label{font-size:.7rem;font-weight:600;color:#808080;display:block;margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.03em}
+.prop-input,.prop-select,.prop-textarea{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border-color);border-radius:6px;padding:.5rem;color:var(--soft-white);font-size:.8rem;font-family:inherit}
+.prop-textarea{min-height:50px;resize:vertical}
+.prop-input:focus,.prop-textarea:focus{outline:none;border-color:var(--neon-red)}
+.toggle-group{display:flex;gap:.5rem}
+.toggle-btn{flex:1;padding:.5rem;border:1px solid var(--border-color);border-radius:6px;background:rgba(255,255,255,.03);color:#808080;cursor:pointer;font-size:.75rem;font-weight:700;transition:all .2s;font-family:inherit}
+.toggle-btn.active{background:var(--neon-red);border-color:var(--neon-red);color:#fff}
+.toggle-btn:hover:not(.active){border-color:var(--neon-red);color:var(--soft-white)}
+.template-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.tpl-card{background:var(--node-bg);border:1px solid var(--border-color);border-radius:8px;padding:.625rem;cursor:pointer;transition:all .25s;text-align:center}
+.tpl-card:hover{border-color:var(--blue);transform:translateY(-2px);background:rgba(255,255,255,.05)}
+.tpl-icon{font-size:1.3rem;display:block;margin-bottom:.25rem}
+.tpl-name{font-size:.7rem;font-weight:700;display:block}
+.tpl-genre{font-size:.6rem;color:#808080;display:block;margin-top:.15rem}
+.agent-config{background:var(--node-bg);border:1px solid var(--border-color);border-radius:8px;padding:.75rem;margin-bottom:.5rem}
+.ac-name{font-size:.8rem;font-weight:700;margin-bottom:.5rem}
+.ac-row{margin-bottom:.4rem}
+.ac-row label{font-size:.65rem;color:#808080;display:block;margin-bottom:.2rem}
+.ac-row input[type="range"]{width:calc(100% - 50px);vertical-align:middle}
+.token-val{font-size:.7rem;font-weight:700;color:var(--matrix-green);margin-left:.5rem}
+.pb-step{display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem}
+.pb-num{width:22px;height:22px;background:rgba(250,30,78,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:900;color:var(--neon-red);flex-shrink:0}
+.pb-input{flex:1}
+.pb-del{width:22px;height:22px;border:none;background:rgba(255,255,255,.05);border-radius:4px;color:#808080;cursor:pointer;font-size:.7rem;flex-shrink:0}
+.pb-del:hover{background:var(--neon-red);color:#fff}
+.cost-display{text-align:center;padding:1rem;background:var(--node-bg);border-radius:8px}
+.cost-main{font-size:1.5rem;font-weight:900;color:var(--matrix-green)}
+.cost-label{font-size:.7rem;color:#808080;margin-top:.2rem}
+.cost-total{font-size:.85rem;font-weight:700;color:var(--gold);margin-top:.5rem}
+.btn-primary,.btn-secondary,.btn-sm{padding:.625rem 1rem;border:none;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit;display:inline-flex;align-items:center;gap:.4rem;justify-content:center}
+.btn-primary{background:linear-gradient(135deg,var(--neon-red),var(--pink));color:#fff}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 5px 20px rgba(250,30,78,.4)}
+.btn-secondary{background:rgba(255,255,255,.05);color:var(--soft-white);border:1px solid var(--border-color)}
+.btn-secondary:hover{background:rgba(255,255,255,.1)}
+.btn-sm{padding:.4rem .75rem;font-size:.7rem;background:rgba(255,255,255,.05);color:var(--soft-white);border:1px solid var(--border-color);border-radius:6px;margin-right:.4rem;margin-bottom:.4rem}
+.link-btn{text-decoration:none;display:inline-flex}
+/* TOAST */
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--card-bg);border:1px solid var(--matrix-green);border-radius:8px;padding:.75rem 1.25rem;transform:translateX(400px);transition:transform .3s;z-index:10000;font-size:.8rem}
+.toast.show{transform:translateX(0)}
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s}
+.modal{background:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;padding:2rem;max-width:600px;width:90%;max-height:85vh;overflow-y:auto}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+.modal-title{font-size:1.2rem;font-weight:800}
+.modal-close{width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:var(--soft-white);cursor:pointer;font-size:1.2rem}
+.modal-close:hover{background:var(--neon-red)}
+.modal-body{font-size:.85rem;line-height:1.8;color:#a0a0a0}
+.modal-body h3{color:var(--soft-white);margin-bottom:.5rem}
+.modal-body p{margin-bottom:.75rem}
+.modal-body ul{margin-left:1.5rem;margin-bottom:.75rem}
+.modal-body code{background:rgba(0,0,0,.3);padding:.1rem .4rem;border-radius:3px;font-size:.75rem}
+.modal-body strong{color:var(--soft-white)}
+/* DEMO RUN MODAL */
+#demo-modal .modal{max-width:700px}
+.demo-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.demo-stats{display:flex;gap:1.5rem}
+.demo-stat-label{font-size:.65rem;color:#808080;text-transform:uppercase}
+.demo-stat-value{font-size:1.1rem;font-weight:800}
+.demo-stat-value.green{color:var(--matrix-green)}
+.demo-stat-value.gold{color:var(--gold)}
+.demo-log{max-height:400px;overflow-y:auto;background:rgba(0,0,0,.3);border-radius:8px;padding:1rem}
+.demo-entry{display:flex;align-items:center;gap:.5rem;padding:.5rem;border-bottom:1px solid var(--border-color);animation:slideIn .3s ease}
+@keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+.de-icon{font-size:1.1rem}
+.de-badge{font-size:.7rem;font-weight:700}
+.de-name{font-size:.8rem;font-weight:700;flex:1}
+.de-msg{font-size:.7rem;color:#808080}
+.de-cost{font-size:.7rem;color:var(--matrix-green);font-weight:700}
+/* ONBOARDING */
+.onboarding-step{display:flex;align-items:flex-start;gap:.75rem;margin-bottom:.75rem}
+.ob-num{background:rgba(250,30,78,.2);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:900;font-size:.75rem;color:var(--neon-red)}
+.ob-num.green{background:rgba(0,208,132,.2);color:var(--matrix-green)}
+.ob-num.blue{background:rgba(85,172,238,.2);color:var(--blue)}
+.ob-num.purple{background:rgba(168,85,247,.2);color:var(--purple)}
+.ob-num.gold{background:rgba(245,158,11,.2);color:var(--gold)}
+/* BG Blobs */
+body::before{content:"";position:fixed;top:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(250,30,78,.07),transparent 70%);pointer-events:none;z-index:0}
+body::after{content:"";position:fixed;bottom:-150px;left:-150px;width:500px;height:500px;background:radial-gradient(circle,rgba(168,85,247,.06),transparent 70%);pointer-events:none;z-index:0}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--dark-base)}::-webkit-scrollbar-thumb{background:var(--border-color);border-radius:3px}
+    
+        /* DkZ Builder Fix — Canvas min-height (R36) */
+        #canvas, .canvas, .workspace, .builder-canvas, .editor-area {
+            min-height: calc(100vh - 100px) !important;
+        }
+        /* Overlay-Cleanup — leere Modals entfernen */
+        .pg-overlay:empty, .modal:empty { display: none !important; }
+    </style>
+    <script src="../../shared/dkz-updater.js"></script>
+</head>
+<body data-dkz-module="team-builder" data-dkz-appid="DKZ-MOD-TEA" data-dkz-version="v0.01" data-dkz-title="Team Builder —" data-dkz-icon="📦" data-dkz-separable="true">
+<div class="app">
+    <header>
+        <div style="display:flex;align-items:center;gap:1rem">
+            <a href="../../hub/index.html" style="color:#808080;text-decoration:none;font-size:1.2rem">&#8592;</a>
+            <div class="logo">👥 TEAM BUILDER</div>
+            <button class="info-btn" onclick="showModuleInfo()" style="width:24px;height:24px;font-size:.85rem" title="Modul-Info">ℹ</button>
+        </div>
+        <div class="chain-nav">
+            <a class="chain-btn" href="../action-builder/index.html">Actions</a>
+            <a class="chain-btn" href="../skill-builder/index.html">Skills</a>
+            <a class="chain-btn" href="../workflow-builder/index.html">Workflows</a>
+            <a class="chain-btn" href="../agent-builder/index.html">Agents</a>
+            <a class="chain-btn active">Teams</a>
+            <a class="chain-btn" href="../leadership-builder/index.html">Leadership</a>
+            <a class="chain-btn" href="../source-registry/index.html">Quellen</a>
+        </div>
+        <div></div>
+    </header>
+    <!-- LEFT: Agent Pool -->
+    <aside class="sidebar-left">
+        <div class="pool-header">
+            <h3>Agent Pool <button class="info-btn" onclick="showInfo('agent-pool')">ℹ</button></h3>
+            <input type="text" class="pool-search" id="pool-search" placeholder="🔍 Agenten suchen..." oninput="filterPool()">
+            <select class="pool-tag-filter" id="pool-tag-filter" onchange="filterPool()">
+                <option value="">Alle Tags</option>
+                <option value="#bmad">#bmad</option>
+                <option value="#openclaw">#openclaw</option>
+                <option value="#seo">#seo</option>
+                <option value="#code">#code</option>
+                <option value="#security">#security</option>
+                <option value="#format">#format</option>
+                <option value="#custom">#custom</option>
+            </select>
+        </div>
+        <div class="pool-body" id="agent-pool"></div>
+    </aside>
+    <!-- CENTER: Team Canvas -->
+    <main class="canvas" id="team-canvas"></main>
+    <!-- RIGHT: Properties -->
+    <aside class="sidebar-right" id="props-panel"></aside>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><div id="tt"></div></div>
+
+<!-- MODULE INFO MODAL -->
+<div class="modal-overlay" id="info-modal">
+<div class="modal">
+    <div class="modal-header">
+        <div class="modal-title">👥 Team Builder — Komplett-Guide</div>
+        <button class="modal-close" onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'">&times;</button>
+    </div>
+    <div class="modal-body">
+        <p><strong>Koordiniere mehrere Agenten als Team nach BMAD-Methodik.</strong></p>
+        <p><strong>Builder-Kette:</strong></p>
+        <p style="font-family:monospace;color:#00D084">Action → Skill → Workflow → Agent → <span style="color:#fa1e4e;font-weight:900">Team</span> → Leadership</p>
+        <h3>Features</h3>
+        <ul>
+            <li><strong>Agent-Pool:</strong> Alle Agenten aus der DkZ-Datenbank, filterbar nach Tags und durchsuchbar</li>
+            <li><strong>BMAD Templates:</strong> v00 = Original (7 Kern-Rollen), plus konfigurierte Varianten nach Genre</li>
+            <li><strong>Rollen & Tokens:</strong> Detaillierte Konfiguration pro Agent (Leader/Worker/Reviewer/Validator/Specialist)</li>
+            <li><strong>Loop-Funktion:</strong> Stateless (jede Runde frisch) oder Memory (Gedächtnis zwischen Runden)</li>
+            <li><strong>Mini-Playbook:</strong> Definiere Schritte für den Team-Durchlauf</li>
+            <li><strong>Kostenrechner:</strong> Live-Berechnung basierend auf Token-Budget und Modell-Raten</li>
+            <li><strong>Demo-Lauf:</strong> Visuell animierte Simulation des Team-Durchlaufs</li>
+            <li><strong>Export:</strong> Team als JSON exportieren oder lokal speichern</li>
+        </ul>
+        <h3>BMAD-Methodik</h3>
+        <p>BMAD (Breakthrough Method for Agile AI-Driven Development) glaubt: <strong>Ein Agent kann nicht alles gleichzeitig sein.</strong> Spezialisierung eliminiert Halluzinationen und steigert Qualität.</p>
+        <p><strong>v00 Original Rollen:</strong> James™ (Master), PM, Architekt, Developer, Reviewer, Tester, Dokumentar</p>
+        <p><strong>Konfigurierte Varianten</strong> werden automatisch kategorisiert mit Genre-Tags und Technik-Symbolen.</p>
+    </div>
+</div>
+</div>
+
+<!-- INFO DETAIL MODAL -->
+<div class="modal-overlay" id="info-detail-modal">
+<div class="modal" style="max-width:480px">
+    <div class="modal-header">
+        <div class="modal-title">ℹ Information</div>
+        <button class="modal-close" onclick="closeInfoDetail()">&times;</button>
+    </div>
+    <div class="modal-body" id="info-detail-content"></div>
+</div>
+</div>
+
+<!-- DEMO RUN MODAL -->
+<div class="modal-overlay" id="demo-modal">
+<div class="modal" style="max-width:700px">
+    <div class="modal-header">
+        <div class="modal-title">▶️ Durchlauf Analyser</div>
+        <button class="modal-close" onclick="stopDemoRun()">&times;</button>
+    </div>
+    <div class="demo-header">
+        <div class="demo-stats">
+            <div><div class="demo-stat-label">Runde</div><div class="demo-stat-value gold" id="demo-round">0/0</div></div>
+            <div><div class="demo-stat-label">Kosten</div><div class="demo-stat-value green" id="demo-cost">€0.0000</div></div>
+            <div><div class="demo-stat-label">Modus</div><div class="demo-stat-value" id="demo-mode">—</div></div>
+        </div>
+        <button class="btn-primary" onclick="stopDemoRun()">⏹ Stopp</button>
+    </div>
+    <div class="demo-log" id="demo-log"></div>
+</div>
+</div>
+
+<!-- ONBOARDING -->
+<div class="modal-overlay" id="onboarding" style="z-index:1001">
+<div class="modal" style="max-width:440px;text-align:center">
+    <div style="font-size:3rem;margin-bottom:.5rem">👥</div>
+    <div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Team Builder</div>
+    <div style="font-size:.85rem;color:#a0a0a0;line-height:1.8;text-align:left">
+        <div class="onboarding-step"><span class="ob-num">1</span><span><strong style="color:#f6f6f7">Agenten wählen</strong> — Aus dem Pool links Agenten ins Team holen (alle aus der DkZ-Datenbank)</span></div>
+        <div class="onboarding-step"><span class="ob-num green">2</span><span><strong style="color:#f6f6f7">Rollen & Tokens</strong> — Jedem Agenten eine Rolle zuweisen und Token-Budget setzen</span></div>
+        <div class="onboarding-step"><span class="ob-num blue">3</span><span><strong style="color:#f6f6f7">BMAD Template</strong> — Oder ein vordefiniertes Team-Template laden (v00 = Original)</span></div>
+        <div class="onboarding-step"><span class="ob-num purple">4</span><span><strong style="color:#f6f6f7">Loop & Playbook</strong> — Stateless oder Memory-Modus wählen, Mini-Playbook erstellen</span></div>
+        <div class="onboarding-step"><span class="ob-num gold">5</span><span><strong style="color:#f6f6f7">Demo starten</strong> — Visuell animiert den Durchlauf testen und Kosten tracken</span></div>
+    </div>
+    <button style="margin-top:1.25rem;width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button>
+    <div style="font-size:.65rem;color:#606060;margin-top:.4rem">Wird nur 1x gezeigt</div>
+</div>
+</div>
+
+<!-- SCRIPTS -->
+<script src="team-builder.js"></script>
+<script src="../../shared/dkz-auth.js"></script>
+<script src="../../shared/dkz-james.js"></script>
+<script src="../../shared/dkz-memory.js"></script>
+<script src="../../shared/dkz-compaction.js"></script>
+<script src="../../shared/dkz-iceberg.js"></script>
+<script src="../../shared/dkz-prompt-score.js"></script>
+<script src="../../shared/dkz-builder-bridge.js"></script>
+<script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+<script src="../../shared/dkz-guide.js"></script>
+<script src="../../shared/dkz-copilot.js"></script>
+<script src="../../shared/dkz-shortcuts.js"></script>
+<script src="../../shared/dkz-export.js"></script>
+<script src="../../shared/dkz-crosslinks.js"></script>
+<script src="../../shared/dkz-a11y.js"></script>
+<script src="../../shared/dkz-test.js"></script>
+<script src="../../shared/dkz-puter.js"></script>
+<script src="../../shared/nexuz.js"></script>
+
+<script src="../../shared/dkz-chain-nav.js"></script>
+
+    <script src="../../shared/dkz-prompt-hub.js"></script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+</html>
+

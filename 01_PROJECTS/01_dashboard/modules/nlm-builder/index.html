@@ -1,0 +1,714 @@
+﻿<!-- @DKZ:RULES → Lies REGELWERK.md + ORDNER.ini bevor du hier arbeitest! -->
+<!-- @DKZ:DOCS  → features.json (MOD-NLM) | BLAUPAUSE.md -->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📓 NLM Builder — DkZâ„¢ v0.01.0_01</title>
+    <meta name="description" content="DkZ NotebookLM Builder — Masken, Vorlagen, Quellen, Prompt-Builder">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0e0e10;--card:#1a1a1c;--card2:#222226;--border:#333338;--text:#f6f6f7;--muted:#a1a1aa;--green:#00ff88;--blue:#55ACEE;--yellow:#FFB800;--red:#fa1e4e;--purple:#818cf8;--accent:#fa1e4e;--accent-rgb:250,30,78;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;--glass:rgba(14,14,22,.72);--blur:blur(24px)}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+        ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:6px}
+        .bg-mesh{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+        .bg-blob{position:absolute;border-radius:50%;filter:blur(120px);opacity:.06;animation:bf 20s ease-in-out infinite}
+        .bg-blob:nth-child(1){width:500px;height:500px;background:var(--purple);top:-10%;left:30%}
+        .bg-blob:nth-child(2){width:350px;height:350px;background:var(--accent);bottom:10%;right:10%;animation-delay:-8s}
+        @keyframes bf{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,-40px) scale(1.1)}}
+        .app{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column}
+
+        /* HEADER */
+        .header{padding:14px 28px;border-bottom:1px solid var(--border);background:var(--glass);backdrop-filter:var(--blur);display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100}
+        .back-btn{padding:7px 14px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.03);color:var(--muted);font-size:11px;cursor:pointer;transition:all .25s;text-decoration:none;font-family:var(--font)}
+        .back-btn:hover{color:var(--text);border-color:var(--accent)}
+        .header h1{font-size:20px;font-weight:900;background:linear-gradient(135deg,var(--purple),var(--accent),var(--yellow));background-size:200% 200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:gs 4s ease infinite}
+        @keyframes gs{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+        .hdr-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+        .hdr-btn{padding:7px 13px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.03);color:var(--muted);font-family:var(--font);font-size:11px;cursor:pointer;transition:all .25s}
+        .hdr-btn:hover{color:var(--text);border-color:var(--accent)}
+        .ver{font-size:9px;color:var(--muted);font-family:var(--mono)}
+
+        /* TABS */
+        .tabs{display:flex;gap:4px;padding:10px 28px;border-bottom:1px solid var(--border);background:var(--glass);backdrop-filter:var(--blur)}
+        .tab{padding:8px 16px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--muted);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:6px}
+        .tab:hover{color:var(--text);background:rgba(255,255,255,.03)}
+        .tab.active{background:rgba(var(--accent-rgb),.1);border-color:rgba(var(--accent-rgb),.3);color:var(--accent)}
+        .tab-panel{display:none;padding:24px 28px;flex:1;max-width:1200px;margin:0 auto;width:100%}
+        .tab-panel.active{display:block}
+
+        /* CARDS */
+        .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;transition:all .3s;margin-bottom:14px}
+        .card:hover{border-color:rgba(var(--accent-rgb),.3)}
+        .card-title{font-size:13px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+        .card-title .badge{font-size:9px;padding:2px 8px;border-radius:4px;font-weight:700;background:rgba(var(--accent-rgb),.1);color:var(--accent)}
+
+        /* FORM */
+        .form-group{margin-bottom:14px}
+        .form-label{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px;display:block;text-transform:uppercase;letter-spacing:.5px}
+        .form-input,.form-select,.form-textarea{width:100%;padding:10px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font);font-size:12px;outline:none;transition:border-color .2s}
+        .form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent)}
+        .form-textarea{min-height:80px;resize:vertical;font-family:var(--mono);font-size:11px;line-height:1.6}
+        .form-select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23a1a1aa'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+        /* BUTTONS */
+        .btn{padding:9px 18px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.03);color:var(--text);font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer;transition:all .25s;display:inline-flex;align-items:center;gap:6px}
+        .btn:hover{border-color:var(--accent);transform:translateY(-1px)}
+        .btn-primary{background:linear-gradient(135deg,var(--accent),#d91643);border:none;color:#fff;box-shadow:0 4px 16px rgba(var(--accent-rgb),.3)}
+        .btn-primary:hover{transform:scale(1.03)}
+        .btn-green{background:rgba(0,255,136,.08);border-color:rgba(0,255,136,.2);color:var(--green)}
+        .btn-purple{background:rgba(129,140,248,.08);border-color:rgba(129,140,248,.2);color:var(--purple)}
+        .btn-bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+
+        /* GRID */
+        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+        .grid-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:all .25s}
+        .grid-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+        .grid-card .gc-name{font-size:12px;font-weight:800;margin-bottom:4px}
+        .grid-card .gc-desc{font-size:10px;color:var(--muted);line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+        .grid-card .gc-meta{font-size:9px;color:var(--muted);font-family:var(--mono);display:flex;gap:10px}
+        .grid-card .gc-actions{display:flex;gap:4px;margin-top:8px}
+        .gc-btn{padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--muted);font-size:9px;cursor:pointer;font-family:var(--font);transition:all .2s}
+        .gc-btn:hover{border-color:var(--accent);color:var(--text)}
+
+        /* SOURCE LIST */
+        .source-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;transition:all .2s}
+        .source-item:hover{border-color:rgba(var(--accent-rgb),.3)}
+        .source-icon{font-size:16px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:rgba(var(--accent-rgb),.06);border-radius:8px;flex-shrink:0}
+        .source-info{flex:1;min-width:0}
+        .source-name{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .source-type{font-size:9px;color:var(--muted);font-family:var(--mono)}
+
+        /* PROMPT OUTPUT */
+        .prompt-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-top:14px}
+        .prompt-text{font-family:var(--mono);font-size:11px;line-height:1.8;color:var(--muted);white-space:pre-wrap;min-height:60px;max-height:300px;overflow-y:auto;padding:12px;background:var(--card2);border-radius:10px;border:1px solid var(--border)}
+
+        /* GUIDE */
+        .guide-section{margin-bottom:20px}
+        .guide-title{font-size:14px;font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+        .guide-code{background:#0a0a0c;border:1px solid var(--border);border-radius:8px;padding:12px;font-family:var(--mono);font-size:11px;color:var(--green);line-height:1.6;position:relative;overflow-x:auto}
+        .guide-code .copy-btn{position:absolute;top:6px;right:6px;padding:3px 8px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:4px;color:var(--muted);font-size:9px;cursor:pointer}
+        .guide-note{font-size:11px;color:var(--muted);line-height:1.6;margin-top:6px}
+        .guide-link{color:var(--purple);text-decoration:none;font-weight:600}
+        .guide-link:hover{text-decoration:underline}
+
+        /* TOAST */
+        .toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;background:var(--green);color:#000;font-size:12px;font-weight:700;border-radius:10px;z-index:300;opacity:0;transform:translateY(20px);transition:all .3s;pointer-events:none}
+        .toast.show{opacity:1;transform:translateY(0)}
+
+        /* EMPTY */
+        .empty{text-align:center;padding:40px;color:var(--muted);font-size:12px}
+        .empty span{font-size:2.5rem;display:block;margin-bottom:10px}
+
+        /* ANIMATIONS */
+        @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .fade-in{animation:fadeIn .3s ease both}
+
+        /* RESPONSIVE */
+        @media(max-width:768px){.form-row,.form-row-3{grid-template-columns:1fr}.tabs{overflow-x:auto;flex-wrap:nowrap}.tab{white-space:nowrap;font-size:11px}}
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+<body data-dkz-module="nlm-builder" data-dkz-appid="DKZ-MOD-NLM" data-dkz-version="v0.01" data-dkz-title="📓 NLM Builder —" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
+    <div class="app">
+        <!-- HEADER -->
+        <div class="header">
+            <a href="../../hub/index.html" class="back-btn">← Hub</a>
+            <h1>📓 NLM Builder</h1>
+            <div class="hdr-right">
+                <button class="hdr-btn" onclick="exportProject()">📦 Export</button>
+                <button class="hdr-btn" onclick="importProject()">📥 Import</button>
+                <span class="ver">v0.01.0_01</span>
+            </div>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('builder')">🏗️ Builder</button>
+            <button class="tab" onclick="switchTab('vorlagen')">📋 Vorlagen</button>
+            <button class="tab" onclick="switchTab('quellen')">📂 Quellen</button>
+            <button class="tab" onclick="switchTab('masken')">🎭 Masken</button>
+            <button class="tab" onclick="switchTab('guide')">📓 Guide</button>
+        </div>
+
+        <!-- TAB: BUILDER -->
+        <div class="tab-panel active" id="tab-builder">
+            <div class="card">
+                <div class="card-title">🏗️ Notebook konfigurieren <span class="badge">BUILDER</span></div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Notebook Name</label>
+                        <input class="form-input" id="b-name" placeholder="Mein Notebook...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Maske</label>
+                        <select class="form-select" id="b-mask" onchange="loadMask()">
+                            <option value="">— Standard —</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ziel / Aufgabe</label>
+                    <textarea class="form-textarea" id="b-goal" placeholder="Was soll das Notebook erreichen?"></textarea>
+                </div>
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label class="form-label">Ausgabetyp</label>
+                        <select class="form-select" id="b-output">
+                            <option value="podcast">🎙️ Podcast</option>
+                            <option value="video">🎬 Video</option>
+                            <option value="slides">📊 Slides</option>
+                            <option value="mindmap">🧠 Mindmap</option>
+                            <option value="quiz">❓ Quiz</option>
+                            <option value="flashcards">🗂️ Flashcards</option>
+                            <option value="report">📝 Report</option>
+                            <option value="infographic">📈 Infographic</option>
+                            <option value="data_table">📋 Datentabelle</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">LLM für Prompt</label>
+                        <select class="form-select" id="b-llm">
+                            <optgroup label="Direkte APIs">
+                                <option value="gemini-flash">Gemini Flash</option>
+                                <option value="gemini-pro">Gemini Pro</option>
+                                <option value="anthropic">Claude Sonnet</option>
+                                <option value="openai">GPT-4o</option>
+                                <option value="grok">Grok Reasoning</option>
+                                <option value="deepseek">DeepSeek</option>
+                            </optgroup>
+                            <optgroup label="Aggregatoren">
+                                <option value="openrouter">OpenRouter</option>
+                                <option value="huggingface">HuggingFace</option>
+                                <option value="nvidia">NVIDIA NIM</option>
+                            </optgroup>
+                            <optgroup label="Lokal">
+                                <option value="ollama">Ollama</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Sprache</label>
+                        <select class="form-select" id="b-lang">
+                            <option value="de">🇩🇪 Deutsch</option>
+                            <option value="en">🇬🇧 English</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Dynamic mask fields -->
+                <div id="b-mask-fields"></div>
+                <!-- Selected sources -->
+                <div class="form-group">
+                    <label class="form-label">Verknüpfte Quellen <span id="b-source-count" style="color:var(--accent)">0</span></label>
+                    <div id="b-sources-list"><div class="empty"><span>📂</span>Quellen im Tab "Quellen" hinzufügen</div></div>
+                </div>
+                <!-- Selected templates as sources -->
+                <div class="form-group">
+                    <label class="form-label">Vorlagen als Quellen <span id="b-tpl-count" style="color:var(--purple)">0</span></label>
+                    <div id="b-tpl-list"><div class="empty"><span>📋</span>Vorlagen im Tab "Vorlagen" erstellen</div></div>
+                </div>
+            </div>
+            <!-- GENERATE -->
+            <div class="btn-bar">
+                <button class="btn btn-primary" onclick="generateNlmPrompt()">🤖 Prompt generieren (Copilot)</button>
+                <button class="btn btn-purple" onclick="generateMcpCommand()">📓 MCP-Kommando</button>
+                <button class="btn" onclick="clearBuilder()">🗑️ Reset</button>
+            </div>
+            <!-- OUTPUT -->
+            <div class="prompt-box" id="b-output-box" style="display:none">
+                <div class="card-title">✨ Generierter Prompt <span class="badge" id="b-char-count">0 Zeichen</span></div>
+                <div class="prompt-text" id="b-prompt-text"></div>
+                <div class="btn-bar">
+                    <button class="btn btn-primary" onclick="copyText('b-prompt-text')">📋 Kopieren</button>
+                    <button class="btn btn-green" onclick="downloadPrompt()">💾 Download</button>
+                    <button class="btn" onclick="saveAsTemplate()">📋 Als Vorlage</button>
+                </div>
+            </div>
+            <div class="prompt-box" id="b-mcp-box" style="display:none">
+                <div class="card-title">📓 MCP Kommando <span class="badge" style="background:rgba(129,140,248,.1);color:var(--purple)">CLI</span></div>
+                <div class="prompt-text" id="b-mcp-text" style="color:var(--green)"></div>
+                <div class="btn-bar">
+                    <button class="btn btn-green" onclick="copyText('b-mcp-text')">📋 Kopieren</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: VORLAGEN -->
+        <div class="tab-panel" id="tab-vorlagen">
+            <div class="btn-bar" style="margin-bottom:14px">
+                <button class="btn btn-primary" onclick="showTplEditor()">+ Neue Vorlage</button>
+                <button class="btn" onclick="exportTemplates()">📦 Export</button>
+                <button class="btn" onclick="importTemplates()">📥 Import</button>
+            </div>
+            <div id="tpl-editor" style="display:none"></div>
+            <div class="grid" id="tpl-grid"></div>
+        </div>
+
+        <!-- TAB: QUELLEN -->
+        <div class="tab-panel" id="tab-quellen">
+            <div class="card">
+                <div class="card-title">📂 Quelle hinzufügen</div>
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label class="form-label">Typ</label>
+                        <select class="form-select" id="s-type">
+                            <option value="url">🔗 URL</option>
+                            <option value="text">📝 Text</option>
+                            <option value="template">📋 Vorlage (Design)</option>
+                            <option value="content-tpl">📄 Vorlage (Inhalt)</option>
+                            <option value="file">📁 Datei-Referenz</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Name</label>
+                        <input class="form-input" id="s-name" placeholder="Quellenname...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tag</label>
+                        <select class="form-select" id="s-tag">
+                            <option value="referenz">📌 Referenz</option>
+                            <option value="vorlage">📋 Vorlage</option>
+                            <option value="daten">📊 Daten</option>
+                            <option value="inspiration">💡 Inspiration</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Inhalt / URL</label>
+                    <textarea class="form-textarea" id="s-content" placeholder="URL oder Text-Inhalt..."></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="addSource()">+ Quelle hinzufügen</button>
+            </div>
+            <div id="source-list"></div>
+        </div>
+
+        <!-- TAB: MASKEN -->
+        <div class="tab-panel" id="tab-masken">
+            <div class="btn-bar" style="margin-bottom:14px">
+                <button class="btn btn-primary" onclick="showMaskEditor()">+ Neue Maske</button>
+                <button class="btn" onclick="exportMasks()">📦 Export</button>
+                <button class="btn" onclick="importMasks()">📥 Import</button>
+            </div>
+            <div id="mask-editor" style="display:none"></div>
+            <div class="grid" id="mask-grid"></div>
+        </div>
+
+        <!-- TAB: GUIDE -->
+        <div class="tab-panel" id="tab-guide">
+            <div class="guide-section">
+                <div class="guide-title">📓 NotebookLM MCP — Setup</div>
+                <p class="guide-note">NotebookLM läuft als MCP-Server. Du brauchst Python + uv + Google-Konto.</p>
+            </div>
+            <div class="guide-section">
+                <div class="guide-title">🚀 Option 1: alfredang/notebooklm-mcp</div>
+                <p class="guide-note">Vollversion: Notebooks, Quellen, Podcasts, Videos, Slides, Mindmaps, Quizze, Flashcards, Reports</p>
+                <div class="guide-code">
+                    <button class="copy-btn" onclick="copyGuide(this)">Copy</button>
+# 1. uv installieren
+pip install uv
+
+# 2. Repo klonen
+git clone https://github.com/alfredang/notebooklm-mcp.git
+cd notebooklm-mcp
+uv sync
+
+# 3. Authentifizieren
+uv run authenticate
+
+# 4. In Claude Desktop: Settings → MCP → Server hinzufügen
+# Pfad: C:\pfad\zu\notebooklm-mcp
+                </div>
+            </div>
+            <div class="guide-section">
+                <div class="guide-title">⚡ Option 2: jacob-bd/notebooklm-mcp-cli</div>
+                <p class="guide-note">CLI + MCP: Leichtgewichtig, Web Research, Drive Import, Sharing</p>
+                <div class="guide-code">
+                    <button class="copy-btn" onclick="copyGuide(this)">Copy</button>
+# Installation
+uv tool install notebooklm-cli
+
+# Authentifizieren
+notebooklm auth
+
+# MCP Setup (automatisch)
+notebooklm install claude-desktop
+                </div>
+            </div>
+            <div class="guide-section">
+                <div class="guide-title">🔧 Verfügbare MCP Tools</div>
+                <div class="guide-code" style="color:var(--purple)">
+list_notebooks          — Alle Notebooks auflisten
+create_notebook         — Neues Notebook erstellen
+add_source_url          — URL als Quelle hinzufügen
+add_source_text         — Text als Quelle hinzufügen
+ask_notebook            — Notebook befragen
+generate_audio_overview — Podcast erstellen
+generate_video_overview — Video erstellen
+generate_slide_deck     — Slides erstellen
+generate_mind_map       — Mindmap erstellen
+generate_quiz           — Quiz erstellen
+generate_flashcards     — Karteikarten erstellen
+generate_summary_report — Bericht erstellen
+generate_infographic    — Infografik erstellen
+generate_data_table     — Datentabelle erstellen
+                </div>
+            </div>
+            <div class="guide-section">
+                <div class="guide-title">🔗 Links</div>
+                <p class="guide-note">
+                    <a href="https://github.com/alfredang/notebooklm-mcp/" target="_blank" class="guide-link">📓 alfredang/notebooklm-mcp</a> — Vollversion (Claude Desktop + Code)<br>
+                    <a href="https://github.com/jacob-bd/notebooklm-mcp-cli" target="_blank" class="guide-link">⚡ jacob-bd/notebooklm-mcp-cli</a> — CLI + MCP (leichtgewichtig)<br>
+                    <a href="https://notebooklm.google.com/" target="_blank" class="guide-link">🌐 NotebookLM Web</a> — Google NotebookLM öffnen
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+    /* ═══════════════════════════════════════════════
+       NLM Builder — Core Logic
+       ═══════════════════════════════════════════════ */
+    const VERSION = 'v0.01.0_01';
+    const STORAGE = {
+        templates: 'dkz-nlm-templates',
+        sources:   'dkz-nlm-sources',
+        masks:     'dkz-nlm-masks',
+        history:   'dkz-nlm-history'
+    };
+
+    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
+    function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+    function load(key) { try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; } }
+    function save(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+
+    // ─── State ───
+    let templates = load(STORAGE.templates);
+    let sources = load(STORAGE.sources);
+    let masks = load(STORAGE.masks);
+    let history = load(STORAGE.history);
+
+    // ─── Default Templates ───
+    if (templates.length === 0) {
+        templates = [
+            { id: uid(), name: 'Podcast Deep Dive', desc: 'Ausführlicher Podcast im Gesprächsstil', output: 'podcast', rules: 'Natürlicher Gesprächston, zwei Sprecher, Fragen und Antworten, Beispiele einbauen', fields: {} },
+            { id: uid(), name: 'Lern-Flashcards', desc: 'Karteikarten zum Lernen', output: 'flashcards', rules: 'Kurze Fragen, prägnante Antworten, Schwierigkeitsgrad mittel, Schlüsselbegriffe hervorheben', fields: {} },
+            { id: uid(), name: 'Projekt-Report', desc: 'Strukturierter Projektbericht', output: 'report', rules: 'Executive Summary, Kernpunkte, Empfehlungen, nächste Schritte, professioneller Ton', fields: {} },
+            { id: uid(), name: 'Mindmap Übersicht', desc: 'Visueller Themenüberblick', output: 'mindmap', rules: 'Hauptthema zentral, maximal 4 Ebenen, kurze Stichworte, logische Gruppierung', fields: {} },
+        ];
+        save(STORAGE.templates, templates);
+    }
+
+    // ─── Default Masks ───
+    if (masks.length === 0) {
+        masks = [
+            { id: uid(), name: 'Standard', desc: 'Grundlegende Felder', fields: [
+                { key: 'zielgruppe', label: 'Zielgruppe', type: 'text', placeholder: 'Für wen?' },
+                { key: 'stil', label: 'Stil / Tonalität', type: 'select', options: ['Professionell', 'Casual', 'Akademisch', 'Kreativ', 'Technisch'] },
+                { key: 'laenge', label: 'Länge', type: 'select', options: ['Kurz', 'Mittel', 'Ausführlich', 'Komplett'] },
+            ]},
+            { id: uid(), name: 'Kreativ', desc: 'Kreative Inhalte', fields: [
+                { key: 'zielgruppe', label: 'Zielgruppe', type: 'text', placeholder: 'Für wen?' },
+                { key: 'stil', label: 'Stil', type: 'select', options: ['Storytelling', 'Humorvoll', 'Inspirierend', 'Provokativ'] },
+                { key: 'format', label: 'Format', type: 'select', options: ['Blog', 'Social Media', 'Newsletter', 'Präsentation'] },
+                { key: 'keywords', label: 'Keywords', type: 'text', placeholder: 'Komma-getrennt...' },
+            ]},
+        ];
+        save(STORAGE.masks, masks);
+    }
+
+    // ═══ TAB SWITCHING ═══
+    function switchTab(name) {
+        document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', t.textContent.toLowerCase().includes(name.slice(0, 4))));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById('tab-' + name)?.classList.add('active');
+        if (name === 'vorlagen') renderTemplates();
+        if (name === 'quellen') renderSources();
+        if (name === 'masken') renderMasks();
+    }
+
+    // ═══ BUILDER ═══
+    function loadMask() {
+        const maskId = document.getElementById('b-mask').value;
+        const container = document.getElementById('b-mask-fields');
+        if (!maskId) { container.innerHTML = ''; return; }
+        const mask = masks.find(m => m.id === maskId);
+        if (!mask) return;
+        container.innerHTML = mask.fields.map(f => `
+            <div class="form-group">
+                <label class="form-label">${esc(f.label)}</label>
+                ${f.type === 'select'
+                    ? `<select class="form-select" data-field="${f.key}">${f.options.map(o => `<option>${o}</option>`).join('')}</select>`
+                    : `<input class="form-input" data-field="${f.key}" placeholder="${esc(f.placeholder || '')}">`}
+            </div>`).join('');
+    }
+
+    function getMaskValues() {
+        const vals = {};
+        document.querySelectorAll('#b-mask-fields [data-field]').forEach(el => {
+            vals[el.dataset.field] = el.value;
+        });
+        return vals;
+    }
+
+    async function generateNlmPrompt() {
+        const name = document.getElementById('b-name').value.trim();
+        const goal = document.getElementById('b-goal').value.trim();
+        const output = document.getElementById('b-output').value;
+        const lang = document.getElementById('b-lang').value;
+        const maskVals = getMaskValues();
+
+        if (!goal) { toast('⚠️ Bitte Ziel eingeben'); return; }
+
+        // Build prompt for Copilot
+        const srcList = sources.map(s => `- [${s.type}] ${s.name}: ${s.content.substring(0, 100)}`).join('\n');
+        const tplList = templates.filter(t => t._selected).map(t => `- Vorlage "${t.name}": ${t.rules}`).join('\n');
+        const maskInfo = Object.entries(maskVals).filter(([,v]) => v).map(([k,v]) => `${k}: ${v}`).join(', ');
+
+        const prompt = `Erstelle einen perfekten NotebookLM-Prompt für folgendes Projekt:
+
+Notebook: "${name || 'Unbenannt'}"
+Ziel: ${goal}
+Ausgabetyp: ${output}
+Sprache: ${lang === 'de' ? 'Deutsch' : 'English'}
+${maskInfo ? 'Einstellungen: ' + maskInfo : ''}
+
+${srcList ? 'Quellen:\n' + srcList : ''}
+${tplList ? 'Vorlagen (als Quellen-Referenz im Prompt benennen):\n' + tplList : ''}
+
+Regeln:
+1. Formatiere als NotebookLM-kompatiblen Prompt
+2. Vorlagen vom Typ "Design" → "Verwende folgendes Layout/Design als Vorlage"
+3. Vorlagen vom Typ "Inhalt" → "Orientiere dich inhaltlich an"
+4. Inkludiere alle Quellen als Kontext-Referenzen
+5. Ausgabetyp-spezifische Anweisungen (${output})
+6. Qualitätskriterien und gewünschter Detailgrad`;
+
+        // Use DkzCopilot if available
+        if (typeof DkzCopilot !== 'undefined') {
+            const llm = document.getElementById('b-llm').value;
+            localStorage.setItem('dkz-copilot-provider', llm);
+            document.getElementById('b-output-box').style.display = 'block';
+            document.getElementById('b-prompt-text').textContent = '⏳ Copilot generiert Prompt...';
+            try {
+                const result = await DkzCopilot.chat(prompt, { name: 'NLM Builder' });
+                document.getElementById('b-prompt-text').textContent = result.ok ? result.text : '❌ ' + result.text;
+            } catch (e) {
+                document.getElementById('b-prompt-text').textContent = '❌ Fehler: ' + e.message;
+            }
+        } else {
+            document.getElementById('b-output-box').style.display = 'block';
+            document.getElementById('b-prompt-text').textContent = prompt;
+        }
+        const text = document.getElementById('b-prompt-text').textContent;
+        document.getElementById('b-char-count').textContent = text.length + ' Zeichen';
+        history.push({ time: new Date().toISOString(), name, output, prompt: text });
+        save(STORAGE.history, history);
+        toast('✨ Prompt generiert!');
+    }
+
+    function generateMcpCommand() {
+        const name = document.getElementById('b-name').value.trim() || 'Mein Notebook';
+        const output = document.getElementById('b-output').value;
+        const mcpMap = { podcast:'generate_audio_overview', video:'generate_video_overview', slides:'generate_slide_deck', mindmap:'generate_mind_map', quiz:'generate_quiz', flashcards:'generate_flashcards', report:'generate_summary_report', infographic:'generate_infographic', data_table:'generate_data_table' };
+        let cmd = `# 1. Notebook erstellen\ncreate_notebook "${name}"\n\n`;
+        sources.forEach((s, i) => {
+            if (s.type === 'url') cmd += `# Quelle ${i+1}: ${s.name}\nadd_source_url "${s.content}"\n\n`;
+            else cmd += `# Quelle ${i+1}: ${s.name}\nadd_source_text "${s.content.substring(0, 200)}..."\n\n`;
+        });
+        cmd += `# ${output.charAt(0).toUpperCase() + output.slice(1)} generieren\n${mcpMap[output] || 'generate_summary_report'}`;
+        document.getElementById('b-mcp-box').style.display = 'block';
+        document.getElementById('b-mcp-text').textContent = cmd;
+        toast('📓 MCP-Kommando generiert!');
+    }
+
+    function clearBuilder() {
+        ['b-name','b-goal'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('b-mask-fields').innerHTML = '';
+        document.getElementById('b-output-box').style.display = 'none';
+        document.getElementById('b-mcp-box').style.display = 'none';
+        toast('🗑️ Builder zurückgesetzt');
+    }
+
+    // ═══ TEMPLATES ═══
+    function renderTemplates() {
+        const grid = document.getElementById('tpl-grid');
+        if (templates.length === 0) { grid.innerHTML = '<div class="empty"><span>📋</span>Keine Vorlagen</div>'; return; }
+        grid.innerHTML = templates.map(t => `
+            <div class="grid-card fade-in">
+                <div class="gc-name">${esc(t.name)}</div>
+                <div class="gc-desc">${esc(t.desc)}</div>
+                <div class="gc-meta"><span>📊 ${t.output}</span></div>
+                <div class="gc-actions">
+                    <button class="gc-btn" onclick="editTemplate('${t.id}')">✏️</button>
+                    <button class="gc-btn" onclick="deleteTemplate('${t.id}')">🗑️</button>
+                    <button class="gc-btn" onclick="toggleTplSource('${t.id}')">${t._selected ? '✅' : '📂'} Als Quelle</button>
+                </div>
+            </div>`).join('');
+    }
+
+    function showTplEditor(id) {
+        const t = id ? templates.find(x => x.id === id) : { id: '', name: '', desc: '', output: 'report', rules: '' };
+        document.getElementById('tpl-editor').style.display = 'block';
+        document.getElementById('tpl-editor').innerHTML = `
+            <div class="card">
+                <div class="card-title">${id ? '✏️ Vorlage bearbeiten' : '+ Neue Vorlage'}</div>
+                <div class="form-row"><div class="form-group"><label class="form-label">Name</label><input class="form-input" id="te-name" value="${esc(t.name)}"></div>
+                <div class="form-group"><label class="form-label">Ausgabetyp</label><select class="form-select" id="te-output"><option ${t.output==='podcast'?'selected':''}>podcast</option><option ${t.output==='video'?'selected':''}>video</option><option ${t.output==='slides'?'selected':''}>slides</option><option ${t.output==='mindmap'?'selected':''}>mindmap</option><option ${t.output==='quiz'?'selected':''}>quiz</option><option ${t.output==='flashcards'?'selected':''}>flashcards</option><option ${t.output==='report'?'selected':''}>report</option></select></div></div>
+                <div class="form-group"><label class="form-label">Beschreibung</label><input class="form-input" id="te-desc" value="${esc(t.desc)}"></div>
+                <div class="form-group"><label class="form-label">Prompt-Regeln / Anweisungen</label><textarea class="form-textarea" id="te-rules">${esc(t.rules)}</textarea></div>
+                <div class="btn-bar"><button class="btn btn-primary" onclick="saveTpl('${t.id}')">💾 Speichern</button><button class="btn" onclick="document.getElementById('tpl-editor').style.display='none'">Abbrechen</button></div>
+            </div>`;
+    }
+
+    function saveTpl(id) {
+        const data = { name: document.getElementById('te-name').value, desc: document.getElementById('te-desc').value, output: document.getElementById('te-output').value, rules: document.getElementById('te-rules').value };
+        if (id) { const i = templates.findIndex(t => t.id === id); if (i >= 0) Object.assign(templates[i], data); }
+        else { templates.push({ id: uid(), ...data, fields: {} }); }
+        save(STORAGE.templates, templates);
+        document.getElementById('tpl-editor').style.display = 'none';
+        renderTemplates(); toast('💾 Vorlage gespeichert');
+    }
+    function editTemplate(id) { showTplEditor(id); }
+    function deleteTemplate(id) { templates = templates.filter(t => t.id !== id); save(STORAGE.templates, templates); renderTemplates(); toast('🗑️ Gelöscht'); }
+    function toggleTplSource(id) { const t = templates.find(x => x.id === id); if (t) t._selected = !t._selected; renderTemplates(); }
+    function exportTemplates() { const b = new Blob([JSON.stringify(templates, null, 2)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'dkz-nlm-templates.json'; a.click(); toast('📦 Exportiert'); }
+    function importTemplates() { const i = document.createElement('input'); i.type = 'file'; i.accept = '.json'; i.onchange = e => { const r = new FileReader(); r.onload = () => { try { const d = JSON.parse(r.result); templates = templates.concat(d); save(STORAGE.templates, templates); renderTemplates(); toast('📥 ' + d.length + ' importiert'); } catch { toast('❌ Fehler beim Import'); } }; r.readAsText(e.target.files[0]); }; i.click(); }
+
+    // ═══ SOURCES ═══
+    function renderSources() {
+        const list = document.getElementById('source-list');
+        if (sources.length === 0) { list.innerHTML = '<div class="empty"><span>📂</span>Keine Quellen</div>'; return; }
+        const icons = { url: '🔗', text: '📝', template: '📋', 'content-tpl': '📄', file: '📁' };
+        list.innerHTML = sources.map(s => `
+            <div class="source-item fade-in">
+                <div class="source-icon">${icons[s.type] || '📄'}</div>
+                <div class="source-info"><div class="source-name">${esc(s.name)}</div><div class="source-type">${s.type} · ${s.tag} · ${s.content.length} Zeichen</div></div>
+                <button class="gc-btn" onclick="deleteSource('${s.id}')">🗑️</button>
+            </div>`).join('');
+    }
+    function addSource() {
+        const type = document.getElementById('s-type').value;
+        const name = document.getElementById('s-name').value.trim();
+        const content = document.getElementById('s-content').value.trim();
+        const tag = document.getElementById('s-tag').value;
+        if (!name || !content) { toast('⚠️ Name und Inhalt benötigt'); return; }
+        sources.push({ id: uid(), type, name, content, tag, created: new Date().toISOString() });
+        save(STORAGE.sources, sources);
+        ['s-name', 's-content'].forEach(id => document.getElementById(id).value = '');
+        renderSources(); updateBuilderSources(); toast('📂 Quelle hinzugefügt');
+    }
+    function deleteSource(id) { sources = sources.filter(s => s.id !== id); save(STORAGE.sources, sources); renderSources(); updateBuilderSources(); toast('🗑️ Gelöscht'); }
+
+    function updateBuilderSources() {
+        const list = document.getElementById('b-sources-list');
+        document.getElementById('b-source-count').textContent = sources.length;
+        if (sources.length === 0) { list.innerHTML = '<div class="empty"><span>📂</span>Quellen im Tab "Quellen" hinzufügen</div>'; return; }
+        const icons = { url:'🔗', text:'📝', template:'📋', 'content-tpl':'📄', file:'📁' };
+        list.innerHTML = sources.map(s => `<div class="source-item" style="margin-bottom:4px"><div class="source-icon">${icons[s.type]||'📄'}</div><div class="source-info"><div class="source-name">${esc(s.name)}</div><div class="source-type">${s.type} · ${s.tag}</div></div></div>`).join('');
+    }
+
+    // ═══ MASKS ═══
+    function renderMasks() {
+        const grid = document.getElementById('mask-grid');
+        if (masks.length === 0) { grid.innerHTML = '<div class="empty"><span>🎭</span>Keine Masken</div>'; return; }
+        grid.innerHTML = masks.map(m => `
+            <div class="grid-card fade-in">
+                <div class="gc-name">${esc(m.name)}</div>
+                <div class="gc-desc">${esc(m.desc)}</div>
+                <div class="gc-meta"><span>${m.fields.length} Felder</span></div>
+                <div class="gc-actions">
+                    <button class="gc-btn" onclick="editMask('${m.id}')">✏️</button>
+                    <button class="gc-btn" onclick="deleteMask('${m.id}')">🗑️</button>
+                </div>
+            </div>`).join('');
+    }
+    function showMaskEditor(id) {
+        const m = id ? masks.find(x => x.id === id) : { id:'', name:'', desc:'', fields:[] };
+        document.getElementById('mask-editor').style.display = 'block';
+        const fieldsHtml = (m.fields || []).map((f, i) => `<div class="form-row" style="margin-bottom:6px"><div class="form-group"><input class="form-input mask-field-label" value="${esc(f.label)}" placeholder="Label"></div><div class="form-group"><select class="form-select mask-field-type"><option ${f.type==='text'?'selected':''}>text</option><option ${f.type==='select'?'selected':''}>select</option><option ${f.type==='textarea'?'selected':''}>textarea</option></select></div></div>`).join('');
+        document.getElementById('mask-editor').innerHTML = `<div class="card"><div class="card-title">${id ? '✏️ Maske bearbeiten' : '+ Neue Maske'}</div>
+            <div class="form-row"><div class="form-group"><label class="form-label">Name</label><input class="form-input" id="me-name" value="${esc(m.name)}"></div><div class="form-group"><label class="form-label">Beschreibung</label><input class="form-input" id="me-desc" value="${esc(m.desc)}"></div></div>
+            <div class="form-group"><label class="form-label">Felder</label><div id="me-fields">${fieldsHtml}</div><button class="btn" onclick="addMaskField()" style="margin-top:6px">+ Feld</button></div>
+            <div class="btn-bar"><button class="btn btn-primary" onclick="saveMask('${m.id}')">💾 Speichern</button><button class="btn" onclick="document.getElementById('mask-editor').style.display='none'">Abbrechen</button></div></div>`;
+    }
+    function addMaskField() {
+        document.getElementById('me-fields').innerHTML += `<div class="form-row" style="margin-bottom:6px"><div class="form-group"><input class="form-input mask-field-label" placeholder="Label"></div><div class="form-group"><select class="form-select mask-field-type"><option>text</option><option>select</option><option>textarea</option></select></div></div>`;
+    }
+    function saveMask(id) {
+        const name = document.getElementById('me-name').value;
+        const desc = document.getElementById('me-desc').value;
+        const labels = document.querySelectorAll('.mask-field-label');
+        const types = document.querySelectorAll('.mask-field-type');
+        const fields = [];
+        labels.forEach((l, i) => { if (l.value.trim()) fields.push({ key: l.value.toLowerCase().replace(/\s+/g,'_'), label: l.value, type: types[i]?.value || 'text', placeholder: '' }); });
+        if (id) { const i = masks.findIndex(m => m.id === id); if (i >= 0) Object.assign(masks[i], { name, desc, fields }); }
+        else { masks.push({ id: uid(), name, desc, fields }); }
+        save(STORAGE.masks, masks);
+        document.getElementById('mask-editor').style.display = 'none';
+        renderMasks(); populateMaskSelect(); toast('💾 Maske gespeichert');
+    }
+    function editMask(id) { showMaskEditor(id); }
+    function deleteMask(id) { masks = masks.filter(m => m.id !== id); save(STORAGE.masks, masks); renderMasks(); populateMaskSelect(); toast('🗑️ Gelöscht'); }
+    function exportMasks() { const b = new Blob([JSON.stringify(masks, null, 2)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'dkz-nlm-masks.json'; a.click(); toast('📦 Exportiert'); }
+    function importMasks() { const i = document.createElement('input'); i.type='file'; i.accept='.json'; i.onchange = e => { const r = new FileReader(); r.onload = () => { try { const d = JSON.parse(r.result); masks = masks.concat(d); save(STORAGE.masks, masks); renderMasks(); populateMaskSelect(); toast('📥 Importiert'); } catch { toast('❌ Fehler'); } }; r.readAsText(e.target.files[0]); }; i.click(); }
+
+    // ═══ UTILITY ═══
+    function copyText(id) { const t = document.getElementById(id).textContent; navigator.clipboard.writeText(t).then(() => toast('📋 Kopiert!')); }
+    function copyGuide(btn) { const code = btn.parentElement.textContent.replace('Copy', '').trim(); navigator.clipboard.writeText(code).then(() => { btn.textContent = '✅'; setTimeout(() => btn.textContent = 'Copy', 1500); }); }
+    function saveAsTemplate() { const text = document.getElementById('b-prompt-text').textContent; if (!text) return; templates.push({ id: uid(), name: document.getElementById('b-name').value || 'Prompt ' + templates.length, desc: 'Aus Builder generiert', output: document.getElementById('b-output').value, rules: text, fields: {} }); save(STORAGE.templates, templates); toast('📋 Als Vorlage gespeichert'); }
+    function downloadPrompt() { const text = document.getElementById('b-prompt-text').textContent; const b = new Blob([text], {type:'text/plain'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'nlm-prompt.txt'; a.click(); }
+    function exportProject() { const data = { templates, sources, masks, history, exported: new Date().toISOString() }; const b = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'dkz-nlm-project.json'; a.click(); toast('📦 Projekt exportiert'); }
+    function importProject() { const i = document.createElement('input'); i.type='file'; i.accept='.json'; i.onchange = e => { const r = new FileReader(); r.onload = () => { try { const d = JSON.parse(r.result); if (d.templates) { templates = d.templates; save(STORAGE.templates, templates); } if (d.sources) { sources = d.sources; save(STORAGE.sources, sources); } if (d.masks) { masks = d.masks; save(STORAGE.masks, masks); } toast('📥 Projekt importiert'); init(); } catch { toast('❌ Fehler'); } }; r.readAsText(e.target.files[0]); }; i.click(); }
+
+    function populateMaskSelect() {
+        const sel = document.getElementById('b-mask');
+        sel.innerHTML = '<option value="">— Standard —</option>' + masks.map(m => `<option value="${m.id}">${esc(m.name)} (${m.fields.length} Felder)</option>`).join('');
+    }
+
+    // ═══ INIT ═══
+    function init() {
+        populateMaskSelect();
+        updateBuilderSources();
+        renderTemplates();
+        renderSources();
+        renderMasks();
+    }
+    init();
+    </script>
+
+    <!-- Shared Scripts -->
+    <script src="../../shared/dkz-eventbus.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+    <script src="../../shared/dkz-health.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+    <script src="../../shared/dkz-prompt-hub.js"></script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+</body>
+</html>

@@ -1,0 +1,446 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⏰ Cron Builder — DkZâ„¢</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #fa1e4e;
+            --accent: #fa1e4e;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(14, 14, 22, .72);
+            --blur: blur(24px)
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .08);
+            border-radius: 6px
+        }
+
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .06;
+            animation: bf 20s ease-in-out infinite
+        }
+
+        .bg-blob:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: var(--blue);
+            top: -10%;
+            left: 10%
+        }
+
+        .bg-blob:nth-child(2) {
+            width: 350px;
+            height: 350px;
+            background: var(--accent);
+            bottom: 10%;
+            right: 10%;
+            animation-delay: -8s
+        }
+
+        @keyframes bf {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(30px, -40px) scale(1.1)
+            }
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        .header {
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .back-btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: none;
+            font-family: var(--font)
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--blue), var(--green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .hdr-right {
+            margin-left: auto
+        }
+
+        .ver {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono)
+        }
+
+        .content {
+            padding: 20px 28px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px
+        }
+
+        .card h3 {
+            font-size: 13px;
+            font-weight: 800;
+            margin-bottom: 12px
+        }
+
+        .cron-display {
+            font-family: var(--mono);
+            font-size: 32px;
+            font-weight: 800;
+            text-align: center;
+            padding: 20px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            letter-spacing: 8px;
+            color: var(--green);
+            margin-bottom: 16px;
+            cursor: pointer
+        }
+
+        .cron-display:hover {
+            border-color: var(--accent)
+        }
+
+        .cron-desc {
+            text-align: center;
+            font-size: 14px;
+            color: var(--blue);
+            margin-bottom: 20px;
+            font-weight: 600
+        }
+
+        .cron-fields {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 16px
+        }
+
+        .cron-field {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center
+        }
+
+        .cron-field label {
+            font-size: 9px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: block;
+            margin-bottom: 6px
+        }
+
+        .cron-field select {
+            width: 100%;
+            padding: 8px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 13px;
+            outline: none
+        }
+
+        .cron-field select:focus {
+            border-color: var(--accent)
+        }
+
+        .presets {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 16px
+        }
+
+        .preset {
+            padding: 6px 14px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 10px;
+            cursor: pointer;
+            font-family: var(--font);
+            transition: all .2s
+        }
+
+        .preset:hover {
+            border-color: var(--accent);
+            color: var(--text)
+        }
+
+        .next-runs {
+            display: flex;
+            flex-direction: column;
+            gap: 4px
+        }
+
+        .next-run {
+            display: flex;
+            gap: 10px;
+            padding: 8px 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 11px;
+            font-family: var(--mono)
+        }
+
+        .next-run .nr-idx {
+            color: var(--accent);
+            font-weight: 700;
+            min-width: 20px
+        }
+
+        .next-run .nr-time {
+            color: var(--green)
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: var(--green);
+            color: #000;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 10px;
+            z-index: 300;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all .3s;
+            pointer-events: none
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0)
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="cron-builder" data-dkz-appid="DKZ-MOD-CRO" data-dkz-version="v0.01" data-dkz-title="⏰ Cron Builder —" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+    </div>
+    <div class="app">
+        <div class="header"><a href="../../hub/index.html" class="back-btn">← Hub</a>
+            <h1>⏰ Cron Builder</h1>
+            <div class="hdr-right"><span class="ver">v0.01</span></div>
+        </div>
+        <div class="content">
+            <div class="card">
+                <div class="cron-display" id="cronDisplay"
+                    onclick="navigator.clipboard.writeText(this.textContent.trim());showToast('📋 Kopiert!')">* * * * *
+                </div>
+                <div class="cron-desc" id="cronDesc">Jede Minute</div>
+                <div class="presets">
+                    <button class="preset" onclick="setCron('* * * * *')">Jede Minute</button>
+                    <button class="preset" onclick="setCron('*/5 * * * *')">Alle 5 Min</button>
+                    <button class="preset" onclick="setCron('0 * * * *')">Jede Stunde</button>
+                    <button class="preset" onclick="setCron('0 0 * * *')">Täglich 0:00</button>
+                    <button class="preset" onclick="setCron('0 9 * * 1-5')">Werktags 9:00</button>
+                    <button class="preset" onclick="setCron('0 0 * * 0')">Sonntags</button>
+                    <button class="preset" onclick="setCron('0 0 1 * *')">Monatl. 1.</button>
+                    <button class="preset" onclick="setCron('0 0 1 1 *')">Jährlich</button>
+                    <button class="preset" onclick="setCron('*/15 * * * *')">Alle 15 Min</button>
+                    <button class="preset" onclick="setCron('0 */2 * * *')">Alle 2 Std</button>
+                </div>
+                <div class="cron-fields">
+                    <div class="cron-field"><label>Minute</label><select id="fMin" onchange="buildCron()">
+                            <option value="*">Jede (*)</option>
+                            <option value="*/5">Alle 5</option>
+                            <option value="*/10">Alle 10</option>
+                            <option value="*/15">Alle 15</option>
+                            <option value="*/30">Alle 30</option>
+                            <option value="0">0</option>
+                            <option value="15">15</option>
+                            <option value="30">30</option>
+                            <option value="45">45</option>
+                        </select></div>
+                    <div class="cron-field"><label>Stunde</label><select id="fHour" onchange="buildCron()">
+                            <option value="*">Jede (*)</option>
+                            <option value="*/2">Alle 2</option>
+                            <option value="*/4">Alle 4</option>
+                            <option value="*/6">Alle 6</option>
+                            <option value="*/12">Alle 12</option>
+                            <option value="0">0</option>
+                            <option value="6">6</option>
+                            <option value="9">9</option>
+                            <option value="12">12</option>
+                            <option value="18">18</option>
+                        </select></div>
+                    <div class="cron-field"><label>Tag</label><select id="fDay" onchange="buildCron()">
+                            <option value="*">Jeder (*)</option>
+                            <option value="1">1.</option>
+                            <option value="15">15.</option>
+                            <option value="1,15">1. & 15.</option>
+                        </select></div>
+                    <div class="cron-field"><label>Monat</label><select id="fMonth" onchange="buildCron()">
+                            <option value="*">Jeder (*)</option>
+                            <option value="1">Jan</option>
+                            <option value="3">Mär</option>
+                            <option value="6">Jun</option>
+                            <option value="12">Dez</option>
+                            <option value="1,4,7,10">Quartal</option>
+                        </select></div>
+                    <div class="cron-field"><label>Wochentag</label><select id="fWeekday" onchange="buildCron()">
+                            <option value="*">Jeder (*)</option>
+                            <option value="1-5">Mo-Fr</option>
+                            <option value="0,6">Wochenende</option>
+                            <option value="1">Mo</option>
+                            <option value="5">Fr</option>
+                        </select></div>
+                </div>
+            </div>
+            <div class="card">
+                <h3>📅 Nächste 10 Ausführungen</h3>
+                <div class="next-runs" id="nextRuns"></div>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        function buildCron() { const cron = [document.getElementById('fMin').value, document.getElementById('fHour').value, document.getElementById('fDay').value, document.getElementById('fMonth').value, document.getElementById('fWeekday').value].join(' '); document.getElementById('cronDisplay').textContent = cron; describeCron(cron); calcNext(cron) }
+        function setCron(cron) { document.getElementById('cronDisplay').textContent = cron; const p = cron.split(' '); const selects = ['fMin', 'fHour', 'fDay', 'fMonth', 'fWeekday']; p.forEach((v, i) => { const sel = document.getElementById(selects[i]); const opt = Array.from(sel.options).find(o => o.value === v); if (opt) sel.value = v; else sel.value = '*' }); describeCron(cron); calcNext(cron) }
+        function describeCron(cron) { const p = cron.split(' '); const [min, hour, day, month, weekday] = p; let desc = ''; if (cron === '* * * * *') desc = 'Jede Minute'; else if (cron === '0 0 * * *') desc = 'Jeden Tag um Mitternacht'; else if (cron === '0 0 * * 0') desc = 'Jeden Sonntag um Mitternacht'; else if (cron === '0 0 1 * *') desc = 'Am 1. jedes Monats um Mitternacht'; else if (cron === '0 0 1 1 *') desc = 'Am 1. Januar (jährlich)'; else { const parts = []; if (min === '*') parts.push('Jede Minute'); else if (min.startsWith('*/')) parts.push(`Alle ${min.slice(2)} Min`); else parts.push(`Minute ${min}`); if (hour === '*') parts.push('jede Stunde'); else if (hour.startsWith('*/')) parts.push(`alle ${hour.slice(2)} Std`); else parts.push(`um ${hour}:00`); if (day !== '*') parts.push(`am ${day}.`); if (month !== '*') parts.push(`Monat ${month}`); if (weekday === '1-5') parts.push('Mo-Fr'); else if (weekday === '0,6') parts.push('Wochenende'); else if (weekday !== '*') parts.push(`Wochentag ${weekday}`); desc = parts.join(', ') } document.getElementById('cronDesc').textContent = desc }
+        function calcNext(cron) { const p = cron.split(' '); const now = new Date(); const runs = []; for (let i = 0; i < 10 && runs.length < 10; i++) { const d = new Date(now.getTime() + i * 60000); if (matchCron(d, p)) runs.push(d) } document.getElementById('nextRuns').innerHTML = runs.map((d, i) => `<div class="next-run"><span class="nr-idx">${i + 1}.</span><span class="nr-time">${d.toLocaleString('de-DE')}</span></div>`).join('') }
+        function matchCron(d, p) { const [min, hour, day, month, weekday] = p; return matchField(d.getMinutes(), min) && matchField(d.getHours(), hour) && matchField(d.getDate(), day) && matchField(d.getMonth() + 1, month) && matchField(d.getDay(), weekday) }
+        function matchField(val, field) { if (field === '*') return true; if (field.includes(',')) return field.split(',').some(f => matchField(val, f)); if (field.includes('-')) { const [a, b] = field.split('-').map(Number); return val >= a && val <= b } if (field.startsWith('*/')) { return val % parseInt(field.slice(2)) === 0 } return val === parseInt(field) }
+        function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500) }
+        buildCron();
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+        <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Cron builder</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Erstelle Cron-Expressions visuell.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Cron builder</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Erstelle Cron-Expressions visuell.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-cron-builder-onboarded','1')}if(!localStorage.getItem('dkz-cron-builder-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>
+
+

@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📓 NLM MCP CLI — Content-Pipeline & Archiv</title>
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #060608;
+            --card: rgba(18, 18, 24, 0.85);
+            --card2: #1a1a20;
+            --border: rgba(255,255,255,0.06);
+            --text: #e8e8ec;
+            --muted: #8a8a9a;
+            --accent: #fa1e4e;
+            --green: #00ff88;
+            --yellow: #ffb800;
+            --red: #ff3b5c;
+            --blue: #3b82f6;
+            --purple: #8b5cf6;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --radius: 14px;
+            --glass: rgba(14,14,22,.72);
+            --blur: blur(24px);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 6px; }
+
+        /* Background Blobs */
+        .bg-mesh { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+        .bg-blob { position: absolute; border-radius: 50%; filter: blur(120px); opacity: .06; animation: bf 20s ease-in-out infinite; }
+        .bg-blob:nth-child(1) { width: 500px; height: 500px; background: var(--purple); top: -10%; left: 10%; }
+        .bg-blob:nth-child(2) { width: 350px; height: 350px; background: var(--accent); bottom: 10%; right: 10%; animation-delay: -8s; }
+        .bg-blob:nth-child(3) { width: 280px; height: 280px; background: var(--green); top: 40%; right: 30%; animation-delay: -14s; }
+        @keyframes bf { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(30px,-40px) scale(1.1); } }
+
+        .app { position: relative; z-index: 1; }
+
+        /* Header */
+        .header {
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            -webkit-backdrop-filter: var(--blur);
+            display: flex; align-items: center; gap: 12px;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .back-btn {
+            padding: 6px 12px; border: 1px solid var(--border);
+            border-radius: 8px; background: rgba(255,255,255,.03);
+            color: var(--muted); font-size: 11px; cursor: pointer;
+            text-decoration: none; font-family: var(--font);
+            transition: all .2s;
+        }
+        .back-btn:hover { border-color: var(--accent); color: var(--text); }
+        .header h1 {
+            font-size: 20px; font-weight: 900;
+            background: linear-gradient(135deg, var(--purple), var(--accent));
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hdr-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+        .ver { font-size: 9px; color: var(--muted); font-family: var(--mono); }
+        .badge-live { padding: 3px 8px; background: rgba(0,255,136,.15); color: var(--green); font-size: 9px; font-weight: 700; border-radius: 6px; font-family: var(--mono); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }
+
+        /* Tabs */
+        .tabs {
+            display: flex; gap: 2px; padding: 0 24px;
+            background: var(--card2); border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+        .tab {
+            padding: 10px 16px; font-size: 11px; font-weight: 700;
+            color: var(--muted); background: none; border: none;
+            cursor: pointer; font-family: var(--font);
+            border-bottom: 2px solid transparent;
+            transition: all .2s; white-space: nowrap;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .tab:hover { color: var(--text); background: rgba(255,255,255,.02); }
+        .tab.active { color: #fff; border-bottom-color: var(--accent); }
+        .tab .tab-count {
+            padding: 1px 6px; background: rgba(250,30,78,.15);
+            color: var(--accent); border-radius: 8px;
+            font-size: 9px; font-family: var(--mono);
+        }
+
+        /* Panel */
+        .panel { display: none; padding: 24px; }
+        .panel.active { display: block; }
+
+        /* Section Title */
+        .section-title {
+            font-size: 16px; font-weight: 900; color: var(--accent);
+            margin: 0 0 16px; display: flex; align-items: center; gap: 8px;
+        }
+        .section-title .st-sub { font-size: 11px; color: var(--muted); font-weight: 400; }
+
+        /* Cards Grid */
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+        .card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); overflow: hidden;
+            transition: all .3s; position: relative;
+            backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+        }
+        .card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 8px 32px rgba(250,30,78,.1); }
+        .card-header {
+            padding: 12px 16px; display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid var(--border); background: rgba(255,255,255,.02);
+        }
+        .card-icon { font-size: 24px; }
+        .card-title { font-size: 13px; font-weight: 800; }
+        .card-badge {
+            margin-left: auto; padding: 2px 8px;
+            border-radius: 6px; font-size: 8px; font-weight: 700;
+            font-family: var(--mono); text-transform: uppercase;
+        }
+        .card-badge.green { background: rgba(0,255,136,.15); color: var(--green); }
+        .card-badge.yellow { background: rgba(255,184,0,.15); color: var(--yellow); }
+        .card-badge.red { background: rgba(255,59,92,.15); color: var(--red); }
+        .card-badge.blue { background: rgba(59,130,246,.15); color: var(--blue); }
+        .card-badge.purple { background: rgba(139,92,246,.15); color: var(--purple); }
+        .card-body { padding: 16px; }
+        .card-body p { font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 8px; }
+        .card-body ul { list-style: none; padding: 0; }
+        .card-body li { font-size: 11px; color: var(--text); padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,.03); }
+        .card-body li:last-child { border: none; }
+        .card-actions {
+            padding: 10px 16px; border-top: 1px solid var(--border);
+            display: flex; gap: 6px; flex-wrap: wrap;
+        }
+        .btn-sm {
+            padding: 4px 10px; border: 1px solid var(--border);
+            border-radius: 6px; font-size: 9px; font-weight: 600;
+            color: var(--muted); background: none; cursor: pointer;
+            font-family: var(--font); transition: all .2s;
+        }
+        .btn-sm:hover { border-color: var(--accent); color: var(--text); }
+        .btn-sm.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .btn-sm.primary:hover { opacity: .85; }
+
+        /* Code Block */
+        pre {
+            background: rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.08);
+            border-radius: 8px; padding: 12px 16px; overflow-x: auto;
+            font-family: var(--mono); font-size: 11px; line-height: 1.6;
+            margin: 8px 0; color: var(--green); cursor: pointer;
+            transition: border-color .2s;
+        }
+        pre:hover { border-color: var(--accent); }
+        pre .cmd { color: var(--green); }
+        pre .flag { color: var(--yellow); }
+        pre .str { color: #ff6b8a; }
+        pre .comment { color: var(--muted); }
+        code { font-family: var(--mono); background: rgba(255,255,255,.06); padding: 2px 6px; border-radius: 4px; font-size: .85em; }
+
+        /* Step Numbers */
+        .step-num {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px; background: var(--accent);
+            color: white; border-radius: 50%; font-weight: 700;
+            font-size: .8rem; margin-right: .5rem; flex-shrink: 0;
+        }
+
+        /* Archive Tiles (Gallery-Style) */
+        .archive-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+        .archive-tile {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 12px; overflow: hidden; cursor: pointer;
+            transition: all .3s; position: relative;
+        }
+        .archive-tile:hover { border-color: var(--purple); transform: translateY(-3px); box-shadow: 0 6px 24px rgba(139,92,246,.12); }
+        .archive-tile .tile-preview {
+            height: 120px; background: var(--card2);
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; position: relative;
+        }
+        .archive-tile .tile-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .archive-tile .tile-preview .preview-icon { font-size: 48px; opacity: .5; }
+        .archive-tile .tile-badge-type {
+            position: absolute; top: 6px; right: 6px; padding: 2px 8px;
+            background: var(--purple); color: #fff; font-size: 8px;
+            font-weight: 800; border-radius: 6px; font-family: var(--mono);
+        }
+        .archive-tile .tile-info { padding: 10px 12px; }
+        .archive-tile .tile-name { font-size: 11px; font-weight: 800; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .archive-tile .tile-meta { font-size: 9px; color: var(--muted); display: flex; gap: 8px; }
+        .archive-tile .tile-size { color: var(--purple); font-family: var(--mono); }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        th { text-align: left; padding: .6rem .75rem; background: rgba(250,30,78,.08); border-bottom: 2px solid var(--accent); font-weight: 700; font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: .5px; }
+        td { padding: .5rem .75rem; border-bottom: 1px solid rgba(255,255,255,.04); font-size: 11px; }
+        tr:hover td { background: rgba(255,255,255,.02); }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex; gap: 12px; padding: 12px 24px;
+            background: var(--card2); border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        .stat {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 10px; color: var(--muted);
+        }
+        .stat-val { color: var(--text); font-weight: 700; font-family: var(--mono); }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px;
+            padding: 12px 20px; background: var(--green);
+            color: #000; font-size: 12px; font-weight: 700;
+            border-radius: 10px; z-index: 300;
+            opacity: 0; transform: translateY(20px);
+            transition: all .3s; pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,.75); z-index: 200;
+            align-items: center; justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: var(--card2); border: 1px solid var(--border);
+            border-radius: 16px; width: 90%; max-width: 800px;
+            max-height: 85vh; overflow-y: auto; padding: 24px;
+        }
+        .modal h2 { font-size: 16px; font-weight: 900; margin-bottom: 12px; }
+        .modal-close { position: absolute; top: 20px; right: 20px; font-size: 20px; cursor: pointer; color: var(--muted); }
+        .modal img { max-width: 100%; border-radius: 8px; margin: 8px 0; }
+        .modal pre { font-size: 10px; }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .cards-grid, .archive-grid { grid-template-columns: 1fr; }
+            .tabs { padding: 0 12px; }
+            .panel { padding: 16px; }
+        }
+    </style>
+</head>
+<body data-dkz-module="nlm-guide" data-dkz-appid="DKZ-NLM-001" data-dkz-version="v0.02" data-dkz-title="NLM Guide" data-dkz-icon="📓" data-dkz-separable="true">
+
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+    </div>
+
+    <div class="app">
+        <!-- Header -->
+        <div class="header">
+            <a href="index.html" class="back-btn">← WissenHub</a>
+            <h1>📓 NLM MCP CLI Guide</h1>
+            <div class="hdr-right">
+                <span class="badge-live">● MCP</span>
+                <span class="ver">v0.02</span>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-bar">
+            <div class="stat">📓 Notebooks: <span class="stat-val" id="stat-nb">—</span></div>
+            <div class="stat">📋 Content-Typen: <span class="stat-val">7</span></div>
+            <div class="stat">📦 Archiv-Dateien: <span class="stat-val">8</span></div>
+            <div class="stat">🔧 CLI Version: <span class="stat-val">v0.5.2+</span></div>
+            <div class="stat">📅 Stand: <span class="stat-val">2026-05-27</span></div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchPanel('workflow',this)">⚡ Workflow <span class="tab-count">6</span></button>
+            <button class="tab" onclick="switchPanel('commands',this)">🔧 Befehle</button>
+            <button class="tab" onclick="switchPanel('archive',this)">📦 Archiv <span class="tab-count">8</span></button>
+            <button class="tab" onclick="switchPanel('flashcards',this)">🃏 Flashcards <span class="tab-count">70</span></button>
+            <button class="tab" onclick="switchPanel('mindmap',this)">🧠 Mind Map</button>
+            <button class="tab" onclick="switchPanel('troubleshoot',this)">⚠️ Fehler</button>
+        </div>
+
+        <!-- Panel: Workflow (6 Phasen) -->
+        <div class="panel active" id="panel-workflow">
+            <div class="section-title">⚡ NLM Content-Pipeline <span class="st-sub">— 6 Phasen zum perfekten Output</span></div>
+
+            <div class="card" style="margin-bottom:12px;border-left:3px solid var(--green)">
+                <div class="card-body">
+                    <p style="color:var(--green);font-weight:700">🔧 IMMER zuerst ausführen (Session-Setup):</p>
+                    <pre><span class="comment"># PowerShell — PATH + Encoding</span>
+<span class="cmd">$env:Path</span> = <span class="str">"C:\Users\BAZE²\.local\bin;$env:Path"</span>
+<span class="cmd">$env:PYTHONIOENCODING</span> = <span class="str">"utf-8"</span>
+
+<span class="comment"># Auth prüfen</span>
+<span class="cmd">nlm notebook list</span></pre>
+                </div>
+            </div>
+
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="step-num">1</span>
+                        <span class="card-title">Notebook erstellen</span>
+                        <span class="card-badge green">Start</span>
+                    </div>
+                    <div class="card-body">
+                        <pre><span class="cmd">nlm notebook create</span> <span class="str">"DkZ - [THEMA]"</span>
+<span class="comment"># → Gibt Notebook-ID zurück</span></pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="step-num">2</span>
+                        <span class="card-title">Quellen hochladen</span>
+                        <span class="card-badge blue">Sources</span>
+                    </div>
+                    <div class="card-body">
+                        <pre><span class="cmd">nlm source add</span> NB_ID <span class="flag">--file</span> <span class="str">"DATEI.md"</span> <span class="flag">--wait</span>
+<span class="cmd">nlm source add</span> NB_ID <span class="flag">--url</span> <span class="str">"https://..."</span> <span class="flag">--wait</span>
+<span class="cmd">nlm source add</span> NB_ID <span class="flag">--youtube</span> <span class="str">"https://..."</span></pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="step-num">3</span>
+                        <span class="card-title">Content generieren</span>
+                        <span class="card-badge purple">Create</span>
+                    </div>
+                    <div class="card-body">
+                        <p style="color:var(--green)">✅ Pflicht (Minimum 3):</p>
+                        <pre><span class="cmd">nlm report create</span> NB_ID <span class="flag">--confirm</span>
+<span class="cmd">nlm slides create</span> NB_ID <span class="flag">--confirm</span>
+<span class="cmd">nlm audio create</span> NB_ID <span class="flag">--language de --confirm</span></pre>
+                        <p style="color:var(--yellow)">⚡ Optional:</p>
+                        <pre><span class="cmd">nlm video create</span> NB_ID <span class="flag">--confirm</span>
+<span class="cmd">nlm mindmap create</span> NB_ID <span class="flag">--confirm</span>
+<span class="cmd">nlm infographic create</span> NB_ID <span class="flag">--confirm</span>
+<span class="cmd">nlm data-table create</span> NB_ID <span class="flag">--description "..."</span> <span class="flag">--confirm</span></pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="step-num">4</span>
+                        <span class="card-title">Status prüfen</span>
+                        <span class="card-badge yellow">Wait</span>
+                    </div>
+                    <div class="card-body">
+                        <pre><span class="cmd">nlm studio status</span> NB_ID
+<span class="comment"># Warten bis alle "completed" sind</span></pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="step-num">5</span>
+                        <span class="card-title">Download</span>
+                        <span class="card-badge green">Save</span>
+                    </div>
+                    <div class="card-body">
+                        <pre><span class="cmd">nlm download report</span>      NB_ID ART_ID <span class="flag">--output</span> <span class="str">report.md</span>
+<span class="cmd">nlm download slide-deck</span>  NB_ID ART_ID <span class="flag">--output</span> <span class="str">slides.pdf</span>
+<span class="cmd">nlm download audio</span>       NB_ID ART_ID <span class="flag">--output</span> <span class="str">podcast.wav</span>
+<span class="cmd">nlm download mind-map</span>    NB_ID ART_ID <span class="flag">--output</span> <span class="str">mindmap.json</span>
+<span class="cmd">nlm download video</span>       NB_ID ART_ID <span class="flag">--output</span> <span class="str">video.mp4</span>
+<span class="cmd">nlm download data-table</span>  NB_ID ART_ID <span class="flag">--output</span> <span class="str">data.csv</span></pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="step-num">6</span>
+                        <span class="card-title">WissenHub eingliedern</span>
+                        <span class="card-badge green">Archive</span>
+                    </div>
+                    <div class="card-body">
+                        <p>Dateien nach <code>archive/[rubrik]/</code> kopieren, <code>catalog.json</code> aktualisieren.</p>
+                        <table>
+                            <tr><th>Typ</th><th>Pfad</th><th>Dateiname</th></tr>
+                            <tr><td>Text/PDF/PNG</td><td><code>archive/[rubrik]/</code></td><td><code>[rubrik]_YYYY-MMDD_nlm-[thema]-[typ].ext</code></td></tr>
+                            <tr><td>Audio (WAV)</td><td><code>archive/media/</code></td><td><code>podcast_YYYY-MMDD_nlm-[thema]-DE.wav</code></td></tr>
+                            <tr><td>Video (MP4)</td><td><code>archive/media/</code></td><td><code>video_YYYY-MMDD_nlm-[thema]-EN.mp4</code></td></tr>
+                        </table>
+                        <p>Tag: <code style="background:rgba(59,130,246,.15);color:var(--blue)">nlm-auto</code> · Catalog: <code>catalog.json</code> Snapshot erhöhen</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel: Befehle -->
+        <div class="panel" id="panel-commands">
+            <div class="section-title">🔧 CLI Befehlsreferenz <span class="st-sub">— nlm v0.5.2+</span></div>
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-header"><span class="card-icon">📓</span><span class="card-title">Notebook</span></div>
+                    <div class="card-body">
+                        <pre><span class="cmd">nlm notebook list</span>                  <span class="comment"># Alle Notebooks</span>
+<span class="cmd">nlm notebook create</span> <span class="str">"Name"</span>         <span class="comment"># Neues Notebook</span>
+<span class="cmd">nlm notebook delete</span> NB_ID          <span class="comment"># Löschen</span></pre>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-icon">📎</span><span class="card-title">Quellen</span></div>
+                    <div class="card-body">
+                        <pre><span class="cmd">nlm source add</span> NB_ID <span class="flag">--file</span> <span class="str">"datei"</span>   <span class="comment"># Datei</span>
+<span class="cmd">nlm source add</span> NB_ID <span class="flag">--url</span> <span class="str">"url"</span>      <span class="comment"># URL</span>
+<span class="cmd">nlm source add</span> NB_ID <span class="flag">--youtube</span> <span class="str">"yt"</span>  <span class="comment"># YouTube</span>
+<span class="cmd">nlm source list</span> NB_ID                 <span class="comment"># Quellen anzeigen</span></pre>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-icon">🎬</span><span class="card-title">Content erstellen</span></div>
+                    <div class="card-body">
+                        <pre><span class="cmd">nlm report create</span> NB_ID <span class="flag">--confirm</span>
+<span class="cmd">nlm slides create</span> NB_ID <span class="flag">--confirm</span>
+<span class="cmd">nlm audio create</span> NB_ID <span class="flag">--language de --confirm</span>
+<span class="cmd">nlm video create</span> NB_ID <span class="flag">--confirm</span>
+<span class="cmd">nlm mindmap create</span> NB_ID <span class="flag">--confirm</span>
+<span class="cmd">nlm infographic create</span> NB_ID <span class="flag">--confirm</span>
+<span class="cmd">nlm data-table create</span> NB_ID <span class="flag">--description "..."</span> <span class="flag">--confirm</span></pre>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-icon">⬇️</span><span class="card-title">Download</span></div>
+                    <div class="card-body">
+                        <pre><span class="cmd">nlm download report</span> NB_ID ART_ID <span class="flag">--output</span> <span class="str">file.md</span>
+<span class="cmd">nlm download slide-deck</span> NB_ID ART_ID <span class="flag">--output</span> <span class="str">file.pdf</span>
+<span class="cmd">nlm download audio</span> NB_ID ART_ID <span class="flag">--output</span> <span class="str">file.wav</span>
+<span class="cmd">nlm download mind-map</span> NB_ID ART_ID <span class="flag">--output</span> <span class="str">file.json</span>
+<span class="cmd">nlm download video</span> NB_ID ART_ID <span class="flag">--output</span> <span class="str">file.mp4</span>
+<span class="cmd">nlm download data-table</span> NB_ID ART_ID <span class="flag">--output</span> <span class="str">file.csv</span></pre>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-icon">📊</span><span class="card-title">Status & Studio</span></div>
+                    <div class="card-body">
+                        <pre><span class="cmd">nlm studio status</span> NB_ID    <span class="comment"># Generierungs-Status</span>
+<span class="cmd">nlm studio list</span> NB_ID      <span class="comment"># Alle Artefakte</span></pre>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-icon">⏱️</span><span class="card-title">Wartezeiten</span></div>
+                    <div class="card-body">
+                        <table>
+                            <tr><th>Content-Typ</th><th>Dauer</th><th>Hinweis</th></tr>
+                            <tr><td>🧠 Mind Map</td><td style="color:var(--green)">Sofort</td><td>Synchron</td></tr>
+                            <tr><td>📋 Report</td><td>~30s</td><td></td></tr>
+                            <tr><td>📊 Data Table</td><td>~60s</td><td></td></tr>
+                            <tr><td>📊 Infographic</td><td>~60s</td><td style="color:var(--yellow)">Manchmal fehlerhaft</td></tr>
+                            <tr><td>📊 Slides</td><td>2-5 Min</td><td></td></tr>
+                            <tr><td>🎙️ Audio</td><td>3-5 Min</td><td></td></tr>
+                            <tr><td>🎬 Video</td><td>5-15 Min</td><td style="color:var(--red)">Immer EN!</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel: Archiv (Gallery-Style) -->
+        <div class="panel" id="panel-archive">
+            <div class="section-title">📦 NLM Blaupause Archiv <span class="st-sub">— Generierte Content-Artefakte (Originale auf Desktop)</span></div>
+            <div class="archive-grid" id="archiveGrid"></div>
+        </div>
+
+        <!-- Panel: Flashcards -->
+        <div class="panel" id="panel-flashcards">
+            <div class="section-title">🃏 Regelwerk Flashcards <span class="st-sub">— 70 Karten aus NLM-Generierung</span></div>
+            <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center">
+                <button class="btn-sm primary" id="fc-prev" onclick="fcNav(-1)">← Zurück</button>
+                <span style="font-size:12px;font-family:var(--mono);color:var(--muted)" id="fc-counter">1 / 70</span>
+                <button class="btn-sm primary" id="fc-next" onclick="fcNav(1)">Weiter →</button>
+                <button class="btn-sm" onclick="fcFlip()">🔄 Umdrehen</button>
+                <button class="btn-sm" onclick="fcRandom()">🎲 Zufällig</button>
+            </div>
+            <div class="card" id="fc-card" onclick="fcFlip()" style="cursor:pointer;min-height:180px">
+                <div class="card-header">
+                    <span class="card-icon" id="fc-side-icon">❓</span>
+                    <span class="card-title" id="fc-side-label">Frage</span>
+                    <span class="card-badge purple" id="fc-badge">FRAGE</span>
+                </div>
+                <div class="card-body" style="display:flex;align-items:center;justify-content:center;min-height:120px">
+                    <p id="fc-text" style="font-size:14px;color:var(--text);text-align:center;font-weight:500"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel: Mind Map -->
+        <div class="panel" id="panel-mindmap">
+            <div class="section-title">🧠 DEVKiTZ™ Ökosystem — Mind Map <span class="st-sub">— Interaktive Baumansicht</span></div>
+            <div id="mindmapTree" style="padding:8px"></div>
+        </div>
+
+        <!-- Panel: Troubleshoot -->
+        <div class="panel" id="panel-troubleshoot">
+            <div class="section-title">⚠️ Häufige Fehler & Workarounds</div>
+            <div class="cards-grid">
+                <div class="card" style="border-left:3px solid var(--red)">
+                    <div class="card-header"><span class="card-icon">⚠️</span><span class="card-title">Download-Bindestriche!</span><span class="card-badge red">WICHTIG</span></div>
+                    <div class="card-body">
+                        <table>
+                            <tr><th>Create-Befehl</th><th>Download-Befehl</th><th>Status</th></tr>
+                            <tr><td><code>nlm mindmap create</code></td><td><code>nlm download mind-map</code></td><td style="color:var(--yellow)">⚠️ Bindestrich!</td></tr>
+                            <tr><td><code>nlm slides create</code></td><td><code>nlm download slide-deck</code></td><td style="color:var(--yellow)">⚠️ Anderer Name!</td></tr>
+                            <tr><td><code>nlm data-table create</code></td><td><code>nlm download data-table</code></td><td style="color:var(--yellow)">⚠️ Bindestrich!</td></tr>
+                            <tr><td><code>nlm audio create</code></td><td><code>nlm download audio</code></td><td style="color:var(--green)">✓ Gleich</td></tr>
+                            <tr><td><code>nlm video create</code></td><td><code>nlm download video</code></td><td style="color:var(--green)">✓ Gleich</td></tr>
+                            <tr><td><code>nlm report create</code></td><td><code>nlm download report</code></td><td style="color:var(--green)">✓ Gleich</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="card" style="border-left:3px solid var(--yellow)">
+                    <div class="card-header"><span class="card-icon">🐛</span><span class="card-title">Bekannte Bugs (v0.5.2 / Python 3.14)</span><span class="card-badge yellow">BUGS</span></div>
+                    <div class="card-body">
+                        <table>
+                            <tr><th>Bug</th><th>Workaround</th></tr>
+                            <tr><td><code>infographic</code> scheitert</td><td>2-3x versuchen, ggf. Browser</td></tr>
+                            <tr><td><code>quiz</code>/<code>flashcards</code> JSON-Fehler</td><td>Im Browser erstellen</td></tr>
+                            <tr><td>Video immer Englisch</td><td>Kein Fix — kein <code>--language</code> Flag</td></tr>
+                            <tr><td>Download <code>--id</code> Flag</td><td>ID ist Position-Argument, kein Flag!</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal" id="modalContent"></div>
+    </div>
+
+<script>
+// XSS Protection
+function esc(s) { var d = document.createElement('div'); d.appendChild(document.createTextNode(s)); return d.innerHTML; }
+function showToast(m) { var t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(function() { t.classList.remove('show'); }, 2500); }
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+// === Tab Switching ===
+function switchPanel(id, btn) {
+    document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    document.getElementById('panel-' + id).classList.add('active');
+    btn.classList.add('active');
+}
+
+// === Archive Grid (Gallery-Style — Originale bleiben auf Desktop!) ===
+var ARCHIVE_FILES = [
+    { name: 'Blaupause Report', file: 'research_2026-0323_nlm-blaupause-report.md', type: 'report', icon: '📋', size: '8.5 KB', format: 'Markdown', color: 'green' },
+    { name: 'Blaupause Slides', file: 'research_2026-0323_nlm-blaupause-slides.pdf', type: 'slides', icon: '📊', size: '7.0 MB', format: 'PDF', color: 'blue' },
+    { name: 'Blaupause Mind Map', file: 'research_2026-0323_nlm-blaupause-mindmap.json', type: 'mindmap', icon: '🧠', size: '2.9 KB', format: 'JSON', color: 'purple' },
+    { name: 'Blaupause Flashcards', file: 'research_2026-0323_nlm-blaupause-flashcards.md', type: 'flashcards', icon: '🃏', size: '12.2 KB', format: 'JSON', color: 'yellow' },
+    { name: 'Blaupause Infographic', file: 'research_2026-0323_nlm-blaupause-infographic.png', type: 'infographic', icon: '🖼️', size: '488 KB', format: 'PNG', color: 'red' },
+    { name: 'Blaupause Data Table', file: 'research_2026-0323_nlm-blaupause-datatable.csv', type: 'datatable', icon: '📊', size: '1.5 KB', format: 'CSV', color: 'green' },
+    { name: 'Blaupause Quiz', file: 'research_2026-0323_nlm-blaupause-quiz.md', type: 'quiz', icon: '❓', size: '55 B', format: 'Markdown', color: 'yellow' },
+    { name: 'Research Archive', file: 'research.rar', type: 'archive', icon: '📦', size: '7.4 MB', format: 'RAR', color: 'purple' }
+];
+
+function renderArchive() {
+    var grid = document.getElementById('archiveGrid');
+    grid.innerHTML = ARCHIVE_FILES.map(function(f) {
+        return '<div class="archive-tile" onclick="showArchiveDetail(\'' + f.file + '\',\'' + esc(f.name) + '\',\'' + f.type + '\')">' +
+            '<div class="tile-preview"><span class="preview-icon">' + f.icon + '</span>' +
+            '<span class="tile-badge-type" style="background:var(--' + f.color + ')">' + f.format + '</span></div>' +
+            '<div class="tile-info"><div class="tile-name">' + esc(f.name) + '</div>' +
+            '<div class="tile-meta"><span>' + f.type + '</span><span class="tile-size">' + f.size + '</span></div></div></div>';
+    }).join('');
+}
+
+function showArchiveDetail(file, name, type) {
+    var src = 'C:\\Users\\BAZE²\\Desktop\\Neuer Ordner (8)\\' + file;
+    document.getElementById('modalContent').innerHTML =
+        '<h2>' + name + '</h2>' +
+        '<p style="color:var(--muted);font-size:11px;margin-bottom:12px">📁 Original-Pfad (unverändert): <code>' + esc(src) + '</code></p>' +
+        '<p style="color:var(--yellow);font-size:10px">⚠️ Originale bleiben da wo sie sind — nur Referenz, kein Verschieben!</p>' +
+        '<div style="margin-top:12px;display:flex;gap:6px">' +
+        '<button class="btn-sm primary" onclick="navigator.clipboard.writeText(\'' + esc(src).replace(/\\/g, '\\\\') + '\');showToast(\'📋 Pfad kopiert!\')">📋 Pfad kopieren</button>' +
+        '<button class="btn-sm" onclick="closeModal()">✖ Schließen</button></div>';
+    document.getElementById('modal').classList.add('open');
+}
+
+renderArchive();
+
+// === Flashcards ===
+var FLASHCARDS = [
+    { front: "Wie viele Dashboard-Module umfasst das DkZ-Ökosystem?", back: "88 Komponenten (74 Module + 14 Dashboards)." },
+    { front: "Welche Datei dient als Gesamtübersicht der Architektur?", back: "BLAUPAUSE.md" },
+    { front: "In welchem Format müssen Ordnernamen benannt werden?", back: "kebab-case (z.B. json-formatter)." },
+    { front: "Welche JS-Funktion muss vor innerHTML genutzt werden?", back: "esc()" },
+    { front: "Was ist die primäre Akzentfarbe (Hex-Code)?", back: "#fa1e4e" },
+    { front: "Welche Schriftart wird für UI-Texte verwendet?", back: "Inter" },
+    { front: "Welche Schriftart wird für Code verwendet?", back: "JetBrains Mono" },
+    { front: "Was bedeutet BMAD in der DkZ-Methodik?", back: "Blueprint → Mapping → Analyse → Design." },
+    { front: "Welcher Agent trägt die Rolle des 'Guardian'?", back: "James™" },
+    { front: "Wie viele Phasen hat der Ralph-Loop™?", back: "6 (Lesen, Spawn, Execute, Verify, Commit, Loop)." },
+    { front: "Was ist der Zweck der 'Spawn'-Phase?", back: "Neue Instanz mit frischem Kontext zur Vermeidung von Halluzinationen." },
+    { front: "Was löst die Regel R24 ALARM aus?", back: "Verschieben/Umbenennen/Löschen ohne Genehmigung." },
+    { front: "Welche Datenbank ist die 'Immutable Knowledge Database'?", back: "WissenHub." },
+    { front: "Was ist die Dreifach-Verankerung?", back: "Iceberg (Daten), Hub (UI), Copilot (Kontext)." },
+    { front: "Welche SSH-Config für Hostinger KVM 8?", back: "~/.ssh/dkz_hostinger" },
+    { front: "Welches CSS-Element erzeugt den Glassmorphism-Effekt?", back: "backdrop-filter: blur(24px)." },
+    { front: "Welche 3 Oberkategorien definiert ECOSYSTEM_MAP.json?", back: "INTERN, SYSTEM und USER." },
+    { front: "Welcher Befehl führt git add + commit aus?", back: "dkz commit 'nachricht'" },
+    { front: "Welches Shared Script verwaltet das Hamburger-Menü?", back: "dkz-navbar.js" },
+    { front: "Wie viele Prompt-Templates gibt es?", back: "344 Templates in 35 Kategorien." }
+];
+var fcIdx = 0;
+var fcFlipped = false;
+
+function fcRender() {
+    var card = FLASHCARDS[fcIdx];
+    document.getElementById('fc-text').textContent = fcFlipped ? card.back : card.front;
+    document.getElementById('fc-counter').textContent = (fcIdx + 1) + ' / ' + FLASHCARDS.length;
+    document.getElementById('fc-side-icon').textContent = fcFlipped ? '💡' : '❓';
+    document.getElementById('fc-side-label').textContent = fcFlipped ? 'Antwort' : 'Frage';
+    document.getElementById('fc-badge').textContent = fcFlipped ? 'ANTWORT' : 'FRAGE';
+    document.getElementById('fc-badge').className = 'card-badge ' + (fcFlipped ? 'green' : 'purple');
+}
+function fcNav(dir) { fcFlipped = false; fcIdx = (fcIdx + dir + FLASHCARDS.length) % FLASHCARDS.length; fcRender(); }
+function fcFlip() { fcFlipped = !fcFlipped; fcRender(); }
+function fcRandom() { fcFlipped = false; fcIdx = Math.floor(Math.random() * FLASHCARDS.length); fcRender(); }
+fcRender();
+
+// === Mind Map Tree ===
+var MINDMAP = {"name":"DEVKiTZ™ Ökosystem","children":[{"name":"Zentrale Dokumentation","children":[{"name":"BLAUPAUSE.md (Architektur)"},{"name":"GEMINI.md (Projektgedächtnis)"},{"name":"REGELWERK.md (Konventionen)"},{"name":"IMPLEMENTIERUNGSPLAN.md (Roadmap)"}]},{"name":"DkZ Dashboard & Module","children":[{"name":"89+ Dashboard-Module"},{"name":"Developer Tools (JSON, Regex, API)"},{"name":"Design & UI (Farben, Favicon)"},{"name":"KI & Prompts (AI Chat, Prompter)"},{"name":"Analyse & Daten (IP Tools, LLM Cost)"},{"name":"Builder Suite (App/Agent/Workflow)"}]},{"name":"Technologie-Stack","children":[{"name":"Frontend: Vanilla HTML5/CSS3/JS"},{"name":"Backend: Node.js (ONTHERUN™), Python, Go"},{"name":"Daten: JSON, DuckDB, Apache Iceberg, KV"},{"name":"KI: vLLM, Claude, GPT, Groq"}]},{"name":"Wissensmanagement","children":[{"name":"WissenHub (Immutable DB)"},{"name":"Wiki Hub™ (Zentraler Wissensbaum)"},{"name":"Research Archive (225+ Artefakte)"},{"name":"Dreifach-Verankerung (Iceberg, Hub, Copilot)"}]},{"name":"Shared Scripts & Standards","children":[{"name":"dkz-theme.css (Design System v2)"},{"name":"dkz-navbar.js (Nav & Notes)"},{"name":"dkz-prompt-hub.js (Prompts & Backups)"},{"name":"dkz-debug.js (XSS & Tests)"}]},{"name":"Methodik & Prozesse","children":[{"name":"BMAD™ (7-Agenten Methodik)"},{"name":"Ralph-Loop™ (6-Phasen Zyklus)"},{"name":"James™ (Guardian Agent)"},{"name":"R24 Alarm (Archiv-Protokoll)"}]},{"name":"Infrastruktur & Tools","children":[{"name":"DkZ™ Hub Chrome Extension"},{"name":"DKZ CLI (Terminal-Steuerung)"},{"name":"VPS vLLM Server (Qwen Coder)"},{"name":"Hostinger Server (KVM 8)"}]}]};
+
+function renderMindmap(node, depth) {
+    depth = depth || 0;
+    var colors = ['var(--accent)', 'var(--green)', 'var(--blue)', 'var(--yellow)', 'var(--purple)'];
+    var color = colors[depth % colors.length];
+    var html = '<div style="margin-left:' + (depth * 20) + 'px;padding:6px 0">';
+    html += '<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(255,255,255,.03);border-left:3px solid ' + color + ';border-radius:0 6px 6px 0;font-size:' + Math.max(11, 14 - depth) + 'px;font-weight:' + (depth === 0 ? '900' : depth === 1 ? '700' : '500') + ';color:' + (depth === 0 ? color : 'var(--text)') + '">';
+    html += esc(node.name) + '</span>';
+    if (node.children) {
+        node.children.forEach(function(child) { html += renderMindmap(child, depth + 1); });
+    }
+    html += '</div>';
+    return html;
+}
+
+document.getElementById('mindmapTree').innerHTML = renderMindmap(MINDMAP);
+
+// === Copy Code Blocks ===
+document.querySelectorAll('pre').forEach(function(pre) {
+    pre.addEventListener('click', function() {
+        navigator.clipboard.writeText(this.textContent);
+        showToast('📋 Code kopiert!');
+    });
+});
+</script>
+
+<!-- DkZ Shared Scripts -->
+<script src="../../shared/dkz-updater.js"></script>
+<script src="../../shared/dkz-auth.js"></script>
+<script src="../../shared/dkz-james.js"></script>
+<script src="../../shared/dkz-memory.js"></script>
+<script src="../../shared/dkz-compaction.js"></script>
+<script src="../../shared/dkz-iceberg.js"></script>
+<script src="../../shared/dkz-debug.js"></script>
+<script src="../../shared/dkz-analyser.js"></script>
+<script src="../../shared/dkz-guide.js"></script>
+<script src="../../shared/dkz-copilot.js"></script>
+<script src="../../shared/dkz-shortcuts.js"></script>
+<script src="../../shared/dkz-export.js"></script>
+<script src="../../shared/dkz-crosslinks.js"></script>
+<script src="../../shared/dkz-a11y.js"></script>
+<script src="../../shared/dkz-test.js"></script>
+<script src="../../shared/dkz-puter.js"></script>
+<script src="../../shared/dkz-headbar.js"></script>
+<script src="../../shared/dkz-navbar.js"></script>
+<script src="../../shared/dkz-console.js"></script>
+<script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(function(){});</script>
+</body>
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

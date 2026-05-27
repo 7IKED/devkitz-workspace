@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DkZ™ Matrix Command Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="../../shared/qrcode.min.js"></script>
+<style>
+:root{--accent:#fa1e4e;--bg:#060608;--surface:#0d0d12;--card:rgba(18,18,24,.85);--card2:rgba(24,24,36,.7);--border:rgba(255,255,255,.06);--text:#e8e8ec;--text2:#8a8a9a;--text3:#555568;--green:#00ff88;--yellow:#ffb800;--red:#ff3b5c;--blue:#3b82f6;--purple:#a855f7;--cyan:#06b6d4;--r:14px;--glass:rgba(17,17,24,.85)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;overflow:hidden;display:flex;flex-direction:column}
+
+/* HEADER */
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:rgba(8,8,12,.9);border-bottom:1px solid var(--border);backdrop-filter:blur(24px);z-index:10;flex-shrink:0}
+.header-left{display:flex;align-items:center;gap:10px}
+.logo{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;box-shadow:0 0 12px rgba(250,30,78,.3)}
+.title{font-size:15px;font-weight:700;letter-spacing:-.3px}
+.badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.badge-green{background:rgba(0,255,136,.12);color:var(--green);border:1px solid rgba(0,255,136,.2)}
+.badge-yellow{background:rgba(255,184,0,.12);color:var(--yellow);border:1px solid rgba(255,184,0,.2)}
+.badge-red{background:rgba(255,59,92,.12);color:var(--red);border:1px solid rgba(255,59,92,.2)}
+.badge-purple{background:rgba(168,85,247,.12);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
+.header-right{display:flex;gap:6px;align-items:center}
+.btn{padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,.04);color:var(--text2);font-size:11px;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;font-weight:500}
+.btn:hover{background:rgba(255,255,255,.08);color:var(--text);border-color:rgba(255,255,255,.15)}
+.btn-accent{background:rgba(250,30,78,.15);border-color:rgba(250,30,78,.3);color:var(--accent)}
+.btn-accent:hover{background:rgba(250,30,78,.25);box-shadow:0 0 16px rgba(250,30,78,.2)}
+
+/* LAYOUT */
+.main{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:280px;background:rgba(8,8,12,.7);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-header{padding:14px 16px;border-bottom:1px solid var(--border);font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;justify-content:space-between}
+.room-list{flex:1;overflow-y:auto;padding:6px}
+.room{padding:10px 14px;border-radius:10px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:10px;margin-bottom:2px}
+.room:hover{background:rgba(255,255,255,.04)}
+.room.active{background:rgba(250,30,78,.08);border:1px solid rgba(250,30,78,.15)}
+.room-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.room-info{flex:1;min-width:0}
+.room-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.room-preview{font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.room-badge{min-width:18px;height:18px;border-radius:10px;background:var(--accent);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px}
+.room-time{font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+
+/* SIDEBAR STATUS */
+.sidebar-status{padding:12px 16px;border-top:1px solid var(--border);font-size:10px}
+.status-item{display:flex;align-items:center;justify-content:space-between;padding:4px 0}
+.status-dot{width:6px;height:6px;border-radius:50%;margin-right:6px;flex-shrink:0}
+
+/* CHAT */
+.chat{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.chat-header{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(8,8,12,.4);backdrop-filter:blur(12px)}
+.chat-title{display:flex;align-items:center;gap:10px}
+.chat-title-text{font-size:14px;font-weight:600}
+.chat-title-sub{font-size:10px;color:var(--text3)}
+.chat-actions{display:flex;gap:6px}
+
+/* MESSAGES */
+.messages{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:4px}
+.messages::-webkit-scrollbar{width:4px}
+.messages::-webkit-scrollbar-thumb{background:rgba(255,255,255,.06);border-radius:2px}
+.msg-group{margin-bottom:8px}
+.msg-sender{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.msg-avatar{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.msg-author{font-size:11px;font-weight:600}
+.msg-time{font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.msg-bubble{padding:8px 14px;border-radius:10px;font-size:12.5px;line-height:1.5;max-width:80%;word-wrap:break-word;margin-left:36px;position:relative}
+.msg-bubble.self{background:rgba(250,30,78,.1);border:1px solid rgba(250,30,78,.15);margin-left:auto;margin-right:0}
+.msg-bubble.bot{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.1)}
+.msg-bubble.hermes{background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.12)}
+.msg-bubble.system{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.1);font-size:11px;font-style:italic;color:var(--text2);text-align:center;margin:4px auto;max-width:100%}
+.msg-bubble code{background:rgba(0,0,0,.3);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px}
+.msg-bubble pre{background:rgba(0,0,0,.4);padding:10px;border-radius:8px;margin:6px 0;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:11px;border:1px solid rgba(255,255,255,.06)}
+.typing{padding:8px 14px;font-size:11px;color:var(--text3);margin-left:36px;display:none}
+.typing.active{display:block}
+.typing .dots{display:inline-block;animation:blink 1.2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* INPUT */
+.chat-input{padding:12px 20px;border-top:1px solid var(--border);background:rgba(8,8,12,.6);backdrop-filter:blur(12px);display:flex;gap:8px;align-items:flex-end}
+.chat-input textarea{flex:1;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:12.5px;resize:none;outline:none;min-height:42px;max-height:120px;line-height:1.4;transition:border .2s}
+.chat-input textarea:focus{border-color:var(--accent)}
+.chat-input textarea::placeholder{color:var(--text3)}
+.send-btn{width:42px;height:42px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;font-size:16px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.send-btn:hover{transform:scale(1.05);box-shadow:0 4px 20px rgba(250,30,78,.3)}
+.send-btn:disabled{opacity:.3;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(10px);z-index:100;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:rgba(14,14,20,.95);border:1px solid var(--border);border-radius:16px;width:460px;max-height:80vh;overflow-y:auto;padding:24px;backdrop-filter:blur(20px)}
+.modal h2{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.modal label{font-size:11px;color:var(--text2);display:block;margin-bottom:4px;font-weight:500;text-transform:uppercase;letter-spacing:.3px}
+.modal input,.modal textarea{width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,.04);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;outline:none;margin-bottom:12px}
+.modal input:focus,.modal textarea:focus{border-color:var(--accent)}
+.modal-actions{display:flex;gap:6px;justify-content:flex-end;margin-top:8px}
+.modal p.hint{font-size:10px;color:var(--text3);line-height:1.4;margin-bottom:12px;padding:8px;background:rgba(0,0,0,.3);border-radius:8px}
+.qr-wrap{text-align:center;padding:16px;background:rgba(255,255,255,.02);border-radius:10px;margin:12px 0}
+.qr-wrap canvas{border-radius:8px;border:2px solid rgba(250,30,78,.3)}
+.qr-label{font-size:10px;color:var(--text3);margin-top:6px}
+
+/* RESPONSIVE */
+@media(max-width:700px){.sidebar{display:none}.main{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+ <div class="header-left">
+  <div class="logo">🔮</div>
+  <span class="title">Matrix Command Center</span>
+  <span class="badge badge-purple">E2E</span>
+  <span class="badge badge-green" id="connBadge">Offline</span>
+ </div>
+ <div class="header-right">
+  <button class="btn" onclick="openSettings()">⚙️ Config</button>
+  <button class="btn" onclick="openQRModal()">📱 QR</button>
+  <button class="btn btn-accent" onclick="connectMatrix()">🔗 Connect</button>
+ </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="main">
+
+ <!-- SIDEBAR -->
+ <div class="sidebar">
+  <div class="sidebar-header">
+   <span>Raeume</span>
+   <button class="btn" onclick="createRoom()" style="padding:3px 8px;font-size:10px">+ Raum</button>
+  </div>
+  <div class="room-list" id="roomList"></div>
+  <div class="sidebar-status">
+   <div class="status-item"><span><span class="status-dot" style="background:var(--green);display:inline-block" id="dotMatrix"></span>Matrix Bridge</span><span class="badge badge-green" id="bridgeStatus">Bereit</span></div>
+   <div class="status-item"><span><span class="status-dot" style="background:var(--yellow);display:inline-block" id="dotHermes"></span>Hermes Agent</span><span class="badge badge-yellow" id="hermesStatus">Standby</span></div>
+   <div class="status-item"><span><span class="status-dot" style="background:var(--green);display:inline-block" id="dotOC"></span>OpenCode</span><span class="badge badge-green" id="ocStatus">Port 9900</span></div>
+  </div>
+ </div>
+
+ <!-- CHAT PANEL -->
+ <div class="chat">
+  <div class="chat-header">
+   <div class="chat-title">
+    <span class="chat-title-text" id="chatRoomName">#dkz-agent</span>
+    <span class="chat-title-sub" id="chatRoomSub">3 Teilnehmer · E2E Encrypted</span>
+   </div>
+   <div class="chat-actions">
+    <button class="btn" onclick="clearChat()">🗑️</button>
+    <button class="btn" onclick="exportChat()">📥 Export</button>
+   </div>
+  </div>
+  <div class="messages" id="messages"></div>
+  <div class="typing" id="typingIndicator"><span class="dots">Hermes tippt...</span></div>
+  <div class="chat-input">
+   <textarea id="msgInput" placeholder="Nachricht schreiben... (Enter = senden, Shift+Enter = neue Zeile)" rows="1"></textarea>
+   <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+  </div>
+ </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal" onclick="if(event.target===this)closeSettings()">
+ <div class="modal">
+  <h2>⚙️ Matrix Konfiguration</h2>
+  <label>Homeserver URL</label>
+  <input id="cfgHomeserver" value="https://matrix.org" placeholder="https://matrix.org">
+  <label>Access Token</label>
+  <input id="cfgToken" type="password" placeholder="syt_xxx...">
+  <p class="hint">💡 Element → Einstellungen → Hilfe & Info → Access Token kopieren. Wird NUR lokal in localStorage gespeichert.</p>
+  <label>Raum-ID (#dkz-agent)</label>
+  <input id="cfgRoom" placeholder="!abc123:matrix.org">
+  <label>Bot-Anzeigename</label>
+  <input id="cfgBotName" value="DkZ Agent" placeholder="DkZ Agent">
+  <label>Hermes Webhook URL (optional)</label>
+  <input id="cfgHermes" placeholder="http://localhost:3040/api/matrix" value="">
+  <p class="hint">🔗 Hermes empfaengt Nachrichten via NanoChat Bridge oder direkt ueber ONTHERUN Gateway. Wenn leer, wird lokal simuliert.</p>
+  <div class="modal-actions">
+   <button class="btn" onclick="closeSettings()">Abbrechen</button>
+   <button class="btn btn-accent" onclick="saveSettings()">💾 Speichern</button>
+  </div>
+ </div>
+</div>
+
+<!-- QR MODAL -->
+<div class="modal-overlay" id="qrModal" onclick="if(event.target===this)closeQRModal()">
+ <div class="modal">
+  <h2>📱 QR-Codes — Mobil verbinden</h2>
+  <div class="qr-wrap">
+   <canvas id="qrElement"></canvas>
+   <div class="qr-label">Element App — Matrix Raum</div>
+  </div>
+  <div class="qr-wrap">
+   <canvas id="qrOpenCode"></canvas>
+   <div class="qr-label">OpenCode Web — LAN</div>
+  </div>
+  <div class="modal-actions">
+   <button class="btn" onclick="closeQRModal()">Schliessen</button>
+   <a href="https://app.element.io" target="_blank" class="btn btn-accent">🌐 Element Web oeffnen</a>
+  </div>
+ </div>
+</div>
+
+<script>
+/* ============================================
+   DkZ™ Matrix Command Center v2.0
+   Echtes Messaging — Du + Hermes + Bridge
+   ============================================ */
+
+const STORAGE_KEY = 'dkz-matrix-config';
+const MSG_KEY = 'dkz-matrix-messages';
+const ROOMS_KEY = 'dkz-matrix-rooms';
+
+function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+// === CONFIG ===
+let config = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || {
+ homeserver: 'https://matrix.org',
+ token: '',
+ room: '',
+ botName: 'DkZ Agent',
+ hermesUrl: '',
+ connected: false
+};
+
+// === ROOMS ===
+let rooms = JSON.parse(localStorage.getItem(ROOMS_KEY) || 'null') || [
+ {id:'dkz-agent', name:'#dkz-agent', icon:'🤖', color:'var(--accent)', desc:'Haupt-Channel', unread:0, members:['777','DkZ Agent','Hermes']},
+ {id:'dkz-dev', name:'#dkz-dev', icon:'💻', color:'var(--green)', desc:'Development', unread:0, members:['777','DkZ Agent']},
+ {id:'dkz-hermes', name:'#dkz-hermes', icon:'🏛️', color:'var(--purple)', desc:'Hermes Tickets', unread:0, members:['777','Hermes','James']},
+ {id:'dkz-alerts', name:'#dkz-alerts', icon:'🚨', color:'var(--red)', desc:'System Alerts', unread:0, members:['System','James']},
+];
+let activeRoom = rooms[0].id;
+
+// === MESSAGES ===
+let allMessages = JSON.parse(localStorage.getItem(MSG_KEY) || 'null') || {};
+// Seed messages
+if (!allMessages['dkz-agent'] || !allMessages['dkz-agent'].length) {
+ allMessages['dkz-agent'] = [
+  {sender:'system', text:'Matrix Bridge v2.0 gestartet — E2E verschluesselt', time:ts(), type:'system'},
+  {sender:'Hermes', text:'Ich bin online. Ticket-Queue ist leer. Warte auf Befehle.', time:ts(), type:'hermes'},
+  {sender:'DkZ Agent', text:'Skills geladen: 1.493. Module aktiv: 89+. Alle Systeme GRUEN.', time:ts(), type:'bot'},
+ ];
+ allMessages['dkz-hermes'] = [
+  {sender:'system', text:'Hermes Ticket-Kanal — VPS, Docker, Deployments', time:ts(), type:'system'},
+  {sender:'Hermes', text:'Letztes Deployment: devkitz.eu — vor 12 Min. Kein Fehler.', time:ts(), type:'hermes'},
+ ];
+ allMessages['dkz-dev'] = [
+  {sender:'system', text:'Development Channel — Code Reviews, PRs, Tasks', time:ts(), type:'system'},
+ ];
+ allMessages['dkz-alerts'] = [
+  {sender:'system', text:'Alert Channel — Automatische System-Benachrichtigungen', time:ts(), type:'system'},
+  {sender:'James', text:'⚠️ R24 ALARM: Archivierung angefordert fuer 99_ARCHIVE/legacy-v1/', time:ts(), type:'hermes'},
+ ];
+}
+
+function ts(){ return new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}); }
+function save(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(config)); localStorage.setItem(MSG_KEY,JSON.stringify(allMessages)); localStorage.setItem(ROOMS_KEY,JSON.stringify(rooms)); }
+
+// === RENDER ROOMS ===
+function renderRooms() {
+ const list = document.getElementById('roomList');
+ list.innerHTML = rooms.map(r => {
+  const msgs = allMessages[r.id] || [];
+  const last = msgs.length ? msgs[msgs.length-1] : null;
+  const preview = last ? (last.sender === 'system' ? last.text : last.sender + ': ' + last.text) : '';
+  const time = last ? last.time : '';
+  return `<div class="room ${r.id===activeRoom?'active':''}" onclick="switchRoom('${esc(r.id)}')">
+   <div class="room-icon" style="background:${r.color}">${r.icon}</div>
+   <div class="room-info">
+    <div class="room-name">${esc(r.name)}</div>
+    <div class="room-preview">${esc(preview.substring(0,40))}</div>
+   </div>
+   <div style="text-align:right">
+    <div class="room-time">${esc(time)}</div>
+    ${r.unread ? '<div class="room-badge">'+r.unread+'</div>' : ''}
+   </div>
+  </div>`;
+ }).join('');
+}
+
+// === RENDER MESSAGES ===
+function renderMessages() {
+ const container = document.getElementById('messages');
+ const msgs = allMessages[activeRoom] || [];
+ const room = rooms.find(r => r.id === activeRoom);
+ document.getElementById('chatRoomName').textContent = room ? room.name : '?';
+ document.getElementById('chatRoomSub').textContent = room ? (room.members||[]).length + ' Teilnehmer · E2E' : '';
+
+ let html = '';
+ let lastSender = '';
+ msgs.forEach(m => {
+  const isNew = m.sender !== lastSender;
+  lastSender = m.sender;
+  const avatarColors = {
+   '777': 'background:var(--accent)',
+   'DkZ Agent': 'background:var(--green)',
+   'Hermes': 'background:var(--purple)',
+   'James': 'background:var(--yellow)',
+   'system': 'background:var(--blue)',
+  };
+  const avatarStyle = avatarColors[m.sender] || 'background:var(--text3)';
+  const initial = m.sender === 'system' ? '⚡' : m.sender.charAt(0).toUpperCase();
+  const bubbleClass = m.type || (m.sender === '777' ? 'self' : 'bot');
+
+  if (m.type === 'system') {
+   html += `<div class="msg-bubble system">${formatMsg(m.text)}</div>`;
+  } else {
+   if (isNew) {
+    html += `<div class="msg-group"><div class="msg-sender">
+     <div class="msg-avatar" style="${avatarStyle}">${initial}</div>
+     <span class="msg-author">${esc(m.sender)}</span>
+     <span class="msg-time">${esc(m.time)}</span>
+    </div></div>`;
+   }
+   html += `<div class="msg-bubble ${bubbleClass}">${formatMsg(m.text)}</div>`;
+  }
+ });
+ container.innerHTML = html;
+ container.scrollTop = container.scrollHeight;
+}
+
+function formatMsg(text) {
+ let s = esc(text);
+ // Inline code
+ s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+ // Bold
+ s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+ // Newlines
+ s = s.replace(/\n/g, '<br>');
+ return s;
+}
+
+// === SEND MESSAGE ===
+function sendMessage() {
+ const input = document.getElementById('msgInput');
+ const text = input.value.trim();
+ if (!text) return;
+ input.value = '';
+ input.style.height = 'auto';
+
+ // Add user message
+ if (!allMessages[activeRoom]) allMessages[activeRoom] = [];
+ allMessages[activeRoom].push({sender:'777', text, time:ts(), type:'self'});
+ save(); renderMessages(); renderRooms();
+
+ // Try real Matrix API
+ if (config.token && config.room) {
+  sendToMatrix(text);
+ }
+
+ // Try Hermes/NanoChat Bridge
+ if (config.hermesUrl || activeRoom === 'dkz-hermes') {
+  sendToHermes(text);
+  return;
+ }
+
+ // Process commands locally
+ if (text.startsWith('!') || text.startsWith('/')) {
+  processCommand(text);
+  return;
+ }
+
+ // Simulate bot response
+ simulateBotReply(text);
+}
+
+// === MATRIX API ===
+async function sendToMatrix(text) {
+ if (!config.token || !config.room) return;
+ try {
+  const txnId = 'm' + Date.now();
+  const url = config.homeserver + '/_matrix/client/v3/rooms/' +
+   encodeURIComponent(config.room) + '/send/m.room.message/' + txnId;
+  await fetch(url, {
+   method: 'PUT',
+   headers: {
+    'Authorization': 'Bearer ' + config.token,
+    'Content-Type': 'application/json'
+   },
+   body: JSON.stringify({msgtype: 'm.text', body: text})
+  });
+ } catch(e) {
+  addMsg('system', 'Matrix API Fehler: ' + e.message);
+ }
+}
+
+// === MATRIX SYNC (Pull) ===
+let syncToken = localStorage.getItem('dkz-matrix-sync') || '';
+async function syncMatrix() {
+ if (!config.token) return;
+ try {
+  let url = config.homeserver + '/_matrix/client/v3/sync?timeout=10000';
+  if (syncToken) url += '&since=' + syncToken;
+  else url += '&filter={"room":{"timeline":{"limit":20}}}';
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  const res = await fetch(url, {
+   headers: {'Authorization': 'Bearer ' + config.token},
+   signal: controller.signal
+  });
+  clearTimeout(timeout);
+  if (!res.ok) throw new Error('Sync: ' + res.status);
+  const data = await res.json();
+  syncToken = data.next_batch || syncToken;
+  localStorage.setItem('dkz-matrix-sync', syncToken);
+
+  // Process room events
+  const joinedRooms = data.rooms?.join || {};
+  for (const [roomId, roomData] of Object.entries(joinedRooms)) {
+   const events = roomData.timeline?.events || [];
+   events.forEach(ev => {
+    if (ev.type !== 'm.room.message') return;
+    if (ev.sender === config.userId) return; // Skip own messages
+    const body = ev.content?.body || '';
+    const sender = ev.sender?.split(':')[0]?.replace('@','') || 'Unbekannt';
+    // Find matching local room or use first
+    const target = rooms.find(r => r.matrixId === roomId) || rooms[0];
+    if (!allMessages[target.id]) allMessages[target.id] = [];
+    // Avoid duplicates
+    const eventId = ev.event_id;
+    if (!allMessages[target.id].find(m => m.eventId === eventId)) {
+     allMessages[target.id].push({sender, text: body, time: ts(), type: 'hermes', eventId});
+     if (target.id !== activeRoom) target.unread = (target.unread||0) + 1;
+    }
+   });
+  }
+  save(); renderMessages(); renderRooms();
+ } catch(e) {
+  if (e.name !== 'AbortError') {
+   console.warn('Sync error:', e.message);
+  }
+ }
+}
+
+// === HERMES BRIDGE ===
+async function sendToHermes(text) {
+ const url = config.hermesUrl || 'http://localhost:3040/api/v1/free-hub/cascade';
+ const typing = document.getElementById('typingIndicator');
+ typing.classList.add('active');
+ try {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  const res = await fetch(url, {
+   method: 'POST',
+   headers: {'Content-Type': 'application/json'},
+   body: JSON.stringify({message: text, sender: '777', room: activeRoom}),
+   signal: controller.signal
+  });
+  clearTimeout(timeout);
+  const data = await res.json();
+  const reply = data.response || data.content || JSON.stringify(data);
+  addMsg('Hermes', reply, 'hermes');
+ } catch(e) {
+  if (e.name === 'AbortError') {
+   addMsg('system', 'Hermes Timeout (15s) — NanoChat Bridge nicht erreichbar');
+  } else {
+   addMsg('system', 'Hermes offline — Bridge unter localhost:3040 starten');
+  }
+ }
+ typing.classList.remove('active');
+}
+
+// === LOCAL COMMANDS ===
+function processCommand(text) {
+ const cmd = text.replace(/^[!/]/, '').trim().toLowerCase();
+ const parts = cmd.split(/\s+/);
+ const action = parts[0];
+
+ switch(action) {
+  case 'help':
+   addMsg('DkZ Agent', '**Befehle:**\n`!status` — System-Status\n`!skills` — Skill-Liste\n`!rooms` — Raum-Uebersicht\n`!hermes [msg]` — An Hermes senden\n`!run [msg]` — An OpenCode senden\n`!ticket [titel]` — Neues Hermes-Ticket\n`!clear` — Chat leeren\n`/help` — Diese Hilfe', 'bot');
+   break;
+  case 'status':
+   addMsg('DkZ Agent', '**System Status:**\n`Matrix:` ' + (config.token ? '🟢 Verbunden' : '🔴 Kein Token') +
+    '\n`Bridge:` 🟢 v2.0\n`OpenCode:` Pruefe...\n`Module:` 89+\n`Skills:` 1.493', 'bot');
+   checkOpenCode();
+   break;
+  case 'skills':
+   addMsg('DkZ Agent', '**Top Skills:** superpowers-dkz, power-plus, grill-with-docs, startup, checkup, health-agent, mod-builder, handoff, stitch-design, webapp-testing', 'bot');
+   break;
+  case 'rooms':
+   addMsg('DkZ Agent', rooms.map(r => r.icon + ' **' + r.name + '** — ' + r.desc + ' (' + (r.members||[]).length + ' Mitglieder)').join('\n'), 'bot');
+   break;
+  case 'hermes':
+   const hermesMsg = parts.slice(1).join(' ');
+   if (hermesMsg) sendToHermes(hermesMsg);
+   else addMsg('system', 'Verwendung: `!hermes [nachricht]`');
+   break;
+  case 'run':
+   const runMsg = parts.slice(1).join(' ');
+   addMsg('DkZ Agent', 'OpenCode ausfuehren: `' + esc(runMsg) + '`\n(Erfordert laufenden OpenCode Server auf Port 9900)', 'bot');
+   break;
+  case 'ticket':
+   const ticketTitle = parts.slice(1).join(' ') || 'Neues Ticket';
+   const ticketId = 'HRM-' + String(Date.now()).slice(-4);
+   addMsg('Hermes', '📋 **Ticket erstellt:** `' + ticketId + '`\n' + esc(ticketTitle) + '\nStatus: OFFEN | Prioritaet: NORMAL', 'hermes');
+   // Also add to hermes room
+   if (!allMessages['dkz-hermes']) allMessages['dkz-hermes'] = [];
+   allMessages['dkz-hermes'].push({sender:'Hermes', text:'📋 Ticket ' + ticketId + ': ' + ticketTitle, time:ts(), type:'hermes'});
+   const hermesRoom = rooms.find(r => r.id === 'dkz-hermes');
+   if (hermesRoom && activeRoom !== 'dkz-hermes') hermesRoom.unread = (hermesRoom.unread||0) + 1;
+   save(); renderRooms();
+   break;
+  case 'clear':
+   clearChat();
+   break;
+  default:
+   addMsg('DkZ Agent', 'Unbekannter Befehl: `' + esc(action) + '`. Nutze `!help` fuer Hilfe.', 'bot');
+ }
+}
+
+// === SIMULATE BOT REPLY ===
+function simulateBotReply(text) {
+ const typing = document.getElementById('typingIndicator');
+ typing.classList.add('active');
+ setTimeout(() => {
+  typing.classList.remove('active');
+  const lower = text.toLowerCase();
+  if (lower.includes('hermes') || lower.includes('ticket') || lower.includes('deploy')) {
+   addMsg('Hermes', getHermesReply(lower), 'hermes');
+  } else {
+   addMsg('DkZ Agent', getAgentReply(lower), 'bot');
+  }
+ }, 800 + Math.random() * 1200);
+}
+
+function getAgentReply(text) {
+ if (text.includes('hallo') || text.includes('hi') || text.includes('hey')) return 'Hallo Europa! 🫡 Wie kann ich helfen?';
+ if (text.includes('status')) return '🟢 Alle Systeme laufen. 89 Module aktiv. Git: feat/second-brain-v2-dashy-nexus';
+ if (text.includes('skill')) return 'Aktuell 42+ Skills in `.agents/skills/`. Meistgenutzt: superpowers-dkz, power-plus, grill-with-docs';
+ if (text.includes('modul')) return '89+ Module unter `01_PROJECTS/01_dashboard/modules/`. Zuletzt: Hermes 3D, Webhook Dashboard, Paperclip v2';
+ if (text.includes('test')) return '✅ Playwright E2E: 12/12 GRUEN. TestStrasse v3 aktiv.';
+ return 'Verstanden. Nutze `!help` fuer Befehle oder schreibe direkt an Hermes ueber `!hermes [nachricht]`.';
+}
+
+function getHermesReply(text) {
+ if (text.includes('deploy')) return '🚀 Deployment-Check:\n`devkitz.eu` — 🟢 Online\n`7iked.devkitz.eu` — 🟢 Online\nLetzter Deploy: vor 14 Min';
+ if (text.includes('ticket')) return '📋 Aktuelle Tickets:\n`HRM-001` — Dashboard Hub CSS Fix — OFFEN\n`HRM-002` — VPS SSL Erneuerung — ERLEDIGT\nNutze `!ticket [titel]` fuer neue Tickets.';
+ if (text.includes('vps') || text.includes('server')) return '📡 VPS Status:\n`web-vps` — 🟢 2 vCPU / 4 GB / 86% Disk\n`ml-vps` — 🟢 4 vCPU / 8 GB / 62% Disk\n`dev-vps` — 🟡 Maintenance geplant';
+ return '🏛️ Hermes hier. Ich verarbeite: **' + esc(text) + '**\nWeitere Befehle: `!ticket`, `!deploy`, `!vps`';
+}
+
+// === HELPERS ===
+function addMsg(sender, text, type) {
+ if (!allMessages[activeRoom]) allMessages[activeRoom] = [];
+ allMessages[activeRoom].push({sender, text, time: ts(), type: type || 'bot'});
+ save(); renderMessages(); renderRooms();
+}
+
+function switchRoom(id) {
+ activeRoom = id;
+ const room = rooms.find(r => r.id === id);
+ if (room) room.unread = 0;
+ save(); renderRooms(); renderMessages();
+}
+
+function clearChat() {
+ allMessages[activeRoom] = [{sender:'system', text:'Chat geleert — ' + ts(), time:ts(), type:'system'}];
+ save(); renderMessages();
+}
+
+function exportChat() {
+ const msgs = allMessages[activeRoom] || [];
+ const text = msgs.map(m => '[' + m.time + '] ' + m.sender + ': ' + m.text).join('\n');
+ const blob = new Blob([text], {type:'text/plain'});
+ const a = document.createElement('a');
+ a.href = URL.createObjectURL(blob);
+ a.download = 'matrix-chat-' + activeRoom + '-' + new Date().toISOString().slice(0,10) + '.txt';
+ a.click();
+}
+
+function createRoom() {
+ const name = prompt('Raum-Name (z.B. #dkz-research):');
+ if (!name) return;
+ const id = name.replace(/[^a-z0-9-]/gi,'').toLowerCase();
+ if (rooms.find(r => r.id === id)) return;
+ rooms.push({id, name: '#' + id, icon:'💬', color:'var(--cyan)', desc:'Neuer Raum', unread:0, members:['777','DkZ Agent']});
+ allMessages[id] = [{sender:'system', text:'Raum erstellt — ' + ts(), time:ts(), type:'system'}];
+ save(); renderRooms();
+}
+
+// === SETTINGS ===
+function openSettings() {
+ document.getElementById('cfgHomeserver').value = config.homeserver;
+ document.getElementById('cfgToken').value = config.token;
+ document.getElementById('cfgRoom').value = config.room;
+ document.getElementById('cfgBotName').value = config.botName;
+ document.getElementById('cfgHermes').value = config.hermesUrl || '';
+ document.getElementById('settingsModal').classList.add('open');
+}
+function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
+function saveSettings() {
+ config.homeserver = document.getElementById('cfgHomeserver').value.trim();
+ config.token = document.getElementById('cfgToken').value.trim();
+ config.room = document.getElementById('cfgRoom').value.trim();
+ config.botName = document.getElementById('cfgBotName').value.trim();
+ config.hermesUrl = document.getElementById('cfgHermes').value.trim();
+ save(); closeSettings();
+ addMsg('system', 'Konfiguration gespeichert. Druecke 🔗 Connect zum Verbinden.');
+}
+
+// === CONNECT ===
+async function connectMatrix() {
+ if (!config.token) {
+  addMsg('system', 'Kein Token konfiguriert. Oeffne ⚙️ Config und trage deinen Matrix Access Token ein.');
+  return;
+ }
+ const badge = document.getElementById('connBadge');
+ badge.textContent = '⏳ Verbinde...';
+ badge.className = 'badge badge-yellow';
+
+ try {
+  // Verify token by getting user ID
+  const res = await fetch(config.homeserver + '/_matrix/client/v3/account/whoami', {
+   headers: {'Authorization': 'Bearer ' + config.token}
+  });
+  if (!res.ok) throw new Error('Token ungueltig (HTTP ' + res.status + ')');
+  const data = await res.json();
+  config.userId = data.user_id;
+  config.connected = true;
+  save();
+  badge.textContent = '🟢 ' + data.user_id;
+  badge.className = 'badge badge-green';
+  document.getElementById('dotMatrix').style.background = 'var(--green)';
+  document.getElementById('bridgeStatus').textContent = 'Online';
+  document.getElementById('bridgeStatus').className = 'badge badge-green';
+  addMsg('system', 'Verbunden als **' + data.user_id + '** mit ' + config.homeserver);
+  // Start sync loop
+  startSyncLoop();
+ } catch(e) {
+  badge.textContent = '🔴 Fehler';
+  badge.className = 'badge badge-red';
+  addMsg('system', 'Verbindung fehlgeschlagen: ' + e.message);
+ }
+}
+
+let syncInterval = null;
+function startSyncLoop() {
+ if (syncInterval) clearInterval(syncInterval);
+ syncMatrix();
+ syncInterval = setInterval(syncMatrix, 12000);
+}
+
+// === QR ===
+function openQRModal() {
+ document.getElementById('qrModal').classList.add('open');
+ try {
+  QRCode.toCanvas(document.getElementById('qrElement'),
+   'https://app.element.io/#/room/#devkitz-agent:matrix.org',
+   {width:180, margin:2, color:{dark:'#fa1e4e',light:'#0a0a0f'}}
+  );
+  QRCode.toCanvas(document.getElementById('qrOpenCode'),
+   'http://192.168.2.69:9900',
+   {width:180, margin:2, color:{dark:'#00ff88',light:'#0a0a0f'}}
+  );
+ } catch(e) {}
+}
+function closeQRModal() { document.getElementById('qrModal').classList.remove('open'); }
+
+// === OPENCODE CHECK ===
+function checkOpenCode() {
+ fetch('http://localhost:9900', {mode:'no-cors'})
+  .then(() => {
+   document.getElementById('ocStatus').textContent = '🟢 Online';
+   document.getElementById('ocStatus').className = 'badge badge-green';
+   document.getElementById('dotOC').style.background = 'var(--green)';
+  })
+  .catch(() => {
+   document.getElementById('ocStatus').textContent = '🔴 Offline';
+   document.getElementById('ocStatus').className = 'badge badge-red';
+   document.getElementById('dotOC').style.background = 'var(--red)';
+  });
+}
+
+// === TEXTAREA AUTO-RESIZE ===
+const msgInput = document.getElementById('msgInput');
+msgInput.addEventListener('input', () => {
+ msgInput.style.height = 'auto';
+ msgInput.style.height = Math.min(msgInput.scrollHeight, 120) + 'px';
+});
+msgInput.addEventListener('keydown', e => {
+ if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+// === INIT ===
+renderRooms();
+renderMessages();
+checkOpenCode();
+setInterval(checkOpenCode, 30000);
+
+// Auto-connect if token exists
+if (config.token) {
+ setTimeout(connectMatrix, 1000);
+}
+</script>
+</body>
+</html>

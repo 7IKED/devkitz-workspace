@@ -1,0 +1,737 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v0.01">
+    <meta name="dkz-module" content="appscript-builder">
+    <title>AppScript Builder — DkZâ„¢ Google Apps Script Generator</title>
+    <meta name="description" content="AppScript Builder — Google Sheets Sync, Drive Ordnerstruktur, DEEPKEEP Archivierung, Löschverbot-Regel">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <style>
+        :root{--neon-red:#fa1e4e;--green:#00D084;--blue:#55ACEE;--yellow:#FFB800;--purple:#a855f7;--base:#0e0e10;--card:#1a1a1c;--border:#2a2a2e;--text:#f6f6f7;--muted:#808080;--orange:#f97316}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',sans-serif;background:var(--base);color:var(--text);min-height:100vh}
+        body::before{content:"";position:fixed;top:-200px;right:-100px;width:600px;height:600px;background:radial-gradient(circle,rgba(249,115,22,.07),transparent 70%);pointer-events:none;z-index:0}
+        body::after{content:"";position:fixed;bottom:-200px;left:-200px;width:500px;height:500px;background:radial-gradient(circle,rgba(0,208,132,.05),transparent 70%);pointer-events:none;z-index:0}
+        header{position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);background:rgba(26,26,28,.85);border-bottom:1px solid var(--border);padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between}
+        .logo{font-size:1.1rem;font-weight:900;display:flex;align-items:center;gap:.5rem}
+        .logo span{background:linear-gradient(135deg,var(--orange),var(--yellow));background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .chain-nav{display:flex;gap:.4rem}
+        .chain-btn{padding:.35rem .7rem;border-radius:6px;font-size:.7rem;font-weight:700;border:1px solid var(--border);background:rgba(255,255,255,.03);color:#808080;cursor:pointer;text-decoration:none;transition:all .2s}
+        .chain-btn:hover{border-color:var(--orange);color:var(--text)}.chain-btn.active{background:var(--orange);border-color:var(--orange);color:#000}
+        .main{display:grid;grid-template-columns:280px 1fr 320px;height:calc(100vh - 60px);position:relative;z-index:1}
+        .sidebar{background:var(--card);border-right:1px solid var(--border);overflow-y:auto;padding:1.25rem}
+        .sidebar-right{background:var(--card);border-left:1px solid var(--border);overflow-y:auto;padding:1.25rem}
+        .center{overflow-y:auto;padding:1.5rem}
+        .section-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.75rem;display:flex;align-items:center;gap:.4rem}
+        .input-group{margin-bottom:.75rem}
+        .input-label{font-size:.65rem;font-weight:700;color:#999;margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.04em}
+        .input,.select{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:.55rem;color:var(--text);font-size:.8rem;font-family:inherit}
+        .input:focus{outline:none;border-color:var(--orange)}
+        .select{appearance:auto}
+        .btn{padding:.5rem .9rem;border:none;border-radius:8px;font-size:.75rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;display:inline-flex;align-items:center;gap:.4rem}
+        .btn-primary{background:linear-gradient(135deg,var(--orange),var(--yellow));color:#000}
+        .btn-primary:hover{transform:translateY(-2px);box-shadow:0 5px 20px rgba(249,115,22,.3)}
+        .btn-secondary{background:rgba(255,255,255,.05);color:var(--text);border:1px solid var(--border)}
+        .btn-secondary:hover{background:rgba(255,255,255,.1)}
+        .btn-sm{padding:.35rem .6rem;font-size:.65rem}
+        .script-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:.75rem;cursor:pointer;transition:all .25s}
+        .script-card:hover{border-color:var(--orange);transform:translateY(-2px)}
+        .script-card.active{border-color:var(--green);background:rgba(0,208,132,.03)}
+        .script-name{font-weight:800;font-size:.85rem;margin-bottom:.2rem;display:flex;align-items:center;gap:.4rem}
+        .script-desc{font-size:.7rem;color:var(--muted);line-height:1.4}
+        .script-badge{font-size:.55rem;padding:.1rem .3rem;border-radius:3px;font-weight:700}
+        .badge-gs{background:rgba(249,115,22,.15);color:var(--orange)}
+        .badge-ready{background:rgba(0,208,132,.15);color:var(--green)}
+        .code-editor{background:#0a0a0c;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+        .code-header{background:rgba(0,0,0,.5);padding:.5rem .75rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+        .code-filename{font-size:.75rem;font-weight:700;color:var(--orange);font-family:'JetBrains Mono',monospace}
+        .code-content{padding:1rem;font-family:'JetBrains Mono',monospace;font-size:.7rem;line-height:1.8;color:#e0e0e0;overflow-x:auto;max-height:calc(100vh - 300px);overflow-y:auto;white-space:pre}
+        .rule-banner{background:linear-gradient(135deg,rgba(250,30,78,.1),rgba(250,30,78,.03));border:1px solid rgba(250,30,78,.3);border-radius:10px;padding:.75rem 1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+        .rule-icon{font-size:1.5rem}
+        .rule-text{font-size:.75rem;font-weight:700;color:var(--neon-red)}
+        .rule-sub{font-size:.65rem;color:var(--muted)}
+        .drive-tree{font-size:.75rem;font-family:'JetBrains Mono',monospace;color:var(--muted);line-height:1.8;padding:.5rem}
+        .drive-folder{color:var(--yellow);font-weight:700}
+        .drive-file{color:var(--green)}
+        .stat-row{display:flex;justify-content:space-between;padding:.3rem 0;font-size:.7rem}
+        .stat-label{color:var(--muted)}.stat-value{font-weight:700;color:var(--green)}
+        .divider{height:1px;background:var(--border);margin:1rem 0}
+        .toast{position:fixed;bottom:2rem;right:2rem;background:var(--card);border:1px solid var(--green);border-radius:8px;padding:.75rem 1.25rem;transform:translateX(400px);transition:transform .3s;z-index:10000;font-size:.85rem;font-weight:600}
+        .toast.show{transform:translateX(0)}
+        ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+        .kw{color:#c586c0}.fn{color:#dcdcaa}.str{color:#ce9178}.cm{color:#6a9955}.num{color:#b5cea8}.var-name{color:#9cdcfe}
+    </style>
+</head>
+<body data-dkz-module="appscript-builder" data-dkz-appid="DKZ-MOD-APP" data-dkz-version="v0.01" data-dkz-title="AppScript Builder — Google Apps Script Generator" data-dkz-icon="📦" data-dkz-separable="true">
+    <header>
+        <div style="display:flex;align-items:center;gap:1rem">
+            <a href="../../hub/index.html" style="color:#808080;text-decoration:none;font-size:1.1rem">&#8592;</a>
+            <div class="logo">📜 <span>AppScript Builder</span></div>
+            <span style="font-size:.65rem;color:#808080;padding:.2rem .5rem;border:1px solid #333;border-radius:4px">v0.01</span>
+        </div>
+        <div class="chain-nav">
+            <a class="chain-btn" href="../wissen-hub/index.html">WissenHub</a>
+            <a class="chain-btn" href="../nexuz-builder/index.html" style="color:#06b6d4;border-color:#06b6d4">NEXUZ²</a>
+            <a class="chain-btn active">AppScript</a>
+            <a class="chain-btn" href="../iceberg/index.html">Iceberg</a>
+        </div>
+        <div style="display:flex;gap:.5rem">
+            <button class="btn btn-secondary btn-sm" onclick="exportAllScripts()">📦 Alle exportieren</button>
+            <button class="btn btn-primary btn-sm" onclick="generateAll()">⚡ Generieren</button>
+        </div>
+    </header>
+    <div class="main">
+        <!-- LEFT: Scripts + Rules -->
+        <div class="sidebar">
+            <div class="rule-banner">
+                <div class="rule-icon">⛔</div>
+                <div><div class="rule-text">EISERNE REGEL: Löschverbot</div><div class="rule-sub">Niemals löschen — immer in /Archive/ verschieben</div></div>
+            </div>
+            <div class="section-title">📜 Apps Scripts</div>
+            <div id="script-list">
+                <div class="script-card active" onclick="showScript('wissenSync')">
+                    <div class="script-name"><span class="script-badge badge-gs">.gs</span> WissenSync</div>
+                    <div class="script-desc">Google Sheets ↔ localStorage Synchronisation für alle 4 Rubriken</div>
+                </div>
+                <div class="script-card" onclick="showScript('driveOrganizer')">
+                    <div class="script-name"><span class="script-badge badge-gs">.gs</span> DriveOrganizer</div>
+                    <div class="script-desc">Google Drive Ordnerstruktur automatisch erstellen und pflegen</div>
+                </div>
+                <div class="script-card" onclick="showScript('researchImporter')">
+                    <div class="script-name"><span class="script-badge badge-gs">.gs</span> ResearchImporter</div>
+                    <div class="script-desc">Google Docs Research automatisch in Research-Rubrik einpflegen</div>
+                </div>
+                <div class="script-card" onclick="showScript('deepkeepArchiver')">
+                    <div class="script-name"><span class="script-badge badge-gs">.gs</span> DeepkeepArchiver</div>
+                    <div class="script-desc">DEEPKEEP Kopien in Google Drive speichern</div>
+                </div>
+                <div class="script-card" onclick="showScript('archiveManager')">
+                    <div class="script-name"><span class="script-badge badge-gs">.gs</span> ArchiveManager</div>
+                    <div class="script-desc">Löschverbot-Enforcement + Archive-Verschiebung</div>
+                </div>
+                <div class="script-card" onclick="showScript('mcpBridge')">
+                    <div class="script-name"><span class="script-badge badge-gs">.gs</span> MCPBridge</div>
+                    <div class="script-desc">NEXUZ™ MCP-Steuerung via Apps Script Web App</div>
+                </div>
+            </div>
+            <div class="divider"></div>
+            <div class="section-title">📊 Konfiguration</div>
+            <div class="input-group"><div class="input-label">Google Sheet ID (Impl)</div><input class="input" id="sheet-impl" placeholder="Sheet ID für Implementierungspläne"></div>
+            <div class="input-group"><div class="input-label">Google Sheet ID (Walk)</div><input class="input" id="sheet-walk" placeholder="Sheet ID für Walkthroughs"></div>
+            <div class="input-group"><div class="input-label">Google Sheet ID (Research)</div><input class="input" id="sheet-research" placeholder="Sheet ID für Research"></div>
+            <div class="input-group"><div class="input-label">Google Sheet ID (Task)</div><input class="input" id="sheet-task" placeholder="Sheet ID für Tasks"></div>
+            <div class="input-group"><div class="input-label">DEEPKEEP Ordner ID</div><input class="input" id="deepkeep-id" placeholder="Google Drive Ordner ID"></div>
+            <button class="btn btn-secondary btn-sm" onclick="saveConfig()" style="width:100%">💾 Config speichern</button>
+        </div>
+        <!-- CENTER: Code Editor -->
+        <div class="center">
+            <div class="code-editor">
+                <div class="code-header">
+                    <div class="code-filename" id="code-filename">WissenSync.gs</div>
+                    <div style="display:flex;gap:.3rem">
+                        <button class="btn btn-sm btn-secondary" onclick="copyCode()">📋 Copy</button>
+                        <button class="btn btn-sm btn-primary" onclick="downloadScript()">⬇️ .gs</button>
+                    </div>
+                </div>
+                <div class="code-content" id="code-content"></div>
+            </div>
+        </div>
+        <!-- RIGHT: Drive + Stats -->
+        <div class="sidebar-right">
+            <div class="section-title">📁 Google Drive Ordnerstruktur</div>
+            <div class="drive-tree">
+<span class="drive-folder">📁 DEVKiTZ™/</span>
+  <span class="drive-folder">📁 Wissen/</span>
+    <span class="drive-folder">📁 Implementierungsplan/</span>
+      <span class="drive-file">📄 v0.01_ImageForge_impl.json</span>
+      <span class="drive-file">📄 v0.01_WissenHub_impl.json</span>
+    <span class="drive-folder">📁 Walkthrough/</span>
+      <span class="drive-file">📄 v0.01_ImageForge_walk.json</span>
+    <span class="drive-folder">📁 Research/</span>
+      <span class="drive-file">📄 v0.01_AIAgents_research.json</span>
+    <span class="drive-folder">📁 Task/</span>
+      <span class="drive-file">📄 v0.01_ImageForge_task.json</span>
+  <span class="drive-folder">📁 DEEPKEEP/</span>
+    <span class="drive-folder">📁 Wissen/</span>
+      <span class="drive-folder">📁 impl/</span>
+      <span class="drive-folder">📁 walk/</span>
+      <span class="drive-folder">📁 research/</span>
+      <span class="drive-folder">📁 task/</span>
+  <span class="drive-folder" style="color:var(--neon-red)">📁 Archive/</span>
+    <span style="color:var(--muted);font-style:italic">⛔ Gelöschte Einträge landen hier</span>
+            </div>
+            <div class="divider"></div>
+            <div class="section-title">📊 Status</div>
+            <div class="stat-row"><span class="stat-label">Scripts generiert</span><span class="stat-value" id="s-scripts">6</span></div>
+            <div class="stat-row"><span class="stat-label">Sheets verbunden</span><span class="stat-value" id="s-sheets">0</span></div>
+            <div class="stat-row"><span class="stat-label">DEEPKEEP Kopien</span><span class="stat-value" id="s-deep">0</span></div>
+            <div class="stat-row"><span class="stat-label">Archiv-Einträge</span><span class="stat-value" id="s-archive">0</span></div>
+            <div class="divider"></div>
+            <div class="section-title">→ Weiterleiten</div>
+            <button class="btn btn-secondary btn-sm" onclick="window.location.href='../wissen-hub/index.html'" style="width:100%;margin-bottom:.5rem">📚 → WissenHub</button>
+            <button class="btn btn-secondary btn-sm" onclick="window.location.href='../nexuz-builder/index.html'" style="width:100%;margin-bottom:.5rem">⚡ → NEXUZ² Builder</button>
+            <div class="divider"></div>
+            <div class="section-title">💡 Hinweise</div>
+            <div style="font-size:.7rem;color:var(--muted);line-height:1.5">
+                1. Scripts mit ⬇️ herunterladen<br>
+                2. In Google Apps Script einfügen<br>
+                3. Sheet IDs in Config eintragen<br>
+                4. OAuth2 Berechtigung erteilen<br>
+                5. Trigger einrichten (auto-sync)
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"><span id="tt"></span></div>
+    <script>
+    // ========================================
+    // AppScript Builder — Script Templates
+    // ========================================
+    var currentScript = 'wissenSync';
+    var SCRIPTS = {
+        wissenSync: {
+            filename: 'WissenSync.gs',
+            code: `/**
+ * WissenSync.gs — NEXUZ™ WissenHub ↔ Google Sheets Sync
+ * @DKZ:TAG [SYS:appscript] [CAT:wissen] [LANG:gs]
+ * ⛔ EISERNE REGEL: Löschverbot — Immer in Archive verschieben!
+ */
+
+// ── Sheet IDs (in Script Properties konfigurieren) ──
+var SHEET_IDS = {
+  impl: PropertiesService.getScriptProperties().getProperty('SHEET_IMPL') || '',
+  walk: PropertiesService.getScriptProperties().getProperty('SHEET_WALK') || '',
+  research: PropertiesService.getScriptProperties().getProperty('SHEET_RESEARCH') || '',
+  task: PropertiesService.getScriptProperties().getProperty('SHEET_TASK') || ''
+};
+
+/**
+ * Sync: WissenHub localStorage → Google Sheet
+ * Wird per POST von WissenHub aufgerufen
+ */
+function doPost(e) {
+  var data = JSON.parse(e.postData.contents);
+  var rubrik = data.rubrik || 'impl';
+  var sheetId = SHEET_IDS[rubrik];
+  if (!sheetId) return ContentService.createTextOutput(JSON.stringify({error: 'Sheet ID nicht konfiguriert'}));
+
+  var ss = SpreadsheetApp.openById(sheetId);
+  var sheet = ss.getSheetByName('Wissen') || ss.insertSheet('Wissen');
+
+  // Header falls leer
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['ID', 'Projekt', 'Version', 'Titel', 'Tags', 'Inhalt', 'Rubrik', 'Dateiname', 'Erstellt', 'Aktualisiert']);
+    sheet.getRange(1, 1, 1, 10).setFontWeight('bold');
+  }
+
+  // Eintrag hinzufügen
+  var entry = data.entry;
+  sheet.appendRow([
+    entry.id, entry.project, entry.version, entry.title,
+    (entry.tags || []).join(', '), entry.content, entry.rubrik,
+    entry.filename, entry.created, new Date().toISOString()
+  ]);
+
+  // DEEPKEEP Kopie erstellen
+  if (data.deepkeep) {
+    createDeepkeepCopy(entry);
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({success: true, row: sheet.getLastRow()}));
+}
+
+/**
+ * Sync: Google Sheet → WissenHub (GET Endpoint)
+ */
+function doGet(e) {
+  var rubrik = e.parameter.rubrik || 'impl';
+  var sheetId = SHEET_IDS[rubrik];
+  if (!sheetId) return ContentService.createTextOutput(JSON.stringify({error: 'Sheet nicht konfiguriert'}));
+
+  var ss = SpreadsheetApp.openById(sheetId);
+  var sheet = ss.getSheetByName('Wissen');
+  if (!sheet) return ContentService.createTextOutput(JSON.stringify({entries: []}));
+
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var entries = [];
+  for (var i = 1; i < data.length; i++) {
+    var entry = {};
+    headers.forEach(function(h, j) { entry[h.toLowerCase()] = data[i][j]; });
+    entries.push(entry);
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({entries: entries, count: entries.length}));
+}`
+        },
+        driveOrganizer: {
+            filename: 'DriveOrganizer.gs',
+            code: `/**
+ * DriveOrganizer.gs — Google Drive Ordnerstruktur für NEXUZ™ WissenHub
+ * @DKZ:TAG [SYS:appscript] [CAT:drive] [LANG:gs]
+ * ⛔ EISERNE REGEL: Löschverbot — Immer in Archive verschieben!
+ */
+
+var ROOT_NAME = 'DEVKiTZ™';
+var RUBRIKEN = ['Implementierungsplan', 'Walkthrough', 'Research', 'Task'];
+
+/**
+ * Erstellt die komplette Ordnerstruktur
+ */
+function createFolderStructure() {
+  var root = getOrCreateFolder(DriveApp.getRootFolder(), ROOT_NAME);
+  var wissen = getOrCreateFolder(root, 'Wissen');
+
+  RUBRIKEN.forEach(function(r) {
+    getOrCreateFolder(wissen, r);
+  });
+
+  // DEEPKEEP
+  var deepkeep = getOrCreateFolder(root, 'DEEPKEEP');
+  var deepWissen = getOrCreateFolder(deepkeep, 'Wissen');
+  ['impl', 'walk', 'research', 'task'].forEach(function(r) {
+    getOrCreateFolder(deepWissen, r);
+  });
+
+  // Archive (Löschverbot)
+  getOrCreateFolder(root, 'Archive');
+
+  Logger.log('✅ Ordnerstruktur erstellt: ' + ROOT_NAME);
+}
+
+function getOrCreateFolder(parent, name) {
+  var folders = parent.getFoldersByName(name);
+  if (folders.hasNext()) return folders.next();
+  return parent.createFolder(name);
+}
+
+/**
+ * Speichert eine Datei im richtigen Ordner
+ */
+function saveToFolder(rubrik, filename, content) {
+  var root = getOrCreateFolder(DriveApp.getRootFolder(), ROOT_NAME);
+  var wissen = getOrCreateFolder(root, 'Wissen');
+  var folder = getOrCreateFolder(wissen, rubrik);
+
+  // Prüfe ob Datei existiert → Versionierung
+  var existing = folder.getFilesByName(filename);
+  if (existing.hasNext()) {
+    var oldFile = existing.next();
+    // ⛔ NICHT LÖSCHEN — in Archive verschieben
+    moveToArchive(oldFile, rubrik);
+  }
+
+  folder.createFile(filename, JSON.stringify(content), MimeType.PLAIN_TEXT);
+  Logger.log('💾 Gespeichert: ' + rubrik + '/' + filename);
+}
+
+/**
+ * ⛔ LÖSCHVERBOT: Verschiebt in Archive statt zu löschen
+ */
+function moveToArchive(file, rubrik) {
+  var root = getOrCreateFolder(DriveApp.getRootFolder(), ROOT_NAME);
+  var archive = getOrCreateFolder(root, 'Archive');
+  var archiveRubrik = getOrCreateFolder(archive, rubrik || 'misc');
+
+  file.moveTo(archiveRubrik);
+  Logger.log('📁 Archiviert: ' + file.getName() + ' → Archive/' + rubrik);
+}`
+        },
+        researchImporter: {
+            filename: 'ResearchImporter.gs',
+            code: `/**
+ * ResearchImporter.gs — Google Docs → Research-Rubrik Import
+ * @DKZ:TAG [SYS:appscript] [CAT:research] [LANG:gs]
+ * ⛔ EISERNE REGEL: Löschverbot — Immer in Archive verschieben!
+ */
+
+var RESEARCH_SHEET_ID = PropertiesService.getScriptProperties().getProperty('SHEET_RESEARCH') || '';
+var RESEARCH_FOLDER_NAME = 'Research';
+
+/**
+ * Scannt einen Google Drive Ordner nach neuen Docs und importiert sie
+ */
+function importResearchDocs(folderId) {
+  var folder = folderId - DriveApp.getFolderById(folderId) : findResearchFolder();
+  if (!folder) { Logger.log('❌ Research-Ordner nicht gefunden'); return; }
+
+  var files = folder.getFilesByType(MimeType.GOOGLE_DOCS);
+  var imported = 0;
+
+  while (files.hasNext()) {
+    var file = files.next();
+    var doc = DocumentApp.openById(file.getId());
+    var body = doc.getBody().getText();
+
+    var entry = {
+      id: 'R-' + file.getId().substring(0, 8),
+      project: extractProject(doc.getName()),
+      version: extractVersion(doc.getName()),
+      title: doc.getName(),
+      tags: extractTags(body),
+      content: body.substring(0, 5000),
+      rubrik: 'research',
+      filename: extractVersion(doc.getName()) + '_' + extractProject(doc.getName()).replace(/\\s+/g, '-') + '_research.json',
+      created: file.getDateCreated().toISOString(),
+      sourceDocId: file.getId(),
+      sourceUrl: file.getUrl()
+    };
+
+    addToSheet(entry);
+    imported++;
+    Logger.log('📄 Importiert: ' + doc.getName());
+  }
+
+  Logger.log('✅ ' + imported + ' Research-Docs importiert');
+  return imported;
+}
+
+function extractProject(name) {
+  // Versuche Projektname aus dem Dateinamen zu extrahieren
+  var parts = name.replace(/[_-]/g, ' ').split(' ');
+  return parts.length > 1 - parts.slice(1).join(' ') : name;
+}
+
+function extractVersion(name) {
+  var match = name.match(/v?\\d+\\.\\d+/);
+  return match - match[0] : 'v0.01';
+}
+
+function extractTags(text) {
+  var keywords = ['AI', 'MCP', 'NEXUZ', 'JAMEZ', 'DkZ', 'API', 'Security', 'Design'];
+  return keywords.filter(function(k) { return text.indexOf(k) !== -1; });
+}
+
+function addToSheet(entry) {
+  if (!RESEARCH_SHEET_ID) return;
+  var ss = SpreadsheetApp.openById(RESEARCH_SHEET_ID);
+  var sheet = ss.getSheetByName('Wissen') || ss.insertSheet('Wissen');
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['ID', 'Projekt', 'Version', 'Titel', 'Tags', 'Inhalt', 'Rubrik', 'Dateiname', 'Erstellt', 'Source URL']);
+    sheet.getRange(1, 1, 1, 10).setFontWeight('bold');
+  }
+  sheet.appendRow([entry.id, entry.project, entry.version, entry.title, entry.tags.join(', '), entry.content, entry.rubrik, entry.filename, entry.created, entry.sourceUrl]);
+}
+
+function findResearchFolder() {
+  var root = DriveApp.getRootFolder().getFoldersByName('DEVKiTZ™');
+  if (!root.hasNext()) return null;
+  var wissen = root.next().getFoldersByName('Wissen');
+  if (!wissen.hasNext()) return null;
+  var research = wissen.next().getFoldersByName('Research');
+  return research.hasNext() - research.next() : null;
+}
+
+/**
+ * Auto-Trigger: Alle 30 Minuten nach neuen Research-Docs scannen
+ */
+function setupAutoImport() {
+  ScriptApp.newTrigger('importResearchDocs').timeBased().everyMinutes(30).create();
+  Logger.log('⏰ Auto-Import Trigger eingerichtet (alle 30 Min)');
+}`
+        },
+        deepkeepArchiver: {
+            filename: 'DeepkeepArchiver.gs',
+            code: `/**
+ * DeepkeepArchiver.gs — DEEPKEEP Backup-System
+ * @DKZ:TAG [SYS:appscript] [CAT:deepkeep] [LANG:gs]
+ * ⛔ EISERNE REGEL: Löschverbot — Immer in Archive verschieben!
+ */
+
+var DEEPKEEP_FOLDER_ID = PropertiesService.getScriptProperties().getProperty('DEEPKEEP_FOLDER') || '';
+
+/**
+ * Erstellt eine DEEPKEEP-Kopie eines Wissenseintrags
+ */
+function createDeepkeepCopy(entry) {
+  var root = DriveApp.getRootFolder().getFoldersByName('DEVKiTZ™');
+  if (!root.hasNext()) { Logger.log('❌ DEVKiTZ™ Ordner nicht gefunden'); return; }
+
+  var deepkeep = root.next().getFoldersByName('DEEPKEEP');
+  if (!deepkeep.hasNext()) { Logger.log('❌ DEEPKEEP Ordner nicht gefunden'); return; }
+
+  var wissen = deepkeep.next().getFoldersByName('Wissen');
+  if (!wissen.hasNext()) { Logger.log('❌ DEEPKEEP/Wissen nicht gefunden'); return; }
+
+  var rubrikFolder = wissen.next().getFoldersByName(entry.rubrik);
+  var folder = rubrikFolder.hasNext() - rubrikFolder.next() : wissen.next().createFolder(entry.rubrik);
+
+  var filename = 'DEEPKEEP_' + entry.filename;
+  var content = JSON.stringify({
+    ...entry,
+    _deepkeep: {
+      archivedAt: new Date().toISOString(),
+      source: 'WissenHub',
+      integrity: 'sha256:' + Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, JSON.stringify(entry)).map(function(b){return ('0'+(b&0xFF).toString(16)).slice(-2)}).join('')
+    }
+  }, null, 2);
+
+  folder.createFile(filename, content, MimeType.PLAIN_TEXT);
+  Logger.log('🗄️ DEEPKEEP: ' + filename);
+}
+
+/**
+ * Batch: Alle Wissenseinträge nach DEEPKEEP kopieren
+ */
+function batchDeepkeep(rubrik) {
+  var sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_' + rubrik.toUpperCase());
+  if (!sheetId) return;
+
+  var ss = SpreadsheetApp.openById(sheetId);
+  var sheet = ss.getSheetByName('Wissen');
+  if (!sheet) return;
+
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+
+  for (var i = 1; i < data.length; i++) {
+    var entry = {};
+    headers.forEach(function(h, j) { entry[h.toLowerCase()] = data[i][j]; });
+    entry.rubrik = rubrik;
+    entry.filename = entry.dateiname || entry.id + '_' + rubrik + '.json';
+    createDeepkeepCopy(entry);
+  }
+
+  Logger.log('✅ Batch DEEPKEEP: ' + (data.length - 1) + ' Einträge für ' + rubrik);
+}`
+        },
+        archiveManager: {
+            filename: 'ArchiveManager.gs',
+            code: `/**
+ * ArchiveManager.gs — Löschverbot-Enforcement + Archive-System
+ * @DKZ:TAG [SYS:appscript] [CAT:archive] [LANG:gs]
+ *
+ * ⛔⛔⛔ EISERNE REGEL: LÖSCHVERBOT ⛔⛔⛔
+ * Dateien werden NIEMALS gelöscht!
+ * Stattdessen werden sie in den Archive-Ordner verschoben.
+ * Diese Regel ist UNVERÄNDERLICH und muss IMMER befolgt werden.
+ */
+
+/**
+ * ⛔ Override für DriveApp.File.setTrashed
+ * Verschiebt statt zu löschen
+ */
+function safeDelete(fileId) {
+  var file = DriveApp.getFileById(fileId);
+  var root = DriveApp.getRootFolder().getFoldersByName('DEVKiTZ™');
+  if (!root.hasNext()) { Logger.log('❌ Archive nicht möglich ohne DEVKiTZ™'); return; }
+
+  var archive = root.next().getFoldersByName('Archive');
+  var folder = archive.hasNext() - archive.next() : root.next().createFolder('Archive');
+
+  // Metadata hinzufügen
+  var metafilename = file.getName() + '.meta.json';
+  var meta = {
+    originalName: file.getName(),
+    originalPath: getFilePath(file),
+    deletedAt: new Date().toISOString(),
+    deletedBy: Session.getActiveUser().getEmail(),
+    reason: 'Löschverbot — verschoben statt gelöscht',
+    fileId: fileId
+  };
+  folder.createFile(metafilename, JSON.stringify(meta, null, 2), MimeType.PLAIN_TEXT);
+
+  file.moveTo(folder);
+  Logger.log('⛔→📁 Löschverbot: ' + file.getName() + ' → Archive/');
+}
+
+function getFilePath(file) {
+  var parents = file.getParents();
+  var path = file.getName();
+  while (parents.hasNext()) {
+    var parent = parents.next();
+    path = parent.getName() + '/' + path;
+    parents = parent.getParents();
+  }
+  return path;
+}
+
+/**
+ * Audit: Prüft ob Dateien im Papierkorb gelandet sind
+ */
+function auditTrash() {
+  var trashed = DriveApp.getTrashedFiles();
+  var violations = 0;
+
+  while (trashed.hasNext()) {
+    var file = trashed.next();
+    if (file.getName().indexOf('DEVKiTZ') !== -1 || file.getName().indexOf('DkZ') !== -1) {
+      // ⛔ Löschverbot-Verstoß! Wiederherstellen!
+      file.setTrashed(false);
+      safeDelete(file.getId());
+      violations++;
+      Logger.log('⚠️ Löschverbot-Verstoß behoben: ' + file.getName());
+    }
+  }
+
+  Logger.log('🔍 Audit: ' + violations + ' Verstöße behoben');
+  return violations;
+}
+
+/**
+ * Auto-Trigger: Papierkorb-Audit alle 15 Minuten
+ */
+function setupAuditTrigger() {
+  ScriptApp.newTrigger('auditTrash').timeBased().everyMinutes(15).create();
+  Logger.log('⏰ Audit-Trigger eingerichtet (alle 15 Min)');
+}`
+        },
+        mcpBridge: {
+            filename: 'MCPBridge.gs',
+            code: `/**
+ * MCPBridge.gs — NEXUZ™ MCP Steuerung via Apps Script Web App
+ * @DKZ:TAG [SYS:appscript] [CAT:mcp] [LANG:gs]
+ * Verbindet Google Workspace mit dem NEXUZ™ Ökosystem
+ * ⛔ EISERNE REGEL: Löschverbot — Immer in Archive verschieben!
+ */
+
+var NEXUZ_GATEWAY = PropertiesService.getScriptProperties().getProperty('NEXUZ_GATEWAY') || 'http://localhost:3040';
+
+/**
+ * Web App Endpoint: Empfängt NEXUZ™ MCP Befehle
+ */
+function doPost(e) {
+  var data = JSON.parse(e.postData.contents);
+  var action = data.action;
+
+  switch(action) {
+    case 'sync_wissen':
+      return handleWissenSync(data);
+    case 'create_deepkeep':
+      createDeepkeepCopy(data.entry);
+      return ok('DEEPKEEP erstellt');
+    case 'import_research':
+      var count = importResearchDocs(data.folderId);
+      return ok(count + ' Docs importiert');
+    case 'audit_trash':
+      var violations = auditTrash();
+      return ok(violations + ' Verstöße behoben');
+    case 'create_structure':
+      createFolderStructure();
+      return ok('Ordnerstruktur erstellt');
+    case 'query_sheet':
+      return handleSheetQuery(data);
+    default:
+      return error('Unbekannte Aktion: ' + action);
+  }
+}
+
+function handleWissenSync(data) {
+  var rubrik = data.rubrik || 'impl';
+  var sheetId = SHEET_IDS[rubrik];
+  if (!sheetId) return error('Sheet ID nicht konfiguriert für: ' + rubrik);
+
+  var ss = SpreadsheetApp.openById(sheetId);
+  var sheet = ss.getSheetByName('Wissen') || ss.insertSheet('Wissen');
+  var entry = data.entry;
+
+  sheet.appendRow([entry.id, entry.project, entry.version, entry.title, (entry.tags||[]).join(', '), entry.content, entry.rubrik, entry.filename, entry.created, new Date().toISOString()]);
+
+  return ok('Eintrag ' + entry.id + ' synchronisiert');
+}
+
+function handleSheetQuery(data) {
+  var rubrik = data.rubrik || 'impl';
+  var sheetId = SHEET_IDS[rubrik];
+  if (!sheetId) return error('Sheet nicht konfiguriert');
+
+  var ss = SpreadsheetApp.openById(sheetId);
+  var sheet = ss.getSheetByName('Wissen');
+  if (!sheet) return ok(JSON.stringify({entries: []}));
+
+  var rows = sheet.getDataRange().getValues();
+  var headers = rows[0];
+  var entries = [];
+  for (var i = 1; i < rows.length; i++) {
+    var entry = {};
+    headers.forEach(function(h, j) { entry[h.toLowerCase()] = rows[i][j]; });
+    // Filter by query if provided
+    if (data.query) {
+      var match = JSON.stringify(entry).toLowerCase().indexOf(data.query.toLowerCase()) !== -1;
+      if (!match) return;
+    }
+    entries.push(entry);
+  }
+
+  return ok(JSON.stringify({entries: entries, count: entries.length}));
+}
+
+function ok(msg) { return ContentService.createTextOutput(JSON.stringify({success: true, message: msg})); }
+function error(msg) { return ContentService.createTextOutput(JSON.stringify({success: false, error: msg})); }`
+        }
+    };
+
+    function showScript(name) {
+        currentScript = name;
+        var script = SCRIPTS[name];
+        document.getElementById('code-filename').textContent = script.filename;
+        document.getElementById('code-content').innerHTML = syntaxHighlight(script.code);
+        document.querySelectorAll('.script-card').forEach(function(c,i) { c.classList.toggle('active', Object.keys(SCRIPTS)[i]===name); });
+    }
+
+    function syntaxHighlight(code) {
+        return esc(code)
+            .replace(/(\/\*\*[\s\S]*?\*\/|\/\/.*)/g, '<span class="cm">$1</span>')
+            .replace(/\b(function|var|const|let|return|if|else|switch|case|for|while|new|typeof|this|default|break)\b/g, '<span class="kw">$1</span>')
+            .replace(/\b(Logger|DriveApp|SpreadsheetApp|ContentService|PropertiesService|ScriptApp|Session|Utilities|DocumentApp|MimeType)\b/g, '<span class="fn">$1</span>')
+            .replace(/('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")/g, '<span class="str">$1</span>')
+            .replace(/\b(\d+)\b/g, '<span class="num">$1</span>');
+    }
+
+    function copyCode() { navigator.clipboard.writeText(SCRIPTS[currentScript].code); toast('📋 Code kopiert!'); }
+
+    function downloadScript() {
+        var script = SCRIPTS[currentScript];
+        var blob = new Blob([script.code], {type:'text/plain'});
+        var a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=script.filename; a.click();
+        toast('⬇️ ' + script.filename + ' heruntergeladen');
+    }
+
+    function exportAllScripts() {
+        Object.keys(SCRIPTS).forEach(function(name) {
+            var s = SCRIPTS[name];
+            var blob = new Blob([s.code], {type:'text/plain'});
+            var a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=s.filename; a.click();
+        });
+        toast('📦 Alle 6 Scripts exportiert!');
+    }
+
+    function generateAll() { toast('⚡ Alle Scripts sind bereit zum Download!'); }
+
+    function saveConfig() {
+        var cfg = {impl:document.getElementById('sheet-impl').value, walk:document.getElementById('sheet-walk').value, research:document.getElementById('sheet-research').value, task:document.getElementById('sheet-task').value, deepkeep:document.getElementById('deepkeep-id').value};
+        localStorage.setItem('dkz-appscript-config', JSON.stringify(cfg));
+        var connected = Object.values(cfg).filter(Boolean).length;
+        document.getElementById('s-sheets').textContent = connected;
+        toast('💾 Config gespeichert: ' + connected + ' Sheets verbunden');
+    }
+
+    function esc(s){if(!s)return '';var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+    function toast(m){var t=document.getElementById('toast');document.getElementById('tt').textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},3000);}
+
+    // INIT
+    showScript('wissenSync');
+    var cfg = JSON.parse(localStorage.getItem('dkz-appscript-config') || '{}');
+    if(cfg.impl) document.getElementById('sheet-impl').value=cfg.impl;
+    if(cfg.walk) document.getElementById('sheet-walk').value=cfg.walk;
+    if(cfg.research) document.getElementById('sheet-research').value=cfg.research;
+    if(cfg.task) document.getElementById('sheet-task').value=cfg.task;
+    if(cfg.deepkeep) document.getElementById('deepkeep-id').value=cfg.deepkeep;
+    </script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/nexuz.js"></script>
+    <footer style="text-align:center;padding:.75rem;font-size:.7rem;color:#606060;font-family:monospace;border-top:1px solid #2a2a2e">
+        © 2024-2026 <span style="color:#f97316">DEVKiTZ™</span> · AppScript Builder v0.01 · MOD-077
+    </footer>
+
+<script src="../../shared/dkz-chain-nav.js"></script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+</html>

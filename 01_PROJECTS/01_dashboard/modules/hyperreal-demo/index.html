@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DkZ Hyperreal UI ✦ 8K Animation System</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  /* ===== DkZ™ Design System v2 (Playbook §26) ===== */
+  :root {
+    --accent: #fa1e4e;
+    --accent-soft: rgba(250, 30, 78, 0.12);
+    --bg: #060608;
+    --bg-card: rgba(18, 18, 24, 0.85);
+    --text-primary: #e8e8ec;
+    --text-secondary: #8a8a9a;
+    --green: #00ff88;
+    --yellow: #ffb800;
+    --red: #ff3b5c;
+    --blue: #3b82f6;
+    --font-main: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: var(--font-main);
+    overflow: hidden;
+    height: 100vh; width: 100vw;
+    color: var(--text-primary);
+    user-select: none;
+    cursor: default;
+  }
+
+  /* ===== CANVAS ===== */
+  #mainCanvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* ===== OVERLAY LAYER ===== */
+  .overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 2;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  /* ===== 8K BADGE ===== */
+  .badge-8k {
+    position: fixed;
+    top: 24px; left: 24px;
+    z-index: 10;
+    pointer-events: auto;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(4,4,6,0.6);
+    backdrop-filter: blur(12px);
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #8a8a9a;
+    letter-spacing: 3px;
+    opacity: 0;
+    transform: translateY(-10px);
+    animation: introBadge 0.6s ease 2.2s forwards;
+  }
+  @keyframes introBadge {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== STANDBY OVERLAY ===== */
+  #standbyOverlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 5;
+    pointer-events: none;
+    background: rgba(4,4,6,0.5);
+    opacity: 0;
+    transition: opacity 1.5s ease;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
+  #standbyOverlay.active {
+    opacity: 1;
+  }
+  #standbyMarquee {
+    position: absolute;
+    white-space: nowrap;
+    color: rgba(232,232,236,0.35);
+    font-size: 18px;
+    font-weight: 300;
+    letter-spacing: 3px;
+    will-change: transform;
+    font-family: 'JetBrains Mono', monospace;
+    text-shadow: 0 0 40px rgba(250,30,78,0.1);
+  }
+  #standbyMarquee .hl {
+    color: rgba(250,30,78,0.5);
+    font-weight: 600;
+  }
+  #standbyMarquee .info {
+    color: rgba(0,255,136,0.3);
+  }
+
+  /* ===== NANOBOT TEXT (im Overlay) ===== */
+  .nanobot-text {
+    position: relative;
+    display: inline-block;
+    pointer-events: auto;
+    z-index: 3;
+    opacity: 0;
+    animation: introFade 1s ease 0.8s forwards;
+  }
+  .nanobot-text .char {
+    display: inline-block;
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    cursor: default;
+  }
+  .nanobot-text .char.nanobot-disperse {
+    opacity: 0;
+    transform: translate(
+      calc(var(--dx, 0) * 1px),
+      calc(var(--dy, 0) * 1px)
+    ) scale(0.3) rotate(calc(var(--dr, 0) * 1deg));
+    filter: blur(8px) brightness(2);
+    transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .nanobot-text .char.nanobot-reconstruct {
+    opacity: 1;
+    transform: translate(0, 0) scale(1) rotate(0deg);
+    filter: blur(0) brightness(1);
+    transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .dkz-logo-hr {
+    font-size: clamp(80px, 18vw, 200px);
+    font-weight: 900;
+    letter-spacing: -4px;
+    line-height: 1;
+    background: linear-gradient(135deg, #fa1e4e 0%, #ff6b8a 40%, #fa1e4e 70%);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 60px rgba(250,30,78,0.2));
+    animation: gradShift 5s ease-in-out infinite;
+  }
+  @keyframes gradShift {
+    0%,100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .claim-hr {
+    font-size: clamp(24px, 4vw, 46px);
+    font-weight: 400;
+    letter-spacing: 3px;
+    margin-top: -8px;
+    opacity: 0;
+    animation: introFade 1s ease 1.4s forwards;
+  }
+  .claim-hr sup { font-size: 0.5em; color: #fa1e4e; }
+  .tagline-hr {
+    font-size: clamp(12px, 1.8vw, 20px);
+    font-style: italic;
+    color: #8a8a9a;
+    letter-spacing: 6px;
+    margin-top: 10px;
+    opacity: 0;
+    animation: introFade 1s ease 1.8s forwards;
+  }
+
+  @keyframes introFade {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== BUTTONS ===== */
+  .button-row {
+    display: flex;
+    gap: 20px;
+    margin-top: 36px;
+    opacity: 0;
+    animation: introFade 0.8s ease 2.2s forwards;
+    pointer-events: auto;
+  }
+
+  /* ===== DkZ Button System (Playbook §26) ===== */
+  .dkz-btn {
+    position: relative;
+    overflow: hidden;
+    padding: 14px 32px;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: var(--radius-md);
+    background: rgba(18,18,24,0.6);
+    backdrop-filter: blur(20px);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow:
+      0 4px 24px rgba(0,0,0,0.3),
+      inset 0 1px 0 rgba(255,255,255,0.06),
+      inset 0 0 20px transparent;
+  }
+  .dkz-btn:hover {
+    transform: translateY(-2px);
+    border-color: rgba(250,30,78,0.3);
+    box-shadow:
+      0 8px 32px rgba(250,30,78,0.15),
+      inset 0 1px 0 rgba(255,255,255,0.08),
+      inset 0 0 30px rgba(250,30,78,0.08);
+  }
+  .dkz-btn:active {
+    transform: translateY(0px) scale(0.98);
+  }
+  .dkz-btn--primary {
+    background: rgba(250,30,78,0.15);
+    border-color: rgba(250,30,78,0.25);
+    box-shadow: 0 0 20px rgba(250,30,78,0.25);
+  }
+  .dkz-btn--primary:hover {
+    background: rgba(250,30,78,0.22);
+    box-shadow: 0 0 30px rgba(250,30,78,0.45);
+  }
+  .dkz-btn--ghost {
+    background: transparent;
+    border-color: rgba(250,30,78,0.4);
+  }
+  .dkz-btn--ghost:hover {
+    background: rgba(250,30,78,0.12);
+    box-shadow: 0 0 15px rgba(250,30,78,0.2);
+  }
+
+  /* Tag-Komponente (Playbook) */
+  .dkz-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    padding: 2px 10px;
+    border-radius: 9999px;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+  .dkz-tag--red {
+    background: rgba(250,30,78,0.12);
+    color: #fa1e4e;
+  }
+  .dkz-tag--green {
+    background: rgba(0,255,136,0.12);
+    color: #00FF88;
+  }
+
+  /* RIPPLE */
+  .ripple-container {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    border-radius: inherit;
+    overflow: hidden;
+  }
+  .ripple-effect {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(250,30,78,0.25);
+    transform: scale(0);
+    animation: rippleAnim 0.6s ease-out forwards;
+    pointer-events: none;
+  }
+  @keyframes rippleAnim {
+    to { transform: scale(4); opacity: 0; }
+  }
+
+  .btn-hr svg {
+    width: 18px; height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 6px rgba(250,30,78,0.3));
+  }
+
+  /* ===== EXPLOSION BUTTON ===== */
+  .btn-explode {
+    background: rgba(255,59,92,0.1);
+    border-color: rgba(255,59,92,0.2);
+  }
+  .btn-explode:hover {
+    background: rgba(255,59,92,0.2);
+    border-color: rgba(255,59,92,0.4);
+    box-shadow: 0 8px 32px rgba(255,59,92,0.2);
+  }
+
+  /* ===== HAMBURGER MENU ===== */
+  .hamburger-btn {
+    position: fixed;
+    top: 20px; right: 24px;
+    z-index: 20;
+    width: 48px; height: 48px;
+    pointer-events: auto;
+    cursor: pointer;
+    background: rgba(18,18,24,0.5);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    opacity: 0;
+    animation: introFade 0.6s ease 2.6s forwards;
+  }
+  .hamburger-btn:hover {
+    background: rgba(250,30,78,0.15);
+    border-color: rgba(250,30,78,0.3);
+  }
+  .hamburger-btn svg {
+    width: 22px; height: 22px;
+    stroke: #e8e8ec;
+    stroke-width: 2;
+    stroke-linecap: round;
+    transition: all 0.4s ease;
+  }
+  .hamburger-btn.open svg {
+    stroke: #fa1e4e;
+    transform: rotate(90deg);
+  }
+
+  /* Panel */
+  .menu-panel {
+    position: fixed;
+    top: 0; right: -400px;
+    width: 360px; max-width: 85vw;
+    height: 100vh;
+    z-index: 15;
+    background: rgba(8,8,12,0.85);
+    backdrop-filter: blur(40px);
+    border-left: 1px solid rgba(255,255,255,0.05);
+    transition: right 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    padding: 80px 32px 32px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -20px 0 80px rgba(0,0,0,0.6);
+    pointer-events: auto;
+  }
+  .menu-panel.open {
+    right: 0;
+  }
+
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    color: #8a8a9a;
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    transition: all 0.25s ease;
+    border: 1px solid transparent;
+    margin-bottom: 4px;
+    cursor: pointer;
+  }
+  .menu-item:hover {
+    color: #e8e8ec;
+    background: rgba(250,30,78,0.06);
+    border-color: rgba(250,30,78,0.1);
+    transform: translateX(4px);
+  }
+  .menu-item svg {
+    width: 20px; height: 20px;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+  }
+  .menu-item .tag {
+    margin-left: auto;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(250,30,78,0.1);
+    color: #fa1e4e;
+    letter-spacing: 1px;
+    font-weight: 600;
+  }
+  .menu-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    margin: 12px 0;
+  }
+  .menu-footer {
+    margin-top: auto;
+    font-size: 11px;
+    color: rgba(255,255,255,0.1);
+    letter-spacing: 2px;
+    text-align: center;
+    padding: 20px 0;
+  }
+
+  /* ===== EXPLOSION KONFETTI ===== */
+  .confetti-piece {
+    position: fixed;
+    width: 6px; height: 6px;
+    border-radius: 2px;
+    z-index: 8;
+    pointer-events: none;
+  }
+
+  /* ===== AKZENT-LINIE ===== */
+  .accent-line-hr {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin: 16px 0 4px;
+    opacity: 0;
+    animation: introFade 0.8s ease 1.2s forwards;
+    pointer-events: none;
+  }
+  .accent-line-hr .line {
+    width: 80px; height: 2px;
+    background: linear-gradient(90deg, transparent, #fa1e4e, transparent);
+    border-radius: 1px;
+  }
+  .accent-line-hr .dot {
+    width: 6px; height: 6px;
+    background: #fa1e4e;
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(250,30,78,0.4);
+    animation: dotPulse 2.5s ease-in-out infinite;
+  }
+  @keyframes dotPulse {
+    0%,100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.6); opacity: 1; }
+  }
+
+  /* ===== STATUS BAR ===== */
+  .status-hr {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+    opacity: 0;
+    animation: introFade 0.8s ease 2.0s forwards;
+    pointer-events: none;
+  }
+  .status-hr .bar {
+    width: 120px; height: 3px;
+    background: rgba(0,255,136,0.1);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .status-hr .bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00ff88, #00ff88);
+    animation: barScan 2.5s ease-in-out infinite;
+    width: 100%;
+    border-radius: 2px;
+  }
+  @keyframes barScan {
+    0% { width: 0%; opacity: 0.3; }
+    50% { width: 100%; opacity: 1; }
+    100% { width: 0%; opacity: 0.3; }
+  }
+  .status-hr .label {
+    font-size: 11px;
+    color: #00ff88;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  /* ===== HEXAGON CANVAS (zweites Canvas) ===== */
+  #hexCanvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0;
+    animation: introHex 2s ease 0.3s forwards;
+  }
+  @keyframes introHex {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* ===== CORNER DOTS ===== */
+  .corner-dot {
+    position: fixed;
+    width: 10px; height: 10px;
+    background: #fa1e4e;
+    border-radius: 50%;
+    z-index: 3;
+    box-shadow: 0 0 24px rgba(250,30,78,0.3);
+    opacity: 0;
+    animation: introFade 0.6s ease 1.6s forwards;
+  }
+  .corner-dot:nth-child(1) { top: 36px; left: 36px; }
+  .corner-dot:nth-child(2) { top: 36px; right: 76px; }
+  .corner-dot:nth-child(3) { bottom: 36px; left: 36px; }
+  .corner-dot:nth-child(4) { bottom: 36px; right: 76px; }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 600px) {
+    .button-row { flex-direction: column; align-items: center; gap: 12px; }
+    .btn-hr { width: 100%; justify-content: center; }
+    .menu-panel { width: 100vw; max-width: 100vw; }
+    .status-hr .bar { width: 60px; }
+    .accent-line-hr .line { width: 40px; }
+  }
+</style>
+</head>
+<body data-dkz-module="hyperreal-demo" data-dkz-appid="DKZ-HR-001" data-dkz-version="1.0.0" data-dkz-title="Hyperreal UI" data-dkz-icon="✨" data-dkz-separable="true">
+
+<!-- Canvas 1: Partikel -->
+<canvas id="mainCanvas"></canvas>
+
+<!-- Canvas 2: Hexagons -->
+<canvas id="hexCanvas"></canvas>
+
+<!-- Standby Overlay -->
+<div id="standbyOverlay">
+  <div id="standbyMarquee"></div>
+</div>
+
+<!-- Corner Dots -->
+<div class="corner-dot"></div>
+<div class="corner-dot"></div>
+<div class="corner-dot"></div>
+<div class="corner-dot"></div>
+
+<!-- 8K Badge -->
+<div class="badge-8k">✦ 8K HYPERREAL</div>
+
+<!-- Hamburger -->
+<div class="hamburger-btn" id="hamburgerBtn" onclick="toggleMenu()" aria-label="Menü">
+  <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</div>
+
+<!-- Menu Panel -->
+<div class="menu-panel" id="menuPanel">
+  <div class="menu-item"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Dashboard <span class="tag">ACTIVE</span></div>
+  <div class="menu-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> History</div>
+  <div class="menu-item"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Analytics</div>
+  <div class="menu-item"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Security</div>
+  <div class="menu-divider"></div>
+  <div class="menu-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Settings</div>
+  <div class="menu-footer">DkZ™ HYPERREAL v1.0 ✦ 8K</div>
+</div>
+
+<!-- Overlay Content -->
+<div class="overlay">
+  <div class="accent-line-hr">
+    <div class="line"></div>
+    <div class="dot"></div>
+    <div class="line"></div>
+  </div>
+
+  <div class="nanobot-text" id="nanobotText">
+    <span style="font-size:clamp(80px,18vw,200px);font-weight:900;letter-spacing:-4px;line-height:1.1;display:inline-block;" id="dkzLogoText">DkZ</span>
+  </div>
+
+  <div class="claim-hr">DEVKiTZ<sup>™</sup></div>
+  <div class="tagline-hr">KI-ENTWICKLER-ÖKOSYSTEM</div>
+
+  <div class="status-hr">
+    <div class="bar"><div class="bar-fill"></div></div>
+    <span class="label">● hyperreal</span>
+    <div class="bar"><div class="bar-fill"></div></div>
+  </div>
+
+  <div class="button-row">
+    <button class="dkz-btn dkz-btn--primary" onclick="triggerRipple(event); triggerExplosion(this)">
+      <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      8K ENTER
+      <span class="dkz-tag dkz-tag--green">● LIVE</span>
+    </button>
+    <button class="dkz-btn dkz-btn--ghost" onclick="triggerRipple(event)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      EXPLORE
+    </button>
+    <button class="dkz-btn dkz-btn--ghost" style="border-color:rgba(255,59,92,0.4)" onclick="triggerRipple(event); explodeEverything(this)">
+      <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      ✦ EXPLODE
+    </button>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// 1. MOUSE TRACKER
+// ================================================================
+const mouse = { x: -1000, y: -1000, px: -1000, py: -1000, active: false };
+document.addEventListener('mousemove', e => {
+  mouse.px = mouse.x;
+  mouse.py = mouse.y;
+  mouse.x = e.clientX;
+  mouse.y = e.clientY;
+  mouse.active = true;
+});
+document.addEventListener('mouseleave', () => { mouse.active = false; });
+
+// ================================================================
+// 2. MAIN CANVAS — PARTIKEL + NANOBOT
+// ================================================================
+const cvs = document.getElementById('mainCanvas');
+const ctx = cvs.getContext('2d');
+let W, H;
+
+function resize() {
+  W = cvs.width = window.innerWidth;
+  H = cvs.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// Partikel
+const particles = [];
+const PCOUNT = 160;
+for (let i = 0; i < PCOUNT; i++) {
+  particles.push({
+    x: Math.random() * W, y: Math.random() * H,
+    ox: 0, oy: 0,
+    r: Math.random() * 2.5 + 0.5,
+    dx: (Math.random() - 0.5) * 0.4,
+    dy: (Math.random() - 0.5) * 0.4,
+    life: Math.random() * 200,
+    maxLife: 200 + Math.random() * 300,
+    alpha: Math.random() * 0.4 + 0.1,
+    hue: Math.random() > 0.6 ? 250 : 348,
+    baseX: Math.random() * W,
+    baseY: Math.random() * H,
+    phase: Math.random() * Math.PI * 2
+  });
+}
+
+// Nanobot-Partikel (von Schrift)
+let nanobots = [];
+let nanobotActive = false;
+let nanobotReconstructTimer = null;
+let nanobotChars = [];
+
+// ===== NANOBOT SETUP =====
+function setupNanobot() {
+  const textEl = document.getElementById('dkzLogoText');
+  const text = textEl.textContent;
+  textEl.innerHTML = '';
+  nanobotChars = [];
+  for (let i = 0; i < text.length; i++) {
+    const span = document.createElement('span');
+    span.className = 'char';
+    span.textContent = text[i];
+    span.dataset.idx = i;
+    span.style.setProperty('--dx', '0');
+    span.style.setProperty('--dy', '0');
+    span.style.setProperty('--dr', '0');
+    textEl.appendChild(span);
+    nanobotChars.push(span);
+  }
+}
+setupNanobot();
+
+function disperseNanobot(mx, my) {
+  if (nanobotActive) return;
+  const chars = document.querySelectorAll('.char');
+  let hit = false;
+  chars.forEach((ch, i) => {
+    const rect = ch.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dist = Math.hypot(mx - cx, my - cy);
+    if (dist < 100) {
+      hit = true;
+      const angle = Math.atan2(cy - my, cx - mx);
+      const force = 80 + Math.random() * 60;
+      const dx = Math.cos(angle) * force + (Math.random() - 0.5) * 40;
+      const dy = Math.sin(angle) * force + (Math.random() - 0.5) * 40;
+      const dr = (Math.random() - 0.5) * 180;
+      ch.dataset.dx = dx;
+      ch.dataset.dy = dy;
+      ch.dataset.dr = dr;
+      ch.style.setProperty('--dx', dx.toFixed(1));
+      ch.style.setProperty('--dy', dy.toFixed(1));
+      ch.style.setProperty('--dr', dr.toFixed(1));
+      ch.className = 'char nanobot-disperse';
+    }
+  });
+  if (hit) {
+    nanobotActive = true;
+    clearTimeout(nanobotReconstructTimer);
+    nanobotReconstructTimer = setTimeout(reconstructNanobot, 1800);
+  }
+}
+
+function reconstructNanobot() {
+  const chars = document.querySelectorAll('.char');
+  chars.forEach(ch => {
+    ch.className = 'char nanobot-reconstruct';
+  });
+  setTimeout(() => {
+    chars.forEach(ch => { ch.className = 'char'; });
+    nanobotActive = false;
+  }, 900);
+}
+
+// Standby
+let standbyTimer = null;
+let standbyActive = false;
+const standbyEl = document.getElementById('standbyOverlay');
+const marqueeEl = document.getElementById('standbyMarquee');
+
+const standbyInfos = [
+  "⠿ DkZ HYPERREAL v1.0  ⠿  SYSTEM: ONLINE  ⠿  MODULE: 89+  ⠿  8K RENDER: ACTIVE  ⠿  STATUS:  ●  ALL SYSTEMS NOMINAL",
+  "⠿ LAST COMMIT: feat(hyperreal): 8K animation system  ⠿  FRAMERATE: 60 FPS  ⠿  PARTICLES: 160 ⠿  NANOBOT: READY",
+  "⠿ DEVKiTZ ECOSYSTEM  ⠿  26 WORKFLOWS  ⠿  19 SKILLS  ⠿  57 WORKFLOWS  ⠿  344 PROMPT TEMPLATES  ⠿  ICEBERG: ACTIVE",
+  "⠿ HOST: BAZE²  ⠿  2026-05-10  ⠿  DkZ DESIGN SYSTEM v2  ⠿  ONTHERUN MCP: 34+ TOOLS"
+];
+
+function startStandby() {
+  if (standbyActive) return;
+  standbyActive = true;
+  standbyEl.classList.add('active');
+  let infoIdx = 0;
+  let pos = window.innerWidth;
+  marqueeEl.textContent = '   ' + standbyInfos[infoIdx] + '   ';
+  marqueeEl.style.left = pos + 'px';
+  marqueeEl.style.transform = 'translateY(-50%)';
+  marqueeEl.style.top = '50%';
+
+  function animateMarquee() {
+    if (!standbyActive) return;
+    pos -= 1.2;
+    marqueeEl.style.left = pos + 'px';
+    if (pos < -marqueeEl.offsetWidth) {
+      infoIdx = (infoIdx + 1) % standbyInfos.length;
+      marqueeEl.textContent = '   ' + standbyInfos[infoIdx] + '   ';
+      pos = window.innerWidth + 50;
+    }
+    requestAnimationFrame(animateMarquee);
+  }
+  animateMarquee();
+}
+
+function stopStandby() {
+  standbyActive = false;
+  standbyEl.classList.remove('active');
+}
+
+function resetStandbyTimer() {
+  clearTimeout(standbyTimer);
+  if (standbyActive) stopStandby();
+  standbyTimer = setTimeout(startStandby, 4000);
+}
+resetStandbyTimer();
+
+document.addEventListener('mousemove', resetStandbyTimer);
+document.addEventListener('click', resetStandbyTimer);
+document.addEventListener('keydown', resetStandbyTimer);
+
+// ===== NANOBOT + STANDBY TRIGGER =====
+document.addEventListener('mousemove', e => {
+  disperseNanobot(e.clientX, e.clientY);
+});
+
+// ===== MAIN LOOP =====
+let time = 0;
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  time += 0.008;
+
+  // Radialer Glow
+  const gx = W/2 + Math.sin(time * 0.4) * 80;
+  const gy = H/2 + Math.cos(time * 0.3) * 50;
+  const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, 500);
+  grad.addColorStop(0, 'rgba(250,30,78,0.035)');
+  grad.addColorStop(0.5, 'rgba(59,130,246,0.015)');
+  grad.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Partikel
+  const mRadius = 120;
+  for (const p of particles) {
+    // Floaten
+    p.x += p.dx + Math.sin(time * 0.5 + p.phase) * 0.08;
+    p.y += p.dy + Math.cos(time * 0.4 + p.phase) * 0.08;
+    p.life++;
+
+    // Wrap
+    if (p.x < -20) p.x = W + 20;
+    if (p.x > W + 20) p.x = -20;
+    if (p.y < -20) p.y = H + 20;
+    if (p.y > H + 20) p.y = -20;
+
+    // Maus-Interaktion
+    const dmx = p.x - mouse.x;
+    const dmy = p.y - mouse.y;
+    const dmDist = Math.hypot(dmx, dmy);
+
+    if (dmDist < mRadius && mouse.active) {
+      const force = (mRadius - dmDist) / mRadius;
+      const angle = Math.atan2(dmy, dmx);
+      const repel = 2.5;
+      p.x += Math.cos(angle) * force * repel;
+      p.y += Math.sin(angle) * force * repel;
+      // Glow bei Annäherung
+      const glowR = p.r * (1 + force * 3);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, glowR * 4, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(250,30,78,${0.08 * force})`;
+      ctx.fill();
+    }
+
+    // Zeichnen
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+
+    const lifeAlpha = p.life < 20 ? p.life / 20 * p.alpha :
+                      p.life > p.maxLife - 20 ? (p.maxLife - p.life) / 20 * p.alpha :
+                      p.alpha;
+
+    const nearby = dmDist < mRadius && mouse.active ? 1.5 : 1;
+    const col = p.hue === 348 ?
+      `rgba(250,30,78,${lifeAlpha * nearby})` :
+      `rgba(120,80,255,${lifeAlpha * nearby * 0.8})`;
+
+    ctx.fillStyle = col;
+    ctx.fill();
+
+    // Reset life
+    if (p.life > p.maxLife) { p.life = 0; p.maxLife = 200 + Math.random() * 300; }
+  }
+
+  // Verbindungslinien
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j += 3) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 100) {
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.strokeStyle = `rgba(250,30,78,${0.025 * (1 - dist / 100)})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+  }
+
+  requestAnimationFrame(draw);
+}
+draw();
+
+// ================================================================
+// 3. HEXAGON CANVAS — MATRIX WABEN
+// ================================================================
+const hcvs = document.getElementById('hexCanvas');
+const hctx = hcvs.getContext('2d');
+let hW, hH;
+
+function resizeHex() {
+  hW = hcvs.width = window.innerWidth;
+  hH = hcvs.height = window.innerHeight;
+  drawHexagons();
+}
+resizeHex();
+window.addEventListener('resize', resizeHex);
+
+function drawHexagons() {
+  hctx.clearRect(0, 0, hW, hH);
+
+  const size = 45;
+  const rows = Math.ceil(hH / (size * 1.5)) + 2;
+  const cols = Math.ceil(hW / (size * 1.75)) + 2;
+  const cx = hW / 2, cy = hH / 2;
+  const maxDist = Math.hypot(hW, hH) / 2;
+
+  for (let row = -1; row < rows; row++) {
+    for (let col = -1; col < cols; col++) {
+      const offsetX = (row % 2 === 0) ? 0 : size * 0.9;
+      const x = col * size * 1.75 + offsetX;
+      const y = row * size * 1.5;
+
+      // Distanz zum Zentrum
+      const dist = Math.hypot(x - cx, y - cy) / maxDist;
+
+      // Nur zeichnen wenn nicht zu nah am Zentrum (von Ecken zuspitzend)
+      if (dist < 0.15) continue;
+
+      // Opacity: von Ecke (1.0) zu Mitte (0.0)
+      const alpha = Math.min(1, Math.pow(Math.max(0, (dist - 0.15) / 0.7), 1.4)) * 0.15;
+
+      // Seitliche Verzerrung für Tiefe
+      const skewX = (x - cx) / cx * 0.08;
+      const skewY = (y - cy) / cy * 0.05;
+
+      hctx.save();
+      hctx.translate(x, y);
+      hctx.transform(1, skewY, skewX, 1, 0, 0);
+
+      // Hexagon zeichnen
+      hctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI / 3) * i - Math.PI / 6;
+        const px = size * Math.cos(angle);
+        const py = size * Math.sin(angle);
+        i === 0 ? hctx.moveTo(px, py) : hctx.lineTo(px, py);
+      }
+      hctx.closePath();
+      hctx.strokeStyle = `rgba(250,30,78,${alpha})`;
+      hctx.lineWidth = 0.8;
+      hctx.stroke();
+
+      // Leichter Fill
+      hctx.fillStyle = `rgba(250,30,78,${alpha * 0.08})`;
+      hctx.fill();
+
+      hctx.restore();
+    }
+  }
+}
+
+// ================================================================
+// 4. BUTTON RIPPLE
+// ================================================================
+function triggerRipple(e) {
+  const btn = e.currentTarget;
+  const rect = btn.getBoundingClientRect();
+  const ripple = document.createElement('span');
+  ripple.className = 'ripple-effect';
+  const size = Math.max(rect.width, rect.height);
+  ripple.style.width = ripple.style.height = size + 'px';
+  ripple.style.left = (e.clientX - rect.left - size/2) + 'px';
+  ripple.style.top = (e.clientY - rect.top - size/2) + 'px';
+  const container = btn.querySelector('.ripple-container') || (() => {
+    const c = document.createElement('span');
+    c.className = 'ripple-container';
+    btn.appendChild(c);
+    return c;
+  })();
+  container.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 700);
+}
+
+// ================================================================
+// 5. EXPLOSION — 8K KONFETTI
+// ================================================================
+function explodeEverything(btn) {
+  const rect = btn.getBoundingClientRect();
+  const ex = rect.left + rect.width / 2;
+  const ey = rect.top + rect.height / 2;
+
+  for (let i = 0; i < 80; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 200 + Math.random() * 400;
+    const dx = Math.cos(angle) * speed;
+    const dy = Math.sin(angle) * speed - 150;
+    const size = 3 + Math.random() * 8;
+    const colors = ['#fa1e4e', '#ff6b8a', '#00ff88', '#3b82f6', '#ffb800', '#a855f7'];
+    piece.style.width = size + 'px';
+    piece.style.height = size + 'px';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    piece.style.left = ex + 'px';
+    piece.style.top = ey + 'px';
+    piece.style.boxShadow = `0 0 6px ${piece.style.background}`;
+    document.body.appendChild(piece);
+
+    const rotation = (Math.random() - 0.5) * 720;
+    piece.animate([
+      { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
+      { transform: `translate(${dx}px,${dy}px) rotate(${rotation}deg)`, opacity: 0 }
+    ], { duration: 800 + Math.random() * 600, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'forwards' })
+    .onfinish = () => piece.remove();
+  }
+
+  // Button selbst kurz aufleuchten
+  btn.style.transform = 'scale(1.1)';
+  btn.style.boxShadow = '0 0 60px rgba(250,30,78,0.6), 0 0 120px rgba(250,30,78,0.3)';
+  setTimeout(() => {
+    btn.style.transform = '';
+    btn.style.boxShadow = '';
+  }, 400);
+}
+
+// ================================================================
+// 6. HAMBURGER MENU
+// ================================================================
+let menuOpen = false;
+function toggleMenu() {
+  menuOpen = !menuOpen;
+  document.getElementById('menuPanel').classList.toggle('open');
+  document.getElementById('hamburgerBtn').classList.toggle('open');
+}
+
+// ================================================================
+// 7. WINDOW FIX
+// ================================================================
+window.addEventListener('resize', () => {
+  resize();
+  resizeHex();
+});
+</script>
+</body>
+</html>

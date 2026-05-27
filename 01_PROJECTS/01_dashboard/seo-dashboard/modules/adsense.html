@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #1a1a1e;
+            --border2: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --cyan: #00FFD5;
+            --purple: #ec4899;
+            --yellow: #FFB800;
+            --orange: #ff8844;
+            --red: #fa1e4e;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            padding: 20px;
+            overflow-y: auto
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg)
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 3px
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            max-width: 1200px;
+            margin: 0 auto
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px
+        }
+
+        .card-full {
+            grid-column: 1/-1
+        }
+
+        .card h3 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .link-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            text-decoration: none;
+            color: var(--text);
+            transition: all .2s
+        }
+
+        .link-card:hover {
+            border-color: var(--blue);
+            transform: translateX(4px)
+        }
+
+        .link-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0
+        }
+
+        .link-title {
+            font-weight: 600;
+            font-size: 12px
+        }
+
+        .link-desc {
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 2px
+        }
+
+        .step-list {
+            counter-reset: steps
+        }
+
+        .step-item {
+            counter-increment: steps;
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 12px
+        }
+
+        .step-item:last-child {
+            border: none
+        }
+
+        .step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--red), var(--purple));
+            color: #fff;
+            font-weight: 800;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0
+        }
+
+        .step-text {
+            line-height: 1.6;
+            color: var(--muted)
+        }
+
+        .step-text strong {
+            color: var(--text)
+        }
+
+        .config-section {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 10px
+        }
+
+        .config-label {
+            font-size: 10px;
+            color: var(--muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 12px
+        }
+
+        .toggle-row:last-child {
+            border: none
+        }
+
+        .toggle {
+            width: 36px;
+            height: 20px;
+            border-radius: 10px;
+            background: var(--border2);
+            cursor: pointer;
+            position: relative;
+            transition: background .2s
+        }
+
+        .toggle.on {
+            background: var(--green)
+        }
+
+        .toggle::after {
+            content: '';
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #fff;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: left .2s
+        }
+
+        .toggle.on::after {
+            left: 18px
+        }
+
+        textarea,
+        input[type=text] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card2);
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 11px;
+            outline: none;
+            resize: vertical
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-family: var(--font);
+            font-weight: 700;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .btn:hover {
+            transform: translateY(-1px)
+        }
+
+        .btn-green {
+            background: var(--green);
+            color: #000
+        }
+
+        .btn-blue {
+            background: var(--blue);
+            color: #fff
+        }
+
+        .revenue-bar {
+            height: 24px;
+            border-radius: 6px;
+            background: var(--card2);
+            overflow: hidden;
+            margin: 6px 0
+        }
+
+        .revenue-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 1s;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            font-size: 10px;
+            font-weight: 700
+        }
+
+        @media(max-width:768px) {
+            .grid {
+                grid-template-columns: 1fr
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="grid">
+        <!-- QUICK LINKS -->
+        <div class="card">
+            <h3>🔗 AdSense Quick Links</h3>
+            <a class="link-card" href="https://www.google.com/adsense" target="_blank">
+                <div class="link-icon" style="background:rgba(0,255,136,.1);color:var(--green)">💰</div>
+                <div>
+                    <div class="link-title">Google AdSense Dashboard</div>
+                    <div class="link-desc">Einnahmen, Reports, Zahlungen</div>
+                </div>
+            </a>
+            <a class="link-card" href="https://developers.google.com/adsense/management" target="_blank">
+                <div class="link-icon" style="background:rgba(68,136,255,.1);color:var(--blue)">⚙️</div>
+                <div>
+                    <div class="link-title">AdSense Management API</div>
+                    <div class="link-desc">Automatisierung & Programmierung</div>
+                </div>
+            </a>
+            <a class="link-card" href="https://support.google.com/adsense" target="_blank">
+                <div class="link-icon" style="background:rgba(153,68,255,.1);color:var(--purple)">📚</div>
+                <div>
+                    <div class="link-title">AdSense Help Center</div>
+                    <div class="link-desc">Richtlinien, FAQs, Troubleshooting</div>
+                </div>
+            </a>
+            <a class="link-card" href="https://www.google.com/adsense/new/u/0/pub-xxx/payments" target="_blank">
+                <div class="link-icon" style="background:rgba(255,204,0,.1);color:var(--yellow)">🏦</div>
+                <div>
+                    <div class="link-title">Zahlungseinstellungen</div>
+                    <div class="link-desc">Konto, Schwellenwert, Methode</div>
+                </div>
+            </a>
+        </div>
+
+        <!-- SETUP GUIDE -->
+        <div class="card">
+            <h3>📋 AdSense Setup – Schritt für Schritt</h3>
+            <div class="step-list">
+                <div class="step-item">
+                    <div class="step-num">1</div>
+                    <div class="step-text"><strong>Google AdSense Account erstellen</strong><br>Gehe zu <a
+                            href="https://www.google.com/adsense" target="_blank"
+                            style="color:var(--cyan)">adsense.google.com</a> und melde dich mit deinem Google-Konto an.
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">2</div>
+                    <div class="step-text"><strong>Website hinzufügen</strong><br>Gib deine Domain ein und bestätige den
+                        Besitz via DNS-TXT Record oder Meta-Tag.</div>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">3</div>
+                    <div class="step-text"><strong>AdSense Code einbauen</strong><br>Füge den Auto-Ads Script-Tag in den
+                        &lt;head&gt; Bereich deiner Website ein.</div>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">4</div>
+                    <div class="step-text"><strong>ads.txt erstellen</strong><br>Lade die ads.txt Datei in das
+                        Root-Verzeichnis hoch. Generator unten nutzen!</div>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">5</div>
+                    <div class="step-text"><strong>Review abwarten</strong><br>Google prüft deine Website (1-14 Tage).
+                        Min. 30 Seiten mit einzigartigem Content empfohlen.</div>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">6</div>
+                    <div class="step-text"><strong>Anzeigen optimieren</strong><br>Auto Ads aktivieren oder manuelle
+                        Placements konfigurieren.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AD PLACEMENT CONFIG -->
+        <div class="card">
+            <h3>🎛️ Ad Placement Konfigurator</h3>
+            <div class="config-section">
+                <div class="config-label">Auto Ads Einstellungen</div>
+                <div class="toggle-row"><span>Auto Ads aktivieren</span>
+                    <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+                </div>
+                <div class="toggle-row"><span>In-Page Ads</span>
+                    <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+                </div>
+                <div class="toggle-row"><span>Anchor Ads (Mobile)</span>
+                    <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+                </div>
+                <div class="toggle-row"><span>Vignette Ads</span>
+                    <div class="toggle" onclick="this.classList.toggle('on')"></div>
+                </div>
+                <div class="toggle-row"><span>Side Rail Ads (Desktop)</span>
+                    <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+                </div>
+            </div>
+            <div class="config-section">
+                <div class="config-label">Manuelle Placements</div>
+                <div class="toggle-row"><span>Header Banner (728x90)</span>
+                    <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+                </div>
+                <div class="toggle-row"><span>Sidebar (300x250)</span>
+                    <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+                </div>
+                <div class="toggle-row"><span>In-Feed Native</span>
+                    <div class="toggle" onclick="this.classList.toggle('on')"></div>
+                </div>
+                <div class="toggle-row"><span>In-Article</span>
+                    <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+                </div>
+                <div class="toggle-row"><span>Footer Banner</span>
+                    <div class="toggle" onclick="this.classList.toggle('on')"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- REVENUE TRACKER -->
+        <div class="card">
+            <h3>💰 Revenue Tracker (Simulation)</h3>
+            <div style="margin-bottom:12px">
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+                    <span>Heute</span><span style="color:var(--green);font-weight:700">€4.82</span></div>
+                <div class="revenue-bar">
+                    <div class="revenue-fill"
+                        style="width:48%;background:linear-gradient(90deg,var(--green),var(--cyan))">48%</div>
+                </div>
+            </div>
+            <div style="margin-bottom:12px">
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span>Diese
+                        Woche</span><span style="color:var(--blue);font-weight:700">€31.50</span></div>
+                <div class="revenue-bar">
+                    <div class="revenue-fill"
+                        style="width:63%;background:linear-gradient(90deg,var(--blue),var(--purple))">63%</div>
+                </div>
+            </div>
+            <div style="margin-bottom:12px">
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span>Dieser
+                        Monat</span><span style="color:var(--purple);font-weight:700">€127.40</span></div>
+                <div class="revenue-bar">
+                    <div class="revenue-fill"
+                        style="width:42%;background:linear-gradient(90deg,var(--purple),var(--pink, #ff44aa))">42%</div>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:14px;font-size:10px;color:var(--muted)">
+                <div style="flex:1;text-align:center;padding:8px;background:var(--card2);border-radius:8px">
+                    <div style="font-size:18px;font-weight:800;color:var(--yellow)">1.2K</div>Impressions
+                </div>
+                <div style="flex:1;text-align:center;padding:8px;background:var(--card2);border-radius:8px">
+                    <div style="font-size:18px;font-weight:800;color:var(--cyan)">3.4%</div>CTR
+                </div>
+                <div style="flex:1;text-align:center;padding:8px;background:var(--card2);border-radius:8px">
+                    <div style="font-size:18px;font-weight:800;color:var(--green)">€0.89</div>CPC
+                </div>
+            </div>
+        </div>
+
+        <!-- ADS.TXT GENERATOR -->
+        <div class="card card-full">
+            <h3>📄 ads.txt Generator</h3>
+            <div style="display:flex;gap:10px;margin-bottom:10px">
+                <input type="text" id="pubId" placeholder="Publisher ID (z.B. pub-1234567890)" style="flex:1">
+                <button class="btn btn-green" onclick="generateAdsTxt()">Generieren</button>
+                <button class="btn btn-blue" onclick="copyAdsTxt()">📋 Kopieren</button>
+            </div>
+            <textarea id="adsTxtOutput" rows="4" readonly placeholder="ads.txt wird hier generiert..."></textarea>
+        </div>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        function generateAdsTxt() {
+            const pub = document.getElementById('pubId').value || 'pub-XXXXXXXXXXXXXXXX';
+            document.getElementById('adsTxtOutput').value = `google.com, ${pub}, DIRECT, f08c47fec0942fa0\n# ads.txt für ${window.location.hostname}\n# Generiert am ${new Date().toLocaleDateString('de-DE')}\n# Weitere Netzwerke hier hinzufügen`;
+        }
+        function copyAdsTxt() {
+            const t = document.getElementById('adsTxtOutput');
+            t.select(); navigator.clipboard.writeText(t.value);
+            t.style.borderColor = 'var(--green)'; setTimeout(() => t.style.borderColor = '', 1500);
+        }
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

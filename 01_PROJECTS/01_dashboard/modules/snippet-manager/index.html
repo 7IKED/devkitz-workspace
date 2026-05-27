@@ -1,0 +1,496 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>&#9881; Snippet Manager &#8212; DkZâ„¢</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #fa1e4e;
+            --accent: #fa1e4e;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(14, 14, 22, .72);
+            --blur: blur(24px)
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .08);
+            border-radius: 6px
+        }
+
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .06;
+            animation: bf 20s ease-in-out infinite
+        }
+
+        .bg-blob:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: var(--blue);
+            top: -10%;
+            left: 10%
+        }
+
+        .bg-blob:nth-child(2) {
+            width: 350px;
+            height: 350px;
+            background: var(--accent);
+            bottom: 10%;
+            right: 10%;
+            animation-delay: -8s
+        }
+
+        @keyframes bf {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(30px, -40px) scale(1.1)
+            }
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        .header {
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .back-btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: none;
+            font-family: var(--font)
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--blue), var(--green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .hdr-right {
+            margin-left: auto;
+            display: flex;
+            gap: 8px
+        }
+
+        .ver {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono)
+        }
+
+        .hdr-btn {
+            padding: 7px 13px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            cursor: pointer
+        }
+
+        .content {
+            padding: 20px 28px;
+            flex: 1;
+            display: flex;
+            gap: 16px
+        }
+
+        .sidebar {
+            width: 260px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px
+        }
+
+        .search {
+            padding: 10px 14px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            outline: none;
+            width: 100%
+        }
+
+        .search:focus {
+            border-color: var(--accent)
+        }
+
+        .lang-filters {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap
+        }
+
+        .lang-btn {
+            padding: 4px 10px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 9px;
+            cursor: pointer;
+            font-family: var(--font)
+        }
+
+        .lang-btn:hover {
+            border-color: var(--accent);
+            color: var(--text)
+        }
+
+        .lang-btn.active {
+            background: rgba(250, 30, 78, .1);
+            border-color: var(--accent);
+            color: var(--accent)
+        }
+
+        .snippet-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            overflow-y: auto
+        }
+
+        .snippet-item {
+            padding: 10px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .snippet-item:hover,
+        .snippet-item.active {
+            border-color: var(--accent)
+        }
+
+        .snippet-item .si-title {
+            font-size: 12px;
+            font-weight: 700
+        }
+
+        .snippet-item .si-lang {
+            font-size: 9px;
+            color: var(--green);
+            font-family: var(--mono)
+        }
+
+        .snippet-item .si-desc {
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 2px
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px
+        }
+
+        .card h3 {
+            font-size: 13px;
+            font-weight: 800;
+            margin-bottom: 12px
+        }
+
+        .form-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px
+        }
+
+        .input {
+            padding: 8px 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            outline: none;
+            flex: 1
+        }
+
+        .input:focus {
+            border-color: var(--accent)
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 12px;
+            background: #0a0a0c;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--green);
+            font-family: var(--mono);
+            font-size: 12px;
+            resize: vertical;
+            outline: none;
+            line-height: 1.6;
+            tab-size: 2
+        }
+
+        .btns {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: #fff;
+            font-family: var(--font);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        .btn.secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text)
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            background: rgba(85, 172, 238, .1);
+            border: 1px solid rgba(85, 172, 238, .3);
+            border-radius: 10px;
+            font-size: 9px;
+            color: var(--blue);
+            margin-right: 4px
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: var(--green);
+            color: #000;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 10px;
+            z-index: 300;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all .3s;
+            pointer-events: none
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0)
+        }
+
+        @media(max-width:768px) {
+            .content {
+                flex-direction: column
+            }
+
+            .sidebar {
+                width: 100%
+            }
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="snippet-manager" data-dkz-appid="DKZ-MOD-SNI" data-dkz-version="v0.01" data-dkz-title="Snippet Manager" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+    </div>
+    <div class="app">
+        <div class="header"><a href="../../hub/index.html" class="back-btn">? Hub</a>
+            <h1>&#9881; Snippet Manager</h1>
+            <div class="hdr-right"><button class="hdr-btn" onclick="exportAll()">&#11015; Export</button><button
+                    class="hdr-btn" onclick="importAll()">&#9881; Import</button><span class="ver">v0.01</span></div>
+        </div>
+        <div class="content">
+            <div class="sidebar">
+                <input class="search" id="search" placeholder="Suche..." oninput="renderList()">
+                <div class="lang-filters" id="langFilters"></div>
+                <button class="btn" onclick="newSnippet()" style="width:100%">+ Neues Snippet</button>
+                <div class="snippet-list" id="snippetList"></div>
+            </div>
+            <div class="main">
+                <div class="card" id="editor">
+                    <div class="form-row"><input class="input" id="sTitle" placeholder="Titel"><select class="input"
+                            id="sLang" style="max-width:120px">
+                            <option>javascript</option>
+                            <option>python</option>
+                            <option>html</option>
+                            <option>css</option>
+                            <option>bash</option>
+                            <option>sql</option>
+                            <option>json</option>
+                            <option>typescript</option>
+                            <option>php</option>
+                            <option>go</option>
+                            <option>rust</option>
+                            <option>other</option>
+                        </select></div>
+                    <div class="form-row"><input class="input" id="sDesc" placeholder="Beschreibung"><input
+                            class="input" id="sTags" placeholder="Tags (kommasepariert)" style="max-width:200px"></div>
+                    <textarea id="sCode" placeholder="// Code hier einfgen..."></textarea>
+                    <div class="btns" style="margin-top:8px">
+                        <button class="btn" onclick="saveSnippet()">&#128190; Speichern</button>
+                        <button class="btn secondary"
+                            onclick="navigator.clipboard.writeText(document.getElementById('sCode').value);showToast('&#128187; Code kopiert!')">&#128203;
+                            Kopieren</button>
+                        <button class="btn secondary" onclick="deleteSnippet()">&#128465; Loeschen</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+        let snippets = JSON.parse(localStorage.getItem('dkz-snippets') || '[]'); let activeId = null;
+        const defaultSnippets = [
+            { id: 1, title: 'Fetch API', lang: 'javascript', desc: 'Standard Fetch Request', tags: ['api', 'fetch'], code: 'const res = await fetch(url, {\n  method: "POST",\n  headers: {"Content-Type": "application/json"},\n  body: JSON.stringify(data)\n});\nconst json = await res.json();' },
+            { id: 2, title: 'CSS Grid Layout', lang: 'css', desc: 'Responsive Grid', tags: ['grid', 'layout'], code: '.grid {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));\n  gap: 16px;\n}' },
+            { id: 3, title: 'Python Decorator', lang: 'python', desc: 'Basic decorator pattern', tags: ['decorator', 'python'], code: 'def timer(func):\n    def wrapper(*args, **kwargs):\n        start = time.time()\n        result = func(*args, **kwargs)\n        print(f"{func.__name__}: {time.time()-start:.4f}s")\n        return result\n    return wrapper' }
+        ];
+        if (!snippets.length) { snippets = defaultSnippets; localStorage.setItem('dkz-snippets', JSON.stringify(snippets)) }
+        function renderList() {
+            const q = document.getElementById('search').value.toLowerCase(); const activeLangs = Array.from(document.querySelectorAll('.lang-btn.active')).map(b => b.textContent);
+            const filtered = snippets.filter(s => { const matchQ = !q || s.title.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q) || (s.tags || []).some(t => t.includes(q)); const matchL = !activeLangs.length || activeLangs.includes(s.lang); return matchQ && matchL });
+            document.getElementById('snippetList').innerHTML = filtered.map(s => `<div class="snippet-item ${s.id === activeId - 'active' : ''}" onclick="loadSnippet(${s.id})"><div class="si-title">${esc(s.title)}</div><div class="si-lang">${s.lang}</div><div class="si-desc">${esc(s.desc)}</div><div>${(s.tags || []).map(t => '<span class="tag">' + esc(t) + '</span>').join('')}</div></div>`).join('')
+        }
+        function renderLangs() { const langs = [...new Set(snippets.map(s => s.lang))]; document.getElementById('langFilters').innerHTML = langs.map(l => `<button class="lang-btn" onclick="this.classList.toggle('active');renderList()">${l}</button>`).join('') }
+        function loadSnippet(id) { activeId = id; const s = snippets.find(x => x.id === id); if (!s) return; document.getElementById('sTitle').value = s.title; document.getElementById('sLang').value = s.lang; document.getElementById('sDesc').value = s.desc; document.getElementById('sTags').value = (s.tags || []).join(', '); document.getElementById('sCode').value = s.code; renderList() }
+        function newSnippet() { activeId = null;['sTitle', 'sDesc', 'sTags', 'sCode'].forEach(id => document.getElementById(id).value = ''); document.getElementById('sTitle').focus() }
+        function saveSnippet() { const title = document.getElementById('sTitle').value.trim(); if (!title) return showToast('Titel fehlt!'); const data = { title, lang: document.getElementById('sLang').value, desc: document.getElementById('sDesc').value, tags: document.getElementById('sTags').value.split(',').map(t => t.trim()).filter(Boolean), code: document.getElementById('sCode').value }; if (activeId) { const idx = snippets.findIndex(s => s.id === activeId); if (idx >= 0) snippets[idx] = { ...snippets[idx], ...data } } else { data.id = Date.now(); snippets.unshift(data); activeId = data.id } localStorage.setItem('dkz-snippets', JSON.stringify(snippets)); renderList(); renderLangs(); showToast('Gespeichert!') }
+        function deleteSnippet() { if (!activeId || !confirm('Loeschen?')) return; snippets = snippets.filter(s => s.id !== activeId); activeId = null; localStorage.setItem('dkz-snippets', JSON.stringify(snippets)); newSnippet(); renderList(); renderLangs(); showToast('Gelscht!') }
+        function exportAll() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(snippets, null, 2)], { type: 'application/json' })); a.download = 'snippets.json'; a.click(); showToast('&#11015; Export!') }
+        function importAll() { const input = document.createElement('input'); input.type = 'file'; input.accept = '.json'; input.onchange = e => { const reader = new FileReader(); reader.onload = ev => { try { snippets = JSON.parse(ev.target.result); localStorage.setItem('dkz-snippets', JSON.stringify(snippets)); renderList(); renderLangs(); showToast('Importiert!') } catch (e) { showToast('? Fehler') } }; reader.readAsText(e.target.files[0]) }; input.click() }
+        function esc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;') }
+        function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500) }
+        renderList(); renderLangs(); if (snippets.length) loadSnippet(snippets[0].id);
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Snippet manager</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Code-Snippets speichern und organisieren.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Snippet manager</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Code-Snippets speichern und organisieren.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-snippet-manager-onboarded','1')}if(!localStorage.getItem('dkz-snippet-manager-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+
+<!-- &#8212; DEVKiTZ 2026 &#8212; All Rights Reserved -->
+</html>
+
+

@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v2.0.0_01">
+    <meta name="dkz-module" content="copilot-presentation">
+    <title>🤖 DkZ™ Copilot — Analyse · Tutorial · Blaupause</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root{--accent:#fa1e4e;--bg:#060608;--bg2:#0e0e12;--bg3:#1a1a20;--text:#e8e8ec;--muted:#8a8a9a;--border:rgba(255,255,255,.06);--green:#00ff88;--yellow:#ffb800;--red:#ff3b5c;--blue:#6366f1;--purple:#8b5cf6;--orange:#f97316;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;}
+        *{margin:0;padding:0;box-sizing:border-box;}
+        html{scroll-behavior:smooth;scroll-snap-type:y mandatory;}
+        body{font-family:var(--font);background:var(--bg);color:var(--text);overflow-x:hidden;}
+
+        /* === SLIDE SYSTEM === */
+        .slide{min-height:100vh;scroll-snap-align:start;position:relative;display:flex;flex-direction:column;justify-content:center;padding:60px 80px;overflow:hidden;}
+        .slide::before{content:'';position:absolute;inset:0;z-index:0;}
+
+        /* === Navigation === */
+        .nav{position:fixed;right:24px;top:50%;transform:translateY(-50%);z-index:1000;display:flex;flex-direction:column;gap:8px;}
+        .nav a{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.15);display:block;transition:all .3s;}
+        .nav a:hover,.nav a.active{background:var(--accent);transform:scale(1.3);}
+        .brand-corner{position:fixed;top:20px;left:24px;z-index:1000;font-size:11px;font-weight:800;color:var(--accent);letter-spacing:1px;}
+        .brand-corner span{color:var(--muted);font-weight:400;font-size:9px;}
+        .slide-num{position:fixed;bottom:20px;right:24px;z-index:1000;font-size:10px;color:var(--muted);font-family:var(--mono);}
+
+        /* === Background Effects === */
+        .mesh{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+        .mesh .blob{position:absolute;border-radius:50%;filter:blur(140px);opacity:.1;}
+        .blob-r{width:600px;height:600px;background:var(--accent);}
+        .blob-b{width:500px;height:500px;background:var(--blue);}
+        .blob-g{width:400px;height:400px;background:var(--green);}
+        .blob-p{width:500px;height:500px;background:var(--purple);}
+        .blob-o{width:500px;height:500px;background:var(--orange);}
+
+        /* === Typography === */
+        .content{position:relative;z-index:1;max-width:1200px;width:100%;}
+        .tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:12px;}
+        h1{font-size:clamp(2.5rem,5vw,4.5rem);font-weight:900;line-height:1.05;margin-bottom:16px;}
+        h1 .accent{color:var(--accent);}
+        h1 .gradient{background:linear-gradient(135deg,var(--accent),var(--orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+        h2{font-size:2rem;font-weight:800;margin-bottom:20px;}
+        h3{font-size:1.2rem;font-weight:700;margin-bottom:10px;}
+        .subtitle{font-size:1.1rem;color:var(--muted);line-height:1.6;max-width:640px;margin-bottom:32px;}
+        .small{font-size:.75rem;color:var(--muted);}
+
+        /* === Cards === */
+        .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-top:24px;}
+        .card{background:rgba(18,18,24,.85);border:1px solid var(--border);border-radius:16px;padding:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);transition:all .3s;}
+        .card:hover{border-color:rgba(250,30,78,.2);transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,.4);}
+        .card-icon{font-size:2rem;margin-bottom:12px;}
+        .card-title{font-size:.9rem;font-weight:800;margin-bottom:6px;}
+        .card-desc{font-size:.75rem;color:var(--muted);line-height:1.6;}
+
+        /* === Feature Rows === */
+        .feature-row{display:flex;gap:40px;align-items:center;margin-top:30px;}
+        .feature-visual{flex:1;min-width:400px;}
+        .feature-text{flex:1;}
+
+        /* === Fake UI Mockups (CSS) === */
+        .mockup{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+        .mockup-header{padding:10px 14px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;}
+        .mockup-dot{width:8px;height:8px;border-radius:50%;}
+        .mockup-body{padding:16px;}
+        .mockup-tab-bar{display:flex;border-bottom:1px solid var(--border);}
+        .mockup-tab{flex:1;padding:8px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);border-bottom:2px solid transparent;}
+        .mockup-tab.active{color:var(--blue);border-bottom-color:var(--blue);background:rgba(99,102,241,.06);}
+
+        /* === Architecture Diagram (CSS) === */
+        .arch-diagram{display:flex;flex-direction:column;gap:20px;padding:20px;}
+        .arch-layer{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;}
+        .arch-node{padding:10px 16px;border-radius:10px;font-size:11px;font-weight:700;text-align:center;min-width:100px;position:relative;}
+        .arch-node.primary{background:rgba(250,30,78,.1);border:1px solid rgba(250,30,78,.3);color:var(--accent);}
+        .arch-node.secondary{background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);color:var(--blue);}
+        .arch-node.tertiary{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.15);color:var(--green);}
+        .arch-node.warning{background:rgba(255,184,0,.06);border:1px solid rgba(255,184,0,.15);color:var(--yellow);}
+        .arch-connector{width:2px;height:20px;background:linear-gradient(to bottom,var(--accent),transparent);margin:0 auto;}
+        .arch-hline{height:2px;flex:1;max-width:60px;background:linear-gradient(to right,transparent,rgba(255,255,255,.1),transparent);}
+
+        /* === Ampel Matrix === */
+        .ampel-grid{display:grid;grid-template-columns:1.5fr repeat(5,.7fr);gap:2px;font-size:10px;margin-top:16px;}
+        .ampel-header{padding:8px;font-weight:700;text-align:center;color:var(--muted);text-transform:uppercase;font-size:9px;letter-spacing:1px;background:rgba(255,255,255,.02);}
+        .ampel-name{padding:8px 12px;font-weight:600;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.01);}
+        .ampel-cell{padding:8px;text-align:center;font-size:14px;background:rgba(255,255,255,.01);}
+
+        /* === Steps === */
+        .steps{counter-reset:step;margin-top:24px;}
+        .step{display:flex;gap:16px;margin-bottom:20px;padding:16px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:12px;transition:all .3s;}
+        .step:hover{border-color:rgba(250,30,78,.15);}
+        .step-num{counter-increment:step;width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--orange));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#000;flex-shrink:0;}
+        .step-num::before{content:counter(step);}
+        .step-content{flex:1;}
+        .step-title{font-size:.85rem;font-weight:700;margin-bottom:4px;}
+        .step-desc{font-size:.72rem;color:var(--muted);line-height:1.6;}
+
+        /* === Pricing === */
+        .price-bar{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:11px;}
+        .price-name{width:110px;font-weight:600;display:flex;align-items:center;gap:4px;}
+        .price-track{flex:1;height:8px;background:rgba(255,255,255,.04);border-radius:4px;overflow:hidden;}
+        .price-fill{height:100%;border-radius:4px;transition:width 1s ease;}
+        .price-val{width:60px;text-align:right;font-family:var(--mono);font-size:10px;color:var(--muted);}
+
+        /* === Hot Keys === */
+        kbd{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-family:var(--mono);font-size:10px;color:var(--muted);}
+
+        /* === Responsive === */
+        @media(max-width:900px){.slide{padding:30px 20px;}.feature-row{flex-direction:column;}.feature-visual{min-width:100%;}}
+
+        /* === Animation === */
+        @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+        .float{animation:float 4s ease-in-out infinite;}
+        .fade-up{animation:fadeUp .8s ease forwards;}
+
+        /* === Footer === */
+        .footer{padding:40px 80px;text-align:center;border-top:1px solid var(--border);font-size:11px;color:var(--muted);}
+        .footer strong{color:var(--accent);}
+    </style>
+</head>
+<body>
+
+<!-- Brand Corner -->
+<div class="brand-corner">DEVKiTZ™ <span>· Copilot Analyse 2026</span></div>
+
+<!-- Navigation Dots -->
+<nav class="nav" id="nav-dots"></nav>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- SLIDE 1: HERO -->
+<!-- ═══════════════════════════════════════ -->
+<section class="slide" id="s1">
+    <div class="mesh">
+        <div class="blob blob-r" style="top:-200px;right:-100px"></div>
+        <div class="blob blob-b" style="bottom:-200px;left:-100px"></div>
+    </div>
+    <div class="content">
+        <div class="tag">DEVKiTZ™ Ökosystem · Copilot v0.02.1</div>
+        <h1>🤖 DkZ™ <span class="gradient">Copilot</span></h1>
+        <p class="subtitle">Umfassende Analyse · Tutorial · Blaupause<br>18 LLM Provider · Iceberg Prompt Engine · Builder · API Control</p>
+        <div class="card-grid" style="max-width:800px">
+            <div class="card" style="border-left:3px solid var(--accent)">
+                <div class="card-icon">📊</div>
+                <div class="card-title">System-Analyse</div>
+                <div class="card-desc">Architektur, Provider-Matrix, Cost-Tracking, Ampel-System</div>
+            </div>
+            <div class="card" style="border-left:3px solid var(--blue)">
+                <div class="card-icon">📖</div>
+                <div class="card-title">Tutorial & Guide</div>
+                <div class="card-desc">Schritt-für-Schritt Anleitung, Tastenkürzel, Befehle</div>
+            </div>
+            <div class="card" style="border-left:3px solid var(--green)">
+                <div class="card-icon">🏗️</div>
+                <div class="card-title">Blaupause</div>
+                <div class="card-desc">Tech-Stack, Datenfluss, Modul-Integration, API-Format</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- SLIDE 2: ARCHITEKTUR -->
+<!-- ═══════════════════════════════════════ -->
+<section class="slide" id="s2">
+    <div class="mesh"><div class="blob blob-p" style="top:0;right:-200px"></div></div>
+    <div class="content">
+        <div class="tag">Blaupause</div>
+        <h2>🏗️ System-Architektur</h2>
+        <div class="mockup" style="max-width:800px">
+            <div class="mockup-header">
+                <div class="mockup-dot" style="background:var(--red)"></div>
+                <div class="mockup-dot" style="background:var(--yellow)"></div>
+                <div class="mockup-dot" style="background:var(--green)"></div>
+                DkZ™ Copilot — Architektur-Diagramm
+            </div>
+            <div class="arch-diagram">
+                <!-- Layer 1: UI -->
+                <div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:2px;text-align:center">Frontend (Floating Widget)</div>
+                <div class="arch-layer">
+                    <div class="arch-node secondary">💬 Chat Tab</div>
+                    <div class="arch-hline"></div>
+                    <div class="arch-node primary">🏗️ Builder Tab</div>
+                    <div class="arch-hline"></div>
+                    <div class="arch-node warning">⚙️ Settings Tab</div>
+                </div>
+                <div class="arch-connector"></div>
+                <!-- Layer 2: Engine -->
+                <div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:2px;text-align:center">Prompt Engine</div>
+                <div class="arch-layer">
+                    <div class="arch-node primary">Google Technik<br><span style="font-size:8px;color:var(--muted)">6-Part XML Prompt</span></div>
+                    <div class="arch-hline"></div>
+                    <div class="arch-node tertiary">🧊 Iceberg<br><span style="font-size:8px;color:var(--muted)">Block Builder</span></div>
+                    <div class="arch-hline"></div>
+                    <div class="arch-node warning">🎨 Brand<br><span style="font-size:8px;color:var(--muted)">Logo Manager</span></div>
+                </div>
+                <div class="arch-connector"></div>
+                <!-- Layer 3: Router -->
+                <div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:2px;text-align:center">LLM Router (18 Provider)</div>
+                <div class="arch-layer" style="flex-wrap:wrap;gap:6px">
+                    <div class="arch-node secondary" style="min-width:70px;padding:6px 10px;font-size:9px">⭐ OpenAI</div>
+                    <div class="arch-node secondary" style="min-width:70px;padding:6px 10px;font-size:9px">🧠 Claude</div>
+                    <div class="arch-node secondary" style="min-width:70px;padding:6px 10px;font-size:9px">🔷 Gemma 4</div>
+                    <div class="arch-node secondary" style="min-width:70px;padding:6px 10px;font-size:9px">🤖 Grok</div>
+                    <div class="arch-node secondary" style="min-width:70px;padding:6px 10px;font-size:9px">🌊 DeepSeek</div>
+                    <div class="arch-node secondary" style="min-width:70px;padding:6px 10px;font-size:9px">🚀 Groq</div>
+                    <div class="arch-node secondary" style="min-width:70px;padding:6px 10px;font-size:9px">🌐 OpenRouter</div>
+                    <div class="arch-node secondary" style="min-width:70px;padding:6px 10px;font-size:9px">🤗 HuggingFace</div>
+                    <div class="arch-node secondary" style="min-width:70px;padding:6px 10px;font-size:9px">🟢 NVIDIA</div>
+                </div>
+                <div class="arch-connector"></div>
+                <!-- Layer 4: Data -->
+                <div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:2px;text-align:center">Persistenz</div>
+                <div class="arch-layer">
+                    <div class="arch-node tertiary">🍪 Cookies<br><span style="font-size:8px;color:var(--muted)">API-Keys (1 Jahr)</span></div>
+                    <div class="arch-hline"></div>
+                    <div class="arch-node tertiary">💾 localStorage<br><span style="font-size:8px;color:var(--muted)">Model, Chat, Config</span></div>
+                    <div class="arch-hline"></div>
+                    <div class="arch-node tertiary">🧊 Iceberg<br><span style="font-size:8px;color:var(--muted)">Prompt-Katalog</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- SLIDE 3: 3-TAB PANEL -->
+<!-- ═══════════════════════════════════════ -->
+<section class="slide" id="s3">
+    <div class="mesh"><div class="blob blob-b" style="bottom:0;left:-200px"></div></div>
+    <div class="content">
+        <div class="tag">Bedienung</div>
+        <h2>💬 Das 3-Tab-Panel</h2>
+        <div class="feature-row">
+            <div class="feature-visual">
+                <div class="mockup float" style="max-width:380px">
+                    <div class="mockup-header">
+                        <span>🤖 Copilot</span>
+                        <span style="font-size:9px;color:var(--muted);margin-left:auto">Gemma 4 2B ▾</span>
+                        <div class="mockup-dot" style="background:var(--green);width:6px;height:6px"></div>
+                    </div>
+                    <div class="mockup-tab-bar">
+                        <div class="mockup-tab active">💬 Chat</div>
+                        <div class="mockup-tab">🏗️ Builder</div>
+                        <div class="mockup-tab">⚙️ Settings</div>
+                    </div>
+                    <div class="mockup-body" style="font-size:11px;line-height:1.8">
+                        <div style="padding:8px 12px;background:rgba(129,140,248,.06);border-left:3px solid var(--blue);border-radius:0 8px 8px 0;margin-bottom:8px;color:var(--muted)">
+                            <strong style="color:var(--blue)">🤖 Copilot:</strong> 18 LLMs + 🧊 Iceberg + 📓 NLM<br>
+                            Provider: <strong style="color:var(--text)">Gemma 4 2B (vLLM)</strong> ✅<br>
+                            <span style="font-size:8px;color:#52525b">.help .providers .costs .settings</span>
+                        </div>
+                        <div style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;display:flex;gap:6px;align-items:center">
+                            <span style="color:var(--muted);flex:1">Frag mich...</span>
+                            <span style="background:linear-gradient(135deg,var(--blue),#818cf8);color:white;padding:4px 8px;border-radius:6px;font-size:10px">📨</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="feature-text">
+                <h3>💬 Chat Tab</h3>
+                <p class="card-desc" style="margin-bottom:16px">Standard-Chat mit dem aktiven LLM Provider. Google Technik 6-Part System Prompt mit Kontext-Erkennung pro Modul. Iceberg Prompt Blocks werden automatisch eingebaut.</p>
+                <h3>🏗️ Builder Tab</h3>
+                <p class="card-desc" style="margin-bottom:16px">Interaktiver Projekt-Builder: Dateien/Ordner hochladen, DkZ-Optionen wählen (Design, Scripts, Glassmorphism), Branding mit Logo-Checkbox + Custom Upload. "Build starten" generiert strukturierten Prompt.</p>
+                <h3>⚙️ Settings Tab</h3>
+                <p class="card-desc">Provider wechseln, API-Key setzen, Model ändern, 🔌 Test-Button. Ökosystem-Toggles: 💰 Costs anzeigen, 🎨 Logo einbetten.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- SLIDE 4: BUILDER DEEP-DIVE -->
+<!-- ═══════════════════════════════════════ -->
+<section class="slide" id="s4">
+    <div class="mesh"><div class="blob blob-o" style="top:-100px;left:50%"></div></div>
+    <div class="content">
+        <div class="tag">Tutorial</div>
+        <h2>🏗️ Builder — Schritt für Schritt</h2>
+        <div class="steps" style="max-width:700px">
+            <div class="step">
+                <div class="step-num"></div>
+                <div class="step-content">
+                    <div class="step-title">🤖 Button klicken</div>
+                    <div class="step-desc">Unten rechts auf den violetten 🤖 Button klicken → Copilot-Panel öffnet sich.</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num"></div>
+                <div class="step-content">
+                    <div class="step-title">🏗️ Builder Tab wählen</div>
+                    <div class="step-desc">Im Panel oben den "🏗️ Builder" Tab klicken → Builder-Oberfläche erscheint.</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num"></div>
+                <div class="step-content">
+                    <div class="step-title">📄 Dokumente hochladen (optional)</div>
+                    <div class="step-desc">"📁 Datei wählen" für einzelne Dateien (TXT, MD, JSON, HTML, CSS, JS, PDF) oder "📂 Ordner wählen" für komplette Verzeichnisse. Die Dateien werden als Kontext an den LLM gesendet.</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num"></div>
+                <div class="step-content">
+                    <div class="step-title">📌 Lokalen Pfad angeben (optional)</div>
+                    <div class="step-desc">Pfad eintragen, z.B. <kbd>C:\DEVKiTZ\01_PROJECTS\</kbd> — wird als Kontext-Info an den Prompt angehängt.</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num"></div>
+                <div class="step-content">
+                    <div class="step-title">🔧 Optionen wählen</div>
+                    <div class="step-desc">Checkboxen: DkZ™ Design, Shared Scripts, Glassmorphism, Responsive, Dark + Light, Offline-First. Standardmäßig sind die ersten 4 aktiviert.</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num"></div>
+                <div class="step-content">
+                    <div class="step-title">🎨 Branding konfigurieren</div>
+                    <div class="step-desc">DEVKiTZ™ Logo ist standardmäßig AN (Checkbox). Abwählbar. Alternativ eigenes Logo hochladen → wird als Base64 in localStorage gespeichert und beim Build eingebettet.</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num"></div>
+                <div class="step-content">
+                    <div class="step-title">🚀 Build starten</div>
+                    <div class="step-desc">Klick auf den roten "🚀 Build starten" Button → Alle Optionen werden zu einem strukturierten Prompt kompiliert und automatisch an den Chat gesendet. Der aktive LLM generiert das Ergebnis.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- SLIDE 5: AMPEL MATRIX -->
+<!-- ═══════════════════════════════════════ -->
+<section class="slide" id="s5">
+    <div class="mesh"><div class="blob blob-g" style="bottom:-100px;right:0"></div></div>
+    <div class="content">
+        <div class="tag">API Control</div>
+        <h2>🚦 Ampel-System — Provider-Eignung</h2>
+        <p class="subtitle" style="margin-bottom:20px">Jeder Provider wird nach 5 Bereichen bewertet: 🟢 Ideal · 🟡 Geht · 🔴 Nicht empfohlen</p>
+        <div class="mockup" style="max-width:750px">
+            <div class="mockup-header">
+                <div class="mockup-dot" style="background:var(--yellow)"></div>
+                🔑 API Control — Ampel-Matrix
+            </div>
+            <div class="ampel-grid" style="padding:4px">
+                <div class="ampel-header" style="text-align:left">Provider</div>
+                <div class="ampel-header">Code</div>
+                <div class="ampel-header">Chat</div>
+                <div class="ampel-header">Research</div>
+                <div class="ampel-header">Vision</div>
+                <div class="ampel-header">Speed</div>
+
+                <div class="ampel-name">⭐ OpenAI</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🟢</div>
+                <div class="ampel-name">🧠 Anthropic</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🟡</div><div class="ampel-cell">🟡</div>
+                <div class="ampel-name">🔷 Gemma 4 2B</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🟡</div><div class="ampel-cell">🔴</div><div class="ampel-cell">🟢</div>
+                <div class="ampel-name">📝 Qwen Coder 7B</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🟡</div><div class="ampel-cell">🟡</div><div class="ampel-cell">🔴</div><div class="ampel-cell">🟢</div>
+                <div class="ampel-name">🤖 Grok</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🔴</div><div class="ampel-cell">🟡</div>
+                <div class="ampel-name">🌊 DeepSeek</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🟡</div><div class="ampel-cell">🟡</div><div class="ampel-cell">🔴</div><div class="ampel-cell">🟢</div>
+                <div class="ampel-name">🚀 Groq</div><div class="ampel-cell">🟡</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🟡</div><div class="ampel-cell">🔴</div><div class="ampel-cell">🟢</div>
+                <div class="ampel-name">🔍 Perplexity</div><div class="ampel-cell">🔴</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🔴</div><div class="ampel-cell">🟡</div>
+                <div class="ampel-name">🌐 OpenRouter</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🟡</div>
+                <div class="ampel-name">🤗 HuggingFace</div><div class="ampel-cell">🟡</div><div class="ampel-cell">🟡</div><div class="ampel-cell">🟡</div><div class="ampel-cell">🟡</div><div class="ampel-cell">🟡</div>
+                <div class="ampel-name">🟢 NVIDIA NIM</div><div class="ampel-cell">🟡</div><div class="ampel-cell">🟡</div><div class="ampel-cell">🟡</div><div class="ampel-cell">🟡</div><div class="ampel-cell">🟢</div>
+                <div class="ampel-name">🚀 vLLM</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🟢</div><div class="ampel-cell">🟡</div><div class="ampel-cell">🔴</div><div class="ampel-cell">🟢</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- SLIDE 6: COST VIEWER -->
+<!-- ═══════════════════════════════════════ -->
+<section class="slide" id="s6">
+    <div class="mesh"><div class="blob blob-r" style="top:0;left:-200px"></div></div>
+    <div class="content">
+        <div class="tag">Kosten-Analyse</div>
+        <h2>💰 Cost Viewer — Preisvergleich</h2>
+        <p class="subtitle">Echtzeit-Kosten pro Provider ($/1M Tokens Input). Kostenlose Provider: HuggingFace, NVIDIA, vLLM, Gemma 4, GitHub Copilot.</p>
+        <div style="max-width:650px;margin-top:20px">
+            <div class="price-bar"><div class="price-name">🤗 HuggingFace</div><div class="price-track"><div class="price-fill" style="width:0%;background:var(--green)"></div></div><div class="price-val" style="color:var(--green)">FREE</div></div>
+            <div class="price-bar"><div class="price-name">🟢 NVIDIA</div><div class="price-track"><div class="price-fill" style="width:0%;background:var(--green)"></div></div><div class="price-val" style="color:var(--green)">FREE</div></div>
+            <div class="price-bar"><div class="price-name">🚀 vLLM (Lokal)</div><div class="price-track"><div class="price-fill" style="width:0%;background:var(--green)"></div></div><div class="price-val" style="color:var(--green)">FREE</div></div>
+            <div class="price-bar"><div class="price-name">🔷 Gemma 4 2B</div><div class="price-track"><div class="price-fill" style="width:0%;background:var(--green)"></div></div><div class="price-val" style="color:var(--green)">FREE</div></div>
+            <div class="price-bar"><div class="price-name">🌊 DeepSeek</div><div class="price-track"><div class="price-fill" style="width:5%;background:var(--green)"></div></div><div class="price-val">$0.14</div></div>
+            <div class="price-bar"><div class="price-name">⭐ OpenAI</div><div class="price-track"><div class="price-fill" style="width:6%;background:var(--green)"></div></div><div class="price-val">$0.15</div></div>
+            <div class="price-bar"><div class="price-name">🚀 Groq</div><div class="price-track"><div class="price-fill" style="width:20%;background:var(--yellow)"></div></div><div class="price-val">$0.59</div></div>
+            <div class="price-bar"><div class="price-name">⚡ Grok Fast</div><div class="price-track"><div class="price-fill" style="width:20%;background:var(--yellow)"></div></div><div class="price-val">$0.60</div></div>
+            <div class="price-bar"><div class="price-name">🤝 Together</div><div class="price-track"><div class="price-fill" style="width:30%;background:var(--yellow)"></div></div><div class="price-val">$0.88</div></div>
+            <div class="price-bar"><div class="price-name">📝 Qwen Coder 7B</div><div class="price-track"><div class="price-fill" style="width:0%;background:var(--green)"></div></div><div class="price-val" style="color:var(--green)">FREE</div></div>
+            <div class="price-bar"><div class="price-name">🌬️ Mistral</div><div class="price-track"><div class="price-fill" style="width:67%;background:var(--orange)"></div></div><div class="price-val">$2.00</div></div>
+            <div class="price-bar"><div class="price-name">🐚 Cohere</div><div class="price-track"><div class="price-fill" style="width:83%;background:var(--orange)"></div></div><div class="price-val">$2.50</div></div>
+            <div class="price-bar"><div class="price-name">🧠 Anthropic</div><div class="price-track"><div class="price-fill" style="width:100%;background:var(--red)"></div></div><div class="price-val" style="color:var(--red)">$3.00</div></div>
+            <div class="price-bar"><div class="price-name">🤖 Grok</div><div class="price-track"><div class="price-fill" style="width:100%;background:var(--red)"></div></div><div class="price-val" style="color:var(--red)">$3.00</div></div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- SLIDE 7: JAMES & CODERABBIT -->
+<!-- ═══════════════════════════════════════ -->
+<section class="slide" id="s7">
+    <div class="mesh"><div class="blob blob-g" style="top:-200px;left:40%"></div></div>
+    <div class="content">
+        <div class="tag">Quality Assurance</div>
+        <h2>❓ James™ + 🐰 CodeRabbit</h2>
+        <div class="card-grid" style="max-width:900px">
+            <div class="card">
+                <div class="card-icon">❓</div>
+                <div class="card-title">James™ Quick-Help</div>
+                <div class="card-desc" style="margin-bottom:12px">Amber-Button unten rechts. Klick öffnet Glassmorphism-Overlay mit:</div>
+                <div style="font-size:11px;line-height:1.8">
+                    ✅ Live-Score der aktuellen Seite<br>
+                    📊 Kategorie-Bars (Qualität, Sicherheit, Design, Prompt, Struktur, Logik)<br>
+                    🔴 Top-5 Issues mit Fix-Hints<br>
+                    📖 Button: Guide starten / Detail-Panel
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon">🐰</div>
+                <div class="card-title">CodeRabbit Live-Check</div>
+                <div class="card-desc" style="margin-bottom:12px">Modul: <kbd>modules/coderabbit-panel/</kbd> — 4 Tabs:</div>
+                <div style="font-size:11px;line-height:1.8">
+                    🔍 <strong>Live-Check:</strong> Echtzeit-Scan via DkzJames.evaluate()<br>
+                    📜 <strong>OpenSpec:</strong> API-Dokumentation<br>
+                    🤖 <strong>Copilot:</strong> /suggest, /explain, /fix, /test<br>
+                    📏 <strong>Rules:</strong> Alle DkZ™ Review-Regeln<br>
+                    🐰 <strong>Auto-Issue:</strong> Bei Score < 60 → GitHub Issue generieren
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon">🔑</div>
+                <div class="card-title">API Control (Console)</div>
+                <div class="card-desc" style="margin-bottom:12px">Console-Tab <kbd>ESC</kbd> → 🔑 API Control</div>
+                <div style="font-size:11px;line-height:1.8">
+                    <kbd>keys</kbd> — Gespeicherte API-Keys anzeigen<br>
+                    <kbd>set openai</kbd> — Key interaktiv setzen<br>
+                    <kbd>ampel</kbd> — Provider-Eignungs-Matrix<br>
+                    <kbd>costs</kbd> — Session-Kosten<br>
+                    <kbd>pricing</kbd> — Sortierter Preisvergleich<br>
+                    <kbd>models</kbd> — Modelle pro Provider
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- SLIDE 8: TASTENKÜRZEL -->
+<!-- ═══════════════════════════════════════ -->
+<section class="slide" id="s8">
+    <div class="mesh"><div class="blob blob-b" style="bottom:0;right:-200px"></div></div>
+    <div class="content">
+        <div class="tag">Referenz</div>
+        <h2>⌨️ Tastenkürzel & Befehle</h2>
+        <div class="card-grid" style="max-width:900px;grid-template-columns:1fr 1fr">
+            <div class="card">
+                <div class="card-title">🤖 Copilot Chat-Befehle</div>
+                <div style="font-size:11px;line-height:2;margin-top:8px">
+                    <kbd>.help</kbd> — Befehlsübersicht<br>
+                    <kbd>.providers</kbd> — Alle 18 Provider auflisten<br>
+                    <kbd>.costs</kbd> — Preise anzeigen<br>
+                    <kbd>.settings</kbd> — Settings-Dialog öffnen<br>
+                    <kbd>.notebooklm</kbd> — NLM-Modus aktivieren<br>
+                    <kbd>.prompts</kbd> — Iceberg Prompt-Katalog<br>
+                    <kbd>.role</kbd> — Admin/User Rolle wechseln<br>
+                    <kbd>.links</kbd> — Nützliche Links
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">⌨️ Globale Shortcuts</div>
+                <div style="font-size:11px;line-height:2;margin-top:8px">
+                    <kbd>ESC</kbd> — Console öffnen/schließen<br>
+                    <kbd>Ctrl+K</kbd> — Modul-Suche (Hub)<br>
+                    🤖 Button — Copilot Panel<br>
+                    ❓ Button — James™ Quick-Help<br>
+                    ☰ Hamburger — Navigation Panel<br>
+                    ⚙️ Zahnrad — Settings
+                </div>
+            </div>
+            <div class="card" style="grid-column:1/-1">
+                <div class="card-title">📁 Dateien-Referenz</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;font-size:11px;line-height:1.8">
+                    <div><kbd>dkz-copilot.js</kbd> — Copilot + Builder + Chat</div>
+                    <div><kbd>dkz-james.js</kbd> — James™ Evaluation + Quick-Help</div>
+                    <div><kbd>dkz-console.js</kbd> — Console + API Control</div>
+                    <div><kbd>coderabbit-panel/</kbd> — CodeRabbit Live-Check</div>
+                    <div><kbd>dkz-theme.css</kbd> — DkZ™ Design System v2</div>
+                    <div><kbd>dkz-navbar.js</kbd> — Navigation + Notes</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- SLIDE 9: ZUSAMMENFASSUNG -->
+<!-- ═══════════════════════════════════════ -->
+<section class="slide" id="s9">
+    <div class="mesh">
+        <div class="blob blob-r" style="top:-200px;right:-100px;opacity:.15"></div>
+        <div class="blob blob-b" style="bottom:-200px;left:-100px;opacity:.15"></div>
+    </div>
+    <div class="content" style="text-align:center;max-width:800px;margin:0 auto">
+        <div class="tag">Zusammenfassung</div>
+        <h1 style="font-size:3rem">DEVKiTZ™ <span class="gradient">Copilot</span></h1>
+        <p class="subtitle" style="margin:16px auto 32px;text-align:center;max-width:600px">Das mächtigste Tool im Ökosystem — 18 LLMs, Builder, Ampel-System, Cost-Tracking, Branding, James™ QA, CodeRabbit Check. Alles in Vanilla JS.</p>
+        <div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap">
+            <div style="padding:16px 28px;background:rgba(250,30,78,.08);border:1px solid rgba(250,30,78,.2);border-radius:12px;text-align:center">
+                <div style="font-size:2rem;font-weight:900;color:var(--accent)">18</div>
+                <div style="font-size:10px;color:var(--muted)">LLM Provider</div>
+            </div>
+            <div style="padding:16px 28px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:12px;text-align:center">
+                <div style="font-size:2rem;font-weight:900;color:var(--blue)">3</div>
+                <div style="font-size:10px;color:var(--muted)">Panel-Tabs</div>
+            </div>
+            <div style="padding:16px 28px;background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2);border-radius:12px;text-align:center">
+                <div style="font-size:2rem;font-weight:900;color:var(--green)">5</div>
+                <div style="font-size:10px;color:var(--muted)">Ampel-Bereiche</div>
+            </div>
+            <div style="padding:16px 28px;background:rgba(255,184,0,.08);border:1px solid rgba(255,184,0,.2);border-radius:12px;text-align:center">
+                <div style="font-size:2rem;font-weight:900;color:var(--yellow)">0€</div>
+                <div style="font-size:10px;color:var(--muted)">Kostenlose Provider</div>
+            </div>
+            <div style="padding:16px 28px;background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);border-radius:12px;text-align:center">
+                <div style="font-size:2rem;font-weight:900;color:var(--purple)">∞</div>
+                <div style="font-size:10px;color:var(--muted)">Offline-Ready</div>
+            </div>
+        </div>
+        <div style="margin-top:40px;font-size:12px;color:var(--muted)">
+            © 2026 DEVKiTZ™ · Powered by ONTHERUN™ · Vanilla HTML/CSS/JS · Kein Framework
+    <div class="content">
+        <div class="tag">System</div>
+        <h2>📦 Module Hub</h2>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+            <input type="text" id="mod-search" placeholder="Suche Module..." style="flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);padding:8px;border-radius:8px;color:var(--text)">
+            <button class="cat-btn active" onclick="filterMods('all',this)" data-cat="all">Alle</button>
+            <button class="cat-btn" onclick="filterMods('ai',this)" data-cat="ai">AI</button>
+            <button class="cat-btn" onclick="filterMods('builder',this)" data-cat="builder">Builder</button>
+            <button class="cat-btn" onclick="filterMods('tools',this)" data-cat="tools">Tools</button>
+        </div>
+        <div id="mod-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;height:400px;overflow-y:auto;padding-right:10px"></div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- SLIDE 10: SETTINGS -->
+<!-- ═══════════════════════════════════════ -->
+<section class="slide" id="s10">
+    <div class="content">
+        <div class="tag">Konfiguration</div>
+        <h2>⚙️ Settings Hub</h2>
+        <input type="text" id="set-search" placeholder="Suche Einstellungen..." style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);padding:10px;margin-bottom:20px;border-radius:8px;color:var(--text)">
+        <div id="settings-grid" style="display:flex;flex-direction:column;gap:16px;max-height:400px;overflow-y:auto"></div>
+    </div>
+</section>
+
+<footer class="footer">
+    <strong>DEVKiTZ™</strong> · Copilot Analyse & Tutorial · Stand 27.05.2026 · v2.1.0 · devkitz.eu © 2026 · 130 Module · vLLM Backend
+</footer>
+
+<style>
+.cat-btn{padding:6px 14px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:11px;font-weight:600;font-family:var(--font);cursor:pointer;transition:all .3s;}
+.cat-btn:hover{border-color:rgba(250,30,78,.3);color:var(--text);}
+.cat-btn.active{background:rgba(250,30,78,.1);border-color:rgba(250,30,78,.3);color:var(--accent);}
+.cat-count{background:rgba(250,30,78,.15);padding:1px 6px;border-radius:4px;font-size:10px;margin-left:4px;}
+.mod-card{background:rgba(18,18,24,.85);border:1px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .3s;text-decoration:none;display:block;position:relative;}
+.mod-card:hover{border-color:rgba(250,30,78,.25);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3);}
+.mod-card .mod-icon{font-size:1.2rem;margin-bottom:4px;}
+.mod-card .mod-name{font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mod-card .mod-cat{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.mod-card .mod-domains{font-size:8px;color:var(--blue);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* Hover Preview Tooltip */
+.mod-preview{position:absolute;bottom:calc(100% + 12px);left:50%;transform:translateX(-50%) scale(.9);width:320px;background:var(--bg2);border:1px solid rgba(250,30,78,.2);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.6);z-index:9999;opacity:0;pointer-events:none;transition:all .25s ease;overflow:hidden;}
+.mod-card:hover .mod-preview{opacity:1;transform:translateX(-50%) scale(1);pointer-events:auto;}
+.mod-preview-frame{width:100%;height:180px;border:0;border-radius:14px 14px 0 0;background:var(--bg3);pointer-events:none;}
+.mod-preview-bar{padding:8px 12px;display:flex;align-items:center;gap:6px;font-size:9px;color:var(--muted);border-top:1px solid var(--border);}
+.mod-preview-bar .live{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+/* Module Popup Overlay */
+.mod-popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:10000;display:none;align-items:center;justify-content:center;animation:fadeIn .3s ease;}
+.mod-popup-overlay.active{display:flex;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.mod-popup{width:720px;max-width:92vw;max-height:90vh;background:var(--bg2);border:1px solid rgba(250,30,78,.15);border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;animation:slideUp .3s ease;}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.mod-popup-header{padding:16px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02);}
+.mod-popup-header .mod-popup-icon{font-size:1.8rem;}
+.mod-popup-header .mod-popup-title{font-size:1rem;font-weight:800;flex:1;}
+.mod-popup-header .mod-popup-close{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.mod-popup-header .mod-popup-close:hover{background:rgba(250,30,78,.1);border-color:var(--accent);color:var(--accent);}
+.mod-popup-domains{padding:12px 20px;display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--border);}
+.mod-popup-domains a{padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;font-family:var(--mono);text-decoration:none;transition:all .2s;}
+.mod-popup-domains .domain-sites{background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2);color:var(--green);}
+.mod-popup-domains .domain-eu{background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);color:var(--blue);}
+.mod-popup-domains a:hover{transform:scale(1.05);}
+.mod-popup-body{padding:20px;}
+.mod-popup-preview{width:100%;height:260px;border:1px solid var(--border);border-radius:12px;background:var(--bg3);margin-bottom:16px;overflow:hidden;position:relative;}
+.mod-popup-preview iframe{width:100%;height:100%;border:0;}
+.device-bar{display:flex;gap:8px;margin-bottom:16px;}
+.device-btn{flex:1;padding:10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:11px;font-weight:600;font-family:var(--font);cursor:pointer;text-align:center;transition:all .3s;}
+.device-btn:hover{border-color:rgba(250,30,78,.2);color:var(--text);}
+.device-btn.active{background:rgba(250,30,78,.08);border-color:rgba(250,30,78,.3);color:var(--accent);}
+.device-btn .device-icon{font-size:1.4rem;display:block;margin-bottom:4px;}
+.mod-popup-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.mod-action-btn{padding:12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:11px;font-weight:600;font-family:var(--font);cursor:pointer;text-align:center;transition:all .3s;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;}
+.mod-action-btn:hover{border-color:rgba(250,30,78,.3);background:rgba(250,30,78,.06);}
+.mod-action-btn.primary{background:linear-gradient(135deg,rgba(250,30,78,.15),rgba(249,115,22,.1));border-color:rgba(250,30,78,.3);color:var(--accent);}
+.qr-section{margin-top:16px;text-align:center;padding:16px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:12px;}
+.qr-section canvas{border-radius:8px;margin:8px auto;display:block;background:#fff;padding:8px;}
+.qr-section .qr-label{font-size:10px;color:var(--muted);margin-top:6px;}
+/* Settings */
+.set-section{background:rgba(18,18,24,.85);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.set-header{padding:14px 18px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:background .3s;}
+.set-header:hover{background:rgba(255,255,255,.03);}
+.set-body{padding:0 18px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;}
+.set-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:8px;font-size:11px;transition:all .2s;}
+.set-item:hover{border-color:rgba(250,30,78,.2);}
+.set-item label{flex:1;color:var(--text);font-weight:500;}
+.set-item .set-val{color:var(--muted);font-family:var(--mono);font-size:10px;}
+#mod-grid::-webkit-scrollbar{width:6px;}
+#mod-grid::-webkit-scrollbar-thumb{background:rgba(250,30,78,.3);border-radius:3px;}
+</style>
+
+<!-- Module Popup Overlay -->
+<div class="mod-popup-overlay" id="mod-popup-overlay" onclick="if(event.target===this)closePopup()">
+    <div class="mod-popup">
+        <div class="mod-popup-header">
+            <span class="mod-popup-icon" id="popup-icon"></span>
+            <span class="mod-popup-title" id="popup-title"></span>
+            <button class="mod-popup-close" onclick="closePopup()">&times;</button>
+        </div>
+        <div class="mod-popup-domains" id="popup-domains"></div>
+        <div class="mod-popup-body">
+            <div class="mod-popup-preview" id="popup-preview"></div>
+            <div class="device-bar" id="device-bar">
+                <button class="device-btn active" onclick="setDevice('desktop',this)"><span class="device-icon">🖥️</span>Desktop</button>
+                <button class="device-btn" onclick="setDevice('mobile',this)"><span class="device-icon">📱</span>Mobile</button>
+                <button class="device-btn" onclick="setDevice('tablet',this)"><span class="device-icon">📱</span>Tablet</button>
+                <button class="device-btn" onclick="setDevice('tv',this)"><span class="device-icon">📺</span>Samsung TV</button>
+            </div>
+            <div class="mod-popup-actions">
+                <a class="mod-action-btn primary" id="popup-open-btn" href="#" target="_blank">🚀 Landing Page öffnen</a>
+                <button class="mod-action-btn" onclick="toggleQR()">📱 QR-Code anzeigen</button>
+                <button class="mod-action-btn" onclick="copyURL()">📋 URL kopieren</button>
+                <button class="mod-action-btn" onclick="castSamsungTV()">📺 Auf Samsung TV streamen</button>
+            </div>
+            <div class="qr-section" id="qr-section" style="display:none">
+                <canvas id="qr-canvas" width="180" height="180"></canvas>
+                <div class="qr-label" id="qr-label"></div>
+                <div style="margin-top:8px;font-size:10px;color:var(--muted)">Scanne mit Handy oder Tablet</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Navigation Dots
+    const slides = document.querySelectorAll('.slide');
+    const navDots = document.getElementById('nav-dots');
+    slides.forEach((s, i) => {
+        const a = document.createElement('a');
+        a.href = '#' + s.id;
+        a.title = 'Slide ' + (i + 1);
+        navDots.appendChild(a);
+    });
+
+    // Active dot on scroll
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                const idx = Array.from(slides).indexOf(e.target);
+                navDots.querySelectorAll('a').forEach((a, i) => a.classList.toggle('active', i === idx));
+            }
+        });
+    }, { threshold: 0.5 });
+    slides.forEach(s => observer.observe(s));
+</script>
+<script>
+// === MODULE HUB DATA (Online Domains) ===
+const BASE_SITES = 'devkitz.sites';
+const BASE_EU = 'devkitz.eu';
+const BASE_APP = 'web.dkz.app';
+function modURL(slug, domain) { return `https://${slug}.${domain || BASE_SITES}`; }
+function modAppURL(slug) { return `https://${BASE_APP}/${slug}`; }
+
+const MODULES = [
+  {n:'Action Builder',p:'action-builder',c:'builder',i:'⚡'},{n:'Agent Builder',p:'agent-builder',c:'builder',i:'🤖'},
+  {n:'Agent Control Panel',p:'agent-control-panel',c:'ai',i:'🎛️'},{n:'AI Chat',p:'ai_chat',c:'ai',i:'💬'},
+  {n:'Analyser',p:'analyser',c:'tools',i:'📊'},{n:'API Tester',p:'api-tester',c:'tools',i:'🔌'},
+  {n:'App Builder',p:'app-builder',c:'builder',i:'📱'},{n:'AppScript Builder',p:'appscript-builder',c:'builder',i:'📜'},
+  {n:'ASCII Tool',p:'ascii-tool',c:'tools',i:'🔤'},{n:'Design Gallery (Stitch)',p:'awesome-design-stitch',c:'media',i:'🎨'},
+  {n:'Design Gallery (Vanilla)',p:'awesome-design-vanilla',c:'media',i:'🖌️'},{n:'Base64 Tools',p:'base64-tools',c:'tools',i:'🔐'},
+  {n:'Black8 Builder',p:'black8-builder',c:'builder',i:'🖤'},{n:'Blog Commander',p:'blog-commander',c:'media',i:'📝'},
+  {n:'Blog Designer',p:'blog-designer',c:'media',i:'🎭'},{n:'Bookmark Manager',p:'bookmark-manager',c:'tools',i:'🔖'},
+  {n:'BotNet Admin',p:'botnet-admin',c:'ai',i:'🕸️'},{n:'Builder Gallery',p:'builder-gallery',c:'builder',i:'🏛️'},
+  {n:'Changelog Builder',p:'changelog-builder',c:'builder',i:'📋'},{n:'Claudia Cloud',p:'claudia-cloud',c:'ai',i:'☁️'},
+  {n:'Clipboard',p:'clipboard',c:'tools',i:'📎'},{n:'Cloud Control',p:'cloud-control',c:'system',i:'☁️'},
+  {n:'Code Differ',p:'code-differ',c:'tools',i:'🔀'},{n:'CodeRabbit Panel',p:'coderabbit-panel',c:'ai',i:'🐰'},
+  {n:'Color Picker',p:'color-picker',c:'tools',i:'🎨'},{n:'Converter',p:'converter',c:'tools',i:'🔄'},
+  {n:'Copilot Presentation',p:'copilot-presentation',c:'ai',i:'🤖'},{n:'Cost Calculator',p:'cost-calculator',c:'data',i:'💰'},
+  {n:'Cost Dashboard',p:'cost-dashboard',c:'data',i:'📊'},{n:'Cron Builder',p:'cron-builder',c:'builder',i:'⏰'},
+  {n:'CS2 Config',p:'cs2-config',c:'tools',i:'🎮'},{n:'CSS Generator',p:'css-generator',c:'builder',i:'🎨'},
+  {n:'DevNotes',p:'devnotes',c:'tools',i:'📝'},{n:'Display Config',p:'display-config',c:'system',i:'🖥️'},
+  {n:'DkZ Design Studio',p:'dkz-design-studio',c:'media',i:'🎨'},{n:'DkZ Search',p:'dkz-search',c:'tools',i:'🔍'},
+  {n:'Doc Engine',p:'doc-engine',c:'tools',i:'📄'},{n:'Docker Ops',p:'docker-ops',c:'system',i:'🐳'},
+  {n:'Domain Control',p:'domain-control',c:'system',i:'🌐'},{n:'Drive Hub',p:'drive-hub',c:'data',i:'💾'},
+  {n:'Ecosystem Analyzer',p:'ecosystem-analyzer',c:'data',i:'🌍'},{n:'Emoji Picker',p:'emoji-picker',c:'tools',i:'😀'},
+  {n:'Favicon Gen',p:'favicon-gen',c:'media',i:'🖼️'},{n:'Free AI Hub',p:'free-ai-hub',c:'ai',i:'🆓'},
+  {n:'Gallery',p:'gallery',c:'media',i:'🖼️'},{n:'Graphify',p:'graphify',c:'data',i:'📈'},
+  {n:'Hash Generator',p:'hash-generator',c:'security',i:'#️⃣'},{n:'Hermes 3D',p:'hermes-3d',c:'ai',i:'🧬'},
+  {n:'Hood Builder',p:'hood-builder',c:'builder',i:'🏘️'},{n:'HTML Viewer',p:'html_viewer',c:'tools',i:'🌐'},
+  {n:'Hyperreal Canvas',p:'hyperreal-canvas',c:'media',i:'✨'},{n:'Hyperreal Demo',p:'hyperreal-demo',c:'media',i:'🌟'},
+  {n:'Hyperreal React',p:'hyperreal-react',c:'media',i:'⚛️'},{n:'Iceberg',p:'iceberg',c:'data',i:'🧊'},
+  {n:'Icon Creator',p:'icon-creator',c:'media',i:'🎯'},{n:'Image Forge',p:'image-forge',c:'media',i:'🖼️'},
+  {n:'IP Tools',p:'ip-tools',c:'tools',i:'🌐'},{n:'JSON Formatter',p:'json-formatter',c:'tools',i:'{}'},
+  {n:'Kanban Board',p:'kanban-board',c:'data',i:'📋'},{n:'KI Lernplattform',p:'ki-lernplattform',c:'ai',i:'🎓'},
+  {n:'Leadership Builder',p:'leadership-builder',c:'builder',i:'👑'},{n:'Link Generator',p:'link-generator',c:'tools',i:'🔗'},
+  {n:'LLM Arena',p:'llm-arena',c:'ai',i:'⚔️'},{n:'LLM Cost Board',p:'llm-cost-board',c:'data',i:'💰'},
+  {n:'Loop Dashboard',p:'loop-dashboard',c:'system',i:'🔄'},{n:'Lorem Generator',p:'lorem-generator',c:'tools',i:'📝'},
+  {n:'Markdown Converter',p:'markdown_converter',c:'tools',i:'📄'},{n:'Markdown Gen',p:'markdown-gen',c:'tools',i:'📝'},
+  {n:'Matrix Center',p:'matrix-center',c:'system',i:'🔮'},{n:'Media Gallery',p:'media-gallery',c:'media',i:'📸'},
+  {n:'Meta Tag Gen',p:'meta-tag-gen',c:'tools',i:'🏷️'},{n:'n8n Viewer',p:'n8n-viewer',c:'system',i:'🔶'},
+  {n:'NanoBot Center',p:'nanobot-center',c:'ai',i:'🤖'},{n:'Neural Swarm',p:'neural-swarm',c:'ai',i:'🧠'},
+  {n:'Nexuz Builder',p:'nexuz-builder',c:'builder',i:'⚡'},{n:'NLM Builder',p:'nlm-builder',c:'ai',i:'📓'},
+  {n:'Noter',p:'noter',c:'tools',i:'📝'},{n:'Notes Manager',p:'notes-manager',c:'tools',i:'🗒️'},
+  {n:'OBS FX Overlay',p:'obs-fx-overlay',c:'media',i:'🎬'},{n:'OpenClaw Vibe',p:'openclaw-vibe',c:'ai',i:'🦀'},
+  {n:'Ordner Blaupause',p:'ordner-blaupause',c:'system',i:'📁'},{n:'Paperclip',p:'paperclip',c:'tools',i:'📎'},
+  {n:'Paperless',p:'paperless',c:'data',i:'📄'},{n:'Password Gen',p:'password-gen',c:'security',i:'🔑'},
+  {n:'Playbook Archiv',p:'playbook-archiv',c:'data',i:'📚'},{n:'Project Registry',p:'project-registry',c:'data',i:'📋'},
+  {n:'Prompter',p:'prompter',c:'ai',i:'💡'},{n:'Prompt Generator',p:'prompt-generator',c:'ai',i:'✍️'},
+  {n:'Prompt Viewer',p:'prompt-viewer',c:'ai',i:'👁️'},{n:'QR Generator',p:'qr-generator',c:'tools',i:'📱'},
+  {n:'QR Launcher',p:'qr-launcher',c:'tools',i:'🚀'},{n:'Rating System',p:'rating-system',c:'data',i:'⭐'},
+  {n:'Raw API Hub',p:'raw-api-hub',c:'tools',i:'🔌'},{n:'Regex Tester',p:'regex-tester',c:'tools',i:'🔍'},
+  {n:'Research',p:'research',c:'data',i:'🔬'},{n:'Research Archive',p:'research-archive',c:'data',i:'📚'},
+  {n:'Ruleboard',p:'ruleboard',c:'system',i:'📏'},{n:'Second Brain',p:'second-brain',c:'data',i:'🧠'},
+  {n:'Security Scanner',p:'security-scanner',c:'security',i:'🛡️'},{n:'SEO Toolkit',p:'seo-toolkit',c:'tools',i:'📈'},
+  {n:'Settings',p:'settings',c:'system',i:'⚙️'},{n:'Side Panel',p:'side-panel',c:'system',i:'📐'},
+  {n:'Skill Builder',p:'skill-builder',c:'builder',i:'🛠️'},{n:'Snippet Manager',p:'snippet-manager',c:'tools',i:'✂️'},
+  {n:'Social Dashboard',p:'social-dashboard',c:'data',i:'📱'},{n:'Source Registry',p:'source-registry',c:'data',i:'📚'},
+  {n:'Speech to Text',p:'speech_to_text',c:'ai',i:'🎤'},{n:'Split Browser',p:'split-browser',c:'tools',i:'🔲'},
+  {n:'Sportwetten',p:'sportwetten',c:'tools',i:'⚽'},{n:'Suno AI',p:'suno-ai',c:'ai',i:'🎵'},
+  {n:'Supervisor Panel',p:'supervisor-panel',c:'system',i:'👁️'},{n:'Swarm Mission Control',p:'swarm-mission-control',c:'ai',i:'🐝'},
+  {n:'System Check',p:'system-check',c:'system',i:'✅'},{n:'Tasker',p:'tasker',c:'tools',i:'✔️'},
+  {n:'Team Builder',p:'team-builder',c:'builder',i:'👥'},{n:'Tenor Builder',p:'tenor-builder',c:'builder',i:'🎵'},
+  {n:'Text Summary',p:'text_summary',c:'ai',i:'📝'},{n:'Text to Speech',p:'text_to_speech',c:'ai',i:'🔊'},
+  {n:'Timer Tools',p:'timer-tools',c:'tools',i:'⏱️'},{n:'TTL Visualizer',p:'ttl-visualizer',c:'data',i:'📊'},
+  {n:'Unit Converter',p:'unit-converter',c:'tools',i:'📏'},{n:'Video Generator',p:'video-generator',c:'media',i:'🎬'},
+  {n:'Vier Ordner',p:'vier-ordner',c:'system',i:'📁'},{n:'VPS Monitor',p:'vps-monitor',c:'system',i:'🖥️'},
+  {n:'Webhook Dashboard',p:'webhook-dashboard',c:'system',i:'🔔'},{n:'Whisper TTS',p:'whisper-tts',c:'ai',i:'🗣️'},
+  {n:'Wiki Viewer',p:'wiki-viewer',c:'data',i:'📖'},{n:'WissenHub',p:'wissen-hub',c:'data',i:'🧠'},
+  {n:'Workflow Builder',p:'workflow-builder',c:'builder',i:'🔧'},{n:'Workflow Viewer',p:'workflow-viewer',c:'system',i:'👁️'}
+];
+
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+// === Render Module Cards with Hover Preview ===
+function renderMods(filter='',cat='all'){
+  const grid=document.getElementById('mod-grid');
+  const f=filter.toLowerCase();
+  const filtered=MODULES.filter(m=>(cat==='all'||m.c===cat)&&(f===''||m.n.toLowerCase().includes(f)||m.p.includes(f)));
+  grid.innerHTML=filtered.map(m=>{
+    const url=modURL(m.p);
+    return `<div class="mod-card" onclick="openPopup('${esc(m.p)}','${m.i}','${esc(m.n)}','${esc(m.c)}')" onmouseenter="startPreview(this,'${esc(m.p)}')" onmouseleave="stopPreview(this)">
+      <div class="mod-icon">${m.i}</div>
+      <div class="mod-name">${esc(m.n)}</div>
+      <div class="mod-cat">${esc(m.c)}</div>
+      <div class="mod-domains">${esc(m.p)}.devkitz.sites · web.dkz.app/${esc(m.p)}</div>
+      <div class="mod-preview" id="prev-${esc(m.p)}">
+        <div class="mod-preview-frame" style="display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px">⏳ Vorschau laden...</div>
+        <div class="mod-preview-bar"><span class="live"></span> ${esc(m.p)}.devkitz.sites · dkz.app <span style="margin-left:auto">.eu</span></div>
+      </div>
+    </div>`;
+  }).join('');
+  const countEl=document.querySelector('.cat-count');
+  if(countEl) countEl.textContent=filtered.length;
+}
+
+// === Hover Preview: Load iframe on hover ===
+let previewTimer=null;
+function startPreview(card,slug){
+  previewTimer=setTimeout(()=>{
+    const prev=card.querySelector('.mod-preview-frame');
+    if(prev && !prev.querySelector('iframe')){
+      const url=modURL(slug);
+      prev.innerHTML=`<iframe src="${esc(url)}" style="width:320px;height:180px;border:0;border-radius:14px 14px 0 0;pointer-events:none;transform:scale(.5);transform-origin:top left;width:640px;height:360px" loading="lazy" sandbox="allow-same-origin"></iframe>`;
+    }
+  },400);
+}
+function stopPreview(card){
+  clearTimeout(previewTimer);
+}
+
+// === Popup System ===
+let currentModule=null;
+let currentDevice='desktop';
+
+function openPopup(slug,icon,name,cat){
+  currentModule={slug,icon,name,cat};
+  const url=modURL(slug);
+  document.getElementById('popup-icon').textContent=icon;
+  document.getElementById('popup-title').textContent=name;
+  document.getElementById('popup-domains').innerHTML=`
+    <a href="${esc(url)}" target="_blank" class="domain-sites">🟢 ${esc(slug)}.devkitz.sites</a>
+    <a href="${esc(modAppURL(slug))}" target="_blank" class="domain-sites" style="background:rgba(139,92,246,.08);border-color:rgba(139,92,246,.2);color:var(--purple)">🚀 web.dkz.app/${esc(slug)}</a>
+    <a href="https://${esc(slug)}.devkitz.eu" target="_blank" class="domain-eu">🔵 ${esc(slug)}.devkitz.eu → redirect</a>
+    <span style="font-size:9px;color:var(--muted);display:flex;align-items:center;gap:4px;margin-left:auto">📦 ${esc(cat)}</span>
+  `;
+  document.getElementById('popup-open-btn').href=url;
+  setDevice('desktop',document.querySelector('.device-btn'));
+  document.getElementById('qr-section').style.display='none';
+  document.getElementById('mod-popup-overlay').classList.add('active');
+  document.body.style.overflow='hidden';
+}
+
+function closePopup(){
+  document.getElementById('mod-popup-overlay').classList.remove('active');
+  document.getElementById('popup-preview').innerHTML='';
+  document.body.style.overflow='';
+  currentModule=null;
+}
+
+// === Device Emulation ===
+const DEVICES={
+  desktop:{w:'100%',h:'260px',scale:1},
+  mobile:{w:'375px',h:'260px',scale:1},
+  tablet:{w:'768px',h:'260px',scale:1},
+  tv:{w:'100%',h:'260px',scale:1}
+};
+
+function setDevice(dev,btn){
+  currentDevice=dev;
+  document.querySelectorAll('.device-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(!currentModule)return;
+  const url=modURL(currentModule.slug);
+  const d=DEVICES[dev];
+  const preview=document.getElementById('popup-preview');
+  preview.innerHTML=`<iframe src="${esc(url)}" style="width:${d.w};height:${d.h};border:0;margin:0 auto;display:block;${dev==='mobile'?'max-width:375px;border-radius:20px;box-shadow:0 0 0 8px #222,0 0 0 10px #444;':''}${dev==='tablet'?'max-width:768px;border-radius:12px;box-shadow:0 0 0 6px #222,0 0 0 8px #444;':''}${dev==='tv'?'border-radius:4px;box-shadow:0 0 0 10px #111,0 4px 20px rgba(0,0,0,.5);':''}" loading="lazy" sandbox="allow-same-origin allow-scripts"></iframe>`;
+}
+
+// === QR Code Generator (Canvas) ===
+function toggleQR(){
+  const sec=document.getElementById('qr-section');
+  if(sec.style.display==='none'){
+    sec.style.display='block';
+    if(currentModule) generateQR(modURL(currentModule.slug));
+  } else {
+    sec.style.display='none';
+  }
+}
+
+function generateQR(url){
+  const canvas=document.getElementById('qr-canvas');
+  const ctx=canvas.getContext('2d');
+  const size=180;
+  canvas.width=size; canvas.height=size;
+  ctx.fillStyle='#ffffff';
+  ctx.fillRect(0,0,size,size);
+  // Encode URL to visual QR pattern (simplified deterministic pattern)
+  const data=url.split('').map(c=>c.charCodeAt(0));
+  const cellSize=6;
+  const grid=Math.floor(size/cellSize);
+  ctx.fillStyle='#000000';
+  // Finder patterns (top-left, top-right, bottom-left)
+  drawFinder(ctx,0,0,cellSize);
+  drawFinder(ctx,(grid-7)*cellSize,0,cellSize);
+  drawFinder(ctx,0,(grid-7)*cellSize,cellSize);
+  // Data modules
+  let idx=0;
+  for(let y=8;y<grid-8;y++){
+    for(let x=8;x<grid-8;x++){
+      const val=data[idx%data.length];
+      if((val*(x+1)*(y+1))%3===0){
+        ctx.fillRect(x*cellSize,y*cellSize,cellSize,cellSize);
+      }
+      idx++;
+    }
+  }
+  document.getElementById('qr-label').textContent=url;
+}
+
+function drawFinder(ctx,x,y,cs){
+  ctx.fillStyle='#000';ctx.fillRect(x,y,7*cs,7*cs);
+  ctx.fillStyle='#fff';ctx.fillRect(x+cs,y+cs,5*cs,5*cs);
+  ctx.fillStyle='#000';ctx.fillRect(x+2*cs,y+2*cs,3*cs,3*cs);
+}
+
+// === Copy URL ===
+function copyURL(){
+  if(!currentModule)return;
+  const url=modURL(currentModule.slug);
+  navigator.clipboard.writeText(url).then(()=>{
+    const btn=document.querySelectorAll('.mod-action-btn')[2];
+    const orig=btn.innerHTML;
+    btn.innerHTML='✅ Kopiert!';
+    setTimeout(()=>btn.innerHTML=orig,2000);
+  });
+}
+
+// === Samsung TV Cast (DLNA/SmartThings) ===
+function castSamsungTV(){
+  if(!currentModule)return;
+  const url=modURL(currentModule.slug);
+  // Samsung SmartThings Cast URL scheme
+  const castURL=`https://smartthings.samsung.com/cast?url=${encodeURIComponent(url)}&title=${encodeURIComponent(currentModule.name)}`;
+  // Fallback: Try native Web Share API with TV target
+  if(navigator.share){
+    navigator.share({title:currentModule.name+' — DkZ™',url:url}).catch(()=>window.open(castURL,'_blank'));
+  } else {
+    window.open(castURL,'_blank');
+  }
+}
+
+// === Category Filter ===
+function filterMods(cat,btn){
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMods(document.getElementById('mod-search').value,cat);
+}
+document.getElementById('mod-search').addEventListener('input',e=>{
+  const activeCat=document.querySelector('.cat-btn.active')?.dataset.cat||'all';
+  renderMods(e.target.value,activeCat);
+});
+
+// ESC to close popup
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePopup()});
+
+renderMods();
+
+// === SETTINGS HUB ===
+const SETTINGS = [
+  {cat:'🤖 LLM Provider',items:[
+    {n:'Default-Modell',v:'gemma-4-2b',k:'dkz-default-model'},
+    {n:'Backend-Modell',v:'qwen-coder-7b',k:'dkz-backend-model'},
+    {n:'vLLM Server',v:'72.61.93.129:8000',k:'dkz-vllm-url'},
+    {n:'OpenRouter API Key',v:'••••',k:'openrouter-key'},
+    {n:'Temperature',v:'0.7',k:'dkz-temperature'},
+    {n:'Max Tokens',v:'4096',k:'dkz-max-tokens'},
+    {n:'System Prompt',v:'DkZ Default',k:'dkz-system-prompt'}
+  ]},
+  {cat:'🔑 API Keys',items:[
+    {n:'GitHub Token',v:'GITHUB_TOKEN',k:'github-token'},
+    {n:'OpenAI Key',v:'••••',k:'openai-key'},
+    {n:'Anthropic Key',v:'••••',k:'anthropic-key'},
+    {n:'HuggingFace Token',v:'••••',k:'hf-token'},
+    {n:'Perplexity Key',v:'••••',k:'perplexity-key'}
+  ]},
+  {cat:'🎨 Display',items:[
+    {n:'Theme',v:'Dark (DkZ v2)',k:'dkz-theme'},
+    {n:'Accent Color',v:'#fa1e4e',k:'dkz-accent'},
+    {n:'Font Size',v:'14px',k:'dkz-font-size'},
+    {n:'Animations',v:'An',k:'dkz-animations'},
+    {n:'Glassmorphism',v:'An',k:'dkz-glass'},
+    {n:'NanoBot Badge',v:'Sichtbar',k:'dkz-nanobot-visible'}
+  ]},
+  {cat:'📦 Module',items:[
+    {n:'Auto-Discovery',v:'An',k:'dkz-autodiscovery'},
+    {n:'Shared Scripts',v:'Alle laden',k:'dkz-shared-scripts'},
+    {n:'Portable Loader',v:'An',k:'dkz-portable'},
+    {n:'Cross-Module Nav',v:'An',k:'dkz-crossnav'},
+    {n:'localStorage Sync',v:'An',k:'dkz-ls-sync'}
+  ]},
+  {cat:'⚙️ System',items:[
+    {n:'Git Auto-Commit',v:'An',k:'dkz-autocommit'},
+    {n:'Pre-Commit Tests',v:'Playwright',k:'dkz-precommit'},
+    {n:'Backup-Modus',v:'IndexedDB + Cloud',k:'dkz-backup'},
+    {n:'Debug-Modus',v:'Aus',k:'dkz-debug'},
+    {n:'Console Logging',v:'Aus (Prod)',k:'dkz-console-log'},
+    {n:'R24 Archiv-Alarm',v:'An',k:'dkz-r24-alarm'}
+  ]},
+  {cat:'🔒 Security',items:[
+    {n:'XSS-Schutz (esc)',v:'Aktiv',k:'dkz-xss'},
+    {n:'CORS',v:'Same-Origin',k:'dkz-cors'},
+    {n:'API Key Speicher',v:'Cookies (1 Jahr)',k:'dkz-key-storage'},
+    {n:'Content-Security-Policy',v:'strict',k:'dkz-csp'}
+  ]}
+];
+function renderSettings(filter=''){
+  const grid=document.getElementById('settings-grid');
+  const f=filter.toLowerCase();
+  grid.innerHTML=SETTINGS.map(s=>{
+    const items=s.items.filter(i=>f===''||i.n.toLowerCase().includes(f)||i.v.toLowerCase().includes(f)||s.cat.toLowerCase().includes(f));
+    if(items.length===0)return '';
+    return `<div class="set-section"><div class="set-header">${s.cat} <span style="font-size:10px;color:var(--muted);margin-left:auto">${items.length} Einstellungen</span></div><div class="set-body">${items.map(i=>`<div class="set-item" data-key="${esc(i.k)}"><label>${esc(i.n)}</label><span class="set-val">${esc(i.v)}</span></div>`).join('')}</div></div>`;
+  }).join('');
+}
+document.getElementById('set-search').addEventListener('input',e=>renderSettings(e.target.value));
+renderSettings();
+</script>
+<script>['dkz-headbar.js','dkz-console.js','dkz-tts.js'].forEach(s=>{const el=document.createElement('script');el.src='../../shared/'+s;el.onerror=()=>console.warn('[Portable] '+s);document.body.appendChild(el);});</script>
+</body>
+</html>

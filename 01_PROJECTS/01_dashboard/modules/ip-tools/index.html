@@ -1,0 +1,491 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌐 IP Tools — DkZâ„¢</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #fa1e4e;
+            --accent: #fa1e4e;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(14, 14, 22, .72);
+            --blur: blur(24px)
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .08);
+            border-radius: 6px
+        }
+
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .06;
+            animation: bf 20s ease-in-out infinite
+        }
+
+        .bg-blob:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: var(--green);
+            top: -10%;
+            left: 10%
+        }
+
+        .bg-blob:nth-child(2) {
+            width: 350px;
+            height: 350px;
+            background: var(--accent);
+            bottom: 10%;
+            right: 10%;
+            animation-delay: -8s
+        }
+
+        @keyframes bf {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(30px, -40px) scale(1.1)
+            }
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        .header {
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .back-btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: none;
+            font-family: var(--font)
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--green), var(--blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .hdr-right {
+            margin-left: auto
+        }
+
+        .ver {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono)
+        }
+
+        .content {
+            padding: 20px 28px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px
+        }
+
+        .card h3 {
+            font-size: 13px;
+            font-weight: 800;
+            margin-bottom: 12px
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 8px
+        }
+
+        .info-item {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px
+        }
+
+        .info-item .ii-label {
+            font-size: 9px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px
+        }
+
+        .info-item .ii-value {
+            font-family: var(--mono);
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--green)
+        }
+
+        .input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px
+        }
+
+        .input {
+            flex: 1;
+            padding: 10px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 13px;
+            outline: none
+        }
+
+        .input:focus {
+            border-color: var(--accent)
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: #fff;
+            font-family: var(--font);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        .btn.secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text)
+        }
+
+        .subnet-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 11px
+        }
+
+        .subnet-table th,
+        .subnet-table td {
+            padding: 8px;
+            border: 1px solid var(--border);
+            text-align: left
+        }
+
+        .subnet-table th {
+            background: var(--card2);
+            color: var(--muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 9px;
+            letter-spacing: 1px
+        }
+
+        .subnet-table td {
+            font-family: var(--mono);
+            color: var(--green)
+        }
+
+        .dns-result {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 12px
+        }
+
+        .dns-item {
+            padding: 8px 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: var(--mono);
+            font-size: 11px;
+            display: flex;
+            gap: 10px
+        }
+
+        .dns-item .di-type {
+            color: var(--accent);
+            font-weight: 700;
+            min-width: 40px
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: var(--green);
+            color: #000;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 10px;
+            z-index: 300;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all .3s;
+            pointer-events: none
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0)
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="ip-tools" data-dkz-appid="DKZ-MOD-IP-" data-dkz-version="v0.01" data-dkz-title="🌐 IP Tools —" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+    </div>
+    <div class="app">
+        <div class="header"><a href="../../hub/index.html" class="back-btn">← Hub</a>
+            <h1>🌐 IP & Netzwerk Tools</h1>
+            <div class="hdr-right"><span class="ver">v0.01</span></div>
+        </div>
+        <div class="content">
+            <div class="card">
+                <h3>📡 Deine IP-Informationen</h3>
+                <div class="info-grid" id="myInfo">
+                    <div class="info-item">
+                        <div class="ii-label">Status</div>
+                        <div class="ii-value">Lade...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <h3>🔍 IP/Subnet Rechner</h3>
+                <div class="input-row"><input class="input" id="subnetIp" value="192.168.1.0"
+                        placeholder="IP-Adresse"><select class="input" id="subnetMask" style="max-width:120px">
+                        <option value="8">/8</option>
+                        <option value="16">/16</option>
+                        <option value="20">/20</option>
+                        <option value="24" selected>/24</option>
+                        <option value="25">/25</option>
+                        <option value="26">/26</option>
+                        <option value="27">/27</option>
+                        <option value="28">/28</option>
+                        <option value="29">/29</option>
+                        <option value="30">/30</option>
+                        <option value="32">/32</option>
+                    </select><button class="btn" onclick="calcSubnet()">Berechnen</button></div>
+                <div id="subnetResult"></div>
+            </div>
+            <div class="card">
+                <h3>🔄 IP Konverter</h3>
+                <div class="input-row"><input class="input" id="convIp" value="192.168.1.1" placeholder="IP-Adresse"
+                        oninput="convertIp()"></div>
+                <div class="info-grid" id="convResult"></div>
+            </div>
+            <div class="card">
+                <h3>📊 Gängige Ports</h3>
+                <table class="subnet-table">
+                    <thead>
+                        <tr>
+                            <th>Port</th>
+                            <th>Service</th>
+                            <th>Protokoll</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>21</td>
+                            <td>FTP</td>
+                            <td>TCP</td>
+                        </tr>
+                        <tr>
+                            <td>22</td>
+                            <td>SSH</td>
+                            <td>TCP</td>
+                        </tr>
+                        <tr>
+                            <td>25</td>
+                            <td>SMTP</td>
+                            <td>TCP</td>
+                        </tr>
+                        <tr>
+                            <td>53</td>
+                            <td>DNS</td>
+                            <td>TCP/UDP</td>
+                        </tr>
+                        <tr>
+                            <td>80</td>
+                            <td>HTTP</td>
+                            <td>TCP</td>
+                        </tr>
+                        <tr>
+                            <td>443</td>
+                            <td>HTTPS</td>
+                            <td>TCP</td>
+                        </tr>
+                        <tr>
+                            <td>3000</td>
+                            <td>Dev Server</td>
+                            <td>TCP</td>
+                        </tr>
+                        <tr>
+                            <td>3306</td>
+                            <td>MySQL</td>
+                            <td>TCP</td>
+                        </tr>
+                        <tr>
+                            <td>5432</td>
+                            <td>PostgreSQL</td>
+                            <td>TCP</td>
+                        </tr>
+                        <tr>
+                            <td>6379</td>
+                            <td>Redis</td>
+                            <td>TCP</td>
+                        </tr>
+                        <tr>
+                            <td>8080</td>
+                            <td>Alt HTTP</td>
+                            <td>TCP</td>
+                        </tr>
+                        <tr>
+                            <td>27017</td>
+                            <td>MongoDB</td>
+                            <td>TCP</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        async function getMyIp() { try { const res = await fetch('https://ipapi.co/json/'); const d = await res.json(); document.getElementById('myInfo').innerHTML = [{ l: 'IP Adresse', v: d.ip }, { l: 'Stadt', v: d.city }, { l: 'Region', v: d.region }, { l: 'Land', v: d.country_name + ' ' + d.country_code }, { l: 'ISP', v: d.org }, { l: 'Zeitzone', v: d.timezone }, { l: 'Latitude', v: d.latitude }, { l: 'Longitude', v: d.longitude }].map(i => `<div class="info-item"><div class="ii-label">${i.l}</div><div class="ii-value">${i.v || '—'}</div></div>`).join('') } catch (e) { document.getElementById('myInfo').innerHTML = '<div class="info-item"><div class="ii-label">Fehler</div><div class="ii-value" style="color:var(--red)">Nicht verfügbar (Offline/CORS)</div></div>' } }
+        function calcSubnet() {
+            const ip = document.getElementById('subnetIp').value; const cidr = +document.getElementById('subnetMask').value; const parts = ip.split('.').map(Number); if (parts.length !== 4) return; const ipInt = (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8) | parts[3]; const mask = ~((1 << (32 - cidr)) - 1); const network = ipInt & mask; const broadcast = network | (~mask); const first = network + 1; const last = broadcast - 1; const hosts = Math.pow(2, 32 - cidr) - 2;
+            const fmt = n => `${(n >>> 24) & 255}.${(n >>> 16) & 255}.${(n >>> 8) & 255}.${n & 255}`;
+            document.getElementById('subnetResult').innerHTML = `<table class="subnet-table"><tbody><tr><td>Netzwerk</td><td>${fmt(network >>> 0)}</td></tr><tr><td>Subnetzmaske</td><td>${fmt(mask >>> 0)}</td></tr><tr><td>Broadcast</td><td>${fmt(broadcast >>> 0)}</td></tr><tr><td>Erster Host</td><td>${fmt(first >>> 0)}</td></tr><tr><td>Letzter Host</td><td>${fmt(last >>> 0)}</td></tr><tr><td>Anzahl Hosts</td><td>${Math.max(0, hosts)}</td></tr><tr><td>CIDR</td><td>/${cidr}</td></tr></tbody></table>`
+        }
+        function convertIp() {
+            const ip = document.getElementById('convIp').value; const parts = ip.split('.').map(Number); if (parts.length !== 4 || parts.some(isNaN)) return; const int = (parts[0] << 24 | parts[1] << 16 | parts[2] << 8 | parts[3]) >>> 0; const bin = parts.map(p => p.toString(2).padStart(8, '0')).join('.'); const hex = parts.map(p => p.toString(16).padStart(2, '0')).join(':'); const cls = parts[0] < 128 - 'A' : parts[0] < 192 - 'B' : parts[0] < 224 - 'C' : parts[0] < 240 - 'D' : 'E'; const priv = (parts[0] === 10) || (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) || (parts[0] === 192 && parts[1] === 168);
+            document.getElementById('convResult').innerHTML = [{ l: 'Dezimal', v: int }, { l: 'Binär', v: bin }, { l: 'Hexadezimal', v: '0x' + hex }, { l: 'Klasse', v: 'Class ' + cls }, { l: 'Typ', v: priv - '🔒 Privat' : '🌍 Öffentlich' }].map(i => `<div class="info-item"><div class="ii-label">${i.l}</div><div class="ii-value">${i.v}</div></div>`).join('')
+        }
+        function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500) }
+        getMyIp(); calcSubnet(); convertIp();
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Ip tools</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">IP-Adresse Lookup und Netzwerk-Tools.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Ip tools</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">IP-Adresse Lookup und Netzwerk-Tools.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-ip-tools-onboarded','1')}if(!localStorage.getItem('dkz-ip-tools-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>
+
+

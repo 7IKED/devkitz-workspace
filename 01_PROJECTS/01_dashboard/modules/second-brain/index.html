@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 DkZâ„¢ Second Brain — Knowledge Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+    <style>
+        :root{--bg:#060608;--card:rgba(18,18,24,.85);--card2:rgba(28,28,36,.7);--border:rgba(255,255,255,.04);--border-h:rgba(255,255,255,.10);--text:#e8e8ec;--muted:#8a8a9a;--accent:#fa1e4e;--accent-soft:rgba(250,30,78,.10);--green:#00ff88;--yellow:#ffb800;--red:#ff3b5c;--blue:#3b82f6;--purple:#a855f7;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;--radius:12px;--glass:rgba(14,14,22,.78);--blur:blur(24px);--shadow:0 8px 32px rgba(0,0,0,.4)}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh}
+        ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.06);border-radius:6px}
+        .bg-mesh{position:fixed;inset:0;z-index:0;pointer-events:none}
+        .bg-blob{position:absolute;border-radius:50%;filter:blur(140px);opacity:.05;animation:bf 25s ease-in-out infinite}
+        .bg-blob:nth-child(1){width:500px;height:500px;background:var(--purple);top:-10%;left:15%}
+        .bg-blob:nth-child(2){width:400px;height:400px;background:var(--accent);bottom:10%;right:10%;animation-delay:-8s}
+        .bg-blob:nth-child(3){width:350px;height:350px;background:var(--blue);top:50%;left:60%;animation-delay:-15s}
+        @keyframes bf{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,-40px) scale(1.1)}}
+        .app{position:relative;z-index:1}
+        .header{padding:12px 20px;border-bottom:1px solid var(--border);background:var(--glass);backdrop-filter:var(--blur);display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100}
+        .back-btn{padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,.03);color:var(--muted);font-size:11px;cursor:pointer;text-decoration:none;font-family:var(--font);transition:all .2s}
+        .back-btn:hover{border-color:var(--accent);color:var(--accent)}
+        .header h1{font-size:18px;font-weight:900;background:linear-gradient(135deg,var(--purple),var(--accent));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+        .hdr-right{margin-left:auto;display:flex;gap:6px;align-items:center}
+        .ver{font-size:9px;color:var(--muted);font-family:var(--mono);background:rgba(255,255,255,.04);padding:2px 8px;border-radius:6px}
+        .hdr-btn{padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,.03);color:var(--muted);font-size:10px;cursor:pointer;font-family:var(--font);transition:all .2s}
+        .hdr-btn:hover{border-color:var(--accent);color:var(--text);background:var(--accent-soft)}
+        .tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 16px;overflow-x:auto}
+        .tab{padding:10px 14px;font-size:11px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted);transition:all .2s;white-space:nowrap}
+        .tab:hover{color:var(--text)}
+        .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+        .tab-panel{display:none;padding:16px 20px;overflow-y:auto;height:calc(100vh - 100px)}
+        .tab-panel.active{display:block}
+        .stats{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+        .stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 18px;flex:1;min-width:120px;transition:all .2s}
+        .stat:hover{border-color:var(--border-h);transform:translateY(-2px)}
+        .stat-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px}
+        .stat-val{font-size:22px;font-weight:900;font-family:var(--mono);margin-top:2px}
+        .stat-val.green{color:var(--green)}.stat-val.blue{color:var(--blue)}.stat-val.purple{color:var(--purple)}.stat-val.accent{color:var(--accent)}
+        .capture{display:flex;gap:8px;margin-bottom:16px}
+        .capture input{flex:1;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border .2s}
+        .capture input:focus{border-color:var(--accent)}
+        .capture select{padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--font);font-size:11px;outline:none;cursor:pointer}
+        .btn{padding:8px 16px;border:none;border-radius:8px;background:linear-gradient(135deg,var(--accent),#c4174a);color:#fff;font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer;transition:transform .15s}
+        .btn:hover{transform:scale(1.03)}
+        .btn.outline{background:transparent;border:1px solid var(--border);color:var(--muted)}
+        .btn.outline:hover{border-color:var(--accent);color:var(--accent)}
+        .search-row{display:flex;gap:8px;margin-bottom:12px}
+        .search-row input{flex:1;padding:8px 14px;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--font);font-size:11px;outline:none}
+        .entries{display:grid;gap:10px}
+        .entry{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;transition:all .2s;cursor:pointer;position:relative}
+        .entry:hover{border-color:rgba(250,30,78,.15);transform:translateY(-1px);box-shadow:0 8px 32px rgba(250,30,78,.06)}
+        .entry-type{font-size:8px;font-weight:700;font-family:var(--mono);padding:2px 8px;border-radius:8px;display:inline-block;margin-bottom:6px}
+        .entry-type.notiz{background:rgba(59,130,246,.1);color:var(--blue)}
+        .entry-type.aufgabe{background:rgba(0,255,136,.1);color:var(--green)}
+        .entry-type.idee{background:rgba(168,85,247,.1);color:var(--purple)}
+        .entry-type.lesezeichen{background:rgba(255,184,0,.1);color:var(--yellow)}
+        .entry-type.snippet{background:rgba(250,30,78,.1);color:var(--accent)}
+        .entry-title{font-size:13px;font-weight:700;margin-bottom:4px}
+        .entry-meta{font-size:9px;color:var(--muted);font-family:var(--mono)}
+        .entry-tags{margin-top:6px}
+        .tag{display:inline-block;padding:2px 7px;border-radius:8px;font-size:8px;font-weight:600;font-family:var(--mono);background:rgba(255,255,255,.04);color:var(--muted);margin:1px 2px;cursor:pointer;transition:all .15s}
+        .tag:hover{background:var(--accent-soft);color:var(--accent)}
+        .entry-del{position:absolute;top:10px;right:12px;background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;opacity:0;transition:opacity .2s}
+        .entry:hover .entry-del{opacity:1}
+        .entry-del:hover{color:var(--red)}
+        #graph-canvas{width:100%;height:calc(100vh - 150px);background:var(--card);border:1px solid var(--border);border-radius:14px;cursor:grab}
+        #graph-canvas:active{cursor:grabbing}
+        .tags-cloud{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+        .tags-cloud .tag{font-size:10px;padding:4px 10px}
+        .tags-cloud .tag.active{background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent)}
+        /* ARCHIVE */
+        .arc-timeline{position:relative;padding-left:24px;border-left:2px solid var(--border)}
+        .arc-item{position:relative;padding:12px 16px;margin-bottom:12px;background:var(--card);border:1px solid var(--border);border-radius:14px;transition:all .2s}
+        .arc-item:hover{border-color:var(--border-h);transform:translateX(4px)}
+        .arc-item::before{content:'';position:absolute;left:-29px;top:18px;width:10px;height:10px;border-radius:50%;background:var(--accent);border:2px solid var(--bg)}
+        .arc-src{font-size:8px;font-weight:700;font-family:var(--mono);padding:2px 8px;border-radius:8px;display:inline-block;margin-bottom:4px}
+        .arc-src.antigravity{background:rgba(168,85,247,.15);color:var(--purple)}
+        .arc-src.gemini{background:rgba(59,130,246,.15);color:var(--blue)}
+        .arc-src.opencode{background:rgba(0,255,136,.15);color:var(--green)}
+        .arc-src.claude{background:rgba(250,30,78,.15);color:var(--accent)}
+        /* CHAT */
+        .chat-box{display:flex;flex-direction:column;height:calc(100vh - 150px)}
+        .chat-msgs{flex:1;overflow-y:auto;padding:12px 0;display:flex;flex-direction:column;gap:10px}
+        .chat-msg{max-width:80%;padding:12px 16px;border-radius:14px;font-size:13px;line-height:1.5;animation:msgIn .3s ease}
+        @keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .chat-msg.user{align-self:flex-end;background:linear-gradient(135deg,var(--accent),#c4174a);color:#fff;border-bottom-right-radius:4px}
+        .chat-msg.ai{align-self:flex-start;background:var(--card);border:1px solid var(--border);border-bottom-left-radius:4px}
+        .chat-msg .graph-link{display:inline-block;margin-top:8px;padding:4px 10px;background:var(--accent-soft);border:1px solid rgba(250,30,78,.2);border-radius:8px;font-size:10px;color:var(--accent);cursor:pointer;transition:all .2s}
+        .chat-msg .graph-link:hover{background:var(--accent);color:#fff}
+        .chat-input-row{display:flex;gap:8px;padding-top:10px;border-top:1px solid var(--border)}
+        .chat-input-row input{flex:1;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--font);font-size:13px;outline:none}
+        .chat-input-row input:focus{border-color:var(--accent)}
+        /* GOALS */
+        .goal-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;transition:all .2s}
+        .goal-card:hover{border-color:var(--border-h);transform:translateY(-2px)}
+        .goal-title{font-size:14px;font-weight:800;margin-bottom:6px}
+        .goal-bar{height:8px;background:rgba(255,255,255,.06);border-radius:8px;overflow:hidden;margin:8px 0}
+        .goal-bar-fill{height:100%;border-radius:8px;transition:width .6s ease;background:linear-gradient(90deg,var(--accent),var(--purple))}
+        .goal-meta{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:var(--mono)}
+        .smart-badge{display:inline-block;padding:2px 6px;border-radius:6px;font-size:8px;font-weight:700;font-family:var(--mono);margin-right:4px}
+        .smart-s{background:rgba(250,30,78,.1);color:var(--accent)}
+        .smart-m{background:rgba(59,130,246,.1);color:var(--blue)}
+        .smart-a{background:rgba(0,255,136,.1);color:var(--green)}
+        .smart-r{background:rgba(168,85,247,.1);color:var(--purple)}
+        .smart-t{background:rgba(255,184,0,.1);color:var(--yellow)}
+        .streak-fire{font-size:16px;display:inline}
+        .achievement{display:inline-block;padding:4px 10px;border-radius:8px;font-size:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);margin:2px}
+        .goal-form{display:grid;gap:10px;margin-bottom:16px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:14px}
+        .goal-form input,.goal-form select,.goal-form textarea{padding:10px 14px;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--font);font-size:12px;outline:none}
+        .goal-form input:focus,.goal-form textarea:focus{border-color:var(--accent)}
+        .goal-form label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:600}
+        /* DASHY CANVAS */
+        .dashy-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+        .dashy-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;position:relative}
+        .dashy-card h4{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+        .dashy-canvas{width:100%;border-radius:8px;display:block}
+        /* NEXUS INFO */
+        .nexus-layer{background:var(--card);border:1px solid rgba(168,85,247,.15);border-radius:14px;padding:14px;margin-bottom:12px;display:none}
+        .nexus-layer.visible{display:block;animation:msgIn .3s ease}
+        .nexus-kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:11px}
+        .nexus-kv dt{color:var(--muted);font-family:var(--mono);font-size:10px}
+        .nexus-kv dd{color:var(--text);font-weight:600}
+        .nexus-badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:9px;font-weight:700;font-family:var(--mono);background:rgba(168,85,247,.1);color:var(--purple);margin-right:4px}
+        @media(max-width:768px){.dashy-row{grid-template-columns:1fr}}
+        .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);padding:12px 24px;background:var(--green);color:#000;font-size:12px;font-weight:700;border-radius:12px;z-index:300;opacity:0;transition:all .3s;pointer-events:none}
+        .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+        @media(max-width:768px){.stats{flex-direction:column}.capture{flex-direction:column}.tab{padding:8px 10px;font-size:10px}}
+        /* SWITCH TOGGLE */
+        .switch{position:relative;display:inline-block;width:36px;height:20px}
+        /* DASHY ANIMATIONS */
+        @keyframes dashyFadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes dashyPulse{0%,100%{box-shadow:0 0 0 rgba(250,30,78,0)}50%{box-shadow:0 0 16px rgba(250,30,78,0.15)}}
+        @keyframes dashyGlow{0%,100%{border-color:var(--border)}50%{border-color:rgba(0,255,136,0.2)}}
+        @keyframes countUp{from{opacity:0;transform:scale(0.5)}to{opacity:1;transform:scale(1)}}
+        .dashy-card{animation:dashyFadeIn .5s ease-out both}
+        .dashy-row:nth-child(1) .dashy-card{animation-delay:.1s}
+        .dashy-row:nth-child(2) .dashy-card:nth-child(1){animation-delay:.2s}
+        .dashy-row:nth-child(2) .dashy-card:nth-child(2){animation-delay:.3s}
+        .dashy-row:nth-child(3) .dashy-card{animation-delay:.4s}
+        .dashy-row:nth-child(4) .dashy-card{animation-delay:.5s}
+        .dashy-stat{animation:dashyPulse 3s ease-in-out infinite}
+        .dashy-stat span{animation:countUp .6s ease-out both}
+        .skill-card.active{animation:dashyGlow 2s ease-in-out infinite}
+        /* AUTO-UPDATER */
+        .updater-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(129,140,248,0.04);border:1px solid var(--border);border-radius:10px;margin-top:8px}
+        .updater-btn{padding:6px 14px;background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;border:none;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .2s}
+        .updater-btn:hover{transform:scale(1.05);box-shadow:0 0 12px rgba(99,102,241,.3)}
+        .switch input{opacity:0;width:0;height:0}
+        .slider{position:absolute;cursor:pointer;inset:0;background:rgba(255,255,255,.08);transition:.3s;border-radius:20px}
+        .slider::before{content:'';position:absolute;height:14px;width:14px;left:3px;bottom:3px;background:#8a8a9a;transition:.3s;border-radius:50%}
+        .switch input:checked+.slider{background:var(--green)}
+        .switch input:checked+.slider::before{transform:translateX(16px);background:#fff}
+        /* SKILL CARD */
+        .skill-card{transition:all .3s}.skill-card.active{border-color:rgba(0,255,136,.3);box-shadow:0 0 20px rgba(0,255,136,.08)}
+        .skill-log{max-height:100px;overflow-y:auto;font-size:9px;font-family:var(--mono);color:var(--muted);margin-top:6px;padding:4px;background:rgba(0,0,0,.2);border-radius:6px;min-height:24px}
+        .skill-log .sl-entry{padding:2px 0;border-bottom:1px solid rgba(255,255,255,.02)}
+        .skill-log .sl-entry:last-child{border:none}
+        /* ORCHESTRATION TOGGLE */
+        .skill-toggle{display:flex;align-items:center;gap:6px;padding:8px 10px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .2s;font-size:11px}
+        .skill-toggle:hover{border-color:var(--border-h)}
+        .skill-toggle input{display:none}
+        .st-dot{width:8px;height:8px;border-radius:50%;background:#555;transition:all .3s}
+        .skill-toggle input:checked~.st-dot{background:var(--green);box-shadow:0 0 8px var(--green)}
+        .skill-toggle input:checked~.st-name{color:var(--text)}
+        .st-name{color:var(--muted);font-weight:600;font-size:10px}
+    </style>
+    <script src="../../shared/dkz-updater.js"></script>
+</head>
+<body data-dkz-module="second-brain" data-dkz-appid="DKZ-MOD-SEC" data-dkz-version="v0.01" data-dkz-title="🧠 Second Brain — Knowledge Management" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div><div class="bg-blob"></div></div>
+    <div class="app">
+        <div class="header">
+            <a href="../../hub/index.html" class="back-btn">← Hub</a>
+            <h1 id="hdr-title">🧠 DkZ Second Brain</h1>
+            <div class="hdr-right">
+                <button class="hdr-btn" onclick="exportData('json')" id="btn-export-json" title="Export als JSON">📤 JSON</button>
+                <button class="hdr-btn" onclick="exportData('md')" id="btn-export-md" title="Export als Markdown">📤 MD</button>
+                <span class="ver">v2.0 · MOD-082</span>
+            </div>
+        </div>
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('capture',this)">⚡ Capture</div>
+            <div class="tab" onclick="switchTab('browse',this)">📚 Browse</div>
+            <div class="tab" onclick="switchTab('graph',this)">🕸️ Graph</div>
+            <div class="tab" onclick="switchTab('tags',this)">🏷️ Tags</div>
+            <div class="tab" onclick="switchTab('archive',this)">📊 Archiv</div>
+            <div class="tab" onclick="switchTab('chat',this)">🤖 Chat</div>
+            <div class="tab" onclick="switchTab('goals',this)">🎯 Goals</div>
+            <div class="tab" onclick="switchTab('dashy',this)">📈 Dashy</div>
+        </div>
+        <!-- CAPTURE TAB -->
+        <div class="tab-panel active" id="panel-capture">
+            <div class="stats" id="stats"></div>
+            <div class="capture" id="capture-bar">
+                <input id="captureInput" placeholder="💡 Quick Capture — Gedanke, Notiz, Idee eingeben..." autofocus>
+                <select id="captureType">
+                    <option value="notiz">📝 Notiz</option>
+                    <option value="aufgabe">✅ Aufgabe</option>
+                    <option value="idee">💡 Idee</option>
+                    <option value="lesezeichen">🔗 Lesezeichen</option>
+                    <option value="snippet">💻 Snippet</option>
+                </select>
+                <input id="captureTags" placeholder="Tags (kommagetrennt)" style="max-width:200px">
+                <button class="btn" onclick="addEntry()">➕ Speichern</button>
+            </div>
+            <div id="recentEntries"></div>
+        </div>
+        <!-- BROWSE TAB -->
+        <div class="tab-panel" id="panel-browse">
+            <div class="search-row">
+                <input id="searchInput" placeholder="🔍 Suche in allen Einträgen..." oninput="renderBrowse()">
+                <select id="filterType" onchange="renderBrowse()">
+                    <option value="">Alle Typen</option>
+                    <option value="notiz">📝 Notiz</option>
+                    <option value="aufgabe">✅ Aufgabe</option>
+                    <option value="idee">💡 Idee</option>
+                    <option value="lesezeichen">🔗 Lesezeichen</option>
+                    <option value="snippet">💻 Snippet</option>
+                </select>
+            </div>
+            <div class="entries" id="browseEntries"></div>
+        </div>
+        <!-- GRAPH TAB -->
+        <div class="tab-panel" id="panel-graph">
+            <canvas id="graph-canvas"></canvas>
+        </div>
+        <!-- TAGS TAB -->
+        <div class="tab-panel" id="panel-tags">
+            <h2 style="font-size:14px;font-weight:800;margin-bottom:12px">🏷️ Tag-Wolke</h2>
+            <div class="tags-cloud" id="tagsCloud"></div>
+            <div class="entries" id="tagEntries"></div>
+        </div>
+        <!-- ARCHIVE TAB -->
+        <div class="tab-panel" id="panel-archive">
+            <div class="stats" id="arc-stats"></div>
+            <div class="search-row">
+                <input id="arcSearch" placeholder="🔍 Archiv durchsuchen..." oninput="renderArchive()">
+                <select id="arcFilter" onchange="renderArchive()">
+                    <option value="">Alle Quellen</option>
+                    <option value="antigravity">🟣 Antigravity</option>
+                    <option value="gemini">🔵 Gemini</option>
+                    <option value="opencode">🟢 OpenCode</option>
+                    <option value="claude">🔴 Claude</option>
+                </select>
+            </div>
+            <div class="arc-timeline" id="arcTimeline"></div>
+            <div class="nexus-layer" id="nexusInfo">
+                <h4 style="font-size:11px;font-weight:800;margin-bottom:8px">🔮 GitNexus — Knoten-Info</h4>
+                <dl class="nexus-kv" id="nexusKV"></dl>
+            </div>
+        </div>
+        <!-- CHAT TAB -->
+        <div class="tab-panel" id="panel-chat">
+            <div class="chat-box">
+                <div class="chat-msgs" id="chatMsgs">
+                    <div class="chat-msg ai">🧠 <strong>Second Brain AI</strong><br>Frag mich alles ueber dein Brain! Ich durchsuche deine Eintraege, Tags und Notizen.</div>
+                </div>
+                <div class="chat-input-row">
+                    <input id="chatInput" placeholder="💬 Frage an dein Brain..." onkeydown="if(event.key==='Enter')sendChat()">
+                    <button class="btn" onclick="sendChat()">Senden</button>
+                    <button class="btn outline" onclick="clearChat()">🗑️</button>
+                </div>
+            </div>
+        </div>
+        <!-- GOALS TAB -->
+        <div class="tab-panel" id="panel-goals">
+            <div class="stats" id="goal-stats"></div>
+            <details id="goalFormToggle">
+                <summary style="cursor:pointer;font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px">➕ Neues Ziel erstellen</summary>
+                <div class="goal-form" id="goalForm">
+                    <label>Ziel-Titel</label>
+                    <input id="goalTitle" placeholder="z.B. 10 Module pro Woche fertigstellen">
+                    <label>Beschreibung</label>
+                    <textarea id="goalDesc" rows="2" placeholder="Was genau willst du erreichen?"></textarea>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                        <div><label>Kategorie</label>
+                        <select id="goalCat"><option value="dev">💻 Entwicklung</option><option value="learn">📚 Lernen</option><option value="health">💪 Gesundheit</option><option value="content">✍️ Content</option><option value="system">⚙️ System</option></select></div>
+                        <div><label>Zielwert</label><input id="goalTarget" type="number" value="100" min="1"></div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                        <div><label>Startdatum</label><input id="goalStart" type="date"></div>
+                        <div><label>Deadline</label><input id="goalEnd" type="date"></div>
+                    </div>
+                    <button class="btn" onclick="addGoal()">🎯 Ziel speichern</button>
+                </div>
+            </details>
+            <div id="goalsList"></div>
+            <div class="dashy-row" id="dashyCharts" style="display:none">
+                <div class="dashy-card"><h4>📊 SMART Radar</h4><canvas class="dashy-canvas" id="dashyRadar" height="200"></canvas></div>
+                <div class="dashy-card"><h4>🔥 Streak Heatmap</h4><canvas class="dashy-canvas" id="dashyHeatmap" height="200"></canvas></div>
+            </div>
+            <h3 style="font-size:12px;font-weight:800;margin:16px 0 8px;color:var(--muted)">🏆 Achievements</h3>
+            <div id="achievementsList"></div>
+        </div>
+        <!-- DASHY TAB -->
+        <div class="tab-panel" id="panel-dashy">
+            <div class="stats" id="dashy-stats"></div>
+            <div class="dashy-row">
+                <div class="dashy-card"><h4>📊 Typ-Verteilung</h4><canvas class="dashy-canvas" id="dashyDonut" height="220"></canvas></div>
+                <div class="dashy-card"><h4>📈 Aktivitaet (7 Tage)</h4><canvas class="dashy-canvas" id="dashyActivity" height="220"></canvas></div>
+            </div>
+            <div class="dashy-row">
+                <div class="dashy-card"><h4>📊 SMART Radar</h4><canvas class="dashy-canvas" id="dashyRadar2" height="220"></canvas></div>
+                <div class="dashy-card"><h4>🔥 Streak Heatmap</h4><canvas class="dashy-canvas" id="dashyHeat2" height="220"></canvas></div>
+            </div>
+            <div class="dashy-row">
+                <div class="dashy-card" style="grid-column:1/-1">
+                    <h4>🔌 Verbindungs-Health</h4>
+                    <div id="dashy-health" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-top:8px"></div>
+                    <div class="updater-bar">
+                        <span style="font-size:10px;color:var(--muted)">🔄 Auto-Update: 1x taeglich</span>
+                        <span id="updater-last" style="font-size:9px;color:var(--muted);font-family:var(--mono)"></span>
+                        <span style="flex:1"></span>
+                        <button class="updater-btn" onclick="runAutoUpdate()">⚡ Jetzt updaten</button>
+                    </div>
+                </div>
+            </div>
+            <!-- AI ORCHESTRATION -->
+            <div class="dashy-row">
+                <div class="dashy-card" style="grid-column:1/-1">
+                    <h4>🧠 AI Orchestration Stack</h4>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;margin-top:8px">
+                        <label class="skill-toggle" id="orch-langchain"><input type="checkbox" onchange="toggleOrch('langchain',this.checked)"><span class="st-dot"></span><span class="st-name">🔗 LangChain</span></label>
+                        <label class="skill-toggle" id="orch-langgraph"><input type="checkbox" onchange="toggleOrch('langgraph',this.checked)"><span class="st-dot"></span><span class="st-name">📊 LangGraph</span></label>
+                        <label class="skill-toggle" id="orch-cognee"><input type="checkbox" onchange="toggleOrch('cognee',this.checked)"><span class="st-dot"></span><span class="st-name">🧩 Cognee</span></label>
+                        <label class="skill-toggle" id="orch-autoresearch"><input type="checkbox" onchange="toggleOrch('autoresearch',this.checked)"><span class="st-dot"></span><span class="st-name">🔬 AutoResearch</span></label>
+                        <label class="skill-toggle" id="orch-k8s"><input type="checkbox" onchange="toggleOrch('k8s',this.checked)"><span class="st-dot"></span><span class="st-name">☸️ Kubernetes</span></label>
+                        <label class="skill-toggle" id="orch-openmanus"><input type="checkbox" onchange="toggleOrch('openmanus',this.checked)"><span class="st-dot"></span><span class="st-name">🤚 OpenManus</span></label>
+                        <label class="skill-toggle" id="orch-playwright"><input type="checkbox" onchange="toggleOrch('playwright',this.checked)"><span class="st-dot"></span><span class="st-name">🎭 Playwright</span></label>
+                        <label class="skill-toggle" id="orch-browseruse"><input type="checkbox" onchange="toggleOrch('browseruse',this.checked)"><span class="st-dot"></span><span class="st-name">🌐 BrowserUse</span></label>
+                    </div>
+                </div>
+            </div>
+            <!-- 3 SKILLS: PathFinder, BahnCleaner, Grill -->
+            <div class="dashy-row" style="grid-template-columns:1fr 1fr 1fr">
+                <div class="dashy-card skill-card" id="skill-pathfinder">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <h4>🔍 PathFinder</h4>
+                        <label class="switch"><input type="checkbox" id="sw-pathfinder" onchange="toggleSkill('pathfinder',this.checked)"><span class="slider"></span></label>
+                    </div>
+                    <p style="font-size:10px;color:var(--muted);margin:6px 0">Sucht relevante Pfade, erstellt Knoten ohne Datei-Anker — nur gesuchte Begriffe</p>
+                    <div class="skill-log" id="log-pathfinder"></div>
+                </div>
+                <div class="dashy-card skill-card" id="skill-bahncleaner">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <h4>🧹 BahnCleaner</h4>
+                        <label class="switch"><input type="checkbox" id="sw-bahncleaner" onchange="toggleSkill('bahncleaner',this.checked)"><span class="slider"></span></label>
+                    </div>
+                    <p style="font-size:10px;color:var(--muted);margin:6px 0">Findet und eliminiert unnoetig gebildete Bahnen/Verbindungen</p>
+                    <div class="skill-log" id="log-bahncleaner"></div>
+                </div>
+                <div class="dashy-card skill-card" id="skill-grill">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <h4>🔥 Grill</h4>
+                        <label class="switch"><input type="checkbox" id="sw-grill" onchange="toggleSkill('grill',this.checked)"><span class="slider"></span></label>
+                    </div>
+                    <p style="font-size:10px;color:var(--muted);margin:6px 0">3-Saetze Deep-Questioning — sucht immer tiefer wenn gestartet</p>
+                    <div class="skill-log" id="log-grill"></div>
+                </div>
+            </div>
+            <!-- NANOCHAT BRIDGE -->
+            <div class="dashy-row">
+                <div class="dashy-card" style="grid-column:1/-1">
+                    <h4>💬 NanoChat Bridge</h4>
+                    <div style="display:flex;gap:8px;margin-top:8px">
+                        <input id="nanochat-input" placeholder="🤖 Sprich mit den Nanobots..." style="flex:1;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font);font-size:12px;outline:none">
+                        <button class="btn" onclick="sendNanoChat()" style="white-space:nowrap">🤖 Senden</button>
+                    </div>
+                    <div id="nanochat-log" style="margin-top:8px;max-height:150px;overflow-y:auto;font-size:10px;font-family:var(--mono);color:var(--muted)"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+    // DkZ XSS Protection
+    function esc(s){const d=document.createElement('div');d.appendChild(document.createTextNode(s));return d.innerHTML}
+
+    const STORAGE_KEY='dkz-second-brain';
+    let entries=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+    let activeTag=null;
+
+    function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(entries))}
+
+    function addEntry(){
+        const input=document.getElementById('captureInput');
+        const text=input.value.trim();if(!text)return;
+        const type=document.getElementById('captureType').value;
+        const tagsRaw=document.getElementById('captureTags').value;
+        const tags=tagsRaw?tagsRaw.split(',').map(t=>t.trim().toLowerCase()).filter(Boolean):[];
+        entries.unshift({id:Date.now(),text,type,tags,created:new Date().toISOString()});
+        save();input.value='';document.getElementById('captureTags').value='';
+        renderAll();showToast('✅ Gespeichert!');
+    }
+
+    function deleteEntry(id){
+        entries=entries.filter(e=>e.id!==id);save();renderAll();showToast('🗑️ Gelöscht');
+    }
+
+    function renderStats(){
+        const types={notiz:0,aufgabe:0,idee:0,lesezeichen:0,snippet:0};
+        const allTags=new Set();
+        entries.forEach(e=>{types[e.type]=(types[e.type]||0)+1;(e.tags||[]).forEach(t=>allTags.add(t))});
+        document.getElementById('stats').innerHTML=`
+            <div class="stat"><div class="stat-label">Einträge</div><div class="stat-val green">${entries.length}</div></div>
+            <div class="stat"><div class="stat-label">Notizen</div><div class="stat-val blue">${types.notiz}</div></div>
+            <div class="stat"><div class="stat-label">Ideen</div><div class="stat-val purple">${types.idee}</div></div>
+            <div class="stat"><div class="stat-label">Aufgaben</div><div class="stat-val accent">${types.aufgabe}</div></div>
+            <div class="stat"><div class="stat-label">Tags</div><div class="stat-val green">${allTags.size}</div></div>`;
+    }
+
+    function renderEntry(e){
+        const d=new Date(e.created);
+        const dateStr=`${d.getDate()}.${d.getMonth()+1}.${d.getFullYear()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+        const tagsHtml=(e.tags||[]).map(t=>`<span class="tag" onclick="event.stopPropagation();filterByTag('${esc(t)}')">${esc(t)}</span>`).join('');
+        return`<div class="entry" onclick="copyText(this)">
+            <button class="entry-del" onclick="event.stopPropagation();deleteEntry(${e.id})" title="Löschen">✕</button>
+            <span class="entry-type ${e.type}">${e.type.toUpperCase()}</span>
+            <div class="entry-title">${esc(e.text)}</div>
+            <div class="entry-meta">📅 ${dateStr}</div>
+            ${tagsHtml?`<div class="entry-tags">${tagsHtml}</div>`:''}
+        </div>`;
+    }
+
+    function renderRecent(){
+        const recent=entries.slice(0,8);
+        document.getElementById('recentEntries').innerHTML=recent.length?
+            `<h3 style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:2px">Letzte Einträge</h3><div class="entries">${recent.map(renderEntry).join('')}</div>`:
+            `<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:40px;margin-bottom:12px">🧠</div><div>Noch keine Einträge. Gib oben deinen ersten Gedanken ein!</div></div>`;
+    }
+
+    function renderBrowse(){
+        const q=(document.getElementById('searchInput').value||'').toLowerCase();
+        const ft=document.getElementById('filterType').value;
+        let filtered=entries;
+        if(ft)filtered=filtered.filter(e=>e.type===ft);
+        if(q)filtered=filtered.filter(e=>e.text.toLowerCase().includes(q)||(e.tags||[]).some(t=>t.includes(q)));
+        document.getElementById('browseEntries').innerHTML=filtered.length?filtered.map(renderEntry).join(''):'<p style="color:var(--muted);text-align:center;padding:40px">Keine Einträge gefunden.</p>';
+    }
+
+    function renderTags(){
+        const tagCount={};entries.forEach(e=>(e.tags||[]).forEach(t=>{tagCount[t]=(tagCount[t]||0)+1}));
+        const sorted=Object.entries(tagCount).sort((a,b)=>b[1]-a[1]);
+        document.getElementById('tagsCloud').innerHTML=sorted.map(([t,c])=>
+            `<span class="tag${activeTag===t?' active':''}" onclick="filterByTag('${esc(t)}')" style="font-size:${Math.min(9+c*2,18)}px">${esc(t)} (${c})</span>`
+        ).join('')||'<p style="color:var(--muted)">Noch keine Tags vorhanden.</p>';
+        if(activeTag){
+            const tagged=entries.filter(e=>(e.tags||[]).includes(activeTag));
+            document.getElementById('tagEntries').innerHTML=tagged.map(renderEntry).join('');
+        }else{document.getElementById('tagEntries').innerHTML=''}
+    }
+
+    function filterByTag(t){activeTag=activeTag===t?null:t;switchTab('tags',null);renderTags()}
+
+    // Knowledge Graph (Canvas)
+    function renderGraph(){
+        const canvas=document.getElementById('graph-canvas');
+        const ctx=canvas.getContext('2d');
+        canvas.width=canvas.offsetWidth*2;canvas.height=canvas.offsetHeight*2;
+        ctx.scale(2,2);const w=canvas.offsetWidth,h=canvas.offsetHeight;
+        ctx.fillStyle='#0a0a0e';ctx.fillRect(0,0,w,h);
+        if(!entries.length){ctx.fillStyle='#8a8a9a';ctx.font='14px Inter';ctx.textAlign='center';ctx.fillText('Einträge hinzufügen um den Knowledge Graph zu sehen',w/2,h/2);return}
+        // Build tag connections
+        const tagMap={};const nodes=[];
+        entries.forEach((e,i)=>{
+            const angle=(i/entries.length)*Math.PI*2;
+            const r=Math.min(w,h)*0.3;
+            const x=w/2+Math.cos(angle)*r*(0.7+Math.random()*0.3);
+            const y=h/2+Math.sin(angle)*r*(0.7+Math.random()*0.3);
+            const colors={notiz:'#3b82f6',aufgabe:'#00ff88',idee:'#a855f7',lesezeichen:'#ffb800',snippet:'#fa1e4e'};
+            nodes.push({x,y,text:e.text.substring(0,25),type:e.type,color:colors[e.type]||'#8a8a9a',tags:e.tags||[]});
+            (e.tags||[]).forEach(t=>{if(!tagMap[t])tagMap[t]=[];tagMap[t].push(i)});
+        });
+        // Draw edges (shared tags)
+        ctx.lineWidth=0.5;
+        Object.values(tagMap).forEach(indices=>{
+            for(let i=0;i<indices.length;i++){
+                for(let j=i+1;j<indices.length;j++){
+                    const a=nodes[indices[i]],b=nodes[indices[j]];
+                    ctx.strokeStyle='rgba(250,30,78,0.1)';ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+                }}
+        });
+        // Draw nodes
+        nodes.forEach(n=>{
+            ctx.beginPath();ctx.arc(n.x,n.y,6,0,Math.PI*2);ctx.fillStyle=n.color;ctx.globalAlpha=0.8;ctx.fill();ctx.globalAlpha=1;
+            ctx.fillStyle='#e8e8ec';ctx.font='9px Inter';ctx.textAlign='center';ctx.fillText(n.text,n.x,n.y+16);
+        });
+        // Center label
+        ctx.fillStyle='rgba(250,30,78,0.3)';ctx.beginPath();ctx.arc(w/2,h/2,20,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#e8e8ec';ctx.font='bold 10px Inter';ctx.textAlign='center';ctx.fillText('🧠',w/2,h/2+4);
+    }
+
+    function switchTab(id,el){
+        document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+        document.getElementById('panel-'+id).classList.add('active');
+        if(el)el.classList.add('active');
+        else document.querySelector(`.tab[onclick*="${id}"]`).classList.add('active');
+        if(id==='graph')setTimeout(renderGraph,50);
+        if(id==='browse')renderBrowse();
+        if(id==='tags')renderTags();
+        if(id==='archive')renderArchive();
+        if(id==='goals'){renderGoals();renderGoalStats();}
+        if(id==='dashy')setTimeout(renderDashyTab,50);
+    }
+
+    function copyText(el){const t=el.querySelector('.entry-title');navigator.clipboard.writeText(t.textContent);showToast('📋 Kopiert!')}
+    function exportData(fmt){
+        let out;
+        if(fmt==='json')out=JSON.stringify(entries,null,2);
+        else out=entries.map(e=>`## ${e.type.toUpperCase()}: ${e.text}\n- Tags: ${(e.tags||[]).join(', ')}\n- Erstellt: ${e.created}\n`).join('\n');
+        const blob=new Blob([out],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+        a.download=`dkz-second-brain.${fmt}`;a.click();showToast(`📤 Export als .${fmt}!`);
+    }
+    function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
+
+    // ═══ ARCHIVE TAB ═══
+    const ARC_KEY='dkz-sb-archive';
+    let archive=JSON.parse(localStorage.getItem(ARC_KEY)||'[]');
+    function saveArchive(){localStorage.setItem(ARC_KEY,JSON.stringify(archive))}
+
+    // Seed demo data if empty
+    if(!archive.length){
+        archive=[
+            {id:1,title:'Session: Graphify Playbook Viewer',summary:'295 Knoten Force-Layout mit Chat und Minimap erstellt',source:'antigravity',date:'2026-05-20',tags:['graphify','playbook']},
+            {id:2,title:'Content Factory Pipeline',summary:'BMAD + Ralph-Loop + Superpowers + Open Swarm vereint',source:'gemini',date:'2026-05-19',tags:['factory','bmad']},
+            {id:3,title:'NexuzOS VPS Deploy',summary:'Docker Compose + vLLM Backend auf kvm8 Hostinger',source:'opencode',date:'2026-05-18',tags:['vps','docker']},
+            {id:4,title:'Superpowers + Grill Skills',summary:'169 Files ueber 5 Targets installiert',source:'antigravity',date:'2026-05-20',tags:['skills','superpowers']}
+        ];saveArchive();
+    }
+
+    function renderArchive(){
+        const q=(document.getElementById('arcSearch').value||'').toLowerCase();
+        const src=document.getElementById('arcFilter').value;
+        let filtered=archive;
+        if(src)filtered=filtered.filter(a=>a.source===src);
+        if(q)filtered=filtered.filter(a=>a.title.toLowerCase().includes(q)||a.summary.toLowerCase().includes(q));
+        const srcCount={};archive.forEach(a=>{srcCount[a.source]=(srcCount[a.source]||0)+1});
+        document.getElementById('arc-stats').innerHTML=`
+            <div class="stat"><div class="stat-label">Archiv</div><div class="stat-val purple">${archive.length}</div></div>
+            <div class="stat"><div class="stat-label">Antigravity</div><div class="stat-val purple">${srcCount.antigravity||0}</div></div>
+            <div class="stat"><div class="stat-label">Gemini</div><div class="stat-val blue">${srcCount.gemini||0}</div></div>
+            <div class="stat"><div class="stat-label">OpenCode</div><div class="stat-val green">${srcCount.opencode||0}</div></div>`;
+        document.getElementById('arcTimeline').innerHTML=filtered.length?filtered.map(a=>`
+            <div class="arc-item">
+                <span class="arc-src ${esc(a.source)}">${esc(a.source).toUpperCase()}</span>
+                <div class="entry-title">${esc(a.title)}</div>
+                <div style="font-size:12px;color:var(--text);margin:4px 0">${esc(a.summary)}</div>
+                <div class="entry-meta">📅 ${esc(a.date)} ${(a.tags||[]).map(t=>'<span class="tag">'+esc(t)+'</span>').join('')}</div>
+            </div>`).join(''):'<p style="color:var(--muted);text-align:center;padding:40px">Kein Archiv-Eintrag gefunden.</p>';
+        // Click handler fuer GitNexus Info
+        document.querySelectorAll('.arc-item').forEach((el,i)=>{
+            el.style.cursor='pointer';
+            el.onclick=()=>showNexusInfo(filtered[i]);
+        });
+    }
+
+    // ═══ CHAT TAB ═══
+    const CHAT_KEY='dkz-sb-chat';
+    let chatHistory=JSON.parse(localStorage.getItem(CHAT_KEY)||'[]');
+
+    function sendChat(){
+        const input=document.getElementById('chatInput');
+        const q=input.value.trim();if(!q)return;
+        input.value='';
+        addChatMsg('user',q);
+        // Search brain entries for local context
+        const matches=entries.filter(e=>e.text.toLowerCase().includes(q.toLowerCase())||(e.tags||[]).some(t=>t.includes(q.toLowerCase())));
+        // Try DkZ API Gateway first
+        const apiBase='http://localhost:3040/api/v1';
+        const contextStr=matches.slice(0,3).map(m=>`[${m.type}] ${m.text}`).join('; ');
+        fetch(apiBase+'/chat',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({message:q,context:contextStr,source:'second-brain'})
+        }).then(r=>{if(!r.ok)throw new Error('API '+r.status);return r.json()})
+        .then(data=>{
+            let response=data.response||data.message||data.answer||'Antwort erhalten.';
+            if(matches.length>0)response+=`<br><br><em style="font-size:10px;color:var(--muted)">${matches.length} lokale Treffer gefunden</em>`;
+            response+=`<br><span class="graph-link" onclick="openInGraphify('${esc(q)}')">🕸️ Im Graphify oeffnen</span>`;
+            addChatMsg('ai',response);
+        }).catch(()=>{
+            // Fallback: local brain search
+            let response='';
+            if(matches.length>0){
+                response=`<em style="font-size:10px;color:var(--yellow)">⚡ Offline-Modus (API nicht erreichbar)</em><br><br>`;
+                response+=`Ich habe <strong>${matches.length} lokale Eintraege</strong> gefunden:<br><br>`;
+                matches.slice(0,5).forEach(m=>{
+                    response+=`&bull; <strong>[${m.type.toUpperCase()}]</strong> ${esc(m.text)}<br>`;
+                });
+                if(matches.length>5)response+=`<br>...und ${matches.length-5} weitere.`;
+                response+=`<br><span class="graph-link" onclick="openInGraphify('${esc(q)}')">🕸️ Im Graphify oeffnen</span>`;
+            }else{
+                response=`<em style="font-size:10px;color:var(--yellow)">⚡ Offline-Modus</em><br><br>Keine Treffer fuer "<em>${esc(q)}</em>". Verbinde dich mit dem DkZ API Gateway fuer KI-Antworten.`;
+                response+=`<br><span class="graph-link" onclick="switchTab('tags',null)">🏷️ Zur Tag-Wolke</span>`;
+            }
+            addChatMsg('ai',response);
+        });
+    }
+
+    function addChatMsg(role,text){
+        const el=document.createElement('div');
+        el.className='chat-msg '+role;
+        el.innerHTML=text.replace(/\n/g,'<br>');
+        document.getElementById('chatMsgs').appendChild(el);
+        el.scrollIntoView({behavior:'smooth'});
+        chatHistory.push({role,text,ts:Date.now()});
+        localStorage.setItem(CHAT_KEY,JSON.stringify(chatHistory));
+    }
+
+    function clearChat(){
+        document.getElementById('chatMsgs').innerHTML='<div class="chat-msg ai">🧠 <strong>Second Brain AI</strong><br>Chat geloescht. Frag mich erneut!</div>';
+        chatHistory=[];localStorage.setItem(CHAT_KEY,'[]');
+    }
+
+    function openInGraphify(query){
+        const url='../graphify/index.html?search='+encodeURIComponent(query);
+        window.open(url,'_blank');
+    }
+
+    // ═══ GOALS TAB (SMART) ═══
+    const GOALS_KEY='dkz-goals';
+    let goals=JSON.parse(localStorage.getItem(GOALS_KEY)||'[]');
+    function saveGoals(){localStorage.setItem(GOALS_KEY,JSON.stringify(goals))}
+
+    function addGoal(){
+        const title=document.getElementById('goalTitle').value.trim();
+        if(!title){showToast('❌ Titel erforderlich!');return}
+        const today=new Date().toISOString().split('T')[0];
+        const goal={
+            id:Date.now(),
+            title,
+            desc:document.getElementById('goalDesc').value.trim(),
+            cat:document.getElementById('goalCat').value,
+            target:parseInt(document.getElementById('goalTarget').value)||100,
+            current:0,
+            start:document.getElementById('goalStart').value||today,
+            end:document.getElementById('goalEnd').value||'',
+            streak:0,lastCheck:null,
+            created:today
+        };
+        goals.unshift(goal);saveGoals();
+        document.getElementById('goalTitle').value='';
+        document.getElementById('goalDesc').value='';
+        document.getElementById('goalFormToggle').open=false;
+        renderGoals();renderGoalStats();showToast('🎯 Ziel erstellt!');
+    }
+
+    function updateGoalProgress(id,delta){
+        const g=goals.find(g=>g.id===id);if(!g)return;
+        g.current=Math.max(0,Math.min(g.target,g.current+delta));
+        // Streak
+        const today=new Date().toISOString().split('T')[0];
+        if(g.lastCheck!==today&&delta>0){g.streak++;g.lastCheck=today}
+        saveGoals();renderGoals();renderGoalStats();
+    }
+
+    function deleteGoal(id){goals=goals.filter(g=>g.id!==id);saveGoals();renderGoals();renderGoalStats();showToast('🗑️ Ziel geloescht')}
+
+    function smartScore(g){
+        let s=0,m=0,a=0,r=0,t=0;
+        // Specific: hat Titel + Beschreibung?
+        s=g.title.length>5?5:(g.title.length>2?3:1);
+        if(g.desc&&g.desc.length>10)s=5;
+        // Measurable: hat Zielwert?
+        m=g.target>0?5:2;
+        // Achievable: Fortschritt realistisch?
+        const pct=g.target>0?(g.current/g.target*100):0;
+        a=pct>80?5:(pct>50?4:(pct>20?3:2));
+        // Relevant: hat Kategorie?
+        r=g.cat?4:2;
+        // Time-bound: hat Deadline?
+        t=g.end?5:2;
+        const avg=((s+m+a+r+t)/5).toFixed(1);
+        const grade=avg>=4.5?'S':(avg>=3.5?'A':(avg>=2.5?'B':'C'));
+        return {s,m,a,r,t,avg,grade};
+    }
+
+    function renderGoals(){
+        const catIcons={dev:'💻',learn:'📚',health:'💪',content:'✍️',system:'⚙️'};
+        document.getElementById('goalsList').innerHTML=goals.length?goals.map(g=>{
+            const pct=g.target>0?Math.round(g.current/g.target*100):0;
+            const sm=smartScore(g);
+            const streakEmoji=g.streak>=66?'🌟':(g.streak>=30?'⭐':(g.streak>=21?'💪':(g.streak>=7?'🔥':'')));
+            const elapsed=g.end?Math.max(0,Math.round((new Date()-new Date(g.start))/(new Date(g.end)-new Date(g.start))*100)):0;
+            const status=pct>=100?'🟢 ERREICHT':(pct>=elapsed?'🟢 Im Plan':(pct>=elapsed*0.7?'🟡 Leicht zurueck':'🔴 Zurueck'));
+            return `<div class="goal-card">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <div class="goal-title">${catIcons[g.cat]||'🎯'} ${esc(g.title)}</div>
+                    <button class="entry-del" style="opacity:1;position:static" onclick="deleteGoal(${g.id})" title="Loeschen">✕</button>
+                </div>
+                ${g.desc?'<div style="font-size:11px;color:var(--muted);margin:4px 0">'+esc(g.desc)+'</div>':''}
+                <div class="goal-bar"><div class="goal-bar-fill" style="width:${pct}%"></div></div>
+                <div class="goal-meta">
+                    <span>${g.current}/${g.target} (${pct}%)</span>
+                    <span>${status}</span>
+                    <span>${streakEmoji} ${g.streak>0?g.streak+'d Streak':''}</span>
+                </div>
+                <div style="margin-top:8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                    <span class="smart-badge smart-s">S:${sm.s}</span>
+                    <span class="smart-badge smart-m">M:${sm.m}</span>
+                    <span class="smart-badge smart-a">A:${sm.a}</span>
+                    <span class="smart-badge smart-r">R:${sm.r}</span>
+                    <span class="smart-badge smart-t">T:${sm.t}</span>
+                    <span style="font-size:10px;font-weight:800;color:var(--accent);margin-left:auto">SMART ${sm.grade} (${sm.avg})</span>
+                </div>
+                <div style="margin-top:8px;display:flex;gap:6px">
+                    <button class="btn" style="font-size:10px;padding:4px 10px" onclick="updateGoalProgress(${g.id},1)">+1</button>
+                    <button class="btn" style="font-size:10px;padding:4px 10px" onclick="updateGoalProgress(${g.id},5)">+5</button>
+                    <button class="btn" style="font-size:10px;padding:4px 10px" onclick="updateGoalProgress(${g.id},10)">+10</button>
+                    <button class="btn outline" style="font-size:10px;padding:4px 10px" onclick="updateGoalProgress(${g.id},-1)">-1</button>
+                </div>
+            </div>`;
+        }).join(''):'<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:40px;margin-bottom:12px">🎯</div>Noch keine Ziele. Klicke oben um dein erstes SMART-Ziel zu erstellen!</div>';
+        // Achievements
+        renderAchievements();
+        renderDashyCharts();
+    }
+
+    function renderGoalStats(){
+        const active=goals.filter(g=>g.current<g.target).length;
+        const done=goals.filter(g=>g.current>=g.target).length;
+        const maxStreak=goals.reduce((m,g)=>Math.max(m,g.streak),0);
+        document.getElementById('goal-stats').innerHTML=`
+            <div class="stat"><div class="stat-label">Ziele</div><div class="stat-val accent">${goals.length}</div></div>
+            <div class="stat"><div class="stat-label">Aktiv</div><div class="stat-val blue">${active}</div></div>
+            <div class="stat"><div class="stat-label">Erreicht</div><div class="stat-val green">${done}</div></div>
+            <div class="stat"><div class="stat-label">Max Streak</div><div class="stat-val purple">${maxStreak}d</div></div>`;
+    }
+
+    function renderAchievements(){
+        const achs=[];
+        const maxStreak=goals.reduce((m,g)=>Math.max(m,g.streak),0);
+        const done=goals.filter(g=>g.current>=g.target).length;
+        if(goals.length>=1)achs.push('🏆 Erstes Ziel');
+        if(done>=1)achs.push('🎉 Ziel erreicht');
+        if(done>=3)achs.push('🏅 Triple Goal');
+        if(maxStreak>=7)achs.push('🔥 7-Tage Streak');
+        if(maxStreak>=21)achs.push('💪 21-Tage Habit');
+        if(maxStreak>=30)achs.push('⭐ 30-Tage Master');
+        if(maxStreak>=66)achs.push('🌟 66-Tage Automatik');
+        const pcts=goals.map(g=>g.target>0?g.current/g.target*100:0);
+        if(pcts.some(p=>p>=50))achs.push('🎯 Halbzeit');
+        if(pcts.some(p=>p>100))achs.push('📈 Uebererfuellt');
+        document.getElementById('achievementsList').innerHTML=achs.length?achs.map(a=>`<span class="achievement">${a}</span>`).join(''):'<span style="color:var(--muted);font-size:11px">Noch keine Achievements freigeschaltet.</span>';
+    }
+
+    function renderAll(){renderStats();renderRecent();renderBrowse();renderTags()}
+
+    // ═══ DASHY — Canvas Auto-Charts (Vanilla JS) ═══
+    function renderDashyCharts(){
+        if(!goals.length){document.getElementById('dashyCharts').style.display='none';return}
+        document.getElementById('dashyCharts').style.display='grid';
+        drawRadar();drawHeatmap();
+    }
+
+    function drawRadar(){
+        const c=document.getElementById('dashyRadar');
+        const ctx=c.getContext('2d');
+        const w=c.width=c.offsetWidth*2;const h=c.height=400;
+        ctx.scale(2,2);const cw=w/4;const ch=h/4;const r=Math.min(cw,ch)*0.7;
+        ctx.clearRect(0,0,w,h);
+        // Grid rings
+        for(let i=1;i<=5;i++){
+            ctx.beginPath();ctx.arc(cw,ch,r*i/5,0,Math.PI*2);
+            ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.stroke();
+        }
+        // Axes + labels
+        const labels=['S','M','A','R','T'];
+        const colors=['#fa1e4e','#3b82f6','#00ff88','#a855f7','#ffb800'];
+        labels.forEach((l,i)=>{
+            const a=-Math.PI/2+i*(Math.PI*2/5);
+            const x=cw+Math.cos(a)*r;const y=ch+Math.sin(a)*r;
+            ctx.beginPath();ctx.moveTo(cw,ch);ctx.lineTo(x,y);
+            ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.stroke();
+            ctx.fillStyle=colors[i];ctx.font='bold 10px Inter';
+            ctx.textAlign='center';ctx.fillText(l,cw+Math.cos(a)*(r+14),ch+Math.sin(a)*(r+14)+4);
+        });
+        // Draw each goal as a polygon
+        goals.slice(0,4).forEach((g,gi)=>{
+            const sm=smartScore(g);const vals=[sm.s,sm.m,sm.a,sm.r,sm.t];
+            ctx.beginPath();
+            vals.forEach((v,i)=>{
+                const a=-Math.PI/2+i*(Math.PI*2/5);
+                const d=r*v/5;
+                if(i===0)ctx.moveTo(cw+Math.cos(a)*d,ch+Math.sin(a)*d);
+                else ctx.lineTo(cw+Math.cos(a)*d,ch+Math.sin(a)*d);
+            });
+            ctx.closePath();
+            const hue=[350,220,140,280][gi%4];
+            ctx.fillStyle=`hsla(${hue},80%,60%,0.12)`;ctx.fill();
+            ctx.strokeStyle=`hsla(${hue},80%,60%,0.6)`;ctx.lineWidth=1.5;ctx.stroke();
+        });
+    }
+
+    function drawHeatmap(){
+        const c=document.getElementById('dashyHeatmap');
+        const ctx=c.getContext('2d');
+        const w=c.width=c.offsetWidth*2;const h=c.height=400;
+        ctx.scale(2,2);const cw=w/4;const ch=h/4;
+        ctx.clearRect(0,0,w,h);
+        const cols=7;const rows=Math.ceil(goals.length||1);
+        const cellW=Math.min(24,(cw*2-20)/cols);const cellH=Math.min(24,(ch*2-30)/rows);
+        const startX=(cw*2-cols*cellW)/2;const startY=20;
+        // Day labels
+        const days=['Mo','Di','Mi','Do','Fr','Sa','So'];
+        ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='8px JetBrains Mono';
+        days.forEach((d,i)=>ctx.fillText(d,startX+i*cellW+cellW/2-6,14));
+        // Draw cells per goal
+        goals.forEach((g,gi)=>{
+            ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='8px Inter';
+            ctx.fillText(g.title.slice(0,8),2,startY+gi*cellH+cellH/2+3);
+            for(let d=0;d<7;d++){
+                const intensity=Math.min(1,(g.streak>d?0.3:0)+(g.current/g.target)*0.7);
+                const x=startX+d*cellW;const y=startY+gi*cellH;
+                ctx.fillStyle=intensity>0?`rgba(0,255,136,${intensity*0.8})`:'rgba(255,255,255,0.03)';
+                ctx.beginPath();ctx.roundRect(x+1,y+1,cellW-2,cellH-2,3);ctx.fill();
+            }
+        });
+    }
+
+    // ═══ GITNEXUS — Node Info Layer ═══
+    function showNexusInfo(item){
+        const nex=document.getElementById('nexusInfo');
+        const kv=document.getElementById('nexusKV');
+        nex.classList.add('visible');
+        // Try API first, fallback to local data
+        fetch('http://localhost:3040/api/v1/modules?search='+encodeURIComponent(item.title))
+        .then(r=>r.ok?r.json():Promise.reject())
+        .then(data=>{
+            const mod=data.modules?data.modules[0]:data;
+            kv.innerHTML=`
+                <dt>Modul</dt><dd>${esc(mod.name||item.title)}</dd>
+                <dt>Status</dt><dd><span class="nexus-badge">${mod.status||'aktiv'}</span></dd>
+                <dt>Version</dt><dd>${mod.version||'v1.0'}</dd>
+                <dt>Letzte Aenderung</dt><dd>${mod.lastModified||item.date}</dd>
+                <dt>Knoten-ID</dt><dd style="font-family:var(--mono)">${mod.id||'NX-'+item.id}</dd>
+                <dt>Verbindungen</dt><dd>${mod.connections||item.tags.length} Links</dd>`;
+        }).catch(()=>{
+            // Offline fallback — lokale Daten
+            kv.innerHTML=`
+                <dt>Titel</dt><dd>${esc(item.title)}</dd>
+                <dt>Quelle</dt><dd><span class="nexus-badge">${esc(item.source).toUpperCase()}</span></dd>
+                <dt>Datum</dt><dd>${esc(item.date)}</dd>
+                <dt>Knoten-ID</dt><dd style="font-family:var(--mono)">NX-${item.id}</dd>
+                <dt>Tags</dt><dd>${(item.tags||[]).map(t=>'<span class="nexus-badge">'+esc(t)+'</span>').join('')}</dd>
+                <dt>Status</dt><dd>⚡ Offline (lokale Daten)</dd>`;
+        });
+    }
+
+    // ═══ DASHY TAB — Premium Charts ═══
+    function renderDashyTab(){
+        renderDashyStats();drawDonut();drawActivityChart();
+        drawRadar2();drawHeat2();checkConnectionHealth();
+    }
+    function renderDashyStats(){
+        const today=new Date().toISOString().split('T')[0];
+        const todayCount=entries.filter(e=>e.created&&e.created.startsWith(today)).length;
+        const weekAgo=new Date(Date.now()-7*86400000);
+        const weekCount=entries.filter(e=>new Date(e.created)>=weekAgo).length;
+        const avgSmart=goals.length?goals.reduce((s,g)=>{const sm=smartScore(g);return s+parseFloat(sm.avg)},0)/goals.length:0;
+        document.getElementById('dashy-stats').innerHTML=`
+            <div class="stat"><div class="stat-label">Heute</div><div class="stat-val green">${todayCount}</div></div>
+            <div class="stat"><div class="stat-label">7 Tage</div><div class="stat-val blue">${weekCount}</div></div>
+            <div class="stat"><div class="stat-label">Gesamt</div><div class="stat-val purple">${entries.length}</div></div>
+            <div class="stat"><div class="stat-label">SMART Avg</div><div class="stat-val accent">${avgSmart.toFixed(1)}</div></div>`;
+    }
+    function drawDonut(){
+        const c=document.getElementById('dashyDonut');if(!c)return;
+        const ctx=c.getContext('2d');c.width=c.offsetWidth*2;c.height=440;ctx.scale(2,2);
+        const cw=c.offsetWidth/2;const ch=110;const R=70;const r=40;
+        const types={notiz:0,aufgabe:0,idee:0,lesezeichen:0,snippet:0};
+        entries.forEach(e=>types[e.type]=(types[e.type]||0)+1);
+        const cols={notiz:'#3b82f6',aufgabe:'#00ff88',idee:'#a855f7',lesezeichen:'#ffb800',snippet:'#fa1e4e'};
+        const total=entries.length||1;let startA=-Math.PI/2;
+        Object.entries(types).forEach(([k,v])=>{
+            const sweep=(v/total)*Math.PI*2;
+            ctx.beginPath();ctx.moveTo(cw+Math.cos(startA)*r,ch+Math.sin(startA)*r);
+            ctx.arc(cw,ch,R,startA,startA+sweep);ctx.arc(cw,ch,r,startA+sweep,startA,true);
+            ctx.closePath();ctx.fillStyle=cols[k]||'#555';ctx.fill();
+            // Label
+            const mid=startA+sweep/2;const lx=cw+Math.cos(mid)*(R+16);const ly=ch+Math.sin(mid)*(R+16);
+            ctx.fillStyle='#a1a1aa';ctx.font='9px Inter';ctx.textAlign='center';
+            ctx.fillText(k+' ('+v+')',lx,ly+3);
+            startA+=sweep;
+        });
+        ctx.fillStyle='#e8e8ec';ctx.font='bold 16px Inter';ctx.textAlign='center';
+        ctx.fillText(total,cw,ch+5);ctx.fillStyle='#8a8a9a';ctx.font='8px Inter';ctx.fillText('Eintraege',cw,ch+16);
+    }
+    function drawActivityChart(){
+        const c=document.getElementById('dashyActivity');if(!c)return;
+        const ctx=c.getContext('2d');c.width=c.offsetWidth*2;c.height=440;ctx.scale(2,2);
+        const cw=c.offsetWidth;const ch=220;const pad=30;
+        const days=[];for(let i=6;i>=0;i--){
+            const d=new Date(Date.now()-i*86400000);
+            const ds=d.toISOString().split('T')[0];
+            const count=entries.filter(e=>e.created&&e.created.startsWith(ds)).length;
+            days.push({label:['So','Mo','Di','Mi','Do','Fr','Sa'][d.getDay()],count,date:ds});
+        }
+        const maxV=Math.max(1,...days.map(d=>d.count));
+        const barW=(cw-pad*2)/days.length;
+        days.forEach((d,i)=>{
+            const x=pad+i*barW;const bh=(d.count/maxV)*(ch-pad*2-20);
+            const grad=ctx.createLinearGradient(x,ch-pad-bh,x,ch-pad);
+            grad.addColorStop(0,'#a855f7');grad.addColorStop(1,'#fa1e4e');
+            ctx.fillStyle=grad;
+            ctx.beginPath();ctx.roundRect(x+4,ch-pad-bh,barW-8,bh,4);ctx.fill();
+            ctx.fillStyle='#8a8a9a';ctx.font='9px Inter';ctx.textAlign='center';
+            ctx.fillText(d.label,x+barW/2,ch-pad+14);
+            if(d.count>0){ctx.fillStyle='#e8e8ec';ctx.font='bold 10px JetBrains Mono';ctx.fillText(d.count,x+barW/2,ch-pad-bh-6);}
+        });
+    }
+    function drawRadar2(){
+        const c=document.getElementById('dashyRadar2');if(!c)return;
+        const ctx=c.getContext('2d');c.width=c.offsetWidth*2;c.height=440;ctx.scale(2,2);
+        const cw=c.offsetWidth/2;const ch=110;const r=Math.min(cw,ch)*0.7;
+        for(let i=1;i<=5;i++){ctx.beginPath();ctx.arc(cw,ch,r*i/5,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.stroke();}
+        const labels=['S','M','A','R','T'];const colors=['#fa1e4e','#3b82f6','#00ff88','#a855f7','#ffb800'];
+        labels.forEach((l,i)=>{const a=-Math.PI/2+i*(Math.PI*2/5);ctx.beginPath();ctx.moveTo(cw,ch);ctx.lineTo(cw+Math.cos(a)*r,ch+Math.sin(a)*r);ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.stroke();ctx.fillStyle=colors[i];ctx.font='bold 10px Inter';ctx.textAlign='center';ctx.fillText(l,cw+Math.cos(a)*(r+14),ch+Math.sin(a)*(r+14)+4);});
+        goals.slice(0,4).forEach((g,gi)=>{const sm=smartScore(g);const vals=[sm.s,sm.m,sm.a,sm.r,sm.t];ctx.beginPath();vals.forEach((v,i)=>{const a=-Math.PI/2+i*(Math.PI*2/5);const d=r*v/5;if(i===0)ctx.moveTo(cw+Math.cos(a)*d,ch+Math.sin(a)*d);else ctx.lineTo(cw+Math.cos(a)*d,ch+Math.sin(a)*d);});ctx.closePath();const hue=[350,220,140,280][gi%4];ctx.fillStyle=`hsla(${hue},80%,60%,0.12)`;ctx.fill();ctx.strokeStyle=`hsla(${hue},80%,60%,0.6)`;ctx.lineWidth=1.5;ctx.stroke();});
+        if(!goals.length){ctx.fillStyle='#8a8a9a';ctx.font='12px Inter';ctx.textAlign='center';ctx.fillText('Erstelle Goals fuer SMART Radar',cw,ch);}
+    }
+    function drawHeat2(){
+        const c=document.getElementById('dashyHeat2');if(!c)return;
+        const ctx=c.getContext('2d');c.width=c.offsetWidth*2;c.height=440;ctx.scale(2,2);
+        const cw=c.offsetWidth;const ch=220;const cols=7;const cellW=Math.min(24,(cw-40)/cols);
+        const startX=(cw-cols*cellW)/2;const startY=20;
+        ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach((d,i)=>{ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='8px JetBrains Mono';ctx.fillText(d,startX+i*cellW+cellW/2-6,14);});
+        goals.forEach((g,gi)=>{const cellH=Math.min(24,(ch-30)/(goals.length||1));
+            for(let d=0;d<7;d++){const int=Math.min(1,(g.streak>d?0.3:0)+(g.current/g.target)*0.7);const x=startX+d*cellW;const y=startY+gi*cellH;ctx.fillStyle=int>0?`rgba(0,255,136,${int*0.8})`:'rgba(255,255,255,0.03)';ctx.beginPath();ctx.roundRect(x+1,y+1,cellW-2,cellH-2,3);ctx.fill();}
+        });
+        if(!goals.length){ctx.fillStyle='#8a8a9a';ctx.font='12px Inter';ctx.textAlign='center';ctx.fillText('Erstelle Goals fuer Heatmap',cw/2,ch/2);}
+    }
+
+    // ═══ CONNECTION HEALTH + AUTO GITHUB ISSUE ═══
+    const ISSUE_LOG_KEY='dkz-sb-issue-log';
+    let issueLog=JSON.parse(localStorage.getItem(ISSUE_LOG_KEY)||'[]');
+    const HEALTH_ENDPOINTS=[
+        {name:'API Gateway',url:'http://localhost:3040/api/v1/health',icon:'\ud83c\udf10'},
+        {name:'WebSocket',url:'ws://localhost:3040/ws',icon:'\ud83d\udd0c',ws:true},
+        {name:'Modules',url:'http://localhost:3040/api/v1/modules',icon:'\ud83d\udce6'},
+        {name:'Pi Agent',url:'http://localhost:3040/api/v1/pi-agent/status',icon:'\ud83e\udd16'}
+    ];
+    async function checkConnectionHealth(){
+        const container=document.getElementById('dashy-health');if(!container)return;
+        container.innerHTML=HEALTH_ENDPOINTS.map(ep=>`
+            <div id="health-${ep.name.replace(/\s/g,'')}" style="padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:8px">
+                <span style="font-size:16px">${ep.icon}</span>
+                <div><div style="font-size:11px;font-weight:700">${esc(ep.name)}</div>
+                <div style="font-size:9px;color:var(--muted)" id="hs-${ep.name.replace(/\s/g,'')}">Pruefe...</div></div>
+            </div>`).join('');
+        for(const ep of HEALTH_ENDPOINTS){
+            const elId='hs-'+ep.name.replace(/\s/g,'');
+            const cardId='health-'+ep.name.replace(/\s/g,'');
+            if(ep.ws){
+                try{const ws=new WebSocket(ep.url);
+                    await new Promise((res,rej)=>{ws.onopen=()=>{ws.close();res()};ws.onerror=rej;setTimeout(rej,3000)});
+                    setHealthStatus(elId,cardId,true);
+                }catch(e){setHealthStatus(elId,cardId,false,ep,e);}
+            }else{
+                try{const r=await fetch(ep.url,{signal:AbortSignal.timeout(5000)});
+                    setHealthStatus(elId,cardId,r.ok,ep,r.ok?null:{status:r.status});
+                }catch(e){setHealthStatus(elId,cardId,false,ep,e);}
+            }
+        }
+    }
+    function setHealthStatus(elId,cardId,ok,ep,err){
+        const el=document.getElementById(elId);const card=document.getElementById(cardId);
+        if(!el)return;
+        if(ok){el.innerHTML='<span style="color:var(--green)">\ud83d\udfe2 Online</span>';card.style.borderColor='rgba(0,255,136,0.2)';}
+        else{el.innerHTML='<span style="color:var(--red)">\ud83d\udd34 Offline</span>';card.style.borderColor='rgba(255,59,92,0.2)';
+            if(ep)autoCreateIssue(ep,err);
+        }
+    }
+    function autoCreateIssue(ep,err){
+        const key=ep.name+'-'+new Date().toISOString().split('T')[0];
+        if(issueLog.includes(key))return; // Max 1 issue pro Endpunkt pro Tag
+        issueLog.push(key);localStorage.setItem(ISSUE_LOG_KEY,JSON.stringify(issueLog));
+        const title='[AutoIssue] Verbindungsfehler: '+ep.name;
+        const body='## Automatischer Fehlerbericht\n\n'
+            +'**Endpunkt:** `'+ep.url+'`\n'
+            +'**Status:** Offline / Nicht erreichbar\n'
+            +'**Fehler:** '+(err?JSON.stringify(err):'Connection refused')+'\n'
+            +'**Zeitpunkt:** '+new Date().toISOString()+'\n'
+            +'**Modul:** Second Brain (Dashy Health Monitor)\n\n'
+            +'---\n*Automatisch erstellt von DkZ Second Brain Health Monitor*';
+        // GitHub Issue via API (falls PAT vorhanden)
+        const pat=localStorage.getItem('dkz-github-pat')||'';
+        if(pat){
+            fetch('https://api.github.com/repos/7IKED/devkitz-workspace/issues',{
+                method:'POST',headers:{'Authorization':'token '+pat,'Content-Type':'application/json'},
+                body:JSON.stringify({title,body,labels:['bug','auto-health']})
+            }).catch(()=>{});
+        }
+        // Immer lokal loggen
+        const logEntry={ts:Date.now(),endpoint:ep.name,url:ep.url,error:err?String(err):'offline',issueTitle:title};
+        const errLog=JSON.parse(localStorage.getItem('dkz-sb-error-log')||'[]');
+        errLog.unshift(logEntry);localStorage.setItem('dkz-sb-error-log',JSON.stringify(errLog.slice(0,100)));
+    }
+
+    // ═══ NANOBOT SWARM — Knowledge Graph ═══
+    let nanobots=[];let nanoAnimFrame=null;
+    function spawnNanobots(nodes,count){
+        for(let i=0;i<count;i++){
+            const src=Math.floor(Math.random()*nodes.length);
+            nanobots.push({
+                x:nodes[src].x,y:nodes[src].y,
+                vx:(Math.random()-0.5)*1.2,vy:(Math.random()-0.5)*1.2,
+                target:null,life:300+Math.random()*200,age:0,
+                id:'NB-'+Date.now()+'-'+i,gen:1,
+                color:`hsl(${160+Math.random()*60},90%,60%)`,size:3+Math.random()*2
+            });
+        }
+    }
+    function updateNanobots(nodes,tagMap,ctx,w,h){
+        const newBots=[];
+        nanobots.forEach(nb=>{
+            nb.age++;
+            // Finde unverbundene Knoten (Nanobots schliessen Verbindungen)
+            if(!nb.target||nb.age%60===0){
+                let best=null;let bestDist=Infinity;
+                nodes.forEach((n,i)=>{
+                    const hasConn=Object.values(tagMap).some(idx=>idx.includes(i)&&idx.length>1);
+                    if(!hasConn){const d=Math.hypot(n.x-nb.x,n.y-nb.y);if(d<bestDist){bestDist=d;best=i;}}
+                });
+                nb.target=best;
+            }
+            // Bewege zum Ziel oder schwirre rum
+            if(nb.target!==null&&nodes[nb.target]){
+                const t=nodes[nb.target];const dx=t.x-nb.x;const dy=t.y-nb.y;const d=Math.hypot(dx,dy);
+                if(d>5){nb.vx+=dx/d*0.15;nb.vy+=dy/d*0.15;}
+                else{nb.target=null;} // Ziel erreicht
+            }
+            nb.vx*=0.97;nb.vy*=0.97;nb.x+=nb.vx;nb.y+=nb.vy;
+            // Grenzen
+            nb.x=Math.max(10,Math.min(w-10,nb.x));nb.y=Math.max(10,Math.min(h-10,nb.y));
+            // Selbst-Replikation (max 30 bots)
+            if(nb.age===150&&nanobots.length+newBots.length<30){
+                newBots.push({x:nb.x+Math.random()*10,y:nb.y+Math.random()*10,
+                    vx:(Math.random()-0.5)*1.5,vy:(Math.random()-0.5)*1.5,
+                    target:null,life:200+Math.random()*100,age:0,
+                    id:'NB-'+Date.now()+'-R',gen:nb.gen+1,
+                    color:`hsl(${140+Math.random()*80},85%,55%)`,size:2+Math.random()*2
+                });
+            }
+            // Zeichne Nanobot
+            const alpha=Math.max(0,1-nb.age/nb.life);
+            ctx.beginPath();ctx.arc(nb.x,nb.y,nb.size,0,Math.PI*2);
+            ctx.fillStyle=nb.color;ctx.globalAlpha=alpha*0.9;ctx.fill();
+            // Glow
+            ctx.beginPath();ctx.arc(nb.x,nb.y,nb.size*2.5,0,Math.PI*2);
+            ctx.fillStyle=nb.color;ctx.globalAlpha=alpha*0.12;ctx.fill();
+            ctx.globalAlpha=1;
+            // Verbindungslinien zu nahen Knoten
+            nodes.forEach(n=>{
+                const d=Math.hypot(n.x-nb.x,n.y-nb.y);
+                if(d<60){ctx.beginPath();ctx.moveTo(nb.x,nb.y);ctx.lineTo(n.x,n.y);ctx.strokeStyle=`rgba(0,255,136,${(1-d/60)*alpha*0.3})`;ctx.lineWidth=0.5;ctx.stroke();}
+            });
+        });
+        nanobots.push(...newBots);
+        nanobots=nanobots.filter(nb=>nb.age<nb.life);
+    }
+
+    // Override renderGraph to include Nanobots
+    const _origRenderGraph=renderGraph;
+    renderGraph=function(){
+        const canvas=document.getElementById('graph-canvas');
+        const ctx=canvas.getContext('2d');
+        canvas.width=canvas.offsetWidth*2;canvas.height=canvas.offsetHeight*2;
+        ctx.scale(2,2);const w=canvas.offsetWidth,h=canvas.offsetHeight;
+        ctx.fillStyle='#0a0a0e';ctx.fillRect(0,0,w,h);
+        if(!entries.length){ctx.fillStyle='#8a8a9a';ctx.font='14px Inter';ctx.textAlign='center';ctx.fillText('Eintraege hinzufuegen fuer Knowledge Graph + Nanobots',w/2,h/2);return}
+        // ═══ DEVKiTZ Ordnerstruktur als Graph-Knoten (ohne Raw) ═══
+        const dkzTree=[
+            {id:'dkz',label:'DEVKiTZ',parent:null,color:'#fa1e4e',size:14},
+            {id:'projects',label:'01_PROJECTS',parent:'dkz',color:'#f97316',size:10},
+            {id:'dashboard',label:'Dashboard',parent:'projects',color:'#f97316',size:8},
+            {id:'mod-sb',label:'Second Brain',parent:'dashboard',color:'#3b82f6',size:7},
+            {id:'mod-graphify',label:'Graphify',parent:'dashboard',color:'#a855f7',size:7},
+            {id:'mod-wissen',label:'WissenHub',parent:'dashboard',color:'#00ff88',size:7},
+            {id:'mod-nlm',label:'NLM Builder',parent:'dashboard',color:'#fac832',size:7},
+            {id:'mod-copilot',label:'Copilot',parent:'dashboard',color:'#818cf8',size:7},
+            {id:'mod-github',label:'GitHub Hub',parent:'dashboard',color:'#8b5cf6',size:7},
+            {id:'mod-flyer',label:'Flyer Engine',parent:'dashboard',color:'#ec4899',size:7},
+            {id:'mod-nanochat',label:'NanoChat',parent:'dashboard',color:'#06b6d4',size:7},
+            {id:'system',label:'04_SYSTEM',parent:'dkz',color:'#f97316',size:10},
+            {id:'wiki',label:'Wiki',parent:'system',color:'#ffb800',size:7},
+            {id:'prompts',label:'Prompts',parent:'system',color:'#ffb800',size:7},
+            {id:'agents',label:'.agents',parent:'dkz',color:'#f97316',size:10},
+            {id:'skills',label:'Skills',parent:'agents',color:'#00ff88',size:7},
+            {id:'workflows',label:'Workflows',parent:'agents',color:'#00ff88',size:7},
+            {id:'archive',label:'99_ARCHIVE',parent:'dkz',color:'#71717a',size:8},
+        ];
+        // ═══ PLAYBOOK als 3. Cluster (unten-mitte) ═══
+        const playbookNodes=[
+            {id:'pb-root',label:'📋 Playbook',x:0,y:0,color:'#fac832',size:12},
+            {id:'pb-bmad',label:'BMAD Methodik',x:0,y:0,color:'#ffb800',size:7},
+            {id:'pb-ralph',label:'Ralph-Loop',x:0,y:0,color:'#00ff88',size:7},
+            {id:'pb-james',label:'James Guardian',x:0,y:0,color:'#fa1e4e',size:6},
+            {id:'pb-dev',label:'Developer',x:0,y:0,color:'#3b82f6',size:6},
+            {id:'pb-review',label:'Reviewer',x:0,y:0,color:'#a855f7',size:6},
+            {id:'pb-test',label:'Tester',x:0,y:0,color:'#06b6d4',size:6},
+            {id:'pb-r31',label:'R31 Rules',x:0,y:0,color:'#ff3b5c',size:6},
+            {id:'pb-deploy',label:'Deploy Pipeline',x:0,y:0,color:'#00ff88',size:6},
+            {id:'pb-iceberg',label:'Iceberg Archive',x:0,y:0,color:'#818cf8',size:6},
+        ];
+        const pbEdges=[['pb-root','pb-bmad'],['pb-root','pb-ralph'],['pb-bmad','pb-james'],['pb-bmad','pb-dev'],['pb-bmad','pb-review'],['pb-bmad','pb-test'],['pb-ralph','pb-r31'],['pb-ralph','pb-deploy'],['pb-ralph','pb-iceberg']];
+        // Playbook Positionen (unten-mitte Sektor)
+        playbookNodes[0].x=w*0.35;playbookNodes[0].y=h*0.82;
+        for(let i=1;i<playbookNodes.length;i++){
+            const angle=((i-1)/(playbookNodes.length-2))*Math.PI-Math.PI*0.5;
+            const dist=50+Math.random()*30;
+            playbookNodes[i].x=Math.max(40,Math.min(w-40,playbookNodes[0].x+Math.cos(angle)*dist));
+            playbookNodes[i].y=Math.max(20,Math.min(h-30,playbookNodes[0].y+Math.sin(angle)*dist*0.5));
+        }
+        // Positionen DEVKiTZ (oben-links Sektor, breiter verteilt)
+        const sysNodes=[];const sysMap={};
+        const sectorCenters={dkz:[w*0.18,h*0.25],projects:[w*0.12,h*0.4],dashboard:[w*0.2,h*0.5],system:[w*0.3,h*0.18],agents:[w*0.08,h*0.15],archive:[w*0.35,h*0.35]};
+        dkzTree.forEach((t,i)=>{
+            let x,y;
+            if(t.parent===null){x=w*0.18;y=h*0.25;}
+            else if(sysMap[t.parent]){
+                const p=sysMap[t.parent];
+                const siblings=dkzTree.filter(s=>s.parent===t.parent);
+                const idx=siblings.indexOf(t);
+                const spread=siblings.length>1?Math.PI*1.2:0;
+                const baseAngle=Math.atan2(p.y-h*0.35,p.x-w*0.2)+Math.PI*0.5;
+                const angle=baseAngle+spread*(idx/(siblings.length-1||1)-0.5);
+                const dist=55+Math.random()*25;
+                x=p.x+Math.cos(angle)*dist;y=p.y+Math.sin(angle)*dist;
+            }else{x=w*0.15+Math.random()*w*0.2;y=h*0.15+Math.random()*h*0.3;}
+            x=Math.max(30,Math.min(w*0.48,x));y=Math.max(20,Math.min(h*0.65,y));
+            const node={...t,x,y};sysNodes.push(node);sysMap[t.id]=node;
+        });
+        // Second Brain Eintraege (rechte Seite)
+        const tagMap={};const nodes=[];
+        entries.forEach((e,i)=>{
+            const angle=(i/entries.length)*Math.PI*1.2-Math.PI*0.4;
+            const rad=Math.min(w,h)*0.22;
+            const x=w*0.75+Math.cos(angle)*rad*(0.5+Math.random()*0.3);
+            const y=h*0.4+Math.sin(angle)*rad*(0.6+Math.random()*0.3);
+            const colors={notiz:'#3b82f6',aufgabe:'#00ff88',idee:'#a855f7',lesezeichen:'#ffb800',snippet:'#fa1e4e'};
+            nodes.push({x:Math.max(w*0.52,Math.min(w-30,x)),y:Math.max(20,Math.min(h-30,y)),text:e.text.substring(0,25),type:e.type,color:colors[e.type]||'#8a8a9a',tags:e.tags||[]});
+            (e.tags||[]).forEach(t=>{if(!tagMap[t])tagMap[t]=[];tagMap[t].push(i)});
+        });
+        // ═══ Zeichnen ═══
+        // DEVKiTZ Struktur-Kanten
+        ctx.lineWidth=0.8;
+        dkzTree.forEach(t=>{
+            if(t.parent&&sysMap[t.parent]&&sysMap[t.id]){
+                const a=sysMap[t.parent],b=sysMap[t.id];
+                ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
+                ctx.strokeStyle='rgba(249,115,22,0.15)';ctx.stroke();
+            }
+        });
+        // SB Entry Kanten (Tag-basiert)
+        ctx.lineWidth=0.5;
+        Object.values(tagMap).forEach(indices=>{for(let i=0;i<indices.length;i++){for(let j=i+1;j<indices.length;j++){const a=nodes[indices[i]],b=nodes[indices[j]];ctx.strokeStyle='rgba(250,30,78,0.1)';ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}}});
+        // Verbindungen SB-Entries <-> DEVKiTZ Knoten (tag-match)
+        ctx.lineWidth=0.4;
+        nodes.forEach(n=>{
+            const txt=(n.text+' '+n.tags.join(' ')).toLowerCase();
+            if(txt.includes('brain')||txt.includes('wissen')||txt.includes('knowledge')){const t=sysMap['mod-sb'];if(t){ctx.beginPath();ctx.moveTo(n.x,n.y);ctx.lineTo(t.x,t.y);ctx.strokeStyle='rgba(59,130,246,0.12)';ctx.stroke();}}
+            if(txt.includes('graph')||txt.includes('nanobot')){const t=sysMap['mod-graphify'];if(t){ctx.beginPath();ctx.moveTo(n.x,n.y);ctx.lineTo(t.x,t.y);ctx.strokeStyle='rgba(168,85,247,0.12)';ctx.stroke();}}
+            if(txt.includes('dashy')||txt.includes('health')||txt.includes('dashboard')){const t=sysMap['dashboard'];if(t){ctx.beginPath();ctx.moveTo(n.x,n.y);ctx.lineTo(t.x,t.y);ctx.strokeStyle='rgba(249,115,22,0.12)';ctx.stroke();}}
+            if(txt.includes('copilot')||txt.includes('chat')){const t=sysMap['mod-copilot'];if(t){ctx.beginPath();ctx.moveTo(n.x,n.y);ctx.lineTo(t.x,t.y);ctx.strokeStyle='rgba(129,140,248,0.12)';ctx.stroke();}}
+        });
+        // DEVKiTZ System-Knoten zeichnen
+        sysNodes.forEach(n=>{
+            ctx.beginPath();ctx.arc(n.x,n.y,n.size,0,Math.PI*2);
+            ctx.fillStyle=n.color;ctx.globalAlpha=0.7;ctx.fill();ctx.globalAlpha=1;
+            ctx.fillStyle='#e8e8ec';ctx.font=(n.size>9?'bold ':'')+Math.max(7,n.size-2)+'px Inter';ctx.textAlign='center';
+            ctx.fillText(n.label,n.x,n.y+n.size+10);
+        });
+        // SB Entry Knoten zeichnen
+        nodes.forEach(n=>{ctx.beginPath();ctx.arc(n.x,n.y,6,0,Math.PI*2);ctx.fillStyle=n.color;ctx.globalAlpha=0.8;ctx.fill();ctx.globalAlpha=1;ctx.fillStyle='#e8e8ec';ctx.font='9px Inter';ctx.textAlign='center';ctx.fillText(n.text,n.x,n.y+16);});
+        // ═══ Playbook Cluster zeichnen ═══
+        // Playbook Kanten
+        ctx.lineWidth=0.6;
+        pbEdges.forEach(([aId,bId])=>{
+            const a=playbookNodes.find(n=>n.id===aId),b=playbookNodes.find(n=>n.id===bId);
+            if(a&&b){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle='rgba(250,200,50,0.18)';ctx.stroke();}
+        });
+        // Playbook -> DEVKiTZ Verbindung
+        if(sysMap['dkz']){ctx.beginPath();ctx.moveTo(playbookNodes[0].x,playbookNodes[0].y);ctx.lineTo(sysMap['dkz'].x,sysMap['dkz'].y);ctx.strokeStyle='rgba(250,200,50,0.08)';ctx.lineWidth=1;ctx.stroke();}
+        // Playbook Knoten
+        playbookNodes.forEach(n=>{
+            ctx.beginPath();ctx.arc(n.x,n.y,n.size*1.5,0,Math.PI*2);ctx.fillStyle=n.color;ctx.globalAlpha=0.08;ctx.fill();ctx.globalAlpha=1;
+            ctx.beginPath();ctx.arc(n.x,n.y,n.size,0,Math.PI*2);ctx.fillStyle=n.color;ctx.globalAlpha=0.75;ctx.fill();ctx.globalAlpha=1;
+            ctx.fillStyle='#e8e8ec';ctx.font=(n.size>9?'bold ':'')+Math.max(7,n.size-2)+'px Inter';ctx.textAlign='center';
+            ctx.fillText(n.label,n.x,n.y+n.size+10);
+        });
+        // ═══ Cluster Labels ═══
+        ctx.globalAlpha=0.25;ctx.font='bold 11px Inter';ctx.textAlign='left';
+        ctx.fillStyle='#f97316';ctx.fillText('🏗️ DEVKiTZ STRUKTUR',10,15);
+        ctx.textAlign='right';ctx.fillStyle='#3b82f6';ctx.fillText('🧠 SECOND BRAIN',w-10,15);
+        ctx.textAlign='center';ctx.fillStyle='#fac832';ctx.fillText('📋 PLAYBOOK',w*0.35,h-5);
+        ctx.globalAlpha=1;
+        // Center Brain
+        ctx.fillStyle='rgba(250,30,78,0.3)';ctx.beginPath();ctx.arc(w/2,h/2,20,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#e8e8ec';ctx.font='bold 10px Inter';ctx.textAlign='center';ctx.fillText('\ud83e\udde0',w/2,h/2+4);
+        // Spawn nanobots on first render
+        if(!nanobots.length&&nodes.length>2)spawnNanobots(nodes,Math.min(8,nodes.length));
+        // Animate nanobots
+        if(nanoAnimFrame)cancelAnimationFrame(nanoAnimFrame);
+        function animLoop(){
+            ctx.fillStyle='#0a0a0e';ctx.fillRect(0,0,w,h);
+            // DEVKiTZ Struktur
+            ctx.lineWidth=0.8;
+            dkzTree.forEach(t=>{if(t.parent&&sysMap[t.parent]&&sysMap[t.id]){const a=sysMap[t.parent],b=sysMap[t.id];ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle='rgba(249,115,22,0.15)';ctx.stroke();}});
+            // SB Edges
+            ctx.lineWidth=0.5;
+            Object.values(tagMap).forEach(indices=>{for(let i=0;i<indices.length;i++){for(let j=i+1;j<indices.length;j++){const a=nodes[indices[i]],b=nodes[indices[j]];ctx.strokeStyle='rgba(250,30,78,0.1)';ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}}});
+            // Cross-links
+            ctx.lineWidth=0.4;
+            nodes.forEach(n=>{const txt=(n.text+' '+n.tags.join(' ')).toLowerCase();
+                if(txt.includes('brain')||txt.includes('wissen')){const t=sysMap['mod-sb'];if(t){ctx.beginPath();ctx.moveTo(n.x,n.y);ctx.lineTo(t.x,t.y);ctx.strokeStyle='rgba(59,130,246,0.12)';ctx.stroke();}}
+                if(txt.includes('graph')||txt.includes('nanobot')){const t=sysMap['mod-graphify'];if(t){ctx.beginPath();ctx.moveTo(n.x,n.y);ctx.lineTo(t.x,t.y);ctx.strokeStyle='rgba(168,85,247,0.12)';ctx.stroke();}}
+                if(txt.includes('dashy')||txt.includes('dashboard')){const t=sysMap['dashboard'];if(t){ctx.beginPath();ctx.moveTo(n.x,n.y);ctx.lineTo(t.x,t.y);ctx.strokeStyle='rgba(249,115,22,0.12)';ctx.stroke();}}
+            });
+            // System nodes
+            sysNodes.forEach(n=>{ctx.beginPath();ctx.arc(n.x,n.y,n.size,0,Math.PI*2);ctx.fillStyle=n.color;ctx.globalAlpha=0.7;ctx.fill();ctx.globalAlpha=1;ctx.fillStyle='#e8e8ec';ctx.font=(n.size>9?'bold ':'')+Math.max(7,n.size-2)+'px Inter';ctx.textAlign='center';ctx.fillText(n.label,n.x,n.y+n.size+10);});
+            // SB nodes
+            nodes.forEach(n=>{ctx.beginPath();ctx.arc(n.x,n.y,6,0,Math.PI*2);ctx.fillStyle=n.color;ctx.globalAlpha=0.8;ctx.fill();ctx.globalAlpha=1;ctx.fillStyle='#e8e8ec';ctx.font='9px Inter';ctx.textAlign='center';ctx.fillText(n.text,n.x,n.y+16);});
+            // Playbook in animLoop
+            ctx.lineWidth=0.6;pbEdges.forEach(([aId,bId])=>{const a=playbookNodes.find(n=>n.id===aId),b=playbookNodes.find(n=>n.id===bId);if(a&&b){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle='rgba(250,200,50,0.18)';ctx.stroke();}});
+            if(sysMap['dkz']){ctx.beginPath();ctx.moveTo(playbookNodes[0].x,playbookNodes[0].y);ctx.lineTo(sysMap['dkz'].x,sysMap['dkz'].y);ctx.strokeStyle='rgba(250,200,50,0.08)';ctx.lineWidth=1;ctx.stroke();}
+            playbookNodes.forEach(n=>{ctx.beginPath();ctx.arc(n.x,n.y,n.size*1.5,0,Math.PI*2);ctx.fillStyle=n.color;ctx.globalAlpha=0.08;ctx.fill();ctx.globalAlpha=1;ctx.beginPath();ctx.arc(n.x,n.y,n.size,0,Math.PI*2);ctx.fillStyle=n.color;ctx.globalAlpha=0.75;ctx.fill();ctx.globalAlpha=1;ctx.fillStyle='#e8e8ec';ctx.font=(n.size>9?'bold ':'')+Math.max(7,n.size-2)+'px Inter';ctx.textAlign='center';ctx.fillText(n.label,n.x,n.y+n.size+10);});
+            // Cluster labels
+            ctx.globalAlpha=0.25;ctx.font='bold 11px Inter';ctx.textAlign='left';ctx.fillStyle='#f97316';ctx.fillText('🏗️ DEVKiTZ',10,15);ctx.textAlign='right';ctx.fillStyle='#3b82f6';ctx.fillText('🧠 SECOND BRAIN',w-10,15);ctx.textAlign='center';ctx.fillStyle='#fac832';ctx.fillText('📋 PLAYBOOK',w*0.35,h-5);ctx.globalAlpha=1;
+            // Center
+            ctx.fillStyle='rgba(250,30,78,0.3)';ctx.beginPath();ctx.arc(w/2,h/2,20,0,Math.PI*2);ctx.fill();
+            ctx.fillStyle='#e8e8ec';ctx.font='bold 10px Inter';ctx.textAlign='center';ctx.fillText('\ud83e\udde0',w/2,h/2+4);
+            // Nanobots
+            updateNanobots(nodes,tagMap,ctx,w,h);
+            // Nanobot count label
+            ctx.fillStyle='rgba(0,255,136,0.6)';ctx.font='9px JetBrains Mono';ctx.textAlign='left';
+            ctx.fillText('\ud83e\udd16 Nanobots: '+nanobots.length+' | Gen: '+Math.max(1,...nanobots.map(n=>n.gen||1)),8,h-8);
+            if(nanobots.length>0)nanoAnimFrame=requestAnimationFrame(animLoop);
+        }
+        animLoop();
+    };
+
+    // Init
+    document.getElementById('captureInput').addEventListener('keydown',e=>{if(e.key==='Enter')addEntry()});
+    renderAll();
+
+    // ═══ SKILL TOGGLES — PathFinder, BahnCleaner, Grill ═══
+    const SKILL_STATE_KEY='dkz-sb-skills';
+    let skillState=JSON.parse(localStorage.getItem(SKILL_STATE_KEY)||'{"pathfinder":false,"bahncleaner":false,"grill":false}');
+    let skillIntervals={};
+
+    function toggleSkill(name,on){
+        skillState[name]=on;localStorage.setItem(SKILL_STATE_KEY,JSON.stringify(skillState));
+        const card=document.getElementById('skill-'+name);
+        if(on){card.classList.add('active');startSkill(name);}
+        else{card.classList.remove('active');stopSkill(name);}
+    }
+    function skillLog(name,msg,type){
+        const log=document.getElementById('log-'+name);if(!log)return;
+        const colors={info:'var(--muted)',success:'var(--green)',warn:'var(--yellow)',error:'var(--red)',action:'var(--accent)'};
+        const ts=new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+        log.innerHTML+=`<div class="sl-entry" style="color:${colors[type]||colors.info}">[${ts}] ${esc(msg)}</div>`;
+        log.scrollTop=log.scrollHeight;
+    }
+    function startSkill(name){
+        skillLog(name,'Skill aktiviert','success');
+        if(name==='pathfinder'){
+            skillLog(name,'Scanne Eintraege nach Begriffs-Knoten...','info');
+            skillIntervals.pathfinder=setInterval(()=>{
+                const terms=new Set();
+                entries.forEach(e=>{e.text.split(/\s+/).forEach(w=>{if(w.length>4)terms.add(w.toLowerCase())})});
+                const unlinked=[...terms].filter(t=>!entries.some(e=>(e.tags||[]).includes(t)));
+                if(unlinked.length>0){
+                    const picked=unlinked[Math.floor(Math.random()*unlinked.length)];
+                    skillLog('pathfinder','Neuer Begriffs-Knoten: "'+picked+'" (kein Datei-Anker)','action');
+                }else skillLog('pathfinder','Alle Begriffe verankert','info');
+            },8000);
+        }
+        if(name==='bahncleaner'){
+            skillLog(name,'Pruefe Bahnen auf Redundanz...','info');
+            skillIntervals.bahncleaner=setInterval(()=>{
+                const tagCount={};entries.forEach(e=>(e.tags||[]).forEach(t=>{tagCount[t]=(tagCount[t]||0)+1}));
+                const weak=Object.entries(tagCount).filter(([,c])=>c===1).map(([t])=>t);
+                if(weak.length>0){
+                    skillLog('bahncleaner','Schwache Bahn: Tag "'+weak[0]+'" (nur 1 Verbindung) — eliminierbar','warn');
+                }else skillLog('bahncleaner','Alle Bahnen valide','success');
+            },10000);
+        }
+        if(name==='grill'){
+            skillLog(name,'Deep-Questioning gestartet (3 Saetze pro Tiefe)','info');
+            let depth=0;
+            skillIntervals.grill=setInterval(()=>{
+                depth++;
+                const questions=[
+                    ['Was ist das Kernproblem?','Welche Abhaengigkeiten bestehen?','Wo liegt der Flaschenhals?'],
+                    ['Warum existiert dieses Problem?','Welche Alternativen wurden geprueft?','Was passiert wenn nichts geaendert wird?'],
+                    ['Was ist die tiefere Ursache?','Welche Annahmen sind falsch?','Welcher Pfad hat das hoechste ROI?'],
+                    ['Welches Muster wiederholt sich?','Was wuerde ein Experte anders machen?','Wo ist der blinde Fleck?'],
+                    ['Was waere die mutigste Entscheidung?','Welche Metrik fehlt?','Was ist die 10x-Loesung?']
+                ];
+                const q=questions[Math.min(depth-1,questions.length-1)];
+                q.forEach(s=>skillLog('grill','[Tiefe '+depth+'] '+s,'action'));
+            },12000);
+        }
+    }
+    function stopSkill(name){
+        if(skillIntervals[name]){clearInterval(skillIntervals[name]);delete skillIntervals[name];}
+        skillLog(name,'Skill deaktiviert','warn');
+    }
+    // Restore skill states on load
+    Object.entries(skillState).forEach(([name,on])=>{
+        const sw=document.getElementById('sw-'+name);
+        if(sw&&on){sw.checked=true;toggleSkill(name,true);}
+    });
+
+    // ═══ ORCHESTRATION TOGGLES ═══
+    const ORCH_KEY='dkz-sb-orch';
+    let orchState=JSON.parse(localStorage.getItem(ORCH_KEY)||'{}');
+    function toggleOrch(name,on){
+        orchState[name]=on;localStorage.setItem(ORCH_KEY,JSON.stringify(orchState));
+        showToast(on?'✅ '+name+' aktiviert':'⬛ '+name+' deaktiviert');
+    }
+    // Restore orchestration states
+    Object.entries(orchState).forEach(([name,on])=>{
+        const el=document.querySelector('#orch-'+name+' input');if(el&&on)el.checked=true;
+    });
+
+    // ═══ NANOCHAT BRIDGE ═══
+    function sendNanoChat(){
+        const input=document.getElementById('nanochat-input');
+        const msg=input.value.trim();if(!msg)return;input.value='';
+        const log=document.getElementById('nanochat-log');
+        const ts=new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+        log.innerHTML+=`<div style="color:var(--accent);margin:4px 0">[${ts}] Du: ${esc(msg)}</div>`;
+        // Microfish System-Analyse: Nanobots antworten
+        setTimeout(()=>{
+            const botCount=nanobots.length;
+            const analyses=[
+                'System braucht mehr Tag-Verbindungen. '+botCount+' Nanobots aktiv.',
+                'Empfehlung: Erstelle Lesezeichen fuer haeufig gesuchte Begriffe.',
+                botCount>5?'Swarm ist optimal verteilt. Verbindungsdichte steigt.':'Mehr Eintraege noetig fuer effektiven Swarm.',
+                'Microfish-Scan: '+(entries.length)+' Knoten, '+Object.keys(orchState).filter(k=>orchState[k]).length+' Orchestratoren aktiv.',
+                'PathFinder meldet '+(skillState.pathfinder?'aktive':'inaktive')+' Pfadsuche. BahnCleaner '+(skillState.bahncleaner?'bereinigt':'pausiert')+'.'
+            ];
+            const reply=analyses[Math.floor(Math.random()*analyses.length)];
+            log.innerHTML+=`<div style="color:var(--green);margin:4px 0">[${ts}] 🤖 NanoSwarm: ${reply}</div>`;
+            log.scrollTop=log.scrollHeight;
+        },800);
+        // Forward to Grill if active
+        if(skillState.grill){
+            setTimeout(()=>{
+                log.innerHTML+=`<div style="color:var(--yellow);margin:4px 0">[${ts}] 🔥 Grill: Tiefergehend — Was genau meinst du mit "${esc(msg)}"? Welcher Aspekt ist am kritischsten? Was wuerdest du sofort aendern?</div>`;
+                log.scrollTop=log.scrollHeight;
+            },1500);
+        }
+    }
+    document.getElementById('nanochat-input').addEventListener('keydown',e=>{if(e.key==='Enter')sendNanoChat()});
+
+    // ═══ DkZ Guide Integration ═══
+    document.addEventListener('DOMContentLoaded', () => {
+        if (typeof DkzGuide === 'undefined') return;
+
+        DkzGuide.addInfo('hdr-title', {
+            title: 'Second Brain — Wissensmanagement',
+            text: 'Persönliche Wissensdatenbank mit Quick Capture, Knowledge Graph, Tag-System und Volltextsuche. Alle Daten in localStorage.',
+            steps: ['Quick Capture: Gedanke eingeben + Enter', 'Browse: Suche und Filter über alle Einträge', 'Graph: Visuelle Verknüpfungen via Tags', 'Tags: Tag-Wolke mit Größen-Skalierung'],
+            links: [
+                { icon: '📖', label: 'Playbook', href: '../playbook-archiv/index.html', hint: 'Strategien & Methoden' },
+                { icon: '💰', label: 'Cost Calculator', href: '../cost-calculator/index.html', hint: 'LLM-Kosten berechnen' },
+                { icon: '📝', label: 'Wissen Hub', href: '../wissen-hub/index.html', hint: 'Immutable Knowledge' }
+            ]
+        });
+
+        DkzGuide.addInfo('capture-bar', {
+            title: 'Quick Capture',
+            text: '5 Eintragstypen: Notiz, Aufgabe, Idee, Lesezeichen, Snippet. Alle Tags sind kommagetrennt. Speichern mit Enter oder Button.',
+            steps: ['Text eingeben', 'Typ wählen (Dropdown)', 'Tags hinzufügen (optional)', 'Enter oder Speichern klicken']
+        });
+
+        DkzGuide.addInfo('btn-export-json', {
+            title: 'JSON Export',
+            text: 'Exportiert alle Einträge als strukturierte JSON-Datei. Inkl. IDs, Timestamps, Tags und Typen.'
+        });
+
+        DkzGuide.registerTour('secondbrain-tour', [
+            { target: '#hdr-title', title: '🧠 Second Brain', text: 'Deine persönliche Wissensdatenbank. Erfasse Gedanken, Ideen, Aufgaben und Snippets an einem Ort.' },
+            { target: '#capture-bar', title: '⚡ Quick Capture', text: 'Tippe hier deinen Gedanken ein und drücke Enter. Wähle einen Typ und füge Tags für Verknüpfungen hinzu.' },
+            { target: '.tab[onclick*="browse"]', title: '📚 Browse Tab', text: 'Über alle Einträge suchen und nach Typ filtern. Klicke auf einen Eintrag zum Kopieren.' },
+            { target: '.tab[onclick*="graph"]', title: '🕸️ Knowledge Graph', text: 'Visualisiert Verknüpfungen zwischen Einträgen über gemeinsame Tags. Je mehr Tags, desto vernetzter.' },
+            { target: '.tab[onclick*="tags"]', title: '🏷️ Tag Cloud', text: 'Alle Tags als Wolke mit Größen-Skalierung. Klicke auf einen Tag um alle zugeordneten Einträge zu sehen.' }
+        ]);
+
+        DkzGuide.injectGuideFAB({ defaultTour: 'secondbrain-tour' });
+
+        if (!DkzGuide.isTourCompleted('secondbrain-tour')) {
+            DkzGuide.highlight('capture-bar', 'glow');
+        }
+    });
+
+    // ═══ AUTO-UPDATER (1x taeglich + manuell) ═══
+    const UPD_KEY='dkz-sb-last-update';
+    function runAutoUpdate(){
+        const btn=document.querySelector('.updater-btn');
+        if(btn){btn.textContent='⏳ Updating...';btn.disabled=true;}
+        showToast('🔄 Auto-Update gestartet...');
+        // Check Health + rerender
+        setTimeout(()=>{
+            renderAll();
+            localStorage.setItem(UPD_KEY,new Date().toISOString());
+            updateLastLabel();
+            if(btn){btn.textContent='✅ Fertig';btn.disabled=false;setTimeout(()=>{btn.textContent='⚡ Jetzt updaten'},2000);}
+            showToast('✅ Update abgeschlossen');
+        },1500);
+    }
+    function updateLastLabel(){
+        const el=document.getElementById('updater-last');if(!el)return;
+        const last=localStorage.getItem(UPD_KEY);
+        el.textContent=last?'Letztes: '+new Date(last).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'Noch kein Update';
+    }
+    updateLastLabel();
+    // Daily auto-check
+    (function(){
+        const last=localStorage.getItem(UPD_KEY);
+        if(!last||Date.now()-new Date(last).getTime()>86400000){
+            setTimeout(()=>runAutoUpdate(),5000);
+        }
+    })();
+    </script>
+    <!-- DkZ Shared Scripts -->
+    <script src="../../shared/dkz-auth.js"></script><script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script><script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script><script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script><script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script><script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script><script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script><script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script><script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</body>
+</html>

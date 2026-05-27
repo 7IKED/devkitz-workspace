@@ -1,0 +1,615 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⏱️ Timer Tools — DkZâ„¢</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #fa1e4e;
+            --accent: #fa1e4e;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(14, 14, 22, .72);
+            --blur: blur(24px)
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .08);
+            border-radius: 6px
+        }
+
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .06;
+            animation: bf 20s ease-in-out infinite
+        }
+
+        .bg-blob:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: var(--accent);
+            top: -10%;
+            left: 10%
+        }
+
+        .bg-blob:nth-child(2) {
+            width: 350px;
+            height: 350px;
+            background: var(--green);
+            bottom: 10%;
+            right: 10%;
+            animation-delay: -8s
+        }
+
+        @keyframes bf {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(30px, -40px) scale(1.1)
+            }
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        .header {
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .back-btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: none;
+            font-family: var(--font)
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent), var(--blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .hdr-right {
+            margin-left: auto
+        }
+
+        .ver {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono)
+        }
+
+        .content {
+            padding: 20px 28px;
+            flex: 1
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: var(--card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border: none;
+            background: none;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 700;
+            font-family: var(--font);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all .2s;
+            flex: 1;
+            text-align: center
+        }
+
+        .tab:hover {
+            color: var(--text);
+            background: var(--card2)
+        }
+
+        .tab.active {
+            background: var(--accent);
+            color: #fff
+        }
+
+        .tab-body {
+            display: none;
+            animation: fi .3s ease
+        }
+
+        .tab-body.active {
+            display: block
+        }
+
+        @keyframes fi {
+            from {
+                opacity: 0;
+                transform: translateY(8px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .timer-display {
+            font-family: var(--mono);
+            font-size: 72px;
+            font-weight: 800;
+            text-align: center;
+            padding: 40px;
+            letter-spacing: 4px
+        }
+
+        .timer-sub {
+            text-align: center;
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 20px
+        }
+
+        .timer-btns {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap
+        }
+
+        .t-btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 12px;
+            font-family: var(--font);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .3s
+        }
+
+        .t-btn.start {
+            background: var(--green);
+            color: #000
+        }
+
+        .t-btn.stop {
+            background: var(--red);
+            color: #fff
+        }
+
+        .t-btn.reset {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text)
+        }
+
+        .t-btn.lap {
+            background: transparent;
+            border: 1px solid var(--green);
+            color: var(--green)
+        }
+
+        .pomodoro-ring {
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+            position: relative
+        }
+
+        .pomodoro-ring svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg)
+        }
+
+        .pomodoro-ring circle {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round
+        }
+
+        .p-bg {
+            stroke: var(--card2)
+        }
+
+        .p-fill {
+            stroke: var(--accent);
+            transition: stroke-dashoffset .5s
+        }
+
+        .p-center {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center
+        }
+
+        .p-time {
+            font-family: var(--mono);
+            font-size: 36px;
+            font-weight: 800
+        }
+
+        .p-label {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 4px
+        }
+
+        .p-presets {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin: 16px 0
+        }
+
+        .p-preset {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+            font-family: var(--font);
+            transition: all .2s
+        }
+
+        .p-preset:hover {
+            border-color: var(--accent);
+            color: var(--text)
+        }
+
+        .p-preset.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent)
+        }
+
+        .countdown-input {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 20px
+        }
+
+        .cd-field {
+            display: flex;
+            flex-direction: column;
+            align-items: center
+        }
+
+        .cd-field input {
+            width: 70px;
+            padding: 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 24px;
+            text-align: center;
+            outline: none
+        }
+
+        .cd-field input:focus {
+            border-color: var(--accent)
+        }
+
+        .cd-field label {
+            font-size: 9px;
+            color: var(--muted);
+            margin-top: 4px;
+            text-transform: uppercase
+        }
+
+        .lap-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 12px
+        }
+
+        .lap-item {
+            display: flex;
+            gap: 10px;
+            padding: 8px 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 11px;
+            font-family: var(--mono)
+        }
+
+        .lap-item .li-num {
+            color: var(--accent);
+            font-weight: 700;
+            min-width: 40px
+        }
+
+        .lap-item .li-time {
+            color: var(--green);
+            flex: 1
+        }
+
+        .lap-item .li-diff {
+            color: var(--muted)
+        }
+
+        .session-log {
+            margin-top: 20px
+        }
+
+        .session-log h3 {
+            font-size: 13px;
+            font-weight: 800;
+            margin-bottom: 10px
+        }
+
+        .s-item {
+            display: flex;
+            gap: 10px;
+            padding: 8px 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 11px;
+            margin-bottom: 4px
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: var(--green);
+            color: #000;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 10px;
+            z-index: 300;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all .3s;
+            pointer-events: none
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0)
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="timer-tools" data-dkz-appid="DKZ-MOD-TIM" data-dkz-version="v0.01" data-dkz-title="⏱️ Timer Tools —" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+    </div>
+    <div class="app">
+        <div class="header"><a href="../../hub/index.html" class="back-btn">← Hub</a>
+            <h1>⏱️ Timer Tools</h1>
+            <div class="hdr-right"><span class="ver">v0.01</span></div>
+        </div>
+        <div class="content">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('stopwatch',this)">⏱️ Stoppuhr</button>
+                <button class="tab" onclick="switchTab('pomodoro',this)">🍅 Pomodoro</button>
+                <button class="tab" onclick="switchTab('countdown',this)">⏳ Countdown</button>
+            </div>
+            <div class="tab-body active" id="tab-stopwatch">
+                <div class="card">
+                    <div class="timer-display" id="swDisplay">00:00:00<span
+                            style="font-size:28px;color:var(--muted)">.000</span></div>
+                    <div class="timer-btns">
+                        <button class="t-btn start" id="swStart" onclick="swToggle()">▶ Start</button>
+                        <button class="t-btn lap" onclick="swLap()">🏁 Runde</button>
+                        <button class="t-btn reset" onclick="swReset()">↻ Reset</button>
+                    </div>
+                    <div class="lap-list" id="lapList"></div>
+                </div>
+            </div>
+            <div class="tab-body" id="tab-pomodoro">
+                <div class="card">
+                    <div class="pomodoro-ring">
+                        <svg viewBox="0 0 200 200">
+                            <circle class="p-bg" cx="100" cy="100" r="90" />
+                            <circle class="p-fill" id="pRing" cx="100" cy="100" r="90" stroke-dasharray="565.48"
+                                stroke-dashoffset="0" />
+                        </svg>
+                        <div class="p-center">
+                            <div class="p-time" id="pTime">25:00</div>
+                            <div class="p-label" id="pLabel">FOKUS</div>
+                        </div>
+                    </div>
+                    <div class="p-presets">
+                        <button class="p-preset active" onclick="setPomo(25,this)">25 Min</button>
+                        <button class="p-preset" onclick="setPomo(15,this)">15 Min</button>
+                        <button class="p-preset" onclick="setPomo(50,this)">50 Min</button>
+                        <button class="p-preset" onclick="setPomo(5,this)">5 Min Pause</button>
+                    </div>
+                    <div class="timer-btns">
+                        <button class="t-btn start" id="pStart" onclick="pToggle()">▶ Start</button>
+                        <button class="t-btn reset" onclick="pReset()">↻ Reset</button>
+                    </div>
+                    <div class="timer-sub">Sessions heute: <strong id="pSessions">0</strong></div>
+                </div>
+            </div>
+            <div class="tab-body" id="tab-countdown">
+                <div class="card">
+                    <div class="countdown-input">
+                        <div class="cd-field"><input type="number" id="cdH" value="0" min="0"
+                                max="99"><label>Stunden</label></div>
+                        <div class="cd-field"><input type="number" id="cdM" value="5" min="0"
+                                max="59"><label>Minuten</label></div>
+                        <div class="cd-field"><input type="number" id="cdS" value="0" min="0"
+                                max="59"><label>Sekunden</label></div>
+                    </div>
+                    <div class="timer-display" id="cdDisplay" style="font-size:60px">00:05:00</div>
+                    <div class="timer-btns">
+                        <button class="t-btn start" id="cdStart" onclick="cdToggle()">▶ Start</button>
+                        <button class="t-btn reset" onclick="cdReset()">↻ Reset</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        // Stopwatch
+        let swRunning = false, swStart = 0, swElapsed = 0, swInterval, laps = [];
+        function swToggle() { if (swRunning) { clearInterval(swInterval); swRunning = false; document.getElementById('swStart').textContent = '▶ Start'; document.getElementById('swStart').className = 't-btn start' } else { swStart = Date.now() - swElapsed; swInterval = setInterval(() => { swElapsed = Date.now() - swStart; renderSw() }, 10); swRunning = true; document.getElementById('swStart').textContent = '⏸ Pause'; document.getElementById('swStart').className = 't-btn stop' } }
+        function renderSw() { const ms = swElapsed; const h = Math.floor(ms / 3600000); const m = Math.floor((ms % 3600000) / 60000); const s = Math.floor((ms % 60000) / 1000); const ml = ms % 1000; document.getElementById('swDisplay').innerHTML = `${pad(h)}:${pad(m)}:${pad(s)}<span style="font-size:28px;color:var(--muted)">.${String(ml).padStart(3, '0')}</span>` }
+        function swLap() { if (!swRunning) return; const lapTime = swElapsed; const lastLap = laps.length - laps[laps.length - 1].total : 0; laps.push({ num: laps.length + 1, total: lapTime, diff: lapTime - lastLap }); renderLaps() }
+        function renderLaps() { document.getElementById('lapList').innerHTML = laps.slice().reverse().map(l => `<div class="lap-item"><span class="li-num">#${l.num}</span><span class="li-time">${fmtMs(l.total)}</span><span class="li-diff">+${fmtMs(l.diff)}</span></div>`).join('') }
+        function swReset() { clearInterval(swInterval); swRunning = false; swElapsed = 0; laps = []; document.getElementById('swDisplay').innerHTML = '00:00:00<span style="font-size:28px;color:var(--muted)">.000</span>'; document.getElementById('lapList').innerHTML = ''; document.getElementById('swStart').textContent = '▶ Start'; document.getElementById('swStart').className = 't-btn start' }
+
+        // Pomodoro
+        let pRunning = false, pTotal = 25 * 60, pRemain = 25 * 60, pInterval, pSessions = +localStorage.getItem('dkz-pomo-sessions') || 0;
+        document.getElementById('pSessions').textContent = pSessions;
+        function setPomo(min, btn) { pTotal = min * 60; pRemain = min * 60; pRunning = false; clearInterval(pInterval); document.querySelectorAll('.p-preset').forEach(b => b.classList.remove('active')); btn.classList.add('active'); renderPomo(); document.getElementById('pStart').textContent = '▶ Start'; document.getElementById('pStart').className = 't-btn start'; document.getElementById('pLabel').textContent = min <= 5 - 'PAUSE' : 'FOKUS' }
+        function pToggle() { if (pRunning) { clearInterval(pInterval); pRunning = false; document.getElementById('pStart').textContent = '▶ Start'; document.getElementById('pStart').className = 't-btn start' } else { pInterval = setInterval(() => { pRemain--; renderPomo(); if (pRemain <= 0) { clearInterval(pInterval); pRunning = false; pSessions++; localStorage.setItem('dkz-pomo-sessions', pSessions); document.getElementById('pSessions').textContent = pSessions; showToast('🍅 Session fertig!'); document.getElementById('pStart').textContent = '▶ Start'; document.getElementById('pStart').className = 't-btn start'; try { new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ==').play() } catch (e) { } } }, 1000); pRunning = true; document.getElementById('pStart').textContent = '⏸ Pause'; document.getElementById('pStart').className = 't-btn stop' } }
+        function pReset() { clearInterval(pInterval); pRunning = false; pRemain = pTotal; renderPomo(); document.getElementById('pStart').textContent = '▶ Start'; document.getElementById('pStart').className = 't-btn start' }
+        function renderPomo() { const m = Math.floor(pRemain / 60), s = pRemain % 60; document.getElementById('pTime').textContent = pad(m) + ':' + pad(s); const pct = (pTotal - pRemain) / pTotal; const circ = 565.48; document.getElementById('pRing').style.strokeDashoffset = circ * (1 - pct) }
+
+        // Countdown
+        let cdRunning = false, cdRemain = 300, cdTotal = 300, cdInterval;
+        function cdToggle() { if (cdRunning) { clearInterval(cdInterval); cdRunning = false; document.getElementById('cdStart').textContent = '▶ Start'; document.getElementById('cdStart').className = 't-btn start' } else { if (!cdRunning && cdRemain === cdTotal) { cdTotal = (+document.getElementById('cdH').value) * 3600 + (+document.getElementById('cdM').value) * 60 + (+document.getElementById('cdS').value); cdRemain = cdTotal } cdInterval = setInterval(() => { cdRemain--; renderCd(); if (cdRemain <= 0) { clearInterval(cdInterval); cdRunning = false; showToast('⏰ Zeit abgelaufen!'); document.getElementById('cdStart').textContent = '▶ Start'; document.getElementById('cdStart').className = 't-btn start' } }, 1000); cdRunning = true; document.getElementById('cdStart').textContent = '⏸ Pause'; document.getElementById('cdStart').className = 't-btn stop' } }
+        function cdReset() { clearInterval(cdInterval); cdRunning = false; cdTotal = (+document.getElementById('cdH').value) * 3600 + (+document.getElementById('cdM').value) * 60 + (+document.getElementById('cdS').value); cdRemain = cdTotal; renderCd(); document.getElementById('cdStart').textContent = '▶ Start'; document.getElementById('cdStart').className = 't-btn start' }
+        function renderCd() { const h = Math.floor(cdRemain / 3600), m = Math.floor((cdRemain % 3600) / 60), s = cdRemain % 60; document.getElementById('cdDisplay').textContent = pad(h) + ':' + pad(m) + ':' + pad(s) }
+
+        function pad(n) { return String(n).padStart(2, '0') }
+        function fmtMs(ms) { const m = Math.floor(ms / 60000), s = Math.floor((ms % 60000) / 1000), ml = ms % 1000; return `${pad(m)}:${pad(s)}.${String(ml).padStart(3, '0')}` }
+        function switchTab(id, btn) { document.querySelectorAll('.tab-body').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); document.getElementById('tab-' + id).classList.add('active'); btn.classList.add('active') }
+        function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500) }
+        renderPomo(); renderCd();
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Timer tools</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Timer, Stoppuhr und Countdown.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Timer tools</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Timer, Stoppuhr und Countdown.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-timer-tools-onboarded','1')}if(!localStorage.getItem('dkz-timer-tools-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>
+
+

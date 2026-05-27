@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../shared/seo-shared.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="grid" style="grid-template-columns:5fr 7fr">
+        <!-- LEFT: CONFIG -->
+        <div class="card">
+            <h3>⛓️ DNS Chain-Builder V2.1</h3>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px" id="modeTabs">
+                <div class="platform-card active" style="padding:12px;--platform-color:var(--blue)"
+                    onclick="setMode('A',this)">
+                    <span style="font-size:20px">🖥️</span>
+                    <div style="font-weight:800;font-size:11px;margin-top:4px">Direct</div>
+                    <div style="font-size:8px;color:var(--muted)">IP-Fix</div>
+                </div>
+                <div class="platform-card" style="padding:12px;--platform-color:var(--green)"
+                    onclick="setMode('REDIRECT',this)">
+                    <span style="font-size:20px">↗️</span>
+                    <div style="font-weight:800;font-size:11px;margin-top:4px">Forward</div>
+                    <div style="font-size:8px;color:var(--muted)">Simple</div>
+                </div>
+                <div class="platform-card" style="padding:12px;--platform-color:var(--purple)"
+                    onclick="setMode('CHAIN',this)">
+                    <span style="font-size:20px">⛓️</span>
+                    <div style="font-weight:800;font-size:11px;margin-top:4px">Chain</div>
+                    <div style="font-size:8px;color:var(--muted)">Multi-Hop</div>
+                </div>
+                <div class="platform-card" style="padding:12px;--platform-color:var(--cyan)"
+                    onclick="setMode('TXT',this)">
+                    <span style="font-size:20px">📄</span>
+                    <div style="font-weight:800;font-size:11px;margin-top:4px">Text</div>
+                    <div style="font-size:8px;color:var(--muted)">Metadata</div>
+                </div>
+            </div>
+            <div style="margin-bottom:12px">
+                <div class="label">Entry Subdomain</div>
+                <div style="position:relative"><input type="text" id="subDomain" placeholder="app, dashboard, staging">
+                    <div
+                        style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:10px;font-weight:700;background:var(--card);padding:2px 8px;border-radius:6px;border:1px solid var(--border)">
+                        .devkitz.eu</div>
+                </div>
+            </div>
+            <div id="valueField">
+                <div class="label" id="valueLabel">Target IP</div>
+                <input type="text" id="targetValue" value="187.77.70.115">
+            </div>
+            <div id="chainField" style="display:none;margin-top:10px">
+                <div class="label">Domain Redirect Chain (Hops)</div>
+                <div id="hops"></div>
+                <button class="btn btn-outline btn-block btn-sm" style="margin-top:8px" onclick="addHop()">+ Hop
+                    hinzufügen</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+                <div style="background:var(--card2);padding:12px;border-radius:10px;border:1px solid var(--border)">
+                    <div class="label">Path Context</div>
+                    <input type="text" id="pathCtx" value="/"
+                        style="background:transparent;border:none;border-bottom:2px solid var(--border2);border-radius:0;padding:6px 0">
+                </div>
+                <div style="background:var(--card2);padding:12px;border-radius:10px;border:1px solid var(--border)">
+                    <div class="label">TTL Cache</div>
+                    <select id="ttlVal" style="background:transparent;border:none">
+                        <option value="60">60s (Instant)</option>
+                        <option value="300" selected>300s (Default)</option>
+                        <option value="3600">1h (Stable)</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-dark btn-block btn-lg" style="margin-top:12px" onclick="deploy()">⚡ Deploy
+                Configuration</button>
+            <div id="statusMsg"
+                style="margin-top:10px;display:none;padding:10px;border-radius:10px;font-size:11px;font-weight:700">
+            </div>
+        </div>
+
+        <!-- RIGHT: LIVE -->
+        <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                <h3 style="margin:0">📡 Active Infrastructure</h3>
+                <span class="badge badge-green"><span class="dot" style="width:6px;height:6px"></span> Live Assets:
+                    <span id="assetCount">0</span></span>
+            </div>
+            <div id="records"></div>
+            <div id="emptyState" class="empty-state">
+                <div class="icon">🌐</div>Noch keine DNS-Einträge konfiguriert.<br>Erstelle links deinen ersten Eintrag!
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        let activeMode = 'A', hops = ['https://'], records = JSON.parse(localStorage.getItem('dns_records') || '[]');
+
+        function setMode(mode, el) { activeMode = mode; document.querySelectorAll('#modeTabs .platform-card').forEach(t => t.classList.remove('active')); el.classList.add('active'); const vf = document.getElementById('valueField'), cf = document.getElementById('chainField'), lbl = document.getElementById('valueLabel'); if (mode === 'CHAIN') { vf.style.display = 'none'; cf.style.display = 'block'; renderHops() } else { vf.style.display = 'block'; cf.style.display = 'none'; lbl.textContent = mode === 'A' ? 'Target IP' : mode === 'REDIRECT' ? 'Forward URL' : 'TXT Content'; document.getElementById('targetValue').value = mode === 'A' ? '187.77.70.115' : mode === 'REDIRECT' ? 'https://' : 'v=spf1 ...' } }
+
+        function addHop() { hops.push('https://'); renderHops() }
+        function removeHop(i) { if (hops.length > 1) { hops.splice(i, 1); renderHops() } }
+        function updateHop(i, v) { hops[i] = v }
+
+        function renderHops() { document.getElementById('hops').innerHTML = hops.map((h, i) => `<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;animation:slideUp .2s"><div style="width:28px;height:28px;border-radius:8px;background:rgba(168,85,247,.1);color:var(--purple);font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${i + 1}</div><input type="text" value="${h}" onchange="updateHop(${i},this.value)" placeholder="https://next-hop.com" style="flex:1"><button class="btn btn-sm btn-outline" onclick="removeHop(${i})" style="padding:6px 10px">✕</button></div>`).join('') }
+
+        function deploy() { const sub = document.getElementById('subDomain').value.toLowerCase().replace(/[^a-z0-9-]/g, ''); if (!sub) { alert('Subdomain eingeben'); return } const record = { id: sub + '-' + Date.now(), subdomain: sub, type: activeMode, value: activeMode === 'CHAIN' ? null : document.getElementById('targetValue').value, hops: activeMode === 'CHAIN' ? [...hops] : null, path: document.getElementById('pathCtx').value, ttl: document.getElementById('ttlVal').value, status: 'active', createdAt: new Date().toISOString() }; records.unshift(record); localStorage.setItem('dns_records', JSON.stringify(records)); renderRecords(); const msg = document.getElementById('statusMsg'); msg.style.display = 'block'; msg.style.background = 'rgba(0,255,136,.1)'; msg.style.color = 'var(--green)'; msg.style.border = '1px solid rgba(0,255,136,.2)'; msg.innerHTML = `✅ Deployment für <strong>${sub}.devkitz.eu</strong> erfolgreich!`; setTimeout(() => msg.style.display = 'none', 4000); document.getElementById('subDomain').value = '' }
+
+        function deleteRecord(id) { records = records.filter(r => r.id !== id); localStorage.setItem('dns_records', JSON.stringify(records)); renderRecords() }
+
+        function renderRecords() { document.getElementById('assetCount').textContent = records.length; document.getElementById('emptyState').style.display = records.length ? 'none' : 'block'; document.getElementById('records').innerHTML = records.map(r => `<div style="background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;transition:all .25s"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-weight:800;font-size:14px">${r.subdomain}.devkitz.eu</span><div style="display:flex;gap:6px;align-items:center"><span class="badge badge-blue">${r.type}</span><button class="btn btn-sm btn-outline" onclick="deleteRecord('${r.id}')">✕</button></div></div>${r.type === 'CHAIN' ? `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px;background:var(--bg);border-radius:8px;margin-top:6px">${r.hops.map((h, i) => `<div style="display:flex;align-items:center;gap:4px;background:var(--card);padding:4px 8px;border-radius:6px;border:1px solid var(--border);font-size:10px;font-family:var(--mono)"><span style="width:18px;height:18px;border-radius:50%;background:rgba(168,85,247,.15);color:var(--purple);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800">${i + 1}</span>${h.replace('https://', '').substring(0, 25)}</div>${i < r.hops.length - 1 ? '<span style="color:var(--muted)">→</span>' : ''}`).join('')}</div>` : `<div style="font-family:var(--mono);font-size:11px;color:var(--cyan);padding:8px;background:var(--bg);border-radius:8px;margin-top:6px">${r.value}</div>`}<div style="font-size:10px;color:var(--muted);margin-top:6px;display:flex;gap:12px"><span>TTL: ${r.ttl}s</span><span>Path: ${r.path}</span><span><span class="dot" style="width:6px;height:6px"></span> Active</span><span>${new Date(r.createdAt).toLocaleString('de-DE')}</span></div></div>`).join('') }
+
+        renderHops(); renderRecords();
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

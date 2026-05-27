@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v1.0.0_01">
+    <meta name="dkz-module" content="cloud-control">
+    <title>☁️ Cloud Control — DkZ™</title>
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --accent:#fa1e4e; --bg:#060608; --bg2:#0e0e12; --bg3:#1a1a20; --text:#e8e8ec; --muted:#8a8a9a; --border:rgba(255,255,255,.06); --green:#00ff88; --yellow:#ffb800; --red:#ff3b5c; --blue:#6366f1; --font:'Inter',sans-serif; --mono:'JetBrains Mono',monospace; }
+        * { margin:0;padding:0;box-sizing:border-box; }
+        body { font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh; }
+        .bg-mesh { position:fixed;inset:0;z-index:-1;overflow:hidden; }
+        .bg-mesh .blob { position:absolute;border-radius:50%;filter:blur(120px);opacity:.12; }
+        .bg-mesh .blob-1 { width:600px;height:600px;background:#3b82f6;top:-200px;right:-100px; }
+        .bg-mesh .blob-2 { width:500px;height:500px;background:#f59e0b;bottom:-200px;left:-100px; }
+        .header { background:rgba(14,14,18,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100; }
+        .header h1 { font-size:18px;font-weight:800; }
+        .header h1 span { color:var(--accent); }
+        .back-btn { color:var(--muted);text-decoration:none;font-size:20px;transition:color .2s; }
+        .back-btn:hover { color:var(--accent); }
+        .tabs { display:flex;gap:4px;margin-left:auto; }
+        .tab { padding:8px 16px;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;font-family:var(--font); }
+        .tab:hover { border-color:rgba(250,30,78,.3);color:var(--text); }
+        .tab.active { background:rgba(250,30,78,.1);border-color:var(--accent);color:var(--accent); }
+        .content { max-width:1000px;margin:0 auto;padding:24px; }
+        .section { background:rgba(18,18,24,.85);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px); }
+        .section-title { font-size:14px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px; }
+        .section-desc { font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.6; }
+        .card-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px; }
+        .card { padding:16px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:12px;transition:all .2s;cursor:pointer; }
+        .card:hover { border-color:rgba(250,30,78,.3);transform:translateY(-1px); }
+        .card-icon { font-size:2rem;margin-bottom:8px; }
+        .card-name { font-size:13px;font-weight:700;margin-bottom:4px; }
+        .card-desc { font-size:10px;color:var(--muted);line-height:1.5; }
+        .status-badge { display:inline-block;padding:3px 10px;border-radius:20px;font-size:9px;font-weight:700; }
+        .status-green { background:rgba(0,255,136,.1);color:var(--green); }
+        .status-yellow { background:rgba(255,184,0,.1);color:var(--yellow); }
+        .status-red { background:rgba(255,59,92,.1);color:var(--red); }
+        .login-btn { display:flex;align-items:center;gap:10px;padding:12px 18px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.03);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;width:100%;transition:all .2s;font-family:var(--font);margin-bottom:8px; }
+        .login-btn:hover { border-color:var(--accent);background:rgba(250,30,78,.04); }
+        .panel { display:none; }
+        .panel.active { display:block; }
+        .stat-row { display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03); }
+        .stat-label { font-size:11px;color:var(--muted); }
+        .stat-val { font-size:12px;font-weight:700; }
+        .file-list { max-height:400px;overflow-y:auto; }
+        .file-item { display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.02);cursor:pointer;transition:background .2s; }
+        .file-item:hover { background:rgba(255,255,255,.02); }
+        .file-icon { font-size:1.1rem; }
+        .file-name { font-size:11px;font-weight:600;flex:1; }
+        .file-size { font-size:10px;color:var(--muted);font-family:var(--mono); }
+        @media(max-width:768px) { .content{padding:14px;} .card-grid{grid-template-columns:1fr;} .tabs{flex-wrap:wrap;} }
+    </style>
+</head>
+<body>
+    <div class="bg-mesh"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
+    <header class="header">
+        <a href="../../hub/index.html" class="back-btn" title="← Hub">←</a>
+        <h1>☁️ Cloud <span>Control</span></h1>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('drive',this)">📁 Drive</button>
+            <button class="tab" onclick="switchTab('cloudflare',this)">🛡️ Cloudflare</button>
+            <button class="tab" onclick="switchTab('oracle',this)">🔶 Oracle</button>
+            <button class="tab" onclick="switchTab('users',this)">👥 Users</button>
+        </div>
+    </header>
+    <div class="content">
+        <!-- DRIVE TAB -->
+        <div class="panel active" id="panel-drive">
+            <div class="section">
+                <div class="section-title">📁 Google Drive</div>
+                <div class="section-desc">Dateien verwalten, teilen und sichern. OAuth2-Anmeldung erforderlich.</div>
+                <button class="login-btn" onclick="loginGoogle()"><span style="font-size:1.2rem">🔐</span> Mit Google anmelden (OAuth2)</button>
+                <div class="stat-row"><span class="stat-label">Status</span><span class="status-badge status-yellow">Nicht verbunden</span></div>
+                <div class="stat-row"><span class="stat-label">Speicher</span><span class="stat-val" id="driveQuota">— / 15 GB</span></div>
+            </div>
+            <div class="section">
+                <div class="section-title">📂 Dateien</div>
+                <div class="file-list" id="driveFiles">
+                    <div style="text-align:center;padding:40px;color:var(--muted);font-size:12px">Verbinde mit Google Drive um Dateien zu sehen</div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">💾 Bulk Backup</div>
+                <div class="section-desc">Alle Dateien eines Nutzers als ZIP exportieren. Nutzt Google Admin SDK.</div>
+                <div class="card-grid">
+                    <div class="card" onclick="bulkBackup()"><div class="card-icon">📦</div><div class="card-name">Vollständiges Backup</div><div class="card-desc">Alle Dateien + Ordnerstruktur herunterladen</div></div>
+                    <div class="card" onclick="selectiveBackup()"><div class="card-icon">🎯</div><div class="card-name">Selektives Backup</div><div class="card-desc">Nur bestimmte Ordner/Typen sichern</div></div>
+                </div>
+            </div>
+        </div>
+        <!-- CLOUDFLARE TAB -->
+        <div class="panel" id="panel-cloudflare">
+            <div class="section">
+                <div class="section-title">🛡️ Cloudflare DNS + DDoS</div>
+                <div class="section-desc">DNS-Records, SSL/TLS, Firewall und Cache verwalten.</div>
+                <div class="card-grid">
+                    <div class="card"><div class="card-icon">🌐</div><div class="card-name">DNS Records</div><div class="card-desc">A, CNAME, MX, TXT Records verwalten</div><span class="status-badge status-green">Aktiv</span></div>
+                    <div class="card"><div class="card-icon">🔒</div><div class="card-name">SSL/TLS</div><div class="card-desc">Zertifikat-Status + Full Strict Mode</div><span class="status-badge status-green">Full (Strict)</span></div>
+                    <div class="card"><div class="card-icon">🛡️</div><div class="card-name">DDoS Protection</div><div class="card-desc">Layer 3/4/7 Schutz aktiv</div><span class="status-badge status-green">Geschützt</span></div>
+                    <div class="card"><div class="card-icon">🔥</div><div class="card-name">Firewall</div><div class="card-desc">WAF Rules + Rate Limiting</div><span class="status-badge status-yellow">3 Rules</span></div>
+                    <div class="card"><div class="card-icon">⚡</div><div class="card-name">Cache</div><div class="card-desc">Cache Purge + Analytics</div><span class="status-badge status-green">Aktiv</span></div>
+                    <div class="card"><div class="card-icon">📊</div><div class="card-name">Analytics</div><div class="card-desc">Requests, Bandwidth, Threats</div><span class="status-badge status-green">24h</span></div>
+                </div>
+            </div>
+        </div>
+        <!-- ORACLE TAB -->
+        <div class="panel" id="panel-oracle">
+            <div class="section">
+                <div class="section-title">🔶 Oracle Cloud Infrastructure</div>
+                <div class="section-desc">Compute, Storage und Netzwerk verwalten.</div>
+                <div class="card-grid">
+                    <div class="card"><div class="card-icon">🖥️</div><div class="card-name">Compute Instances</div><div class="card-desc">VMs erstellen und verwalten</div></div>
+                    <div class="card"><div class="card-icon">💾</div><div class="card-name">Object Storage</div><div class="card-desc">Buckets + Dateien</div></div>
+                    <div class="card"><div class="card-icon">🌐</div><div class="card-name">Netzwerk (VCN)</div><div class="card-desc">Virtual Cloud Networks</div></div>
+                    <div class="card"><div class="card-icon">💰</div><div class="card-name">Cost Dashboard</div><div class="card-desc">Aktuelle Kosten + Prognose</div></div>
+                </div>
+            </div>
+        </div>
+        <!-- USERS TAB -->
+        <div class="panel" id="panel-users">
+            <div class="section">
+                <div class="section-title">👥 Benutzerverwaltung</div>
+                <div class="section-desc">Google Workspace Benutzer verwalten. Bulk-Operationen für Backup und Rechte.</div>
+                <div class="card-grid">
+                    <div class="card"><div class="card-icon">👤</div><div class="card-name">Benutzer auflisten</div><div class="card-desc">Alle Workspace-Benutzer anzeigen</div></div>
+                    <div class="card"><div class="card-icon">📦</div><div class="card-name">Bulk Backup</div><div class="card-desc">Alle Benutzer-Daten sichern</div></div>
+                    <div class="card"><div class="card-icon">🔐</div><div class="card-name">Rechte-Matrix</div><div class="card-desc">Wer darf was — Rollenbasiert</div></div>
+                    <div class="card"><div class="card-icon">📋</div><div class="card-name">Audit Log</div><div class="card-desc">Alle Aktionen protokolliert</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+        function switchTab(name,btn){
+            document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+            document.getElementById('panel-'+name).classList.add('active');
+            btn.classList.add('active');
+        }
+        function loginGoogle(){alert('OAuth2 Login benötigt Client-ID in Settings → Verbindungen');}
+        function bulkBackup(){alert('Bulk Backup benötigt Google Admin SDK API-Key');}
+        function selectiveBackup(){alert('Selektives Backup — wähle Ordner zum Sichern');}
+    </script>
+    <script>['dkz-headbar.js','dkz-console.js','dkz-tts.js'].forEach(s=>{const el=document.createElement('script');el.src='../../shared/'+s;el.onerror=()=>console.warn('[Portable] '+s+' nicht verfuegbar');document.body.appendChild(el);});</script>
+</body>
+</html>

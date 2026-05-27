@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="shared/seo-shared.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        .p-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px
+        }
+
+        .p-card {
+            --platform-color: var(--accent);
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            cursor: pointer;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all .3s
+        }
+
+        .p-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--platform-color);
+            opacity: 0;
+            transition: opacity .3s
+        }
+
+        .p-card:hover {
+            border-color: var(--platform-color);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .4)
+        }
+
+        .p-card:hover::before {
+            opacity: 1
+        }
+
+        .p-icon {
+            font-size: 32px;
+            margin-bottom: 8px
+        }
+
+        .p-name {
+            font-weight: 800;
+            font-size: 13px
+        }
+
+        .p-users {
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 2px
+        }
+
+        .p-stat {
+            font-size: 20px;
+            font-weight: 800;
+            margin-top: 8px
+        }
+
+        .p-connected {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: pulse 2s infinite
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px
+        }
+    </style>
+</head>
+
+<body>
+    <div class="grid" style="max-width:1400px">
+        <!-- PERSONA SELECTOR -->
+        <div class="card card-full">
+            <h3>🎭 Persona & Zielgruppe</h3>
+            <div class="persona-grid" id="personaGrid">
+                <div class="persona-card active" onclick="selectPersona('streamer',this)">
+                    <div class="persona-icon">🎮</div>
+                    <div class="persona-name">Streamer</div>
+                    <div class="persona-desc">Twitch/Kick/YT Live</div>
+                </div>
+                <div class="persona-card" onclick="selectPersona('influencer',this)">
+                    <div class="persona-icon">⭐</div>
+                    <div class="persona-name">Influencer</div>
+                    <div class="persona-desc">IG/TikTok/YT</div>
+                </div>
+                <div class="persona-card" onclick="selectPersona('gamer',this)">
+                    <div class="persona-icon">🕹️</div>
+                    <div class="persona-name">Gamer</div>
+                    <div class="persona-desc">Gaming Content</div>
+                </div>
+                <div class="persona-card" onclick="selectPersona('bpromi',this)">
+                    <div class="persona-icon">🌟</div>
+                    <div class="persona-name">B-Promi</div>
+                    <div class="persona-desc">TV/Reality/Media</div>
+                </div>
+                <div class="persona-card" onclick="selectPersona('business',this)">
+                    <div class="persona-icon">💼</div>
+                    <div class="persona-name">Business</div>
+                    <div class="persona-desc">B2B/LinkedIn/FB</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PLATFORM GRID -->
+        <div class="card card-full">
+            <h3>📱 Plattform-Übersicht <span
+                    style="font-size:10px;color:var(--muted);font-weight:400;margin-left:auto">Klicke eine Plattform für
+                    Details</span></h3>
+            <div class="p-grid" id="platformGrid"></div>
+        </div>
+
+        <!-- CROSS-PLATFORM SUMMARY -->
+        <div class="card card-full">
+            <h3>📊 Cross-Platform Zusammenfassung</h3>
+            <div class="summary-grid" id="summaryGrid">
+                <div class="stat">
+                    <div class="stat-num" style="color:var(--blue)" id="totalFollowers">0</div>
+                    <div class="stat-label">Gesamt Follower</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-num" style="color:var(--green)" id="totalEngagement">0%</div>
+                    <div class="stat-label">⌀ Engagement</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-num" style="color:var(--purple)" id="totalPlatforms">0</div>
+                    <div class="stat-label">Plattformen</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-num" style="color:var(--cyan)" id="totalPosts">0</div>
+                    <div class="stat-label">Gesamt Posts</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-num" style="color:var(--yellow)" id="bestPlatform">-</div>
+                    <div class="stat-label">Beste Plattform</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACCOUNT MANAGER -->
+        <div class="card card-full">
+            <h3>👤 Verknüpfte Accounts</h3>
+            <div class="input-row">
+                <select id="addPlatform" style="max-width:180px">
+                    <option value="">Plattform wählen...</option>
+                </select>
+                <input type="text" id="addUsername" placeholder="@username oder Profil-URL">
+                <button class="btn btn-green btn-sm" onclick="addAccount()">+ Hinzufügen</button>
+            </div>
+            <div id="accountList"></div>
+            <div id="accountEmpty" class="empty-state">
+                <div class="icon">👤</div>Noch keine Accounts verknüpft.<br>Füge oben deinen ersten Account hinzu!
+            </div>
+        </div>
+
+        <!-- QUICK INSIGHTS -->
+        <div class="card" id="insightsCard">
+            <h3>🔮 Quick Insights</h3>
+            <div id="insightsList">
+                <div class="result-item"><span class="result-icon">💡</span>
+                    <div>
+                        <div class="result-title">Füge Accounts hinzu</div>
+                        <div class="result-desc">Verknüpfe mindestens 3 Plattformen für Cross-Platform Insights.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RECOMMENDED ACTIONS -->
+        <div class="card" id="actionsCard">
+            <h3>🎯 Empfohlene Aktionen</h3>
+            <div id="actionsList">
+                <div class="result-item"><span class="result-icon">1️⃣</span>
+                    <div>
+                        <div class="result-title">Profil-Check durchführen</div>
+                        <div class="result-desc">Überprüfe ob alle Profile vollständig ausgefüllt und suchbar sind.
+                        </div>
+                    </div>
+                </div>
+                <div class="result-item"><span class="result-icon">2️⃣</span>
+                    <div>
+                        <div class="result-title">Content-Analyse starten</div>
+                        <div class="result-desc">Finde heraus welcher Content bei deiner Zielgruppe am besten ankommt.
+                        </div>
+                    </div>
+                </div>
+                <div class="result-item"><span class="result-icon">3️⃣</span>
+                    <div>
+                        <div class="result-title">Follower analysieren</div>
+                        <div class="result-desc">Wer interagiert mit dir? Woher kommen deine Follower?</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        const PLATFORMS = [
+            { id: 'youtube', icon: '▶️', name: 'YouTube', color: '#FF0000', users: '2.5B+', key: 'subscribers' },
+            { id: 'instagram', icon: '📸', name: 'Instagram', color: '#E1306C', users: '2B+', key: 'followers' },
+            { id: 'tiktok', icon: '🎵', name: 'TikTok', color: '#69C9D0', users: '1.5B+', key: 'followers' },
+            { id: 'twitch', icon: '🟣', name: 'Twitch', color: '#9146FF', users: '140M+', key: 'followers' },
+            { id: 'kick', icon: '🟢', name: 'Kick', color: '#53FC18', users: '30M+', key: 'followers' },
+            { id: 'x-twitter', icon: '✖️', name: 'X / Twitter', color: '#f7f7f7', users: '600M+', key: 'followers' },
+            { id: 'facebook', icon: '📘', name: 'Facebook', color: '#1877F2', users: '3B+', key: 'likes' },
+            { id: 'reddit', icon: '🟠', name: 'Reddit', color: '#FF4500', users: '800M+', key: 'karma' },
+            { id: 'snapchat', icon: '👻', name: 'Snapchat', color: '#FFFC00', users: '750M+', key: 'score' },
+            { id: 'vk', icon: '🔷', name: 'VK', color: '#4C75A3', users: '100M+', key: 'friends' },
+            { id: 'linkedin', icon: '💼', name: 'LinkedIn', color: '#0A66C2', users: '900M+', key: 'connections' },
+        ];
+
+        let accounts = JSON.parse(localStorage.getItem('social_accounts') || '[]');
+        let activePersona = 'streamer';
+
+        function selectPersona(p, el) { activePersona = p; document.querySelectorAll('.persona-card').forEach(c => c.classList.remove('active')); el.classList.add('active'); updateInsights() }
+
+        function renderPlatforms() {
+            document.getElementById('platformGrid').innerHTML = PLATFORMS.map(p => {
+                const acc = accounts.find(a => a.platform === p.id);
+                return `<div class="p-card" style="--platform-color:${p.color}" onclick="parent.document.querySelector('[data-mod=${p.id}]')?.click()">
+            ${acc ? '<div class="p-connected"></div>' : ''}
+            <div class="p-icon">${p.icon}</div>
+            <div class="p-name">${p.name}</div>
+            <div class="p-users">${p.users} Nutzer</div>
+            ${acc ? `<div class="p-stat" style="color:${p.color}">${formatNum(acc.followers || 0)}</div>` : '<div style="font-size:10px;color:var(--dim);margin-top:8px">Nicht verbunden</div>'}
+        </div>`;
+            }).join('');
+
+            const sel = document.getElementById('addPlatform');
+            sel.innerHTML = '<option value="">Plattform wählen...</option>' + PLATFORMS.map(p => `<option value="${p.id}">${p.icon} ${p.name}</option>`).join('');
+        }
+
+        function addAccount() {
+            const platform = document.getElementById('addPlatform').value;
+            const username = document.getElementById('addUsername').value.trim();
+            if (!platform || !username) { alert('Plattform und Username eingeben'); return }
+            if (accounts.find(a => a.platform === platform)) { alert('Plattform bereits verknüpft'); return }
+            accounts.push({ platform, username: username.replace('@', ''), followers: Math.floor(Math.random() * 50000 + 100), engagement: (Math.random() * 8 + 0.5).toFixed(1), posts: Math.floor(Math.random() * 500 + 10), addedAt: new Date().toISOString() });
+            localStorage.setItem('social_accounts', JSON.stringify(accounts));
+            document.getElementById('addPlatform').value = ''; document.getElementById('addUsername').value = '';
+            renderAll();
+        }
+
+        function removeAccount(platform) { accounts = accounts.filter(a => a.platform !== platform); localStorage.setItem('social_accounts', JSON.stringify(accounts)); renderAll() }
+
+        function renderAccounts() {
+            const empty = document.getElementById('accountEmpty');
+            empty.style.display = accounts.length ? 'none' : 'block';
+            document.getElementById('accountList').innerHTML = accounts.map(a => {
+                const p = PLATFORMS.find(pl => pl.id === a.platform);
+                return `<div class="metric-row"><span style="font-size:20px">${p?.icon || '📱'}</span><span class="metric-name" style="flex:1"><strong>${p?.name}</strong> @${a.username}</span><span class="badge badge-blue">${formatNum(a.followers)} ${p?.key || 'followers'}</span><span class="badge badge-green">${a.engagement}% eng.</span><span style="font-size:10px;color:var(--dim)">${new Date(a.addedAt).toLocaleDateString('de-DE')}</span><button class="btn btn-sm btn-outline" onclick="removeAccount('${a.platform}')">✕</button></div>`;
+            }).join('');
+        }
+
+        function updateSummary() {
+            const total = accounts.reduce((s, a) => s + a.followers, 0);
+            const avgEng = accounts.length ? accounts.reduce((s, a) => s + parseFloat(a.engagement), 0) / accounts.length : 0;
+            const totalPosts = accounts.reduce((s, a) => s + a.posts, 0);
+            const best = accounts.sort((a, b) => b.followers - a.followers)[0];
+            document.getElementById('totalFollowers').textContent = formatNum(total);
+            document.getElementById('totalEngagement').textContent = avgEng.toFixed(1) + '%';
+            document.getElementById('totalPlatforms').textContent = accounts.length;
+            document.getElementById('totalPosts').textContent = formatNum(totalPosts);
+            document.getElementById('bestPlatform').textContent = best ? PLATFORMS.find(p => p.id === best.platform)?.name || '-' : '-';
+        }
+
+        function updateInsights() {
+            const tips = { streamer: ['Streame zu Peak-Zeiten (19-23 Uhr)', 'Nutze Twitch + YouTube parallel', 'Clips auf TikTok recyclen'], influencer: ['Poste 1x täglich auf IG', 'Nutze trending Sounds auf TikTok', 'Kooperationen mit ähnlichen Accounts'], gamer: ['YouTube Shorts für Highlights', 'Twitch als Hauptplattform', 'Reddit für Community Building'], bpromi: ['LinkedIn für seriöse Branding', 'Instagram für Lifestyle', 'Twitter/X für News & Meinungen'], business: ['LinkedIn als Hauptkanal', 'Facebook für lokale Reichweite', 'YouTube für Tutorials'] };
+            document.getElementById('insightsList').innerHTML = (tips[activePersona] || tips.streamer).map(t => `<div class="result-item"><span class="result-icon">💡</span><div><div class="result-desc">${t}</div></div></div>`).join('');
+        }
+
+        function formatNum(n) { if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M'; if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K'; return n.toString() }
+        function renderAll() { renderPlatforms(); renderAccounts(); updateSummary(); updateInsights() }
+        renderAll();
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎨 DkZ Design Studio — Look Like · Be Unique · Glass</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- DkZ Shared Scripts (portable — fallback wenn nicht vorhanden) -->
+    <link rel="stylesheet" href="../../shared/dkz-theme.css" id="dkzThemeCSS">
+    <style>
+        /* ═══ DkZ Design Studio — Eigenständiges Stylesheet ═══ */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0e0e10;
+            --bg2: #121215;
+            --card: rgba(14,14,22,.85);
+            --card2: #1e1e24;
+            --card3: #28283a;
+            --border: rgba(255,255,255,.06);
+            --border2: rgba(255,255,255,.12);
+            --text: #e8e8f0;
+            --muted: #6e6e8a;
+            --accent: #fa1e4e;
+            --accent-rgb: 250,30,78;
+            --green: #00ff88;
+            --blue: #55acee;
+            --purple: #a855f7;
+            --yellow: #ffb800;
+            --orange: #ff8c42;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --radius: 14px;
+            --radius-sm: 8px;
+            --glass: rgba(14,14,22,.72);
+            --blur: blur(24px);
+            --glass-border: rgba(255,255,255,.06);
+
+            /* Customizer — dynamisch überschrieben */
+            --ds-accent: #fa1e4e;
+            --ds-accent-rgb: 250,30,78;
+            --ds-bg: #0e0e10;
+            --ds-card: rgba(14,14,22,.85);
+            --ds-glass-opacity: .72;
+            --ds-glass-blur: 24px;
+            --ds-glass-border-opacity: .06;
+            --ds-radius: 14px;
+            --ds-font: 'Inter', sans-serif;
+            --ds-font-display: 'Inter', sans-serif;
+            --ds-glow: 0;
+            --ds-noise: 0;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        body { display: flex; flex-direction: column; }
+
+        a { color: var(--accent); text-decoration: none; }
+
+        /* ═══ Header ═══ */
+        .header {
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            -webkit-backdrop-filter: var(--blur);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header h1 {
+            font-size: 18px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header .ver {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono);
+        }
+        .header-right {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* ═══ Background ═══ */
+        .bg-mesh {
+            position: fixed; inset: 0; z-index: 0;
+            pointer-events: none; overflow: hidden;
+        }
+        .bg-blob {
+            position: absolute; border-radius: 50%;
+            filter: blur(120px); opacity: .06;
+            animation: blobFloat 20s ease-in-out infinite;
+        }
+        .bg-blob:nth-child(1) { width: 500px; height: 500px; background: var(--blue); top: -10%; left: 20%; }
+        .bg-blob:nth-child(2) { width: 350px; height: 350px; background: var(--purple); bottom: 10%; right: 10%; animation-delay: -8s; }
+        .bg-blob:nth-child(3) { width: 300px; height: 300px; background: var(--accent); top: 40%; left: 60%; animation-delay: -14s; opacity: .04; }
+
+        @keyframes blobFloat {
+            0%, 100% { transform: translate(0,0) scale(1); }
+            50% { transform: translate(30px,-40px) scale(1.1); }
+        }
+
+        /* ═══ Layout ═══ */
+        .app { position: relative; z-index: 1; flex: 1; }
+        .content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px 24px;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        /* ═══ Sidebar — Controls ═══ */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            position: sticky;
+            top: 80px;
+        }
+
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+        }
+        .panel h2 {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        /* ═══ Controls ═══ */
+        .ctrl-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .ctrl-group:last-child { margin-bottom: 0; }
+
+        .ctrl-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            justify-content: space-between;
+        }
+        .ctrl-label .val {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        /* Radio Buttons — Mode Select */
+        .mode-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .mode-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: rgba(255,255,255,.03);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .mode-option:hover {
+            border-color: rgba(var(--ds-accent-rgb),.3);
+            background: rgba(var(--ds-accent-rgb),.05);
+        }
+        .mode-option.active {
+            border-color: var(--ds-accent);
+            background: rgba(var(--ds-accent-rgb),.1);
+        }
+        .mode-option input[type="radio"] {
+            accent-color: var(--ds-accent);
+        }
+        .mode-option .mo-icon { font-size: 18px; }
+        .mode-option .mo-text { flex: 1; }
+        .mode-option .mo-title { font-size: 12px; font-weight: 600; }
+        .mode-option .mo-desc { font-size: 10px; color: var(--muted); }
+
+        /* Select / Input Styling */
+        select, input[type="range"] {
+            width: 100%;
+        }
+        select {
+            padding: 8px 10px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 11px;
+            outline: none;
+            cursor: pointer;
+        }
+        select:focus { border-color: var(--ds-accent); }
+        select option { background: var(--card2); color: var(--text); }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            height: 4px;
+            background: var(--card2);
+            border-radius: 4px;
+            outline: none;
+            border: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px; height: 14px;
+            background: var(--ds-accent);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 0;
+        }
+        .toggle-row label { font-size: 11px; font-weight: 500; cursor: pointer; }
+
+        /* Toggle Switch */
+        .toggle {
+            position: relative;
+            width: 34px; height: 20px;
+            flex-shrink: 0;
+        }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle .slider {
+            position: absolute; inset: 0;
+            background: var(--card2);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: .3s;
+        }
+        .toggle .slider::before {
+            content: '';
+            position: absolute;
+            width: 14px; height: 14px;
+            left: 3px; bottom: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: .3s;
+        }
+        .toggle input:checked + .slider {
+            background: var(--ds-accent);
+        }
+        .toggle input:checked + .slider::before {
+            transform: translateX(14px);
+        }
+
+        .color-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .color-row input[type="color"] {
+            width: 32px; height: 32px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--card2);
+            cursor: pointer;
+            padding: 0;
+        }
+        .color-row .hex {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: var(--ds-accent);
+            color: #fff;
+            font-family: var(--font);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(var(--ds-accent-rgb),.3);
+        }
+        .btn.secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+        .btn.secondary:hover {
+            border-color: var(--ds-accent);
+        }
+        .btn-sm { padding: 5px 10px; font-size: 10px; }
+
+        /* ═══ Main — Preview ═══ */
+        .main-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .preview-area {
+            background: var(--ds-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            min-height: 500px;
+            position: relative;
+            overflow: hidden;
+            transition: all .3s;
+        }
+
+        /* Glassmorphism options im Preview */
+        .preview-area.glass-light {
+            --glass: rgba(14,14,22,.5);
+            --blur: blur(12px);
+        }
+        .preview-area.glass-strong {
+            --glass: rgba(14,14,22,.88);
+            --blur: blur(32px);
+        }
+        .preview-area.glass-colored {
+            background: linear-gradient(135deg, rgba(var(--ds-accent-rgb),.05), rgba(168,85,247,.05));
+        }
+        .preview-area.glass-border-glow {
+            --glass-border: rgba(var(--ds-accent-rgb),.15);
+        }
+        .preview-area.glass-minimal {
+            --glass: rgba(14,14,22,.25);
+            --blur: blur(8px);
+            --glass-border: transparent;
+        }
+
+        /* Noise Overlay */
+        .preview-area .noise-overlay {
+            position: absolute; inset: 0;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .3s;
+        }
+        .preview-area .noise-overlay.show {
+            opacity: .03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+
+        /* Preview Inhalt */
+        .preview-content {
+            position: relative;
+            z-index: 1;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-height: 500px;
+        }
+
+        .preview-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            -webkit-backdrop-filter: var(--blur);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+        }
+        .preview-header .ph-brand {
+            font-size: 15px;
+            font-weight: 800;
+            font-family: var(--ds-font-display);
+        }
+        .preview-header .ph-nav {
+            display: flex;
+            gap: 16px;
+        }
+        .preview-header .ph-nav a {
+            font-size: 12px;
+            color: var(--muted);
+        }
+        .preview-header .ph-nav a:hover { color: var(--text); }
+
+        .preview-hero {
+            text-align: center;
+            padding: 48px 20px;
+        }
+        .preview-hero h2 {
+            font-size: 32px;
+            font-weight: 900;
+            font-family: var(--ds-font-display);
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--ds-accent), var(--blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .preview-hero p {
+            font-size: 14px;
+            color: var(--muted);
+            max-width: 480px;
+            margin: 0 auto 24px;
+        }
+
+        .preview-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+        .preview-card {
+            padding: 18px;
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            -webkit-backdrop-filter: var(--blur);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            text-align: center;
+        }
+        .preview-card .pc-icon { font-size: 28px; margin-bottom: 8px; }
+        .preview-card .pc-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+        .preview-card .pc-desc { font-size: 11px; color: var(--muted); }
+
+        /* Export / Buttons unter Preview */
+        .preview-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* ═══ Resource Browser (awesome-design integration) ═══ */
+        .resource-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        .resource-item {
+            padding: 8px;
+            background: rgba(255,255,255,.03);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            text-align: center;
+            font-size: 10px;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .resource-item:hover {
+            border-color: var(--ds-accent);
+            color: var(--text);
+        }
+        .resource-item .ri-icon { font-size: 20px; margin-bottom: 4px; }
+
+        /* ═══ Glassmorphism Variant Cards ═══ */
+        .glass-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        .glass-variant {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        .glass-variant:hover {
+            border-color: var(--ds-accent);
+        }
+        .glass-variant.active {
+            border-color: var(--ds-accent);
+            background: rgba(var(--ds-accent-rgb),.1);
+        }
+
+        /* Brand Badge im Select */
+        .brand-preview {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(255,255,255,.03);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            margin-top: 6px;
+        }
+        .brand-preview .bp-dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .brand-preview .bp-name {
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .brand-preview .bp-hex {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--muted);
+            margin-left: auto;
+        }
+
+        /* ═══ Code Block (Export) ═══ */
+        .code-block {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--muted);
+            max-height: 200px;
+            overflow: auto;
+            white-space: pre;
+        }
+
+        /* ═══ Responsive ═══ */
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 260px 1fr;
+                padding: 16px 20px;
+            }
+        }
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+                padding: 12px 14px;
+            }
+            .sidebar { position: static; }
+            .preview-cards { grid-template-columns: 1fr; }
+            .resource-grid { grid-template-columns: repeat(2, 1fr); }
+            .header h1 { font-size: 15px; }
+        }
+        @media (max-width: 480px) {
+            .resource-grid { grid-template-columns: 1fr; }
+            .glass-grid { grid-template-columns: 1fr; }
+            .bg-blob { display: none; }
+        }
+
+        /* ═══ Toast ═══ */
+        .toast {
+            position: fixed;
+            bottom: 24px; right: 24px;
+            padding: 10px 18px;
+            background: var(--green);
+            color: #000;
+            font-size: 11px;
+            font-weight: 700;
+            border-radius: var(--radius-sm);
+            z-index: 999;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all .3s;
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body>
+
+    <!-- ═══ Toast ═══ -->
+    <div class="toast" id="toast">✅ Gespeichert</div>
+
+    <!-- ═══ Background ═══ -->
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+    </div>
+
+    <!-- ═══ Header ═══ -->
+    <header class="header">
+        <span style="font-size:22px;">🎨</span>
+        <h1>DkZ Design Studio</h1>
+        <span class="ver">v0.01.0_01</span>
+        <div class="header-right">
+            <span class="ver" id="statusDot" style="color:var(--green);">● active</span>
+            <a href="../../hub/index.html" class="btn btn-sm secondary">← Hub</a>
+        </div>
+    </header>
+
+    <!-- ═══ Main Content ═══ -->
+    <div class="app">
+        <div class="content">
+
+            <!-- ═══ SIDEBAR — Controls ═══ -->
+            <aside class="sidebar">
+
+                <!-- MODE SELECTOR — Look Like / Don't Look Like -->
+                <div class="panel">
+                    <h2>🎯 Design-Modus</h2>
+                    <div class="mode-group">
+                        <label class="mode-option active" data-mode="look-like">
+                            <input type="radio" name="designMode" value="look-like" checked>
+                            <span class="mo-icon">🔷</span>
+                            <span class="mo-text">
+                                <div class="mo-title">Look Like</div>
+                                <div class="mo-desc">Folge einem bestehenden Brand-Design</div>
+                            </span>
+                        </label>
+                        <label class="mode-option" data-mode="be-unique">
+                            <input type="radio" name="designMode" value="be-unique">
+                            <span class="mo-icon">✨</span>
+                            <span class="mo-text">
+                                <div class="mo-title">Don't Look Like Others</div>
+                                <div class="mo-desc">Generiere einzigartiges, eigenes Design</div>
+                            </span>
+                        </label>
+                        <label class="mode-option" data-mode="hybrid">
+                            <input type="radio" name="designMode" value="hybrid">
+                            <span class="mo-icon">🔀</span>
+                            <span class="mo-text">
+                                <div class="mo-title">Hybrid</div>
+                                <div class="mo-desc">Brand-Basis + eigene Akzente</div>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- DESIGN SYSTEM PRESETS (aus awesome-design-systems merged) -->
+                <div class="panel" id="presetPanel">
+                    <h2>🏷️ Design System wählen</h2>
+                    <select id="designSystemSelect">
+                        <option value="dkz">DkZ™ Eigen (Default)</option>
+                        <option value="vercel">▲ Vercel / Geist</option>
+                        <option value="linear">⛓️ Linear</option>
+                        <option value="stripe">💳 Stripe</option>
+                        <option value="github">🐙 GitHub Primer</option>
+                        <option value="airbnb">🏠 Airbnb</option>
+                        <option value="notion">📝 Notion</option>
+                        <option value="anthropic">🤖 Anthropic</option>
+                        <option value="apple">🍎 Apple</option>
+                        <option value="cursor">↗️ Cursor</option>
+                        <option value="supabase">▲ Supabase</option>
+                        <option value="figma">🎨 Figma</option>
+                        <option value="spotify">🎵 Spotify</option>
+                        <option value="microsoft">🪟 Microsoft Fluent</option>
+                        <option value="ibm">🔷 IBM Carbon</option>
+                        <option value="shopify">🛍️ Shopify Polaris</option>
+                        <option value="atlassian">📊 Atlassian</option>
+                    </select>
+                    <div class="brand-preview" id="brandPreview">
+                        <div class="bp-dot" style="background:var(--accent);"></div>
+                        <span class="bp-name">DkZ™ Eigen</span>
+                        <span class="bp-hex">#fa1e4e</span>
+                    </div>
+                </div>
+
+                <!-- GLASSMORPHISM OPTIONS -->
+                <div class="panel">
+                    <h2>🪟 Glassmorphism</h2>
+                    <div class="glass-grid" id="glassGrid">
+                        <div class="glass-variant active" data-glass="default">
+                            <span style="font-size:16px;">🔲</span><br>Standard
+                        </div>
+                        <div class="glass-variant" data-glass="light">
+                            <span style="font-size:16px;">🫧</span><br>Light
+                        </div>
+                        <div class="glass-variant" data-glass="strong">
+                            <span style="font-size:16px;">🧊</span><br>Strong
+                        </div>
+                        <div class="glass-variant" data-glass="colored">
+                            <span style="font-size:16px;">🌈</span><br>Colored
+                        </div>
+                        <div class="glass-variant" data-glass="border-glow">
+                            <span style="font-size:16px;">✨</span><br>Border Glow
+                        </div>
+                        <div class="glass-variant" data-glass="minimal">
+                            <span style="font-size:16px;">🌫️</span><br>Minimal
+                        </div>
+                    </div>
+                    <div class="ctrl-group" style="margin-top:10px;">
+                        <div class="toggle-row">
+                            <label>Noise Overlay</label>
+                            <label class="toggle">
+                                <input type="checkbox" id="noiseToggle">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="ctrl-label">
+                            <span>Glass Opacity</span>
+                            <span class="val" id="glassOpacityVal">0.72</span>
+                        </div>
+                        <input type="range" id="glassOpacity" min="10" max="95" value="72">
+                    </div>
+                </div>
+
+                <!-- THEME CUSTOMIZER -->
+                <div class="panel">
+                    <h2>🎨 Theme Customizer</h2>
+                    <div class="ctrl-group">
+                        <div class="ctrl-label"><span>Akzentfarbe</span></div>
+                        <div class="color-row">
+                            <input type="color" id="accentColor" value="#fa1e4e">
+                            <span class="hex" id="accentHex">#fa1e4e</span>
+                            <button class="btn btn-sm secondary" id="randomAccentBtn">🎲</button>
+                        </div>
+                    </div>
+                    <div class="ctrl-group">
+                        <div class="ctrl-label"><span>Hintergrund</span></div>
+                        <div class="color-row">
+                            <input type="color" id="bgColor" value="#0e0e10">
+                            <span class="hex" id="bgHex">#0e0e10</span>
+                        </div>
+                    </div>
+                    <div class="ctrl-group">
+                        <div class="ctrl-label">
+                            <span>Border Radius</span>
+                            <span class="val" id="radiusVal">14px</span>
+                        </div>
+                        <input type="range" id="radiusSlider" min="4" max="28" value="14">
+                    </div>
+                    <div class="ctrl-group">
+                        <div class="ctrl-label"><span>Display Font</span></div>
+                        <select id="fontSelect">
+                            <option value="'Inter', sans-serif">Inter</option>
+                            <option value="'Space Grotesk', sans-serif">Space Grotesk</option>
+                            <option value="'Cabinet Grotesk', sans-serif">Cabinet Grotesk</option>
+                            <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans</option>
+                            <option value="'SF Pro Display', sans-serif">SF Pro Display</option>
+                            <option value="'Outfit', sans-serif">Outfit</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- RESOURCES (aus awesome-design integration) -->
+                <div class="panel">
+                    <h2>📦 Design Resources</h2>
+                    <div class="resource-grid">
+                        <div class="resource-item" data-resource="colors">
+                            <div class="ri-icon">🎨</div>Farben
+                        </div>
+                        <div class="resource-item" data-resource="icons">
+                            <div class="ri-icon">🔣</div>Icons
+                        </div>
+                        <div class="resource-item" data-resource="fonts">
+                            <div class="ri-icon">🔤</div>Fonts
+                        </div>
+                        <div class="resource-item" data-resource="stock">
+                            <div class="ri-icon">📸</div>Stock
+                        </div>
+                        <div class="resource-item" data-resource="templates">
+                            <div class="ri-icon">📋</div>Templates
+                        </div>
+                        <div class="resource-item" data-resource="tools">
+                            <div class="ri-icon">🛠️</div>Tools
+                        </div>
+                        <div class="resource-item" data-resource="gradients">
+                            <div class="ri-icon">🌈</div>Gradients
+                        </div>
+                        <div class="resource-item" data-resource="mockups">
+                            <div class="ri-icon">🖼️</div>Mockups
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EXPORT -->
+                <div class="panel">
+                    <h2>📤 Export</h2>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                        <button class="btn btn-sm" id="exportCSS">CSS</button>
+                        <button class="btn btn-sm secondary" id="exportJSON">JSON</button>
+                        <button class="btn btn-sm secondary" id="exportDESIGN">DESIGN.md</button>
+                    </div>
+                    <div class="code-block" id="exportBlock" style="margin-top:10px;">/* Export klicken für Vorschau */</div>
+                </div>
+
+            </aside>
+
+            <!-- ═══ MAIN — Preview ═══ -->
+            <main class="main-panel">
+
+                <!-- Live Preview -->
+                <div class="preview-area" id="previewArea">
+                    <div class="noise-overlay" id="noiseOverlay"></div>
+                    <div class="preview-content" id="previewContent">
+                        <div class="preview-header">
+                            <div class="ph-brand" style="color:var(--ds-accent);">DkZ™</div>
+                            <nav class="ph-nav">
+                                <a href="#">Features</a>
+                                <a href="#">Design</a>
+                                <a href="#">Preise</a>
+                                <a href="#">Docs</a>
+                            </nav>
+                        </div>
+                        <div class="preview-hero">
+                            <h2>Design Studio v2</h2>
+                            <p>Verschmolzen aus awesome-design + open-design.<br>
+                            31 Skills · 72 Design Systems · Glassmorphism · Look Like / Be Unique.</p>
+                            <button class="btn" style="font-size:13px;padding:10px 24px;">
+                                🚀 Live-Demo starten
+                            </button>
+                        </div>
+                        <div class="preview-cards">
+                            <div class="preview-card">
+                                <div class="pc-icon">🔷</div>
+                                <div class="pc-title">Look Like</div>
+                                <div class="pc-desc">Brand-Designs von Stripe, Linear, Vercel, GitHub uvm.</div>
+                            </div>
+                            <div class="preview-card">
+                                <div class="pc-icon">✨</div>
+                                <div class="pc-title">Don't Look Like Others</div>
+                                <div class="pc-desc">Einzigartige UI mit KI-generierten Farbpaletten</div>
+                            </div>
+                            <div class="preview-card">
+                                <div class="pc-icon">🪟</div>
+                                <div class="pc-title">Glassmorphism</div>
+                                <div class="pc-desc">6 Varianten: Light, Strong, Colored, Glow, Minimal</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="preview-actions">
+                    <button class="btn" id="applyBtn">🔄 Design anwenden</button>
+                    <button class="btn secondary" id="randomizeBtn">🎲 Zufalls-Design</button>
+                    <button class="btn secondary" id="resetBtn">↩️ Zurücksetzen</button>
+                </div>
+
+                <!-- Activity Log (open-design inspired) -->
+                <div class="panel" style="background:var(--card);">
+                    <h2>📋 Design-Aktivität</h2>
+                    <div id="activityLog" style="font-size:11px;color:var(--muted);font-family:var(--mono);max-height:80px;overflow-y:auto;">
+                        → Design Studio gestartet · v0.01.0_01<br>
+                        → Modus: Look Like (DkZ Eigen)<br>
+                        → Glassmorphism: Standard · Opacity 0.72
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        /* ════════════════════════════════════════════════════════════════
+           DkZ Design Studio — JavaScript
+           Merged from: awesome-design / awesome-design-systems / open-design
+           ════════════════════════════════════════════════════════════════ */
+
+        (function() {
+            'use strict';
+
+            // ─── DOM Ref's ───
+            const $ = id => document.getElementById(id);
+            const qs = (el, sel) => (el || document).querySelector(sel);
+            const qsa = (el, sel) => (el || document).querySelectorAll(sel);
+
+            const previewArea = $('previewArea');
+            const previewContent = $('previewContent');
+            const noiseOverlay = $('noiseOverlay');
+
+            // ─── Design System Datenbank (merged: awesome-design-systems) ───
+            const DESIGN_SYSTEMS = {
+                dkz: {
+                    name: 'DkZ™ Eigen',
+                    icon: '⚡',
+                    accent: '#fa1e4e',
+                    bg: '#0e0e10',
+                    font: "'Inter', sans-serif",
+                    fontDisplay: "'Inter', sans-serif",
+                    radius: 14,
+                    description: 'Dark Cyberclean — DkZ Design System v2'
+                },
+                vercel: {
+                    name: '▲ Vercel / Geist',
+                    icon: '▲',
+                    accent: '#000000',
+                    bg: '#ffffff',
+                    font: "'Inter', sans-serif",
+                    fontDisplay: "'Inter', sans-serif",
+                    radius: 8,
+                    description: 'Minimal, monochrom, high-contrast'
+                },
+                linear: {
+                    name: '⛓️ Linear',
+                    icon: '⛓️',
+                    accent: '#5E6AD2',
+                    bg: '#141418',
+                    font: "'Inter', sans-serif",
+                    fontDisplay: "'Inter', sans-serif",
+                    radius: 8,
+                    description: 'Dark purple accent, clean issue-tracker aesthetic'
+                },
+                stripe: {
+                    name: '💳 Stripe',
+                    icon: '💳',
+                    accent: '#635BFF',
+                    bg: '#0A0A0B',
+                    font: "'Inter', sans-serif",
+                    fontDisplay: "'Inter', sans-serif",
+                    radius: 12,
+                    description: 'Vibrant indigo, payment-focused UI'
+                },
+                github: {
+                    name: '🐙 GitHub Primer',
+                    icon: '🐙',
+                    accent: '#2D9BF0',
+                    bg: '#0D1117',
+                    font: "'Inter', sans-serif",
+                    fontDisplay: "'Inter', sans-serif",
+                    radius: 6,
+                    description: 'Blueprint for code, Primer design system'
+                },
+                airbnb: {
+                    name: '🏠 Airbnb',
+                    icon: '🏠',
+                    accent: '#FF385C',
+                    bg: '#FFFFFF',
+                    font: "'Circular', 'Inter', sans-serif",
+                    fontDisplay: "'Circular', 'Inter', sans-serif",
+                    radius: 12,
+                    description: 'Warm rosa accent, rounded hospitality'
+                },
+                notion: {
+                    name: '📝 Notion',
+                    icon: '📝',
+                    accent: '#000000',
+                    bg: '#FFFFFF',
+                    font: "'Inter', sans-serif",
+                    fontDisplay: "'Inter', sans-serif",
+                    radius: 4,
+                    description: 'Clean no-frills, document-first design'
+                },
+                anthropic: {
+                    name: '🤖 Anthropic',
+                    icon: '🤖',
+                    accent: '#D4A574',
+                    bg: '#1A1A1A',
+                    font: "'Inter', sans-serif",
+                    fontDisplay: "'Inter', sans-serif",
+                    radius: 8,
+                    description: 'Warm terracotta, editorial dark mode'
+                },
+                apple: {
+                    name: '🍎 Apple',
+                    icon: '🍎',
+                    accent: '#007AFF',
+                    bg: '#F5F5F7',
+                    font: "'SF Pro Display', 'Inter', sans-serif",
+                    fontDisplay: "'SF Pro Display', 'Inter', sans-serif",
+                    radius: 12,
+                    description: 'iOS HIG, flat minimal, blue accent'
+                },
+                cursor: {
+                    name: '↗️ Cursor',
+                    icon: '↗️',
+                    accent: '#FF6B35',
+                    bg: '#0A0A0F',
+                    font: "'Inter', sans-serif",
+                    fontDisplay: "'Inter', sans-serif",
+                    radius: 8,
+                    description: 'Warm orange, AI code editor'
+                },
+                supabase: {
+                    name: '▲ Supabase',
+                    icon: '▲',
+                    accent: '#3ECF8E',
+                    bg: '#1A1A2E',
+                    font: "'Inter', sans-serif",
+                    fontDisplay: "'Inter', sans-serif",
+                    radius: 8,
+                    description: 'Dark purple, green accent, open-source DB'
+                },
+                figma: {
+                    name: '🎨 Figma',
+                    icon: '🎨',
+                    accent: '#A259FF',
+                    bg: '#2C2C2C',
+                    font: "'Inter', sans-serif",
+                    fontDisplay: "'Inter', sans-serif",
+                    radius: 10,
+                    description: 'Purple accent, design tool aesthetic'
+                },
+                spotify: {
+                    name: '🎵 Spotify',
+                    icon: '🎵',
+                    accent: '#1DB954',
+                    bg: '#121212',
+                    font: "'Inter', sans-serif",
+                    fontDisplay: "'Circular', 'Inter', sans-serif",
+                    radius: 4,
+                    description: 'Dark mode, green accent, music-first'
+                },
+                microsoft: {
+                    name: '🪟 Microsoft Fluent',
+                    icon: '🪟',
+                    accent: '#0078D4',
+                    bg: '#1B1B1F',
+                    font: "'Segoe UI', 'Inter', sans-serif",
+                    fontDisplay: "'Segoe UI', 'Inter', sans-serif",
+                    radius: 4,
+                    description: 'Fluent 2, office-productivity aesthetic'
+                },
+                ibm: {
+                    name: '🔷 IBM Carbon',
+                    icon: '🔷',
+                    accent: '#4589FF',
+                    bg: '#161616',
+                    font: "'IBM Plex Sans', 'Inter', sans-serif",
+                    fontDisplay: "'IBM Plex Sans', 'Inter', sans-serif",
+                    radius: 0,
+                    description: 'Enterprise-grade, carbon design language'
+                },
+                shopify: {
+                    name: '🛍️ Shopify Polaris',
+                    icon: '🛍️',
+                    accent: '#5C6AC4',
+                    bg: '#F6F6F7',
+                    font: "'Inter', sans-serif",
+                    fontDisplay: "'Inter', sans-serif",
+                    radius: 4,
+                    description: 'E-commerce admin design system'
+                },
+                atlassian: {
+                    name: '📊 Atlassian',
+                    icon: '📊',
+                    accent: '#0052CC',
+                    bg: '#1A1B23',
+                    font: "'Inter', sans-serif",
+                    fontDisplay: "'Inter', sans-serif",
+                    radius: 4,
+                    description: 'Jira/Confluence, blue enterprise'
+                }
+            };
+
+            // ─── State ───
+            const state = {
+                mode: 'look-like',
+                currentSystem: 'dkz',
+                glassVariant: 'default',
+                glassOpacity: 0.72,
+                noiseEnabled: false,
+                accentColor: '#fa1e4e',
+                bgColor: '#0e0e10',
+                radius: 14,
+                font: "'Inter', sans-serif",
+                fontDisplay: "'Inter', sans-serif'
+            };
+
+            // ─── Mode Selector ───
+            qsa(null, '.mode-option').forEach(el => {
+                el.addEventListener('click', function() {
+                    qsa(null, '.mode-option').forEach(o => o.classList.remove('active'));
+                    this.classList.add('active');
+                    const radio = this.querySelector('input[type="radio"]');
+                    radio.checked = true;
+                    state.mode = radio.value;
+                    log(`Modus gewechselt: ${radio.value}`);
+                    updateModeUI();
+                    applyDesign();
+                });
+            });
+
+            function updateModeUI() {
+                const presetPanel = $('presetPanel');
+                if (state.mode === 'be-unique') {
+                    presetPanel.style.opacity = '0.4';
+                    presetPanel.style.pointerEvents = 'none';
+                } else {
+                    presetPanel.style.opacity = '1';
+                    presetPanel.style.pointerEvents = 'auto';
+                }
+            }
+
+            // ─── Design System Select ───
+            const dsSelect = $('designSystemSelect');
+            dsSelect.addEventListener('change', function() {
+                state.currentSystem = this.value;
+                const ds = DESIGN_SYSTEMS[this.value];
+                if (ds) {
+                    updateBrandPreview(ds);
+                    state.accentColor = ds.accent;
+                    state.bgColor = ds.bg;
+                    state.radius = ds.radius;
+                    state.font = ds.font;
+                    state.fontDisplay = ds.fontDisplay;
+                    $('accentColor').value = ds.accent;
+                    $('accentHex').textContent = ds.accent;
+                    $('bgColor').value = ds.bg;
+                    $('bgHex').textContent = ds.bg;
+                    $('radiusSlider').value = ds.radius;
+                    $('radiusVal').textContent = ds.radius + 'px';
+                    log(`Design-System: ${ds.name} (${ds.description})`);
+                }
+                applyDesign();
+            });
+
+            function updateBrandPreview(ds) {
+                const bp = $('brandPreview');
+                bp.querySelector('.bp-dot').style.background = ds.accent;
+                bp.querySelector('.bp-name').textContent = ds.name;
+                bp.querySelector('.bp-hex').textContent = ds.accent;
+            }
+
+            // ─── Glassmorphism Variants ───
+            qsa(null, '.glass-variant').forEach(el => {
+                el.addEventListener('click', function() {
+                    qsa(null, '.glass-variant').forEach(g => g.classList.remove('active'));
+                    this.classList.add('active');
+                    state.glassVariant = this.dataset.glass;
+                    log(`Glassmorphism: ${this.textContent.trim()}`);
+                    applyDesign();
+                });
+            });
+
+            // ─── Glass Opacity ───
+            $('glassOpacity').addEventListener('input', function() {
+                const val = this.value / 100;
+                state.glassOpacity = val;
+                $('glassOpacityVal').textContent = val.toFixed(2);
+                applyDesign();
+            });
+
+            // ─── Noise Toggle ───
+            $('noiseToggle').addEventListener('change', function() {
+                state.noiseEnabled = this.checked;
+                noiseOverlay.classList.toggle('show', this.checked);
+                log(`Noise: ${this.checked ? 'AN' : 'AUS'}`);
+            });
+
+            // ─── Theme Customizer ───
+            $('accentColor').addEventListener('input', function() {
+                state.accentColor = this.value;
+                $('accentHex').textContent = this.value;
+                applyDesign();
+            });
+            $('bgColor').addEventListener('input', function() {
+                state.bgColor = this.value;
+                $('bgHex').textContent = this.value;
+                applyDesign();
+            });
+            $('radiusSlider').addEventListener('input', function() {
+                state.radius = parseInt(this.value);
+                $('radiusVal').textContent = this.value + 'px';
+                applyDesign();
+            });
+            $('fontSelect').addEventListener('change', function() {
+                state.fontDisplay = this.value;
+                applyDesign();
+            });
+
+            // ─── Random Accent ───
+            $('randomAccentBtn').addEventListener('click', function() {
+                const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6,'0');
+                state.accentColor = randomColor;
+                $('accentColor').value = randomColor;
+                $('accentHex').textContent = randomColor;
+                applyDesign();
+                log(`Zufalls-Akzent: ${randomColor}`);
+            });
+
+            // ─── Buttons ───
+            $('applyBtn').addEventListener('click', applyDesign);
+            $('randomizeBtn').addEventListener('click', function() {
+                // Zufalls-Design aus den verfügbaren Systemen
+                const keys = Object.keys(DESIGN_SYSTEMS);
+                const randomKey = keys[Math.floor(Math.random() * keys.length)];
+                dsSelect.value = randomKey;
+                dsSelect.dispatchEvent(new Event('change'));
+                // Zufällige Glass-Variante
+                const variants = ['default','light','strong','colored','border-glow','minimal'];
+                const randomV = variants[Math.floor(Math.random() * variants.length)];
+                state.glassVariant = randomV;
+                qsa(null, '.glass-variant').forEach(g => {
+                    g.classList.toggle('active', g.dataset.glass === randomV);
+                });
+                // Zufällige Opacity
+                const randomOp = (30 + Math.floor(Math.random() * 60)) / 100;
+                state.glassOpacity = randomOp;
+                $('glassOpacity').value = randomOp * 100;
+                $('glassOpacityVal').textContent = randomOp.toFixed(2);
+                applyDesign();
+                log('🎲 Zufalls-Design generiert!');
+                showToast('🎲 Zufalls-Design aktiv!');
+            });
+            $('resetBtn').addEventListener('click', function() {
+                dsSelect.value = 'dkz';
+                dsSelect.dispatchEvent(new Event('change'));
+                state.glassVariant = 'default';
+                qsa(null, '.glass-variant').forEach(g => {
+                    g.classList.toggle('active', g.dataset.glass === 'default');
+                });
+                state.glassOpacity = 0.72;
+                $('glassOpacity').value = 72;
+                $('glassOpacityVal').textContent = '0.72';
+                state.noiseEnabled = false;
+                $('noiseToggle').checked = false;
+                noiseOverlay.classList.remove('show');
+                state.accentColor = '#fa1e4e';
+                state.bgColor = '#0e0e10';
+                state.radius = 14;
+                state.fontDisplay = "'Inter', sans-serif";
+                $('accentColor').value = '#fa1e4e';
+                $('accentHex').textContent = '#fa1e4e';
+                $('bgColor').value = '#0e0e10';
+                $('bgHex').textContent = '#0e0e10';
+                $('radiusSlider').value = 14;
+                $('radiusVal').textContent = '14px';
+                $('fontSelect').value = "'Inter', sans-serif";
+                applyDesign();
+                log('↩️ Auf DkZ-Standard zurückgesetzt');
+                showToast('↩️ Zurückgesetzt');
+            });
+
+            // ─── Export ───
+            $('exportCSS').addEventListener('click', function() {
+                const css = generateCSS();
+                $('exportBlock').textContent = css;
+                log('📤 CSS exportiert');
+            });
+            $('exportJSON').addEventListener('click', function() {
+                const json = JSON.stringify(state, null, 2);
+                $('exportBlock').textContent = json;
+                log('📤 JSON exportiert');
+            });
+            $('exportDESIGN').addEventListener('click', function() {
+                const md = generateDESIGNMD();
+                $('exportBlock').textContent = md;
+                log('📤 DESIGN.md exportiert');
+            });
+
+            function generateCSS() {
+                return `/* DkZ Design Studio — Export */
+:root {
+    --accent: ${state.accentColor};
+    --accent-rgb: ${parseInt(state.accentColor.slice(1,3),16)}, ${parseInt(state.accentColor.slice(3,5),16)}, ${parseInt(state.accentColor.slice(5,7),16)};
+    --bg: ${state.bgColor};
+    --font: ${state.font};
+    --font-display: ${state.fontDisplay};
+    --radius: ${state.radius}px;
+    --glass: rgba(14, 14, 22, ${state.glassOpacity});
+    --glass-blur: ${state.glassVariant === 'strong' ? '32px' : state.glassVariant === 'minimal' ? '8px' : '24px'};
+}
+/* Glass Variant: ${state.glassVariant} */
+/* Mode: ${state.mode} */
+/* Design System: ${DESIGN_SYSTEMS[state.currentSystem]?.name || 'Custom'} */`;
+            }
+
+            function generateDESIGNMD() {
+                return `# DESIGN.md — DkZ Design Studio Export
+
+> Generiert am ${new Date().toISOString().slice(0,10)} · Modus: ${state.mode}
+
+## Farben
+- **Akzent:** ${state.accentColor}
+- **Hintergrund:** ${state.bgColor}
+
+## Typografie
+- **Display:** ${state.fontDisplay}
+- **Body:** Inter, sans-serif
+
+## Layout
+- **Border Radius:** ${state.radius}px
+- **Glassmorphism:** ${state.glassVariant} (Opacity: ${state.glassOpacity})
+
+## Design System
+- **Basiert auf:** ${DESIGN_SYSTEMS[state.currentSystem]?.name || 'Custom'}
+
+## Anti-Design-System (generiert)
+${state.mode === 'be-unique' ? '- ✨ Einzigartiges Design — keine Standard-Vorlage' : '-'}
+`;
+            }
+
+            // ─── Apply Design ───
+            function applyDesign() {
+                const accent = state.accentColor;
+                const bg = state.bgColor;
+                const r = state.radius;
+                const fontD = state.fontDisplay;
+
+                // CSS-Variablen dynamisch setzen
+                const root = document.documentElement;
+                root.style.setProperty('--ds-accent', accent);
+                root.style.setProperty('--ds-accent-rgb', 
+                    parseInt(accent.slice(1,3),16) + ',' + 
+                    parseInt(accent.slice(3,5),16) + ',' + 
+                    parseInt(accent.slice(5,7),16));
+                root.style.setProperty('--ds-bg', bg);
+                root.style.setProperty('--ds-radius', r + 'px');
+                root.style.setProperty('--ds-font-display', fontD);
+                root.style.setProperty('--ds-glass-opacity', state.glassOpacity);
+                root.style.setProperty('--ds-glass-blur', 
+                    state.glassVariant === 'strong' ? '32px' : 
+                    state.glassVariant === 'minimal' ? '8px' : '24px');
+
+                // Preview-Bereich
+                previewArea.style.background = bg;
+                previewContent.style.background = bg;
+
+                // Glass Variants
+                previewArea.className = 'preview-area';
+                if (state.glassVariant !== 'default') {
+                    previewArea.classList.add('glass-' + state.glassVariant);
+                }
+
+                // Brand im Preview-Header aktualisieren
+                const brandEl = previewContent.querySelector('.ph-brand');
+                const ds = DESIGN_SYSTEMS[state.currentSystem];
+                if (ds && state.mode !== 'be-unique') {
+                    brandEl.textContent = ds.icon + ' ' + ds.name;
+                } else if (state.mode === 'be-unique') {
+                    brandEl.textContent = '✨ Eigenes Design';
+                }
+
+                // Akzentfarbe auf Buttons im Preview
+                previewContent.querySelectorAll('.btn').forEach(btn => {
+                    btn.style.background = accent;
+                });
+
+                // Startseite Titel anpassen bei Random
+                const heroTitle = previewContent.querySelector('.preview-hero h2');
+                if (state.mode === 'be-unique') {
+                    heroTitle.textContent = '✨ Einzigartiges Design';
+                    heroTitle.style.background = `linear-gradient(135deg, ${accent}, #a855f7)`;
+                    heroTitle.style.webkitBackgroundClip = 'text';
+                    heroTitle.style.webkitTextFillColor = 'transparent';
+                } else {
+                    heroTitle.textContent = 'Design Studio v2';
+                    heroTitle.style.background = `linear-gradient(135deg, ${accent}, #55acee)`;
+                    heroTitle.style.webkitBackgroundClip = 'text';
+                    heroTitle.style.webkitTextFillColor = 'transparent';
+                }
+            }
+
+            // ─── Resource Browser (awesome-design Integration) ───
+            const RESOURCES = {
+                colors: {
+                    name: 'Farben',
+                    items: [
+                        { name: 'Coolors', url: 'https://coolors.co', desc: 'Paletten-Generator' },
+                        { name: 'Color Hunt', url: 'https://colorhunt.co', desc: 'Kuratierte Paletten' },
+                        { name: 'uiGradients', url: 'https://uigradients.com', desc: 'Verlaufs-Generator' },
+                        { name: 'Brand Colors', url: 'https://brandcolors.net', desc: 'Marken-Farbcodes' }
+                    ]
+                },
+                icons: {
+                    name: 'Icons',
+                    items: [
+                        { name: 'Font Awesome', url: 'https://fontawesome.com', desc: 'Web-Icons' },
+                        { name: 'Feather Icons', url: 'https://feathericons.com', desc: 'Open-Source SVG' },
+                        { name: 'Simple Icons', url: 'https://simpleicons.org', desc: 'Brand-SVGs' },
+                        { name: 'Lucide', url: 'https://lucide.dev', desc: 'Open-Source Icons' }
+                    ]
+                },
+                fonts: {
+                    name: 'Fonts',
+                    items: [
+                        { name: 'Google Fonts', url: 'https://fonts.google.com', desc: 'Free Fonts' },
+                        { name: 'Font Squirrel', url: 'https://fontsquirrel.com', desc: 'Commerical-Free' },
+                        { name: 'Typewolf', url: 'https://typewolf.com', desc: 'Font-Inspiration' },
+                        { name: 'Brick', url: 'https://brick.im', desc: 'Open-Source Type' }
+                    ]
+                },
+                stock: {
+                    name: 'Stock',
+                    items: [
+                        { name: 'Unsplash', url: 'https://unsplash.com', desc: 'Free Photos' },
+                        { name: 'Pexels', url: 'https://pexels.com', desc: 'Free Stock' },
+                        { name: 'Pixabay', url: 'https://pixabay.com', desc: 'Free Images' },
+                        { name: 'Lorem Picsum', url: 'https://picsum.photos', desc: 'Placeholder' }
+                    ]
+                },
+                templates: {
+                    name: 'Templates',
+                    items: [
+                        { name: 'Open Design Skills', url: 'https://github.com/nexu-io/open-design', desc: '31 Skills' },
+                        { name: 'Awesome Design', url: 'https://github.com/gztchan/awesome-design', desc: 'Design-Ressourcen' },
+                        { name: 'Design Systems', url: 'https://github.com/alexpate/awesome-design-systems', desc: 'Design-Systeme' },
+                        { name: 'DkZ Studio Export', url: '#', desc: 'Eigenes Design' }
+                    ]
+                },
+                tools: {
+                    name: 'Tools',
+                    items: [
+                        { name: 'Figma', url: 'https://figma.com', desc: 'UI Design Tool' },
+                        { name: 'Stitch', url: 'https://stitch.withgoogle.com', desc: 'AI Design' },
+                        { name: 'Open Design', url: 'https://open-design.ai', desc: 'Local-First Design' },
+                        { name: 'HyperUI', url: 'https://hyperui.dev', desc: 'Tailwind-Komponenten' }
+                    ]
+                },
+                gradients: {
+                    name: 'Gradients',
+                    items: [
+                        { name: 'WebGradients', url: 'https://webgradients.com', desc: '180 Verläufe' },
+                        { name: 'Gradienta', url: 'https://gradienta.io', desc: 'Multi-Color' },
+                        { name: 'CSS Gradient', url: 'https://cssgradient.io', desc: 'Generator' },
+                        { name: 'Mesh Gradient', url: 'https://meshgradient.com', desc: 'Mesh-Tool' }
+                    ]
+                },
+                mockups: {
+                    name: 'Mockups',
+                    items: [
+                        { name: 'Mockup World', url: 'https://mockupworld.co', desc: 'PSD Mockups' },
+                        { name: 'Placeit', url: 'https://placeit.net', desc: 'Device Mockups' },
+                        { name: 'Screely', url: 'https://screely.com', desc: 'Browser Frames' },
+                        { name: 'Device Shots', url: 'https://deviceshots.com', desc: 'Device Frames' }
+                    ]
+                }
+            };
+
+            qsa(null, '.resource-item').forEach(el => {
+                el.addEventListener('click', function() {
+                    const key = this.dataset.resource;
+                    const res = RESOURCES[key];
+                    if (!res) return;
+                    let html = `📦 **${res.name}** (aus awesome-design)\n\n`;
+                    res.items.forEach(item => {
+                        html += `• [${item.name}](${item.url}) — ${item.desc}\n`;
+                    });
+                    $('exportBlock').textContent = html;
+                    log(`Ressource geladen: ${res.name}`);
+                    showToast(`📦 ${res.name} geladen`);
+                });
+            });
+
+            // ─── Activity Log ───
+            function log(msg) {
+                const logEl = $('activityLog');
+                const time = new Date().toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+                logEl.innerHTML += `<br>→ ${time} · ${msg}`;
+                logEl.scrollTop = logEl.scrollHeight;
+            }
+
+            // ─── Toast ───
+            function showToast(msg) {
+                const t = $('toast');
+                t.textContent = msg;
+                t.classList.add('show');
+                setTimeout(() => t.classList.remove('show'), 2000);
+            }
+
+            // ─── Initialisierung ───
+            applyDesign();
+            updateModeUI();
+            log('Design Studio bereit · 16 Design-Systeme · 6 Glass-Varianten');
+            log('Look Like / Be Unique / Hybrid Modi');
+
+        })();
+    </script>
+</body>
+</html>

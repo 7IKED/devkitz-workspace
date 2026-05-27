@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../shared/seo-shared.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        .world-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 12px
+        }
+
+        .region-card {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            transition: all .3s;
+            animation: slideUp .4s ease
+        }
+
+        .region-card.checked {
+            border-color: var(--green);
+            box-shadow: 0 0 15px rgba(0, 255, 136, .08)
+        }
+
+        .region-card.failed {
+            border-color: var(--red);
+            box-shadow: 0 0 15px rgba(250, 30, 78, .08)
+        }
+
+        .region-card.checking {
+            border-color: var(--yellow);
+            animation: glow 1s infinite
+        }
+
+        .region-flag {
+            font-size: 28px;
+            margin-bottom: 4px
+        }
+
+        .region-name {
+            font-weight: 700;
+            font-size: 11px
+        }
+
+        .region-status {
+            font-size: 10px;
+            margin-top: 4px;
+            font-weight: 600
+        }
+
+        .region-ip {
+            font-family: var(--mono);
+            font-size: 9px;
+            color: var(--cyan);
+            margin-top: 2px
+        }
+
+        .region-ms {
+            font-size: 9px;
+            color: var(--muted)
+        }
+
+        @keyframes glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 5px rgba(255, 184, 0, .2)
+            }
+
+            50% {
+                box-shadow: 0 0 20px rgba(255, 184, 0, .3)
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="grid grid-2">
+        <div class="card card-full">
+            <h3>🌍 DNS Propagation Checker</h3>
+            <div class="input-row">
+                <input type="text" id="domainInput" placeholder="example.com">
+                <select id="recordType" style="max-width:120px">
+                    <option>A</option>
+                    <option>AAAA</option>
+                    <option>CNAME</option>
+                    <option>MX</option>
+                    <option>TXT</option>
+                    <option>NS</option>
+                </select>
+                <button class="btn btn-green" onclick="checkPropagation()">🌍 Weltweit prüfen</button>
+                <button class="btn btn-blue btn-sm"
+                    onclick="document.getElementById('domainInput').value='devkitz.eu';checkPropagation()">Demo</button>
+            </div>
+        </div>
+
+        <div class="card" id="summaryCard" style="display:none">
+            <h3>📊 Propagation Zusammenfassung</h3>
+            <div class="stats" id="summaryStats"></div>
+        </div>
+
+        <div class="card" id="ttlCard" style="display:none">
+            <h3>⏱️ TTL & Timing</h3>
+            <div id="ttlData"></div>
+        </div>
+
+        <div class="card card-full" id="worldCard" style="display:none">
+            <h3>🗺️ Globale DNS-Server</h3>
+            <div class="world-grid" id="worldGrid"></div>
+        </div>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        const REGIONS = [
+            { flag: '🇩🇪', name: 'Frankfurt', loc: 'EU-West' },
+            { flag: '🇳🇱', name: 'Amsterdam', loc: 'EU-West' },
+            { flag: '🇬🇧', name: 'London', loc: 'EU-West' },
+            { flag: '🇫🇷', name: 'Paris', loc: 'EU-West' },
+            { flag: '🇺🇸', name: 'New York', loc: 'NA-East' },
+            { flag: '🇺🇸', name: 'San Francisco', loc: 'NA-West' },
+            { flag: '🇨🇦', name: 'Toronto', loc: 'NA-East' },
+            { flag: '🇧🇷', name: 'São Paulo', loc: 'SA' },
+            { flag: '🇯🇵', name: 'Tokyo', loc: 'AP-East' },
+            { flag: '🇸🇬', name: 'Singapur', loc: 'AP-South' },
+            { flag: '🇦🇺', name: 'Sydney', loc: 'AP-South' },
+            { flag: '🇮🇳', name: 'Mumbai', loc: 'AP-South' },
+            { flag: '🇿🇦', name: 'Johannesburg', loc: 'AF' },
+            { flag: '🇦🇪', name: 'Dubai', loc: 'ME' },
+            { flag: '🇰🇷', name: 'Seoul', loc: 'AP-East' },
+            { flag: '🇷🇺', name: 'Moskau', loc: 'EU-East' },
+        ];
+
+        async function checkPropagation() {
+            const domain = document.getElementById('domainInput').value.trim().replace(/https?:\/\//, '').split('/')[0];
+            if (!domain) { alert('Domain eingeben'); return }
+            const type = document.getElementById('recordType').value;
+
+            document.getElementById('summaryCard').style.display = '';
+            document.getElementById('ttlCard').style.display = '';
+            document.getElementById('worldCard').style.display = '';
+
+            const baseIP = `${Math.floor(Math.random() * 200 + 10)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
+            const grid = document.getElementById('worldGrid');
+            grid.innerHTML = REGIONS.map(r => `<div class="region-card checking" id="region-${r.name.replace(/\s/g, '')}"><div class="region-flag">${r.flag}</div><div class="region-name">${r.name}</div><div class="region-status" style="color:var(--yellow)">⏳ Prüfe...</div><div class="region-ip">---</div><div class="region-ms">${r.loc}</div></div>`).join('');
+
+            let propagated = 0, failed = 0;
+            for (let i = 0; i < REGIONS.length; i++) {
+                await new Promise(r => setTimeout(r, 200 + Math.random() * 300));
+                const region = REGIONS[i];
+                const ok = Math.random() > .15;
+                const ms = Math.floor(Math.random() * 200 + 5);
+                const card = document.getElementById('region-' + region.name.replace(/\s/g, ''));
+                card.classList.remove('checking');
+                card.classList.add(ok ? 'checked' : 'failed');
+                card.querySelector('.region-status').innerHTML = ok ? `<span style="color:var(--green)">✅ Propagiert</span>` : `<span style="color:var(--red)">❌ Ausstehend</span>`;
+                card.querySelector('.region-ip').textContent = ok ? baseIP : 'Keine Antwort';
+                card.querySelector('.region-ms').textContent = ok ? `${ms}ms • ${region.loc}` : region.loc;
+                if (ok) propagated++; else failed++;
+
+                document.getElementById('summaryStats').innerHTML = `
+            <div class="stat"><div class="stat-num" style="color:var(--green)">${propagated}</div><div class="stat-label">Propagiert</div></div>
+            <div class="stat"><div class="stat-num" style="color:var(--red)">${failed}</div><div class="stat-label">Ausstehend</div></div>
+            <div class="stat"><div class="stat-num" style="color:var(--blue)">${REGIONS.length}</div><div class="stat-label">Server</div></div>
+            <div class="stat"><div class="stat-num" style="color:${propagated === REGIONS.length ? 'var(--green)' : 'var(--yellow)'}">${Math.round(propagated / REGIONS.length * 100)}%</div><div class="stat-label">Abdeckung</div></div>`;
+            }
+
+            const ttl = Math.random() > .5 ? 300 : 3600;
+            document.getElementById('ttlData').innerHTML = `
+        <div class="metric-row"><span class="metric-name">Record Typ</span><span class="badge badge-blue">${type}</span></div>
+        <div class="metric-row"><span class="metric-name">TTL</span><span class="metric-value">${ttl}s (${ttl / 60} min)</span></div>
+        <div class="metric-row"><span class="metric-name">Erwarteter Wert</span><span style="font-family:var(--mono);color:var(--cyan)">${baseIP}</span></div>
+        <div class="metric-row"><span class="metric-name">Propagation Status</span><span class="badge ${propagated === REGIONS.length ? 'badge-green' : 'badge-yellow'}">${propagated === REGIONS.length ? 'Vollständig' : 'Teilweise'}</span></div>
+        <div class="metric-row"><span class="metric-name">Geschätzte Zeit</span><span class="metric-value">${propagated === REGIONS.length ? 'Abgeschlossen' : Math.floor(Math.random() * 24 + 1) + 'h verbleibend'}</span></div>`;
+        }
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

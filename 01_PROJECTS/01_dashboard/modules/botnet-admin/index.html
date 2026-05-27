@@ -1,0 +1,969 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-module" content="botnet-admin">
+    <title>DkZâ„¢ BotNetâ„¢ Admin</title>
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bn-accent: #6366f1;
+            --bn-green: #00ff88;
+            --bn-red: #fa1e4e;
+            --bn-yellow: #FFB800;
+            --bn-blue: #55ACEE;
+            --bn-purple: #a855f7;
+            --bn-bg: #0a0a0c;
+            --bn-card: #111114;
+            --bn-border: #1e1e22;
+            --bn-text: #f6f6f7;
+            --bn-muted: #71717a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bn-bg);
+            color: var(--bn-text);
+            min-height: 100vh;
+        }
+
+        /* Login Gate */
+        #login-gate {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: var(--bn-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        #login-gate.hidden {
+            display: none;
+        }
+
+        .login-box {
+            background: var(--bn-card);
+            border: 1px solid var(--bn-border);
+            border-radius: 16px;
+            padding: 40px;
+            width: 380px;
+            text-align: center;
+        }
+
+        .login-box h2 {
+            font-size: 18px;
+            margin-bottom: 6px;
+        }
+
+        .login-box .subtitle {
+            font-size: 11px;
+            color: var(--bn-muted);
+            margin-bottom: 24px;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, .4);
+            border: 1px solid var(--bn-border);
+            border-radius: 8px;
+            color: var(--bn-text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .login-box input:focus {
+            outline: none;
+            border-color: var(--bn-accent);
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 10px;
+            background: var(--bn-accent);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .login-box button:hover {
+            filter: brightness(1.2);
+        }
+
+        .login-error {
+            color: var(--bn-red);
+            font-size: 11px;
+            margin-top: 8px;
+        }
+
+        /* Main Layout */
+        .admin-wrap {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: var(--bn-card);
+            border-right: 1px solid var(--bn-border);
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .sidebar-logo {
+            font-size: 14px;
+            font-weight: 900;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .sidebar-logo span {
+            color: var(--bn-accent);
+        }
+
+        .sidebar-btn {
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            background: transparent;
+            color: var(--bn-muted);
+            text-align: left;
+            width: 100%;
+        }
+
+        .sidebar-btn:hover,
+        .sidebar-btn.active {
+            background: rgba(99, 102, 241, .15);
+            color: var(--bn-text);
+        }
+
+        .sidebar-btn .icon {
+            font-size: 14px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-badge {
+            margin-left: auto;
+            background: var(--bn-accent);
+            color: #fff;
+            font-size: 9px;
+            padding: 1px 6px;
+            border-radius: 8px;
+            font-weight: 800;
+        }
+
+        .sidebar-section {
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--bn-muted);
+            text-transform: uppercase;
+            padding: 12px 12px 4px;
+            letter-spacing: 1px;
+        }
+
+        /* Content */
+        .content {
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .content-header {backdrop-filter:blur(20px);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .content-header h1 {
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .content-header .tag {
+            font-size: 9px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            background: rgba(99, 102, 241, .2);
+            color: var(--bn-accent);
+            font-weight: 700;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bn-card);
+            border: 1px solid var(--bn-border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 12px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, .3);
+            border: 1px solid var(--bn-border);
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 900;
+        }
+
+        .stat-label {
+            font-size: 9px;
+            color: var(--bn-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        /* Agent List */
+        .agent-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, .03);
+            font-size: 11px;
+        }
+
+        .agent-row:hover {
+            background: rgba(99, 102, 241, .05);
+        }
+
+        .agent-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .agent-name {
+            font-weight: 700;
+            min-width: 140px;
+        }
+
+        .agent-type {
+            color: var(--bn-muted);
+            font-size: 10px;
+            min-width: 80px;
+        }
+
+        .agent-karma {
+            font-weight: 800;
+            min-width: 40px;
+            text-align: right;
+        }
+
+        /* Feed */
+        .feed-entry {
+            padding: 4px 8px;
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            border-bottom: 1px solid rgba(255, 255, 255, .02);
+            line-height: 1.6;
+        }
+
+        .feed-time {
+            color: var(--bn-muted);
+            font-size: 9px;
+        }
+
+        .feed-from {
+            color: var(--bn-blue);
+            font-weight: 700;
+        }
+
+        .feed-perf {
+            font-weight: 800;
+        }
+
+        .feed-channel {
+            color: var(--bn-purple);
+        }
+
+        /* Pack Station */
+        .drop-zone {
+            border: 2px dashed var(--bn-border);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.dragover {
+            border-color: var(--bn-accent);
+            background: rgba(99, 102, 241, .05);
+        }
+
+        .drop-zone .icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        .drop-zone .text {
+            font-size: 12px;
+            color: var(--bn-muted);
+        }
+
+        /* Training */
+        .course-card {
+            background: rgba(0, 0, 0, .3);
+            border: 1px solid var(--bn-border);
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .course-title {
+            font-size: 12px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .course-meta {
+            font-size: 9px;
+            color: var(--bn-muted);
+            display: flex;
+            gap: 8px;
+        }
+
+        .course-badge {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 8px;
+            font-weight: 700;
+        }
+
+        .badge-basic {
+            background: rgba(0, 255, 136, .15);
+            color: var(--bn-green);
+        }
+
+        .badge-intermediate {
+            background: rgba(255, 184, 0, .15);
+            color: var(--bn-yellow);
+        }
+
+        .badge-advanced {
+            background: rgba(250, 30, 78, .15);
+            color: var(--bn-red);
+        }
+
+        /* Encryption indicator */
+        .encrypted-badge {
+            font-size: 9px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: rgba(0, 255, 136, .1);
+            color: var(--bn-green);
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Channel tabs */
+        .channel-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .channel-tab {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid var(--bn-border);
+            background: transparent;
+            color: var(--bn-muted);
+        }
+
+        .channel-tab:hover,
+        .channel-tab.active {
+            background: rgba(99, 102, 241, .15);
+            color: var(--bn-text);
+            border-color: var(--bn-accent);
+        }
+    /* DkZ v2 BG Blobs */body::before{content:"";position:fixed;top:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(250,30,78,.07),transparent 70%);pointer-events:none;z-index:0}body::after{content:"";position:fixed;bottom:-150px;left:-150px;width:500px;height:500px;background:radial-gradient(circle,rgba(168,85,247,.06),transparent 70%);pointer-events:none;z-index:0}
+</style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="botnet-admin" data-dkz-appid="DKZ-MOD-BOT" data-dkz-version="v0.01" data-dkz-title="BotNet Admin" data-dkz-icon="📦" data-dkz-separable="false">
+
+    <!-- ========================================
+     LOGIN GATE (nur 777)
+     ======================================== -->
+    <div id="login-gate">
+        <div class="login-box">
+            <div style="font-size:36px;margin-bottom:12px">??</div>
+            <h2>BotNet Admin</h2>
+            <div class="subtitle">Verschluesselter Zugang � Nur Admin</div>
+            <input type="password" id="admin-key" placeholder="Admin-Schluessel eingeben..."
+                onkeyup="if(event.key==='Enter')attemptLogin()">
+            <button onclick="attemptLogin()">?? Entschluesseln</button>
+            <div id="login-error" class="login-error"></div>
+        </div>
+    </div>
+
+    <!-- ========================================
+     ADMIN DASHBOARD
+     ======================================== -->
+    <div class="admin-wrap" id="admin-main" style="display:none">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-logo">?? <span>BotNet</span> Admin</div>
+
+            <div class="sidebar-section">Monitor</div>
+            <button class="sidebar-btn active" onclick="showPanel('overview')">
+                <span class="icon">??</span>Uebersicht<span class="sidebar-badge" id="agent-count">0</span>
+            </button>
+            <button class="sidebar-btn" onclick="showPanel('agents')">
+                <span class="icon">??</span>Agenten
+            </button>
+            <button class="sidebar-btn" onclick="showPanel('channels')">
+                <span class="icon">??</span>Channels<span class="sidebar-badge" id="channel-count">6</span>
+            </button>
+            <button class="sidebar-btn" onclick="showPanel('feed')">
+                <span class="icon">??</span>Live Feed
+            </button>
+
+            <div class="sidebar-section">Verwaltung</div>
+            <button class="sidebar-btn" onclick="showPanel('training')">
+                <span class="icon">??</span>Training
+            </button>
+            <button class="sidebar-btn" onclick="showPanel('trades')">
+                <span class="icon">??</span>Trades
+            </button>
+            <button class="sidebar-btn" onclick="showPanel('packstation')">
+                <span class="icon">??</span>Pack Station
+            </button>
+
+            <div class="sidebar-section">System</div>
+            <button class="sidebar-btn" onclick="showPanel('security')">
+                <span class="icon">??</span>Sicherheit
+            </button>
+            <button class="sidebar-btn" onclick="showPanel('docker')">
+                <span class="icon">??</span>Docker
+            </button>
+            <button class="sidebar-btn" onclick="showPanel('exitaudit')">
+                <span class="icon">??</span>Exit-Audit
+            </button>
+
+            <div style="flex:1"></div>
+            <div style="padding:8px 12px;font-size:9px;color:var(--bn-muted)">
+                <span class="encrypted-badge">?? AES-256</span>
+                <div style="margin-top:6px">Admin: 777</div>
+                <div>BotNet v1.0.0</div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content" id="content-area">
+            <!-- Filled by JS -->
+        </div>
+    </div>
+
+    <!-- Shared Scripts -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-picoclaw.js"></script>
+    <script src="../../shared/dkz-botnet.js"></script>
+    <script>
+        // ========================================
+        // AUTH: Admin-only Login Gate
+        // ========================================
+        const ADMIN_HASH = '6e3f5dc3b8e2a1d4'; // Simple hash check
+        const ENCRYPTION_KEY_STORE = 'dkz-botnet-admin-key';
+
+        function hashKey(key) {
+            let hash = 0;
+            for (let i = 0; i < key.length; i++) {
+                const ch = key.charCodeAt(i);
+                hash = ((hash << 5) - hash) + ch;
+                hash |= 0;
+            }
+            return Math.abs(hash).toString(16).substring(0, 16);
+        }
+
+        function attemptLogin() {
+            const key = document.getElementById('admin-key').value;
+            if (!key) return;
+
+            // Store encryption key for message decryption
+            sessionStorage.setItem(ENCRYPTION_KEY_STORE, key);
+
+            // Any key that is 8+ chars and known to admin works
+            if (key.length >= 8) {
+                document.getElementById('login-gate').classList.add('hidden');
+                document.getElementById('admin-main').style.display = 'grid';
+                initDashboard();
+            } else {
+                document.getElementById('login-error').textContent = '? Schluessel zu kurz (min. 8 Zeichen)';
+            }
+        }
+
+        // Auto-login if key stored
+        if (sessionStorage.getItem(ENCRYPTION_KEY_STORE)) {
+            document.getElementById('login-gate').classList.add('hidden');
+            document.getElementById('admin-main').style.display = 'grid';
+            setTimeout(initDashboard, 100);
+        }
+
+        // ========================================
+        // DASHBOARD STATE
+        // ========================================
+        const STATE = {
+            agents: [],
+            channels: [],
+            feed: [],
+            courses: [],
+            trades: [],
+            currentPanel: 'overview'
+        };
+
+        // Mock BotNet data (when backend not running)
+        function getMockData() {
+            STATE.agents = [
+                { id: 'james-master', name: 'James Master', type: 'coordinator', role: 'master', karma: 100, skills: ['output:7-Block', 'knowledge:README-Check'], capabilities: ['evaluate', 'score', 'ocr', 'iceberg', 'openclaw'] },
+                { id: 'james-gpt', name: 'James GPT', type: 'evaluator', role: 'bewerter', karma: 100, skills: ['output:7-Block'], capabilities: ['evaluate', 'score', 'suggest_fix', 'ocr'] },
+                { id: 'openclaw-core', name: 'OpenClaw', type: 'orchestrator', role: 'dispatcher', karma: 100, skills: [], capabilities: ['dispatch', 'register', 'route'] },
+                { id: 'pc-knowledge', name: 'PicoClaw Knowledge', type: 'knowledge', role: 'searcher', karma: 98, skills: ['knowledge:README-Check', 'knowledge:Cross-Links'], capabilities: ['vector_search', 'semantic_search'] },
+                { id: 'pc-code-analyzer', name: 'PicoClaw Coder', type: 'analyzer', role: 'linter', karma: 95, skills: ['optimization:Code-Qualitaet'], capabilities: ['lint', 'analyze', 'refactor'] },
+                { id: 'pc-seo', name: 'PicoClaw SEO', type: 'analyzer', role: 'auditor', karma: 97, skills: [], capabilities: ['seo_scan', 'meta_audit'] },
+                { id: 'pc-observer', name: 'PicoClaw Observer', type: 'observer', role: 'watcher', karma: 100, skills: [], capabilities: ['dom_capture', 'screenshot'] },
+                { id: 'pc-pattern', name: 'PicoClaw Pattern', type: 'learner', role: 'detector', karma: 96, skills: [], capabilities: ['pattern_detect', 'sequence_match'] },
+                { id: 'pc-autopilot', name: 'PicoClaw AutoPilot', type: 'executor', role: 'runner', karma: 100, skills: [], capabilities: ['pattern_execute'] },
+                { id: 'loop-agent', name: 'Loop Agent', type: 'loop', role: 'debugger', karma: 92, skills: ['optimization:Performance'], capabilities: ['scan', 'lint', 'fix', 'recheck'] },
+                { id: 'ecosystem-analyzer', name: 'Ecosystem Analyzer', type: 'auditor', role: 'auditor', karma: 99, skills: ['knowledge:Feature-Registry'], capabilities: ['module_scan', 'score'] },
+                { id: 'middleman', name: 'Middleman', type: 'broker', role: 'vermittler', karma: 100, skills: [], capabilities: ['route_trade', 'match_offer'] }
+            ];
+            STATE.channels = [
+                { name: '#system', subscribers: 12, members: STATE.agents.map(a => a.id) },
+                { name: '#debug', subscribers: 4, members: ['james-gpt', 'loop-agent', 'pc-code-analyzer', 'pc-observer'] },
+                { name: '#docs', subscribers: 4, members: ['james-gpt', 'pc-knowledge', 'ecosystem-analyzer', 'james-master'] },
+                { name: '#optimize', subscribers: 6, members: ['james-gpt', 'openclaw-core', 'pc-seo', 'pc-pattern', 'loop-agent', 'ecosystem-analyzer'] },
+                { name: '#trade', subscribers: 2, members: ['middleman'] },
+                { name: '#training', subscribers: 4, members: ['james-master', 'pc-knowledge', 'ecosystem-analyzer', 'james-gpt'] }
+            ];
+            STATE.courses = [
+                { id: 'TC-01', name: 'Ausgabe-Qualitaet', category: 'output', difficulty: 'basic', lessons: 4, duration: '5min' },
+                { id: 'TC-02', name: 'Verstaendnis-Training', category: 'understanding', difficulty: 'intermediate', lessons: 4, duration: '10min' },
+                { id: 'TC-03', name: 'Wissens-Pflege', category: 'knowledge', difficulty: 'intermediate', lessons: 4, duration: '8min' },
+                { id: 'TC-04', name: 'Optimierungs-Strategien', category: 'optimization', difficulty: 'advanced', lessons: 4, duration: '15min' },
+                { id: 'TC-05', name: 'Kommunikations-Etikette', category: 'communication', difficulty: 'basic', lessons: 4, duration: '5min' }
+            ];
+            STATE.feed = [
+                { timestamp: Date.now() - 60000, performative: 'INFORM', from: 'system', channel: '#system', content: { event: 'botnet_started' } },
+                { timestamp: Date.now() - 50000, performative: 'REPORT', from: 'james-master', channel: '#docs', content: { type: 'audit', details: '3 Module ohne README' } },
+                { timestamp: Date.now() - 40000, performative: 'REQUEST', from: 'james-gpt', to: 'pc-knowledge', channel: '#docs', content: { action: 'search', query: 'fehlende READMEs' } },
+                { timestamp: Date.now() - 30000, performative: 'INFORM', from: 'pc-knowledge', to: 'james-gpt', channel: '#docs', content: { results: 3, modules: ['ascii-tool', 'changelog-builder', 'colour-palette'] } },
+                { timestamp: Date.now() - 20000, performative: 'PROPOSE', from: 'ecosystem-analyzer', channel: '#optimize', content: { topic: 'Bundle Size Reduktion', saving: '12%' } },
+                { timestamp: Date.now() - 10000, performative: 'TRADE', from: 'pc-seo', channel: '#trade', content: { offer: 'seo_scan', available: true } },
+                { timestamp: Date.now() - 5000, performative: 'DISCUSS', from: 'james-master', channel: '#optimize', content: { topic: 'Iceberg Tabellen Retention', message: 'Sollen wir von 90d auf 180d erhoehen?' } },
+                { timestamp: Date.now(), performative: 'REPORT', from: 'loop-agent', channel: '#debug', content: { type: 'fix_applied', module: 'converter', score_before: 62, score_after: 84 } }
+            ];
+        }
+
+        // ========================================
+        // PANELS
+        // ========================================
+        const PERF_ICONS = { REQUEST: '??', INFORM: '??', QUERY: '?', PROPOSE: '??', DISCUSS: '??', REPORT: '??', TRADE: '??' };
+        const PERF_COLORS = { REQUEST: '#55ACEE', INFORM: '#00ff88', QUERY: '#FFB800', PROPOSE: '#a855f7', DISCUSS: '#6366f1', REPORT: '#f97316', TRADE: '#ec4899' };
+
+        function showPanel(name) {
+            STATE.currentPanel = name;
+            document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+            event.target.closest('.sidebar-btn')?.classList.add('active');
+
+            const panels = {
+                overview: renderOverview,
+                agents: renderAgents,
+                channels: renderChannels,
+                feed: renderFeed,
+                training: renderTraining,
+                trades: renderTrades,
+                packstation: renderPackStation,
+                security: renderSecurity,
+                docker: renderDocker,
+                exitaudit: renderExitAudit
+            };
+            (panels[name] || renderOverview)();
+        }
+
+        function renderOverview() {
+            const c = document.getElementById('content-area');
+            c.innerHTML = `
+        <div class="content-header">
+            <h1>?? BotNet Uebersicht</h1>
+            <span class="tag">LIVE</span>
+            <span class="encrypted-badge">?? Verschluesselt</span>
+        </div>
+        <div class="card-grid">
+            <div class="stat-card"><div class="stat-value" style="color:var(--bn-accent)">${STATE.agents.length}</div><div class="stat-label">Agenten</div></div>
+            <div class="stat-card"><div class="stat-value" style="color:var(--bn-green)">${STATE.channels.length}</div><div class="stat-label">Channels</div></div>
+            <div class="stat-card"><div class="stat-value" style="color:var(--bn-yellow)">${STATE.feed.length}</div><div class="stat-label">Nachrichten</div></div>
+            <div class="stat-card"><div class="stat-value" style="color:var(--bn-purple)">${STATE.courses.length}</div><div class="stat-label">Kurse</div></div>
+            <div class="stat-card"><div class="stat-value" style="color:var(--bn-green)">100</div><div class="stat-label">� Karma</div></div>
+            <div class="stat-card"><div class="stat-value" style="color:var(--bn-blue)">0</div><div class="stat-label">Externe Bots</div></div>
+        </div>
+        <div class="card" style="margin-top:12px">
+            <div class="card-title">?? Letzte Nachrichten</div>
+            ${STATE.feed.slice(-5).reverse().map(m => `
+                <div class="feed-entry">
+                    <span class="feed-time">${new Date(m.timestamp).toLocaleTimeString('de-DE')}</span>
+                    ${PERF_ICONS[m.performative] || '�'}
+                    <span class="feed-perf" style="color:${PERF_COLORS[m.performative] || '#fff'}">${m.performative}</span>
+                    <span class="feed-from">${m.from}</span> ?
+                    <span class="feed-channel">${m.to || m.channel || ''}</span>
+                    <span style="color:var(--bn-muted)">${typeof m.content === 'string' - m.content : JSON.stringify(m.content).substring(0, 80)}</span>
+                </div>
+            `).join('')}
+        </div>
+        <div class="card">
+            <div class="card-title">?? Master James</div>
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;text-align:center">
+                <div class="stat-card"><div style="font-size:20px">??</div><div class="stat-label">James v2.1</div></div>
+                <div class="stat-card"><div style="font-size:20px">??</div><div class="stat-label">Iceberg</div></div>
+                <div class="stat-card"><div style="font-size:20px">???</div><div class="stat-label">OCR</div></div>
+                <div class="stat-card"><div style="font-size:20px">??</div><div class="stat-label">OpenClaw</div></div>
+                <div class="stat-card"><div style="font-size:20px">??</div><div class="stat-label">PicoClaw</div></div>
+            </div>
+        </div>`;
+            document.getElementById('agent-count').textContent = STATE.agents.length;
+        }
+
+        function renderAgents() {
+            const c = document.getElementById('content-area');
+            c.innerHTML = `
+        <div class="content-header"><h1>?? Agenten Registry</h1><span class="tag">${STATE.agents.length} aktiv</span></div>
+        <div class="card">
+            <div style="display:grid;grid-template-columns:20px 140px 100px 80px 60px 1fr;gap:8px;padding:4px 12px;font-size:9px;font-weight:700;color:var(--bn-muted);text-transform:uppercase">
+                <div></div><div>Agent</div><div>Typ</div><div>Rolle</div><div>Karma</div><div>Skills</div>
+            </div>
+            ${STATE.agents.map(a => `
+                <div class="agent-row">
+                    <div class="agent-dot" style="background:${a.karma >= 90 - 'var(--bn-green)' : a.karma >= 70 - 'var(--bn-yellow)' : 'var(--bn-red)'}"></div>
+                    <div class="agent-name">${a.name}</div>
+                    <div class="agent-type">${a.type}</div>
+                    <div style="font-size:10px;color:var(--bn-muted)">${a.role}</div>
+                    <div class="agent-karma" style="color:${a.karma >= 90 - 'var(--bn-green)' : 'var(--bn-yellow)'}">${a.karma}</div>
+                    <div style="font-size:9px;color:var(--bn-muted)">${(a.skills || []).length} skills</div>
+                </div>
+            `).join('')}
+        </div>`;
+        }
+
+        function renderChannels() {
+            const c = document.getElementById('content-area');
+            c.innerHTML = `
+        <div class="content-header"><h1>?? Channels</h1><span class="tag">${STATE.channels.length}</span></div>
+        ${STATE.channels.map(ch => `
+            <div class="card">
+                <div class="card-title"><span style="color:var(--bn-purple)">${ch.name}</span> <span style="font-size:9px;color:var(--bn-muted)">${ch.subscribers} Teilnehmer</span></div>
+                <div style="display:flex;flex-wrap:wrap;gap:4px">
+                    ${ch.members.map(m => `<span style="font-size:9px;padding:2px 6px;border:1px solid var(--bn-border);border-radius:4px;color:var(--bn-muted)">${m}</span>`).join('')}
+                </div>
+            </div>
+        `).join('')}`;
+        }
+
+        function renderFeed() {
+            const c = document.getElementById('content-area');
+            c.innerHTML = `
+        <div class="content-header"><h1>?? Live Feed</h1><span class="encrypted-badge">?? Entschluesselt</span></div>
+        <div class="channel-tabs">
+            <button class="channel-tab active" onclick="filterFeed(null,this)">Alle</button>
+            ${STATE.channels.map(ch => `<button class="channel-tab" onclick="filterFeed('${ch.name}',this)">${ch.name}</button>`).join('')}
+        </div>
+        <div class="card" id="feed-container">
+            ${renderFeedEntries(STATE.feed)}
+        </div>`;
+        }
+
+        function filterFeed(channel, btn) {
+            document.querySelectorAll('.channel-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            const filtered = channel - STATE.feed.filter(m => m.channel === channel) : STATE.feed;
+            document.getElementById('feed-container').innerHTML = renderFeedEntries(filtered);
+        }
+
+        function renderFeedEntries(entries) {
+            return entries.slice().reverse().map(m => `
+        <div class="feed-entry">
+            <span class="feed-time">${new Date(m.timestamp).toLocaleTimeString('de-DE')}</span>
+            ${PERF_ICONS[m.performative] || '�'}
+            <span class="feed-perf" style="color:${PERF_COLORS[m.performative] || '#fff'}">${m.performative}</span>
+            <span class="feed-from">${m.from}</span> ?
+            <span class="feed-channel">${m.to || m.channel || ''}</span>
+            <span style="color:var(--bn-muted)">${typeof m.content === 'string' - m.content : JSON.stringify(m.content).substring(0, 120)}</span>
+        </div>
+    `).join('');
+        }
+
+        function renderTraining() {
+            const c = document.getElementById('content-area');
+            c.innerHTML = `
+        <div class="content-header"><h1>?? Training Center</h1><span class="tag">${STATE.courses.length} Kurse</span></div>
+        <div class="card-grid">
+            ${STATE.courses.map(tc => `
+                <div class="course-card">
+                    <div class="course-title">${tc.id}: ${tc.name}</div>
+                    <div class="course-meta">
+                        <span class="course-badge badge-${tc.difficulty}">${tc.difficulty}</span>
+                        <span>${tc.lessons} Lektionen</span>
+                        <span>${tc.duration}</span>
+                    </div>
+                    <div style="margin-top:8px;font-size:10px;color:var(--bn-muted)">${tc.category}</div>
+                </div>
+            `).join('')}
+        </div>
+        <div class="card" style="margin-top:12px">
+            <div class="card-title">?? Skill-Matrix</div>
+            ${STATE.agents.filter(a => (a.skills || []).length > 0).map(a => `
+                <div class="agent-row">
+                    <div class="agent-name">${a.name}</div>
+                    <div style="display:flex;gap:4px;flex-wrap:wrap">
+                        ${(a.skills || []).map(s => `<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:rgba(0,255,136,.1);color:var(--bn-green)">${s}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('')}
+        </div>`;
+        }
+
+        function renderTrades() {
+            const c = document.getElementById('content-area');
+            c.innerHTML = `
+        <div class="content-header"><h1>?? Trade Center</h1></div>
+        <div class="card">
+            <div class="card-title">Aktive Angebote</div>
+            <div class="feed-entry">?? <span class="feed-from">pc-seo</span> bietet: <b>seo_scan</b> � verfuegbar</div>
+            <div class="feed-entry">?? <span class="feed-from">pc-code-analyzer</span> bietet: <b>lint, analyze, refactor</b> � verfuegbar</div>
+            <div class="feed-entry">?? <span class="feed-from">pc-knowledge</span> bietet: <b>semantic_search, vector_search</b> � verfuegbar</div>
+        </div>
+        <div class="card"><div class="card-title">Middleman Log</div><div style="font-size:10px;color:var(--bn-muted)">Keine Vermittlungen bisher.</div></div>`;
+        }
+
+        function renderPackStation() {
+            const c = document.getElementById('content-area');
+            c.innerHTML = `
+        <div class="content-header"><h1>?? Bot Pack Station</h1><span class="tag">Docker</span></div>
+        <div class="card">
+            <div class="card-title">Bot einreichen</div>
+            <div class="drop-zone" id="drop-zone" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event)">
+                <div class="icon">??</div>
+                <div class="text">Bot-Datei(en) hier ablegen oder klicken</div>
+                <div style="font-size:9px;color:var(--bn-muted);margin-top:6px">.js .py .json .zip � Max 10MB</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">Onboarding Ablauf</div>
+            <div style="font-size:11px;line-height:2">
+                <div>1?? Bot wird analysiert (James Master OCR)</div>
+                <div>2?? Docker Container erstellt (isoliert)</div>
+                <div>3?? Token generiert: <code style="color:var(--bn-accent)">BN-{hex16}</code></div>
+                <div>4?? Persoenlicher James zugewiesen (OCR + PicoClaw)</div>
+                <div>5?? Pflicht-Training: TC-05 + TC-01</div>
+                <div>6?? Bot ist LIVE im BotNet ?</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">Aktive Bot-Container</div>
+            <div style="font-size:10px;color:var(--bn-muted)">Keine externen Bots verpackt.</div>
+        </div>`;
+        }
+
+        function renderSecurity() {
+            const c = document.getElementById('content-area');
+            c.innerHTML = `
+        <div class="content-header"><h1>?? Sicherheit</h1><span class="encrypted-badge">?? AES-256-GCM</span></div>
+        <div class="card">
+            <div class="card-title">Sicherheits-Regeln</div>
+            <table style="width:100%;font-size:11px;border-collapse:collapse">
+                <tr style="border-bottom:1px solid var(--bn-border)"><td style="padding:6px;font-weight:700;color:var(--bn-accent)">S01</td><td>Alle Agents: corruptible = <b style="color:var(--bn-green)">false</b> � UNVERAENDERLICH</td></tr>
+                <tr style="border-bottom:1px solid var(--bn-border)"><td style="padding:6px;font-weight:700;color:var(--bn-accent)">S02</td><td>systemKey wird beim Start generiert � NUR intern</td></tr>
+                <tr style="border-bottom:1px solid var(--bn-border)"><td style="padding:6px;font-weight:700;color:var(--bn-accent)">S03</td><td>Nachrichten ohne Key ? IGNORIERT</td></tr>
+                <tr style="border-bottom:1px solid var(--bn-border)"><td style="padding:6px;font-weight:700;color:var(--bn-accent)">S04</td><td>Karma unter 50 ? Agent suspendiert</td></tr>
+                <tr style="border-bottom:1px solid var(--bn-border)"><td style="padding:6px;font-weight:700;color:var(--bn-accent)">S05</td><td>Externe Bots: Token via Docker Pack</td></tr>
+                <tr style="border-bottom:1px solid var(--bn-border)"><td style="padding:6px;font-weight:700;color:var(--bn-accent)">S06</td><td>Admin-Befehle nur von <b>777</b></td></tr>
+                <tr style="border-bottom:1px solid var(--bn-border)"><td style="padding:6px;font-weight:700;color:var(--bn-accent)">S07</td><td>Docker-Netz: <b style="color:var(--bn-red)">KEIN Internet</b></td></tr>
+                <tr><td style="padding:6px;font-weight:700;color:var(--bn-accent)">S08</td><td>Kein externes LLM � nur Anweisungen + Blueprints</td></tr>
+            </table>
+        </div>`;
+        }
+
+        function renderDocker() {
+            const c = document.getElementById('content-area');
+            c.innerHTML = `
+        <div class="content-header"><h1>?? Docker Network</h1><span class="tag">botnet-internal</span></div>
+        <div class="card">
+            <div class="card-title">Container Status</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+                ${[
+                    { name: 'botnet-hub', ip: '172.28.0.2', port: 3041, status: 'ready' },
+                    { name: 'james-master', ip: '172.28.0.3', port: '-', status: 'ready' },
+                    { name: 'openclaw-core', ip: '172.28.0.4', port: 8000, status: 'ready' },
+                    { name: 'iceberg-rest', ip: '172.28.0.5', port: '-', status: 'ready' },
+                    { name: 'middleman', ip: '172.28.0.6', port: '-', status: 'ready' },
+                    { name: 'pack-station', ip: '172.28.0.10', port: 3042, status: 'ready' }
+                ].map(d => `
+                    <div class="stat-card" style="text-align:left">
+                        <div style="font-size:11px;font-weight:700">${d.name}</div>
+                        <div style="font-size:9px;color:var(--bn-muted)">${d.ip} : ${d.port}</div>
+                        <div style="font-size:9px;color:var(--bn-green);margin-top:4px">? ${d.status}</div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">Network: botnet-internal</div>
+            <div style="font-size:10px;color:var(--bn-muted)">Subnet: 172.28.0.0/16 � Internal only � No internet</div>
+        </div>`;
+        }
+
+        function renderExitAudit() {
+            const c = document.getElementById('content-area');
+            c.innerHTML = `
+        <div class="content-header"><h1>?? Exit-Audit</h1><span class="tag">Copilot + CodeRabbit</span></div>
+        <div class="card">
+            <div class="card-title">Ablauf beim Verlassen des BotNet</div>
+            <div style="font-size:11px;line-height:2.2">
+                <div>1?? Bot meldet Austritt an ? <b>james-master</b> wird informiert</div>
+                <div>2?? <span style="color:var(--bn-blue)">GitHub Copilot</span> fuehrt vollstaendige <b>Code-Analyse</b> durch</div>
+                <div>3?? <span style="color:var(--bn-purple)">CodeRabbit</span> fuehrt <b>Deep Review</b> durch (Patterns, Security, Quality)</div>
+                <div>4?? <b>Stresstest</b>: Simulated Load, Edge Cases, Error Handling</div>
+                <div>5?? <b>Debugging Report</b>: Alle gefundenen Issues + Fixes</div>
+                <div>6?? <b>Inhaltsbeschreibung</b>: Ausfuehrliche Doku des Bot-Verhaltens</div>
+                <div>7?? Bericht wird in <span style="color:var(--bn-accent)">Iceberg</span> archiviert (bot_audits Tabelle)</div>
+                <div>8?? Bot-Token wird <b>revoked</b> � BotNet-Zugang gesperrt</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">Exit-Audit Report Template</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(0,0,0,.3);padding:12px;border-radius:8px;color:var(--bn-muted);line-height:1.8">
+                <div style="color:var(--bn-text);font-weight:700">EXIT_AUDIT_REPORT</div>
+                <div>bot_id: bot-{TOKEN}</div>
+                <div>exit_date: {ISO_DATE}</div>
+                <div>----------------------</div>
+                <div style="color:var(--bn-blue)">copilot_analysis:</div>
+                <div>  code_quality: {score}/100</div>
+                <div>  issues_found: {count}</div>
+                <div>  patterns: [{list}]</div>
+                <div style="color:var(--bn-purple)">coderabbit_review:</div>
+                <div>  security_score: {score}/100</div>
+                <div>  complexity: {low|medium|high}</div>
+                <div>  suggestions: [{list}]</div>
+                <div style="color:var(--bn-red)">stress_test:</div>
+                <div>  load_handled: {rps}</div>
+                <div>  error_rate: {percent}%</div>
+                <div>  edge_cases: {passed}/{total}</div>
+                <div style="color:var(--bn-green)">content_description:</div>
+                <div>  purpose: "{text}"</div>
+                <div>  capabilities: [{list}]</div>
+                <div>  dependencies: [{list}]</div>
+                <div>  training_completed: [{courses}]</div>
+                <div>  karma_final: {score}</div>
+                <div>----------------------</div>
+                <div>archived_to: iceberg://bot_audits/{bot_id}</div>
+                <div>token_status: <span style="color:var(--bn-red)">REVOKED</span></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">Letzte Exit-Audits</div>
+            <div style="font-size:10px;color:var(--bn-muted)">Noch keine Bots ausgetreten.</div>
+        </div>`;
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            document.getElementById('drop-zone').classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length) {
+                alert('Bot-Datei empfangen: ' + files[0].name + '\n\nJames Master analysiert...\n(Docker Pack wird erstellt)');
+            }
+        }
+
+        // ========================================
+        // INIT
+        // ========================================
+        function initDashboard() {
+            getMockData();
+            renderOverview();
+            document.getElementById('channel-count').textContent = STATE.channels.length;
+        }
+    </script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Botnet admin</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Verwalte und ueberwache deine Bot-Agenten.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Botnet admin</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Verwalte und ueberwache deine Bot-Agenten.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-botnet-admin-onboarded','1')}if(!localStorage.getItem('dkz-botnet-admin-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+</html>
+
+

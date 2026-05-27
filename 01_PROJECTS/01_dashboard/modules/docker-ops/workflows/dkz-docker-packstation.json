@@ -1,0 +1,357 @@
+{
+  "name": "DkZ Docker Pack Station",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "docker/pack",
+        "authentication": "basicAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [-1200, 300],
+      "id": "pack-webhook-001",
+      "name": "Pack Webhook",
+      "webhookId": "dkz-docker-pack-001",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "dkz-basic-auth",
+          "name": "DkZ Docker Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "validate-image",
+              "leftValue": "={{ $json.body.image }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "isNotEmpty" }
+            },
+            {
+              "id": "validate-version",
+              "leftValue": "={{ $json.body.version }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "isNotEmpty" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-960, 300],
+      "id": "pack-validate-001",
+      "name": "Validate Pack Input"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": false, \"error\": \"Missing required fields: image, version\", \"timestamp\": \"{{ $now.toISO() }}\" }",
+        "options": { "responseCode": 400 }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [-720, 480],
+      "id": "pack-error-input-001",
+      "name": "Error: Invalid Pack Input"
+    },
+    {
+      "parameters": {
+        "command": "=docker tag dkz-{{ $('Pack Webhook').item.json.body.image }} dkz-local/{{ $('Pack Webhook').item.json.body.image }}:{{ $('Pack Webhook').item.json.body.version }} 2>&1 && echo 'TAG_OK'",
+        "cwd": "/opt/dkz"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [-720, 120],
+      "id": "pack-tag-001",
+      "name": "SSH: Tag Image",
+      "credentials": {
+        "sshPassword": {
+          "id": "dkz-ssh-key",
+          "name": "DkZ VPS SSH Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "=COMPOSE_FILE={{ $('Pack Webhook').item.json.body.compose_file || '/opt/dkz/docker/docker-compose.dkz.yml' }} && docker compose -f $COMPOSE_FILE up -d {{ $('Pack Webhook').item.json.body.image }} 2>&1",
+        "cwd": "/opt/dkz/docker"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [-480, 120],
+      "id": "pack-compose-001",
+      "name": "SSH: Compose Up",
+      "credentials": {
+        "sshPassword": {
+          "id": "dkz-ssh-key",
+          "name": "DkZ VPS SSH Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "=PORT={{ $('Pack Webhook').item.json.body.health_port || '9890' }} && sleep 5 && curl -sf http://localhost:$PORT/health && echo 'HEALTHY' || echo 'UNHEALTHY'",
+        "cwd": "/opt/dkz"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [-240, 120],
+      "id": "pack-health-001",
+      "name": "SSH: Health Check",
+      "credentials": {
+        "sshPassword": {
+          "id": "dkz-ssh-key",
+          "name": "DkZ VPS SSH Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "check-healthy",
+              "leftValue": "={{ $json.stdout }}",
+              "rightValue": "HEALTHY",
+              "operator": { "type": "string", "operation": "contains" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [0, 120],
+      "id": "pack-health-check-001",
+      "name": "Is Healthy?"
+    },
+    {
+      "parameters": {
+        "command": "docker image prune --filter 'until=72h' --filter 'label!=dkz.keep=true' -f 2>&1 && echo '---CLEANUP DONE---' && docker system df --format '{{.Type}}: {{.Size}} ({{.Reclaimable}} reclaimable)'",
+        "cwd": "/opt/dkz"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [240, 0],
+      "id": "pack-cleanup-001",
+      "name": "SSH: Cleanup Old Images",
+      "credentials": {
+        "sshPassword": {
+          "id": "dkz-ssh-key",
+          "name": "DkZ VPS SSH Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "=docker logs {{ $('Pack Webhook').item.json.body.image }} --tail 20 2>&1",
+        "cwd": "/opt/dkz"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [240, 240],
+      "id": "pack-error-logs-001",
+      "name": "SSH: Get Error Logs",
+      "credentials": {
+        "sshPassword": {
+          "id": "dkz-ssh-key",
+          "name": "DkZ VPS SSH Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:9890/packs",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "image", "value": "={{ $('Pack Webhook').item.json.body.image }}" },
+            { "name": "version", "value": "={{ $('Pack Webhook').item.json.body.version }}" },
+            { "name": "status", "value": "deployed" },
+            { "name": "healthy", "value": "true" },
+            { "name": "cleanup_log", "value": "={{ $('SSH: Cleanup Old Images').item.json.stdout }}" },
+            { "name": "compose_file", "value": "={{ $('Pack Webhook').item.json.body.compose_file || 'docker-compose.dkz.yml' }}" },
+            { "name": "eu_compliant", "value": "true" },
+            { "name": "pipeline", "value": "n8n-dkz-pack-station" }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 0],
+      "id": "pack-log-db-001",
+      "name": "Log Pack to DB"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:9890/packs",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "image", "value": "={{ $('Pack Webhook').item.json.body.image }}" },
+            { "name": "version", "value": "={{ $('Pack Webhook').item.json.body.version }}" },
+            { "name": "status", "value": "failed" },
+            { "name": "healthy", "value": "false" },
+            { "name": "error_log", "value": "={{ $('SSH: Get Error Logs').item.json.stdout }}" },
+            { "name": "eu_compliant", "value": "true" },
+            { "name": "pipeline", "value": "n8n-dkz-pack-station" }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 240],
+      "id": "pack-log-error-db-001",
+      "name": "Log Error to DB"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3040/api/v1/docker/notify",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "event", "value": "pack_complete" },
+            { "name": "image", "value": "={{ $('Pack Webhook').item.json.body.image }}" },
+            { "name": "version", "value": "={{ $('Pack Webhook').item.json.body.version }}" },
+            { "name": "status", "value": "success" }
+          ]
+        },
+        "options": { "timeout": 5000 }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 0],
+      "id": "pack-notify-otr-001",
+      "name": "Notify ONTHERUN"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": true, \"image\": \"{{ $('Pack Webhook').item.json.body.image }}\", \"version\": \"{{ $('Pack Webhook').item.json.body.version }}\", \"healthy\": true, \"deployed\": true, \"timestamp\": \"{{ $now.toISO() }}\", \"eu_compliant\": true, \"pipeline\": \"dkz-pack-station\" }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [960, 0],
+      "id": "pack-respond-success-001",
+      "name": "Respond: Pack Success"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": false, \"image\": \"{{ $('Pack Webhook').item.json.body.image }}\", \"version\": \"{{ $('Pack Webhook').item.json.body.version }}\", \"healthy\": false, \"error\": \"Health check failed\", \"logs\": \"{{ $('SSH: Get Error Logs').item.json.stdout }}\", \"timestamp\": \"{{ $now.toISO() }}\" }",
+        "options": { "responseCode": 500 }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [960, 240],
+      "id": "pack-respond-error-001",
+      "name": "Respond: Pack Failed"
+    },
+    {
+      "parameters": {
+        "content": "## 📦 DkZ™ Docker Pack Station\n\n**Einheit 2** — Paketiert, taggt, deployed und räumt auf\n\n### Webhook:\n`POST /webhook/docker/pack`\n\n### Body (JSON):\n```json\n{\n  \"image\": \"dkz-ontherun:latest\",\n  \"version\": \"v1.0.0\",\n  \"compose_file\": \"docker-compose.dkz.yml\",\n  \"health_port\": 9890\n}\n```\n\n### Pipeline:\n1. Tag Image (Versionierung)\n2. Compose Up (Deployment)\n3. Health Check (5s Delay)\n4. Cleanup (>72h alte Images)\n5. Log to DB + ONTHERUN Notify\n\n**EU-konform:** Lokale Registry, kein Cloud-Upload",
+        "height": 480,
+        "width": 400
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-1200, -200],
+      "id": "pack-note-001",
+      "name": "Pack Station Info"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Pack Webhook": {
+      "main": [
+        [{ "node": "Validate Pack Input", "type": "main", "index": 0 }]
+      ]
+    },
+    "Validate Pack Input": {
+      "main": [
+        [{ "node": "SSH: Tag Image", "type": "main", "index": 0 }],
+        [{ "node": "Error: Invalid Pack Input", "type": "main", "index": 0 }]
+      ]
+    },
+    "SSH: Tag Image": {
+      "main": [
+        [{ "node": "SSH: Compose Up", "type": "main", "index": 0 }]
+      ]
+    },
+    "SSH: Compose Up": {
+      "main": [
+        [{ "node": "SSH: Health Check", "type": "main", "index": 0 }]
+      ]
+    },
+    "SSH: Health Check": {
+      "main": [
+        [{ "node": "Is Healthy?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Is Healthy?": {
+      "main": [
+        [{ "node": "SSH: Cleanup Old Images", "type": "main", "index": 0 }],
+        [{ "node": "SSH: Get Error Logs", "type": "main", "index": 0 }]
+      ]
+    },
+    "SSH: Cleanup Old Images": {
+      "main": [
+        [{ "node": "Log Pack to DB", "type": "main", "index": 0 }]
+      ]
+    },
+    "SSH: Get Error Logs": {
+      "main": [
+        [{ "node": "Log Error to DB", "type": "main", "index": 0 }]
+      ]
+    },
+    "Log Pack to DB": {
+      "main": [
+        [{ "node": "Notify ONTHERUN", "type": "main", "index": 0 }]
+      ]
+    },
+    "Log Error to DB": {
+      "main": [
+        [{ "node": "Respond: Pack Failed", "type": "main", "index": 0 }]
+      ]
+    },
+    "Notify ONTHERUN": {
+      "main": [
+        [{ "node": "Respond: Pack Success", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "dkz-packstation-v1.0.0",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "dkz-devkitz-ecosystem"
+  },
+  "id": "dkz-docker-packstation-001",
+  "tags": [
+    { "id": "dkz-docker", "name": "docker" },
+    { "id": "dkz-pack", "name": "pack-station" },
+    { "id": "dkz-eu", "name": "eu-compliant" }
+  ]
+}

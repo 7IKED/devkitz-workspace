@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="shared/seo-shared.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="grid grid-2">
+        <div class="card card-full">
+            <h3>🎯 Content & Audience Fit Analyzer</h3>
+            <div class="input-row">
+                <input type="text" id="topicInput" placeholder="Content-Thema (z.B. Gaming, Fitness, Tech)">
+                <select id="personaSelect">
+                    <option value="streamer">🎮 Streamer</option>
+                    <option value="influencer">⭐ Influencer</option>
+                    <option value="gamer">🕹️ Gamer</option>
+                    <option value="bpromi">🌟 B-Promi</option>
+                    <option value="business">💼 Business</option>
+                </select>
+                <button class="btn btn-green" onclick="analyzeContent()">🔍 Analysieren</button>
+            </div>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>Content wird analysiert...
+            </div>
+        </div>
+        <div class="card" id="fitCard" style="display:none">
+            <h3>📊 Audience Fit</h3>
+            <div id="fitData"></div>
+        </div>
+        <div class="card" id="trendCard" style="display:none">
+            <h3>🔥 Trending Topics</h3>
+            <div id="trendData"></div>
+        </div>
+        <div class="card" id="formatCard" style="display:none">
+            <h3>🎬 Beste Formate</h3>
+            <div id="formatData"></div>
+        </div>
+        <div class="card" id="competitorCard" style="display:none">
+            <h3>⚔️ Content-Wettbewerb</h3>
+            <div id="competitorData"></div>
+        </div>
+        <div class="card card-full" id="calendarCard" style="display:none">
+            <h3>📅 Content-Kalender Vorschlag</h3>
+            <div id="calendarData"></div>
+        </div>
+        <div class="card card-full" id="recoCard" style="display:none">
+            <h3>💡 Content-Empfehlungen</h3>
+            <div id="recoData"></div>
+        </div>
+    </div>
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        const TOPICS = { gaming: { trends: ['Live Service Games', 'Indie Highlights', 'Retro Revival', 'Esports News', 'Game Reviews'], formats: ['Let\'s Plays', 'Reviews', 'Tutorials', 'Highlights', 'Rankings'], audience: '16-28, 75% männlich' }, fitness: { trends: ['Home Workouts', 'Meal Prep', 'Supplements', 'Yoga', 'HIIT'], formats: ['Workout Videos', 'Vorher/Nachher', 'Routinen', 'Challenges', 'Rezepte'], audience: '18-35, 60% weiblich' }, tech: { trends: ['AI Tools', 'Smartphone Reviews', 'Smart Home', 'Coding', 'Startups'], formats: ['Reviews', 'Tutorials', 'Unboxing', 'Vergleiche', 'News'], audience: '20-40, 70% männlich' }, lifestyle: { trends: ['Minimalism', 'Travel', 'Self-Care', 'Productivity', 'Fashion'], formats: ['Vlogs', 'GRWM', 'Hauls', 'Room Tours', 'Day in Life'], audience: '18-35, 65% weiblich' }, business: { trends: ['AI im Business', 'Remote Work', 'Side Hustles', 'Personal Branding', 'Networking'], formats: ['Thought Leadership', 'Case Studies', 'How-To', 'Interviews', 'Behind the Scenes'], audience: '25-45, 55% männlich' } };
+
+        async function analyzeContent() {
+            const topic = document.getElementById('topicInput').value.trim() || 'gaming';
+            const persona = document.getElementById('personaSelect').value;
+            document.getElementById('loading').classList.add('show');
+            ['fitCard', 'trendCard', 'formatCard', 'competitorCard', 'calendarCard', 'recoCard'].forEach(id => document.getElementById(id).style.display = 'none');
+            await new Promise(r => setTimeout(r, 1500)); document.getElementById('loading').classList.remove('show');
+
+            const topicData = TOPICS[topic.toLowerCase()] || TOPICS.gaming;
+            const fitScore = Math.floor(Math.random() * 40 + 60);
+
+            // FIT SCORE
+            document.getElementById('fitCard').style.display = '';
+            document.getElementById('fitData').innerHTML = `
+        <div class="stat" style="margin-bottom:12px;background:var(--bg)"><div class="stat-num" style="color:${fitScore >= 80 ? 'var(--green)' : fitScore >= 60 ? 'var(--yellow)' : 'var(--red)'; font - size: 36px
+        } ">${fitScore}%</div><div class="stat - label">Audience-Content Fit</div></div>
+            < div class="metric-row" ><span class="metric-name">Thema</span><span class="metric-value">${topic}</span></div >
+        <div class="metric-row"><span class="metric-name">Persona</span><span class="badge badge-purple">${persona}</span></div>
+        <div class="metric-row"><span class="metric-name">Zielgruppe</span><span class="metric-value">${topicData.audience}</span></div>
+        <div class="metric-row"><span class="metric-name">Sättigungsgrad</span><span class="metric-value">${Math.floor(Math.random()*60+20)}%</span><span class="metric-scale ${Math.random()>.5?'scale-mid':'scale-high'}">${Math.random()>.5?'Mittel':'Hoch'}</span></div>
+        <div class="metric-row"><span class="metric-name">Wachstumspotenzial</span><span class="metric-value" style="color:var(--green)">${Math.floor(Math.random()*30+10)}% p.a.</span></div>`;
+
+    // TRENDS
+    document.getElementById('trendCard').style.display='';
+    document.getElementById('trendData').innerHTML=topicData.trends.map((t,i)=>`< div class="metric-row" ><span style="font-weight:800;color:var(--yellow);width:24px">#${i+1}</span><span class="metric-name">${t}</span><span class="badge badge-${i<2?'green':i<4?'blue':'purple'}">${i<2?'🔥 Hot':i<4?'📈 Steigend':'💡 Emerging'}</span></div > `).join('');
+
+    // FORMATS
+    document.getElementById('formatCard').style.display='';
+    document.getElementById('formatData').innerHTML=topicData.formats.map((f,i)=>`< div class="metric-row" ><span class="metric-name">${f}</span><div style="flex:1;margin:0 12px"><div class="progress"><div class="progress-fill progress-${['green','blue','purple','yellow','red'][i]}" style="width:${95-i*15}%"></div></div></div><span style="font-size:11px;color:var(--muted)">${95-i*15}%</span></div > `).join('');
+
+    // COMPETITOR
+    document.getElementById('competitorCard').style.display='';
+    document.getElementById('competitorData').innerHTML=['Top Creator #1','Top Creator #2','Nischen-Expert','Newcomer','Established Pro'].map((c,i)=>`< div class="metric-row" ><span class="metric-name">${c}</span><span class="metric-value">${Math.floor(Math.random()*500+50)}K</span><span class="badge ${i===3?'badge-green':'badge-blue'}">${i===3?'Chancenreich':'Etabliert'}</span></div > `).join('');
+
+    // CALENDAR
+    document.getElementById('calendarCard').style.display='';
+    const days=['Mo','Di','Mi','Do','Fr','Sa','So'];
+    document.getElementById('calendarData').innerHTML=`< table class="data-table" ><thead><tr>${days.map(d=>`<th>${d}</th>`).join('')}</tr></thead><tbody><tr>${days.map((d,i)=>{const type=topicData.formats[i%topicData.formats.length];const time=i<5?'18:00':'14:00';return `<td style="font-size:10px"><div style="font-weight:700;color:var(--green)">${time}</div><div style="color:var(--muted)">${type}</div></td>`}).join('')}</tr></tbody></table > `;
+
+    // RECOMMENDATIONS
+    document.getElementById('recoCard').style.display='';
+    const recos=[`Fokus auf "${topicData.trends[0]}" – höchstes Suchvolumen`,`Format "${topicData.formats[0]}" als Hauptformat nutzen`,`Posting - Frequenz: ${ persona === 'streamer' ? 'täglich' : '3-4x/Woche' } `,`Hashtags: #${ topic } #${ topicData.trends[0].replace(/\s/g, '') } #Content`,`Cross - Posting auf mindestens 3 Plattformen`];
+    document.getElementById('recoData').innerHTML=recos.map((r,i)=>`< div class="result-item" ><span class="result-icon">💡</span><div><div class="result-title">#${i+1}: ${r}</div></div></div >`).join('');
+}
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

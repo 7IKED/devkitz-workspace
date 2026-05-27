@@ -1,0 +1,258 @@
+{
+  "name": "DkZ Docker Database Manager",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "docker/db/:action",
+        "authentication": "basicAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [-960, 300],
+      "id": "db-webhook-001",
+      "name": "DB Webhook",
+      "webhookId": "dkz-docker-db-001",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "dkz-basic-auth",
+          "name": "DkZ Docker Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "value": "query",
+              "output": 0
+            },
+            {
+              "value": "log",
+              "output": 1
+            },
+            {
+              "value": "status",
+              "output": 2
+            },
+            {
+              "value": "cleanup",
+              "output": 3
+            }
+          ]
+        },
+        "dataType": "string",
+        "value": "={{ $json.params.action }}"
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [-720, 300],
+      "id": "db-switch-001",
+      "name": "Route Action"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=http://localhost:9890/{{ $('DB Webhook').item.json.body.endpoint || 'builds' }}?limit={{ $('DB Webhook').item.json.body.limit || 50 }}&status={{ $('DB Webhook').item.json.body.status || 'all' }}",
+        "options": { "timeout": 10000 }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-480, 60],
+      "id": "db-query-001",
+      "name": "Query DB"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:9890/audit",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "action", "value": "={{ $('DB Webhook').item.json.body.action_type || 'manual_log' }}" },
+            { "name": "service", "value": "={{ $('DB Webhook').item.json.body.service || 'unknown' }}" },
+            { "name": "message", "value": "={{ $('DB Webhook').item.json.body.message || '' }}" },
+            { "name": "metadata", "value": "={{ JSON.stringify($('DB Webhook').item.json.body.metadata || {}) }}" },
+            { "name": "source", "value": "n8n-dkz-db-manager" }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-480, 240],
+      "id": "db-log-001",
+      "name": "Write Audit Log"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://localhost:9890/status",
+        "options": { "timeout": 5000 }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-480, 420],
+      "id": "db-status-001",
+      "name": "Get DB Status"
+    },
+    {
+      "parameters": {
+        "command": "docker system df --format '{{.Type}}: {{.Size}} ({{.Reclaimable}} reclaimable)' && echo '---' && docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | head -20",
+        "cwd": "/opt/dkz"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [-480, 600],
+      "id": "db-docker-status-001",
+      "name": "SSH: Docker System Status",
+      "credentials": {
+        "sshPassword": {
+          "id": "dkz-ssh-key",
+          "name": "DkZ VPS SSH Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:9890/cleanup",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "older_than_days", "value": "={{ $('DB Webhook').item.json.body.older_than_days || 30 }}" },
+            { "name": "keep_last", "value": "={{ $('DB Webhook').item.json.body.keep_last || 100 }}" }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-480, 780],
+      "id": "db-cleanup-001",
+      "name": "Cleanup Old Records"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, action: 'query', data: $json, timestamp: $now.toISO() }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [-240, 60],
+      "id": "db-respond-query-001",
+      "name": "Respond: Query Result"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, action: 'log', data: $json, timestamp: $now.toISO() }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [-240, 240],
+      "id": "db-respond-log-001",
+      "name": "Respond: Log Written"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, action: 'status', db: $('Get DB Status').item.json, docker: $('SSH: Docker System Status').item.json.stdout, timestamp: $now.toISO() }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [-60, 510],
+      "id": "db-respond-status-001",
+      "name": "Respond: Full Status"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, action: 'cleanup', data: $json, timestamp: $now.toISO() }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [-240, 780],
+      "id": "db-respond-cleanup-001",
+      "name": "Respond: Cleanup Done"
+    },
+    {
+      "parameters": {
+        "content": "## 🗄️ DkZ™ Docker Database Manager\n\n**Einheit 3** — Persistente Metadaten-DB für Builds & Deployments\n\n### Webhook:\n`POST /webhook/docker/db/:action`\n\n### Actions:\n- `query` — Builds/Packs abfragen\n- `log` — Audit-Eintrag schreiben\n- `status` — DB + Docker System Status\n- `cleanup` — Alte Records bereinigen\n\n### Node.js DB Service:\n- Express.js :9890\n- SQLite (lokal, immutable)\n- Tabellen: builds, packs, deployments, audit_log\n\n**EU-konform:** Alles lokal, kein Cloud",
+        "height": 420,
+        "width": 400
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-960, -160],
+      "id": "db-note-001",
+      "name": "DB Manager Info"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "DB Webhook": {
+      "main": [
+        [{ "node": "Route Action", "type": "main", "index": 0 }]
+      ]
+    },
+    "Route Action": {
+      "main": [
+        [{ "node": "Query DB", "type": "main", "index": 0 }],
+        [{ "node": "Write Audit Log", "type": "main", "index": 0 }],
+        [{ "node": "Get DB Status", "type": "main", "index": 0 }],
+        [{ "node": "Cleanup Old Records", "type": "main", "index": 0 }]
+      ]
+    },
+    "Query DB": {
+      "main": [
+        [{ "node": "Respond: Query Result", "type": "main", "index": 0 }]
+      ]
+    },
+    "Write Audit Log": {
+      "main": [
+        [{ "node": "Respond: Log Written", "type": "main", "index": 0 }]
+      ]
+    },
+    "Get DB Status": {
+      "main": [
+        [{ "node": "SSH: Docker System Status", "type": "main", "index": 0 }]
+      ]
+    },
+    "SSH: Docker System Status": {
+      "main": [
+        [{ "node": "Respond: Full Status", "type": "main", "index": 0 }]
+      ]
+    },
+    "Cleanup Old Records": {
+      "main": [
+        [{ "node": "Respond: Cleanup Done", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "dkz-db-manager-v1.0.0",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "dkz-devkitz-ecosystem"
+  },
+  "id": "dkz-docker-db-001",
+  "tags": [
+    { "id": "dkz-docker", "name": "docker" },
+    { "id": "dkz-db", "name": "database" },
+    { "id": "dkz-eu", "name": "eu-compliant" }
+  ]
+}

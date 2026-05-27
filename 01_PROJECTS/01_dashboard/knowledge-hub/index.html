@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📝 DkZ Knowledge Hub — Wiki · Kanban · Notizen</title>
+    <meta name="description" content="DkZ Knowledge Hub — Notion-Alternative: Wiki, Kanban-Board, Schnellnotizen. EU-souverän, self-hosted.">
+    <meta name="dkz-module" content="knowledge-hub">
+    <meta name="dkz-version" content="v2.0.0">
+    <link rel="stylesheet" href="../shared/dkz-theme.css">
+    <link rel="manifest" href="../shared/manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--bg:#0e0e10;--bg2:#121215;--card:#16161a;--card2:#1e1e24;--glass:rgba(15,15,24,.65);--blur:blur(16px);--border:#1a1a2a;--border2:#2a2a3a;--text:#e8e8f0;--muted:#5e5e78;--accent:#fa1e4e;--purple:#a855f7;--green:#00ff88;--yellow:#ffb800;--blue:#55acee;--red:#ff4466;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;--radius:16px}
+        html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text)}
+        body{display:flex;flex-direction:column;background:radial-gradient(ellipse at 20% 30%,rgba(168,85,247,.04) 0%,transparent 50%),radial-gradient(ellipse at 80% 70%,rgba(250,30,78,.03) 0%,transparent 50%),var(--bg)}
+
+        /* HEADER */
+        .header{padding:14px 24px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);flex-shrink:0}
+        .header h1{font-size:17px;font-weight:900;background:linear-gradient(135deg,var(--purple),var(--accent));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+        .header .sub{font-size:9px;color:var(--muted);font-family:var(--mono);letter-spacing:1px}
+        .header-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+        .btn{padding:7px 14px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--muted);font-family:var(--font);font-size:11px;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+        .btn:hover{color:var(--text);border-color:var(--accent)}
+        .btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+        /* TABS */
+        .tab-bar{display:flex;gap:0;border-bottom:1px solid var(--border);flex-shrink:0;padding:0 24px}
+        .tab{padding:12px 20px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;display:flex;align-items:center;gap:6px}
+        .tab:hover{color:var(--text)}
+        .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+        .tab .badge{font-size:9px;font-family:var(--mono);background:rgba(250,30,78,.1);color:var(--accent);padding:2px 6px;border-radius:4px}
+
+        /* MAIN LAYOUT */
+        .main{flex:1;overflow:auto;display:flex}
+        .sidebar{width:240px;border-right:1px solid var(--border);padding:16px;flex-shrink:0;overflow-y:auto}
+        .sidebar-title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin:16px 0 8px;display:flex;align-items:center;gap:6px}
+        .sidebar-title:first-child{margin-top:0}
+        .sidebar-item{padding:8px 12px;border-radius:8px;font-size:12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px;color:var(--text)}
+        .sidebar-item:hover{background:var(--card)}
+        .sidebar-item.active{background:rgba(250,30,78,.08);color:var(--accent)}
+        .sidebar-item .icon{font-size:14px;width:20px;text-align:center}
+        .sidebar-item .count{margin-left:auto;font-size:9px;font-family:var(--mono);color:var(--muted)}
+        .content{flex:1;padding:24px;overflow-y:auto}
+        .view{display:none}
+        .view.active{display:block}
+
+        /* WIKI */
+        .wiki-search{width:100%;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;margin-bottom:20px;transition:border-color .2s}
+        .wiki-search:focus{border-color:var(--accent)}
+        .wiki-search::placeholder{color:var(--muted)}
+        .wiki-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+        .wiki-card{background:var(--glass);backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:var(--radius);padding:18px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden}
+        .wiki-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent);opacity:0;transition:opacity .3s}
+        .wiki-card:hover{transform:translateY(-3px);border-color:var(--border2);box-shadow:0 6px 24px rgba(0,0,0,.3)}
+        .wiki-card:hover::before{opacity:1}
+        .wiki-card .wc-icon{font-size:28px;margin-bottom:10px}
+        .wiki-card .wc-title{font-size:14px;font-weight:700;margin-bottom:4px}
+        .wiki-card .wc-desc{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+        .wiki-card .wc-meta{display:flex;justify-content:space-between;font-size:9px;font-family:var(--mono);color:var(--muted)}
+        .wiki-card .wc-tag{font-size:8px;padding:2px 6px;border-radius:4px;font-weight:600}
+
+        /* KANBAN */
+        .kanban{display:flex;gap:14px;overflow-x:auto;padding-bottom:20px;min-height:400px}
+        .kanban-col{min-width:260px;max-width:300px;flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column}
+        .kanban-col-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700}
+        .kanban-col-head .dot{width:8px;height:8px;border-radius:50%}
+        .kanban-col-head .count{margin-left:auto;font-size:9px;font-family:var(--mono);color:var(--muted);background:rgba(255,255,255,.05);padding:2px 6px;border-radius:4px}
+        .kanban-cards{flex:1;padding:10px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+        .kanban-card{padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;cursor:grab;transition:all .2s;font-size:12px}
+        .kanban-card:hover{border-color:var(--accent);box-shadow:0 2px 12px rgba(0,0,0,.2)}
+        .kanban-card .kc-title{font-weight:600;margin-bottom:4px}
+        .kanban-card .kc-desc{color:var(--muted);font-size:10px;line-height:1.5}
+        .kanban-card .kc-footer{display:flex;justify-content:space-between;margin-top:8px;font-size:9px;font-family:var(--mono);color:var(--muted)}
+        .kc-priority{padding:2px 6px;border-radius:4px;font-size:8px;font-weight:700}
+
+        /* NOTES */
+        .notes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+        .note-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;min-height:120px}
+        .note-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+        .note-card .nc-title{font-size:13px;font-weight:700;margin-bottom:6px}
+        .note-card .nc-text{font-size:11px;color:var(--muted);line-height:1.6;overflow:hidden;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical}
+        .note-card .nc-date{font-size:9px;font-family:var(--mono);color:var(--muted);margin-top:10px}
+        .note-new{border-style:dashed;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--muted);font-size:24px}
+        .note-new:hover{color:var(--accent);border-color:var(--accent)}
+        .note-new span{font-size:10px;font-weight:600}
+
+        /* INTERACTIVE NOTES */
+        .notes-toolbar{display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
+        .notes-search{flex:1;min-width:200px;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font);font-size:12px;outline:none;transition:border-color .2s}
+        .notes-search:focus{border-color:var(--accent)}
+        .folder-tabs{display:flex;gap:4px;margin-bottom:14px}
+        .folder-tab{padding:6px 14px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .2s;display:flex;align-items:center;gap:5px}
+        .folder-tab:hover{border-color:var(--accent);color:var(--text)}
+        .folder-tab.active{background:rgba(250,30,78,.1);border-color:rgba(250,30,78,.3);color:var(--accent)}
+        .folder-tab .ft-count{font-family:var(--mono);font-size:8px;background:rgba(255,255,255,.05);padding:1px 5px;border-radius:3px}
+        .note-prefix{font-size:8px;font-weight:900;padding:2px 6px;border-radius:3px;display:inline-block}
+        .pf-P{background:rgba(99,102,241,.2);color:#6366f1}
+        .pf-I{background:rgba(0,255,136,.15);color:var(--green)}
+        .pf-R{background:rgba(255,184,0,.15);color:var(--yellow)}
+        .note-card .nc-folder{font-size:8px;font-family:var(--mono);color:var(--muted);margin-top:4px}
+        .note-card .nc-tags{display:flex;gap:3px;flex-wrap:wrap;margin-top:6px}
+        .note-card .nc-tags span{font-size:7px;padding:1px 5px;border-radius:3px;background:rgba(168,85,247,.1);color:var(--purple);font-weight:600}
+        .notes-stats{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+        .ns-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:8px;font-size:10px}
+        .ns-val{font-size:16px;font-weight:900;font-family:var(--mono)}
+
+        /* NOTE MODAL */
+        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:1000;display:none;align-items:center;justify-content:center}
+        .modal-overlay.open{display:flex}
+        .modal-box{background:var(--card);border:1px solid var(--border);border-radius:16px;width:90%;max-width:640px;max-height:85vh;overflow-y:auto;padding:24px;position:relative}
+        .modal-box.wide{max-width:700px}
+        .modal-box .nm-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+        .nm-title-input{width:100%;background:transparent;border:none;color:var(--text);font-size:18px;font-weight:800;font-family:var(--font);outline:none;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:12px}
+        .nm-body{width:100%;min-height:200px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:var(--font);line-height:1.8;outline:none;resize:vertical;padding:12px}
+        .nm-meta{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+        .nm-btn{padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--muted);font-family:var(--font);font-size:10px;cursor:pointer;transition:all .2s}
+        .nm-btn:hover{color:var(--text);border-color:var(--accent)}
+        .nm-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+        .nm-btn.danger{border-color:var(--red);color:var(--red)}
+        .nm-btn.danger:hover{background:var(--red);color:#fff}
+        .nm-close{width:28px;height:28px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:var(--muted);cursor:pointer;font-size:14px;transition:all .2s}
+        .nm-close:hover{background:rgba(250,30,78,.15);color:var(--accent)}
+
+        /* TOAST */
+        .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--card);border:1px solid var(--accent);color:var(--text);padding:10px 24px;border-radius:10px;font-size:12px;font-weight:600;z-index:2000;transition:transform .3s;pointer-events:none}
+        .toast.show{transform:translateX(-50%) translateY(0)}
+
+        @media(max-width:768px){.sidebar{display:none}.kanban{flex-direction:column}.kanban-col{min-width:100%;max-width:100%}}
+    </style>
+</head>
+
+<body>
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
+
+    <div class="header">
+        <div>
+            <h1>📝 Knowledge Hub</h1>
+            <div class="sub">WIKI · KANBAN · NOTIZEN</div>
+        </div>
+        <div class="header-right">
+            <a href="../nexuz/index.html" class="btn">⚡ NEXUZ²</a>
+            <a href="../hub/index.html" class="btn">← Hub</a>
+            <button class="btn" onclick="handleNewBtn()">+ Neu</button>
+        </div>
+    </div>
+
+    <div class="tab-bar">
+        <div class="tab active" data-view="wiki">📚 Wiki <span class="badge" id="wikiCount">0</span></div>
+        <div class="tab" data-view="kanban">📋 Kanban <span class="badge" id="kanbanCount">0</span></div>
+        <div class="tab" data-view="notes">🗒️ Notizen <span class="badge" id="notesCount">0</span></div>
+    </div>
+
+    <div class="main">
+        <!-- SIDEBAR -->
+        <div class="sidebar" id="sidebarEl">
+            <div class="sidebar-title">📂 Spaces</div>
+            <div class="sidebar-item active"><span class="icon">🏠</span> Alles <span class="count" id="allCount">0</span></div>
+            <div class="sidebar-item"><span class="icon">⚡</span> NEXUZ² <span class="count">8</span></div>
+            <div class="sidebar-item"><span class="icon">🤖</span> Agents <span class="count">5</span></div>
+            <div class="sidebar-item"><span class="icon">🔧</span> DevOps <span class="count">4</span></div>
+            <div class="sidebar-item"><span class="icon">📈</span> Business <span class="count">3</span></div>
+            <div class="sidebar-item"><span class="icon">🎓</span> Learning <span class="count">6</span></div>
+
+            <div class="sidebar-title">🏷️ Tags</div>
+            <div class="sidebar-item"><span class="icon">#</span> backend</div>
+            <div class="sidebar-item"><span class="icon">#</span> frontend</div>
+            <div class="sidebar-item"><span class="icon">#</span> architecture</div>
+            <div class="sidebar-item"><span class="icon">#</span> deployment</div>
+
+            <div class="sidebar-title">⭐ Pinned</div>
+            <div class="sidebar-item"><span class="icon">📌</span> NEXUZ² Blueprint</div>
+            <div class="sidebar-item"><span class="icon">📌</span> API Key Registry</div>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="content">
+            <!-- WIKI VIEW -->
+            <div class="view active" id="wikiView">
+                <input type="text" class="wiki-search" placeholder="🔍 Suche in Wiki-Artikeln..." id="wikiSearch">
+                <div class="wiki-grid" id="wikiGrid"></div>
+            </div>
+
+            <!-- KANBAN VIEW -->
+            <div class="view" id="kanbanView">
+                <div class="kanban" id="kanbanBoard"></div>
+            </div>
+
+            <!-- NOTES VIEW -->
+            <div class="view" id="notesView">
+                <div class="notes-stats" id="notesStats"></div>
+                <div class="notes-toolbar">
+                    <input type="text" class="notes-search" placeholder="🔍 Notizen durchsuchen..." id="notesSearch">
+                    <button class="nm-btn primary" onclick="createNewNote()">+ Neue Notiz</button>
+                    <button class="nm-btn" onclick="archiveOldNotes()">📦 30d Auto-Archiv</button>
+                </div>
+                <div class="folder-tabs" id="folderTabs"></div>
+                <div class="notes-grid" id="notesGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTE EDIT MODAL -->
+    <div class="modal-overlay" id="noteModal">
+        <div class="modal-box">
+            <div class="nm-head">
+                <div style="font-size:14px;font-weight:800">📝 Notiz bearbeiten</div>
+                <button class="nm-close" onclick="closeNoteModal()">&times;</button>
+            </div>
+            <input class="nm-title-input" id="nmTitle" placeholder="Titel...">
+            <textarea class="nm-body" id="nmBody" placeholder="Inhalt schreiben..."></textarea>
+            <div class="nm-meta">
+                <select id="nmPrefix" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:10px;font-family:var(--font)">
+                    <option value="P">P — Projekt</option>
+                    <option value="I">I — Idee</option>
+                    <option value="R">R — Referenz</option>
+                </select>
+                <select id="nmFolder" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:10px;font-family:var(--font)">
+                    <option value="inbox">📥 Inbox</option>
+                    <option value="aktiv">🔥 Aktiv</option>
+                    <option value="archiv">📦 Archiv</option>
+                    <option value="meeting">🎤 Meeting</option>
+                </select>
+                <button class="nm-btn primary" onclick="saveNoteModal()">💾 Speichern</button>
+                <button class="nm-btn danger" onclick="deleteNoteModal()">🗑️ Löschen</button>
+                <div style="flex:1"></div>
+                <span id="nmInfo" style="font-size:9px;color:var(--muted);font-family:var(--mono)"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- WIKI DETAIL MODAL -->
+    <div class="modal-overlay" id="wikiModal">
+        <div class="modal-box wide">
+            <div class="nm-head">
+                <div id="wmTitle" style="font-size:18px;font-weight:900"></div>
+                <button class="nm-close" onclick="closeWikiModal()">&times;</button>
+            </div>
+            <div id="wmSpace" style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:16px"></div>
+            <div id="wmBody" style="font-size:13px;line-height:2;white-space:pre-wrap"></div>
+            <div id="wmTags" style="display:flex;gap:4px;margin-top:16px;flex-wrap:wrap"></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- SHARED DATA LAYER -->
+    <script src="../shared/dkz-notes-shared.js"></script>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+
+    // ═══════════════════════════════════════
+    // WIKI DATA (persistent in localStorage)
+    // ═══════════════════════════════════════
+    const DEFAULT_WIKI = [
+        { title: "NEXUZ² Architektur-Overview", desc: "Multi-Backend/Frontend-System mit 6 Backends, 7 Frontends und MCP Browser-Integration. Das zentrale Nervensystem des DkZ-Ökosystems.", icon: "⚡", space: "NEXUZ²", tags: ["#architecture", "#nexuz"], updated: "2026-03-08", color: "#fa1e4e", body: "NEXUZ² ist das zentrale Nervensystem des DkZ-Ökosystems.\n\n## Architektur\n- 6 Backends: VPS, LLM Server, Google Apps Script, Apache, Cloudflare Worker, Nextcloud\n- 7 Frontends: Dashboard, Hub, Landing Pages, Mobile, Extension, Admin, Docs\n- MCP Browser-Integration für Chrome/Vivaldi\n\n## Kernprinzipien\n1. Dezentral: Kein Single Point of Failure\n2. EU-souverän: Alle Server in EU\n3. Self-hosted: Volle Kontrolle\n4. Offline-First: localStorage + Service Worker" },
+        { title: "Backend Registry & Bridges", desc: "Wie der NEXUZ² Router die 6 Backends verbindet: VPS, LLM Server, Google Apps Script, Apache, Cloudflare Worker, Nextcloud.", icon: "🔌", space: "NEXUZ²", tags: ["#backend", "#router"], updated: "2026-03-08", color: "#fa1e4e", body: "Der NEXUZ² Router verbindet alle Backends über ein Bridge-System.\n\n## Backends\n1. KVM8 VPS — Primary API Gateway (Node.js/Fastify)\n2. LLM Server — Ollama/vLLM für lokale Inferenz\n3. Google Apps Script — Drive, Sheets, Docs Brücke\n4. Apache VPS — Legacy-Kompatibilität\n5. Cloudflare Worker — Edge Computing, CORS-Proxy\n6. Nextcloud — Agent-Dispatch, File Sync\n\n## Health-Monitoring\nJeder Backend hat einen /health Endpoint der alle 30s geprüft wird." },
+        { title: "MCP Browser Extension", desc: "Chrome/Vivaldi Extension mit Sidepanel, Context Menu und Keyboard Shortcuts. Manifest V3, Service Worker, Content Script.", icon: "🔗", space: "NEXUZ²", tags: ["#mcp", "#extension"], updated: "2026-03-08", color: "#a855f7", body: "Die MCP Browser Extension verbindet den Browser direkt mit dem DkZ-Ökosystem.\n\n## Features\n- Sidepanel: Chat + Status Dashboard\n- Context Menu: Text markieren → AI verarbeiten\n- Keyboard Shortcuts: Ctrl+Shift+K → Quick Command\n- Background Service Worker: Message Routing\n\n## Technik\n- Manifest V3 (Chrome/Vivaldi)\n- Content Script für Page-Integration\n- Options Page für Backend-Config" },
+        { title: "DkZ Design System", desc: "Farben (#fa1e4e Accent), Typography (Inter/JetBrains Mono), Glassmorphism, Dark Theme, Component-Library.", icon: "🎨", space: "DevOps", tags: ["#design", "#css"], updated: "2026-03-08", color: "#fa1e4e", body: "Das DkZ Design System v2 definiert alle visuellen Standards.\n\n## Farben\n- Accent: #fa1e4e (Rot-Pink)\n- Green: #00ff88\n- Yellow: #ffb800\n- Purple: #a855f7\n- Background: #060608\n\n## Typography\n- UI: Inter (300-900)\n- Code: JetBrains Mono (400-700)\n\n## Komponenten\n- Glassmorphism Cards\n- Dark-Only Theme\n- CSS Custom Properties\n- Kein TailwindCSS — Vanilla CSS only" },
+        { title: "OpenClaw Orchestrator", desc: "Agent-Orchestrator mit PicoClaw-Registry, Health-Monitoring, Remote-Steuerung über Nextcloud. Docker-Deployment.", icon: "🐙", space: "Agents", tags: ["#openclaw", "#agents"], updated: "2026-03-08", color: "#a855f7", body: "OpenClaw ist der zentrale Agent-Orchestrator.\n\n## Features\n- PicoClaw-Registry: Alle Agenten registriert\n- Health-Monitoring: Echtzeit-Status\n- Remote-Steuerung über Nextcloud\n- Docker-Deployment für Isolation\n\n## Agent-Typen\n- PicoClaw: Leichtgewichtig, aufgabenspezifisch\n- NanoBot: Middleware-Agent\n- TinyClaw: Embedded Mini-Agent\n- OpenClaw: Orchestrator (dieser)" },
+        { title: "PicoClaw Agent Framework", desc: "Leichtgewichtige Agenten für spezifische Aufgaben. Registry-basiert, health-monitored, remote-steuerbar.", icon: "🦀", space: "Agents", tags: ["#picoclaw", "#framework"], updated: "2026-03-08", color: "#22C55E", body: "PicoClaw — Leichtgewichtige Agenten für spezifische Aufgaben.\n\n## Architektur\n- Registry-basiert: Zentrale Verwaltung\n- Health-monitored: Automatische Überwachung\n- Remote-steuerbar: Via Nextcloud API\n\n## Lifecycle\n1. Registrierung in Registry\n2. Health-Check Interval: 30s\n3. Task-Zuweisung via Queue\n4. Ergebnis-Reporting\n5. Auto-Restart bei Failure" },
+        { title: "KVM8 VPS Setup", desc: "Primary API Gateway auf dem KVM8 VPS. Node.js/Fastify Stack, Auth, Session-Management, PostgreSQL.", icon: "🖥️", space: "NEXUZ²", tags: ["#vps", "#setup"], updated: "2026-03-07", color: "#55acee", body: "KVM8 VPS — Primary API Gateway.\n\n## Stack\n- Runtime: Node.js 18+\n- Framework: Fastify\n- Auth: Passkey/WebAuthn\n- Database: PostgreSQL\n- Session: Redis\n\n## Endpoints\n- /api/modules — GET\n- /api/health — GET\n- /api/config — POST\n- /api/auth — POST\n- /api/user — GET/PUT" },
+        { title: "LLM Server Konfiguration", desc: "Ollama/vLLM auf dem Linux Dedicated Server. Lokale Modelle, RAG-Pipeline, Embedding-Generierung.", icon: "🧠", space: "NEXUZ²", tags: ["#llm", "#inference"], updated: "2026-03-07", color: "#F59E0B", body: "LLM Server — Lokale KI-Inferenz.\n\n## Modelle\n- Ollama: llama3, codellama, mistral\n- vLLM: Für High-Throughput Batch\n- Embeddings: nomic-embed-text\n\n## RAG-Pipeline\n1. Document Ingestion → Chunking\n2. Embedding → Vector Store\n3. Query → Retrieval → Generation\n4. Response + Citations" },
+        { title: "CI/CD Pipeline Guide", desc: "GitHub Actions Workflow für automatisches Build, Test und Deploy. Docker-Integration und Staging-Umgebung.", icon: "⚙️", space: "DevOps", tags: ["#cicd", "#github"], updated: "2026-03-06", color: "#F97316", body: "CI/CD Pipeline — Automatisches Build, Test, Deploy.\n\n## Workflow\n1. Push/PR → GitHub Actions Trigger\n2. Lint + Test → Automatisch\n3. Docker Build → Registry Push\n4. Deploy → Staging Environment\n5. Health-Check → Verification\n6. Promote → Production\n\n## Konfiguration\n- .github/workflows/deploy.yml\n- Docker Multi-Stage Build\n- Environment Variables via Secrets" },
+        { title: "Google Apps Script API", desc: "REST-API über Google Apps Script. Drive-Zugriff, Sheets als Datenbank, Docs-Export, Blogger-Integration.", icon: "📊", space: "NEXUZ²", tags: ["#gas", "#google"], updated: "2026-03-06", color: "#10B981", body: "Google Apps Script — Bridge zu Google Services.\n\n## Endpoints\n- doGet: REST API Read\n- doPost: REST API Write\n- Sheets: Als leichtgewichtige DB\n- Drive: File Storage + Backup\n- Docs: Export + Template Engine\n- Blogger: CMS Integration\n\n## Deployment\n- Web App → URL generiert\n- Execution API für Server-to-Server" },
+        { title: "EU DSGVO Compliance", desc: "Datenschutz-Richtlinien für alle DkZ-Module. Cookie-Consent, Datenverarbeitung, Server-Standorte (EU only).", icon: "🇪🇺", space: "Business", tags: ["#dsgvo", "#compliance"], updated: "2026-03-05", color: "#3B82F6", body: "DSGVO Compliance für alle DkZ-Module.\n\n## Maßnahmen\n- Cookie-Consent Banner (Opt-In)\n- Datenverarbeitung nur auf EU-Servern\n- Keine Drittanbieter-Tracking\n- Lösch-Anfragen binnen 72h\n- Privacy by Design\n\n## Server-Standorte\n- Frankfurt (Hetzner)\n- Amsterdam (Backup)\n- Cloudflare Edge: EU-only Routing" },
+        { title: "Cloudflare Worker Setup", desc: "Edge-Computing Worker für Rate-Limiting, CORS-Proxy, Caching und Geo-Routing. Wrangler + GitHub CI Deploy.", icon: "⚡", space: "NEXUZ²", tags: ["#cloudflare", "#edge"], updated: "2026-03-05", color: "#F97316", body: "Cloudflare Workers — Edge Computing.\n\n## Features\n- Rate-Limiting: IP-basiert\n- CORS-Proxy: Cross-Origin Requests\n- Caching: KV Store\n- Geo-Routing: EU/US/Asia\n\n## Deployment\n- Wrangler CLI\n- GitHub Actions CI/CD\n- Environment: Production + Staging" },
+        { title: "Auto-Sort System", desc: "PowerShell-basiertes Dateisortier-System für DEVKiTZ. 33 Kategorien, Duplikat-Erkennung, Trockenlauf-Modus.", icon: "🧹", space: "DevOps", tags: ["#auto-sort", "#powershell"], updated: "2026-03-08", color: "#00ff88", body: "Auto-Sort — Intelligente Dateisortierung.\n\n## Features\n- 33 Kategorien (Bilder, Docs, Code, etc.)\n- Duplikat-Erkennung via Hash\n- Trockenlauf-Modus (WhatIf)\n- Logging + Undo-Funktion\n\n## Verwendung\npowershell\n.\\auto-sort.ps1 -Path C:\\Downloads -DryRun\n.\\auto-sort.ps1 -Path C:\\Downloads -Execute" },
+        { title: "Playbook Workflow Reference", desc: "100 DKZ-Workflows in 5 Kategorien: Ops, Dev, Data, AI, System. Markdown-basiert, LLM-optimiert.", icon: "📋", space: "DevOps", tags: ["#playbook", "#workflows"], updated: "2026-03-08", color: "#F59E0B", body: "100 DKZ-Workflows dokumentiert.\n\n## Kategorien\n1. Ops (20): Server, Monitoring, Backup\n2. Dev (25): Build, Test, Deploy, Review\n3. Data (15): ETL, Migration, Analytics\n4. AI (20): Training, Inference, RAG\n5. System (20): Config, Auth, Health\n\n## Format\n- Markdown-basiert\n- LLM-optimiert (strukturiert)\n- Jeder Workflow: Trigger → Steps → Verify" },
+        { title: "Drive Organizer (Jeff Su)", desc: "Google Drive 5x99 Sortier-System nach Jeff Su. Apps Script, automatische Ordner-Erstellung und File-Routing.", icon: "📁", space: "Business", tags: ["#drive", "#organization"], updated: "2026-03-07", color: "#3B82F6", body: "Google Drive Organisation nach Jeff Su Methode.\n\n## 5x99 System\n- 5 Hauptkategorien\n- Max 99 Unterordner\n- Automatische Sortierung\n\n## Apps Script\n- Automatische Ordner-Erstellung\n- File-Routing nach Typ\n- Duplikat-Check\n- Timestamp-basierte Archivierung" },
+        { title: "Action Deck System", desc: "Swipe-to-Decide Dashboard mit YOLO JOLO Modus, Sprachassistent (TTS/STT), QR-Code für Mobile.", icon: "🎴", space: "NEXUZ²", tags: ["#action-deck", "#voice"], updated: "2026-03-08", color: "#fa1e4e", body: "Action Deck — Swipe-to-Decide Dashboard.\n\n## Features\n- Swipe Left/Right für Entscheidungen\n- YOLO JOLO Modus: Zufällige Aktionen\n- Sprachassistent: TTS + STT\n- QR-Code: Mobile Quick-Access\n- Gamification: Streak Counter\n\n## Integration\n- Tasks aus Kanban Board\n- Notizen aus 4-Ordner System\n- Shortcuts zu allen Modulen" },
+        { title: "Skills Ecosystem (DKZ-SK)", desc: "12 Skills in 3 Kategorien: Content (wiki-add, wiki-update, session-log), Dashboard (create, update), System (meta-sync, tag-manage, git-wiki-commit).", icon: "🧩", space: "Agents", tags: ["#skills", "#ecosystem"], updated: "2026-02-01", color: "#22C55E", body: "DkZ Skills Ecosystem — 12 automatisierte Fähigkeiten.\n\n## Content Skills\n- SK-001 wiki-add — Neuen Wiki-Eintrag anlegen\n- SK-002 wiki-update — Wiki-Eintrag aktualisieren\n- SK-005 session-log — Session-Protokoll anlegen\n- SK-009 skill-doc — Skill dokumentieren\n- SK-012 export-report — Report exportieren\n\n## Dashboard Skills\n- SK-003 dashboard-create — HTML-Dashboard generieren\n- SK-004 dashboard-update — Dashboard aktualisieren\n\n## System Skills\n- SK-006 meta-sync — CSV-Metadaten synchronisieren\n- SK-007 tag-manage — Tags verwalten\n- SK-008 git-wiki-commit — Wiki committen\n- SK-010 agent-create — Neuen Agenten definieren\n- SK-011 project-init — Neues Projekt anlegen\n\nQuelle: 08_aiaikirk/wiki/skills/" },
+        { title: "n8n MCP Server Integration", desc: "4 MCP-Server für n8n-Anbindung verglichen: czlonkowski (1.084+ Nodes), Official, salacoste (17 Tools), zach0028 (400+ Nodes).", icon: "🔗", space: "NEXUZ²", tags: ["#n8n", "#mcp-server"], updated: "2026-02-02", color: "#a855f7", body: "RES-001: n8n MCP Server Integration\n\n## Empfehlung: czlonkowski/n8n-mcp\n- 1.084+ Nodes (537 Core + 547 Community)\n- Claude Code Support: Ja\n- Workflow CRUD: Ja (mit API-Key)\n- Config Validation: Ja\n- 2.646 Pre-Extracted Configurations\n\n## Setup\nclaude mcp add n8n-mcp -e MCP_MODE=stdio -- npx n8n-mcp\n\n## Vergleich\n| Server | Nodes | Claude Code | CRUD |\n|--------|-------|-------------|------|\n| czlonkowski | 1.084+ | Ja | Ja |\n| Official | Variabel | Indirekt | Ja |\n| salacoste | k.A. | Ja | Ja |\n| zach0028 | 400+ | Nein | Nein |\n\nQuelle: 08_aiaikirk/wiki/research/RES-001" },
+        { title: "Automatisierungs-Guide", desc: "3-Ebenen-System: Skills (DKZ-SK), Workflows (DKZ-WF), Agenten (DKZ-AG). 5 Workflows, 5 Agenten, Hooks-Integration.", icon: "⚡", space: "DevOps", tags: ["#automation", "#workflows"], updated: "2026-02-01", color: "#F97316", body: "DkZ Automatisierungs-Guide — 3-Ebenen-System.\n\n## Ebenen\n1. Skills (DKZ-SK) — 12 Einzelaktionen\n2. Workflows (DKZ-WF) — 5 verkettete Abläufe\n3. Agenten (DKZ-AG) — 5 KI-Agenten\n\n## Workflows\n- WF-001: new-wiki-entry (SK-001 → SK-003 → SK-006 → SK-008)\n- WF-002: session-complete (SK-005 → SK-006 → SK-008)\n- WF-003: project-setup (SK-011 → SK-001 → SK-003 → SK-006 → SK-008)\n- WF-004: skill-register (SK-009 → SK-006 → SK-004 → SK-008)\n- WF-005: full-update (SK-002 → SK-004 → SK-006 → SK-008)\n\n## Agenten\n- AG-001 WikiExplorer — Wiki durchsuchen\n- AG-002 DashboardBuilder — Dashboards erstellen\n- AG-003 MetaManager — CSV-Metadaten\n- AG-004 DocWriter — Dokumentation\n- AG-005 SkillArchitect — Skills planen\n\nQuelle: 08_aiaikirk/wiki/rubriken/automation/" },
+        { title: "Claude Code Benutzerhandbuch", desc: "Vollständiges Handbuch für Claude Code CLI. Befehle, Workflows, MCP-Server, Hooks und Best Practices.", icon: "📖", space: "DevOps", tags: ["#claude-code", "#handbuch"], updated: "2026-02-01", color: "#55acee", body: "Claude Code Benutzerhandbuch — CLI Reference.\n\n## Kernbefehle\n- claude — Interaktiver Chat\n- claude mcp add — MCP-Server hinzufügen\n- claude --help — Hilfe anzeigen\n\n## MCP-Server Verwaltung\n- claude mcp add <name> -- <command>\n- claude mcp remove <name>\n- claude mcp list\n\n## Hooks\n- PreToolUse — Vor Tool-Ausführung\n- PostToolUse — Nach Tool-Ausführung\n- Notification — Bei Benachrichtigung\n\nQuelle: 08_aiaikirk/wiki/docs/claude-code-benutzerhandbuch/" },
+        { title: "n8n REST API Reference", desc: "Vollständige REST-API Dokumentation für n8n: Workflows, Executions, Credentials, Tags. Bearer Token Auth.", icon: "🔌", space: "NEXUZ²", tags: ["#n8n", "#rest-api"], updated: "2026-02-02", color: "#10B981", body: "RES-002: n8n REST API Reference\n\n## Endpoints\n- GET /workflows — Alle Workflows\n- POST /workflows — Workflow erstellen\n- GET /executions — Ausführungen\n- POST /credentials — Credentials anlegen\n- GET /tags — Tags auflisten\n\n## Auth\n- Bearer Token via API-Key\n- Konfiguration in n8n Dashboard\n\n## Pagination\n- limit (default: 100)\n- cursor (für Next Page)\n\nQuelle: 08_aiaikirk/wiki/research/RES-002" },
+        { title: "n8n AI Agents Guide", desc: "AI Agents in n8n erstellen: Tool Agent, Conversational Agent, OpenAI Functions Agent. Memory und Tool-Integration.", icon: "🤖", space: "Agents", tags: ["#n8n", "#ai-agents"], updated: "2026-02-02", color: "#a855f7", body: "RES-004: n8n AI Agents\n\n## Agent-Typen\n1. Tool Agent — Nutzt externe Tools\n2. Conversational Agent — Chat-basiert\n3. OpenAI Functions Agent — Structured Output\n\n## Memory\n- Window Buffer Memory\n- Summary Memory\n- Vector Store Memory\n\n## Integration\n- HTTP Request Tool\n- Code Tool (JS/Python)\n- Workflow Tool\n- Calculator Tool\n\nQuelle: 08_aiaikirk/wiki/research/RES-004" },
+        { title: "Hooks Automatisierung", desc: "Claude Code Hooks für DkZ: PreToolUse, PostToolUse, Notification. Auto-Format, Auto-Lint, Status-Updates.", icon: "🪝", space: "DevOps", tags: ["#hooks", "#automation"], updated: "2026-02-02", color: "#F59E0B", body: "RES-005: Hooks Automatisierung\n\n## Hook-Typen\n- PreToolUse — Vor Tool-Ausführung (z.B. Lint-Check)\n- PostToolUse — Nach Tool-Ausführung (z.B. Auto-Format)\n- Notification — Bei Meldungen (z.B. Status-Update)\n\n## Konfiguration\nIn .claude/settings.local.json:\n\n## DkZ-spezifische Hooks\n1. Auto-Format nach Code-Edits\n2. Lint-Check vor Git-Commits\n3. Wiki-Sync nach Dokumentations-Änderungen\n4. Dashboard-Update nach Skill-Änderungen\n\nQuelle: 08_aiaikirk/wiki/research/RES-005" },
+        { title: "DkZ Prompt-Bibliothek", desc: "8 optimierte Prompts: Wiki-Eintrag, Dashboard, Session-Log, Skill-Doc, Research, Agent-Create, Project-Init, Report.", icon: "💬", space: "Agents", tags: ["#prompts", "#templates"], updated: "2026-02-01", color: "#ec4899", body: "8 DkZ-optimierte Prompts.\n\n## Prompt-Katalog\n- PROMPT-001: Wiki-Eintrag erstellen\n- PROMPT-002: Dashboard generieren\n- PROMPT-003: Session-Log anlegen\n- PROMPT-004: Skill dokumentieren\n- PROMPT-005: Research durchführen\n- PROMPT-006: Agent erstellen\n- PROMPT-007: Projekt initialisieren\n- PROMPT-008: Report exportieren\n\n## Format\nJeder Prompt hat:\n- Kontext-Sektion\n- Aufgaben-Definition\n- Output-Format\n- Qualitäts-Kriterien\n\nQuelle: 08_aiaikirk/wiki/prompts/" },
+        { title: "Dateimanagement (5x99)", desc: "Strukturiertes Dateisystem nach der 5×99 Methode. Zäsur-Strategie, Quick Share, automatische Sortierung.", icon: "📁", space: "Business", tags: ["#dateimanagement", "#5x99"], updated: "2026-02-01", color: "#3B82F6", body: "Dateimanagement nach 5×99 Methode.\n\n## Struktur\n- 5 Hauptkategorien\n- Max 99 Unterordner pro Kategorie\n- Automatische Nummerierung\n\n## Zäsur-Strategie\n- Quartals-Archivierung\n- Automatische Verschiebung alter Dateien\n- Aktiv/Archiv Trennung\n\n## Quick Share\n- Temporärer Ordner für schnellen Austausch\n- Auto-Cleanup nach 7 Tagen\n- Symlinks zu aktiven Projekten\n\nQuelle: 08_aiaikirk/wiki/rubriken/dateimanagement/" },
+    ];
+
+    let WIKI_ARTICLES = JSON.parse(localStorage.getItem('dkz-wiki')) || DEFAULT_WIKI;
+    if (!localStorage.getItem('dkz-wiki')) localStorage.setItem('dkz-wiki', JSON.stringify(WIKI_ARTICLES));
+
+    // ═══════════════════════════════════════
+    // KANBAN DATA (persistent)
+    // ═══════════════════════════════════════
+    const KANBAN_COLUMNS = [
+        { name: "Backlog", color: "var(--muted)", cards: [
+            { title: "Multi-Messenger (Matrix)", desc: "Bridges zu WhatsApp, Telegram, Signal", priority: "hoch", tag: "Kern-Modul" },
+            { title: "Community Hub", desc: "Discord-Ersatz mit Jitsi Voice", priority: "mittel", tag: "Kern-Modul" },
+            { title: "EU Cloud Hosting", desc: "Docker/K8s Frankfurt + Amsterdam", priority: "strategisch", tag: "Infrastruktur" }
+        ]},
+        { name: "Geplant", color: "var(--blue)", cards: [
+            { title: "Passkey Auth System", desc: "WebAuthn/FIDO2 — Zero Password", priority: "hoch", tag: "Sicherheit" },
+            { title: "Self-Repair Watchdog", desc: "Health-Checks + Auto-Restart", priority: "mittel", tag: "System" },
+            { title: "CI/CD Pipeline", desc: "GitHub Actions Integration", priority: "mittel", tag: "DevOps" }
+        ]},
+        { name: "In Arbeit", color: "var(--yellow)", cards: [
+            { title: "NEXUZ² Backend APIs", desc: "Echte Endpoint-Verbindungen", priority: "kritisch", tag: "NEXUZ²" },
+            { title: "Knowledge Hub", desc: "Wiki + Kanban + Notizen", priority: "hoch", tag: "Kern-Modul" },
+            { title: "OpenClaw Orchestrator", desc: "Backend-API und Dashboard", priority: "hoch", tag: "Agents" }
+        ]},
+        { name: "Review", color: "var(--purple)", cards: [
+            { title: "Action Deck", desc: "Swipe Dashboard mit Voice", priority: "erledigt", tag: "Dashboard" },
+            { title: "MCP Extension", desc: "Chrome/Vivaldi Sidepanel", priority: "erledigt", tag: "MCP" }
+        ]},
+        { name: "Erledigt ✅", color: "var(--green)", cards: [
+            { title: "Hub Auto-Discovery", desc: "26 Module, Filter, Suche", priority: "erledigt", tag: "Dashboard" },
+            { title: "NEXUZ² Command Center", desc: "6 Backends, 7 Frontends", priority: "erledigt", tag: "NEXUZ²" },
+            { title: "Playbook Runner", desc: "100 Workflows", priority: "erledigt", tag: "Dashboard" },
+            { title: "Landing Pages", desc: "Universal, Desktop, Mobile", priority: "erledigt", tag: "Frontend" }
+        ]}
+    ];
+
+    // ═══════════════════════════════════════
+    // STATE
+    // ═══════════════════════════════════════
+    let activeView = 'wiki';
+    let activeNoteFolder = 'all';
+    let noteSearch = '';
+    let editingNoteId = null;
+
+    // ═══════════════════════════════════════
+    // RENDER: WIKI
+    // ═══════════════════════════════════════
+    function renderWiki() {
+        const grid = document.getElementById('wikiGrid');
+        grid.innerHTML = WIKI_ARTICLES.map((a, idx) => `
+        <div class="wiki-card" data-title="${esc(a.title.toLowerCase())}" onclick="openWikiArticle(${idx})">
+            <div class="wc-icon">${a.icon}</div>
+            <div class="wc-title">${esc(a.title)}</div>
+            <div class="wc-desc">${esc(a.desc)}</div>
+            <div class="wc-meta">
+                <div>
+                    ${a.tags.map(t => `<span class="wc-tag" style="background:${hexAlpha(a.color, .1)};color:${a.color}">${esc(t)}</span>`).join(' ')}
+                </div>
+                <div>${esc(a.space)} · ${a.updated}</div>
+            </div>
+        </div>
+    `).join('');
+        document.getElementById('wikiCount').textContent = WIKI_ARTICLES.length;
+    }
+
+    function openWikiArticle(idx) {
+        const a = WIKI_ARTICLES[idx];
+        if (!a) return;
+        document.getElementById('wmTitle').innerHTML = `${a.icon} ${esc(a.title)}`;
+        document.getElementById('wmSpace').textContent = `${a.space} · Aktualisiert: ${a.updated}`;
+        document.getElementById('wmBody').textContent = a.body || a.desc;
+        document.getElementById('wmTags').innerHTML = a.tags.map(t => `<span class="wc-tag" style="background:${hexAlpha(a.color, .1)};color:${a.color};padding:3px 8px;border-radius:4px;font-size:9px;font-weight:600">${esc(t)}</span>`).join('');
+        document.getElementById('wikiModal').classList.add('open');
+    }
+
+    function closeWikiModal() { document.getElementById('wikiModal').classList.remove('open'); }
+
+    // ═══════════════════════════════════════
+    // RENDER: KANBAN
+    // ═══════════════════════════════════════
+    function renderKanban() {
+        const board = document.getElementById('kanbanBoard');
+        let totalCards = 0;
+        board.innerHTML = KANBAN_COLUMNS.map(col => {
+            totalCards += col.cards.length;
+            return `
+        <div class="kanban-col">
+            <div class="kanban-col-head">
+                <div class="dot" style="background:${col.color}"></div>
+                ${esc(col.name)}
+                <span class="count">${col.cards.length}</span>
+            </div>
+            <div class="kanban-cards">
+                ${col.cards.map(c => {
+                    const pColor = c.priority === 'kritisch' ? 'var(--red)' : c.priority === 'hoch' ? 'var(--yellow)' : c.priority === 'erledigt' ? 'var(--green)' : 'var(--blue)';
+                    return `
+                    <div class="kanban-card">
+                        <div class="kc-title">${esc(c.title)}</div>
+                        <div class="kc-desc">${esc(c.desc)}</div>
+                        <div class="kc-footer">
+                            <span class="kc-priority" style="background:${pColor}20;color:${pColor}">${esc(c.priority)}</span>
+                            <span>${esc(c.tag)}</span>
+                        </div>
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>`;
+        }).join('');
+        document.getElementById('kanbanCount').textContent = totalCards;
+    }
+
+    // ═══════════════════════════════════════
+    // RENDER: NOTES (4-Ordner System)
+    // ═══════════════════════════════════════
+    function renderNotesStats() {
+        const s = DkzNotes.stats();
+        document.getElementById('notesStats').innerHTML = `
+            <div class="ns-card"><span class="ns-val" style="color:var(--accent)">${s.total}</span> Gesamt</div>
+            <div class="ns-card"><span class="ns-val" style="color:var(--blue)">${s.inbox}</span> 📥 Inbox</div>
+            <div class="ns-card"><span class="ns-val" style="color:var(--green)">${s.aktiv}</span> 🔥 Aktiv</div>
+            <div class="ns-card"><span class="ns-val" style="color:var(--purple)">${s.meeting}</span> 🎤 Meeting</div>
+            <div class="ns-card"><span class="ns-val" style="color:var(--yellow)">${s.archiv}</span> 📦 Archiv</div>
+            <div class="ns-card"><span class="note-prefix pf-P">P</span> ${s.byPrefix.P}</div>
+            <div class="ns-card"><span class="note-prefix pf-I">I</span> ${s.byPrefix.I}</div>
+            <div class="ns-card"><span class="note-prefix pf-R">R</span> ${s.byPrefix.R}</div>
+        `;
+    }
+
+    function renderFolderTabs() {
+        const folders = DkzNotes.load();
+        const all = DkzNotes.allNotes(folders);
+        let h = `<button class="folder-tab ${activeNoteFolder === 'all' ? 'active' : ''}" onclick="setNoteFolder('all')">🏠 Alle <span class="ft-count">${all.length}</span></button>`;
+        folders.forEach(f => {
+            h += `<button class="folder-tab ${activeNoteFolder === f.id ? 'active' : ''}" onclick="setNoteFolder('${f.id}')">${f.icon} ${esc(f.name)} <span class="ft-count">${(f.notes||[]).length}</span></button>`;
+        });
+        document.getElementById('folderTabs').innerHTML = h;
+    }
+
+    function renderNotes() {
+        renderNotesStats();
+        renderFolderTabs();
+        const folders = DkzNotes.load();
+        let notes;
+        if (noteSearch) {
+            notes = DkzNotes.searchNotes(noteSearch, folders);
+            if (activeNoteFolder !== 'all') notes = notes.filter(n => n.folder === activeNoteFolder);
+        } else if (activeNoteFolder === 'all') {
+            notes = DkzNotes.allNotes(folders);
+        } else {
+            notes = DkzNotes.notesByFolder(activeNoteFolder, folders).map(n => {
+                const f = folders.find(x => (x.notes||[]).includes(n));
+                return { ...n, folder: activeNoteFolder, folderIcon: folders.find(x=>x.id===activeNoteFolder)?.icon || '' };
+            });
+        }
+
+        const grid = document.getElementById('notesGrid');
+        grid.innerHTML = notes.map(n => `
+        <div class="note-card" onclick="openNoteEditor('${n.id}')" style="${n.folder === 'aktiv' ? 'border-left:3px solid var(--green)' : n.folder === 'meeting' ? 'border-left:3px solid var(--purple)' : ''}">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+                <span class="note-prefix pf-${n.prefix}">${n.prefix}</span>
+                <div class="nc-title" style="margin:0">${esc(n.title)}</div>
+            </div>
+            <div class="nc-text">${esc(n.body || '')}</div>
+            ${(n.tags && n.tags.length) ? `<div class="nc-tags">${n.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>` : ''}
+            <div class="nc-date">${n.folderIcon || ''} ${n.modified || n.created || ''}</div>
+        </div>`).join('');
+
+        document.getElementById('notesCount').textContent = DkzNotes.allNotes(folders).length;
+    }
+
+    function setNoteFolder(id) { activeNoteFolder = id; renderNotes(); }
+
+    // ═══════════════════════════════════════
+    // NOTE EDITOR MODAL
+    // ═══════════════════════════════════════
+    function openNoteEditor(id) {
+        const result = DkzNotes.findNote(id);
+        if (!result) return;
+        editingNoteId = id;
+        document.getElementById('nmTitle').value = result.note.title;
+        document.getElementById('nmBody').value = result.note.body || '';
+        document.getElementById('nmPrefix').value = result.note.prefix || 'I';
+        document.getElementById('nmFolder').value = result.folderId;
+        document.getElementById('nmInfo').textContent = `Erstellt: ${result.note.created || '—'} · Geändert: ${result.note.modified || '—'} · ${(result.note.body||'').length} Zeichen`;
+        document.getElementById('noteModal').classList.add('open');
+        setTimeout(() => document.getElementById('nmTitle').focus(), 100);
+    }
+
+    function saveNoteModal() {
+        if (!editingNoteId) return;
+        const title = document.getElementById('nmTitle').value;
+        const body = document.getElementById('nmBody').value;
+        const prefix = document.getElementById('nmPrefix').value;
+        const targetFolder = document.getElementById('nmFolder').value;
+
+        const result = DkzNotes.findNote(editingNoteId);
+        if (!result) return;
+
+        DkzNotes.updateNote(editingNoteId, { title, body, prefix });
+        if (result.folderId !== targetFolder) {
+            DkzNotes.moveNote(editingNoteId, targetFolder);
+        }
+        renderNotes();
+        toast('💾 Notiz gespeichert');
+    }
+
+    function deleteNoteModal() {
+        if (!editingNoteId || !confirm('Notiz wirklich löschen?')) return;
+        DkzNotes.deleteNote(editingNoteId);
+        closeNoteModal();
+        renderNotes();
+        toast('🗑️ Notiz gelöscht');
+    }
+
+    function closeNoteModal() {
+        document.getElementById('noteModal').classList.remove('open');
+        editingNoteId = null;
+    }
+
+    function createNewNote() {
+        const folder = activeNoteFolder === 'all' ? 'inbox' : activeNoteFolder;
+        const folders = DkzNotes.addNote(folder, { title: 'Neue Notiz', prefix: 'I' });
+        const all = DkzNotes.allNotes(folders);
+        if (all.length > 0) openNoteEditor(all[0].id);
+        renderNotes();
+        toast('📝 Neue Notiz erstellt');
+    }
+
+    function archiveOldNotes() {
+        const result = DkzNotes.archiveOld(30);
+        renderNotes();
+        toast(result.moved > 0 ? `📦 ${result.moved} Notizen archiviert` : '✅ Nichts zu archivieren');
+    }
+
+    // ═══════════════════════════════════════
+    // HELPERS
+    // ═══════════════════════════════════════
+    function hexAlpha(hex, alpha) {
+        if (!hex || hex.startsWith('var(')) return `rgba(250,30,78,${alpha})`;
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+    function toast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    function handleNewBtn() {
+        if (activeView === 'notes') createNewNote();
+        else if (activeView === 'wiki') toast('💡 Wiki-Artikel werden von James™ verwaltet');
+        else toast('📋 Kanban-Karten werden automatisch synchronisiert');
+    }
+
+    // ═══════════════════════════════════════
+    // TABS
+    // ═══════════════════════════════════════
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            activeView = tab.dataset.view;
+            document.getElementById(activeView + 'View').classList.add('active');
+        });
+    });
+
+    // WIKI SEARCH
+    document.getElementById('wikiSearch').addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase();
+        document.querySelectorAll('.wiki-card').forEach(card => {
+            card.style.display = card.dataset.title.includes(q) ? '' : 'none';
+        });
+    });
+
+    // NOTES SEARCH
+    document.getElementById('notesSearch').addEventListener('input', (e) => {
+        noteSearch = e.target.value;
+        renderNotes();
+    });
+
+    // SIDEBAR
+    document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.addEventListener('click', () => {
+            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+        });
+    });
+
+    // KEYBOARD
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { closeNoteModal(); closeWikiModal(); }
+    });
+
+    // CLICK OUTSIDE MODAL
+    document.getElementById('noteModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeNoteModal(); });
+    document.getElementById('wikiModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeWikiModal(); });
+
+    // ═══════════════════════════════════════
+    // BOOT
+    // ═══════════════════════════════════════
+    DkzNotes.ensureData();
+    document.getElementById('allCount').textContent = WIKI_ARTICLES.length + DkzNotes.allNotes().length;
+    renderWiki();
+    renderKanban();
+    renderNotes();
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    <script src="../shared/dkz-debug.js"></script>
+    <script src="../shared/dkz-guide.js"></script>
+    <script src="../shared/dkz-copilot.js"></script>
+    <script src="../shared/dkz-shortcuts.js"></script>
+    <script src="../shared/dkz-export.js"></script>
+    <script src="../shared/dkz-crosslinks.js"></script>
+    <script src="../shared/dkz-a11y.js"></script>
+    <script src="../shared/dkz-test.js"></script>
+    <script src="../shared/dkz-puter.js"></script>
+    <script src="../shared/dkz-navbar.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../shared/sw.js").catch(()=>{});</script>
+</body>
+</html>

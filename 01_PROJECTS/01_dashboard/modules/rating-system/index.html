@@ -1,0 +1,550 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>? Rating System &#8212; DkZâ„¢ v0.01</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #fa1e4e;
+            --accent: #fa1e4e;
+            --accent-rgb: 250, 30, 78;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(14, 14, 22, .72);
+            --blur: blur(24px)
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .08);
+            border-radius: 6px
+        }
+
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .06;
+            animation: bf 20s ease-in-out infinite
+        }
+
+        .bg-blob:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: var(--yellow);
+            top: -10%;
+            left: 30%
+        }
+
+        @keyframes bf {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(30px, -40px) scale(1.1)
+            }
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        .header {
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .back-btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .25s;
+            text-decoration: none;
+            font-family: var(--font)
+        }
+
+        .back-btn:hover {
+            color: var(--text);
+            border-color: var(--accent)
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--yellow), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .hdr-right {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .hdr-btn {
+            padding: 7px 13px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .25s
+        }
+
+        .hdr-btn:hover {
+            color: var(--text);
+            border-color: var(--accent)
+        }
+
+        .ver {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono)
+        }
+
+        .content {
+            padding: 24px 28px;
+            flex: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px
+        }
+
+        .stat {
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center
+        }
+
+        .stat .sv {
+            font-size: 24px;
+            font-weight: 800;
+            font-family: var(--mono)
+        }
+
+        .stat .sl {
+            font-size: 9px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 3px
+        }
+
+        .add-form {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 20px
+        }
+
+        .add-form h3 {
+            font-size: 13px;
+            font-weight: 800;
+            margin-bottom: 12px
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .form-input {
+            padding: 9px 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            outline: none;
+            flex: 1;
+            min-width: 150px
+        }
+
+        .form-input:focus {
+            border-color: var(--accent)
+        }
+
+        .stars {
+            display: flex;
+            gap: 4px;
+            font-size: 24px;
+            cursor: pointer
+        }
+
+        .stars .star {
+            color: var(--border);
+            transition: color .15s
+        }
+
+        .stars .star:hover,
+        .stars .star.active {
+            color: var(--yellow)
+        }
+
+        .add-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            background: var(--accent);
+            color: #fff;
+            font-family: var(--font);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        .rating-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px
+        }
+
+        .rating-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            transition: all .3s;
+            display: flex;
+            gap: 16px
+        }
+
+        .rating-item:hover {
+            border-color: rgba(var(--accent-rgb), .3)
+        }
+
+        .ri-score {
+            font-size: 28px;
+            font-weight: 900;
+            font-family: var(--mono);
+            width: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0
+        }
+
+        .ri-body {
+            flex: 1
+        }
+
+        .ri-name {
+            font-size: 14px;
+            font-weight: 800;
+            margin-bottom: 4px
+        }
+
+        .ri-comment {
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 6px
+        }
+
+        .ri-stars {
+            font-size: 14px;
+            color: var(--yellow)
+        }
+
+        .ri-date {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono);
+            margin-top: 4px
+        }
+
+        .ri-del {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            align-self: center
+        }
+
+        .ri-del:hover {
+            color: var(--red);
+            background: rgba(250, 30, 78, .1)
+        }
+
+        .graph-bar {
+            display: flex;
+            gap: 3px;
+            align-items: end;
+            margin-top: 16px;
+            height: 80px
+        }
+
+        .graph-col {
+            flex: 1;
+            background: linear-gradient(to top, var(--accent), var(--yellow));
+            border-radius: 4px 4px 0 0;
+            transition: height .5s;
+            min-width: 20px;
+            position: relative
+        }
+
+        .graph-col::after {
+            content: attr(data-label);
+            position: absolute;
+            bottom: -16px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 8px;
+            color: var(--muted);
+            font-family: var(--mono);
+            white-space: nowrap
+        }
+
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: var(--green);
+            color: #000;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 10px;
+            z-index: 300;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all .3s;
+            pointer-events: none
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0)
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="rating-system" data-dkz-appid="DKZ-MOD-RAT" data-dkz-version="v0.01" data-dkz-title="? Rating System" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+    </div>
+    <div class="app">
+        <div class="header">
+            <a href="../../hub/index.html" class="back-btn">? Hub</a>
+            <h1>? Bewertungssystem</h1>
+            <div class="hdr-right"><button class="hdr-btn" onclick="exportRatings()">&#11015; Export</button><span
+                    class="ver">v0.01</span></div>
+        </div>
+        <div class="content">
+            <div class="stats-row">
+                <div class="stat">
+                    <div class="sv" id="sCount" style="color:var(--accent)">0</div>
+                    <div class="sl">Bewertungen</div>
+                </div>
+                <div class="stat">
+                    <div class="sv" id="sAvg" style="color:var(--yellow)"></div>
+                    <div class="sl"> Bewertung</div>
+                </div>
+                <div class="stat">
+                    <div class="sv" id="sBest" style="color:var(--green)"></div>
+                    <div class="sl">Beste</div>
+                </div>
+            </div>
+            <div class="add-form">
+                <h3>+ Neue Bewertung</h3>
+                <div class="form-row">
+                    <input class="form-input" id="rName" placeholder="Name / Titel">
+                    <div class="stars" id="starPicker"></div>
+                    <input class="form-input" id="rComment" placeholder="Kommentar (optional)">
+                    <button class="add-btn" onclick="addRating()">Bewerten</button>
+                </div>
+            </div>
+            <div
+                style="margin-bottom:20px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px">
+                <h3 style="font-size:13px;font-weight:800;margin-bottom:12px">&#9881; Verteilung</h3>
+                <div class="graph-bar" id="graph"></div>
+            </div>
+            <div class="rating-list" id="ratingList"></div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+        let ratings = JSON.parse(localStorage.getItem('dkz-ratings') || '[]');
+        let selectedStars = 0;
+
+        function init() {
+            renderStarPicker(); renderRatings(); updateStats(); renderGraph();
+            if (!ratings.length) {
+                [['DkZ kosystem', 5, 'Perfekte Architektur'], ['NOTER Tool', 4, 'Sehr ntzlich'], ['CS2 Config', 4, 'Top Pro-Settings'], ['Tasker', 5, 'Beste Organisation']].forEach(([n, s, c]) => {
+                    ratings.push({ id: Date.now() + Math.random(), name: n, stars: s, comment: c, created: new Date().toISOString() });
+                });
+                save(); renderRatings(); updateStats(); renderGraph();
+            }
+        }
+        function renderStarPicker() {
+            document.getElementById('starPicker').innerHTML = [1, 2, 3, 4, 5].map(i => `<span class="star ${i <= selectedStars - 'active' : ''}" onclick="selectedStars=${i};renderStarPicker()">${i <= selectedStars - '&#10067;' : '&#10067;'}</span>`).join('');
+        }
+        function addRating() {
+            const name = document.getElementById('rName').value.trim();
+            if (!name || !selectedStars) return;
+            ratings.unshift({ id: Date.now(), name, stars: selectedStars, comment: document.getElementById('rComment').value.trim(), created: new Date().toISOString() });
+            save(); document.getElementById('rName').value = ''; document.getElementById('rComment').value = ''; selectedStars = 0; renderStarPicker();
+            renderRatings(); updateStats(); renderGraph(); showToast('? Bewertung hinzugefgt!');
+        }
+        function deleteRating(id) { ratings = ratings.filter(r => r.id !== id); save(); renderRatings(); updateStats(); renderGraph(); }
+        function renderRatings() {
+            const list = document.getElementById('ratingList');
+            if (!ratings.length) { list.innerHTML = '<div class="empty">Keine Bewertungen vorhanden</div>'; return; }
+            list.innerHTML = ratings.map(r => `
+        <div class="rating-item">
+            <div class="ri-score" style="color:${r.stars >= 4 - 'var(--green)' : r.stars >= 3 - 'var(--yellow)' : 'var(--red)'}">${r.stars}.0</div>
+            <div class="ri-body">
+                <div class="ri-name">${esc(r.name)}</div>
+                ${r.comment - `<div class="ri-comment">${esc(r.comment)}</div>` : ''}
+                <div class="ri-stars">${'&#10067;'.repeat(r.stars)}${'&#10067;'.repeat(5 - r.stars)}</div>
+                <div class="ri-date">${new Date(r.created).toLocaleDateString('de-DE')}</div>
+            </div>
+            <button class="ri-del" onclick="deleteRating(${r.id})">?</button>
+        </div>
+    `).join('');
+        }
+        function renderGraph() {
+            const dist = [0, 0, 0, 0, 0]; ratings.forEach(r => dist[r.stars - 1]++);
+            const max = Math.max(...dist, 1);
+            document.getElementById('graph').innerHTML = dist.map((c, i) => `<div class="graph-col" style="height:${(c / max) * 100}%" data-label="${i + 1}? (${c})"></div>`).join('');
+        }
+        function updateStats() {
+            document.getElementById('sCount').textContent = ratings.length;
+            if (ratings.length) {
+                const avg = (ratings.reduce((a, r) => a + r.stars, 0) / ratings.length).toFixed(1);
+                document.getElementById('sAvg').textContent = avg + '&#10067;';
+                document.getElementById('sBest').textContent = Math.max(...ratings.map(r => r.stars)) + '&#10067;';
+            }
+        }
+        function exportRatings() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(ratings, null, 2)], { type: 'application/json' })); a.download = 'ratings.json'; a.click(); showToast('&#11015; Export!') }
+        function save() { localStorage.setItem('dkz-ratings', JSON.stringify(ratings)) }
+        function esc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;') }
+        function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500) }
+        init();
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Rating system</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Bewertungssystem fuer Module.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Rating system</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Bewertungssystem fuer Module.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-rating-system-onboarded','1')}if(!localStorage.getItem('dkz-rating-system-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+
+<!-- &#8212; DEVKiTZ 2026 &#8212; All Rights Reserved -->
+</html>
+
+

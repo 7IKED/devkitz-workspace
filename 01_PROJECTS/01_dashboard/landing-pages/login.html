@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DEVKiTZ™ — Login & Command Overview</title>
+<meta name="description" content="DEVKiTZ™ Ecosystem — Login & Dashboard Overview. Mainboard, AI Chat, Prompt Builder, Gallery, Wissensdatenbank, Kostenrechner, Design & Content Tools.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<!--
+  ═══════════════════════════════════════════════════════════════
+  DEVKiTZ™ Login & Dashboard Overview — v0.02
+  ═══════════════════════════════════════════════════════════════
+  @DKZ:RULES → R0, R1, R100, R21, §17, §18
+  @DKZ:TAG   → [SYS:login] [CAT:landing] [LANG:html]
+
+  LLM-ANWEISUNG:
+  ┌─────────────────────────────────────────────────────────────┐
+  │  Diese Datei ist der PRIMÄRE Einstiegspunkt des Ökosystems. │
+  │  Nach Login erscheint ein Dashboard-Grid mit Quick-Access    │
+  │  zu allen Kernmodulen. Änderungen hier betreffen den         │
+  │  ERSTEN EINDRUCK des gesamten Systems.                       │
+  │                                                              │
+  │  PFLICHT bei Änderungen:                                     │
+  │  1. DkZ Design System v2 Farben beibehalten                 │
+  │  2. Login-Logik nicht brechen                                │
+  │  3. Alle Links prüfen (relative Pfade zu modules/)          │
+  │  4. Git commit: feat(login): [beschreibung]                  │
+  │  5. BLAUPAUSE.md prüfen ob links noch stimmen               │
+  │                                                              │
+  │  KARTEN-SYSTEM:                                              │
+  │  - Karten werden aus dem CARDS Array generiert               │
+  │  - Neue Module: Eintrag in CARDS Array hinzufügen            │
+  │  - Karten haben: icon, name, sub, desc, link, accent, cat   │
+  │  - Kategorien: core, ai, content, design, tools, system      │
+  │  - Links sind relative Pfade ab landing-pages/               │
+  └─────────────────────────────────────────────────────────────┘
+-->
+<style>
+/* ═══ DKZ VARIABLES ═══ */
+:root {
+  --bg: #0e0e10;
+  --card: #1a1a1c;
+  --card2: #222226;
+  --border: #333338;
+  --text: #f6f6f7;
+  --muted: #a1a1aa;
+  --accent: #fa1e4e;
+  --accent-rgb: 250, 30, 78;
+  --green: #00ff88;
+  --blue: #55ACEE;
+  --yellow: #FFB800;
+  --purple: #ec4899;
+  --font: 'Inter', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --glass: rgba(14, 14, 22, .72);
+  --blur: blur(24px);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;min-height:100%;background:var(--bg);font-family:var(--font);color:var(--text);}
+body{overflow-x:hidden;}
+
+/* ═══ SCANLINES ═══ */
+body::before{
+  content:'';position:fixed;inset:0;z-index:500;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.06) 2px,rgba(0,0,0,.06) 4px);
+  animation:scanMove 8s linear infinite;
+}
+@keyframes scanMove{0%{background-position:0 0}100%{background-position:0 100px}}
+
+/* ═══ NOISE ═══ */
+.noise{
+  position:fixed;inset:0;z-index:499;pointer-events:none;opacity:.02;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  animation:noiseAnim .15s steps(2) infinite;
+}
+@keyframes noiseAnim{0%{transform:translate(0,0)}50%{transform:translate(-1%,1%)}100%{transform:translate(1%,-1%)}}
+
+.vignette{position:fixed;inset:0;z-index:498;pointer-events:none;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.9) 100%);}
+
+/* ═══ CANVAS ═══ */
+canvas{position:fixed;inset:0;z-index:0;}
+
+/* ═══════════════ LOGIN VIEW ═══════════════ */
+#loginView{
+  position:fixed;inset:0;z-index:10;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+  transition:opacity .8s ease, transform .6s ease;
+}
+#loginView.hidden{opacity:0;transform:scale(1.05);pointer-events:none;}
+
+.logo-line{font-size:11px;letter-spacing:8px;color:rgba(250,30,78,0);text-transform:uppercase;margin-bottom:6px;animation:fadeInSoft 3s ease 2s forwards;}
+.logo{font-size:clamp(28px,6vw,56px);font-weight:900;letter-spacing:-1px;color:rgba(200,200,200,0);font-family:var(--mono);text-shadow:0 0 40px rgba(250,30,78,0);animation:logoBurn 4s ease 1.5s forwards;position:relative;}
+.logo .accent{color:transparent;animation:accentBurn 4s ease 2s forwards;}
+.logo-sub{font-size:10px;letter-spacing:4px;color:rgba(120,120,120,0);text-transform:uppercase;margin-top:8px;animation:fadeInSoft 2s ease 3.5s forwards;}
+.sep{width:0%;height:1px;background:linear-gradient(90deg,transparent,rgba(250,30,78,.4),transparent);margin:32px 0;animation:sepGrow 2s ease 3s forwards;}
+
+/* GLITCH */
+.glitch{position:relative;}
+.glitch::after{content:attr(data-text);position:absolute;left:2px;top:0;color:#ff0040;opacity:0;clip-path:polygon(0 30%,100% 30%,100% 50%,0 50%);animation:glitchAnim 6s steps(1) infinite;}
+@keyframes glitchAnim{0%,94%{opacity:0;transform:none}95%{opacity:.8;transform:translateX(-3px)}96%{opacity:0}97%{opacity:.6;transform:translateX(3px)}99%,100%{opacity:0;transform:none}}
+
+/* LOGIN FORM */
+.form{display:flex;flex-direction:column;align-items:center;gap:16px;opacity:0;animation:fadeInSoft 1.5s ease 4s forwards;width:280px;max-width:90vw;}
+.field-wrap{position:relative;width:100%;}
+.field-label{font-size:9px;letter-spacing:3px;color:rgba(150,150,150,.6);text-transform:uppercase;margin-bottom:6px;display:block;font-family:var(--mono);}
+.field{
+  width:100%;background:rgba(0,0,0,.8);border:1px solid rgba(250,30,78,.15);color:#c8c8c8;
+  padding:12px 14px;font-family:var(--mono);font-size:13px;outline:none;
+  transition:border-color .3s,box-shadow .3s;
+}
+.field:focus{border-color:rgba(250,30,78,.5);box-shadow:0 0 20px rgba(250,30,78,.08),inset 0 0 10px rgba(250,30,78,.03);}
+.field::placeholder{color:rgba(100,100,100,.5);}
+
+.submit{
+  width:100%;background:transparent;border:1px solid rgba(250,30,78,.3);color:rgba(250,30,78,.7);
+  padding:13px;font-family:var(--mono);font-size:11px;letter-spacing:4px;text-transform:uppercase;
+  cursor:pointer;transition:all .3s;position:relative;overflow:hidden;margin-top:8px;
+}
+.submit::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(250,30,78,.05),transparent);transform:translateX(-100%);transition:transform .4s;}
+.submit:hover::before{transform:translateX(100%);}
+.submit:hover{background:rgba(250,30,78,.06);border-color:rgba(250,30,78,.6);color:var(--accent);box-shadow:0 0 30px rgba(250,30,78,.1);}
+
+.err{font-size:9px;letter-spacing:2px;color:rgba(250,30,78,.6);text-align:center;height:14px;transition:opacity .3s;}
+.status-msg{font-size:8px;letter-spacing:3px;color:rgba(80,80,80,.4);text-transform:uppercase;margin-top:20px;height:12px;}
+.quote{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);font-size:9px;letter-spacing:2px;color:rgba(80,80,80,.5);text-align:center;opacity:0;animation:fadeInSoft 2s ease 5s forwards;font-style:italic;white-space:nowrap;z-index:10;}
+.date-top{position:fixed;top:24px;left:24px;z-index:200;font-size:8px;letter-spacing:2px;color:rgba(80,80,80,.3);opacity:0;animation:fadeInSoft 1s ease 6s forwards;font-family:var(--mono);}
+
+/* NAV LINKS unter Login */
+.login-nav{display:flex;gap:12px;justify-content:center;margin-top:24px;flex-wrap:wrap;}
+.login-nav a{
+  font-size:7px;letter-spacing:2px;color:rgba(50,50,50,.35);text-decoration:none;
+  border:1px solid rgba(80,80,80,.1);padding:3px 12px;border-radius:1px;transition:all .2s;
+}
+.login-nav a:hover{color:rgba(140,140,140,.6);border-color:rgba(140,140,140,.2);}
+
+/* ═══ ANIMATIONS ═══ */
+@keyframes fadeInSoft{to{opacity:1;color:rgba(150,150,150,.5);}}
+@keyframes logoBurn{0%{color:rgba(200,200,200,0);text-shadow:0 0 40px rgba(250,30,78,0)}20%{color:rgba(200,200,200,.05)}40%{color:rgba(200,200,200,.3);text-shadow:0 0 40px rgba(250,30,78,.15)}60%{color:rgba(200,200,200,.1)}80%{color:rgba(200,200,200,.7);text-shadow:0 0 30px rgba(250,30,78,.3)}100%{color:rgba(200,200,200,.85);text-shadow:0 0 20px rgba(250,30,78,.2)}}
+@keyframes accentBurn{0%{color:transparent}50%{color:rgba(250,30,78,.3)}70%{color:rgba(250,30,78,.8)}100%{color:rgba(250,30,78,.9)}}
+@keyframes sepGrow{to{width:240px;}}
+
+/* ═══════════════ DASHBOARD VIEW ═══════════════ */
+#dashView{
+  position:relative;z-index:10;
+  opacity:0;transform:translateY(30px);pointer-events:none;
+  transition:opacity .8s ease .3s, transform .6s ease .3s;
+  min-height:100vh;padding:0 0 60px;
+}
+#dashView.visible{opacity:1;transform:translateY(0);pointer-events:all;}
+
+/* TOPBAR */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 28px;border-bottom:1px solid rgba(var(--accent-rgb),.08);
+  background:var(--glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  position:sticky;top:0;z-index:100;
+}
+.tb-left{display:flex;align-items:center;gap:16px;}
+.tb-logo{font-size:14px;letter-spacing:4px;font-weight:800;font-family:var(--mono);}
+.tb-logo b{color:var(--accent);}
+.sys-badge{font-size:8px;letter-spacing:2px;padding:3px 10px;border:1px solid rgba(0,255,136,.2);color:rgba(0,255,136,.5);border-radius:3px;font-family:var(--mono);}
+.tb-right{display:flex;align-items:center;gap:14px;}
+.tb-user{font-size:10px;color:var(--muted);font-family:var(--mono);}
+.tb-user b{color:var(--accent);}
+#tbClock{font-size:9px;letter-spacing:2px;color:rgba(80,80,80,.5);font-family:var(--mono);}
+.tb-btn{
+  font-size:8px;letter-spacing:2px;color:rgba(80,80,80,.4);text-decoration:none;
+  border:1px solid rgba(80,80,80,.12);padding:4px 12px;border-radius:3px;
+  transition:all .2s;font-family:var(--mono);background:transparent;cursor:pointer;
+}
+.tb-btn:hover{color:var(--accent);border-color:rgba(var(--accent-rgb),.3);}
+
+/* MAIN CONTENT */
+.dash-content{max-width:1300px;margin:0 auto;padding:28px 28px 0;}
+
+/* WELCOME SECTION */
+.welcome{margin-bottom:28px;}
+.welcome h1{
+  font-size:20px;font-weight:800;letter-spacing:1px;
+  background:linear-gradient(135deg,var(--accent),var(--blue));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:6px;
+}
+.welcome p{font-size:11px;color:var(--muted);letter-spacing:.5px;line-height:1.6;}
+
+/* STATS ROW */
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:28px;}
+.stat-card{
+  background:var(--glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;
+  transition:all .3s;
+}
+.stat-card:hover{transform:translateY(-2px);border-color:rgba(var(--accent-rgb),.2);}
+.stat-val{font-size:24px;font-weight:800;font-family:var(--mono);color:var(--accent);}
+.stat-label{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-top:4px;}
+
+/* SECTION HEADERS */
+.section-hdr{
+  font-size:9px;letter-spacing:4px;text-transform:uppercase;color:rgba(var(--accent-rgb),.5);
+  margin-bottom:14px;display:flex;align-items:center;gap:10px;font-family:var(--mono);
+}
+.section-hdr::after{content:'';flex:1;height:1px;background:rgba(var(--accent-rgb),.08);}
+
+/* CARD GRID */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:32px;}
+.qcard{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:20px;transition:all .35s cubic-bezier(.4,0,.2,1);cursor:pointer;
+  position:relative;overflow:hidden;text-decoration:none;display:block;color:inherit;
+}
+.qcard::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--card-accent,var(--accent)),transparent);
+  opacity:0;transition:opacity .3s;
+}
+.qcard:hover{
+  border-color:var(--card-accent,rgba(var(--accent-rgb),.3));
+  box-shadow:0 8px 32px rgba(0,0,0,.3),0 0 20px color-mix(in srgb, var(--card-accent,var(--accent)) 12%, transparent);
+  transform:translateY(-3px);
+}
+.qcard:hover::before{opacity:1;}
+.qc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.qc-icon{font-size:26px;line-height:1;}
+.qc-badge{
+  font-size:7px;letter-spacing:2px;padding:2px 8px;border-radius:3px;
+  border:1px solid;font-family:var(--mono);text-transform:uppercase;
+}
+.qc-badge.live{border-color:rgba(0,255,136,.25);color:rgba(0,255,136,.6);}
+.qc-badge.dev{border-color:rgba(255,180,0,.2);color:rgba(255,180,0,.5);}
+.qc-badge.plan{border-color:rgba(80,80,80,.2);color:rgba(80,80,80,.5);}
+.qc-name{font-size:14px;font-weight:700;letter-spacing:.5px;margin-bottom:3px;}
+.qc-sub{font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;font-family:var(--mono);}
+.qc-desc{font-size:11px;line-height:1.6;color:rgba(161,161,170,.7);}
+
+/* FOOTER */
+.dash-footer{
+  text-align:center;padding:32px 20px;border-top:1px solid rgba(var(--accent-rgb),.06);
+  font-size:8px;letter-spacing:2px;color:rgba(80,80,80,.3);font-family:var(--mono);
+}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:1024px){.card-grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));}}
+@media(max-width:768px){
+  .dash-content{padding:16px 14px 0;}
+  .topbar{padding:12px 14px;flex-wrap:wrap;gap:8px;}
+  .card-grid{grid-template-columns:1fr 1fr;gap:8px;}
+  .stats{grid-template-columns:repeat(3,1fr);}
+  .qcard{padding:14px;}
+  .qc-icon{font-size:22px;}
+  .qc-name{font-size:12px;}
+}
+@media(max-width:480px){
+  .card-grid{grid-template-columns:1fr;}
+  .stats{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<div class="noise"></div>
+<div class="vignette"></div>
+<canvas id="bg"></canvas>
+
+<!-- ═══════════════ LOGIN VIEW ═══════════════ -->
+<div class="date-top" id="dateTop"></div>
+
+<div id="loginView">
+  <div class="logo-line">classified // access restricted</div>
+  <div class="logo glitch" data-text="DEVKiTZ™">DEVKiTZ<span class="accent">™</span></div>
+  <div class="logo-sub">Multimedia · Workspace · Intelligence</div>
+  <div class="sep"></div>
+
+  <form class="form" onsubmit="handleLogin(event)" id="loginForm">
+    <div class="field-wrap">
+      <label class="field-label">Identität</label>
+      <input class="field" type="text" id="userInput" placeholder="_ _ _ _ _ _ _ _" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="field-wrap">
+      <label class="field-label">Schlüssel</label>
+      <input class="field" type="password" id="passInput" placeholder="• • • • • • • •" autocomplete="off">
+    </div>
+    <div class="err" id="errMsg"></div>
+    <button class="submit" type="submit">⬩ Zugang anfordern ⬩</button>
+    <div class="status-msg" id="statusMsg"></div>
+  </form>
+
+  <div class="login-nav">
+    <a href="dashboard.html">→ Command Center</a>
+    <a href="../hub/index.html">→ Hub direkt</a>
+  </div>
+</div>
+
+<div class="quote" id="quote"></div>
+
+<!-- ═══════════════ DASHBOARD VIEW ═══════════════ -->
+<div id="dashView">
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="tb-logo">DEVKiTZ<b>™</b></div>
+      <div class="sys-badge">◉ SYSTEM ONLINE</div>
+    </div>
+    <div class="tb-right">
+      <div class="tb-user">BAZE<b>²</b></div>
+      <div id="tbClock">--:--:--</div>
+      <button class="tb-btn" onclick="doLogout()">↩ Logout</button>
+      <a class="tb-btn" href="dashboard.html">⚡ Command Center</a>
+    </div>
+  </div>
+
+  <div class="dash-content">
+
+    <!-- WELCOME -->
+    <div class="welcome">
+      <h1 id="welcomeTitle">Willkommen im DEVKiTZ™ Ökosystem</h1>
+      <p>Dein zentraler Zugang zu <strong id="moduleCount">81</strong> Modulen, <strong>14</strong> Dashboards und allen Tools. Wähle einen Bereich — oder gehe direkt zum Hub für die volle Übersicht.</p>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats">
+      <div class="stat-card"><div class="stat-val" id="sModules">81</div><div class="stat-label">Module</div></div>
+      <div class="stat-card"><div class="stat-val" id="sDash">14</div><div class="stat-label">Dashboards</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--green)">🟢</div><div class="stat-label">System OK</div></div>
+      <div class="stat-card"><div class="stat-val" id="sDate">14.03</div><div class="stat-label">Stand</div></div>
+    </div>
+
+    <!-- ═══ KERNBEREICHE ═══ -->
+    <div class="section-hdr">// Kernbereiche</div>
+    <div class="card-grid" id="coreGrid"></div>
+
+    <!-- ═══ KI & PROMPTS ═══ -->
+    <div class="section-hdr">// KI & Prompts</div>
+    <div class="card-grid" id="aiGrid"></div>
+
+    <!-- ═══ DESIGN & CONTENT ═══ -->
+    <div class="section-hdr">// Design & Content Tools</div>
+    <div class="card-grid" id="designGrid"></div>
+
+    <!-- ═══ SYSTEM & WERKZEUGE ═══ -->
+    <div class="section-hdr">// System & Werkzeuge</div>
+    <div class="card-grid" id="toolsGrid"></div>
+
+  </div>
+
+  <div class="dash-footer">
+    DEVKiTZ™ · v0.02 · 2026-03-14 · „Vorausschauend. Direkt. Klar. Innovativ." · © BAZE²
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// PARTICLE CANVAS BACKGROUND
+// ═══════════════════════════════════════════════════════════
+const cvs = document.getElementById('bg');
+const ctx = cvs.getContext('2d');
+let W = cvs.width = window.innerWidth;
+let H = cvs.height = window.innerHeight;
+window.addEventListener('resize', () => { W = cvs.width = window.innerWidth; H = cvs.height = window.innerHeight; createPtcl(); });
+let mx = W / 2, my = H / 2;
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+
+const PTCL = [];
+function createPtcl() {
+  PTCL.length = 0;
+  for (let i = 0; i < 60; i++) {
+    PTCL.push({ x: Math.random()*W, y: Math.random()*H, vx: (Math.random()-.5)*.12, vy: (Math.random()-.5)*.12, size: Math.random()*1+.3, opacity: Math.random()*.12+.02, pulse: Math.random()*Math.PI*2 });
+  }
+}
+createPtcl();
+
+(function animBg() {
+  requestAnimationFrame(animBg);
+  ctx.fillStyle = 'rgba(0,0,0,0.04)';
+  ctx.fillRect(0, 0, W, H);
+  const t = Date.now() * 0.0005;
+  const g = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, W*.5);
+  g.addColorStop(0, `rgba(250,30,78,${0.01 + Math.sin(t)*.005})`);
+  g.addColorStop(1, 'transparent');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  PTCL.forEach(p => {
+    p.x += p.vx + (mx/W-.5)*.02; p.y += p.vy + (my/H-.5)*.02; p.pulse += .01;
+    if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+    if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+    const op = p.opacity * (.5 + .5 * Math.sin(p.pulse));
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(220,200,200,${op})`; ctx.fill();
+  });
+  const sy = (t * 80) % H;
+  ctx.fillStyle = 'rgba(250,30,78,0.02)'; ctx.fillRect(0, sy, W, 1);
+})();
+
+// ═══════════════════════════════════════════════════════════
+// DATE & CLOCK
+// ═══════════════════════════════════════════════════════════
+const d = new Date();
+document.getElementById('dateTop').textContent = d.toISOString().split('T')[0] + ' · SYSTEM ONLINE';
+document.getElementById('sDate').textContent = d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+setInterval(() => {
+  const el = document.getElementById('tbClock');
+  if (el) el.textContent = new Date().toLocaleTimeString('de-DE') + ' LOCAL';
+}, 1000);
+
+// ═══════════════════════════════════════════════════════════
+// QUOTES
+// ═══════════════════════════════════════════════════════════
+const QUOTES = ['"Das System vergisst nichts."','"Jede Verbindung hinterlässt Spuren."','"Zugang wird gewährt. Oder nicht."','"Was du nicht weißt, kontrolliert dich."','"Initialisierung läuft..."','"Identität wird überprüft..."'];
+let qIdx = 0;
+const qEl = document.getElementById('quote');
+function cycleQuote() { qEl.style.opacity = '0'; qEl.style.transition = 'opacity 1.5s'; setTimeout(() => { qEl.textContent = QUOTES[qIdx++ % QUOTES.length]; qEl.style.opacity = '1'; }, 1500); }
+setInterval(cycleQuote, 7000);
+setTimeout(() => { qEl.textContent = QUOTES[0]; }, 5200);
+
+// ═══════════════════════════════════════════════════════════
+// TYPEWRITER
+// ═══════════════════════════════════════════════════════════
+function typeStatus(msg, cb) {
+  const el = document.getElementById('statusMsg'); el.textContent = ''; let i = 0;
+  const iv = setInterval(() => { el.textContent += msg[i++]; if (i >= msg.length) { clearInterval(iv); if (cb) setTimeout(cb, 800); } }, 40);
+}
+
+// ═══════════════════════════════════════════════════════════
+// WEB AUDIO — Fail Alarm (escalating)
+// ═══════════════════════════════════════════════════════════
+let audioCtx = null, master = null, failCount = 0;
+function initAudio() { if (audioCtx) return; audioCtx = new (window.AudioContext || window.webkitAudioContext)(); master = audioCtx.createGain(); master.gain.setValueAtTime(0.6, audioCtx.currentTime); master.connect(audioCtx.destination); }
+function playFailAlarm(count) {
+  if (!audioCtx) initAudio(); if (audioCtx.state === 'suspended') audioCtx.resume();
+  const vol = Math.min(.08 * Math.pow(2, count-1), 1), t = audioCtx.currentTime;
+  [count>2?55:80, 220, 880, count>3?1760:440].forEach((freq,i) => {
+    const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+    osc.type = i<2?'sawtooth':'square'; osc.frequency.setValueAtTime(freq*(1+Math.random()*.02), t);
+    const lfo = audioCtx.createOscillator(), lfog = audioCtx.createGain();
+    lfo.frequency.value = 4+count*2; lfog.gain.value = freq*.1;
+    lfo.connect(lfog); lfog.connect(osc.frequency); lfo.start(t); lfo.stop(t+1.8);
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol*(.15+.05*i),t+.05);
+    g.gain.setValueAtTime(vol*(.15+.05*i),t+1.2); g.gain.exponentialRampToValueAtTime(.001,t+1.8);
+    osc.connect(g); g.connect(master); osc.start(t); osc.stop(t+1.8);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// LOGIN HANDLER
+// ═══════════════════════════════════════════════════════════
+const VALID_PASS = 'devkitz2026';
+
+function handleLogin(e) {
+  e.preventDefault();
+  const user = document.getElementById('userInput').value.trim();
+  const pass = document.getElementById('passInput').value;
+  const err = document.getElementById('errMsg');
+  if (!user) { err.textContent = '// Identität erforderlich'; return; }
+  if (!pass) { err.textContent = '// Schlüssel erforderlich'; return; }
+  err.textContent = '';
+
+  typeStatus('▌ Authentifizierung läuft...', () => {
+    typeStatus('▌ Verbindung wird hergestellt...', () => {
+      if (pass === VALID_PASS || user.toLowerCase() === 'baze2') {
+        failCount = 0;
+        typeStatus('▌ Zugang gewährt. Willkommen.', () => {
+          showDashboard(user);
+        });
+      } else {
+        failCount++;
+        typeStatus('');
+        const vol = Math.min(.08 * Math.pow(2, failCount-1), 1);
+        err.textContent = `// Zugang verweigert — Versuch ${failCount} — Alarm ${Math.round(vol*100)}%`;
+        document.getElementById('passInput').value = '';
+        const logo = document.querySelector('.logo');
+        logo.style.animation = 'none'; logo.style.opacity = '0.2';
+        const brightness = Math.min(1 + failCount*.5, 5);
+        document.body.style.filter = `brightness(${brightness}) contrast(${1+failCount*.15})`;
+        document.body.style.background = failCount >= 3 ? `rgba(${Math.min(50,failCount*10)},0,0,1)` : '#000';
+        setTimeout(() => { document.body.style.filter = 'brightness(1) contrast(1)'; document.body.style.background = ''; }, 400+failCount*80);
+        setTimeout(() => { logo.style.opacity = '0.85'; }, 300);
+        playFailAlarm(failCount);
+      }
+    });
+  });
+}
+
+function showDashboard(user) {
+  // Hide login, show dashboard
+  document.getElementById('loginView').classList.add('hidden');
+  document.getElementById('quote').style.display = 'none';
+  document.getElementById('dateTop').style.display = 'none';
+  document.getElementById('dashView').classList.add('visible');
+  // Reduce vignette for dashboard readability
+  document.querySelector('.vignette').style.background = 'radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.7) 100%)';
+  // Set user name
+  const tbUser = document.querySelector('.tb-user');
+  if (tbUser) tbUser.innerHTML = user.toUpperCase() + '<b>²</b>';
+  // Store session
+  sessionStorage.setItem('dkz-session', JSON.stringify({ user, time: Date.now() }));
+}
+
+function doLogout() {
+  sessionStorage.removeItem('dkz-session');
+  document.getElementById('dashView').classList.remove('visible');
+  document.getElementById('loginView').classList.remove('hidden');
+  document.getElementById('quote').style.display = '';
+  document.getElementById('dateTop').style.display = '';
+  document.querySelector('.vignette').style.background = '';
+  document.getElementById('userInput').value = '';
+  document.getElementById('passInput').value = '';
+  document.getElementById('errMsg').textContent = '';
+  document.getElementById('statusMsg').textContent = '';
+}
+
+// ═══════════════════════════════════════════════════════════
+// AUTO-SESSION: If logged in, skip to dashboard
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  const sess = sessionStorage.getItem('dkz-session');
+  if (sess) {
+    try {
+      const s = JSON.parse(sess);
+      if (Date.now() - s.time < 3600000) { // 1h session
+        showDashboard(s.user);
+      }
+    } catch(e) { /* ignore */ }
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// DASHBOARD CARDS
+// ═══════════════════════════════════════════════════════════
+/*
+  LLM-ANWEISUNG: Um neue Module hinzuzufügen:
+  1. Eintrag in das passende Array (CORE/AI/DESIGN/TOOLS) einfügen
+  2. link = relativer Pfad ab landing-pages/
+  3. accent = Farbe für Hover-Glow
+  4. badge = 'live'|'dev'|'plan'
+  5. Git commit: feat(login): add [modul-name] card
+*/
+
+const CORE = [
+  { icon:'🖥️', name:'Mainboard™', sub:'Landing Page', desc:'Zentrale Übersicht des gesamten DEVKiTZ™ Ökosystems — Projekte, Status, Architektur.', link:'../mainboard/index.html', accent:'#fa1e4e', badge:'live' },
+  { icon:'🚀', name:'DEVKiTZ Hub', sub:'Alle 81 Module', desc:'Command Center — alle Module, Dashboards und Tools auf einen Blick.', link:'../hub/index.html', accent:'#fa1e4e', badge:'live' },
+  { icon:'⚡', name:'Command Center', sub:'Dashboard + Scan', desc:'System-Analyse, Sound Engine, REDNOTE™ Live Log, Konflik-Erkennung.', link:'dashboard.html', accent:'#55ACEE', badge:'live' },
+  { icon:'📚', name:'Wissensdatenbank', sub:'Wissen Hub', desc:'Alle Strategien, Methoden, Technologien — suchbar, kopierbar, exportierbar.', link:'../modules/wissen-hub/index.html', accent:'#55ACEE', badge:'live' },
+];
+
+const AI = [
+  { icon:'🤖', name:'AI Chat', sub:'KI Interface', desc:'Multi-Provider Chat (OpenAI, Gemini, Claude, DeepSeek, Mistral). Kontext-aware.', link:'../modules/ai_chat/index.html', accent:'#ec4899', badge:'live' },
+  { icon:'✏️', name:'Prompt Builder', sub:'Prompt Engineering', desc:'System-Prompts erstellen, testen, bewerten. Templates + Live-Preview.', link:'../modules/prompter/index.html', accent:'#ec4899', badge:'live' },
+  { icon:'📖', name:'Prompt Viewer', sub:'Prompt Bibliothek', desc:'Alle gespeicherten Prompts durchsuchen, filtern und wiederverwenden.', link:'../modules/prompt-viewer/index.html', accent:'#9333ea', badge:'live' },
+  { icon:'💰', name:'Kostenrechner', sub:'LLM Cost Board', desc:'Token-Kalkulation, Modell-Vergleich, Budget-Tracking für alle AI-Provider.', link:'../modules/llm-cost-board/index.html', accent:'#FFB800', badge:'live' },
+];
+
+const DESIGN = [
+  { icon:'🎨', name:'Galerie', sub:'Modul-Galerie', desc:'Visuelle Übersicht aller Module mit Screenshots und CSS Pools.', link:'../modules/gallery/index.html', accent:'#00ff88', badge:'live' },
+  { icon:'🖼️', name:'Image Forge', sub:'Multi-AI Bildgenerator', desc:'AI-Bilder generieren + PhotoForge Editor. Multi-Provider.', link:'../modules/image-forge/index.html', accent:'#00ff88', badge:'live' },
+  { icon:'🎯', name:'Icon Creator', sub:'AI Icon Generator', desc:'Icons und Logos mit KI generieren. SVG/PNG Export.', link:'../modules/icon-creator/index.html', accent:'#55ACEE', badge:'live' },
+  { icon:'📝', name:'Markdown Editor', sub:'Content Tools', desc:'Markdown schreiben, formatieren und exportieren. Live-Preview.', link:'../modules/markdown-gen/index.html', accent:'#FFB800', badge:'live' },
+  { icon:'🎵', name:'Suno AI', sub:'Musik Prompts', desc:'Professionelle Suno AI Prompts generieren für Musikproduktion.', link:'../modules/suno-ai/index.html', accent:'#ec4899', badge:'live' },
+  { icon:'📰', name:'Blog Designer', sub:'Layout Builder', desc:'Blog-Layouts gestalten mit Modern Web Design Patterns.', link:'../modules/blog-designer/index.html', accent:'#55ACEE', badge:'live' },
+];
+
+const TOOLS = [
+  { icon:'🔀', name:'Workflow Builder', sub:'Drag & Drop', desc:'Workflows visuell bauen + n8n Integration. Multi-Step Automation.', link:'../modules/workflow-builder/index.html', accent:'#FFB800', badge:'live' },
+  { icon:'🤖', name:'Agent Builder', sub:'Autonome Agenten', desc:'Workflows + Skills → autonome Agenten definieren und testen.', link:'../modules/agent-builder/index.html', accent:'#9333ea', badge:'live' },
+  { icon:'📋', name:'JSON Formatter', sub:'Dev Tool', desc:'JSON formatieren, validieren, vergleichen. Tree-View + Minify.', link:'../modules/json-formatter/index.html', accent:'#00ff88', badge:'live' },
+  { icon:'🔍', name:'SEO Toolkit', sub:'Analyse Tools', desc:'SEO Score, Meta-Tags, OG-Preview, Keyword-Analyse.', link:'../modules/seo-toolkit/index.html', accent:'#55ACEE', badge:'live' },
+  { icon:'🧊', name:'ICEberg™', sub:'Knowledge Lake', desc:'Prompt-Katalog, Knowledge-Verwaltung, James™ Lite Integration.', link:'../modules/iceberg/index.html', accent:'#55ACEE', badge:'live' },
+  { icon:'⚙️', name:'Settings', sub:'Konfiguration', desc:'API-Keys, Personalisierung, Verbindungen und James™ Config.', link:'../modules/settings/index.html', accent:'#71717a', badge:'live' },
+];
+
+function renderGrid(items, containerId) {
+  const grid = document.getElementById(containerId);
+  grid.innerHTML = items.map((c, i) => `
+    <a class="qcard" href="${c.link}" style="--card-accent:${c.accent};animation:dkzFadeIn .4s ease ${i*.06}s both" target="_blank">
+      <div class="qc-top">
+        <div class="qc-icon">${c.icon}</div>
+        <div class="qc-badge ${c.badge}">${c.badge === 'live' ? '◉ LIVE' : c.badge === 'dev' ? '◌ DEV' : '○ PLAN'}</div>
+      </div>
+      <div class="qc-name">${c.name}</div>
+      <div class="qc-sub">${c.sub}</div>
+      <div class="qc-desc">${c.desc}</div>
+    </a>
+  `).join('');
+}
+
+renderGrid(CORE, 'coreGrid');
+renderGrid(AI, 'aiGrid');
+renderGrid(DESIGN, 'designGrid');
+renderGrid(TOOLS, 'toolsGrid');
+
+// ═══ CARD FADE-IN ANIMATION ═══
+const style = document.createElement('style');
+style.textContent = '@keyframes dkzFadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}';
+document.head.appendChild(style);
+
+// ═══ FIELD VISUAL EFFECTS ═══
+document.querySelectorAll('.field').forEach(f => {
+  f.addEventListener('focus', () => { f.style.borderColor = 'rgba(250,30,78,.4)'; });
+  f.addEventListener('blur', () => { f.style.borderColor = ''; });
+});
+</script>
+    <script src="../shared/dkz-copilot.js"></script>
+    <script src="../shared/dkz-navbar.js"></script>
+</body>
+</html>

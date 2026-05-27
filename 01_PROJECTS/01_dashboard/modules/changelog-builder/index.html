@@ -1,0 +1,478 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>&#9881; Changelog Builder &#8212; DkZâ„¢</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #fa1e4e;
+            --accent: #fa1e4e;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(14, 14, 22, .72);
+            --blur: blur(24px)
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .08);
+            border-radius: 6px
+        }
+
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .06;
+            animation: bf 20s ease-in-out infinite
+        }
+
+        .bg-blob:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: var(--accent);
+            top: -10%;
+            left: 10%
+        }
+
+        .bg-blob:nth-child(2) {
+            width: 350px;
+            height: 350px;
+            background: var(--green);
+            bottom: 10%;
+            right: 10%;
+            animation-delay: -8s
+        }
+
+        @keyframes bf {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(30px, -40px) scale(1.1)
+            }
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        .header {
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .back-btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: none;
+            font-family: var(--font)
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent), var(--yellow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .hdr-right {
+            margin-left: auto;
+            display: flex;
+            gap: 8px
+        }
+
+        .ver {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono)
+        }
+
+        .hdr-btn {
+            padding: 7px 13px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            cursor: pointer
+        }
+
+        .content {
+            padding: 20px 28px;
+            flex: 1;
+            display: flex;
+            gap: 20px
+        }
+
+        .left {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px
+        }
+
+        .right {
+            width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px
+        }
+
+        .card h3 {
+            font-size: 13px;
+            font-weight: 800;
+            margin-bottom: 12px
+        }
+
+        .form-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px
+        }
+
+        .input {
+            padding: 8px 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            outline: none;
+            flex: 1
+        }
+
+        .input:focus {
+            border-color: var(--accent)
+        }
+
+        .type-btns {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-bottom: 12px
+        }
+
+        .type-btn {
+            padding: 5px 12px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: transparent;
+            font-size: 10px;
+            cursor: pointer;
+            font-family: var(--font);
+            transition: all .2s
+        }
+
+        .type-btn.feat {
+            color: var(--green);
+            border-color: rgba(0, 255, 136, .3)
+        }
+
+        .type-btn.fix {
+            color: var(--red);
+            border-color: rgba(250, 30, 78, .3)
+        }
+
+        .type-btn.chore {
+            color: var(--muted);
+            border-color: var(--border)
+        }
+
+        .type-btn.docs {
+            color: var(--blue);
+            border-color: rgba(85, 172, 238, .3)
+        }
+
+        .type-btn.break {
+            color: var(--yellow);
+            border-color: rgba(255, 184, 0, .3)
+        }
+
+        .type-btn.perf {
+            color: #ec4899;
+            border-color: rgba(236, 72, 153, .3)
+        }
+
+        .type-btn.active {
+            background: rgba(255, 255, 255, .08)
+        }
+
+        .entry-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-height: 300px;
+            overflow-y: auto
+        }
+
+        .entry {
+            display: flex;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 11px;
+            align-items: center
+        }
+
+        .entry .e-type {
+            font-size: 9px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 700
+        }
+
+        .entry .e-text {
+            flex: 1
+        }
+
+        .entry button {
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 12px
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: #fff;
+            font-family: var(--font);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        .btn.secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text)
+        }
+
+        .preview {
+            font-family: var(--mono);
+            font-size: 11px;
+            padding: 14px;
+            background: #0a0a0c;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+            line-height: 1.6;
+            color: var(--green)
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: var(--green);
+            color: #000;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 10px;
+            z-index: 300;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all .3s;
+            pointer-events: none
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0)
+        }
+
+        @media(max-width:900px) {
+            .content {
+                flex-direction: column
+            }
+
+            .right {
+                width: 100%
+            }
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="changelog-builder" data-dkz-appid="DKZ-MOD-CHA" data-dkz-version="v0.01" data-dkz-title="Changelog Builder" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+    </div>
+    <div class="app">
+        <div class="header"><a href="../../hub/index.html" class="back-btn">? Hub</a>
+            <h1>&#9881; Changelog Builder</h1>
+            <div class="hdr-right"><button class="hdr-btn" onclick="exportMD()">&#128196; .md</button><button class="hdr-btn"
+                    onclick="exportJSON()">&#9881; JSON</button><span class="ver">v0.01</span></div>
+        </div>
+        <div class="content">
+            <div class="left">
+                <div class="card">
+                    <h3>&#9881; Neuer Eintrag</h3>
+                    <div class="form-row"><input class="input" id="version" placeholder="Version (z.B. 1.2.0)"
+                            value="0.01"><input class="input" id="date" type="date"></div>
+                    <div class="type-btns">
+                        <button class="type-btn feat active" onclick="setType('feat',this)">? Feature</button>
+                        <button class="type-btn fix" onclick="setType('fix',this)">&#9881; Fix</button>
+                        <button class="type-btn chore" onclick="setType('chore',this)">&#9881; Chore</button>
+                        <button class="type-btn docs" onclick="setType('docs',this)">&#9881; Docs</button>
+                        <button class="type-btn break" onclick="setType('break',this)">&#9881; Breaking</button>
+                        <button class="type-btn perf" onclick="setType('perf',this)">? Perf</button>
+                    </div>
+                    <div class="form-row"><input class="input" id="entryText" placeholder="nderung beschreiben..."
+                            onkeypress="if(event.key==='Enter')addEntry()"><button class="btn"
+                            onclick="addEntry()">+</button></div>
+                </div>
+                <div class="card">
+                    <h3>&#9881; Eintraege</h3>
+                    <div class="entry-list" id="entryList"></div>
+                </div>
+            </div>
+            <div class="right">
+                <div class="card">
+                    <h3>&#9881; Vorschau</h3>
+                    <div class="preview" id="preview"></div>
+                    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn"
+                            onclick="navigator.clipboard.writeText(document.getElementById('preview').textContent);showToast('Kopiert!')'">&#128203;
+                            Kopieren</button><button class="btn secondary" onclick="clearAll()">&#9881; Reset</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+        let entries = JSON.parse(localStorage.getItem('dkz-changelog') || '[]'); let currentType = 'feat';
+        const TYPES = { feat: { emoji: '&#10067;', label: 'Features', color: 'var(--green)' }, fix: { emoji: '&#9881;', label: 'Bug Fixes', color: 'var(--red)' }, chore: { emoji: '&#9881;', label: 'Chores', color: 'var(--muted)' }, docs: { emoji: '&#9881;', label: 'Documentation', color: 'var(--blue)' }, break: { emoji: '&#9881;', label: 'Breaking Changes', color: 'var(--yellow)' }, perf: { emoji: '&#10067;', label: 'Performance', color: '#ec4899' } };
+        document.getElementById('date').value = new Date().toISOString().slice(0, 10);
+        function setType(t, btn) { currentType = t; document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active') }
+        function addEntry() { const text = document.getElementById('entryText').value.trim(); if (!text) return; entries.push({ type: currentType, text, version: document.getElementById('version').value, date: document.getElementById('date').value, id: Date.now() }); document.getElementById('entryText').value = ''; save(); render() }
+        function removeEntry(id) { entries = entries.filter(e => e.id !== id); save(); render() }
+        function save() { localStorage.setItem('dkz-changelog', JSON.stringify(entries)) }
+        function render() {
+            document.getElementById('entryList').innerHTML = entries.length - entries.map(e => `<div class="entry"><span class="e-type" style="background:rgba(255,255,255,.05);color:${TYPES[e.type].color}">${TYPES[e.type].emoji} ${e.type}</span><span class="e-text">${esc(e.text)}</span><span style="color:var(--muted);font-size:9px">${e.version}</span><button onclick="removeEntry(${e.id})">?</button></div>`).join('') : '<div style="text-align:center;color:var(--muted);padding:20px">Keine Eintraege</div>';
+            // Generate MD preview
+            const versions = {}; entries.forEach(e => { const key = `${e.version} (${e.date})`; if (!versions[key]) versions[key] = {}; if (!versions[key][e.type]) versions[key][e.type] = []; versions[key][e.type].push(e.text) });
+            let md = '# Changelog\n\n'; Object.entries(versions).forEach(([ver, types]) => { md += `## [${ver}]\n\n`; Object.entries(types).forEach(([type, items]) => { md += `### ${TYPES[type].emoji} ${TYPES[type].label}\n\n`; items.forEach(i => md += `- ${i}\n`); md += '\n' }) });
+            document.getElementById('preview').textContent = md;
+        }
+        function exportMD() { const md = document.getElementById('preview').textContent; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([md], { type: 'text/markdown' })); a.download = 'CHANGELOG.md'; a.click(); showToast('CHANGELOG.md!') }
+        function exportJSON() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' })); a.download = 'changelog.json'; a.click(); showToast('JSON!') }
+        function clearAll() { if (!confirm('Alles loeschen?')) return; entries = []; save(); render(); showToast('Reset!') }
+        function esc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;') }
+        function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500) }
+        render();
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+        <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Changelog builder</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Erstelle professionelle Changelogs.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Changelog builder</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Erstelle professionelle Changelogs.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-changelog-builder-onboarded','1')}if(!localStorage.getItem('dkz-changelog-builder-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+
+<!-- &#8212; DEVKiTZ 2026 &#8212; All Rights Reserved -->
+</html>
+
+

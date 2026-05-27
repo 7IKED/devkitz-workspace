@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔌 DkZ MCP & API Control — Command Center</title>
+    <meta name="description" content="MCP Server & API Gateway Kontrollzentrum für das DkZ-Ökosystem">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0e0e10;
+            --bg-secondary: #0c0c14;
+            --bg-card: rgba(255, 255, 255, 0.02);
+            --bg-card-hover: rgba(255, 255, 255, 0.04);
+            --border: rgba(250, 30, 78, 0.12);
+            --border-accent: rgba(250, 30, 78, 0.35);
+            --crimson: #fa1e4e;
+            --crimson-glow: rgba(250, 30, 78, 0.15);
+            --crimson-soft: rgba(250, 30, 78, 0.08);
+            --neon-cyan: #fa1e4e;
+            --neon-green: #39ff14;
+            --neon-purple: #a855f7;
+            --neon-amber: #f59e0b;
+            --text-primary: #e8e8ef;
+            --text-secondary: #8a8a9a;
+            --text-muted: #5a5a6a;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow-glow: 0 0 30px rgba(250, 30, 78, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ═══ HEADER ═══ */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--crimson), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .header-badge {
+            background: var(--crimson-soft);
+            color: var(--crimson);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            border: 1px solid rgba(250, 30, 78, 0.2);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.6;
+                transform: scale(1.3);
+            }
+        }
+
+        .header-status {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .btn-hub {
+            background: var(--crimson-soft);
+            color: var(--crimson);
+            border: 1px solid rgba(250, 30, 78, 0.25);
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-hub:hover {
+            background: var(--crimson);
+            color: white;
+            box-shadow: 0 0 20px rgba(250, 30, 78, 0.3);
+        }
+
+        /* ═══ TABS ═══ */
+        .tab-bar {
+            display: flex;
+            gap: 2px;
+            padding: 0 32px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab {
+            padding: 12px 20px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            color: var(--crimson);
+            border-bottom-color: var(--crimson);
+        }
+
+        /* ═══ MAIN GRID ═══ */
+        .main {
+            padding: 24px 32px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        /* ═══ CARDS ═══ */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-accent);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* ═══ GRID LAYOUTS ═══ */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        /* ═══ STAT CARDS ═══ */
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--crimson), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        /* ═══ TOOL LIST ═══ */
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 12px;
+        }
+
+        .tool-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+            cursor: default;
+        }
+
+        .tool-item:hover {
+            border-color: var(--border-accent);
+            background: var(--bg-card-hover);
+            transform: translateY(-1px);
+        }
+
+        .tool-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .tool-icon.chat {
+            background: rgba(168, 85, 247, 0.15);
+        }
+
+        .tool-icon.files {
+            background: rgba(250, 30, 78, 0.15);
+        }
+
+        .tool-icon.health {
+            background: rgba(34, 197, 94, 0.15);
+        }
+
+        .tool-icon.modules {
+            background: rgba(245, 158, 11, 0.15);
+        }
+
+        .tool-icon.seo {
+            background: rgba(250, 30, 78, 0.15);
+        }
+
+        .tool-icon.workflow {
+            background: rgba(59, 130, 246, 0.15);
+        }
+
+        .tool-icon.system {
+            background: rgba(148, 163, 184, 0.15);
+        }
+
+        .tool-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--neon-cyan);
+        }
+
+        .tool-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .tool-category {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            padding: 2px 8px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+
+        /* ═══ BACKEND STATUS ═══ */
+        .backend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            transition: all 0.2s;
+        }
+
+        .backend-item:hover {
+            border-color: var(--border-accent);
+        }
+
+        .backend-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .backend-status.online {
+            background: var(--success);
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+        }
+
+        .backend-status.offline {
+            background: var(--danger);
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+        }
+
+        .backend-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .backend-detail {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .backend-latency {
+            margin-left: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        /* ═══ API EXPLORER ═══ */
+        .explorer-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .method-badge {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            min-width: 55px;
+            text-align: center;
+        }
+
+        .method-badge.get {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--success);
+        }
+
+        .method-badge.post {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+        }
+
+        .method-badge.patch {
+            background: rgba(168, 85, 247, 0.15);
+            color: var(--neon-purple);
+        }
+
+        .method-badge.delete {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+        }
+
+        .endpoint-path {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            color: var(--neon-cyan);
+            flex-grow: 1;
+        }
+
+        .endpoint-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            min-width: 150px;
+            text-align: right;
+        }
+
+        .btn-try {
+            background: var(--crimson-soft);
+            color: var(--crimson);
+            border: 1px solid rgba(250, 30, 78, 0.2);
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-try:hover {
+            background: var(--crimson);
+            color: white;
+        }
+
+        /* ═══ CONSOLE ═══ */
+        .console-output {
+            background: #121215;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            color: var(--neon-green);
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+
+        .console-input {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .console-input input {
+            flex: 1;
+            background: #121215;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            outline: none;
+        }
+
+        .console-input input:focus {
+            border-color: var(--crimson);
+        }
+
+        .console-input button {
+            background: var(--crimson);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.82rem;
+            transition: all 0.2s;
+        }
+
+        .console-input button:hover {
+            box-shadow: 0 0 20px rgba(250, 30, 78, 0.4);
+        }
+
+        /* ═══ CONFIG SECTION ═══ */
+        .config-block {
+            background: #121215;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .config-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--neon-purple);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-copy {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-copy:hover {
+            background: var(--crimson);
+            color: white;
+            border-color: var(--crimson);
+        }
+
+        /* ═══ LOG STREAM ═══ */
+        .log-entry {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            display: flex;
+            gap: 8px;
+        }
+
+        .log-time {
+            color: var(--text-muted);
+            min-width: 80px;
+        }
+
+        .log-method {
+            font-weight: 600;
+            min-width: 45px;
+        }
+
+        .log-method.get {
+            color: var(--success);
+        }
+
+        .log-method.post {
+            color: var(--warning);
+        }
+
+        .log-path {
+            color: var(--neon-cyan);
+            flex-grow: 1;
+        }
+
+        .log-status {
+            font-weight: 600;
+        }
+
+        .log-status.ok {
+            color: var(--success);
+        }
+
+        .log-status.err {
+            color: var(--danger);
+        }
+
+        .log-duration {
+            color: var(--text-muted);
+        }
+
+        /* ═══ SECTION TITLES ═══ */
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-desc {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        /* ═══ SCROLLBAR ═══ */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(250, 30, 78, 0.2);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(250, 30, 78, 0.4);
+        }
+
+        /* ═══ RESPONSIVE ═══ */
+        @media (max-width: 1024px) {
+            .grid-4 {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .grid-3 {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+
+            .grid-4,
+            .grid-3,
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .main {
+                padding: 16px;
+            }
+
+            .header {
+                padding: 12px 16px;
+            }
+
+            .tab-bar {
+                padding: 0 16px;
+                overflow-x: auto;
+            }
+        }
+
+        /* ═══ WS INDICATOR ═══ */
+        .ws-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .ws-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            transition: background 0.3s;
+        }
+
+        .ws-dot.connected {
+            background: var(--neon-green);
+            box-shadow: 0 0 6px rgba(57, 255, 20, 0.5);
+        }
+
+        /* ═══ ANIMATIONS ═══ */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card,
+        .tool-item,
+        .backend-item,
+        .stat-card {
+            animation: fadeIn 0.4s ease-out;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ═══ HEADER ═══ -->
+    <header class="header" id="header">
+        <div class="header-left">
+            <span class="header-logo">🔌 MCP & API Control</span>
+            <span class="header-badge">v1.01.1_01</span>
+        </div>
+        <div class="header-right">
+            <div class="ws-indicator">
+                <div class="ws-dot" id="wsDot"></div>
+                <span id="wsStatus">Verbinde...</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+                <div class="status-dot" id="apiDot"></div>
+                <span class="header-status" id="apiStatus">Prüfe API...</span>
+            </div>
+            <a class="btn-hub" href="hub/index.html" id="btnHub">← Hub</a>
+        </div>
+    </header>
+
+    <!-- ═══ TAB BAR ═══ -->
+    <nav class="tab-bar" id="tabBar">
+        <div class="tab active" data-tab="overview">⚡ Overview</div>
+        <div class="tab" data-tab="tools">🔧 MCP Tools (24)</div>
+        <div class="tab" data-tab="api">🌐 API Explorer</div>
+        <div class="tab" data-tab="health">💚 Health</div>
+        <div class="tab" data-tab="console">💻 Console</div>
+        <div class="tab" data-tab="config">⚙️ Config</div>
+        <div class="tab" data-tab="logs">📋 Logs</div>
+    </nav>
+
+    <!-- ═══ MAIN CONTENT ═══ -->
+    <main class="main">
+
+        <!-- ═══ OVERVIEW PANEL ═══ -->
+        <div class="panel active" id="panel-overview">
+            <div class="grid-4" style="margin-bottom:24px">
+                <div class="stat-card">
+                    <div class="stat-value" id="statTools">24</div>
+                    <div class="stat-label">MCP Tools</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statEndpoints">18</div>
+                    <div class="stat-label">API Endpoints</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statBackends">7</div>
+                    <div class="stat-label">Backends</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statRequests">0</div>
+                    <div class="stat-label">Requests</div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🔌 MCP Server</div>
+                        <span class="header-badge" id="mcpStatus">Bereit</span>
+                    </div>
+                    <div style="font-size:0.85rem;color:var(--text-secondary);line-height:1.8">
+                        <div><strong>Protocol:</strong> MCP v1.0 (JSON-RPC 2.0)</div>
+                        <div><strong>Transport:</strong> stdio</div>
+                        <div><strong>Tools:</strong> 24 registriert</div>
+                        <div><strong>Resources:</strong> 4 verfügbar</div>
+                        <div><strong>Prompts:</strong> 4 Templates</div>
+                        <div><strong>Entry:</strong> <code style="color:var(--neon-cyan)">mcp-server/index.js</code>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🌐 API Gateway</div>
+                        <span class="header-badge" id="apiGatewayStatus">Prüfe...</span>
+                    </div>
+                    <div style="font-size:0.85rem;color:var(--text-secondary);line-height:1.8">
+                        <div><strong>URL:</strong> <code style="color:var(--neon-cyan)">http://localhost:3040</code>
+                        </div>
+                        <div><strong>WebSocket:</strong> <code
+                                style="color:var(--neon-cyan)">ws://localhost:3040/ws</code></div>
+                        <div><strong>Endpoints:</strong> 18 REST Endpoints</div>
+                        <div><strong>Auth:</strong> API Key / Bearer Token</div>
+                        <div><strong>Rate Limit:</strong> 120 req/min</div>
+                        <div><strong>Docs:</strong> <a href="http://localhost:3040/api/v1/docs" target="_blank"
+                                style="color:var(--crimson)">OpenAPI Docs →</a></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top:8px">
+                <div class="card-header">
+                    <div class="card-title">📊 Architektur</div>
+                </div>
+                <pre
+                    style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-secondary);line-height:1.8;overflow-x:auto">
+ AI Clients (Gemini, Claude, Cursor, etc.)
+        │ stdio / JSON-RPC
+ ┌──────┴──────────────────┐
+ │    DKZ MCP SERVER       │
+ │  24 Tools │ 4 Resources │
+ │  4 Prompts              │
+ └──────┬──────────────────┘
+        │ HTTP / fetch
+ ┌──────┴──────────────────┐
+ │    DKZ API GATEWAY      │
+ │  :3040 │ WebSocket      │
+ │  18 REST Endpoints      │
+ │  Rate Limit │ Auth      │
+ └──────┬──────────────────┘
+        │
+ ┌──────┴──────────────────┐
+ │   BACKEND BRIDGES       │
+ │  VPS │ LLM │ GAS │ ...  │
+ └─────────────────────────┘</pre>
+            </div>
+        </div>
+
+        <!-- ═══ TOOLS PANEL ═══ -->
+        <div class="panel" id="panel-tools">
+            <div class="section-title">🔧 MCP Tools</div>
+            <div class="section-desc">Alle 24 registrierten MCP-Tools, aufrufbar von AI-Clients via stdio.</div>
+            <div class="tool-grid" id="toolGrid"></div>
+        </div>
+
+        <!-- ═══ API EXPLORER PANEL ═══ -->
+        <div class="panel" id="panel-api">
+            <div class="section-title">🌐 API Explorer</div>
+            <div class="section-desc">Alle REST-Endpoints des API Gateway. Klicke "Try" um sie direkt zu testen.</div>
+            <div class="card" id="apiEndpoints"></div>
+            <div class="card" style="margin-top:16px">
+                <div class="card-header">
+                    <div class="card-title">📤 Response</div>
+                    <button class="btn-try"
+                        onclick="document.getElementById('apiResponse').textContent = ''">Clear</button>
+                </div>
+                <div class="console-output" id="apiResponse">Klicke "Try" bei einem Endpoint...</div>
+            </div>
+        </div>
+
+        <!-- ═══ HEALTH PANEL ═══ -->
+        <div class="panel" id="panel-health">
+            <div class="section-title">💚 Backend Health</div>
+            <div class="section-desc">Echtzeit-Status aller 7 Backends. Aktualisiert sich jede 30 Sekunden.</div>
+            <div style="display:flex;flex-direction:column;gap:8px" id="healthGrid"></div>
+            <div class="card" style="margin-top:16px">
+                <div class="card-header">
+                    <div class="card-title">📋 Letzte Incidents</div>
+                </div>
+                <div id="incidentList" style="font-size:0.82rem;color:var(--text-secondary)">Keine Incidents.</div>
+            </div>
+        </div>
+
+        <!-- ═══ CONSOLE PANEL ═══ -->
+        <div class="panel" id="panel-console">
+            <div class="section-title">💻 API Console</div>
+            <div class="section-desc">Interaktive API-Konsole — teste Endpoints direkt.</div>
+            <div class="card">
+                <div class="console-output" id="consoleOutput">⚡ DkZ API Console bereit.\nVerbinde mit API Gateway auf
+                    http://localhost:3040...\n\nBeispiele:\n GET /api/v1/health\n GET /api/v1/modules\n POST
+                    /api/v1/chat {"message":"Hallo DkZ!"}\n POST /api/v1/files/list {"path":"/"}\n</div>
+                <div class="console-input">
+                    <input type="text" id="consoleInput" placeholder='z.B. GET /api/v1/health'
+                        onkeydown="if(event.key==='Enter')executeConsole()">
+                    <button onclick="executeConsole()">Send ⚡</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ CONFIG PANEL ═══ -->
+        <div class="panel" id="panel-config">
+            <div class="section-title">⚙️ MCP Client Config</div>
+            <div class="section-desc">Kopiere die passende Konfiguration in deinen AI-Client, um den DkZ MCP Server zu
+                verbinden.</div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="config-label">Gemini Code Assist / Gemini CLI</div>
+                    <div class="config-block" id="configGemini">
+                        <button class="btn-copy" onclick="copyConfig('configGemini')">Copy</button>
+                        <pre>{
+  "mcpServers": {
+    "dkz": {
+      "command": "node",
+      "args": ["C:/DEVKiTZ/01_PROJECTS/01_dashboard/mcp-server/index.js"],
+      "env": {
+        "DKZ_API_URL": "http://localhost:3040"
+      }
+    }
+  }
+}</pre>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="config-label">Claude Desktop</div>
+                    <div class="config-block" id="configClaude">
+                        <button class="btn-copy" onclick="copyConfig('configClaude')">Copy</button>
+                        <pre>{
+  "mcpServers": {
+    "dkz": {
+      "command": "node",
+      "args": ["C:/DEVKiTZ/01_PROJECTS/01_dashboard/mcp-server/index.js"],
+      "env": {
+        "DKZ_API_URL": "http://localhost:3040"
+      }
+    }
+  }
+}</pre>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="config-label">VS Code (settings.json)</div>
+                    <div class="config-block" id="configVSCode">
+                        <button class="btn-copy" onclick="copyConfig('configVSCode')">Copy</button>
+                        <pre>{
+  "mcp.servers": {
+    "dkz": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["C:/DEVKiTZ/01_PROJECTS/01_dashboard/mcp-server/index.js"]
+    }
+  }
+}</pre>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="config-label">Cursor / Windsurf</div>
+                    <div class="config-block" id="configCursor">
+                        <button class="btn-copy" onclick="copyConfig('configCursor')">Copy</button>
+                        <pre>{
+  "mcpServers": {
+    "dkz": {
+      "command": "node",
+      "args": ["C:/DEVKiTZ/01_PROJECTS/01_dashboard/mcp-server/index.js"]
+    }
+  }
+}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ LOGS PANEL ═══ -->
+        <div class="panel" id="panel-logs">
+            <div class="section-title">📋 Request Log</div>
+            <div class="section-desc">Live-Stream aller API-Requests über WebSocket.</div>
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                    <div class="card-title">Live Requests</div>
+                    <button class="btn-try" onclick="document.getElementById('logStream').innerHTML = ''">Clear</button>
+                </div>
+                <div id="logStream" style="max-height:500px;overflow-y:auto">
+                    <div class="log-entry" style="color:var(--text-muted)">Warte auf WebSocket-Verbindung...</div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        // ═══ GLOBALS ═══
+        const API_BASE = 'http://localhost:3040';
+        let ws = null;
+        let requestCount = 0;
+
+        // ═══ TAB SWITCHING ═══
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // ═══ TOOL DATA ═══
+        const tools = [
+            { name: 'dkz_chat', icon: '💬', cat: 'Chat', desc: 'AI Chat mit Multi-Model' },
+            { name: 'dkz_summarize', icon: '📝', cat: 'Chat', desc: 'Text zusammenfassen' },
+            { name: 'dkz_translate', icon: '🌐', cat: 'Chat', desc: 'Text übersetzen' },
+            { name: 'dkz_codegen', icon: '💻', cat: 'Chat', desc: 'Code generieren / konvertieren' },
+            { name: 'dkz_list_files', icon: '📂', cat: 'Files', desc: 'Dateien auflisten' },
+            { name: 'dkz_read_file', icon: '📄', cat: 'Files', desc: 'Datei lesen' },
+            { name: 'dkz_write_file', icon: '✏️', cat: 'Files', desc: 'Datei schreiben' },
+            { name: 'dkz_search_files', icon: '🔍', cat: 'Files', desc: 'Dateien suchen' },
+            { name: 'dkz_move_file', icon: '📦', cat: 'Files', desc: 'Datei verschieben' },
+            { name: 'dkz_health_check', icon: '💚', cat: 'Health', desc: 'System Health Check' },
+            { name: 'dkz_incidents', icon: '🚨', cat: 'Health', desc: 'Incident Log' },
+            { name: 'dkz_metrics', icon: '📊', cat: 'Health', desc: 'System Metriken' },
+            { name: 'dkz_list_modules', icon: '📦', cat: 'Modules', desc: 'Module auflisten' },
+            { name: 'dkz_module_info', icon: 'ℹ️', cat: 'Modules', desc: 'Modul-Details' },
+            { name: 'dkz_register_module', icon: '➕', cat: 'Modules', desc: 'Modul registrieren' },
+            { name: 'dkz_seo_analyze', icon: '📊', cat: 'SEO', desc: 'SEO Analyse' },
+            { name: 'dkz_keyword_research', icon: '🔑', cat: 'SEO', desc: 'Keyword-Recherche' },
+            { name: 'dkz_generate_meta', icon: '🏷️', cat: 'SEO', desc: 'Meta-Tags generieren' },
+            { name: 'dkz_list_workflows', icon: '📋', cat: 'Workflow', desc: 'Workflows auflisten' },
+            { name: 'dkz_start_workflow', icon: '🚀', cat: 'Workflow', desc: 'Workflow starten' },
+            { name: 'dkz_create_task', icon: '✅', cat: 'Workflow', desc: 'Task erstellen' },
+            { name: 'dkz_git_sync', icon: '🔄', cat: 'System', desc: 'Git Sync' },
+            { name: 'dkz_ecosystem_info', icon: '⚡', cat: 'System', desc: 'Ökosystem Info' },
+            { name: 'dkz_mcp_info', icon: '🔌', cat: 'System', desc: 'MCP Server Info' },
+        ];
+
+        // Render tool grid
+        const toolGrid = document.getElementById('toolGrid');
+        tools.forEach(t => {
+            const catClass = t.cat.toLowerCase();
+            toolGrid.innerHTML += `
+        <div class="tool-item">
+            <div class="tool-icon ${catClass}">${t.icon}</div>
+            <div>
+                <div class="tool-name">${t.name}</div>
+                <div class="tool-desc">${t.desc}</div>
+            </div>
+            <span class="tool-category">${t.cat}</span>
+        </div>
+    `;
+        });
+
+        // ═══ API ENDPOINTS ═══
+        const endpoints = [
+            { method: 'GET', path: '/api/v1/health', desc: 'System Health Check' },
+            { method: 'GET', path: '/api/v1/modules', desc: 'Module auflisten' },
+            { method: 'GET', path: '/api/v1/ecosystem', desc: 'Ökosystem Info' },
+            { method: 'GET', path: '/api/v1/metrics', desc: 'System Metriken' },
+            { method: 'GET', path: '/api/v1/registry', desc: 'Backend Registry' },
+            { method: 'GET', path: '/api/v1/mcp/info', desc: 'MCP Server Info' },
+            { method: 'GET', path: '/api/v1/mcp/tools', desc: 'MCP Tool Liste' },
+            { method: 'GET', path: '/api/v1/mcp/config', desc: 'MCP Client Configs' },
+            { method: 'GET', path: '/api/v1/docs', desc: 'OpenAPI Dokumentation' },
+            { method: 'GET', path: '/api/v1/workflows', desc: 'Workflows auflisten' },
+            { method: 'GET', path: '/api/v1/tasks', desc: 'Tasks auflisten' },
+            { method: 'POST', path: '/api/v1/chat', desc: 'AI Chat' },
+            { method: 'POST', path: '/api/v1/summarize', desc: 'Text zusammenfassen' },
+            { method: 'POST', path: '/api/v1/translate', desc: 'Text übersetzen' },
+            { method: 'POST', path: '/api/v1/files/list', desc: 'Dateien auflisten' },
+            { method: 'POST', path: '/api/v1/files/read', desc: 'Datei lesen' },
+            { method: 'POST', path: '/api/v1/files/search', desc: 'Dateien suchen' },
+            { method: 'POST', path: '/api/v1/seo/analyze', desc: 'SEO Analyse' },
+        ];
+
+        const apiEndpoints = document.getElementById('apiEndpoints');
+        endpoints.forEach(ep => {
+            apiEndpoints.innerHTML += `
+        <div class="explorer-row">
+            <span class="method-badge ${ep.method.toLowerCase()}">${ep.method}</span>
+            <span class="endpoint-path">${ep.path}</span>
+            <span class="endpoint-desc">${ep.desc}</span>
+            <button class="btn-try" onclick="tryEndpoint('${ep.method}', '${ep.path}')">Try</button>
+        </div>
+    `;
+        });
+
+        // ═══ TRY ENDPOINT ═══
+        async function tryEndpoint(method, path) {
+            const responseEl = document.getElementById('apiResponse');
+            responseEl.textContent = `⏳ ${method} ${path}...\n`;
+
+            try {
+                const opts = { method };
+                if (method === 'POST') {
+                    opts.headers = { 'Content-Type': 'application/json' };
+                    // Default payloads
+                    const payloads = {
+                        '/api/v1/chat': { message: 'Hallo DkZ! Was kannst du?' },
+                        '/api/v1/summarize': { text: 'Das DkZ-Ökosystem ist ein modulares System für die EU.', depth: 'kurz' },
+                        '/api/v1/translate': { text: 'Hello World', targetLang: 'de' },
+                        '/api/v1/files/list': { path: '/' },
+                        '/api/v1/files/read': { path: '/04_SYSTEM/DKZ_PLAYBOOK.md' },
+                        '/api/v1/files/search': { query: 'dashboard', searchIn: 'name' },
+                        '/api/v1/seo/analyze': { html: '<html><head><title>Test</title></head><body><h1>Test</h1></body></html>' },
+                    };
+                    opts.body = JSON.stringify(payloads[path] || {});
+                }
+
+                const start = performance.now();
+                const resp = await fetch(API_BASE + path, opts);
+                const duration = Math.round(performance.now() - start);
+                const data = await resp.json();
+
+                responseEl.textContent = `✅ ${resp.status} ${resp.statusText} (${duration}ms)\n\n${JSON.stringify(data, null, 2)}`;
+                requestCount++;
+                document.getElementById('statRequests').textContent = requestCount;
+            } catch (err) {
+                responseEl.textContent = `❌ Error: ${err.message}\n\nStelle sicher, dass der API Gateway läuft:\n  cd api-gateway && npm start`;
+            }
+        }
+
+        // ═══ CONSOLE ═══
+        async function executeConsole() {
+            const input = document.getElementById('consoleInput');
+            const output = document.getElementById('consoleOutput');
+            const cmd = input.value.trim();
+            if (!cmd) return;
+
+            output.textContent += `\n> ${cmd}\n`;
+            input.value = '';
+
+            // Parse: METHOD /path {json}
+            const match = cmd.match(/^(GET|POST|PUT|DELETE|PATCH)\s+(\/\S+)(?:\s+(.+))?$/i);
+            if (!match) {
+                output.textContent += `❌ Format: METHOD /path [json_body]\n`;
+                output.scrollTop = output.scrollHeight;
+                return;
+            }
+
+            const [, method, path, bodyStr] = match;
+            try {
+                const opts = { method: method.toUpperCase(), headers: {} };
+                if (bodyStr) {
+                    opts.headers['Content-Type'] = 'application/json';
+                    opts.body = bodyStr;
+                }
+
+                const start = performance.now();
+                const resp = await fetch(API_BASE + path, opts);
+                const duration = Math.round(performance.now() - start);
+                const data = await resp.json();
+
+                output.textContent += `${resp.status} (${duration}ms)\n${JSON.stringify(data, null, 2)}\n`;
+                requestCount++;
+                document.getElementById('statRequests').textContent = requestCount;
+            } catch (err) {
+                output.textContent += `❌ ${err.message}\n`;
+            }
+
+            output.scrollTop = output.scrollHeight;
+        }
+
+        // ═══ HEALTH CHECK ═══
+        async function loadHealth() {
+            const grid = document.getElementById('healthGrid');
+            try {
+                const resp = await fetch(API_BASE + '/api/v1/health');
+                const data = await resp.json();
+
+                grid.innerHTML = data.backends.map(b => `
+            <div class="backend-item">
+                <div class="backend-status ${b.online ? 'online' : 'offline'}"></div>
+                <div>
+                    <div class="backend-name">${b.icon} ${b.name}</div>
+                    <div class="backend-detail">${b.id} · ${b.lastCheck ? new Date(b.lastCheck).toLocaleTimeString() : '—'}</div>
+                </div>
+                <div class="backend-latency" style="color:${b.online ? 'var(--success)' : 'var(--danger)'}">
+                    ${b.latency ? b.latency + 'ms' : '—'}
+                </div>
+            </div>
+        `).join('');
+
+                document.getElementById('apiDot').style.background = 'var(--success)';
+                document.getElementById('apiStatus').textContent = `${data.summary.online}/${data.summary.total} online`;
+                document.getElementById('apiGatewayStatus').textContent = 'Online';
+                document.getElementById('apiGatewayStatus').style.color = 'var(--success)';
+            } catch {
+                grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">API Gateway offline — starte mit: <code>cd api-gateway && npm start</code></div>';
+                document.getElementById('apiDot').style.background = 'var(--danger)';
+                document.getElementById('apiStatus').textContent = 'Offline';
+                document.getElementById('apiGatewayStatus').textContent = 'Offline';
+                document.getElementById('apiGatewayStatus').style.color = 'var(--danger)';
+            }
+        }
+
+        // ═══ WEBSOCKET ═══
+        function connectWebSocket() {
+            try {
+                ws = new WebSocket('ws://localhost:3040/ws');
+
+                ws.onopen = () => {
+                    document.getElementById('wsDot').classList.add('connected');
+                    document.getElementById('wsStatus').textContent = 'WS verbunden';
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const msg = JSON.parse(event.data);
+                        addLogEntry(msg);
+                    } catch { }
+                };
+
+                ws.onclose = () => {
+                    document.getElementById('wsDot').classList.remove('connected');
+                    document.getElementById('wsStatus').textContent = 'WS getrennt';
+                    setTimeout(connectWebSocket, 5000);
+                };
+
+                ws.onerror = () => {
+                    document.getElementById('wsDot').classList.remove('connected');
+                    document.getElementById('wsStatus').textContent = 'WS Fehler';
+                };
+            } catch {
+                document.getElementById('wsStatus').textContent = 'WS N/A';
+            }
+        }
+
+        function addLogEntry(msg) {
+            const stream = document.getElementById('logStream');
+            const time = new Date().toLocaleTimeString();
+            const html = `<div class="log-entry">
+        <span class="log-time">${time}</span>
+        <span class="log-method">${msg.type || '—'}</span>
+        <span class="log-path">${JSON.stringify(msg.data || msg.message || msg).substring(0, 100)}</span>
+    </div>`;
+            stream.insertAdjacentHTML('afterbegin', html);
+            if (stream.children.length > 100) stream.lastChild.remove();
+        }
+
+        // ═══ COPY CONFIG ═══
+        function copyConfig(id) {
+            const el = document.getElementById(id);
+            const pre = el.querySelector('pre');
+            navigator.clipboard.writeText(pre.textContent.trim());
+            const btn = el.querySelector('.btn-copy');
+            btn.textContent = '✓ Copied';
+            setTimeout(() => btn.textContent = 'Copy', 2000);
+        }
+
+        // ═══ INIT ═══
+        loadHealth();
+        connectWebSocket();
+        setInterval(loadHealth, 30000);
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,1293 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v0.01.2_02">
+    <title>DkZâ„¢ Loop Dashboard & Builder</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --bg2: #111116;
+            --bg3: #1a1a20;
+            --bg4: #222228;
+            --accent: #fa1e4e;
+            --green: #00ff88;
+            --blue: #818cf8;
+            --yellow: #fac832;
+            --orange: #ffab40;
+            --purple: #a78bfa;
+            --text: #f0f0f2;
+            --text2: #a1a1aa;
+            --text3: #71717a;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --radius: 12px
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh
+        }
+
+        header {
+            background: var(--bg2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between
+        }
+
+        .logo {
+            font-weight: 800;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .logo span {
+            color: var(--accent)
+        }
+
+        .hub-btn {
+            background: rgba(250, 30, 78, 0.08);
+            color: var(--accent);
+            border: 1px solid rgba(250, 30, 78, 0.2);
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: var(--mono);
+            font-size: .7rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all .2s
+        }
+
+        .hub-btn:hover {
+            background: rgba(250, 30, 78, 0.15)
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--bg2);
+            padding: 8px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04)
+        }
+
+        .tab {
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--text3);
+            transition: all .2s;
+            border: none;
+            background: none
+        }
+
+        .tab.active {
+            background: rgba(250, 30, 78, 0.1);
+            color: var(--accent)
+        }
+
+        .tab:hover {
+            color: var(--text2)
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 24px
+        }
+
+        .stat-card {
+            background: var(--bg2);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: var(--radius);
+            padding: 16px;
+            text-align: center
+        }
+
+        .stat-val {
+            font-size: 1.6rem;
+            font-weight: 800
+        }
+
+        .stat-lbl {
+            font-size: .65rem;
+            color: var(--text3);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: .5px
+        }
+
+        .card {
+            background: var(--bg2);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 16px
+        }
+
+        .card h3 {
+            font-size: .9rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .loop-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px
+        }
+
+        .loop-card {
+            background: var(--bg3);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            padding: 16px;
+            transition: all .3s;
+            position: relative;
+            overflow: hidden
+        }
+
+        .loop-card:hover {
+            border-color: rgba(250, 30, 78, 0.3);
+            transform: translateY(-2px)
+        }
+
+        .loop-card .status {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%
+        }
+
+        .status.running {
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green);
+            animation: pulse 2s infinite
+        }
+
+        .status.paused {
+            background: var(--yellow)
+        }
+
+        .status.stopped {
+            background: var(--accent)
+        }
+
+        .status.idle {
+            background: var(--text3)
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .4
+            }
+        }
+
+        .loop-card h4 {
+            font-size: .85rem;
+            font-weight: 700;
+            margin-bottom: 6px
+        }
+
+        .loop-card p {
+            font-size: .7rem;
+            color: var(--text3);
+            margin-bottom: 8px;
+            line-height: 1.4
+        }
+
+        .loop-meta {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+        .tag {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: .6rem;
+            font-weight: 600;
+            font-family: var(--mono)
+        }
+
+        .tag.cr {
+            background: rgba(250, 30, 78, 0.1);
+            color: var(--accent)
+        }
+
+        .tag.cp {
+            background: rgba(129, 140, 248, 0.1);
+            color: var(--blue)
+        }
+
+        .tag.sys {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--green)
+        }
+
+        .tag.cron {
+            background: rgba(250, 200, 50, 0.1);
+            color: var(--yellow)
+        }
+
+        .loop-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px
+        }
+
+        .loop-actions button {
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: var(--bg4);
+            color: var(--text2);
+            font-size: .65rem;
+            cursor: pointer;
+            font-family: var(--mono);
+            transition: all .2s
+        }
+
+        .loop-actions button:hover {
+            border-color: var(--accent);
+            color: var(--accent)
+        }
+
+        /* Flow Visualizer */
+        .flow-container {
+            background: var(--bg);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            padding: 20px;
+            position: relative;
+            min-height: 200px;
+            overflow: hidden
+        }
+
+        .flow-node {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: .7rem;
+            font-weight: 600;
+            position: relative;
+            transition: all .4s
+        }
+
+        .flow-node.active {
+            box-shadow: 0 0 20px rgba(250, 30, 78, 0.3)
+        }
+
+        .flow-arrow {
+            color: var(--text3);
+            font-size: .8rem;
+            margin: 0 8px
+        }
+
+        .flow-line {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin: 12px 0
+        }
+
+        /* Builder */
+        .builder-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px
+        }
+
+        .builder-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px
+        }
+
+        .builder-form label {
+            font-size: .7rem;
+            color: var(--text3);
+            font-weight: 600
+        }
+
+        .builder-form input,
+        .builder-form select,
+        .builder-form textarea {
+            background: var(--bg);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: .8rem;
+            outline: none
+        }
+
+        .builder-form textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: var(--mono);
+            font-size: .7rem
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #ec4899);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: .8rem;
+            transition: all .3s
+        }
+
+        .btn-primary:hover {
+            opacity: .9;
+            transform: translateY(-1px)
+        }
+
+        .btn-secondary {
+            background: rgba(129, 140, 248, 0.1);
+            color: var(--blue);
+            border: 1px solid rgba(129, 140, 248, 0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: .75rem
+        }
+
+        .btn-debug {
+            background: rgba(250, 30, 78, 0.08);
+            color: var(--accent);
+            border: 1px solid rgba(250, 30, 78, 0.2);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: .65rem;
+            font-weight: 600;
+            font-family: var(--mono)
+        }
+
+        /* Copilot Chat */
+        .chat-container {
+            background: var(--bg);
+            border: 1px solid rgba(129, 140, 248, 0.2);
+            border-radius: 10px;
+            padding: 16px;
+            max-height: 400px;
+            overflow-y: auto
+        }
+
+        .chat-msg {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: .75rem;
+            line-height: 1.5
+        }
+
+        .chat-msg.bot {
+            background: rgba(129, 140, 248, 0.06);
+            border-left: 3px solid var(--blue)
+        }
+
+        .chat-msg.user {
+            background: rgba(250, 30, 78, 0.06);
+            border-left: 3px solid var(--accent)
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px
+        }
+
+        .chat-input input {
+            flex: 1;
+            background: var(--bg3);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: var(--text);
+            font-size: .8rem;
+            outline: none
+        }
+
+        /* Mindmap Preview */
+        .mindmap {
+            background: var(--bg);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            padding: 16px;
+            font-family: var(--mono);
+            font-size: .7rem;
+            white-space: pre-line;
+            color: var(--text2);
+            line-height: 1.8;
+            max-height: 400px;
+            overflow-y: auto
+        }
+
+        .mindmap .node {
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline
+        }
+
+        .mindmap .root {
+            background: rgba(250, 30, 78, 0.15);
+            color: var(--accent);
+            font-weight: 700
+        }
+
+        .mindmap .branch {
+            background: rgba(129, 140, 248, 0.1);
+            color: var(--blue)
+        }
+
+        .mindmap .leaf {
+            background: rgba(0, 255, 136, 0.08);
+            color: var(--green)
+        }
+
+        /* Panels */
+        .panel {
+            display: none
+        }
+
+        .panel.active {
+            display: block
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px)
+            }
+
+            to {
+                opacity: 1;
+                transform: none
+            }
+        }
+
+        .panel.active>* {
+            animation: fadeIn .3s ease-out
+        }
+
+        @media(max-width:768px) {
+            .stats {
+                grid-template-columns: repeat(3, 1fr)
+            }
+
+            .loop-grid,
+            .builder-grid {
+                grid-template-columns: 1fr
+            }
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="loop-dashboard" data-dkz-appid="DKZ-MOD-LOO" data-dkz-version="v0.01" data-dkz-title="Loop Dashboard & Builder" data-dkz-icon="📦" data-dkz-separable="false">
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
+    <header>
+        <div class="logo">🔄 <span>Loop</span> Dashboard & Builder <span id="info-loop-main"></span></div>
+        <div style="display:flex;gap:8px;align-items:center">
+            <span id="loop-role-badge"></span>
+            <span style="font-size:.65rem;color:var(--text3);font-family:var(--mono)" id="clock"></span>
+            <a href="../../hub/index.html" class="hub-btn">← Hub</a>
+        </div>
+    </header>
+
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+        <button class="tab" onclick="switchTab('builder')">🔧 Loop Builder</button>
+        <button class="tab" onclick="switchTab('flow')">🎬 Flow Visualizer</button>
+        <button class="tab" onclick="switchTab('copilot')">🤖 Copilot Chat</button>
+    </div>
+
+    <main>
+        <!-- Stats Bar -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-val" style="color:var(--accent)" id="totalLoops">8</div>
+                <div class="stat-lbl">Loops Gesamt</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" style="color:var(--green)" id="activeLoops">5</div>
+                <div class="stat-lbl">Aktiv</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" style="color:var(--yellow)" id="pausedLoops">2</div>
+                <div class="stat-lbl">Pausiert</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" style="color:var(--blue)" id="totalRuns">0</div>
+                <div class="stat-lbl">Durchläufe</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" style="color:var(--green)" id="successRate">100%</div>
+                <div class="stat-lbl">Erfolgsrate</div>
+            </div>
+        </div>
+
+        <!-- Dashboard Panel -->
+        <div class="panel active" id="panelDashboard">
+            <div class="card">
+                <h3>🔄 Aktive Loops</h3>
+                <div class="loop-grid" id="loopGrid"></div>
+            </div>
+        </div>
+
+        <!-- Builder Panel -->
+        <div class="panel" id="panelBuilder">
+            <div class="card">
+                <h3>🔧 Neuen Loop erstellen</h3>
+                <div class="builder-grid">
+                    <div class="builder-form" id="builderForm">
+                        <label>Loop Name</label>
+                        <input type="text" id="loopName" placeholder="z.B. Security Scanner Loop">
+
+                        <label>Typ</label>
+                        <select id="loopType">
+                            <option value="coderabbit">🐰 CodeRabbit (Bug Scanner)</option>
+                            <option value="copilot">🤖 Copilot (Suggestions)</option>
+                            <option value="system">⚙️ System (Health/Persist)</option>
+                            <option value="ci">🚀 CI/CD (Build/Deploy)</option>
+                            <option value="custom">🔧 Custom</option>
+                        </select>
+
+                        <label>Schedule (Cron)</label>
+                        <select id="loopSchedule">
+                            <option value="*/30 * * * *">Alle 30 Minuten</option>
+                            <option value="0 * * * *">Stündlich</option>
+                            <option value="*/5 * * * *">Alle 5 Minuten</option>
+                            <option value="0 */6 * * *">Alle 6 Stunden</option>
+                            <option value="0 0 * * *">Täglich</option>
+                            <option value="60000">setInterval 60s</option>
+                            <option value="300000">setInterval 5min</option>
+                            <option value="custom">Custom...</option>
+                        </select>
+
+                        <label>Checks / Schritte</label>
+                        <textarea id="loopSteps"
+                            placeholder="1. Scan modules&#10;2. Check for errors&#10;3. Create issue if found&#10;4. Verify fix on next run"></textarea>
+
+                        <label>Verfahren</label>
+                        <select id="loopMethod">
+                            <option value="scan-issue-verify">Scan → Issue → Verify → Close/Re-Issue</option>
+                            <option value="scan-suggest">Scan → Suggest (Verbesserungsvorschläge)</option>
+                            <option value="check-alert">Check → Alert → Escalate</option>
+                            <option value="save-sync">Save → Sync → Confirm</option>
+                            <option value="custom">Custom Verfahren</option>
+                        </select>
+
+                        <label>Agenten</label>
+                        <div style="display:flex;gap:8px">
+                            <label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+                                <input type="checkbox" id="agentCR" checked> <span style="font-size:.7rem">🐰
+                                    CodeRabbit</span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+                                <input type="checkbox" id="agentCP" checked> <span style="font-size:.7rem">🤖
+                                    Copilot</span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+                                <input type="checkbox" id="agentOCR"> <span style="font-size:.7rem">👁️ Mistral
+                                    OCR</span>
+                            </label>
+                        </div>
+
+                        <div style="display:flex;gap:8px;margin-top:8px">
+                            <button class="btn-primary" onclick="createLoop()">🚀 Loop erstellen</button>
+                            <button class="btn-debug" onclick="debugLoop()">🐰 Debug mit CodeRabbit</button>
+                            <button class="btn-secondary" onclick="importFromPromptGen()" id="btn-import-prompt"
+                                title="Prompt aus Prompt Generator laden">🎯 Prompt importieren</button>
+                        </div>
+                        <div id="loop-cross-links" style="margin-top:12px"></div>
+                    </div>
+
+                    <!-- Mindmap Preview -->
+                    <div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                            <label style="font-size:.7rem;color:var(--text3);font-weight:600">📐 Mindmap Preview</label>
+                            <button class="btn-secondary" onclick="generateMindmap()"
+                                style="padding:4px 10px;font-size:.6rem">🤖 Copilot generieren</button>
+                        </div>
+                        <div class="mindmap" id="mindmapPreview">
+                            <span class="node root">🔄 Neuer Loop</span>
+                            ├── <span class="node branch">📋 Trigger</span>
+                            │ └── <span class="node leaf">⏰ Schedule / Event</span>
+                            ├── <span class="node branch">🔍 Scan</span>
+                            │ ├── <span class="node leaf">Agent A: CodeRabbit</span>
+                            │ └── <span class="node leaf">Agent B: Copilot</span>
+                            ├── <span class="node branch">📝 Action</span>
+                            │ ├── <span class="node leaf">Issue erstellen</span>
+                            │ └── <span class="node leaf">Suggestion posten</span>
+                            └── <span class="node branch">✅ Verify</span>
+                            ├── <span class="node leaf">Fix prüfen</span>
+                            └── <span class="node leaf">Close / Re-Open</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flow Visualizer Panel -->
+        <div class="panel" id="panelFlow">
+            <div class="card">
+                <h3>🎬 Loop Flow Visualizer</h3>
+                <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center">
+                    <select id="flowSelect"
+                        style="background:var(--bg);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:6px 10px;color:var(--text);font-size:.75rem;outline:none"
+                        onchange="selectFlowLoop()">
+                        <option value="">Loop auswählen...</option>
+                    </select>
+                    <button class="btn-primary" onclick="runFlowDemo()" style="padding:6px 16px;font-size:.7rem"
+                        id="flowRunBtn">▶️ Demo starten</button>
+                    <button class="btn-debug" onclick="debugFlowLoop()">🐰 Debug</button>
+                    <span id="flowStatus" style="font-size:.65rem;color:var(--text3);font-family:var(--mono)"></span>
+                </div>
+                <div class="flow-container" id="flowContainer">
+                    <div style="text-align:center;color:var(--text3);padding:60px;font-size:.8rem">Loop auswählen um
+                        Flow zu visualisieren</div>
+                </div>
+                <div id="flowLog"
+                    style="margin-top:12px;background:var(--bg);border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:12px;font-family:var(--mono);font-size:.65rem;color:var(--text3);max-height:200px;overflow-y:auto;display:none">
+                </div>
+            </div>
+        </div>
+
+        <!-- Copilot Chat Panel -->
+        <div class="panel" id="panelCopilot">
+            <div class="card">
+                <h3>🤖 Copilot Loop-Assistent</h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                    <div>
+                        <div class="chat-container" id="chatContainer">
+                            <div class="chat-msg bot">
+                                <strong>🤖 Copilot:</strong> Willkommen im Loop Builder! Ich helfe dir, neue Loops zu
+                                erstellen.<br><br>
+                                Du kannst mir sagen:<br>
+                                • <em>"Erstelle einen Security Scanner"</em><br>
+                                • <em>"Baue einen Performance Loop"</em><br>
+                                • <em>"Zeige mir alle aktiven Loops"</em><br>
+                                • <em>"Debug den Ralph Loop"</em>
+                            </div>
+                        </div>
+                        <div class="chat-input">
+                            <input type="text" id="chatInput" placeholder="Beschreibe den Loop, den du bauen willst..."
+                                onkeydown="if(event.key==='Enter')sendChat()">
+                            <button class="btn-primary" onclick="sendChat()"
+                                style="padding:8px 16px;font-size:.75rem">📨</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label
+                            style="font-size:.7rem;color:var(--text3);font-weight:600;display:block;margin-bottom:8px">📐
+                            Copilot Mindmap Output</label>
+                        <div class="mindmap" id="copilotMindmap" style="min-height:340px">
+                            <span style="color:var(--text3)">Copilot generiert hier die Mindmap...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-eventlog.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+    <script>
+        // ═══════════════════════════════════════
+        // Loop Registry — Pre-registered Loops
+        // ═══════════════════════════════════════
+        const LOOPS = [
+            {
+                id: 'ralph-loop', name: '🐰 CodeRabbit Ralph Loop', type: 'coderabbit', status: 'running',
+                schedule: '*/30 * * * *', scheduleLabel: 'Alle 30 Min',
+                method: 'scan-issue-verify',
+                agents: ['CodeRabbit'],
+                description: 'Dauerschleife: Scannt alle 56 Module auf Design, Security und Struktur-Fehler. Erstellt automatisch GitHub Issues und verifiziert Fixes im nächsten Durchlauf.',
+                steps: ['Discover Modules', 'CodeRabbit Scan (7 Checks)', 'Create GitHub Issues', 'Verify Fixed Issues', 'Close/Re-open'],
+                file: '.github/workflows/coderabbit-ralph-loop.yml',
+                runs: 0, lastRun: null, errors: 0
+            },
+            {
+                id: 'copilot-suggest', name: '🤖 Copilot Suggestion Loop', type: 'copilot', status: 'running',
+                schedule: '0 * * * *', scheduleLabel: 'Stündlich',
+                method: 'scan-suggest',
+                agents: ['Copilot'],
+                description: 'Stündlich: Sucht system-relevante Verbesserungen (Performance, UX, Logic). Postet wöchentliche Verbesserungsvorschläge — keine Issues!',
+                steps: ['Scan Modules (8 Checks)', 'Group by Category', 'Check Existing Suggestions', 'Create/Update Weekly Report'],
+                file: '.github/workflows/copilot-suggestion-loop.yml',
+                runs: 0, lastRun: null, errors: 0
+            },
+            {
+                id: 'auto-save', name: '💾 Auto-Save Loop', type: 'system', status: 'running',
+                schedule: '60000', scheduleLabel: 'Alle 60s',
+                method: 'save-sync',
+                agents: [],
+                description: 'Speichert alle localStorage-Daten automatisch zum Server. Kein Wissensverlust (R12).',
+                steps: ['Collect localStorage', 'POST /user/persist', 'Confirm Save'],
+                file: 'shared/dkz-persist.js',
+                runs: 0, lastRun: null, errors: 0
+            },
+            {
+                id: 'auto-backup', name: '☁️ Auto-Backup Loop', type: 'system', status: 'paused',
+                schedule: '300000', scheduleLabel: 'Alle 5 Min',
+                method: 'save-sync',
+                agents: [],
+                description: 'Sichert System-Daten auf Google Drive via Apps Script. Manuell aktivierbar.',
+                steps: ['Collect System Data', 'POST to Apps Script', 'Confirm Backup'],
+                file: 'shared/dkz-persist.js',
+                runs: 0, lastRun: null, errors: 0
+            },
+            {
+                id: 'health-check', name: '🏥 Health Check Loop', type: 'system', status: 'running',
+                schedule: '30000', scheduleLabel: 'Alle 30s',
+                method: 'check-alert',
+                agents: [],
+                description: 'Prüft System-Status: Backend, Module, EventLog, localStorage. Zeigt Status-Lampe.',
+                steps: ['Ping Backend', 'Check Module Index', 'Verify EventLog', 'Update Status Lamp'],
+                file: 'shared/dkz-health.js',
+                runs: 0, lastRun: null, errors: 0
+            },
+            {
+                id: 'auto-update', name: '🔄 Auto-Update Check', type: 'system', status: 'running',
+                schedule: '3600000', scheduleLabel: 'Stündlich',
+                method: 'check-alert',
+                agents: [],
+                description: 'Prüft ob neue Versionen verfügbar sind. Zeigt Update-Banner.',
+                steps: ['Check Version Endpoint', 'Compare Versions', 'Show Update Banner'],
+                file: 'shared/dkz-autoupdate.js',
+                runs: 0, lastRun: null, errors: 0
+            },
+            {
+                id: 'issue-triage', name: '🏷️ Issue Triage Loop', type: 'coderabbit', status: 'running',
+                schedule: '0 * * * *', scheduleLabel: 'Stündlich',
+                method: 'scan-issue-verify',
+                agents: ['CodeRabbit'],
+                description: 'GitHub Action: Triagiert neue Issues, weist Pflegefall-IDs zu, setzt Priority Labels.',
+                steps: ['List Open Issues', 'Assign PF-ID', 'Set Priority Label', 'Verify Fix Attempts', 'Escalate if 3x Failed'],
+                file: '.github/workflows/issue-triage.yml',
+                runs: 0, lastRun: null, errors: 0
+            },
+            {
+                id: 'dual-agent-analyse', name: '🔬 Dual-Agent Analyse Loop', type: 'coderabbit', status: 'paused',
+                schedule: 'manual', scheduleLabel: 'Manuell',
+                method: 'scan-issue-verify',
+                agents: ['CodeRabbit', 'Copilot', 'Mistral OCR'],
+                description: 'Admin-Button: Zwei Agenten scannen parallel (22 Checks), Cross-Check gegenseitig, OCR für Bilder/PDFs.',
+                steps: ['Agent A: 12 Checks (Design/Security)', 'Agent B: 10 Checks (Logic/UX)', 'Cross-Check Findings', 'OCR if needed', 'Generate Report'],
+                file: 'shared/dkz-analyser.js',
+                runs: 0, lastRun: null, errors: 0
+            }
+        ];
+
+        // Save/Load from localStorage
+        function saveLoops() { localStorage.setItem('dkz-loops', JSON.stringify(LOOPS)); }
+        function loadLoops() {
+            const saved = localStorage.getItem('dkz-loops');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                parsed.forEach(s => {
+                    const existing = LOOPS.find(l => l.id === s.id);
+                    if (existing) { existing.runs = s.runs || 0; existing.lastRun = s.lastRun; existing.errors = s.errors || 0; existing.status = s.status; }
+                    else LOOPS.push(s);
+                });
+            }
+        }
+
+        // XSS safe
+        function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+        // ═══════════════════════════════════════
+        // Dashboard
+        // ═══════════════════════════════════════
+        function renderDashboard() {
+            const grid = document.getElementById('loopGrid');
+            grid.innerHTML = LOOPS.map(loop => `
+            <div class="loop-card" data-id="${loop.id}">
+                <div class="status ${loop.status}"></div>
+                <h4>${esc(loop.name)}</h4>
+                <p>${esc(loop.description)}</p>
+                <div class="loop-meta">
+                    <span class="tag ${loop.type === 'coderabbit' - 'cr' : loop.type === 'copilot' - 'cp' : 'sys'}">${esc(loop.type)}</span>
+                    <span class="tag cron">⏰ ${esc(loop.scheduleLabel)}</span>
+                    ${loop.agents.map(a => `<span class="tag cp">${esc(a)}</span>`).join('')}
+                </div>
+                <div class="loop-actions">
+                    <button onclick="toggleLoop('${loop.id}')">${loop.status === 'running' - '⏸️ Pause' : '▶️ Start'}</button>
+                    <button onclick="viewFlow('${loop.id}')">🎬 Flow</button>
+                    <button onclick="debugLoopById('${loop.id}')">🐰 Debug</button>
+                    <button onclick="showLoopLog('${loop.id}')">📋 Log</button>
+                </div>
+            </div>
+        `).join('');
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('totalLoops').textContent = LOOPS.length;
+            document.getElementById('activeLoops').textContent = LOOPS.filter(l => l.status === 'running').length;
+            document.getElementById('pausedLoops').textContent = LOOPS.filter(l => l.status !== 'running').length;
+            const totalRuns = LOOPS.reduce((s, l) => s + (l.runs || 0), 0);
+            document.getElementById('totalRuns').textContent = totalRuns;
+            const totalErrors = LOOPS.reduce((s, l) => s + (l.errors || 0), 0);
+            document.getElementById('successRate').textContent = totalRuns > 0 - Math.round(((totalRuns - totalErrors) / totalRuns) * 100) + '%' : '100%';
+        }
+
+        function toggleLoop(id) {
+            const loop = LOOPS.find(l => l.id === id);
+            if (loop) {
+                loop.status = loop.status === 'running' - 'paused' : 'running';
+                saveLoops(); renderDashboard();
+            }
+        }
+
+        function viewFlow(id) {
+            switchTab('flow');
+            document.getElementById('flowSelect').value = id;
+            selectFlowLoop();
+        }
+
+        // ═══════════════════════════════════════
+        // Flow Visualizer
+        // ═══════════════════════════════════════
+        function populateFlowSelect() {
+            const sel = document.getElementById('flowSelect');
+            sel.innerHTML = '<option value="">Loop auswählen...</option>' +
+                LOOPS.map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
+        }
+
+        function selectFlowLoop() {
+            const id = document.getElementById('flowSelect').value;
+            const loop = LOOPS.find(l => l.id === id);
+            if (!loop) return;
+            renderFlow(loop);
+        }
+
+        function renderFlow(loop) {
+            const container = document.getElementById('flowContainer');
+            const colors = { trigger: 'var(--yellow)', scan: 'var(--blue)', action: 'var(--accent)', verify: 'var(--green)' };
+            const groups = [
+                { label: '⏰ Trigger', color: colors.trigger, step: loop.scheduleLabel },
+                ...loop.steps.map((s, i) => ({
+                    label: s, color: i < loop.steps.length / 2 - colors.scan : i < loop.steps.length * 0.75 - colors.action : colors.verify,
+                    step: s
+                })),
+                { label: '🔄 Repeat', color: colors.trigger, step: 'Loop' }
+            ];
+
+            container.innerHTML = `
+            <div class="flow-line" id="flowLine">
+                ${groups.map((g, i) => `
+                    <div class="flow-node" id="fnode-${i}" style="background:rgba(255,255,255,0.03);border:1px solid ${g.color}40;color:${g.color}">
+                        ${esc(g.label)}
+                    </div>
+                    ${i < groups.length - 1 - '<span class="flow-arrow">→</span>' : ''}
+                `).join('')}
+            </div>
+        `;
+        }
+
+        let flowRunning = false;
+        async function runFlowDemo() {
+            const id = document.getElementById('flowSelect').value;
+            const loop = LOOPS.find(l => l.id === id);
+            if (!loop || flowRunning) return;
+
+            flowRunning = true;
+            const nodes = document.querySelectorAll('.flow-node');
+            const log = document.getElementById('flowLog');
+            log.style.display = 'block';
+            log.innerHTML = '';
+            document.getElementById('flowStatus').textContent = '▶️ Running...';
+
+            for (let i = 0; i < nodes.length; i++) {
+                nodes.forEach(n => { n.style.background = 'rgba(255,255,255,0.03)'; n.classList.remove('active'); });
+                nodes[i].style.background = 'rgba(250,30,78,0.15)';
+                nodes[i].classList.add('active');
+
+                const ts = new Date().toLocaleTimeString();
+                log.innerHTML += `<div style="padding:2px 0">[${ts}] ✅ ${nodes[i].textContent.trim()}</div>`;
+                log.scrollTop = log.scrollHeight;
+                await new Promise(r => setTimeout(r, 800));
+            }
+
+            loop.runs = (loop.runs || 0) + 1;
+            loop.lastRun = new Date().toISOString();
+            saveLoops();
+            document.getElementById('flowStatus').textContent = `✅ Durchlauf #${loop.runs} — fehlerfrei`;
+            flowRunning = false;
+            updateStats();
+        }
+
+        function debugFlowLoop() {
+            const id = document.getElementById('flowSelect').value;
+            if (id) debugLoopById(id);
+        }
+
+        function debugLoopById(id) {
+            const loop = LOOPS.find(l => l.id === id);
+            if (!loop) return;
+            // Run CodeRabbit-style debug on the loop
+            const results = [];
+            results.push(loop.name - '✅ Name gesetzt' : '⚠️ Name fehlt');
+            results.push(loop.schedule - '✅ Schedule konfiguriert' : '⚠️ Schedule fehlt');
+            results.push(loop.steps.length > 0 - `✅ ${loop.steps.length} Schritte definiert` : '⚠️ Keine Schritte');
+            results.push(loop.method - '✅ Verfahren: ' + loop.method : '⚠️ Kein Verfahren');
+            results.push(loop.file - '✅ Datei: ' + loop.file : '⚠️ Keine Datei verknüpft');
+            results.push(loop.agents.length > 0 - '✅ Agenten: ' + loop.agents.join(', ') : 'ℹ️ Keine Agenten (System Loop)');
+            results.push(loop.description.length > 20 - '✅ Beschreibung vollständig' : '⚠️ Beschreibung zu kurz');
+
+            const pass = results.filter(r => r.startsWith('✅')).length;
+            const total = results.length;
+            const score = Math.round((pass / total) * 100);
+
+            alert(`🐰 CodeRabbit Debug — ${loop.name}\n\n${results.join('\n')}\n\n━━━━━━━━━━━━━━━━━━\nScore: ${score}% (${pass}/${total})`);
+        }
+
+        function showLoopLog(id) {
+            const loop = LOOPS.find(l => l.id === id);
+            if (!loop) return;
+            alert(`📋 Loop Log — ${loop.name}\n\nDurchläufe: ${loop.runs || 0}\nLetzter Lauf: ${loop.lastRun || 'Noch nie'}\nFehler: ${loop.errors || 0}\nStatus: ${loop.status}\nDatei: ${loop.file}`);
+        }
+
+        // ═══════════════════════════════════════
+        // Loop Builder
+        // ═══════════════════════════════════════
+        function createLoop() {
+            const name = document.getElementById('loopName').value;
+            if (!name) { alert('Loop Name eingeben!'); return; }
+
+            const newLoop = {
+                id: 'custom-' + Date.now().toString(36),
+                name: '🔧 ' + name,
+                type: document.getElementById('loopType').value,
+                status: 'paused',
+                schedule: document.getElementById('loopSchedule').value,
+                scheduleLabel: document.getElementById('loopSchedule').selectedOptions[0].text,
+                method: document.getElementById('loopMethod').value,
+                agents: [
+                    ...(document.getElementById('agentCR').checked - ['CodeRabbit'] : []),
+                    ...(document.getElementById('agentCP').checked - ['Copilot'] : []),
+                    ...(document.getElementById('agentOCR').checked - ['Mistral OCR'] : [])
+                ],
+                description: document.getElementById('loopSteps').value || 'Custom Loop',
+                steps: (document.getElementById('loopSteps').value || '').split('\n').filter(s => s.trim()),
+                file: 'custom',
+                runs: 0, lastRun: null, errors: 0
+            };
+
+            LOOPS.push(newLoop);
+            saveLoops();
+            renderDashboard();
+            populateFlowSelect();
+            switchTab('dashboard');
+            if (typeof DkzEventLog !== 'undefined') DkzEventLog.logCreation('loop-dashboard', 'loop-created', { loopId: newLoop.id, name: newLoop.name });
+            alert('✅ Loop erstellt: ' + name);
+        }
+
+        function debugLoop() {
+            const name = document.getElementById('loopName').value || 'Unbenannt';
+            const steps = document.getElementById('loopSteps').value;
+            const schedule = document.getElementById('loopSchedule').value;
+            const results = [];
+            results.push(name.length > 3 - '✅ Name OK' : '⚠️ Name zu kurz');
+            results.push(schedule - '✅ Schedule gesetzt' : '⚠️ Schedule fehlt');
+            results.push(steps.split('\n').filter(s => s.trim()).length >= 2 - '✅ Mind. 2 Schritte' : '⚠️ Mehr Schritte definieren');
+            results.push(document.getElementById('agentCR').checked || document.getElementById('agentCP').checked - '✅ Agent ausgewählt' : '⚠️ Keinen Agent gewählt');
+            alert(`🐰 CodeRabbit Debug — Builder\n\n${results.join('\n')}`);
+        }
+
+        function generateMindmap() {
+            const name = document.getElementById('loopName').value || 'Neuer Loop';
+            const type = document.getElementById('loopType').selectedOptions[0].text;
+            const method = document.getElementById('loopMethod').selectedOptions[0].text;
+            const steps = document.getElementById('loopSteps').value.split('\n').filter(s => s.trim());
+            const agents = [];
+            if (document.getElementById('agentCR').checked) agents.push('CodeRabbit');
+            if (document.getElementById('agentCP').checked) agents.push('Copilot');
+            if (document.getElementById('agentOCR').checked) agents.push('Mistral OCR');
+
+            document.getElementById('mindmapPreview').innerHTML = `
+<span class="node root">🔄 ${esc(name)}</span>
+  ├── <span class="node branch">📋 Typ: ${esc(type)}</span>
+  ├── <span class="node branch">⚙️ Verfahren: ${esc(method)}</span>
+  ├── <span class="node branch">🤖 Agenten</span>
+  │   ${agents.map((a, i) => `${i === agents.length - 1 - '└' : '├'}── <span class="node leaf">${esc(a)}</span>`).join('\n  │   ')}
+  └── <span class="node branch">📝 Schritte</span>
+      ${steps.map((s, i) => `${i === steps.length - 1 - '└' : '├'}── <span class="node leaf">${esc(s)}</span>`).join('\n      ')}`;
+        }
+
+        // ═══════════════════════════════════════
+        // Copilot Chat
+        // ═══════════════════════════════════════
+        const COPILOT_RESPONSES = {
+            'security': { text: 'Ich schlage einen Security Scanner Loop vor:\n\n1. Scan alle Module auf XSS (innerHTML ohne esc)\n2. Prüfe CORS Headers\n3. Suche nach hardcoded API Keys\n4. Validiere Input Sanitization\n5. Erstelle Issue bei Fund\n\nTyp: CodeRabbit · Schedule: Alle 30 Min', mindmap: 'security-scan' },
+            'performance': { text: 'Performance Loop Vorschlag:\n\n1. Messe Modul-Größe (>50KB Warnung)\n2. Prüfe inline JS Volumen\n3. Checke Bilder (lazy loading?)\n4. Prüfe render-blocking Scripts\n5. Poste Suggestion wenn Optimierung nötig', mindmap: 'performance' },
+            'debug': { text: 'Debug-Loop Workflow:\n\n1. Collect Console Errors (global handler)\n2. Check All Module Health\n3. Verify Backend Connectivity\n4. Scan for undefined References\n5. Auto-create Pflegefall bei Fund', mindmap: 'debug' },
+            'loop': { text: `Aktuell ${LOOPS.length} Loops registriert:\n\n${LOOPS.map(l => `• ${l.name} [${l.status}]`).join('\n')}\n\n${LOOPS.filter(l => l.status === 'running').length} aktiv, ${LOOPS.filter(l => l.status !== 'running').length} pausiert.`, mindmap: null },
+            'default': { text: 'Ich kann dir helfen mit:\n\n• Loop Erstellung (z.B. "Security Scanner")\n• Loop Debugging ("Debug den Ralph Loop")\n• Performance Optimierung\n• System Monitoring\n\nWas möchtest du bauen?', mindmap: null }
+        };
+
+        function sendChat() {
+            const input = document.getElementById('chatInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            input.value = '';
+
+            const container = document.getElementById('chatContainer');
+            container.innerHTML += `<div class="chat-msg user"><strong>Du:</strong> ${esc(msg)}</div>`;
+
+            // Match response
+            const lower = msg.toLowerCase();
+            let response;
+            if (lower.includes('security') || lower.includes('xss') || lower.includes('sicher')) response = COPILOT_RESPONSES.security;
+            else if (lower.includes('performance') || lower.includes('schnell') || lower.includes('speed')) response = COPILOT_RESPONSES.performance;
+            else if (lower.includes('debug') || lower.includes('fehler') || lower.includes('bug')) response = COPILOT_RESPONSES.debug;
+            else if (lower.includes('loop') || lower.includes('aktiv') || lower.includes('zeig')) response = COPILOT_RESPONSES.loop;
+            else response = COPILOT_RESPONSES.default;
+
+            setTimeout(() => {
+                container.innerHTML += `<div class="chat-msg bot"><strong>🤖 Copilot:</strong> ${esc(response.text).replace(/\n/g, '<br>')}</div>`;
+                container.scrollTop = container.scrollHeight;
+
+                if (response.mindmap) {
+                    const mm = document.getElementById('copilotMindmap');
+                    mm.innerHTML = generateCopilotMindmap(response.mindmap, msg);
+                }
+            }, 500);
+        }
+
+        function generateCopilotMindmap(type, query) {
+            const maps = {
+                'security-scan': `<span class="node root">🔒 Security Scanner Loop</span>
+  ├── <span class="node branch">⏰ Trigger: */30 * * * *</span>
+  ├── <span class="node branch">🐰 Agent: CodeRabbit</span>
+  │   ├── <span class="node leaf">XSS Check (innerHTML/esc)</span>
+  │   ├── <span class="node leaf">CORS Header Validation</span>
+  │   ├── <span class="node leaf">API Key Exposure</span>
+  │   └── <span class="node leaf">Input Sanitization</span>
+  ├── <span class="node branch">📝 Action</span>
+  │   ├── <span class="node leaf">GitHub Issue erstellen</span>
+  │   └── <span class="node leaf">Pflegefall-ID zuweisen</span>
+  └── <span class="node branch">✅ Verify</span>
+      ├── <span class="node leaf">Fix prüfen</span>
+      └── <span class="node leaf">Issue schließen / Re-Open</span>`,
+                'performance': `<span class="node root">⚡ Performance Loop</span>
+  ├── <span class="node branch">⏰ Trigger: Stündlich</span>
+  ├── <span class="node branch">🤖 Agent: Copilot</span>
+  │   ├── <span class="node leaf">Module Size Check (>50KB)</span>
+  │   ├── <span class="node leaf">Inline JS Volume</span>
+  │   ├── <span class="node leaf">Image Lazy Loading</span>
+  │   └── <span class="node leaf">Render-Blocking Scripts</span>
+  └── <span class="node branch">💡 Action</span>
+      └── <span class="node leaf">Suggestion posten (nicht Issue!)</span>`,
+                'debug': `<span class="node root">🐛 Debug Loop</span>
+  ├── <span class="node branch">⏰ Trigger: Alle 5 Min</span>
+  ├── <span class="node branch">🐰 CodeRabbit + 🤖 Copilot</span>
+  │   ├── <span class="node leaf">Console Error Collector</span>
+  │   ├── <span class="node leaf">Module Health Check</span>
+  │   ├── <span class="node leaf">Backend Connectivity</span>
+  │   └── <span class="node leaf">Undefined References</span>
+  └── <span class="node branch">🚨 Action</span>
+      ├── <span class="node leaf">Auto Pflegefall</span>
+      └── <span class="node leaf">Escalation nach 3x</span>`
+            };
+            return maps[type] || `<span class="node root">🔄 ${esc(query)}</span>\n  └── <span class="node leaf">Konfiguration läuft...</span>`;
+        }
+
+        // ═══════════════════════════════════════
+        // Tab Switching
+        // ═══════════════════════════════════════
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelector(`.tab[onclick*="${tab}"]`).classList.add('active');
+            const panels = { dashboard: 'panelDashboard', builder: 'panelBuilder', flow: 'panelFlow', copilot: 'panelCopilot' };
+            document.getElementById(panels[tab]).classList.add('active');
+        }
+
+        // Clock
+        setInterval(() => { document.getElementById('clock').textContent = new Date().toLocaleTimeString(); }, 1000);
+
+        // Init
+        loadLoops();
+        renderDashboard();
+        populateFlowSelect();
+    </script>
+
+    <!-- Shared Scripts -->
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+    <script>
+        // ═══ Prompt Import from Prompt Generator ═══
+        function importFromPromptGen() {
+            const imported = localStorage.getItem('dkz-loop-import-prompt');
+            if (imported) {
+                document.getElementById('loopSteps').value = imported;
+                localStorage.removeItem('dkz-loop-import-prompt');
+                showToast('🎯 Prompt importiert!');
+            } else {
+                if (confirm('Kein Prompt vorhanden. Zum Prompt Generator wechseln?')) {
+                    window.location.href = '../prompt-generator/index.html';
+                }
+            }
+        }
+
+        // Auto-detect imported prompt on load
+        (function checkImport() {
+            const imported = localStorage.getItem('dkz-loop-import-prompt');
+            if (imported) {
+                const btn = document.getElementById('btn-import-prompt');
+                if (btn) btn.style.cssText += 'animation:dkzPulse 2s ease-in-out infinite;border-color:rgba(250,30,78,.4);';
+                switchTab('builder');
+                setTimeout(() => {
+                    document.getElementById('loopSteps').value = imported;
+                    localStorage.removeItem('dkz-loop-import-prompt');
+                    showToast('🎯 Prompt aus Generator importiert!');
+                }, 500);
+            }
+        })();
+
+        function showToast(msg) {
+            const existing = document.getElementById('dkz-loop-toast');
+            if (existing) existing.remove();
+            const t = document.createElement('div');
+            t.id = 'dkz-loop-toast';
+            t.style.cssText = 'position:fixed;bottom:24px;right:24px;padding:12px 20px;background:#00ff88;color:#000;font-size:12px;font-weight:700;border-radius:10px;z-index:300;opacity:0;transform:translateY(20px);transition:all .3s;font-family:Inter,sans-serif;';
+            t.textContent = msg;
+            document.body.appendChild(t);
+            requestAnimationFrame(() => { t.style.opacity = '1'; t.style.transform = 'translateY(0)'; });
+            setTimeout(() => t.remove(), 2500);
+        }
+
+        // ═══ Guide System Init ═══
+        DkzGuide.addInfo('info-loop-main', {
+            title: 'Loop Dashboard & Builder',
+            text: 'Erstelle Automatisierungs-Loops mit Agenten, Triggern und Verfahren. Importiere Prompts direkt aus dem Prompt Generator.',
+            steps: [
+                'Wähle den Builder-Tab',
+                'Loop konfigurieren (Name, Typ, Schedule)',
+                'Optional: Prompt aus Prompt Generator importieren',
+                '🚀 Loop erstellen',
+                'Im Dashboard verwalten'
+            ],
+            links: [
+                { icon: '🎯', label: 'Prompt Generator', href: '../prompt-generator/index.html', hint: 'Prompt erstellen und hierher importieren', recommended: true },
+                { icon: '🧊', label: 'Iceberg', href: '../iceberg/index.html', hint: 'Prompt-Bausteine aus Iceberg nutzen' },
+                { icon: '💰', label: 'LLM Kosten', href: '../llm-cost-board/index.html', hint: 'Token-Verbrauch prüfen' }
+            ]
+        });
+
+        DkzGuide.registerLinks('loop-dashboard', [
+            { icon: '🎯', label: 'Prompt Generator', href: '../prompt-generator/index.html', hint: 'Prompt für Loop erstellen', recommended: true },
+            { icon: '🧊', label: 'Iceberg', href: '../iceberg/index.html', hint: 'Wissens-Bausteine' },
+            { icon: '⚡', label: 'Hub', href: '../../hub/index.html', hint: 'Zurück zur Übersicht' },
+            { icon: '💰', label: 'LLM Kosten', href: '../llm-cost-board/index.html', hint: 'Kosten-Tracking' },
+        ]);
+        DkzGuide.renderLinkBar('loop-cross-links', 'loop-dashboard');
+
+        DkzGuide.registerTour('loop-guide', [
+            { target: '.stats', title: 'Loop-Statistiken', text: 'Übersicht aller Loops: Gesamt, Aktiv, Pausiert, Durchläufe und Erfolgsrate.' },
+            { target: '#panelDashboard', title: 'Dashboard', text: 'Hier verwaltest du alle aktiven Loops. Starten, pausieren, löschen.' },
+            { target: '.tab[onclick*="builder"]', title: 'Builder', text: 'Erstelle neue Loops mit Name, Typ, Schedule und Agenten. Importiere Prompts!' },
+            { target: '.tab[onclick*="flow"]', title: 'Flow Visualizer', text: 'Visualisiere den Ablauf eines Loops als Flowchart.' },
+            { target: '.tab[onclick*="copilot"]', title: 'Copilot Chat', text: 'Lass dir von Copilot beim Loop-Design helfen.' },
+        ]);
+
+        if (!DkzGuide.isTourCompleted('loop-guide')) {
+            DkzGuide.highlight('panelBuilder', 'glow');
+        }
+
+        DkzGuide.injectGuideFAB({ defaultTour: 'loop-guide' });
+        DkzGuide.renderRoleBadge('loop-role-badge');
+    </script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Loop dashboard</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Loop Agent Dashboard und Monitoring.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Loop dashboard</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Loop Agent Dashboard und Monitoring.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-loop-dashboard-onboarded','1')}if(!localStorage.getItem('dkz-loop-dashboard-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>
+
+    <script src="../../shared/dkz-prompt-hub.js"></script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+</html>
+
+

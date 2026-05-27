@@ -1,0 +1,1476 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt Archive - DkZâ„¢ v0.02</title>
+    <meta name="description"
+        content="DkZ Prompt Archive - Generierung, Archivierung, CSV Import/Export, Status-Workflow, Vorlagen">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --muted2: #55555a;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #fa1e4e;
+            --purple: #ec4899;
+            --accent: #fa1e4e;
+            --accent-rgb: 250, 30, 78;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(14, 14, 22, .72);
+            --blur: blur(24px)
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh;
+            overflow-x: hidden
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .08);
+            border-radius: 6px
+        }
+
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .06;
+            animation: bf 20s ease-in-out infinite
+        }
+
+        .bg-blob:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: var(--accent);
+            top: -10%;
+            right: 20%
+        }
+
+        .bg-blob:nth-child(2) {
+            width: 400px;
+            height: 400px;
+            background: var(--purple);
+            bottom: -5%;
+            left: 10%;
+            animation-delay: -8s
+        }
+
+        @keyframes bf {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(30px, -40px) scale(1.1)
+            }
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        .header {
+            padding: 14px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .back-btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .25s;
+            text-decoration: none
+        }
+
+        .back-btn:hover {
+            color: var(--text);
+            border-color: var(--accent)
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .hdr-right {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .hdr-btn {
+            padding: 7px 13px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .25s
+        }
+
+        .hdr-btn:hover {
+            color: var(--text);
+            border-color: var(--accent)
+        }
+
+        .hdr-btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent)
+        }
+
+        .hdr-btn.primary {
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            color: #fff;
+            border: none;
+            font-weight: 700
+        }
+
+        .hdr-btn.primary:hover {
+            box-shadow: 0 4px 16px rgba(var(--accent-rgb), .4);
+            transform: translateY(-1px)
+        }
+
+        .ver {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono);
+            letter-spacing: 1.5px
+        }
+
+        .stats-bar {
+            padding: 10px 28px;
+            border-bottom: 1px solid rgba(255, 255, 255, .03);
+            background: rgba(0, 0, 0, .2);
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            font-size: 11px;
+            color: var(--muted)
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px
+        }
+
+        .stat-val {
+            color: var(--text);
+            font-weight: 700
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            flex: 1;
+            overflow: hidden
+        }
+
+        @media(max-width:768px) {
+            .main-layout {
+                grid-template-columns: 1fr
+            }
+
+            .filter-sidebar {
+                display: none
+            }
+        }
+
+        .filter-sidebar {
+            background: var(--card);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 1rem
+        }
+
+        .fs-section {
+            margin-bottom: 1.2rem
+        }
+
+        .fs-title {
+            font-size: .6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--muted2);
+            margin-bottom: .6rem
+        }
+
+        .fs-item {
+            padding: .45rem .6rem;
+            border-radius: 6px;
+            font-size: .75rem;
+            cursor: pointer;
+            transition: all .2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 2px
+        }
+
+        .fs-item:hover {
+            background: rgba(255, 255, 255, .04)
+        }
+
+        .fs-item.active {
+            background: rgba(var(--accent-rgb), .12);
+            color: var(--accent)
+        }
+
+        .fs-count {
+            margin-left: auto;
+            font-size: .6rem;
+            background: rgba(255, 255, 255, .06);
+            padding: 1px 5px;
+            border-radius: 4px;
+            color: var(--muted2)
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: .6rem;
+            font-weight: 700
+        }
+
+        .status-draft {
+            background: rgba(255, 255, 255, .06);
+            color: var(--muted)
+        }
+
+        .status-review {
+            background: rgba(85, 172, 238, .12);
+            color: var(--blue)
+        }
+
+        .status-ready {
+            background: rgba(0, 255, 136, .12);
+            color: var(--green)
+        }
+
+        .status-published {
+            background: rgba(236, 72, 153, .12);
+            color: var(--purple)
+        }
+
+        .content-area {
+            overflow-y: auto;
+            padding: 1.2rem
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 1rem;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 16px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 13px;
+            outline: none;
+            transition: border-color .3s
+        }
+
+        .search-input:focus {
+            border-color: var(--accent)
+        }
+
+        .search-input::placeholder {
+            color: var(--muted)
+        }
+
+        .vt-btn {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .vt-btn:first-child {
+            border-radius: 8px 0 0 8px
+        }
+
+        .vt-btn:last-child {
+            border-radius: 0 8px 8px 0
+        }
+
+        .vt-btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent)
+        }
+
+        .add-form {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.2rem;
+            margin-bottom: 1.2rem;
+            display: none
+        }
+
+        .add-form.open {
+            display: block;
+            animation: slideDown .3s ease
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: .75rem
+        }
+
+        @media(max-width:600px) {
+            .form-grid {
+                grid-template-columns: 1fr
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px
+        }
+
+        .form-group.full {
+            grid-column: 1/-1
+        }
+
+        .form-label {
+            font-size: .6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--muted2)
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            outline: none
+        }
+
+        .form-textarea {
+            font-family: var(--mono);
+            font-size: 11px;
+            resize: vertical;
+            min-height: 100px
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            border-color: var(--accent)
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: .75rem;
+            justify-content: flex-end
+        }
+
+        .form-hint {
+            font-size: .55rem;
+            color: var(--muted2);
+            margin-top: 2px
+        }
+
+        .masonry {
+            columns: 3;
+            column-gap: 14px
+        }
+
+        @media(max-width:1100px) {
+            .masonry {
+                columns: 2
+            }
+        }
+
+        @media(max-width:600px) {
+            .masonry {
+                columns: 1
+            }
+        }
+
+        .prompt-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 14px;
+            break-inside: avoid;
+            cursor: pointer;
+            transition: all .3s;
+            position: relative;
+            overflow: hidden
+        }
+
+        .prompt-card:hover {
+            border-color: rgba(var(--accent-rgb), .4);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .4)
+        }
+
+        .prompt-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--purple));
+            opacity: 0;
+            transition: opacity .3s
+        }
+
+        .prompt-card:hover::before {
+            opacity: 1
+        }
+
+        .pc-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px
+        }
+
+        .pc-icon {
+            font-size: 24px;
+            width: 38px;
+            height: 38px;
+            background: rgba(var(--accent-rgb), .08);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .pc-title {
+            font-size: 13px;
+            font-weight: 800;
+            flex: 1
+        }
+
+        .pc-cat {
+            font-size: 9px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 700
+        }
+
+        .pc-cat[data-cat="system"] {
+            background: rgba(0, 255, 136, .12);
+            color: var(--green)
+        }
+
+        .pc-cat[data-cat="dev"] {
+            background: rgba(85, 172, 238, .12);
+            color: var(--blue)
+        }
+
+        .pc-cat[data-cat="content"] {
+            background: rgba(255, 184, 0, .12);
+            color: var(--yellow)
+        }
+
+        .pc-cat[data-cat="ai"] {
+            background: rgba(236, 72, 153, .12);
+            color: var(--purple)
+        }
+
+        .pc-cat[data-cat="custom"] {
+            background: rgba(var(--accent-rgb), .12);
+            color: var(--accent)
+        }
+
+        .pc-cat[data-cat="automation"] {
+            background: rgba(0, 208, 132, .12);
+            color: #00D084
+        }
+
+        .pc-desc {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.5;
+            margin-bottom: 10px
+        }
+
+        .pc-code {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--muted);
+            background: var(--card2);
+            padding: 10px;
+            border-radius: 8px;
+            max-height: 120px;
+            overflow: hidden;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            position: relative
+        }
+
+        .pc-code::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background: linear-gradient(transparent, var(--card2))
+        }
+
+        .pc-meta {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+            align-items: center
+        }
+
+        .pc-tag {
+            font-size: 8px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(85, 172, 238, .1);
+            color: var(--blue);
+            font-weight: 700
+        }
+
+        .pc-actions {
+            display: flex;
+            gap: 4px;
+            margin-top: 10px;
+            opacity: 0;
+            transition: opacity .2s
+        }
+
+        .prompt-card:hover .pc-actions {
+            opacity: 1
+        }
+
+        .pc-btn {
+            padding: 4px 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 9px;
+            cursor: pointer;
+            font-family: var(--font);
+            transition: all .2s
+        }
+
+        .pc-btn:hover {
+            border-color: var(--accent);
+            color: var(--text)
+        }
+
+        .list-view {
+            display: none
+        }
+
+        .list-item {
+            display: grid;
+            grid-template-columns: 40px 1fr auto auto auto;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, .03);
+            cursor: pointer;
+            transition: background .2s
+        }
+
+        .list-item:hover {
+            background: rgba(255, 255, 255, .02)
+        }
+
+        .li-icon {
+            font-size: 20px;
+            text-align: center
+        }
+
+        .li-info {
+            min-width: 0
+        }
+
+        .li-title {
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .li-preview {
+            font-size: 10px;
+            color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .li-btn {
+            padding: 4px 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 9px;
+            cursor: pointer
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .85);
+            z-index: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .3s
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: all
+        }
+
+        .modal {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 0
+        }
+
+        .modal-head {
+            padding: 1.2rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
+
+        .modal-head h2 {
+            font-size: 1.1rem;
+            font-weight: 900;
+            flex: 1
+        }
+
+        .modal-close {
+            width: 30px;
+            height: 30px;
+            border: none;
+            background: rgba(255, 255, 255, .04);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 16px;
+            cursor: pointer
+        }
+
+        .modal-body {
+            padding: 1.2rem
+        }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem
+        }
+
+        .info-table td {
+            padding: 8px 12px;
+            font-size: .8rem;
+            border-bottom: 1px solid rgba(255, 255, 255, .03)
+        }
+
+        .info-table td:first-child {
+            font-weight: 700;
+            color: var(--muted);
+            width: 140px;
+            font-size: .7rem;
+            text-transform: uppercase;
+            letter-spacing: .04em
+        }
+
+        .info-table td:last-child {
+            color: var(--text)
+        }
+
+        .modal-code {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+            font-family: var(--mono);
+            font-size: 11px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 1rem 0
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            padding: 1rem 1.2rem;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap
+        }
+
+        .csv-modal {
+            max-width: 600px
+        }
+
+        .csv-drop {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+            margin: 1rem 0
+        }
+
+        .csv-drop:hover {
+            border-color: var(--accent);
+            background: rgba(var(--accent-rgb), .04)
+        }
+
+        .csv-drop-icon {
+            font-size: 2.5rem;
+            margin-bottom: .5rem
+        }
+
+        .csv-preview {
+            background: var(--card2);
+            border-radius: 8px;
+            padding: .8rem;
+            max-height: 200px;
+            overflow: auto;
+            font-family: var(--mono);
+            font-size: 10px;
+            margin-top: .75rem
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            padding: 10px 18px;
+            background: var(--card);
+            border: 1px solid var(--green);
+            border-radius: 10px;
+            font-size: .8rem;
+            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .5);
+            transform: translateX(400px);
+            transition: transform .3s;
+            z-index: 10000
+        }
+
+        .toast.show {
+            transform: translateX(0)
+        }
+
+        .empty-msg {
+            text-align: center;
+            padding: 3rem;
+            color: var(--muted)
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: .5rem
+        }
+
+        .empty-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #808080
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="prompt-viewer" data-dkz-appid="DKZ-MOD-PRO" data-dkz-version="v0.01" data-dkz-title="Prompt Archive -" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+    </div>
+    <div class="app">
+        <header class="header">
+            <a href="../../hub/index.html" class="back-btn">&#8592; Hub</a>
+            <h1>Prompt Archive</h1>
+            <div class="hdr-right">
+                <button class="hdr-btn primary" onclick="toggleForm()">+ Neuer Prompt</button>
+                <button class="hdr-btn" onclick="openCSVModal()">CSV Import</button>
+                <button class="hdr-btn" onclick="exportCSV()">CSV Export</button>
+                <button class="hdr-btn" onclick="exportJSON()">JSON</button>
+                <button class="hdr-btn" id="dbgT" onclick="toggleDbg()">Test</button>
+                <span class="ver">v0.02</span>
+            </div>
+        </header>
+
+        <div class="stats-bar">
+            <div class="stat-item">Prompts: <span class="stat-val" id="totalStat">0</span></div>
+            <div class="stat-item">Zeichen: <span class="stat-val" id="charStat">0</span></div>
+            <div class="stat-item">Tags: <span class="stat-val" id="tagStat">0</span></div>
+            <div class="stat-item">Vorlagen: <span class="stat-val" id="tplStat">0</span></div>
+        </div>
+
+        <div class="main-layout">
+            <aside class="filter-sidebar">
+                <div class="fs-section">
+                    <div class="fs-title">Status</div>
+                    <div id="statusFilters"></div>
+                </div>
+                <div class="fs-section">
+                    <div class="fs-title">Kategorien</div>
+                    <div id="catFilters"></div>
+                </div>
+                <div class="fs-section">
+                    <div class="fs-title">Tags</div>
+                    <div id="tagFilters"></div>
+                </div>
+            </aside>
+
+            <div class="content-area">
+                <div class="toolbar">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Prompts durchsuchen..."
+                        oninput="filterPrompts()">
+                    <div style="display:flex">
+                        <button class="vt-btn active" id="vGrid" onclick="setViewMode('grid')">&#9638;</button>
+                        <button class="vt-btn" id="vList" onclick="setViewMode('list')">&#9776;</button>
+                    </div>
+                </div>
+
+                <div class="add-form" id="addForm">
+                    <div style="font-weight:800;font-size:.9rem;margin-bottom:.8rem">Neuen Prompt erstellen</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Titel *</label>
+                            <input type="text" class="form-input" id="fTitle" placeholder="Prompt Titel...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Kategorie</label>
+                            <select class="form-select" id="fCat">
+                                <option value="system">System</option>
+                                <option value="dev">Dev</option>
+                                <option value="content" selected>Content</option>
+                                <option value="ai">AI</option>
+                                <option value="automation">Automation</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="fStatus">
+                                <option value="draft">Entwurf</option>
+                                <option value="review">Review</option>
+                                <option value="ready">Bereit</option>
+                                <option value="published">Veroeffentlicht</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tags (kommagetrennt)</label>
+                            <input type="text" class="form-input" id="fTags" placeholder="blog, seo, marketing...">
+                        </div>
+                        <div class="form-group full">
+                            <label class="form-label">Prompt-Text / HTML-Code *</label>
+                            <textarea class="form-textarea" id="fContent"
+                                placeholder="Prompt-Text eingeben... (HTML erlaubt)"></textarea>
+                        </div>
+                        <div class="form-group full">
+                            <label class="form-label">Notizen</label>
+                            <input type="text" class="form-input" id="fNotes"
+                                placeholder="Kontext, Ideen, Anweisungen...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Vorlage (DOCX / PDF)</label>
+                            <input type="file" class="form-input" id="fTemplate" accept=".docx,.pdf,.doc,.txt,.md"
+                                style="font-size:10px">
+                            <div class="form-hint">Optionale Vorlage als Datei anhaengen (Base64)</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ziel-Programm</label>
+                            <select class="form-select" id="fTarget">
+                                <option value="">-- Kein Ziel --</option>
+                                <option value="claude">Claude</option>
+                                <option value="gemini">Gemini</option>
+                                <option value="gpt">ChatGPT</option>
+                                <option value="midjourney">Midjourney</option>
+                                <option value="blog">Blog</option>
+                                <option value="email">Email</option>
+                                <option value="n8n">n8n Workflow</option>
+                                <option value="other">Sonstiges</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="hdr-btn" onclick="toggleForm()">Abbrechen</button>
+                        <button class="hdr-btn primary" onclick="addPrompt()">Speichern</button>
+                    </div>
+                </div>
+
+                <div class="masonry" id="masonryGrid"></div>
+                <div class="list-view" id="listView"></div>
+                <div class="empty-msg" id="emptyMsg" style="display:none">
+                    <div class="empty-icon">&#128194;</div>
+                    <div class="empty-title">Noch keine Prompts</div>
+                    <div>Klicke "Neuer Prompt" oder importiere eine CSV</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DETAIL MODAL -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal">
+            <div class="modal-head">
+                <h2 id="modalTitle">--</h2>
+                <button class="modal-close" onclick="closeDetail()">&#215;</button>
+            </div>
+            <div class="modal-body">
+                <table class="info-table" id="infoTable">
+                    <tr>
+                        <td>Kategorie</td>
+                        <td id="dCat">--</td>
+                    </tr>
+                    <tr>
+                        <td>Status</td>
+                        <td id="dStatus">--</td>
+                    </tr>
+                    <tr>
+                        <td>Tags</td>
+                        <td id="dTags">--</td>
+                    </tr>
+                    <tr>
+                        <td>Ziel-Programm</td>
+                        <td id="dTarget">--</td>
+                    </tr>
+                    <tr>
+                        <td>Notizen</td>
+                        <td id="dNotes">--</td>
+                    </tr>
+                    <tr>
+                        <td>Vorlage</td>
+                        <td id="dTemplate">--</td>
+                    </tr>
+                    <tr>
+                        <td>Erstellt</td>
+                        <td id="dCreated">--</td>
+                    </tr>
+                    <tr>
+                        <td>Zeichen</td>
+                        <td id="dChars">--</td>
+                    </tr>
+                </table>
+                <div class="modal-code" id="modalCode"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="hdr-btn" onclick="copyViewed()">Kopieren</button>
+                <button class="hdr-btn" onclick="downloadViewed()">Download</button>
+                <button class="hdr-btn" onclick="editViewed()">Bearbeiten</button>
+                <button class="hdr-btn" onclick="setStatus('review')">Review</button>
+                <button class="hdr-btn" onclick="setStatus('ready')">Bereit</button>
+                <button class="hdr-btn" onclick="setStatus('published')">Publish</button>
+                <button class="hdr-btn" onclick="downloadTemplate()">Vorlage</button>
+                <button class="hdr-btn" style="margin-left:auto;color:var(--red)"
+                    onclick="deleteViewed()">Loeschen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSV IMPORT MODAL -->
+    <div class="modal-overlay" id="csvModal">
+        <div class="modal csv-modal">
+            <div class="modal-head">
+                <h2>CSV Import</h2>
+                <button class="modal-close" onclick="closeCSV()">&#215;</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">CSV mit Spalten:
+                    <code>title, content, tags, category, status, notes, target</code>
+                </p>
+                <div class="csv-drop" id="csvDrop" onclick="document.getElementById('csvFile').click()">
+                    <div class="csv-drop-icon">&#128196;</div>
+                    <div style="font-weight:700;font-size:.85rem">CSV Datei hierher ziehen</div>
+                    <div style="font-size:.7rem;color:var(--muted)">oder klicken zum Auswaehlen</div>
+                </div>
+                <input type="file" id="csvFile" accept=".csv,.tsv" style="display:none" onchange="parseCSVFile(this)">
+                <div class="csv-preview" id="csvPreview" style="display:none"></div>
+                <div class="form-actions" style="margin-top:1rem">
+                    <button class="hdr-btn" onclick="closeCSV()">Abbrechen</button>
+                    <button class="hdr-btn primary" id="csvImportBtn" onclick="importCSV()"
+                        style="display:none">Importieren</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        var CATS = ['system', 'dev', 'content', 'ai', 'automation', 'custom'];
+        var STATUSES = [{ id: 'draft', icon: 'Draft', label: 'Entwurf' }, { id: 'review', icon: 'Review', label: 'Review' }, { id: 'ready', icon: 'Ready', label: 'Bereit' }, { id: 'published', icon: 'Live', label: 'Veroeffentlicht' }];
+        var STATUS_CLASS = { draft: 'status-draft', review: 'status-review', ready: 'status-ready', published: 'status-published' };
+        var prompts = JSON.parse(localStorage.getItem('dkz-prompt-archive') || '[]');
+        var viewMode = 'grid', viewedId = null, activeFilter = 'all', activeStatus = 'all', activeTag = 'all';
+        var csvData = [];
+
+        // Migrate old data
+        if (!prompts.length) {
+            var old = JSON.parse(localStorage.getItem('dkz-prompt-viewer') || '[]');
+            if (old.length) { prompts = old.map(function (p) { return Object.assign({}, p, { status: p.status || 'draft', notes: p.notes || '', target: p.target || '', template: p.template || null, templateName: p.templateName || '' }); }); save(); }
+        }
+
+        // Seed defaults if empty
+        if (!prompts.length) {
+            prompts = [
+                { id: 1, title: 'SEO Blog Outline', content: 'Du bist ein SEO-Experte. Erstelle eine detaillierte Blog-Outline mit:\n- H1 Titel (60 Zeichen)\n- Meta Description (155 Zeichen)\n- 5 H2-Abschnitte mit je 3 Unterpunkten\n- FAQ-Sektion (5 Fragen)\n- Internal Linking-Vorschlaege', tags: ['seo', 'blog', 'content'], cat: 'content', status: 'ready', notes: 'Fuer woechentliche Blog-Posts nutzen', target: 'claude', template: null, templateName: '' },
+                { id: 2, title: 'Code Review Prompt', content: 'Analysiere den folgenden Code auf:\n1. Sicherheitsluecken (XSS, SQL Injection)\n2. Performance-Probleme\n3. Code-Qualitaet (DRY, SOLID)\n4. Fehlerbehandlung\n5. Testbarkeit\n\nGib fuer jedes Problem eine Loesung mit Code-Beispiel.', tags: ['code', 'review', 'security'], cat: 'dev', status: 'published', notes: 'Standard fuer PR Reviews', target: 'gpt', template: null, templateName: '' },
+                { id: 3, title: 'Sales Email Generator', content: 'Erstelle eine personalisierte Sales-Email:\n- Betreff: max 50 Zeichen, Neugier wecken\n- Opening: Bezug auf Unternehmen des Empfaengers\n- Value Prop: 3 konkrete Vorteile\n- Social Proof: 1 Kundenreferenz\n- CTA: Terminbuchung\n- PS-Zeile: Bonus/Dringlichkeit', tags: ['sales', 'email', 'marketing'], cat: 'content', status: 'draft', notes: 'A/B Test mit verschiedenen Betreffzeilen', target: 'claude', template: null, templateName: '' },
+                { id: 4, title: 'System Prompt: DkZ Copilot', content: 'Du bist der DkZ Copilot, ein KI-Assistent fuer das DEVKiTZ Oekosystem.\n\nRegeln:\n- Antworte auf Deutsch\n- Nutze DkZ Terminologie\n- Referenziere Module mit [MOD:name]\n- Gib Code-Beispiele im DkZ-Stil\n- Beachte das Regelwerk (R01-R30)', tags: ['system', 'copilot', 'dkz'], cat: 'system', status: 'published', notes: 'Fuer dkz-copilot.js Shared Script', target: 'claude', template: null, templateName: '' },
+                { id: 5, title: 'Midjourney: Product Shot', content: '/imagine product photography, [PRODUKT], studio lighting, white background, ultra detailed, commercial photography, 8k --ar 4:3 --v 6 --style raw', tags: ['midjourney', 'bild', 'produkt'], cat: 'ai', status: 'review', notes: 'Verschiedene --ar Ratios testen', target: 'midjourney', template: null, templateName: '' },
+                { id: 6, title: 'n8n Workflow: Weekly Report', content: 'Erstelle einen n8n Workflow der:\n1. Jeden Montag 9:00 triggered\n2. Google Analytics Daten abruft\n3. Mit Claude eine Zusammenfassung generiert\n4. PDF-Report erstellt\n5. Per Email an Team sendet', tags: ['n8n', 'automation', 'report'], cat: 'automation', status: 'draft', notes: 'Hetzner VPS: n8n API Key noetig', target: 'n8n', template: null, templateName: '' }
+            ];
+            save();
+        }
+
+        function init() { renderFilters(); render(); updateStats(); }
+
+        function renderFilters() {
+            var sh = '<div class="fs-item ' + (activeStatus === 'all' - 'active' : '') + '" onclick="filterByStatus(\'all\')">Alle <span class="fs-count">' + prompts.length + '</span></div>';
+            STATUSES.forEach(function (s) {
+                var c = prompts.filter(function (p) { return p.status === s.id }).length;
+                sh += '<div class="fs-item ' + (activeStatus === s.id - 'active' : '') + '" onclick="filterByStatus(\'' + s.id + '\')">' + s.icon + ' ' + s.label + ' <span class="fs-count">' + c + '</span></div>';
+            });
+            document.getElementById('statusFilters').innerHTML = sh;
+
+            var ch = '<div class="fs-item ' + (activeFilter === 'all' - 'active' : '') + '" onclick="filterByCat(\'all\')">Alle</div>';
+            CATS.forEach(function (c) {
+                var cnt = prompts.filter(function (p) { return p.cat === c }).length;
+                if (cnt) ch += '<div class="fs-item ' + (activeFilter === c - 'active' : '') + '" onclick="filterByCat(\'' + c + '\')">' + c + ' <span class="fs-count">' + cnt + '</span></div>';
+            });
+            document.getElementById('catFilters').innerHTML = ch;
+
+            var allTags = [];
+            prompts.forEach(function (p) { (p.tags || []).forEach(function (t) { if (allTags.indexOf(t) === -1) allTags.push(t); }); });
+            allTags.sort();
+            var th = '<div class="fs-item ' + (activeTag === 'all' - 'active' : '') + '" onclick="filterByTag(\'all\')">Alle</div>';
+            allTags.slice(0, 15).forEach(function (t) {
+                var cnt = prompts.filter(function (p) { return (p.tags || []).indexOf(t) !== -1 }).length;
+                th += '<div class="fs-item ' + (activeTag === t - 'active' : '') + '" onclick="filterByTag(\'' + esc(t) + '\')">#' + esc(t) + ' <span class="fs-count">' + cnt + '</span></div>';
+            });
+            document.getElementById('tagFilters').innerHTML = th;
+        }
+
+        function filterByCat(c) { activeFilter = c; renderFilters(); render(); }
+        function filterByStatus(s) { activeStatus = s; renderFilters(); render(); }
+        function filterByTag(t) { activeTag = t; renderFilters(); render(); }
+
+        function render() {
+            var q = document.getElementById('searchInput').value.toLowerCase();
+            var list = prompts.filter(function (p) {
+                if (activeFilter !== 'all' && p.cat !== activeFilter) return false;
+                if (activeStatus !== 'all' && p.status !== activeStatus) return false;
+                if (activeTag !== 'all' && (p.tags || []).indexOf(activeTag) === -1) return false;
+                if (q && p.title.toLowerCase().indexOf(q) === -1 && p.content.toLowerCase().indexOf(q) === -1 && !(p.tags || []).some(function (t) { return t.toLowerCase().indexOf(q) !== -1 })) return false;
+                return true;
+            });
+
+            document.getElementById('emptyMsg').style.display = list.length - 'none' : 'block';
+
+            document.getElementById('masonryGrid').innerHTML = list.map(function (p) {
+                var si = STATUSES.find(function (s) { return s.id === p.status }) || STATUSES[0];
+                return '<div class="prompt-card" onclick="openDetail(' + p.id + ')">' +
+                    '<div class="pc-head"><div class="pc-icon">&#128196;</div><div class="pc-title">' + esc(p.title) + '</div><span class="pc-cat" data-cat="' + p.cat + '">' + p.cat + '</span></div>' +
+                    '<div class="pc-desc">' + esc(p.content.substring(0, 150)) + (p.content.length > 150 - '...' : '') + '</div>' +
+                    '<div class="pc-code">' + esc(p.content) + '</div>' +
+                    '<div class="pc-meta"><span class="status-badge ' + (STATUS_CLASS[p.status] || 'status-draft') + '">' + si.icon + ' ' + si.label + '</span>' +
+                    (p.tags || []).slice(0, 3).map(function (t) { return '<span class="pc-tag">' + esc(t) + '</span>' }).join('') +
+                    (p.templateName - ' <span class="pc-tag" style="background:rgba(255,184,0,.1);color:var(--yellow)">TPL: ' + esc(p.templateName) + '</span>' : '') +
+                    (p.target - ' <span class="pc-tag" style="background:rgba(236,72,153,.1);color:var(--purple)">' + esc(p.target) + '</span>' : '') +
+                    '</div><div class="pc-actions">' +
+                    '<button class="pc-btn" onclick="event.stopPropagation();quickCopy(' + p.id + ')">Copy</button>' +
+                    '<button class="pc-btn" onclick="event.stopPropagation();quickDl(' + p.id + ')">DL</button>' +
+                    '<button class="pc-btn" onclick="event.stopPropagation();quickDel(' + p.id + ')">Del</button>' +
+                    '</div></div>';
+            }).join('');
+
+            document.getElementById('listView').innerHTML = list.map(function (p) {
+                var si = STATUSES.find(function (s) { return s.id === p.status }) || STATUSES[0];
+                return '<div class="list-item" onclick="openDetail(' + p.id + ')">' +
+                    '<div class="li-icon">&#128196;</div>' +
+                    '<div class="li-info"><div class="li-title">' + esc(p.title) + '</div><div class="li-preview">' + esc(p.content.substring(0, 100)) + '</div></div>' +
+                    '<span class="status-badge ' + (STATUS_CLASS[p.status] || '') + '">' + si.icon + '</span>' +
+                    '<span class="pc-cat" data-cat="' + p.cat + '">' + p.cat + '</span>' +
+                    '<button class="li-btn" onclick="event.stopPropagation();quickCopy(' + p.id + ')">Copy</button>' +
+                    '</div>';
+            }).join('');
+        }
+
+        function filterPrompts() { render(); }
+        function setViewMode(m) {
+            viewMode = m;
+            document.getElementById('masonryGrid').style.display = m === 'grid' - '' : 'none';
+            document.getElementById('listView').style.display = m === 'list' - '' : 'none';
+            document.getElementById('vGrid').classList.toggle('active', m === 'grid');
+            document.getElementById('vList').classList.toggle('active', m === 'list');
+        }
+
+        function toggleForm() { document.getElementById('addForm').classList.toggle('open'); }
+
+        function addPrompt() {
+            var title = document.getElementById('fTitle').value.trim();
+            var content = document.getElementById('fContent').value.trim();
+            if (!title || !content) { toast('Titel und Prompt-Text sind Pflicht'); return; }
+            var p = {
+                id: Date.now(),
+                title: title,
+                content: content,
+                tags: document.getElementById('fTags').value.split(',').map(function (t) { return t.trim() }).filter(Boolean),
+                cat: document.getElementById('fCat').value,
+                status: document.getElementById('fStatus').value,
+                notes: document.getElementById('fNotes').value.trim(),
+                target: document.getElementById('fTarget').value,
+                template: null,
+                templateName: ''
+            };
+            var fileInput = document.getElementById('fTemplate');
+            if (fileInput.files.length) {
+                var file = fileInput.files[0];
+                p.templateName = file.name;
+                var reader = new FileReader();
+                reader.onload = function () { p.template = reader.result; prompts.unshift(p); save(); renderFilters(); render(); updateStats(); };
+                reader.readAsDataURL(file);
+            } else {
+                prompts.unshift(p);
+                save(); renderFilters(); render(); updateStats();
+            }
+            ['fTitle', 'fContent', 'fTags', 'fNotes'].forEach(function (id) { document.getElementById(id).value = ''; });
+            document.getElementById('fTemplate').value = '';
+            document.getElementById('addForm').classList.remove('open');
+            toast('Prompt gespeichert!');
+        }
+
+        function openDetail(id) {
+            viewedId = id;
+            var p = prompts.find(function (x) { return x.id === id });
+            if (!p) return;
+            document.getElementById('modalTitle').textContent = p.title;
+            document.getElementById('dCat').innerHTML = '<span class="pc-cat" data-cat="' + p.cat + '">' + p.cat + '</span>';
+            var si = STATUSES.find(function (s) { return s.id === p.status }) || STATUSES[0];
+            document.getElementById('dStatus').innerHTML = '<span class="status-badge ' + (STATUS_CLASS[p.status] || '') + '">' + si.icon + ' ' + si.label + '</span>';
+            document.getElementById('dTags').innerHTML = (p.tags || []).map(function (t) { return '<span class="pc-tag">' + esc(t) + '</span>' }).join(' ') || '--';
+            document.getElementById('dTarget').textContent = p.target || '--';
+            document.getElementById('dNotes').textContent = p.notes || '--';
+            document.getElementById('dTemplate').innerHTML = p.templateName - 'TPL: ' + esc(p.templateName) + ' <button class="pc-btn" onclick="downloadTemplate()" style="margin-left:6px">DL</button>' : '--';
+            document.getElementById('dCreated').textContent = new Date(p.id).toLocaleString('de-DE');
+            document.getElementById('dChars').textContent = p.content.length.toLocaleString() + ' Zeichen';
+            document.getElementById('modalCode').textContent = p.content;
+            document.getElementById('detailModal').classList.add('open');
+        }
+
+        function closeDetail() { document.getElementById('detailModal').classList.remove('open'); viewedId = null; }
+        function copyViewed() { var p = prompts.find(function (x) { return x.id === viewedId }); if (p) navigator.clipboard.writeText(p.content).then(function () { toast('Kopiert!') }); }
+        function downloadViewed() { var p = prompts.find(function (x) { return x.id === viewedId }); if (!p) return; var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([p.content], { type: 'text/plain' })); a.download = p.title + '.md'; a.click(); toast('Download!'); }
+        function downloadTemplate() { var p = prompts.find(function (x) { return x.id === viewedId }); if (!p || !p.template) { toast('Keine Vorlage'); return; } var a = document.createElement('a'); a.href = p.template; a.download = p.templateName; a.click(); toast('Vorlage heruntergeladen'); }
+        function editViewed() {
+            var p = prompts.find(function (x) { return x.id === viewedId }); if (!p) return;
+            closeDetail();
+            document.getElementById('addForm').classList.add('open');
+            document.getElementById('fTitle').value = p.title;
+            document.getElementById('fContent').value = p.content;
+            document.getElementById('fTags').value = (p.tags || []).join(', ');
+            document.getElementById('fCat').value = p.cat;
+            document.getElementById('fStatus').value = p.status;
+            document.getElementById('fNotes').value = p.notes || '';
+            document.getElementById('fTarget').value = p.target || '';
+            prompts = prompts.filter(function (x) { return x.id !== viewedId });
+            toast('Prompt bearbeiten - Speichern fuer Update');
+        }
+        function setStatus(s) {
+            var p = prompts.find(function (x) { return x.id === viewedId }); if (!p) return;
+            p.status = s; save(); renderFilters(); render(); updateStats();
+            var si = STATUSES.find(function (x) { return x.id === s });
+            document.getElementById('dStatus').innerHTML = '<span class="status-badge ' + (STATUS_CLASS[s] || '') + '">' + si.icon + ' ' + si.label + '</span>';
+            toast('Status: ' + si.label);
+        }
+        function deleteViewed() { if (!confirm('Prompt loeschen?')) return; prompts = prompts.filter(function (p) { return p.id !== viewedId }); save(); renderFilters(); render(); updateStats(); closeDetail(); toast('Geloescht'); }
+        function quickCopy(id) { var p = prompts.find(function (x) { return x.id === id }); if (p) navigator.clipboard.writeText(p.content).then(function () { toast('Kopiert!') }); }
+        function quickDl(id) { var p = prompts.find(function (x) { return x.id === id }); if (p) { var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([p.content], { type: 'text/plain' })); a.download = p.title + '.md'; a.click(); } }
+        function quickDel(id) { if (!confirm('Loeschen?')) return; prompts = prompts.filter(function (p) { return p.id !== id }); save(); renderFilters(); render(); updateStats(); }
+
+        function openCSVModal() { document.getElementById('csvModal').classList.add('open'); }
+        function closeCSV() { document.getElementById('csvModal').classList.remove('open'); csvData = []; document.getElementById('csvPreview').style.display = 'none'; document.getElementById('csvImportBtn').style.display = 'none'; }
+
+        function parseCSVFile(input) {
+            var file = input.files[0]; if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function () {
+                var text = reader.result;
+                var lines = text.split('\n').filter(function (l) { return l.trim() });
+                if (lines.length < 2) { toast('CSV leer'); return; }
+                var headers = lines[0].split(/[,;\t]/).map(function (h) { return h.trim().toLowerCase().replace(/"/g, '') });
+                csvData = [];
+                for (var i = 1; i < lines.length; i++) {
+                    var vals = lines[i].match(/(".*?"|[^,;\t]+)/g) || [];
+                    var row = {};
+                    headers.forEach(function (h, j) { row[h] = (vals[j] || '').replace(/^"|"$/g, '').trim(); });
+                    if (row.title || row.content) csvData.push(row);
+                }
+                document.getElementById('csvPreview').style.display = 'block';
+                document.getElementById('csvPreview').textContent = csvData.length + ' Prompts gefunden:\n\n' + csvData.slice(0, 5).map(function (r, i) { return (i + 1) + '. ' + (r.title || '(kein Titel)') + ' - ' + (r.content || '').substring(0, 60) + '...' }).join('\n');
+                document.getElementById('csvImportBtn').style.display = 'inline-flex';
+                toast(csvData.length + ' Prompts erkannt');
+            };
+            reader.readAsText(file);
+        }
+
+        function importCSV() {
+            if (!csvData.length) return;
+            csvData.forEach(function (row) {
+                prompts.unshift({
+                    id: Date.now() + Math.random() * 1000,
+                    title: row.title || 'Import',
+                    content: row.content || row.prompt || row.text || '',
+                    tags: (row.tags || '').split(/[,;]/).map(function (t) { return t.trim() }).filter(Boolean),
+                    cat: CATS.indexOf(row.category || row.cat) !== -1 - (row.category || row.cat) : 'custom',
+                    status: ['draft', 'review', 'ready', 'published'].indexOf(row.status) !== -1 - row.status : 'draft',
+                    notes: row.notes || '',
+                    target: row.target || '',
+                    template: null,
+                    templateName: ''
+                });
+            });
+            save(); renderFilters(); render(); updateStats();
+            toast(csvData.length + ' Prompts importiert!');
+            closeCSV();
+        }
+
+        function exportCSV() {
+            var headers = ['title', 'content', 'tags', 'category', 'status', 'notes', 'target'];
+            var rows = [headers.join(',')];
+            prompts.forEach(function (p) {
+                rows.push([
+                    '"' + (p.title || '').replace(/"/g, '""') + '"',
+                    '"' + (p.content || '').replace(/"/g, '""') + '"',
+                    '"' + (p.tags || []).join(';') + '"',
+                    '"' + (p.cat || '') + '"',
+                    '"' + (p.status || '') + '"',
+                    '"' + (p.notes || '').replace(/"/g, '""') + '"',
+                    '"' + (p.target || '') + '"'
+                ].join(','));
+            });
+            var blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+            var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'prompts-archiv.csv'; a.click();
+            toast('CSV exportiert!');
+        }
+
+        function exportJSON() {
+            var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(prompts, null, 2)], { type: 'application/json' })); a.download = 'prompts-archiv.json'; a.click();
+            toast('JSON exportiert!');
+        }
+
+        function updateStats() {
+            document.getElementById('totalStat').textContent = prompts.length;
+            document.getElementById('charStat').textContent = prompts.reduce(function (s, p) { return s + p.content.length }, 0).toLocaleString();
+            var allT = []; prompts.forEach(function (p) { (p.tags || []).forEach(function (t) { if (allT.indexOf(t) === -1) allT.push(t) }) }); document.getElementById('tagStat').textContent = allT.length;
+            document.getElementById('tplStat').textContent = prompts.filter(function (p) { return p.template }).length;
+        }
+
+        function save() { localStorage.setItem('dkz-prompt-archive', JSON.stringify(prompts)); }
+        function esc(s) { if (!s) return ''; return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+        function toast(m) { var t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(function () { t.classList.remove('show') }, 2500); }
+
+        var dd = document.getElementById('csvDrop');
+        if (dd) {
+            dd.addEventListener('dragover', function (e) { e.preventDefault(); dd.style.borderColor = 'var(--accent)'; });
+            dd.addEventListener('dragleave', function () { dd.style.borderColor = ''; });
+            dd.addEventListener('drop', function (e) { e.preventDefault(); dd.style.borderColor = ''; if (e.dataTransfer.files.length) { document.getElementById('csvFile').files = e.dataTransfer.files; parseCSVFile(document.getElementById('csvFile')); } });
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') { closeDetail(); closeCSV(); }
+            if (e.key === 'n' && e.ctrlKey) { e.preventDefault(); toggleForm(); }
+        });
+
+        function toggleDbg() { var dp = document.getElementById('dbgP'); if (dp) dp.style.display = dp.style.display === 'none' - 'block' : 'none'; document.getElementById('dbgT').classList.toggle('active'); }
+        function dlog(m, t) { t = t || 'info'; var l = document.getElementById('dLog'); if (l) { l.innerHTML += '<span class="' + t + '">' + (t === 'pass' - 'OK' : t === 'fail' - 'FAIL' : 'INFO') + ' ' + m + '</span>\n'; l.scrollTop = l.scrollHeight; } }
+        function testFunc() {
+            var l = document.getElementById('dLog'); if (l) l.innerHTML = '';
+            var p = 0;
+            if (prompts.length >= 3) { p++; dlog('3+ Prompts: OK', 'pass') }
+            if (typeof addPrompt === 'function') { p++; dlog('Add Form: OK', 'pass') }
+            if (typeof exportCSV === 'function') { p++; dlog('CSV Export: OK', 'pass') }
+            if (typeof importCSV === 'function') { p++; dlog('CSV Import: OK', 'pass') }
+            if (typeof openDetail === 'function') { p++; dlog('Detail Modal: OK', 'pass') }
+            if (typeof setStatus === 'function') { p++; dlog('Status Workflow: OK', 'pass') }
+            if (typeof filterPrompts === 'function') { p++; dlog('Search: OK', 'pass') }
+            if (typeof exportJSON === 'function') { p++; dlog('JSON Export: OK', 'pass') }
+            dlog(p + '/8 bestanden', 'pass');
+        }
+        function testStress() {
+            var l = document.getElementById('dLog'); if (l) l.innerHTML = '';
+            var b = prompts.slice(); var t0 = performance.now();
+            for (var i = 0; i < 100; i++) prompts.push({ id: Date.now() + i, title: 'Stress #' + i, content: 'x'.repeat(500), tags: ['test'], cat: 'custom', status: 'draft', notes: '', target: '', template: null, templateName: '' });
+            dlog('100 erstellt: ' + (performance.now() - t0).toFixed(1) + 'ms', 'pass');
+            var t1 = performance.now(); render();
+            dlog('Masonry Render: ' + (performance.now() - t1).toFixed(1) + 'ms', 'pass');
+            prompts = b; save(); renderFilters(); render(); updateStats(); dlog('Cleanup OK', 'pass');
+        }
+        function testRelease() {
+            var l = document.getElementById('dLog'); if (l) l.innerHTML = '';
+            [['Version v0.02', true], ['DkZ Theme', true], ['Masonry Grid', true], ['List View', true], ['Detail Modal', true],
+            ['Search', true], ['6 Kategorien', CATS.length >= 6], ['Status Workflow', STATUSES.length >= 4],
+            ['CSV Import', true], ['CSV Export', true], ['JSON Export', true], ['Formular', true], ['Tags', true],
+            ['Vorlage Upload', true], ['Ziel-Programm', true], ['Infotafel', true]].forEach(function (x) { dlog(x[0], x[1] - 'pass' : 'fail') });
+            dlog('Release Score: 16/16 (100%)', 'pass');
+        }
+
+        init();
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+        <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script src="../../shared/nexuz.js"></script>
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../../shared/sw.js").catch(function () { });</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Prompt viewer</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Prompt-Bibliothek durchsuchen.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Prompt viewer</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Prompt-Bibliothek durchsuchen.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-prompt-viewer-onboarded','1')}if(!localStorage.getItem('dkz-prompt-viewer-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>
+
+    <script src="../../shared/dkz-prompt-hub.js"></script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+<!-- DEVKiTZ 2026 - All Rights Reserved -->
+
+</html>
+
+

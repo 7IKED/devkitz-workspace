@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v0.01">
+    <meta name="dkz-module" content="jamez-builder">
+    <title>JAMEZ™ Builder — DkZ Agent Builder</title>
+    <meta name="description" content="JAMEZ™ Builder — Eigene JAMEZ Instanzen mit Custom Rules, Datenbanken und Werkzeugen erstellen">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <style>
+        :root{--neon-red:#fa1e4e;--pink:#ec4899;--matrix-green:#00D084;--blue:#55ACEE;--yellow:#FFB800;--dark-base:#0e0e10;--soft-white:#f6f6f7;--card-bg:#1a1a1c;--border-color:#2a2a2e}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',sans-serif;background:var(--dark-base);color:var(--soft-white);min-height:100vh}
+        body::before{content:"";position:fixed;top:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(250,30,78,.08),transparent 70%);pointer-events:none;z-index:0}
+        body::after{content:"";position:fixed;bottom:-150px;left:-150px;width:500px;height:500px;background:radial-gradient(circle,rgba(168,85,247,.06),transparent 70%);pointer-events:none;z-index:0}
+        header{position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);background:rgba(26,26,28,.85);border-bottom:1px solid var(--border-color);padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between}
+        .logo{font-size:1.2rem;font-weight:900;display:flex;align-items:center;gap:.5rem}
+        .logo span{background:linear-gradient(135deg,var(--neon-red),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .chain-nav{display:flex;gap:.4rem}
+        .chain-btn{padding:.35rem .7rem;border-radius:6px;font-size:.7rem;font-weight:700;border:1px solid var(--border-color);background:rgba(255,255,255,.03);color:#808080;cursor:pointer;text-decoration:none;transition:all .2s}
+        .chain-btn:hover{border-color:var(--neon-red);color:var(--soft-white)}
+        .chain-btn.active{background:var(--neon-red);border-color:var(--neon-red);color:#fff}
+        .main{display:grid;grid-template-columns:320px 1fr 340px;height:calc(100vh - 60px);position:relative;z-index:1}
+        .sidebar{background:var(--card-bg);border-right:1px solid var(--border-color);overflow-y:auto;padding:1.5rem}
+        .sidebar-right{background:var(--card-bg);border-left:1px solid var(--border-color);overflow-y:auto;padding:1.5rem}
+        .section-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#808080;margin-bottom:1rem}
+        .input-group{margin-bottom:1rem}
+        .input-label{font-size:.7rem;font-weight:700;color:#999;margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.04em}
+        .input,.select,.textarea{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border-color);border-radius:8px;padding:.6rem;color:var(--soft-white);font-size:.85rem;font-family:inherit}
+        .input:focus,.textarea:focus{outline:none;border-color:var(--neon-red)}
+        .textarea{min-height:80px;resize:vertical;font-family:'JetBrains Mono',monospace;font-size:.75rem}
+        .select{appearance:auto;-webkit-appearance:auto}
+        .btn{padding:.55rem 1rem;border:none;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;display:inline-flex;align-items:center;gap:.4rem}
+        .btn-primary{background:linear-gradient(135deg,var(--neon-red),var(--pink));color:#fff}
+        .btn-primary:hover{transform:translateY(-2px);box-shadow:0 5px 20px rgba(250,30,78,.3)}
+        .btn-secondary{background:rgba(255,255,255,.05);color:var(--soft-white);border:1px solid var(--border-color)}
+        .btn-secondary:hover{background:rgba(255,255,255,.1)}
+        .btn-sm{padding:.35rem .65rem;font-size:.7rem}
+        .center-panel{overflow-y:auto;padding:1.5rem;background:repeating-linear-gradient(0deg,transparent,transparent 19px,rgba(255,255,255,.015) 19px,rgba(255,255,255,.015) 20px),repeating-linear-gradient(90deg,transparent,transparent 19px,rgba(255,255,255,.015) 19px,rgba(255,255,255,.015) 20px)}
+        .tool-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;margin-bottom:1.5rem}
+        .tool-card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:1rem;cursor:pointer;transition:all .25s;position:relative}
+        .tool-card:hover{border-color:var(--neon-red);transform:translateY(-2px);box-shadow:0 4px 15px rgba(250,30,78,.15)}
+        .tool-card.active{border-color:var(--matrix-green);background:rgba(0,208,132,.05)}
+        .tool-icon{font-size:1.5rem;margin-bottom:.5rem}
+        .tool-name{font-weight:800;font-size:.85rem;margin-bottom:.25rem}
+        .tool-desc{font-size:.7rem;color:#808080;line-height:1.4}
+        .tool-badge{position:absolute;top:.5rem;right:.5rem;font-size:.6rem;padding:.15rem .4rem;border-radius:4px;font-weight:700}
+        .badge-active{background:rgba(0,208,132,.15);color:var(--matrix-green)}
+        .badge-plan{background:rgba(255,184,0,.15);color:var(--yellow)}
+        .rule-card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:.75rem;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center}
+        .rule-info{flex:1}
+        .rule-id{font-size:.7rem;font-weight:800;color:var(--blue)}
+        .rule-name{font-size:.8rem;font-weight:700}
+        .rule-cat{font-size:.65rem;color:#808080}
+        .template-card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:1rem;cursor:pointer;transition:all .25s;margin-bottom:.75rem}
+        .template-card:hover{border-color:var(--neon-red);transform:translateY(-2px)}
+        .template-name{font-weight:800;font-size:.9rem;margin-bottom:.25rem}
+        .template-desc{font-size:.75rem;color:#808080;line-height:1.4}
+        .db-item{background:rgba(0,0,0,.2);border:1px solid var(--border-color);border-radius:8px;padding:.6rem;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center}
+        .db-name{font-weight:700;font-size:.8rem}
+        .db-type{font-size:.65rem;color:var(--blue)}
+        .db-count{font-size:.65rem;color:#808080}
+        .preview-json{background:rgba(0,0,0,.4);border:1px solid var(--border-color);border-radius:8px;padding:1rem;font-family:'JetBrains Mono',monospace;font-size:.7rem;line-height:1.6;max-height:300px;overflow-y:auto;color:#a0a0a0;white-space:pre-wrap}
+        .toast{position:fixed;bottom:2rem;right:2rem;background:var(--card-bg);border:1px solid var(--matrix-green);border-radius:8px;padding:.75rem 1.25rem;transform:translateX(400px);transition:transform .3s;z-index:10000;font-size:.85rem;font-weight:600}
+        .toast.show{transform:translateX(0)}
+        .stat-row{display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:.75rem}
+        .stat-label{color:#808080}
+        .stat-value{font-weight:700;color:var(--matrix-green)}
+        .divider{height:1px;background:var(--border-color);margin:1.25rem 0}
+        ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border-color);border-radius:3px}
+    </style>
+</head>
+<body>
+    <header>
+        <div style="display:flex;align-items:center;gap:1rem">
+            <a href="../agent-builder/index.html" style="color:#808080;text-decoration:none;font-size:1.1rem">&#8592;</a>
+            <div class="logo">🎯 <span>JAMEZ™ Builder</span></div>
+            <span style="font-size:.65rem;color:#808080;padding:.2rem .5rem;border:1px solid #333;border-radius:4px">v0.01</span>
+        </div>
+        <div class="chain-nav">
+            <a class="chain-btn" href="../action-builder/index.html">Actions</a>
+            <a class="chain-btn" href="../skill-builder/index.html">Skills</a>
+            <a class="chain-btn" href="../workflow-builder/index.html">Workflows</a>
+            <a class="chain-btn" href="../agent-builder/index.html">Agents</a>
+            <a class="chain-btn active">JAMEZ™</a>
+            <a class="chain-btn" href="../team-builder/index.html">Teams</a>
+        </div>
+        <div style="display:flex;gap:.5rem">
+            <button class="btn btn-secondary btn-sm" onclick="importConfig()">📥 Import</button>
+            <button class="btn btn-primary btn-sm" onclick="exportConfig()">📦 Export</button>
+        </div>
+    </header>
+    <div class="main">
+        <!-- LEFT SIDEBAR: JAMEZ Config -->
+        <div class="sidebar">
+            <div class="section-title">🎯 JAMEZ™ Instanz</div>
+            <div class="input-group">
+                <div class="input-label">Name</div>
+                <input class="input" id="jz-name" value="Mein JAMEZ™" oninput="updatePreview()">
+            </div>
+            <div class="input-group">
+                <div class="input-label">Rolle</div>
+                <select class="select" id="jz-role" onchange="updatePreview()">
+                    <option value="evaluator">Code Evaluator</option>
+                    <option value="reviewer">Prompt Reviewer</option>
+                    <option value="auditor">Security Auditor</option>
+                    <option value="analyzer">Content Analyzer</option>
+                    <option value="scanner">OCR Scanner</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <div class="input-label">System Prompt</div>
+                <textarea class="textarea" id="jz-prompt" oninput="updatePreview()">Du bist JAMEZ™, ein spezialisierter DkZ Evaluations-Agent. Bewerte nach den DkZ-Standards.</textarea>
+            </div>
+            <div class="input-group">
+                <div class="input-label">LLM Model</div>
+                <select class="select" id="jz-model" onchange="updatePreview()">
+                    <option>auto (NEXUZ)</option>
+                    <option>Claude Sonnet</option>
+                    <option>Gemma 4 2B</option>
+                    <option>Qwen Coder 7B</option>
+                    <option>GPT-4o</option>
+                    <option>DeepSeek R1</option>
+                    <option>Mistral Large</option>
+                    <option>open-mistral-nemo</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <div class="input-label">Max Tokens</div>
+                <input class="input" type="number" id="jz-tokens" value="4096" min="256" max="32000" oninput="updatePreview()">
+            </div>
+
+            <div class="divider"></div>
+            <div class="section-title">📚 Eigene Datenbank</div>
+            <div id="db-list"></div>
+            <button class="btn btn-secondary btn-sm" onclick="addDatabase()" style="width:100%">+ Datenbank hinzufügen</button>
+
+            <div class="divider"></div>
+            <div class="section-title">📏 Custom Rubric Rules</div>
+            <div id="rules-list"></div>
+            <button class="btn btn-secondary btn-sm" onclick="addRule()" style="width:100%">+ Regel hinzufügen</button>
+
+            <div class="divider"></div>
+            <div class="section-title">🔗 Vernetzung</div>
+            <div class="stat-row"><span class="stat-label">agents-registry</span><span class="stat-value">✅ Verbunden</span></div>
+            <div class="stat-row"><span class="stat-label">teams-registry</span><span class="stat-value">✅ Verbunden</span></div>
+            <div class="stat-row"><span class="stat-label">skills-registry</span><span class="stat-value">✅ Verbunden</span></div>
+            <div class="stat-row"><span class="stat-label">Prompt-Archiv</span><span class="stat-value">✅ Iceberg</span></div>
+            <div class="stat-row"><span class="stat-label">Builder-Bridge</span><span class="stat-value">✅ localStorage</span></div>
+        </div>
+
+        <!-- CENTER: Tools -->
+        <div class="center-panel">
+            <div class="section-title">🔧 JAMEZ™ Werkzeuge (10)</div>
+            <div class="tool-grid" id="tools-grid">
+                <div class="tool-card active" data-tool="scanner" onclick="toggleTool(this)">
+                    <span class="tool-badge badge-active">Aktiv</span>
+                    <div class="tool-icon">🔍</div>
+                    <div class="tool-name">Code Scanner</div>
+                    <div class="tool-desc">Statische Code-Analyse mit 22 Rubric-Regeln inkl. XSS, eval(), Design System Checks</div>
+                </div>
+                <div class="tool-card active" data-tool="dashboard" onclick="toggleTool(this)">
+                    <span class="tool-badge badge-active">Aktiv</span>
+                    <div class="tool-icon">📊</div>
+                    <div class="tool-name">Score Dashboard</div>
+                    <div class="tool-desc">Live 0-100 Score + 6 Kategorie-Balken (Quality, Security, Design, Prompt, Structure, Logic)</div>
+                </div>
+                <div class="tool-card active" data-tool="tester" onclick="toggleTool(this)">
+                    <span class="tool-badge badge-active">Aktiv</span>
+                    <div class="tool-icon">🧪</div>
+                    <div class="tool-name">Test Runner</div>
+                    <div class="tool-desc">Automated Testing mit Pass/Fail Reporting und Fix-Hints pro fehlgeschlagener Regel</div>
+                </div>
+                <div class="tool-card active" data-tool="report" onclick="toggleTool(this)">
+                    <span class="tool-badge badge-active">Aktiv</span>
+                    <div class="tool-icon">📝</div>
+                    <div class="tool-name">Report Generator</div>
+                    <div class="tool-desc">Audit-Berichte als JSON/Markdown/HTML mit Score-Verlauf und Issue-Tracking</div>
+                </div>
+                <div class="tool-card" data-tool="api" onclick="toggleTool(this)">
+                    <span class="tool-badge badge-plan">Wählen</span>
+                    <div class="tool-icon">🔗</div>
+                    <div class="tool-name">API Connector</div>
+                    <div class="tool-desc">Externe APIs testen und evaluieren — REST, GraphQL, WebSocket Health-Checks</div>
+                </div>
+                <div class="tool-card active" data-tool="prompt-eval" onclick="toggleTool(this)">
+                    <span class="tool-badge badge-active">Aktiv</span>
+                    <div class="tool-icon">🎯</div>
+                    <div class="tool-name">Prompt Evaluator</div>
+                    <div class="tool-desc">Prompt-Qualität bewerten: Struktur, Kontext, Output-Format, Blueprint-Kompatibilität</div>
+                </div>
+                <div class="tool-card active" data-tool="security" onclick="toggleTool(this)">
+                    <span class="tool-badge badge-active">Aktiv</span>
+                    <div class="tool-icon">🛡️</div>
+                    <div class="tool-name">Security Auditor</div>
+                    <div class="tool-desc">XSS, Injection, Hardcoded Keys, HTTP vs HTTPS, CSP-Prüfung und Auto-Fix</div>
+                </div>
+                <div class="tool-card" data-tool="knowledge" onclick="toggleTool(this)">
+                    <span class="tool-badge badge-plan">Wählen</span>
+                    <div class="tool-icon">📚</div>
+                    <div class="tool-name">Knowledge Importer</div>
+                    <div class="tool-desc">Wissensdaten aus JSON, Markdown oder URL importieren und indexieren</div>
+                </div>
+                <div class="tool-card" data-tool="multi-agent" onclick="toggleTool(this)">
+                    <span class="tool-badge badge-plan">Wählen</span>
+                    <div class="tool-icon">🤖</div>
+                    <div class="tool-name">Multi-Agent Bridge</div>
+                    <div class="tool-desc">JAMEZ™ ↔ Agent Kommunikation, Handoff, Score-Sharing zwischen Instanzen</div>
+                </div>
+                <div class="tool-card active" data-tool="ocr-vision" onclick="toggleTool(this)">
+                    <span class="tool-badge badge-active">Aktiv</span>
+                    <div class="tool-icon">👁️</div>
+                    <div class="tool-name">OCR Vision</div>
+                    <div class="tool-desc">Mistral OCR 0.8 — Objekte erkennen, Texte lesen, Structured Data extrahieren</div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="section-title">📋 JAMEZ™ Templates</div>
+            <div class="template-card" onclick="loadTemplate('code-reviewer')">
+                <div class="template-name">🔍 Code Reviewer</div>
+                <div class="template-desc">22 DkZ-Regeln + Security + Design System — Scanner + Dashboard + Test Runner aktiv</div>
+            </div>
+            <div class="template-card" onclick="loadTemplate('prompt-scorer')">
+                <div class="template-name">🎯 Prompt Scorer</div>
+                <div class="template-desc">Prompt-Qualität nach 20 Blueprint-Standards — Evaluator + Report Generator aktiv</div>
+            </div>
+            <div class="template-card" onclick="loadTemplate('security-auditor')">
+                <div class="template-name">🛡️ Security Auditor</div>
+                <div class="template-desc">XSS, Injection, Keys, CSP — Security Auditor + Scanner + Report aktiv</div>
+            </div>
+            <div class="template-card" onclick="loadTemplate('content-analyzer')">
+                <div class="template-name">📝 Content Analyzer</div>
+                <div class="template-desc">7-Block-Standard, Min-Zeichen, Tags, Metadaten — OCR Vision + Knowledge aktiv</div>
+            </div>
+            <div class="template-card" onclick="loadTemplate('full-stack')">
+                <div class="template-name">⚡ Full Stack JAMEZ™</div>
+                <div class="template-desc">Alle 10 Werkzeuge aktiv — Maximale Evaluierungstiefe für Enterprise-Module</div>
+            </div>
+        </div>
+
+        <!-- RIGHT SIDEBAR: Preview + Export -->
+        <div class="sidebar-right">
+            <div class="section-title">📊 Instanz-Übersicht</div>
+            <div class="stat-row"><span class="stat-label">Name</span><span class="stat-value" id="stat-name">Mein JAMEZ™</span></div>
+            <div class="stat-row"><span class="stat-label">Rolle</span><span class="stat-value" id="stat-role">evaluator</span></div>
+            <div class="stat-row"><span class="stat-label">Werkzeuge</span><span class="stat-value" id="stat-tools">7/10</span></div>
+            <div class="stat-row"><span class="stat-label">Custom Rules</span><span class="stat-value" id="stat-rules">0</span></div>
+            <div class="stat-row"><span class="stat-label">Datenbanken</span><span class="stat-value" id="stat-dbs">0</span></div>
+            <div class="stat-row"><span class="stat-label">Version</span><span class="stat-value">v3.0.0</span></div>
+
+            <div class="divider"></div>
+            <div class="section-title">💻 Config JSON</div>
+            <div class="preview-json" id="preview-json">{}</div>
+            <div style="display:flex;gap:.5rem;margin-top:.75rem">
+                <button class="btn btn-secondary btn-sm" onclick="copyConfig()" style="flex:1">📋 Copy</button>
+                <button class="btn btn-primary btn-sm" onclick="deployJamez()" style="flex:1">🚀 Deploy</button>
+            </div>
+
+            <div class="divider"></div>
+            <div class="section-title">→ Weiterleiten</div>
+            <button class="btn btn-secondary btn-sm" onclick="sendToAgent()" style="width:100%;margin-bottom:.5rem">🤖 → Agent Builder</button>
+            <button class="btn btn-secondary btn-sm" onclick="sendToTeam()" style="width:100%">👥 → Team Builder</button>
+        </div>
+    </div>
+    <div class="toast" id="toast"><span id="tt"></span></div>
+
+    <script>
+    // ========================================
+    // JAMEZ™ Builder — State
+    // ========================================
+    var customRules = [];
+    var databases = [];
+    var ruleId = 1;
+    var dbId = 1;
+
+    // ========================================
+    // TOOLS
+    // ========================================
+    function toggleTool(el) {
+        el.classList.toggle('active');
+        var badge = el.querySelector('.tool-badge');
+        if (el.classList.contains('active')) {
+            badge.textContent = 'Aktiv';
+            badge.className = 'tool-badge badge-active';
+        } else {
+            badge.textContent = 'Wählen';
+            badge.className = 'tool-badge badge-plan';
+        }
+        updatePreview();
+    }
+
+    function getActiveTools() {
+        var tools = [];
+        document.querySelectorAll('.tool-card.active').forEach(function(t) {
+            tools.push({
+                id: t.dataset.tool,
+                name: t.querySelector('.tool-name').textContent,
+                icon: t.querySelector('.tool-icon').textContent
+            });
+        });
+        return tools;
+    }
+
+    // ========================================
+    // CUSTOM RULES
+    // ========================================
+    function addRule() {
+        var rule = { id: 'CR-' + String(ruleId++).padStart(2, '0'), cat: 'quality', name: 'Neue Regel', weight: 5, check: 'return true;', hint: 'Beschreibung...' };
+        customRules.push(rule);
+        renderRules();
+        updatePreview();
+        toast('Regel ' + rule.id + ' hinzugefügt');
+    }
+
+    function removeRule(idx) {
+        customRules.splice(idx, 1);
+        renderRules();
+        updatePreview();
+    }
+
+    function renderRules() {
+        var html = '';
+        customRules.forEach(function(r, i) {
+            html += '<div class="rule-card"><div class="rule-info"><div class="rule-id">' + r.id + '</div><div class="rule-name">' + esc(r.name) + '</div><div class="rule-cat">' + r.cat + ' | Gewicht: ' + r.weight + '</div></div><button class="btn btn-secondary btn-sm" onclick="removeRule(' + i + ')">🗑️</button></div>';
+        });
+        document.getElementById('rules-list').innerHTML = html;
+        document.getElementById('stat-rules').textContent = customRules.length;
+    }
+
+    // ========================================
+    // DATABASES
+    // ========================================
+    function addDatabase() {
+        var db = { id: 'DB-' + String(dbId++).padStart(2, '0'), name: 'Wissensdatenbank ' + dbId, type: 'localStorage', entries: 0 };
+        databases.push(db);
+        renderDatabases();
+        updatePreview();
+        toast('Datenbank ' + db.name + ' erstellt');
+    }
+
+    function removeDb(idx) {
+        databases.splice(idx, 1);
+        renderDatabases();
+        updatePreview();
+    }
+
+    function renderDatabases() {
+        var html = '';
+        databases.forEach(function(d, i) {
+            html += '<div class="db-item"><div><div class="db-name">' + esc(d.name) + '</div><div class="db-type">' + d.type + '</div></div><div style="display:flex;align-items:center;gap:.5rem"><span class="db-count">' + d.entries + ' Einträge</span><button class="btn btn-secondary btn-sm" onclick="removeDb(' + i + ')">🗑️</button></div></div>';
+        });
+        document.getElementById('db-list').innerHTML = html;
+        document.getElementById('stat-dbs').textContent = databases.length;
+    }
+
+    // ========================================
+    // TEMPLATES
+    // ========================================
+    function loadTemplate(name) {
+        var templates = {
+            'code-reviewer': { name: 'Code Reviewer JAMEZ™', role: 'evaluator', prompt: 'Du bist JAMEZ™ Code Reviewer. Bewerte DkZ-Module nach 22 Regeln: XSS-Schutz, Design System, Shared Scripts, Responsive, Error Handling. Gib Score 0-100 + Issues + Fix-Vorschläge.', tools: ['scanner','dashboard','tester','report','security','prompt-eval','ocr-vision'] },
+            'prompt-scorer': { name: 'Prompt Scorer JAMEZ™', role: 'reviewer', prompt: 'Du bist JAMEZ™ Prompt Scorer. Bewerte Prompts nach den 20 DkZ Blueprint-Standards (BP-01 bis BP-20): Reasoning Effort, XML-Container, Output-Klammer, Token-Sparen, Scope-Disziplin.', tools: ['prompt-eval','report','dashboard','ocr-vision'] },
+            'security-auditor': { name: 'Security Auditor JAMEZ™', role: 'auditor', prompt: 'Du bist JAMEZ™ Security Auditor. Prüfe Code auf: XSS (innerHTML ohne esc()), eval(), Hardcoded API-Keys, HTTP statt HTTPS, fehlende CSP. Gib Severity + Fix zurück.', tools: ['security','scanner','report','tester'] },
+            'content-analyzer': { name: 'Content Analyzer JAMEZ™', role: 'analyzer', prompt: 'Du bist JAMEZ™ Content Analyzer. Prüfe Dokumente nach DkZ 7-Block-Standard: Metadaten-Header, Einführung, Ziel, Strukturierte Erklärung, Visuelle Darstellung, Anwendung, Fazit.', tools: ['ocr-vision','knowledge','report','dashboard'] },
+            'full-stack': { name: 'Full Stack JAMEZ™', role: 'evaluator', prompt: 'Du bist JAMEZ™ Full Stack Evaluator v3.0. Du hast Zugriff auf alle 10 Werkzeuge. Bewerte Code, Prompts, Security, Content und OCR. Maximale Analystiefe.', tools: ['scanner','dashboard','tester','report','api','prompt-eval','security','knowledge','multi-agent','ocr-vision'] }
+        };
+        var t = templates[name];
+        if (!t) return;
+        document.getElementById('jz-name').value = t.name;
+        document.getElementById('jz-role').value = t.role;
+        document.getElementById('jz-prompt').value = t.prompt;
+        // Set active tools
+        document.querySelectorAll('.tool-card').forEach(function(card) {
+            var isActive = t.tools.indexOf(card.dataset.tool) !== -1;
+            card.classList.toggle('active', isActive);
+            var badge = card.querySelector('.tool-badge');
+            badge.textContent = isActive - 'Aktiv' : 'Wählen';
+            badge.className = 'tool-badge ' + (isActive - 'badge-active' : 'badge-plan');
+        });
+        updatePreview();
+        toast('Template geladen: ' + t.name);
+    }
+
+    // ========================================
+    // PREVIEW
+    // ========================================
+    function updatePreview() {
+        var config = buildConfig();
+        document.getElementById('preview-json').textContent = JSON.stringify(config, null, 2);
+        document.getElementById('stat-name').textContent = config.name;
+        document.getElementById('stat-role').textContent = config.role;
+        document.getElementById('stat-tools').textContent = config.tools.length + '/10';
+        // Save to localStorage
+        localStorage.setItem('dkz-jamez-builder', JSON.stringify(config));
+    }
+
+    function buildConfig() {
+        return {
+            name: document.getElementById('jz-name').value,
+            role: document.getElementById('jz-role').value,
+            systemPrompt: document.getElementById('jz-prompt').value,
+            model: document.getElementById('jz-model').value,
+            maxTokens: parseInt(document.getElementById('jz-tokens').value),
+            version: 'v3.0.0',
+            tools: getActiveTools(),
+            customRules: customRules,
+            databases: databases,
+            connections: {
+                agentsRegistry: true,
+                teamsRegistry: true,
+                skillsRegistry: true,
+                promptArchive: true,
+                builderBridge: true
+            },
+            createdAt: new Date().toISOString(),
+            ecosystem: 'DEVKiTZ™'
+        };
+    }
+
+    // ========================================
+    // EXPORT / IMPORT
+    // ========================================
+    function exportConfig() {
+        var config = buildConfig();
+        var blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = config.name.replace(/[^a-zA-Z0-9]/g, '_') + '.jamez.json';
+        a.click();
+        toast('JAMEZ™ Config exportiert!');
+    }
+
+    function importConfig() {
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = function(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    var config = JSON.parse(ev.target.result);
+                    document.getElementById('jz-name').value = config.name || '';
+                    document.getElementById('jz-role').value = config.role || 'evaluator';
+                    document.getElementById('jz-prompt').value = config.systemPrompt || '';
+                    document.getElementById('jz-model').value = config.model || 'auto (NEXUZ)';
+                    document.getElementById('jz-tokens').value = config.maxTokens || 4096;
+                    customRules = config.customRules || [];
+                    databases = config.databases || [];
+                    renderRules();
+                    renderDatabases();
+                    if (config.tools) {
+                        var toolIds = config.tools.map(function(t) { return t.id; });
+                        document.querySelectorAll('.tool-card').forEach(function(card) {
+                            var isActive = toolIds.indexOf(card.dataset.tool) !== -1;
+                            card.classList.toggle('active', isActive);
+                            var badge = card.querySelector('.tool-badge');
+                            badge.textContent = isActive - 'Aktiv' : 'Wählen';
+                            badge.className = 'tool-badge ' + (isActive - 'badge-active' : 'badge-plan');
+                        });
+                    }
+                    updatePreview();
+                    toast('JAMEZ™ Config importiert!');
+                } catch (err) {
+                    toast('❌ Import fehlgeschlagen: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+
+    function copyConfig() {
+        navigator.clipboard.writeText(document.getElementById('preview-json').textContent);
+        toast('Config kopiert!');
+    }
+
+    // ========================================
+    // DEPLOY & BRIDGE
+    // ========================================
+    function deployJamez() {
+        var config = buildConfig();
+        localStorage.setItem('dkz-jamez-active', JSON.stringify(config));
+        // Register in agents bridge
+        var agents = JSON.parse(localStorage.getItem('dkz-agents') || '[]');
+        var existing = agents.findIndex(function(a) { return a.name === config.name; });
+        if (existing >= 0) agents[existing] = config;
+        else agents.push(config);
+        localStorage.setItem('dkz-agents', JSON.stringify(agents));
+        toast('🚀 JAMEZ™ "' + config.name + '" deployed!');
+    }
+
+    function sendToAgent() {
+        localStorage.setItem('dkz-jamez-to-agent', JSON.stringify(buildConfig()));
+        window.location.href = '../agent-builder/index.html';
+    }
+
+    function sendToTeam() {
+        localStorage.setItem('dkz-jamez-to-team', JSON.stringify(buildConfig()));
+        window.location.href = '../team-builder/index.html';
+    }
+
+    // ========================================
+    // UTILS
+    // ========================================
+    function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    function toast(m) { var t = document.getElementById('toast'); document.getElementById('tt').textContent = m; t.classList.add('show'); setTimeout(function() { t.classList.remove('show'); }, 3000); }
+
+    // ========================================
+    // INIT
+    // ========================================
+    (function init() {
+        // Load saved config
+        var saved = localStorage.getItem('dkz-jamez-builder');
+        if (saved) {
+            try {
+                var config = JSON.parse(saved);
+                document.getElementById('jz-name').value = config.name || 'Mein JAMEZ™';
+                document.getElementById('jz-role').value = config.role || 'evaluator';
+                document.getElementById('jz-prompt').value = config.systemPrompt || '';
+                if (config.model) document.getElementById('jz-model').value = config.model;
+                if (config.maxTokens) document.getElementById('jz-tokens').value = config.maxTokens;
+                customRules = config.customRules || [];
+                databases = config.databases || [];
+                renderRules();
+                renderDatabases();
+            } catch(e) {}
+        }
+        updatePreview();
+    })();
+    </script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/nexuz.js"></script>
+    <footer style="text-align:center;padding:.75rem;font-size:.7rem;color:#606060;font-family:monospace;border-top:1px solid #2a2a2e">
+        © 2024-2026 <span style="color:#fa1e4e">DEVKiTZ™</span> · JAMEZ™ Builder v0.01 · DkZ Design System v2
+    </footer>
+
+<script src="../../shared/dkz-chain-nav.js"></script>
+</body>
+</html>

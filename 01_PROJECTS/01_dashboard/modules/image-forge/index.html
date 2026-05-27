@@ -1,0 +1,623 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎨 ImageForge Studio — DkZâ„¢ v0.01</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0e0e10;--bg2:#0a0a0c;--card:#1a1a1c;--card2:#222226;--border:#333338;--border2:#2a2a2e;--text:#f6f6f7;--text2:#e4e4e7;--muted:#a1a1aa;--muted2:#71717a;--accent:#fa1e4e;--accent-hover:#ff3366;--accent-glow:rgba(250,30,78,0.35);--accent-dim:rgba(250,30,78,0.12);--green:#00ff88;--blue:#55ACEE;--yellow:#FFB800;--orange:#ff6b35;--purple:#a855f7;--cyan:#00FFD5;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;--glass:rgba(26,26,28,0.85);--blur:blur(24px);--radius:12px;--radius-lg:16px;--radius-xl:20px;--shadow:0 4px 24px rgba(0,0,0,.4);--shadow-accent:0 0 20px rgba(250,30,78,.25);--transition:all .2s cubic-bezier(.4,0,.2,1)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;line-height:1.5;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.06);border-radius:5px}
+::selection{background:var(--accent);color:#fff}
+.bg-mesh{position:fixed;inset:0;z-index:0;pointer-events:none}
+.bg-blob{position:absolute;border-radius:50%;filter:blur(140px);opacity:.06;animation:bf 25s ease-in-out infinite}
+.bg-blob:nth-child(1){width:600px;height:600px;background:var(--accent);top:-10%;left:5%}
+.bg-blob:nth-child(2){width:400px;height:400px;background:var(--blue);bottom:5%;right:10%;animation-delay:-10s}
+.bg-blob:nth-child(3){width:300px;height:300px;background:var(--purple);top:40%;right:30%;animation-delay:-18s}
+@keyframes bf{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,-50px) scale(1.15)}}
+.app{position:relative;z-index:1;display:flex;flex-direction:column;min-height:100vh}
+.header{padding:12px 24px;border-bottom:1px solid var(--border);background:var(--glass);backdrop-filter:var(--blur);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.back-btn{padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,.03);color:var(--muted);font-size:11px;cursor:pointer;text-decoration:none;font-family:var(--font);transition:var(--transition)}
+.back-btn:hover{border-color:var(--accent);color:var(--accent)}
+.header h1{font-size:22px;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.ver{font-size:9px;color:var(--muted2);font-family:var(--mono);margin-left:auto}
+.smart-toggle{padding:6px 14px;border:1px solid var(--green);border-radius:20px;background:rgba(0,255,136,.08);color:var(--green);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);transition:var(--transition);margin-left:8px}
+.smart-toggle:hover{background:rgba(0,255,136,.18)}
+.smart-toggle.active{background:var(--green);color:#000}
+/* TABS */
+.tab-bar{display:flex;gap:2px;padding:8px 24px;background:var(--bg2);border-bottom:1px solid var(--border)}
+.tab-btn{padding:10px 20px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;border-radius:10px 10px 0 0;transition:var(--transition);display:flex;align-items:center;gap:8px}
+.tab-btn:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.tab-btn.active{color:var(--accent);background:var(--card);border-bottom:2px solid var(--accent)}
+.tab-content{display:none;flex:1;overflow-y:auto;padding:20px 24px}
+.tab-content.active{display:block}
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px;transition:var(--transition)}
+.card:hover{border-color:var(--border2)}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px}
+.card-badge{font-size:9px;padding:3px 10px;border-radius:20px;font-weight:700;font-family:var(--mono);letter-spacing:.5px}
+.badge-green{background:rgba(0,255,136,.12);color:var(--green)}
+.badge-blue{background:rgba(85,172,238,.12);color:var(--blue)}
+.badge-accent{background:var(--accent-dim);color:var(--accent)}
+/* BUTTONS */
+.btn{padding:10px 20px;border:none;border-radius:var(--radius);background:var(--accent);color:#fff;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--accent-hover);box-shadow:var(--shadow-accent)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+.btn-sm{padding:6px 14px;font-size:11px;border-radius:8px}
+.btn-icon{width:36px;height:36px;padding:0;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--card2);border:1px solid var(--border);color:var(--muted);font-size:16px;cursor:pointer;transition:var(--transition)}
+.btn-icon:hover{border-color:var(--accent);color:var(--accent)}
+/* INPUTS */
+.input,.textarea,.select{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-family:var(--font);font-size:13px;transition:var(--transition);outline:none}
+.input:focus,.textarea:focus,.select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.textarea{resize:vertical;min-height:80px}
+.select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a1a1aa' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+label{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:.5px}
+.form-group{margin-bottom:14px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+/* CHIPS */
+.chip-group{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:5px 12px;border:1px solid var(--border);border-radius:20px;background:transparent;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;transition:var(--transition);font-family:var(--font)}
+.chip:hover,.chip.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+/* CHAT */
+.chat-area{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;max-height:calc(100vh - 340px);min-height:300px}
+.chat-msg{max-width:85%;padding:14px 18px;border-radius:16px;font-size:13px;line-height:1.6;animation:fadeIn .3s ease}
+.chat-user{align-self:flex-end;background:var(--card2);border:1px solid var(--border);border-bottom-right-radius:4px}
+.chat-ai{align-self:flex-start;background:var(--card);border:1px solid var(--border);border-bottom-left-radius:4px;border-top:2px solid var(--accent)}
+.chat-ai img{max-width:100%;border-radius:var(--radius);margin-top:10px;cursor:pointer;transition:var(--transition)}
+.chat-ai img:hover{box-shadow:var(--shadow-accent)}
+.chat-input-bar{display:flex;gap:8px;padding:16px;background:var(--glass);backdrop-filter:var(--blur);border-top:1px solid var(--border);border-radius:0 0 var(--radius-lg) var(--radius-lg)}
+.chat-input{flex:1;padding:12px 16px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:var(--transition)}
+.chat-input:focus{border-color:var(--accent)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* EDITOR CANVAS */
+.editor-container{display:grid;grid-template-columns:56px 1fr 260px;gap:0;height:calc(100vh - 160px);border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border)}
+.toolbar{background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:6px;gap:2px;overflow-y:auto}
+.tool-btn{width:42px;height:42px;border:none;border-radius:8px;background:transparent;color:var(--muted);font-size:18px;cursor:pointer;transition:var(--transition);display:flex;align-items:center;justify-content:center;position:relative}
+.tool-btn:hover{background:rgba(255,255,255,.05);color:var(--text)}
+.tool-btn.active{background:var(--accent-dim);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.tool-btn[data-tooltip]:hover::after{content:attr(data-tooltip);position:absolute;left:52px;top:50%;transform:translateY(-50%);background:var(--card2);color:var(--text);padding:6px 12px;border-radius:6px;font-size:11px;font-family:var(--font);white-space:nowrap;z-index:200;border:1px solid var(--border);pointer-events:none}
+.canvas-area{background:#1a1a1a;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.canvas-area canvas{background:#fff;box-shadow:0 0 40px rgba(0,0,0,.5);cursor:crosshair}
+.props-panel{background:var(--card);border-left:1px solid var(--border);padding:16px;overflow-y:auto}
+.props-section{margin-bottom:20px}
+.props-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.color-swatch{width:100%;height:36px;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:var(--transition)}
+.color-swatch:hover{border-color:var(--accent)}
+.range-slider{width:100%;-webkit-appearance:none;height:4px;border-radius:2px;background:var(--border);outline:none}
+.range-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer}
+.range-val{font-size:11px;color:var(--muted);font-family:var(--mono);text-align:right}
+/* GALLERY BUILDER */
+.gb-columns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.gb-column{display:flex;flex-direction:column}
+.gb-column .textarea{min-height:120px;flex:1}
+.gb-preview{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:16px}
+.gb-preview-item{aspect-ratio:1;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:var(--transition);display:flex;align-items:center;justify-content:center;color:var(--muted2);font-size:32px}
+.gb-preview-item:hover{border-color:var(--accent);transform:scale(1.03)}
+.gb-preview-item img{width:100%;height:100%;object-fit:cover}
+/* SMART MODE */
+.smart-container{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 200px);padding:40px}
+.smart-orb{width:140px;height:140px;border-radius:50%;background:radial-gradient(circle at 30% 30%,var(--accent),#7c0a2a);box-shadow:0 0 60px var(--accent-glow),0 0 120px rgba(250,30,78,.15);animation:pulse 3s ease-in-out infinite;cursor:pointer;transition:var(--transition);position:relative}
+.smart-orb:hover{transform:scale(1.08);box-shadow:0 0 80px var(--accent-glow)}
+.smart-orb.listening{animation:pulse .8s ease-in-out infinite;box-shadow:0 0 100px rgba(0,255,136,.3)}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.smart-label{margin-top:24px;font-size:14px;color:var(--muted);text-align:center}
+.smart-input-wrap{margin-top:32px;width:100%;max-width:600px;position:relative}
+.smart-input{width:100%;padding:16px 60px 16px 20px;border:1px solid var(--border);border-radius:28px;background:var(--card);color:var(--text);font-family:var(--font);font-size:15px;outline:none;transition:var(--transition)}
+.smart-input:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-dim)}
+.smart-mic{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:40px;height:40px;border:none;border-radius:50%;background:var(--accent);color:#fff;font-size:18px;cursor:pointer;transition:var(--transition);display:flex;align-items:center;justify-content:center}
+.smart-mic:hover{background:var(--accent-hover)}
+.smart-mic.listening{background:var(--green);animation:pulse .6s infinite}
+.smart-results{margin-top:28px;width:100%;max-width:700px;display:flex;flex-direction:column;gap:12px}
+/* SETTINGS PANEL */
+.settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.settings-overlay.show{display:flex}
+.settings-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-xl);padding:28px;width:90%;max-width:520px;max-height:80vh;overflow-y:auto}
+/* IMAGE ACTIONS */
+.img-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;background:var(--green);color:#000;font-size:12px;font-weight:700;border-radius:10px;z-index:300;opacity:0;transform:translateY(20px);transition:var(--transition);pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+/* POPUP / INFO */
+.info-popup{position:absolute;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;font-size:12px;color:var(--text2);z-index:200;max-width:260px;box-shadow:var(--shadow);animation:fadeIn .2s ease}
+.info-popup h4{font-size:12px;font-weight:800;color:var(--accent);margin-bottom:6px}
+.info-popup .shortcut{font-family:var(--mono);font-size:10px;color:var(--muted);padding:2px 6px;background:var(--bg);border-radius:4px}
+/* RESPONSIVE */
+@media(max-width:768px){
+.tab-btn span{display:none}
+.editor-container{grid-template-columns:48px 1fr;height:calc(100vh - 200px)}
+.props-panel{display:none}
+.gb-columns{grid-template-columns:1fr}
+.form-row,.form-row-3{grid-template-columns:1fr}
+.chat-msg{max-width:95%}
+}
+/* FOOTER */
+.footer{padding:14px 0;border-top:1px solid var(--border);text-align:center;font-size:9px;color:var(--muted2);font-family:var(--mono);letter-spacing:1px}
+.footer a{color:var(--accent);text-decoration:none}
+</style>
+</head>
+<body data-dkz-module="image-forge" data-dkz-appid="DKZ-MOD-IMA" data-dkz-version="v0.01" data-dkz-title="🎨 ImageForge Studio —" data-dkz-icon="📦" data-dkz-separable="true">
+<div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div><div class="bg-blob"></div></div>
+<div class="app">
+<!-- HEADER -->
+<div class="header">
+<a href="../../hub/index.html" class="back-btn">← Hub</a>
+<h1>🎨 ImageForge Studio</h1>
+<span class="ver">v0.01</span>
+<button class="smart-toggle" id="smartToggle" onclick="toggleSmartMode()">⚡ Smart</button>
+<button class="btn-icon" onclick="openSettings()" title="Einstellungen">⚙️</button>
+<button class="btn-icon" id="theme-toggle" onclick="cycleTheme()" title="Theme">🌙</button>
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar" id="tabBar">
+<button class="tab-btn active" data-tab="generator" onclick="switchTab('generator')">🎨 <span>AI Generator</span></button>
+<button class="tab-btn" data-tab="editor" onclick="switchTab('editor')">🖌️ <span>PhotoForge</span></button>
+<button class="tab-btn" data-tab="gallery-builder" onclick="switchTab('gallery-builder')">🖼️ <span>Gallery Builder</span></button>
+<button class="tab-btn" data-tab="smart" onclick="switchTab('smart')">⚡ <span>Smart Mode</span></button>
+</div>
+
+<!-- TAB 1: AI GENERATOR -->
+<div class="tab-content active" id="tab-generator">
+<div style="display:grid;grid-template-columns:280px 1fr;gap:16px;height:calc(100vh - 180px)">
+<!-- SIDEBAR -->
+<div style="overflow-y:auto;display:flex;flex-direction:column;gap:12px">
+<div class="card">
+<div class="card-header"><span class="card-title">🤖 Modell</span></div>
+<select class="select" id="aiModel">
+<optgroup label="Google"><option value="gemini-2.0-flash">Gemini 2.0 Flash</option><option value="gemini-3">Gemini 3</option></optgroup>
+<optgroup label="Banana"><option value="banana-2">Banana 2</option><option value="banana-pro">Banana PRO</option></optgroup>
+<optgroup label="xAI (Grok)"><option value="grok-vision">Grok Vision</option><option value="grok-aurora">Aurora</option></optgroup>
+<optgroup label="Stability AI"><option value="sdxl">SDXL</option><option value="sd3-turbo">SD3 Turbo</option></optgroup>
+<optgroup label="OpenAI"><option value="dall-e-3">DALL-E 3</option></optgroup>
+<optgroup label="Flux"><option value="flux-pro">Flux.1 Pro</option><option value="flux-dev">Flux.1 Dev</option></optgroup>
+</select>
+</div>
+<div class="card">
+<div class="card-header"><span class="card-title">📐 Einstellungen</span></div>
+<div class="form-group"><label>Seitenverhältnis</label>
+<div class="chip-group" id="ratioChips">
+<button class="chip active" data-val="1:1" onclick="setChip(this,'ratioChips')">1:1</button>
+<button class="chip" data-val="16:9" onclick="setChip(this,'ratioChips')">16:9</button>
+<button class="chip" data-val="9:16" onclick="setChip(this,'ratioChips')">9:16</button>
+<button class="chip" data-val="4:3" onclick="setChip(this,'ratioChips')">4:3</button>
+<button class="chip" data-val="A4" onclick="setChip(this,'ratioChips')">A4</button>
+</div></div>
+<div class="form-group"><label>Qualität</label>
+<div class="chip-group" id="qualityChips">
+<button class="chip" data-val="draft" onclick="setChip(this,'qualityChips')">Draft</button>
+<button class="chip active" data-val="standard" onclick="setChip(this,'qualityChips')">Standard</button>
+<button class="chip" data-val="hd" onclick="setChip(this,'qualityChips')">HD</button>
+<button class="chip" data-val="ultra" onclick="setChip(this,'qualityChips')">Ultra</button>
+</div></div>
+<div class="form-group"><label>Stil</label>
+<select class="select" id="styleSelect">
+<option value="photorealistic">📷 Fotorealistisch</option>
+<option value="illustration">🎨 Illustration</option>
+<option value="3d">🧊 3D Render</option>
+<option value="pixel">👾 Pixel Art</option>
+<option value="anime">🌸 Anime</option>
+<option value="watercolor">💧 Aquarell</option>
+<option value="oil">🖼️ Ölgemälde</option>
+<option value="logo">💎 Logo/Minimal</option>
+</select></div>
+<div class="form-group"><label>Hintergrund</label>
+<div class="chip-group" id="bgChips">
+<button class="chip active" data-val="auto" onclick="setChip(this,'bgChips')">Auto</button>
+<button class="chip" data-val="transparent" onclick="setChip(this,'bgChips')">Transparent</button>
+<button class="chip" data-val="white" onclick="setChip(this,'bgChips')">Weiß</button>
+<button class="chip" data-val="gradient" onclick="setChip(this,'bgChips')">Gradient</button>
+</div></div>
+<div class="form-group"><label>Ausgabetyp</label>
+<select class="select" id="outputType">
+<option value="general">Allgemein</option><option value="logo">Logo</option><option value="thumbnail">Thumbnail</option>
+<option value="banner">Banner</option><option value="social">Social Media</option><option value="print">Print</option>
+</select></div>
+</div>
+<div class="card">
+<div class="card-header"><span class="card-title">🔧 Nachbearbeitung</span></div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<button class="btn-ghost btn-sm" onclick="showToast('⬆️ Upscaling 2x...')">⬆️ Upscale 2x</button>
+<button class="btn-ghost btn-sm" onclick="showToast('⬆️ Upscaling 4x...')">⬆️ Upscale 4x</button>
+<button class="btn-ghost btn-sm" onclick="showToast('🔲 Hintergrund entfernt')">🔲 BG entfernen</button>
+<button class="btn-ghost btn-sm" onclick="showToast('🎨 Farben verstärkt')">🎨 Farben verstärken</button>
+<button class="btn-ghost btn-sm" onclick="showToast('✨ Rauschen entfernt')">✨ Entrauschen</button>
+</div>
+</div>
+<div class="card">
+<div class="card-header"><span class="card-title">📝 Vorlagen</span></div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<button class="chip" onclick="setPromptTemplate('logo')">💎 Logo Generator</button>
+<button class="chip" onclick="setPromptTemplate('portrait')">👤 Portrait</button>
+<button class="chip" onclick="setPromptTemplate('landscape')">🏔️ Landschaft</button>
+<button class="chip" onclick="setPromptTemplate('product')">📦 Produkt</button>
+<button class="chip" onclick="setPromptTemplate('banner')">🎬 Banner</button>
+<button class="chip" onclick="setPromptTemplate('icon')">⭐ Icon Set</button>
+<button class="chip" onclick="setPromptTemplate('thumbnail')">📺 YouTube Thumb</button>
+<button class="chip" onclick="setPromptTemplate('social')">📱 Social Post</button>
+</div>
+</div>
+</div>
+<!-- CHAT AREA -->
+<div style="display:flex;flex-direction:column;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden">
+<div class="chat-area" id="chatArea">
+<div class="chat-ai"><strong>🎨 ImageForge</strong><br>Willkommen! Beschreibe was du erstellen möchtest. Wähle links ein AI-Modell und die Einstellungen, dann starte die Generierung.<br><br>💡 <em>Tipp: Nutze die Vorlagen-Prompts für schnelle Ergebnisse!</em></div>
+</div>
+<div class="chat-input-bar">
+<input class="chat-input" id="promptInput" placeholder="Beschreibe dein Bild..." onkeydown="if(event.key==='Enter')generateImage()">
+<button class="btn" onclick="generateImage()">🚀 Generieren</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- TAB 2: PHOTOFORGE EDITOR -->
+<div class="tab-content" id="tab-editor">
+<div class="editor-container">
+<div class="toolbar" id="editorToolbar">
+<button class="tool-btn active" data-tooltip="Zauberstab (W)" data-tool="magic" onclick="setTool(this)">✨</button>
+<button class="tool-btn" data-tooltip="Zeiger (V)" data-tool="pointer" onclick="setTool(this)">👆</button>
+<div style="height:1px;background:var(--border);margin:4px 0"></div>
+<button class="tool-btn" data-tooltip="Rechteck-Auswahl (M)" data-tool="select-rect" onclick="setTool(this)">⬜</button>
+<button class="tool-btn" data-tooltip="Lasso (L)" data-tool="lasso" onclick="setTool(this)">〰️</button>
+<div style="height:1px;background:var(--border);margin:4px 0"></div>
+<button class="tool-btn" data-tooltip="Pinsel (B)" data-tool="brush" onclick="setTool(this)">🖌️</button>
+<button class="tool-btn" data-tooltip="Stift (P)" data-tool="pen" onclick="setTool(this)">✒️</button>
+<button class="tool-btn" data-tooltip="Radierer (E)" data-tool="eraser" onclick="setTool(this)">🧽</button>
+<button class="tool-btn" data-tooltip="Farbeimer (G)" data-tool="fill" onclick="setTool(this)">🪣</button>
+<div style="height:1px;background:var(--border);margin:4px 0"></div>
+<button class="tool-btn" data-tooltip="Text (T)" data-tool="text" onclick="setTool(this)">T</button>
+<button class="tool-btn" data-tooltip="Form (U)" data-tool="shape" onclick="setTool(this)">⬟</button>
+<button class="tool-btn" data-tooltip="Linie" data-tool="line" onclick="setTool(this)">╱</button>
+<div style="height:1px;background:var(--border);margin:4px 0"></div>
+<button class="tool-btn" data-tooltip="Zuschneiden (C)" data-tool="crop" onclick="setTool(this)">✂️</button>
+<button class="tool-btn" data-tooltip="Drehen (R)" data-tool="rotate" onclick="setTool(this)">🔄</button>
+<button class="tool-btn" data-tooltip="Spiegeln" data-tool="flip" onclick="setTool(this)">↔️</button>
+<div style="height:1px;background:var(--border);margin:4px 0"></div>
+<button class="tool-btn" data-tooltip="Pipette (I)" data-tool="eyedrop" onclick="setTool(this)">💉</button>
+<button class="tool-btn" data-tooltip="Zoom (Z)" data-tool="zoom" onclick="setTool(this)">🔍</button>
+<button class="tool-btn" data-tooltip="Hand (H)" data-tool="hand" onclick="setTool(this)">✋</button>
+</div>
+<div class="canvas-area" id="canvasArea">
+<canvas id="editorCanvas" width="800" height="600"></canvas>
+</div>
+<div class="props-panel" id="propsPanel">
+<div class="props-section">
+<div class="props-title">🎨 Farben</div>
+<div class="form-group"><label>Vordergrund</label><input type="color" class="color-swatch" id="fgColor" value="#ffffff"></div>
+<div class="form-group"><label>Hintergrund</label><input type="color" class="color-swatch" id="bgColorPick" value="#000000"></div>
+</div>
+<div class="props-section">
+<div class="props-title">🖌️ Pinsel</div>
+<div class="form-group"><label>Größe: <span class="range-val" id="brushSizeVal">5</span>px</label>
+<input type="range" class="range-slider" id="brushSize" min="1" max="100" value="5" oninput="document.getElementById('brushSizeVal').textContent=this.value"></div>
+<div class="form-group"><label>Deckkraft: <span class="range-val" id="opacityVal">100</span>%</label>
+<input type="range" class="range-slider" id="opacity" min="1" max="100" value="100" oninput="document.getElementById('opacityVal').textContent=this.value"></div>
+<div class="form-group"><label>Härte: <span class="range-val" id="hardnessVal">80</span>%</label>
+<input type="range" class="range-slider" id="hardness" min="0" max="100" value="80" oninput="document.getElementById('hardnessVal').textContent=this.value"></div>
+</div>
+<div class="props-section">
+<div class="props-title">⚡ Auto-Korrektur</div>
+<button class="btn btn-sm" onclick="autoCorrect()" style="width:100%;margin-bottom:6px">✨ Auto-Korrektur</button>
+<button class="btn-ghost btn-sm" onclick="adjustFilter('brightness')" style="width:100%;margin-bottom:6px">☀️ Helligkeit</button>
+<button class="btn-ghost btn-sm" onclick="adjustFilter('contrast')" style="width:100%;margin-bottom:6px">🎛️ Kontrast</button>
+<button class="btn-ghost btn-sm" onclick="adjustFilter('saturation')" style="width:100%;margin-bottom:6px">🌈 Sättigung</button>
+<button class="btn-ghost btn-sm" onclick="adjustFilter('sharpen')" style="width:100%;margin-bottom:6px">🔪 Schärfen</button>
+<button class="btn-ghost btn-sm" onclick="adjustFilter('blur')" style="width:100%;margin-bottom:6px">💨 Weichzeichner</button>
+</div>
+<div class="props-section">
+<div class="props-title">🔄 Aktionen</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+<button class="btn-ghost btn-sm" onclick="editorUndo()">↩️ Undo</button>
+<button class="btn-ghost btn-sm" onclick="editorRedo()">↪️ Redo</button>
+<button class="btn-ghost btn-sm" onclick="document.getElementById('editorImport').click()">📂 Öffnen</button>
+<button class="btn-ghost btn-sm" onclick="exportCanvas()">💾 Speichern</button>
+</div>
+<input type="file" id="editorImport" accept="image/*" style="display:none" onchange="importImage(event)">
+</div>
+<div class="props-section">
+<div class="props-title">📊 Flows</div>
+<div id="flowSuggestions" style="font-size:11px;color:var(--muted)">Nutze Werkzeuge — Flows werden automatisch erkannt.</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- TAB 3: GALLERY BUILDER -->
+<div class="tab-content" id="tab-gallery-builder">
+<div class="card">
+<div class="card-header"><span class="card-title">🖼️ Gallery Builder</span><span class="card-badge badge-blue">Bidirektional</span></div>
+<div class="gb-columns">
+<div class="gb-column"><label>💡 Was brauche ich?</label><textarea class="textarea" id="gbWhat" placeholder="Beschreibe was du erstellen möchtest..."></textarea></div>
+<div class="gb-column"><label>🎯 Wofür ist es?</label><textarea class="textarea" id="gbPurpose" placeholder="Web, Print, Social Media, Präsentation..."></textarea></div>
+<div class="gb-column"><label>✨ Was soll es haben?</label><textarea class="textarea" id="gbSpecs" placeholder="Farben, Stil, Stimmung, besondere Elemente..."></textarea></div>
+</div>
+</div>
+<div class="card">
+<div class="card-header"><span class="card-title">📂 Kategorie & Spezifikationen</span></div>
+<div class="form-row-3">
+<div class="form-group"><label>Kategorie</label>
+<select class="select" id="gbCategory"><option value="general">Allgemein</option><option value="logos">Logos</option><option value="banners">Banner</option><option value="social">Social Media</option><option value="portraits">Portraits</option><option value="products">Produkte</option><option value="landscapes">Landschaften</option><option value="abstract">Abstrakt</option><option value="icons">Icons</option><option value="ui-elements">UI Elemente</option></select></div>
+<div class="form-group"><label>Format</label>
+<select class="select" id="gbFormat"><option value="png">PNG</option><option value="jpg">JPG</option><option value="webp">WebP</option><option value="svg">SVG</option></select></div>
+<div class="form-group"><label>Auflösung</label>
+<select class="select" id="gbRes"><option value="1024">1024×1024</option><option value="1920">1920×1080</option><option value="2048">2048×2048</option><option value="4096">4096×4096</option></select></div>
+</div>
+</div>
+<div class="card">
+<div class="card-header"><span class="card-title">📎 Vorlagen</span>
+<button class="btn btn-sm" onclick="document.getElementById('gbUpload').click()">📤 Hochladen</button></div>
+<input type="file" id="gbUpload" accept="image/*" multiple style="display:none" onchange="handleGBUpload(event)">
+<div class="gb-preview" id="gbPreview"><div class="gb-preview-item" onclick="loadFromGallery()">➕</div></div>
+</div>
+<div style="display:flex;gap:10px;margin-top:12px">
+<button class="btn" onclick="buildGallery()">🚀 Galerie generieren</button>
+<button class="btn btn-ghost" onclick="exportGallery()">📤 Exportieren</button>
+<button class="btn btn-ghost" onclick="sendToGallery()">🖼️ → Gallery Modul</button>
+</div>
+</div>
+
+<!-- TAB 4: SMART MODE -->
+<div class="tab-content" id="tab-smart">
+<div class="smart-container">
+<div class="smart-orb" id="smartOrb" onclick="toggleVoice()">
+<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:42px">🎨</div>
+</div>
+<div class="smart-label" id="smartLabel">Tippe oder sprich — ImageForge erledigt den Rest</div>
+<div class="smart-input-wrap">
+<input class="smart-input" id="smartInput" placeholder="Was möchtest du erstellen?" onkeydown="if(event.key==='Enter')smartGenerate()">
+<button class="smart-mic" id="smartMic" onclick="toggleVoice()">🎤</button>
+</div>
+<div class="smart-results" id="smartResults"></div>
+</div>
+</div>
+
+<footer class="footer">© 2024–2026 <a href="../../hub/index.html">DEVKiTZ™</a> · ImageForge Studio v0.01 · DkZ Design System v2</footer>
+</div>
+
+<!-- SETTINGS OVERLAY -->
+<div class="settings-overlay" id="settingsOverlay" onclick="if(event.target===this)closeSettings()">
+<div class="settings-panel">
+<div class="card-header"><span class="card-title">⚙️ Einstellungen</span><button class="btn-icon" onclick="closeSettings()">✕</button></div>
+<div class="form-group"><label>Speicherort</label><input class="input" id="savePath" value="03_MEDIA/04_ai_generated/"></div>
+<div class="form-group"><label>Standard-Modell</label>
+<select class="select" id="defaultModel"><option value="gemini-2.0-flash">Gemini 2.0 Flash</option><option value="dall-e-3">DALL-E 3</option><option value="flux-pro">Flux.1 Pro</option></select></div>
+<div class="form-group"><label>Auto-Save</label>
+<div class="chip-group"><button class="chip active" onclick="setChip(this,null)">An</button><button class="chip" onclick="setChip(this,null)">Aus</button></div></div>
+<div class="form-group"><label>Cloud-Upload</label>
+<div class="chip-group"><button class="chip" onclick="setChip(this,null)">Google Drive</button><button class="chip active" onclick="setChip(this,null)">puter.js</button><button class="chip" onclick="setChip(this,null)">Aus</button></div></div>
+<button class="btn" onclick="saveSettings()" style="width:100%;margin-top:12px">💾 Speichern</button>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+<script>
+/* ═══ GLOBALS ═══ */
+const STATE = {
+  currentTab: 'generator',
+  currentTool: 'magic',
+  toolHistory: [],
+  toolFlows: {},
+  undoStack: [],
+  redoStack: [],
+  smartMode: false,
+  isListening: false,
+  settings: JSON.parse(localStorage.getItem('dkz-imageforge') || '{}')
+};
+
+/* ═══ TABS ═══ */
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+  STATE.currentTab = tab;
+  if (tab === 'editor') initCanvas();
+}
+
+/* ═══ CHIP SELECT ═══ */
+function setChip(el, groupId) {
+  if (groupId) {
+    document.getElementById(groupId).querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  } else if (el.parentElement) {
+    el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  }
+  el.classList.add('active');
+}
+
+/* ═══ PROMPT TEMPLATES ═══ */
+const TEMPLATES = {
+  logo: 'Erstelle ein minimalistisches, professionelles Logo für [Markenname]. Modern, clean, vektortauglich, transparenter Hintergrund.',
+  portrait: 'Erstelle ein professionelles Portrait-Foto. Natürliche Beleuchtung, sanfter Bokeh-Hintergrund, hohe Auflösung.',
+  landscape: 'Erstelle eine atemberaubende Landschaftsaufnahme. Goldene Stunde, dramatische Wolken, lebhafte Farben.',
+  product: 'Erstelle ein Produktfoto auf weißem Hintergrund. Perfekte Beleuchtung, Studioqualität, werbetauglich.',
+  banner: 'Erstelle ein Website-Banner (1920x600). Modernes Design, Gradient-Hintergrund, Platz für Text links.',
+  icon: 'Erstelle ein Set von 6 konsistenten Flat-Design Icons. Einheitlicher Stil, 2 Farben, 128x128px.',
+  thumbnail: 'Erstelle ein YouTube Thumbnail (1280x720). Auffällig, kontraststark, großer lesbarer Text-Bereich.',
+  social: 'Erstelle einen Instagram Post (1080x1080). Trendy Design, lebhafte Farben, engagement-optimiert.'
+};
+
+function setPromptTemplate(key) {
+  document.getElementById('promptInput').value = TEMPLATES[key] || '';
+  document.getElementById('promptInput').focus();
+  showToast('📝 Vorlage geladen: ' + key);
+}
+
+/* ═══ AI GENERATOR ═══ */
+function generateImage() {
+  const prompt = document.getElementById('promptInput').value.trim();
+  if (!prompt) return showToast('⚠️ Bitte Prompt eingeben');
+  const model = document.getElementById('aiModel').value;
+  const chat = document.getElementById('chatArea');
+  chat.innerHTML += `<div class="chat-user">${esc(prompt)}</div>`;
+  chat.innerHTML += `<div class="chat-ai"><strong>🤖 ${esc(model)}</strong><br><em>Generiere Bild...</em>
+    <div style="margin-top:12px;width:100%;height:300px;background:linear-gradient(135deg,var(--card2),var(--bg2));border-radius:var(--radius);display:flex;align-items:center;justify-content:center;animation:pulse 2s infinite">
+    <span style="font-size:48px">🎨</span></div>
+    <div class="img-actions" style="margin-top:10px">
+      <button class="btn btn-sm" onclick="showToast('💾 Gespeichert in 03_MEDIA/')">💾 Speichern</button>
+      <button class="btn btn-sm btn-ghost" onclick="showToast('📋 In Projekt gruppiert')">📂 Projekt</button>
+      <button class="btn btn-sm btn-ghost" onclick="showToast('☁️ Cloud Upload...')">☁️ Cloud</button>
+      <button class="btn btn-sm btn-ghost" onclick="copyEmbedCode()">🔗 Einbetten</button>
+      <button class="btn btn-sm btn-ghost" onclick="showToast('🖌️ In PhotoForge geöffnet')">🖌️ Bearbeiten</button>
+    </div></div>`;
+  chat.scrollTop = chat.scrollHeight;
+  document.getElementById('promptInput').value = '';
+  showToast('🎨 Bild wird generiert mit ' + model);
+}
+
+function copyEmbedCode() {
+  const url = 'https://3-veo.com/de/#generate_video';
+  navigator.clipboard.writeText(`<img src="${url}" alt="ImageForge Generated">`).then(() => showToast('📋 Einbettungs-Code kopiert!'));
+}
+
+/* ═══ EDITOR ═══ */
+let canvas, ctx;
+function initCanvas() {
+  canvas = document.getElementById('editorCanvas');
+  ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  let drawing = false;
+  canvas.addEventListener('mousedown', e => { drawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); saveUndo(); });
+  canvas.addEventListener('mousemove', e => { if (!drawing) return; const tool = STATE.currentTool; if (['brush','pen'].includes(tool)) { ctx.strokeStyle = document.getElementById('fgColor').value; ctx.lineWidth = document.getElementById('brushSize').value; ctx.globalAlpha = document.getElementById('opacity').value / 100; ctx.lineCap = 'round'; ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } else if (tool === 'eraser') { ctx.strokeStyle = '#ffffff'; ctx.lineWidth = document.getElementById('brushSize').value * 2; ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); }});
+  canvas.addEventListener('mouseup', () => { drawing = false; ctx.globalAlpha = 1; trackTool(STATE.currentTool); });
+}
+
+function setTool(el) {
+  document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  const prev = STATE.currentTool;
+  STATE.currentTool = el.dataset.tool;
+  if (prev === 'magic' && STATE.currentTool !== 'pointer') {
+    setTimeout(() => showToast('💡 Tipp: Nach Zauberstab → Zeiger (V) nutzen'), 500);
+  }
+}
+
+function trackTool(tool) {
+  STATE.toolHistory.push(tool);
+  if (STATE.toolHistory.length >= 3) {
+    const last3 = STATE.toolHistory.slice(-3).join('→');
+    STATE.toolFlows[last3] = (STATE.toolFlows[last3] || 0) + 1;
+    updateFlowSuggestions();
+  }
+}
+
+function updateFlowSuggestions() {
+  const sorted = Object.entries(STATE.toolFlows).sort((a,b) => b[1] - a[1]).slice(0, 3);
+  const el = document.getElementById('flowSuggestions');
+  if (sorted.length === 0) return;
+  el.innerHTML = sorted.map(([flow, count]) => `<div style="padding:4px 0;border-bottom:1px solid var(--border)">🔄 <strong>${flow}</strong> <span style="color:var(--accent)">(${count}x)</span></div>`).join('');
+}
+
+function saveUndo() { STATE.undoStack.push(canvas.toDataURL()); if (STATE.undoStack.length > 30) STATE.undoStack.shift(); STATE.redoStack = []; }
+function editorUndo() { if (!STATE.undoStack.length) return; STATE.redoStack.push(canvas.toDataURL()); const img = new Image(); img.onload = () => { ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(img,0,0); }; img.src = STATE.undoStack.pop(); }
+function editorRedo() { if (!STATE.redoStack.length) return; STATE.undoStack.push(canvas.toDataURL()); const img = new Image(); img.onload = () => { ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(img,0,0); }; img.src = STATE.redoStack.pop(); }
+
+function autoCorrect() { ctx.filter = 'contrast(1.1) saturate(1.15) brightness(1.05)'; ctx.drawImage(canvas, 0, 0); ctx.filter = 'none'; showToast('✨ Auto-Korrektur angewendet'); }
+function adjustFilter(type) {
+  const f = { brightness:'brightness(1.15)', contrast:'contrast(1.2)', saturation:'saturate(1.3)', sharpen:'contrast(1.1)', blur:'blur(1px)' };
+  ctx.filter = f[type] || 'none'; ctx.drawImage(canvas,0,0); ctx.filter = 'none'; showToast('🎛️ ' + type + ' angewendet');
+}
+
+function importImage(e) { const file = e.target.files[0]; if (!file) return; const img = new Image(); img.onload = () => { canvas.width = img.width; canvas.height = img.height; ctx.drawImage(img,0,0); showToast('📂 Bild geladen'); saveUndo(); }; img.src = URL.createObjectURL(file); }
+function exportCanvas() { const a = document.createElement('a'); a.download = 'imageforge_' + Date.now() + '.png'; a.href = canvas.toDataURL('image/png'); a.click(); showToast('💾 Bild exportiert'); }
+
+/* ═══ GALLERY BUILDER ═══ */
+function handleGBUpload(e) {
+  const preview = document.getElementById('gbPreview');
+  Array.from(e.target.files).forEach(f => {
+    const reader = new FileReader();
+    reader.onload = ev => { const div = document.createElement('div'); div.className = 'gb-preview-item'; div.innerHTML = `<img src="${ev.target.result}">`; preview.insertBefore(div, preview.lastElementChild); };
+    reader.readAsDataURL(f);
+  });
+}
+function loadFromGallery() { showToast('🖼️ Gallery-Verbindung: Bilder aus Gallery laden...'); }
+function buildGallery() { showToast('🚀 Galerie wird generiert...'); }
+function exportGallery() { showToast('📤 Galerie exportiert'); }
+function sendToGallery() { showToast('🖼️ An Gallery-Modul gesendet'); }
+
+/* ═══ SMART MODE ═══ */
+let recognition;
+function toggleSmartMode() {
+  STATE.smartMode = !STATE.smartMode;
+  document.getElementById('smartToggle').classList.toggle('active', STATE.smartMode);
+  if (STATE.smartMode) switchTab('smart');
+  else switchTab('generator');
+}
+
+function toggleVoice() {
+  if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) return showToast('⚠️ Speech API nicht verfügbar');
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (STATE.isListening) { recognition.stop(); return; }
+  recognition = new SpeechRecognition();
+  recognition.lang = 'de-DE'; recognition.continuous = false;
+  recognition.onstart = () => { STATE.isListening = true; document.getElementById('smartMic').classList.add('listening'); document.getElementById('smartOrb').classList.add('listening'); document.getElementById('smartLabel').textContent = '🎤 Höre zu...'; };
+  recognition.onresult = e => { const t = e.results[0][0].transcript; document.getElementById('smartInput').value = t; smartGenerate(); };
+  recognition.onend = () => { STATE.isListening = false; document.getElementById('smartMic').classList.remove('listening'); document.getElementById('smartOrb').classList.remove('listening'); document.getElementById('smartLabel').textContent = 'Tippe oder sprich — ImageForge erledigt den Rest'; };
+  recognition.onerror = () => { STATE.isListening = false; showToast('⚠️ Spracherkennung fehlgeschlagen'); };
+  recognition.start();
+}
+
+function smartGenerate() {
+  const input = document.getElementById('smartInput').value.trim();
+  if (!input) return;
+  const results = document.getElementById('smartResults');
+  results.innerHTML = `<div class="card"><div class="card-header"><span class="card-title">🎨 Ergebnis</span><span class="card-badge badge-green">Smart</span></div>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:12px">Prompt: "${esc(input)}"</p>
+    <div style="width:100%;height:300px;background:linear-gradient(135deg,var(--card2),var(--bg2));border-radius:var(--radius);display:flex;align-items:center;justify-content:center;animation:pulse 2s infinite"><span style="font-size:48px">🎨</span></div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-sm" onclick="showToast('💾 Gespeichert')">💾 Speichern</button>
+      <button class="btn btn-sm btn-ghost" onclick="showToast('🔄 Variante wird erstellt...')">🔄 Variante</button>
+      <button class="btn btn-sm btn-ghost" onclick="switchTab('editor');showToast('🖌️ In Editor geladen')">🖌️ Bearbeiten</button>
+      <button class="btn btn-sm btn-ghost" onclick="showToast('☁️ Hochgeladen')">☁️ Teilen</button>
+    </div></div>`;
+  document.getElementById('smartInput').value = '';
+  showToast('⚡ Smart Mode: Generiere...');
+}
+
+/* ═══ SETTINGS ═══ */
+function openSettings() { document.getElementById('settingsOverlay').classList.add('show'); }
+function closeSettings() { document.getElementById('settingsOverlay').classList.remove('show'); }
+function saveSettings() { localStorage.setItem('dkz-imageforge', JSON.stringify({ savePath: document.getElementById('savePath').value, defaultModel: document.getElementById('defaultModel').value })); closeSettings(); showToast('💾 Einstellungen gespeichert'); }
+
+/* ═══ THEME ═══ */
+const DKZ_THEMES = ['dark', 'crimson', 'neon'];
+function setTheme(t) { document.documentElement.setAttribute('data-theme', t); localStorage.setItem('dkz-theme', t); const icons = { dark:'🌙', crimson:'🔴', neon:'⚡' }; document.getElementById('theme-toggle').textContent = icons[t] || '🌙'; }
+function cycleTheme() { const c = document.documentElement.getAttribute('data-theme') || 'dark'; setTheme(DKZ_THEMES[(DKZ_THEMES.indexOf(c) + 1) % DKZ_THEMES.length]); }
+
+/* ═══ TOAST ═══ */
+function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
+
+/* ═══ XSS SAFETY ═══ */
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+/* ═══ INIT ═══ */
+document.addEventListener('DOMContentLoaded', () => {
+  setTheme(localStorage.getItem('dkz-theme') || 'dark');
+  // Keyboard shortcuts
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    const shortcuts = { v:'pointer', w:'magic', b:'brush', e:'eraser', p:'pen', t:'text', m:'select-rect', l:'lasso', c:'crop', r:'rotate', i:'eyedrop', z:'zoom', h:'hand', g:'fill', u:'shape' };
+    if (shortcuts[e.key]) { const btn = document.querySelector(`[data-tool="${shortcuts[e.key]}"]`); if (btn) setTool(btn); }
+    if (e.ctrlKey && e.key === 'z') { e.preventDefault(); editorUndo(); }
+    if (e.ctrlKey && e.key === 'y') { e.preventDefault(); editorRedo(); }
+  });
+});
+</script>
+
+<!-- DkZ Shared Scripts (R21) -->
+<script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+<script src="../../shared/dkz-guide.js"></script>
+<script src="../../shared/dkz-copilot.js"></script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+</html>

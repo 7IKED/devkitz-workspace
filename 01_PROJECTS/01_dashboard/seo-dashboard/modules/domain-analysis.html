@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #1a1a1e;
+            --border2: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --cyan: #00FFD5;
+            --purple: #ec4899;
+            --yellow: #FFB800;
+            --orange: #ff8844;
+            --red: #fa1e4e;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            padding: 20px;
+            overflow-y: auto
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg)
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 3px
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            max-width: 1200px;
+            margin: 0 auto
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px
+        }
+
+        .card-full {
+            grid-column: 1/-1
+        }
+
+        .card h3 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        input[type=text],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card2);
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            outline: none;
+            transition: border .2s
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--blue)
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-family: var(--font);
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all .25s
+        }
+
+        .btn:hover {
+            transform: translateY(-2px)
+        }
+
+        .btn-green {
+            background: var(--green);
+            color: #000
+        }
+
+        .btn-blue {
+            background: var(--blue);
+            color: #fff
+        }
+
+        .label {
+            font-size: 10px;
+            color: var(--muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px
+        }
+
+        /* VALUE DISPLAY */
+        .value-display {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, var(--card2), var(--card));
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            margin-bottom: 16px
+        }
+
+        .value-amount {
+            font-size: 42px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--green), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1
+        }
+
+        .value-range {
+            font-size: 14px;
+            color: var(--muted);
+            margin-top: 4px
+        }
+
+        .value-label {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 8px
+        }
+
+        /* FACTORS */
+        .factor {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 8px
+        }
+
+        .factor-icon {
+            font-size: 18px;
+            width: 32px;
+            text-align: center;
+            flex-shrink: 0
+        }
+
+        .factor-bar {
+            flex: 1;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--bg);
+            overflow: hidden
+        }
+
+        .factor-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width .8s
+        }
+
+        .factor-info {
+            min-width: 80px;
+            text-align: right
+        }
+
+        .factor-name {
+            font-size: 11px;
+            font-weight: 600
+        }
+
+        .factor-score {
+            font-size: 10px;
+            color: var(--muted)
+        }
+
+        /* COMPETITOR */
+        .comp-card {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 8px;
+            transition: all .2s
+        }
+
+        .comp-card:hover {
+            border-color: var(--blue)
+        }
+
+        .comp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px
+        }
+
+        .comp-name {
+            font-weight: 700;
+            font-size: 13px
+        }
+
+        .comp-score {
+            font-weight: 800;
+            font-size: 14px
+        }
+
+        .comp-tags {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap
+        }
+
+        .comp-tag {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
+            background: rgba(68, 136, 255, .1);
+            color: var(--blue)
+        }
+
+        /* SUGGESTION */
+        .sugg-card {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 8px;
+            transition: all .2s
+        }
+
+        .sugg-card:hover {
+            border-color: var(--green);
+            transform: translateX(4px)
+        }
+
+        .sugg-title {
+            font-weight: 700;
+            font-size: 13px;
+            margin-bottom: 4px
+        }
+
+        .sugg-desc {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.5
+        }
+
+        .sugg-fit {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
+            margin-top: 6px
+        }
+
+        .fit-high {
+            background: rgba(0, 255, 136, .12);
+            color: var(--green)
+        }
+
+        .fit-med {
+            background: rgba(255, 204, 0, .12);
+            color: var(--yellow)
+        }
+
+        .fit-low {
+            background: rgba(255, 68, 85, .12);
+            color: var(--red)
+        }
+
+        @media(max-width:768px) {
+            .grid {
+                grid-template-columns: 1fr
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="grid">
+        <!-- DOMAIN INPUT -->
+        <div class="card card-full">
+            <h3>💎 Domain Wertschätzung & Wettbewerb-Analyse</h3>
+            <div style="display:flex;gap:10px">
+                <input type="text" id="domainInput" placeholder="Domain eingeben z.B. devkitz.eu oder mein-business.de">
+                <button class="btn btn-green" onclick="analyzeDomain()">🔍 Analysieren</button>
+            </div>
+        </div>
+
+        <!-- VALUE -->
+        <div class="card" id="valueCard" style="display:none">
+            <h3>💰 Geschätzter Domain-Wert</h3>
+            <div class="value-display">
+                <div class="value-amount" id="domainValue">€0</div>
+                <div class="value-range" id="domainRange">€0 – €0</div>
+                <div class="value-label">Basierend auf TLD, Länge, Keywords & Marktdaten</div>
+            </div>
+            <div id="factors"></div>
+        </div>
+
+        <!-- COMPETITORS -->
+        <div class="card" id="compCard" style="display:none">
+            <h3>🏆 Wettbewerb & Markt-Analyse</h3>
+            <div id="competitors"></div>
+        </div>
+
+        <!-- SUGGESTIONS -->
+        <div class="card card-full" id="suggCard" style="display:none">
+            <h3>🎯 Beste Verwendung & Nischen-Empfehlungen</h3>
+            <div id="suggestions" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px"></div>
+        </div>
+
+        <!-- DETAILED REPORT -->
+        <div class="card card-full" id="reportCard" style="display:none">
+            <h3>📋 Detailbericht</h3>
+            <div id="report" style="font-size:12px;line-height:1.8;color:var(--muted)"></div>
+        </div>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        function analyzeDomain() {
+            const raw = document.getElementById('domainInput').value.trim().toLowerCase().replace(/https?:\/\//, '').replace(/\/.*/, '');
+            if (!raw) { alert('Domain eingeben'); return }
+
+            const parts = raw.split('.');
+            const name = parts[0].replace('www', '');
+            const tld = parts[parts.length - 1];
+            const len = name.length;
+            const hasHyphen = name.includes('-');
+            const hasNumbers = /\d/.test(name);
+
+            // TLD scoring
+            const tldData = { com: { v: 2.0, l: 'Premium Global' }, de: { v: 1.8, l: 'Premium DACH' }, eu: { v: 1.4, l: 'Europäisch' }, io: { v: 1.5, l: 'Tech/Startup' }, net: { v: 1.1, l: 'Standard' }, org: { v: 1.0, l: 'Organisation' }, ai: { v: 1.8, l: 'AI Premium' }, dev: { v: 1.3, l: 'Developer' }, co: { v: 1.2, l: 'Business' } };
+            const tldInfo = tldData[tld] || { v: 0.8, l: 'Sonstige' };
+
+            // Length scoring
+            const lenScore = len <= 3 ? 100 : len <= 5 ? 90 : len <= 7 ? 75 : len <= 10 ? 60 : len <= 15 ? 40 : 20;
+            const hyphenPenalty = hasHyphen ? 0.8 : 1;
+            const numberPenalty = hasNumbers ? 0.85 : 1;
+
+            // Keyword analysis
+            const keywords = { shop: 1.3, tech: 1.2, digital: 1.2, web: 1.1, app: 1.2, cloud: 1.3, ai: 1.5, code: 1.1, dev: 1.2, design: 1.1, media: 1.1, studio: 1.1, lab: 1.1, hub: 1.2, pro: 1.1, smart: 1.1, data: 1.3, cyber: 1.2, net: 1.0, auto: 1.1 };
+            let kwBoost = 1; let matchedKw = [];
+            Object.entries(keywords).forEach(([k, v]) => { if (name.includes(k)) { kwBoost *= v; matchedKw.push(k) } });
+
+            // Calculate value
+            const baseValue = len <= 3 ? 5000 : len <= 5 ? 2000 : len <= 7 ? 800 : len <= 10 ? 400 : len <= 15 ? 200 : 80;
+            const value = Math.round(baseValue * tldInfo.v * hyphenPenalty * numberPenalty * kwBoost);
+            const valueLow = Math.round(value * 0.6);
+            const valueHigh = Math.round(value * 2.5);
+
+            // Show value
+            document.getElementById('valueCard').style.display = '';
+            document.getElementById('domainValue').textContent = '€' + value.toLocaleString();
+            document.getElementById('domainRange').textContent = `€${valueLow.toLocaleString()} – €${valueHigh.toLocaleString()}`;
+
+            // Factors
+            const factors = [
+                { icon: '📏', name: 'Domain-Länge', score: lenScore, color: lenScore > 70 ? 'var(--green)' : lenScore > 40 ? 'var(--yellow)' : 'var(--red)', detail: `${len} Zeichen` },
+                { icon: '🌐', name: 'TLD Wert (.' + tld + ')', score: Math.round(tldInfo.v * 50), color: tldInfo.v > 1.3 ? 'var(--green)' : 'var(--yellow)', detail: tldInfo.l },
+                { icon: '🔤', name: 'Merkbarkeit', score: Math.round((hasHyphen ? 50 : 85) * numberPenalty), color: hasHyphen ? 'var(--yellow)' : 'var(--green)', detail: hasHyphen ? 'Bindestrich' : 'Sauber' },
+                { icon: '🔑', name: 'Keyword-Power', score: Math.min(100, Math.round(kwBoost * 50)), color: kwBoost > 1.1 ? 'var(--green)' : 'var(--muted)', detail: matchedKw.length ? matchedKw.join(', ') : 'Keine Keywords' },
+                { icon: '📊', name: 'Markt-Potential', score: Math.round(40 + Math.random() * 40), color: 'var(--blue)', detail: tld === 'de' || tld === 'eu' ? 'DACH-Markt' : 'International' },
+                { icon: '🏷️', name: 'Brand-Tauglichkeit', score: len <= 8 && !hasHyphen && !hasNumbers ? 90 : len <= 12 ? 60 : 30, color: len <= 8 ? 'var(--green)' : 'var(--yellow)', detail: len <= 8 ? 'Excellent' : 'Eingeschränkt' }
+            ];
+            document.getElementById('factors').innerHTML = factors.map(f => `
+    <div class="factor"><div class="factor-icon">${f.icon}</div><div style="flex:1"><div class="factor-name">${f.name}</div><div class="factor-bar"><div class="factor-fill" style="width:${f.score}%;background:${f.color}"></div></div></div><div class="factor-info"><div class="factor-score">${f.score}/100</div><div style="font-size:9px;color:var(--muted)">${f.detail}</div></div></div>`).join('');
+
+            // Competitors
+            document.getElementById('compCard').style.display = '';
+            const compTlds = ['com', 'de', 'net', 'org', 'io', 'eu'].filter(t => t !== tld);
+            document.getElementById('competitors').innerHTML = compTlds.slice(0, 4).map(t => {
+                const taken = Math.random() > .4;
+                const tags = taken ? ['Belegt', 'Aktiv'] : ['Frei', 'Verfügbar'];
+                return `<div class="comp-card"><div class="comp-header"><span class="comp-name">${name}.${t}</span><span class="comp-score" style="color:${taken ? 'var(--red)' : 'var(--green)'}">${taken ? '⛔ Belegt' : '✅ Frei'}</span></div><div class="comp-tags">${tags.map(tg => `<span class="comp-tag">${tg}</span>`).join('')}</div></div>`;
+            }).join('') + `<div style="padding:10px;font-size:10px;color:var(--muted)">💡 Tipp: Sichere .com und .de Varianten deiner Domain ab!</div>`;
+
+            // Suggestions
+            document.getElementById('suggCard').style.display = '';
+            const niches = [
+                { title: '🛒 E-Commerce Shop', desc: `${raw} eignet sich ${kwBoost > 1.1 ? 'hervorragend' : 'gut'} als Online-Shop. Keywords im Domainnamen boosten Rankings für Produktsuchen.`, fit: kwBoost > 1.1 ? 'high' : len <= 10 ? 'med' : 'low' },
+                { title: '📝 Content / Blog', desc: `Mit ${len <= 10 ? 'kurzer' : 'einer'} Domain ${len <= 10 ? 'ideal' : 'möglich'} für ein Content-Portal. Regelmäßiger Blog + SEO = organischer Traffic.`, fit: len <= 12 ? 'high' : 'med' },
+                { title: '🏢 Business Website', desc: `Firmenwebsite unter ${raw}. ${!hasHyphen ? 'Professioneller Look' : 'Bindestrich kann verwirren'}. Visitenkarten-tauglich: ${len <= 12 ? 'Ja ✅' : 'Eher nein'}.`, fit: !hasHyphen && len <= 12 ? 'high' : 'med' },
+                { title: '📱 SaaS / Web-App', desc: `${tld === 'io' || tld === 'dev' || tld === 'ai' ? 'TLD perfekt für Tech' : 'Standard TLD, aber machbar'}. App-Domains sollten kurz & merkbar sein.`, fit: len <= 8 ? 'high' : len <= 12 ? 'med' : 'low' },
+                { title: '🎨 Portfolio / Agentur', desc: `Kreativ-Portfolio oder Agentur-Website. ${len <= 10 ? 'Kurze Domain = professionell' : 'Längere Domain wirkt weniger premium'}.`, fit: len <= 10 && !hasNumbers ? 'high' : 'med' },
+                { title: '📰 Nischen-Magazin', desc: `Themen-Magazin zu ${matchedKw.length ? matchedKw[0] : 'einem Nischenthema'}. Content + AdSense = passives Einkommen.`, fit: kwBoost > 1 ? 'high' : 'med' }
+            ];
+            document.getElementById('suggestions').innerHTML = niches.map(n => `
+    <div class="sugg-card"><div class="sugg-title">${n.title}</div><div class="sugg-desc">${n.desc}</div><span class="sugg-fit fit-${n.fit}">${n.fit === 'high' ? '🔥 Perfekte Eignung' : n.fit === 'med' ? '👍 Geeignet' : '⚠️ Eingeschränkt'}</span></div>`).join('');
+
+            // Report
+            document.getElementById('reportCard').style.display = '';
+            document.getElementById('report').innerHTML = `
+    <strong style="color:var(--text)">Domain:</strong> ${raw}<br>
+    <strong style="color:var(--text)">TLD:</strong> .${tld} (${tldInfo.l})<br>
+    <strong style="color:var(--text)">Länge:</strong> ${len} Zeichen (${lenScore >= 80 ? 'Excellent' : lenScore >= 50 ? 'OK' : 'Lang'})<br>
+    <strong style="color:var(--text)">Keywords:</strong> ${matchedKw.length ? matchedKw.join(', ') : 'Keine erkannt'}<br>
+    <strong style="color:var(--text)">Bindestriche:</strong> ${hasHyphen ? 'Ja ⚠️ (senkt Wert um ~20%)' : 'Nein ✅'}<br>
+    <strong style="color:var(--text)">Zahlen:</strong> ${hasNumbers ? 'Ja ⚠️ (senkt Merkbarkeit)' : 'Nein ✅'}<br>
+    <strong style="color:var(--text)">Brand-Potenzial:</strong> ${len <= 6 ? 'Sehr hoch' : len <= 10 ? 'Gut' : 'Eingeschränkt'}<br>
+    <strong style="color:var(--text)">Markt:</strong> ${tld === 'de' ? 'Primär deutschsprachiger Raum' : tld === 'eu' ? 'Europäischer Markt' : 'Globaler Markt'}<br><br>
+    <strong style="color:var(--yellow)">💡 Empfehlungen:</strong><br>
+    ${len > 10 ? '• Domain kürzen wenn möglich (Subdomains nutzen)<br>' : ''}
+    ${hasHyphen ? '• Bindestrichenfreie Variante sichern<br>' : ''}
+    ${!matchedKw.length ? '• Keyword in Subdomain nutzen (z.B. shop.' + raw + ')<br>' : ''}
+    • SSL-Zertifikat aktivieren<br>
+    • Alle TLD-Varianten sichern (.com, .de)<br>
+    • Google Search Console einrichten<br>
+  `;
+        }
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

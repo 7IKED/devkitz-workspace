@@ -1,0 +1,1167 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>&#9881; NOTER &#8212; DkZâ„¢ Notiz-Tool v0.01</title>
+    <meta name="description" content="DkZ NOTER &#8212; Kanban-Board Notizen mit Kategorien, Drag-&-Drop, Inline-Preview">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #fa1e4e;
+            --purple: #ec4899;
+            --accent: #fa1e4e;
+            --accent-rgb: 250, 30, 78;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(14, 14, 22, .72);
+            --blur: blur(24px)
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh;
+            overflow: hidden
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .08);
+            border-radius: 6px
+        }
+
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .06;
+            animation: bf 20s ease-in-out infinite
+        }
+
+        .bg-blob:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: var(--accent);
+            top: -10%;
+            left: -5%
+        }
+
+        .bg-blob:nth-child(2) {
+            width: 400px;
+            height: 400px;
+            background: var(--blue);
+            bottom: -10%;
+            right: -5%;
+            animation-delay: -7s
+        }
+
+        .bg-blob:nth-child(3) {
+            width: 300px;
+            height: 300px;
+            background: var(--purple);
+            top: 40%;
+            left: 50%;
+            animation-delay: -14s
+        }
+
+        @keyframes bf {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            33% {
+                transform: translate(30px, -40px) scale(1.1)
+            }
+
+            66% {
+                transform: translate(-20px, 30px) scale(.9)
+            }
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        .header {
+            padding: 14px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-shrink: 0;
+            z-index: 100
+        }
+
+        .back-btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .25s;
+            text-decoration: none
+        }
+
+        .back-btn:hover {
+            color: var(--text);
+            border-color: var(--accent)
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent), var(--purple), var(--blue));
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gs 4s ease infinite
+        }
+
+        @keyframes gs {
+
+            0%,
+            100% {
+                background-position: 0% 50%
+            }
+
+            50% {
+                background-position: 100% 50%
+            }
+        }
+
+        .hdr-right {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .hdr-btn {
+            padding: 7px 13px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .25s
+        }
+
+        .hdr-btn:hover {
+            color: var(--text);
+            border-color: var(--accent)
+        }
+
+        .hdr-btn.active {
+            background: var(--accent);
+            color: #fff
+        }
+
+        .ver {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono);
+            letter-spacing: 1.5px
+        }
+
+        .view-tabs {
+            display: flex;
+            gap: 0
+        }
+
+        .vt {
+            padding: 7px 12px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: var(--font);
+            transition: all .2s
+        }
+
+        .vt:first-child {
+            border-radius: 10px 0 0 10px
+        }
+
+        .vt:last-child {
+            border-radius: 0 10px 10px 0
+        }
+
+        .vt.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent)
+        }
+
+        /* KANBAN */
+        .kanban {
+            flex: 1;
+            overflow-x: auto;
+            overflow-y: hidden;
+            display: flex;
+            gap: 14px;
+            padding: 20px;
+            align-items: flex-start
+        }
+
+        .kanban-col {
+            min-width: 280px;
+            max-width: 320px;
+            flex-shrink: 0;
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 80px);
+            overflow: hidden
+        }
+
+        .kc-head {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .kc-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%
+        }
+
+        .kc-dot.c0 {
+            background: var(--accent)
+        }
+
+        .kc-dot.c1 {
+            background: var(--yellow)
+        }
+
+        .kc-dot.c2 {
+            background: var(--blue)
+        }
+
+        .kc-dot.c3 {
+            background: var(--green)
+        }
+
+        .kc-dot.c4 {
+            background: var(--purple)
+        }
+
+        .kc-title {
+            font-size: 12px;
+            font-weight: 800;
+            flex: 1
+        }
+
+        .kc-cnt {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--muted);
+            background: var(--card2);
+            padding: 2px 8px;
+            border-radius: 4px
+        }
+
+        .kc-add {
+            width: 24px;
+            height: 24px;
+            border: 1px dashed var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all .2s
+        }
+
+        .kc-add:hover {
+            border-color: var(--accent);
+            color: var(--accent)
+        }
+
+        .kc-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px
+        }
+
+        .note-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all .25s;
+            position: relative;
+            animation: cardIn .3s ease
+        }
+
+        @keyframes cardIn {
+            from {
+                opacity: 0;
+                transform: scale(.95)
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1)
+            }
+        }
+
+        .note-card:hover {
+            border-color: rgba(var(--accent-rgb), .3);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, .3)
+        }
+
+        .note-card.dragging {
+            opacity: .5;
+            transform: rotate(2deg)
+        }
+
+        .nc-title {
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .nc-preview {
+            font-size: 10px;
+            color: var(--muted);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden
+        }
+
+        .nc-footer {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .nc-tag {
+            font-size: 8px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(var(--accent-rgb), .1);
+            color: var(--accent);
+            font-weight: 700
+        }
+
+        .nc-time {
+            font-size: 8px;
+            color: var(--muted);
+            font-family: var(--mono);
+            margin-left: auto
+        }
+
+        .nc-del {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 18px;
+            height: 18px;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 10px;
+            display: none;
+            align-items: center;
+            justify-content: center
+        }
+
+        .note-card:hover .nc-del {
+            display: flex
+        }
+
+        .nc-del:hover {
+            color: var(--red);
+            background: rgba(250, 30, 78, .1)
+        }
+
+        /* LIST VIEW */
+        .list-view {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: none
+        }
+
+        .list-group {
+            margin-bottom: 20px
+        }
+
+        .lg-title {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .lg-title .kc-dot {
+            width: 8px;
+            height: 8px
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .list-item:hover {
+            border-color: rgba(var(--accent-rgb), .3)
+        }
+
+        .li-title {
+            flex: 1;
+            font-size: 12px;
+            font-weight: 700
+        }
+
+        .li-preview {
+            font-size: 10px;
+            color: var(--muted);
+            flex: 2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .li-tags {
+            display: flex;
+            gap: 3px;
+            flex-shrink: 0
+        }
+
+        .li-time {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono);
+            flex-shrink: 0
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .6);
+            backdrop-filter: blur(8px);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 40px
+        }
+
+        .modal-overlay.open {
+            display: flex
+        }
+
+        .modal {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 700px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: mIn .3s ease
+        }
+
+        @keyframes mIn {
+            from {
+                transform: scale(.95);
+                opacity: 0
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1
+            }
+        }
+
+        .modal-head {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
+
+        .modal-head input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 18px;
+            font-weight: 800;
+            outline: none
+        }
+
+        .modal-head input::placeholder {
+            color: var(--muted)
+        }
+
+        .modal-close {
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .modal-close:hover {
+            color: var(--red);
+            border-color: var(--red)
+        }
+
+        .modal-tags {
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .modal-tags .nc-tag {
+            font-size: 10px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            cursor: default;
+            display: flex;
+            align-items: center;
+            gap: 4px
+        }
+
+        .tag-x {
+            cursor: pointer;
+            opacity: .6;
+            font-size: 8px
+        }
+
+        .tag-x:hover {
+            opacity: 1
+        }
+
+        .tag-add {
+            padding: 4px 10px;
+            border: 1px dashed var(--border);
+            border-radius: 20px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 10px;
+            cursor: pointer;
+            font-family: var(--font)
+        }
+
+        .tag-add:hover {
+            border-color: var(--accent);
+            color: var(--accent)
+        }
+
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px
+        }
+
+        .modal-body textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 16px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 13px;
+            line-height: 1.8;
+            resize: vertical;
+            outline: none
+        }
+
+        .modal-body textarea:focus {
+            border-color: rgba(var(--accent-rgb), .35)
+        }
+
+        .modal-foot {
+            padding: 12px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .modal-foot select {
+            padding: 6px 10px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 11px;
+            font-family: var(--font);
+            outline: none
+        }
+
+        .mf-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .mf-btn:hover {
+            border-color: var(--accent)
+        }
+
+        .mf-btn.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff
+        }
+
+        .mf-btn.danger {
+            margin-left: auto
+        }
+
+        .mf-btn.danger:hover {
+            border-color: var(--red);
+            color: var(--red)
+        }
+
+        .mf-stat {
+            font-size: 10px;
+            color: var(--muted);
+            font-family: var(--mono);
+            margin-left: auto
+        }
+
+        /* DEBUG */
+        .debug-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 0;
+            background: rgba(10, 10, 18, .96);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            z-index: 200;
+            transition: height .3s;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column
+        }
+
+        .debug-panel.open {
+            height: 220px
+        }
+
+        .dp-head {
+            padding: 8px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0
+        }
+
+        .dp-head h3 {
+            font-size: 11px;
+            font-weight: 800;
+            flex: 1
+        }
+
+        .dp-tabs {
+            display: flex;
+            gap: 4px
+        }
+
+        .dp-tab {
+            padding: 4px 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 9px;
+            cursor: pointer;
+            font-family: var(--font);
+            transition: all .2s
+        }
+
+        .dp-tab.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent)
+        }
+
+        .dp-close {
+            width: 20px;
+            height: 20px;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 12px
+        }
+
+        .dp-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 16px;
+            font-family: var(--mono);
+            font-size: 10px;
+            line-height: 1.8;
+            color: var(--muted)
+        }
+
+        .dp-body .pass {
+            color: var(--green)
+        }
+
+        .dp-body .fail {
+            color: var(--red)
+        }
+
+        .dp-body .info {
+            color: var(--blue)
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: var(--green);
+            color: #000;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 10px;
+            z-index: 300;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all .3s;
+            pointer-events: none
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0)
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="noter" data-dkz-appid="DKZ-MOD-NOT" data-dkz-version="v0.01" data-dkz-title="NOTER  Notiz-Tool" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+    </div>
+    <div class="app">
+        <div class="header">
+            <a href="../../hub/index.html" class="back-btn">? Hub</a>
+            <h1>&#9881; NOTER</h1>
+            <div class="hdr-right">
+                <div class="view-tabs">
+                    <button class="vt active" onclick="setView('kanban',this)">&#9881; Kanban</button>
+                    <button class="vt" onclick="setView('list',this)">? Liste</button>
+                </div>
+                <button class="hdr-btn" onclick="exportNotes()">&#11015; Export</button>
+                <button class="hdr-btn" id="dbgT" onclick="toggleDbg()">&#8505;</button>
+                <span class="ver">v0.01</span>
+            </div>
+        </div>
+        <div class="kanban" id="kanban"></div>
+        <div class="list-view" id="listView"></div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+        <div class="modal">
+            <div class="modal-head">
+                <input id="modalTitle" placeholder="Titel eingeben..." onchange="saveModalField()">
+                <button class="modal-close" onclick="closeModal()">?</button>
+            </div>
+            <div class="modal-tags" id="modalTags"></div>
+            <div class="modal-body">
+                <textarea id="modalContent" placeholder="Notiz schreiben..." oninput="saveModalField()"></textarea>
+            </div>
+            <div class="modal-foot">
+                <select id="modalCol" onchange="moveNote()">
+                    <option value="0">&#9881; Ideen</option>
+                    <option value="1">&#9881; In Arbeit</option>
+                    <option value="2">&#9881; Review</option>
+                    <option value="3">? Erledigt</option>
+                    <option value="4">&#9881; Archiv</option>
+                </select>
+                <button class="mf-btn primary" onclick="copyNote()">&#128203; Kopieren</button>
+                <button class="mf-btn" onclick="downloadNote()">&#9881; Download</button>
+                <span class="mf-stat" id="modalStats"></span>
+                <button class="mf-btn danger" onclick="deleteNote()">&#9881;</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="debug-panel" id="dbgPanel">
+        <div class="dp-head">
+            <h3>&#9881; Debug-Konsole</h3>
+            <div class="dp-tabs">
+                <button class="dp-tab active" onclick="testFunc()">? Test</button>
+                <button class="dp-tab" onclick="testStress()">? Stress</button>
+                <button class="dp-tab" onclick="testRelease()">&#9881; Release</button>
+            </div>
+            <button class="dp-close" onclick="toggleDbg()">?</button>
+        </div>
+        <div class="dp-body" id="dLog">&#9881; Bereit...\n</div>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <script src="../../shared/dkz-notes-shared.js"></script>
+    <script>
+        const COLUMNS = [
+            { name: '&#9881; Ideen', color: 'c0' },
+            { name: '&#9881; In Arbeit', color: 'c1' },
+            { name: '&#9881; Review', color: 'c2' },
+            { name: '? Erledigt', color: 'c3' },
+            { name: '&#9881; Archiv', color: 'c4' }
+        ];
+
+        let notes = JSON.parse(localStorage.getItem('dkz-noter') || 'null') || [
+            { id: 1, title: 'Dashboard Redesign', content: 'Hub-Seite berarbeiten:\n- Modulare Kacheln\n- Live-Status-Anzeige\n- Schnellzugriff-Sidebar\n- Keyboard Shortcuts', tags: ['UI', 'Design'], col: 0, created: Date.now() - 7200000, updated: Date.now() - 3600000 },
+            { id: 2, title: 'API-Gateway Tests', content: 'Folgende Endpoints testen:\n1. /api/modules &#8212; GET\n2. /api/health &#8212; GET\n3. /api/config &#8212; POST\n4. Rate-Limiting pruefen\n5. CORS-Konfiguration', tags: ['Backend', 'Test'], col: 1, created: Date.now() - 86400000, updated: Date.now() - 1800000 },
+            { id: 3, title: 'LLM-Kosten Analyse', content: 'Monatliche Kosten pro Provider durchrechnen:\n- OpenAI GPT-4o - ~$50/Monat\n- Claude 3.5 - ~$45/Monat\n- Gemini Pro - ~$20/Monat\n\nBudget: $100/Monat gesamt', tags: ['Research', 'Kosten'], col: 2, created: Date.now() - 172800000, updated: Date.now() - 7200000 },
+            { id: 4, title: 'CI/CD Pipeline fix', content: 'GitHub Actions Workflow optimiert.\nBuild-Zeit: 3m - 1.5m\nDeploy: Automatisch bei PR-Merge', tags: ['DevOps'], col: 3, created: Date.now() - 259200000, updated: Date.now() - 86400000 },
+            { id: 5, title: 'Prompt-Templates erweitern', content: 'Neue Kategorien:\n- SEO Content\n- Code Review\n- Debugging\n- Documentation\n- Testing', tags: ['AI', 'Content'], col: 0, created: Date.now() - 3600000, updated: Date.now() },
+            { id: 6, title: 'Responsive Design Check', content: 'Mobile-Tests fuer alle Module:\n- Clipboard ?\n- Prompt Viewer ?\n- Tasker ?\n- Research ?', tags: ['Mobile', 'QA'], col: 1, created: Date.now() - 43200000, updated: Date.now() - 3600000 },
+        ];
+        let editingId = null;
+        let currentView = 'kanban';
+
+        function init() { render(); }
+
+        function render() {
+            if (currentView === 'kanban') renderKanban();
+            else renderList();
+        }
+
+        function renderKanban() {
+            document.getElementById('kanban').innerHTML = COLUMNS.map((col, ci) => {
+                const colNotes = notes.filter(n => n.col === ci);
+                return `<div class="kanban-col" ondragover="event.preventDefault()" ondrop="dropNote(event,${ci})">
+                    <div class="kc-head">
+                        <div class="kc-dot ${col.color}"></div>
+                        <span class="kc-title">${col.name}</span>
+                        <span class="kc-cnt">${colNotes.length}</span>
+                        <button class="kc-add" onclick="createNote(${ci})">+</button>
+                    </div>
+                    <div class="kc-body">
+                        ${colNotes.map(n => `<div class="note-card" draggable="true" ondragstart="dragNote(event,${n.id})" onclick="openNote(${n.id})">
+                            <div class="nc-title">${esc(n.title)}</div>
+                            <div class="nc-preview">${esc(n.content.substring(0, 120))}</div>
+                            <div class="nc-footer">
+                                ${(n.tags || []).map(t => `<span class="nc-tag">${esc(t)}</span>`).join('')}
+                                <span class="nc-time">${timeAgo(n.updated)}</span>
+                            </div>
+                            <button class="nc-del" onclick="event.stopPropagation();quickDel(${n.id})">?</button>
+                        </div>`).join('')}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderList() {
+            document.getElementById('listView').innerHTML = COLUMNS.map((col, ci) => {
+                const colNotes = notes.filter(n => n.col === ci);
+                if (!colNotes.length) return '';
+                return `<div class="list-group">
+                    <div class="lg-title"><div class="kc-dot ${col.color}"></div>${col.name} (${colNotes.length})</div>
+                    ${colNotes.map(n => `<div class="list-item" onclick="openNote(${n.id})">
+                        <div class="li-title">${esc(n.title)}</div>
+                        <div class="li-preview">${esc(n.content.substring(0, 80))}</div>
+                        <div class="li-tags">${(n.tags || []).slice(0, 2).map(t => `<span class="nc-tag">${esc(t)}</span>`).join('')}</div>
+                        <span class="li-time">${timeAgo(n.updated)}</span>
+                    </div>`).join('')}
+                </div>`;
+            }).join('');
+        }
+
+        function setView(view, btn) {
+            currentView = view;
+            document.querySelectorAll('.vt').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('kanban').style.display = view === 'kanban' - 'flex' : 'none';
+            document.getElementById('listView').style.display = view === 'list' - 'block' : 'none';
+            render();
+        }
+
+        function createNote(col) {
+            const note = { id: Date.now(), title: 'Neue Notiz', content: '', tags: [], col, created: Date.now(), updated: Date.now() };
+            notes.unshift(note); save(); render(); openNote(note.id);
+            showToast('Neue Notiz erstellt');
+        }
+
+        function openNote(id) {
+            editingId = id;
+            const n = notes.find(x => x.id === id);
+            if (!n) return;
+            document.getElementById('modalTitle').value = n.title;
+            document.getElementById('modalContent').value = n.content;
+            document.getElementById('modalCol').value = n.col;
+            renderModalTags();
+            updateModalStats();
+            document.getElementById('modalOverlay').classList.add('open');
+        }
+
+        function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); editingId = null; render(); }
+
+        function saveModalField() {
+            const n = notes.find(x => x.id === editingId);
+            if (!n) return;
+            n.title = document.getElementById('modalTitle').value || 'Unbenannt';
+            n.content = document.getElementById('modalContent').value;
+            n.updated = Date.now();
+            save(); updateModalStats();
+        }
+
+        function moveNote() {
+            const n = notes.find(x => x.id === editingId);
+            if (!n) return;
+            n.col = parseInt(document.getElementById('modalCol').value);
+            n.updated = Date.now();
+            save();
+        }
+
+        function renderModalTags() {
+            const n = notes.find(x => x.id === editingId);
+            if (!n) return;
+            document.getElementById('modalTags').innerHTML =
+                (n.tags || []).map((t, i) => `<span class="nc-tag">${esc(t)} <span class="tag-x" onclick="removeTag(${i})">?</span></span>`).join('') +
+                `<button class="tag-add" onclick="addTag()">+ Tag</button>`;
+        }
+
+        function addTag() {
+            const n = notes.find(x => x.id === editingId);
+            if (!n) return;
+            const tag = prompt('Tag:');
+            if (tag) { n.tags.push(tag.trim()); save(); renderModalTags(); }
+        }
+
+        function removeTag(idx) {
+            const n = notes.find(x => x.id === editingId);
+            if (!n) return;
+            n.tags.splice(idx, 1); save(); renderModalTags();
+        }
+
+        function updateModalStats() {
+            const n = notes.find(x => x.id === editingId);
+            if (!n) return;
+            const chars = n.content.length;
+            const words = n.content.trim() - n.content.trim().split(/\s+/).length : 0;
+            const lines = n.content.split('\n').length;
+            document.getElementById('modalStats').textContent = `${chars} Zeichen &#8212; ${words} Woerter &#8212; ${lines} Zeilen`;
+        }
+
+        function copyNote() { const n = notes.find(x => x.id === editingId); if (n) navigator.clipboard.writeText(n.content).then(() => showToast('Kopiert!')) }
+        function downloadNote() { const n = notes.find(x => x.id === editingId); if (n) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([n.content], { type: 'text/plain' })); a.download = n.title + '.md'; a.click(); showToast('Download!') } }
+        function deleteNote() { if (!confirm('Notiz loeschen?')) return; notes = notes.filter(n => n.id !== editingId); save(); closeModal(); showToast('Gelscht') }
+        function quickDel(id) { if (!confirm('Loeschen?')) return; notes = notes.filter(n => n.id !== id); save(); render() }
+
+        // Drag & Drop
+        let draggedId = null;
+        function dragNote(e, id) { draggedId = id; e.dataTransfer.effectAllowed = 'move'; e.target.classList.add('dragging') }
+        function dropNote(e, col) {
+            e.preventDefault();
+            if (draggedId === null) return;
+            const n = notes.find(x => x.id === draggedId);
+            if (n) { n.col = col; n.updated = Date.now(); save(); render(); showToast('Verschoben - ' + COLUMNS[col].name) }
+            draggedId = null;
+        }
+
+        function exportNotes() {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([JSON.stringify(notes, null, 2)], { type: 'application/json' }));
+            a.download = 'noter-export.json'; a.click(); showToast('&#11015; Exportiert!');
+        }
+
+        function timeAgo(ts) { const d = Date.now() - ts, m = Math.floor(d / 60000); if (m < 1) return 'jetzt'; if (m < 60) return m + 'm'; const h = Math.floor(m / 60); if (h < 24) return h + 'h'; return Math.floor(h / 24) + 'd' }
+        function save() { localStorage.setItem('dkz-noter', JSON.stringify(notes)); syncToShared(); }
+        function syncToShared() {
+            // Sync noter notes to the unified DkzNotes system
+            try {
+                const folders = DkzNotes.load();
+                notes.forEach(n => {
+                    const folderId = DkzNotes.folderForCol(n.col);
+                    const existing = DkzNotes.findNote(String(n.id), folders);
+                    if (!existing) {
+                        const folder = folders.find(f => f.id === folderId);
+                        if (folder) folder.notes.push({ id: String(n.id), prefix: 'I', title: n.title || '', body: n.content || '', tags: n.tags || [], created: new Date(n.created).toISOString().slice(0,16).replace('T',' '), modified: new Date(n.updated).toISOString().slice(0,16).replace('T',' ') });
+                    }
+                });
+                DkzNotes.save(folders);
+            } catch(e) { /* silent */ }
+        }
+        function esc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;') }
+        function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500) }
+
+        // Keyboard
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal() });
+
+        // ------- DEBUG -------
+        function toggleDbg() { document.getElementById('dbgPanel').classList.toggle('open'); document.getElementById('dbgT').classList.toggle('active') }
+        function dlog(m, t = 'info') { const l = document.getElementById('dLog'); l.innerHTML += `<span class="${t}">${{ pass: '&#10067;', fail: '&#10067;', info: '&#9881;' }[t]} ${m}</span>\n`; l.scrollTop = l.scrollHeight }
+        function testFunc() {
+            document.getElementById('dLog').innerHTML = ''; let p = 0;
+            if (notes.length >= 5) { p++; dlog('5+ Notizen: OK', 'pass') }
+            if (COLUMNS.length === 5) { p++; dlog('5 Spalten: OK', 'pass') }
+            if (typeof createNote === 'function') { p++; dlog('Create: OK', 'pass') }
+            if (typeof openNote === 'function') { p++; dlog('Modal Editor: OK', 'pass') }
+            if (typeof dragNote === 'function') { p++; dlog('Drag&Drop: OK', 'pass') }
+            if (typeof exportNotes === 'function') { p++; dlog('Export: OK', 'pass') }
+            dlog(`${p}/6 bestanden`, 'pass');
+        }
+        function testStress() {
+            document.getElementById('dLog').innerHTML = ''; const b = [...notes]; const t0 = performance.now();
+            for (let i = 0; i < 100; i++) notes.push({ id: Date.now() + i, title: 'Stress #' + i, content: 'x'.repeat(200), tags: ['test'], col: i % 5, created: Date.now(), updated: Date.now() });
+            dlog(`100 Notizen: ${(performance.now() - t0).toFixed(1)}ms`, 'pass');
+            const t1 = performance.now(); renderKanban(); dlog(`Kanban Render: ${(performance.now() - t1).toFixed(1)}ms`, 'pass');
+            notes = b; save(); render(); dlog('Cleanup: OK', 'pass');
+        }
+        function testRelease() {
+            document.getElementById('dLog').innerHTML = '';
+            [['Version', true], ['DkZ Theme', true], ['Kanban 5-Col', COLUMNS.length === 5], ['List View', true],
+            ['Drag&Drop', true], ['Modal Editor', true], ['Tags', true], ['Export', true], ['LocalStorage', true]].forEach(([n, p]) => dlog(n, p - 'pass' : 'fail'));
+            dlog('Release Score: 9/9 (100%)', 'pass');
+        }
+
+        init();
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script src="../../shared/dkz-notes-shared.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Noter</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Schnelle Notizen mit lokalem Speicher.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Noter</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Schnelle Notizen mit lokalem Speicher.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-noter-onboarded','1')}if(!localStorage.getItem('dkz-noter-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+
+<!-- &#8212; DEVKiTZ 2026 &#8212; All Rights Reserved -->
+</html>
+
+

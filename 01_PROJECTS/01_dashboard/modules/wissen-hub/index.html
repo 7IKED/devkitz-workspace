@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v0.02">
+    <meta name="dkz-module" content="wissen-hub">
+    <title>NEXUZ™ WissenHub — DkZâ„¢ Knowledge System</title>
+    <meta name="description" content="NEXUZ™ WissenHub — Immutable Knowledge Archive mit Apache Iceberg Catalog, DuckDB Queries und JAMEZ™ Suche">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <style>
+        :root{--neon-red:#fa1e4e;--pink:#ec4899;--green:#00D084;--blue:#55ACEE;--yellow:#FFB800;--purple:#a855f7;--base:#0e0e10;--card:#1a1a1c;--card2:#222226;--border:#2a2a2e;--text:#f6f6f7;--muted:#808080;--glass:rgba(26,26,28,.85)}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',sans-serif;background:var(--base);color:var(--text);min-height:100vh}
+        body::before{content:"";position:fixed;top:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(250,30,78,.08),transparent 70%);pointer-events:none;z-index:0}
+        body::after{content:"";position:fixed;bottom:-150px;left:-150px;width:500px;height:500px;background:radial-gradient(circle,rgba(85,172,238,.06),transparent 70%);pointer-events:none;z-index:0}
+
+        /* Header */
+        header{position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);background:var(--glass);border-bottom:1px solid var(--border);padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between}
+        .logo{font-size:1.1rem;font-weight:900;display:flex;align-items:center;gap:.5rem}
+        .logo span{background:linear-gradient(135deg,var(--blue),var(--purple));background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .chain-nav{display:flex;gap:.4rem}
+        .chain-btn{padding:.35rem .7rem;border-radius:6px;font-size:.7rem;font-weight:700;border:1px solid var(--border);background:rgba(255,255,255,.03);color:#808080;cursor:pointer;text-decoration:none;transition:all .2s}
+        .chain-btn:hover{border-color:var(--neon-red);color:var(--text)}
+        .chain-btn.active{background:var(--blue);border-color:var(--blue);color:#fff}
+
+        /* Search */
+        .search-bar{display:flex;gap:.5rem;padding:1rem 2rem;background:var(--card);border-bottom:1px solid var(--border);align-items:center}
+        .search-input{flex:1;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem .75rem 2.5rem;color:var(--text);font-size:.9rem;font-family:inherit;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23808080' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.442.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:12px center}
+        .search-input:focus{outline:none;border-color:var(--blue)}
+        .search-input::placeholder{color:#606060}
+
+        /* Buttons */
+        .btn{padding:.55rem 1rem;border:none;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;display:inline-flex;align-items:center;gap:.4rem}
+        .btn-primary{background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff}
+        .btn-primary:hover{transform:translateY(-2px);box-shadow:0 5px 20px rgba(85,172,238,.3)}
+        .btn-secondary{background:rgba(255,255,255,.05);color:var(--text);border:1px solid var(--border)}
+        .btn-secondary:hover{background:rgba(255,255,255,.1)}
+        .btn-sm{padding:.35rem .65rem;font-size:.7rem}
+        .btn-accent{background:linear-gradient(135deg,var(--neon-red),var(--pink));color:#fff}
+
+        /* Layout */
+        .main-layout{display:grid;grid-template-columns:1fr 360px;height:calc(100vh - 120px);position:relative;z-index:1}
+        .content{overflow-y:auto;padding:1.5rem 2rem}
+        .sidebar-right{background:var(--card);border-left:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+
+        /* Tabs */
+        .tabs{display:flex;gap:2px;margin-bottom:1.5rem;background:rgba(0,0,0,.2);border-radius:10px;padding:3px}
+        .tab{flex:1;padding:.6rem .5rem;text-align:center;font-size:.75rem;font-weight:700;border-radius:8px;cursor:pointer;color:var(--muted);transition:all .2s;border:none;background:none}
+        .tab:hover{color:var(--text)}
+        .tab.active{background:var(--card);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+        .tab-indicator{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px}
+        .tab-count{font-size:.6rem;color:var(--muted);margin-left:4px}
+
+        /* Section */
+        .section-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
+
+        /* Entry Cards */
+        .entry-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:.75rem;cursor:pointer;transition:all .25s;position:relative}
+        .entry-card:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 4px 15px rgba(85,172,238,.1)}
+        .entry-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.5rem}
+        .entry-title{font-weight:800;font-size:.9rem}
+        .entry-version{font-size:.6rem;padding:.15rem .4rem;border-radius:4px;background:rgba(85,172,238,.15);color:var(--blue);font-weight:700}
+        .entry-source{font-size:.6rem;padding:.15rem .4rem;border-radius:4px;font-weight:700}
+        .source-antigravity{background:rgba(168,85,247,.15);color:var(--purple)}
+        .source-claude{background:rgba(250,30,78,.15);color:var(--neon-red)}
+        .source-gemini{background:rgba(0,208,132,.15);color:var(--green)}
+        .entry-desc{font-size:.75rem;color:var(--muted);line-height:1.5}
+        .entry-tags{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.5rem}
+        .tag{font-size:.6rem;padding:.15rem .4rem;border-radius:4px;background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--border);cursor:pointer;transition:all .2s}
+        .tag:hover{border-color:var(--blue);color:var(--blue)}
+        .entry-immutable{position:absolute;top:.5rem;right:.5rem;font-size:.55rem;color:var(--muted);opacity:.5}
+
+        /* DuckDB Panel */
+        .duckdb-panel{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem;display:none}
+        .sql-input{width:100%;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:6px;padding:.5rem;color:var(--green);font-family:'JetBrains Mono',monospace;font-size:.75rem;margin-bottom:.5rem}
+        .sql-input:focus{outline:none;border-color:var(--green)}
+        .db-table{width:100%;border-collapse:collapse;font-size:.7rem}
+        .db-table th{text-align:left;padding:.4rem .5rem;border-bottom:1px solid var(--border);color:var(--blue);font-weight:700}
+        .db-table td{padding:.4rem .5rem;border-bottom:1px solid rgba(255,255,255,.03);color:var(--muted)}
+        .db-table tr:hover td{color:var(--text);background:rgba(85,172,238,.03)}
+
+        /* Iceberg Tags */
+        .iceberg-panel{display:none;margin-bottom:1rem}
+        .iceberg-tags{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem}
+        .iceberg-tag{padding:.4rem .8rem;border-radius:20px;font-size:.7rem;font-weight:700;background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.2);color:var(--purple);cursor:pointer;transition:all .2s}
+        .iceberg-tag:hover{background:rgba(168,85,247,.2);transform:scale(1.05)}
+        .iceberg-tag .tag-count{margin-left:.3rem;font-size:.6rem;color:var(--muted)}
+
+        /* Chat */
+        .chat-area{flex:1;display:flex;flex-direction:column}
+        .chat-header{padding:1rem;border-bottom:1px solid var(--border)}
+        .chat-messages{flex:1;overflow-y:auto;padding:1rem}
+        .chat-msg{margin-bottom:.75rem;display:flex;gap:.5rem}
+        .chat-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0}
+        .chat-bubble{padding:.6rem .8rem;border-radius:10px;font-size:.8rem;line-height:1.5;max-width:90%}
+        .msg-user .chat-avatar{background:rgba(85,172,238,.2)}
+        .msg-user .chat-bubble{background:rgba(85,172,238,.1);border:1px solid rgba(85,172,238,.2)}
+        .msg-ai .chat-avatar{background:rgba(250,30,78,.2)}
+        .msg-ai .chat-bubble{background:rgba(250,30,78,.05);border:1px solid rgba(250,30,78,.15)}
+        .chat-input-area{padding:.75rem;border-top:1px solid var(--border);display:flex;gap:.5rem}
+        .chat-input{flex:1;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:.6rem;color:var(--text);font-size:.8rem;font-family:inherit}
+        .chat-input:focus{outline:none;border-color:var(--blue)}
+
+        /* Markdown Viewer Modal */
+        .md-viewer{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:200;background:rgba(0,0,0,.85);backdrop-filter:blur(10px)}
+        .md-viewer.show{display:flex;align-items:center;justify-content:center}
+        .md-content{background:var(--card);border:1px solid var(--border);border-radius:14px;width:85%;max-width:900px;max-height:85vh;overflow-y:auto;padding:2rem;position:relative}
+        .md-content h1{font-size:1.3rem;color:var(--text);margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:.5rem}
+        .md-content h2{font-size:1rem;color:var(--blue);margin:1.2rem 0 .5rem}
+        .md-content h3{font-size:.9rem;color:var(--purple);margin:1rem 0 .4rem}
+        .md-content p{font-size:.85rem;line-height:1.7;color:var(--muted);margin-bottom:.5rem}
+        .md-content ul,.md-content ol{padding-left:1.5rem;margin-bottom:.5rem}
+        .md-content li{font-size:.85rem;color:var(--muted);line-height:1.6}
+        .md-content code{background:rgba(0,0,0,.4);padding:.1rem .3rem;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--green)}
+        .md-content pre{background:rgba(0,0,0,.4);padding:1rem;border-radius:8px;overflow-x:auto;margin:.5rem 0}
+        .md-content pre code{background:none;padding:0}
+        .md-content table{width:100%;border-collapse:collapse;margin:.5rem 0}
+        .md-content th{text-align:left;padding:.4rem .6rem;border-bottom:1px solid var(--border);color:var(--blue);font-size:.75rem}
+        .md-content td{padding:.4rem .6rem;border-bottom:1px solid rgba(255,255,255,.05);font-size:.8rem;color:var(--muted)}
+        .md-close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--muted);font-size:1.5rem;cursor:pointer}
+        .md-close:hover{color:var(--text)}
+        .md-meta{display:flex;gap:1rem;margin-bottom:1rem;font-size:.7rem;color:var(--muted)}
+        .md-meta span{padding:.2rem .5rem;background:rgba(255,255,255,.05);border-radius:4px}
+
+        /* Stats */
+        .stat-row{display:flex;justify-content:space-between;padding:.3rem 0;font-size:.7rem}
+        .stat-label{color:var(--muted)}.stat-value{font-weight:700;color:var(--green)}
+
+        /* Snapshot Log */
+        .snapshot-log{max-height:150px;overflow-y:auto;margin-top:.5rem}
+        .snapshot-item{padding:.35rem .5rem;font-size:.65rem;color:var(--muted);border-left:2px solid var(--purple);margin-bottom:.3rem;padding-left:.75rem}
+        .snapshot-item strong{color:var(--text)}
+
+        /* Misc */
+        .empty-state{text-align:center;padding:3rem;color:var(--muted)}
+        .empty-icon{font-size:3rem;margin-bottom:1rem}
+        .toast{position:fixed;bottom:2rem;right:2rem;background:var(--card);border:1px solid var(--green);border-radius:8px;padding:.75rem 1.25rem;transform:translateX(400px);transition:transform .3s;z-index:10000;font-size:.85rem;font-weight:600}
+        .toast.show{transform:translateX(0)}
+        .immutable-badge{display:inline-flex;align-items:center;gap:.3rem;font-size:.6rem;color:var(--neon-red);background:rgba(250,30,78,.1);padding:.2rem .5rem;border-radius:4px;border:1px solid rgba(250,30,78,.2)}
+
+        ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+        @media(max-width:900px){.main-layout{grid-template-columns:1fr}.sidebar-right{display:none}}
+    </style>
+    <script src="./master-data.js"></script>
+</head>
+<body data-dkz-module="wissen-hub" data-dkz-appid="DKZ-WIS-001" data-dkz-version="v0.02" data-dkz-title="WissenHub" data-dkz-icon="📝" data-dkz-separable="true">
+    <header>
+        <div style="display:flex;align-items:center;gap:1rem">
+            <a href="../../hub/index.html" style="color:#808080;text-decoration:none;font-size:1.1rem">&#8592;</a>
+            <div class="logo">&#128218; <span>NEXUZ&#8482; WissenHub</span></div>
+            <span style="font-size:.65rem;color:#808080;padding:.2rem .5rem;border:1px solid #333;border-radius:4px">v0.02</span>
+            <span class="immutable-badge">&#128274; IMMUTABLE</span>
+        </div>
+        <div class="chain-nav">
+            <a class="chain-btn active">WissenHub</a>
+            <a class="chain-btn" href="../nexuz-builder/index.html" style="color:var(--blue);border-color:var(--blue)">NEXUZ&#178;</a>
+            <a class="chain-btn" href="../appscript-builder/index.html">AppScript</a>
+            <a class="chain-btn" href="../iceberg/index.html">Iceberg</a>
+            <a class="chain-btn" href="../agent-builder/jamez-builder.html" style="color:var(--neon-red);border-color:var(--neon-red)">JAMEZ&#8482;</a>
+        </div>
+        <div style="display:flex;gap:.5rem">
+            <button class="btn btn-secondary btn-sm" onclick="toggleDuckDB()">&#129414; DuckDB</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportAll()">&#128230; Export</button>
+        </div>
+    </header>
+
+    <div class="search-bar">
+        <input class="search-input" id="search" placeholder="&#127919; JAMEZ&#8482; Suche — Wissensarchiv durchsuchen..." oninput="searchEntries()">
+        <button class="btn btn-secondary btn-sm" onclick="toggleIceberg()">&#127991;&#65039; Tags</button>
+        <span style="font-size:.6rem;color:var(--muted);white-space:nowrap" id="total-count">0 Einträge</span>
+    </div>
+
+    <div class="main-layout">
+        <div class="content">
+            <!-- DuckDB Panel -->
+            <div class="duckdb-panel" id="duckdb-panel">
+                <div class="section-title">&#129414; DuckDB Query Engine <button class="btn btn-sm btn-secondary" onclick="runSQL()">&#9654; Run</button></div>
+                <input class="sql-input" id="sql-query" value="SELECT * FROM wissen WHERE rubrik = 'impl' ORDER BY created DESC LIMIT 20" placeholder="SQL Query..." onkeydown="if(event.key==='Enter')runSQL()">
+                <table class="db-table" id="db-table">
+                    <thead><tr><th>ID</th><th>Titel</th><th>Rubrik</th><th>Source</th><th>Tags</th><th>Erstellt</th><th>Snapshot</th></tr></thead>
+                    <tbody id="db-rows"></tbody>
+                </table>
+            </div>
+
+            <!-- Iceberg Tags -->
+            <div id="iceberg-panel" class="iceberg-panel">
+                <div class="section-title">&#127991;&#65039; Apache Iceberg — Tag-Verzeichnis (immutable)</div>
+                <div class="iceberg-tags" id="tag-cloud"></div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs" style="flex-wrap:wrap">
+                <button class="tab active" onclick="switchTab('all')"><span class="tab-indicator" style="background:var(--text)"></span>&#128203; Alle<span class="tab-count" id="tc-all"></span></button>
+                <button class="tab" onclick="switchTab('impl')"><span class="tab-indicator" style="background:var(--blue)"></span>&#128203; Impl<span class="tab-count" id="tc-impl"></span></button>
+                <button class="tab" onclick="switchTab('walk')"><span class="tab-indicator" style="background:var(--green)"></span>&#128214; Walk<span class="tab-count" id="tc-walk"></span></button>
+                <button class="tab" onclick="switchTab('research')"><span class="tab-indicator" style="background:var(--yellow)"></span>&#128300; Research<span class="tab-count" id="tc-research"></span></button>
+                <button class="tab" onclick="switchTab('task')"><span class="tab-indicator" style="background:var(--neon-red)"></span>&#9989; Task<span class="tab-count" id="tc-task"></span></button>
+                <button class="tab" onclick="switchTab('documentation')"><span class="tab-indicator" style="background:var(--blue)"></span>&#128196; Doku<span class="tab-count" id="tc-doc"></span></button>
+                <button class="tab" onclick="switchTab('readme')"><span class="tab-indicator" style="background:var(--green)"></span>&#128214; README<span class="tab-count" id="tc-readme"></span></button>
+                <button class="tab" onclick="switchTab('archive')"><span class="tab-indicator" style="background:var(--yellow)"></span>&#128230; Archiv<span class="tab-count" id="tc-archive"></span></button>
+                <button class="tab" onclick="switchTab('blueprint')"><span class="tab-indicator" style="background:var(--purple)"></span>&#127959; Blueprint<span class="tab-count" id="tc-blueprint"></span></button>
+                <button class="tab" onclick="switchTab('changelog')"><span class="tab-indicator" style="background:var(--muted)"></span>&#128221; Change<span class="tab-count" id="tc-changelog"></span></button>
+            </div>
+
+            <!-- Entries List -->
+            <div id="entries-list"></div>
+        </div>
+
+        <!-- RIGHT: Sidebar -->
+        <div class="sidebar-right">
+            <div class="chat-area">
+                <div class="chat-header">
+                    <div class="section-title">&#128172; NEXUZ&#8482; Wissens-Chat</div>
+                    <div style="font-size:.7rem;color:var(--muted)">Durchsuche das gesamte Wissensarchiv per Freitext</div>
+                </div>
+                <div class="chat-messages" id="chat-messages">
+                    <div class="chat-msg msg-ai">
+                        <div class="chat-avatar">&#127919;</div>
+                        <div class="chat-bubble">Willkommen im <b>NEXUZ&#8482; WissenHub</b>! Ich durchsuche alle 4 Rubriken im immutable Archive. Kein Wissen geht verloren. Was suchst du?</div>
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <input class="chat-input" id="chat-input" placeholder="Archiv abfragen..." onkeydown="if(event.key==='Enter')sendChat()">
+                    <button class="btn btn-primary btn-sm" onclick="sendChat()">&#10148;</button>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div style="padding:.75rem;border-top:1px solid var(--border)">
+                <div class="section-title" style="margin-bottom:.5rem">&#128202; Statistiken</div>
+                <div class="stat-row"><span class="stat-label">&#128203; Implementierungspläne</span><span class="stat-value" id="s-impl">0</span></div>
+                <div class="stat-row"><span class="stat-label">&#128214; Walkthroughs</span><span class="stat-value" id="s-walk">0</span></div>
+                <div class="stat-row"><span class="stat-label">&#128300; Research</span><span class="stat-value" id="s-research">0</span></div>
+                <div class="stat-row"><span class="stat-label">&#9989; Tasks</span><span class="stat-value" id="s-task">0</span></div>
+                <div class="stat-row"><span class="stat-label">&#128196; Dokumentation</span><span class="stat-value" id="s-doc">0</span></div>
+                <div class="stat-row"><span class="stat-label">&#128214; READMEs</span><span class="stat-value" id="s-readme">0</span></div>
+                <div class="stat-row"><span class="stat-label">&#128230; Archive</span><span class="stat-value" id="s-archive">0</span></div>
+                <div class="stat-row"><span class="stat-label">&#127959; Blueprints</span><span class="stat-value" id="s-blueprint">0</span></div>
+                <div class="stat-row"><span class="stat-label">&#128221; Changelogs</span><span class="stat-value" id="s-changelog">0</span></div>
+                <div class="stat-row"><span class="stat-label">&#127991;&#65039; Tags (Iceberg)</span><span class="stat-value" id="s-tags">0</span></div>
+                <div class="stat-row"><span class="stat-label">&#128247; Snapshots</span><span class="stat-value" id="s-snap">0</span></div>
+                <div class="stat-row" style="border-top:1px solid var(--border);padding-top:.5rem;margin-top:.3rem"><span class="stat-label" style="font-weight:700;color:var(--text)">Gesamt-Einträge</span><span class="stat-value" style="font-size:.9rem" id="s-total">0</span></div>
+            </div>
+
+            <!-- Snapshot Log -->
+            <div style="padding:.75rem;border-top:1px solid var(--border)">
+                <div class="section-title" style="margin-bottom:.5rem">&#128247; Iceberg Snapshot-Log</div>
+                <div class="snapshot-log" id="snapshot-log"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Markdown Viewer Modal -->
+    <div class="md-viewer" id="md-viewer" onclick="if(event.target===this)closeMdViewer()">
+        <div class="md-content" id="md-content">
+            <button class="md-close" onclick="closeMdViewer()">&#10005;</button>
+            <div id="md-body"></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"><span id="tt"></span></div>
+
+    <script>
+    // ========================================
+    // NEXUZ WissenHub v0.02 — Immutable Knowledge Archive
+    // Apache Iceberg Catalog + DuckDB Query Engine
+    // ========================================
+
+    var DB = {
+        CATALOG_KEY: 'dkz-wissenhub-catalog',
+        currentTab: 'all',
+        catalog: null
+    };
+
+    // ========================================
+    // CATALOG MANAGEMENT (Apache Iceberg Pattern)
+    // ========================================
+
+    function loadCatalog() {
+        var stored = localStorage.getItem(DB.CATALOG_KEY);
+        if (stored) {
+            DB.catalog = JSON.parse(stored);
+        } else {
+            // Bootstrap mit Seed-Daten (erste Session-Eintraege)
+            DB.catalog = {
+                format: 'iceberg-dkz-v1',
+                created: '2026-03-14T19:53:00Z',
+                description: 'NEXUZ WissenHub — Apache Iceberg Knowledge Catalog',
+                rules: {
+                    immutable: true,
+                    delete_allowed: false,
+                    manual_upload: false,
+                    sources: ['antigravity', 'claude', 'gemini', 'devkitz']
+                },
+                current_snapshot_id: 1,
+                snapshots: [
+                    { id: 1, timestamp: '2026-03-14T19:53:00Z', operation: 'seed', summary: 'Initial seed — 3 Eintraege aus erster WissenHub Session', entries_added: 3 }
+                ],
+                entries: [
+                    {
+                        id: 'W-0001', title: 'WissenHub Archive System', rubrik: 'impl',
+                        tags: ['wissenhub', 'r26', 'archive', 'iceberg', 'duckdb'], source: 'antigravity',
+                        created: '2026-03-14T19:53:00Z', snapshot_id: 1, version: 'v0.02',
+                        _content: '# WissenHub Archive System — Implementation Plan\n\n## Ziel\nDas WissenHub wird zur zentralen, unveraenderlichen Wissensdatenbank des DEVKiTZ Oekosystems.\n\n## Neue Regel R26\n- Jede KI-Session archiviert erstelltes Wissen automatisch als .md\n- 4 Rubriken: Implementierungsplan, Walkthrough, Research, Task\n- Keine Loeschfunktion — Daten sind immutable\n- Kein manuelles Upload — nur KI-Agenten schreiben\n\n## Aenderungen\n- REGELWERK.md: R26 WissenHub Archiv-Pflicht\n- CLAUDE.md: §22 WissenHub-Regel\n- GEMINI.md: WissenHub Archiv-Regel\n- archive/catalog.json: Apache Iceberg Manifest\n- index.html: Komplett-Rebuild mit DuckDB + Iceberg\n\n## Architektur\n- Archive-Pfad: modules/wissen-hub/archive/[rubrik]/\n- Katalog: catalog.json (Iceberg Manifest)\n- Interface: index.html mit DuckDB Query + JAMEZ Suche',
+                        _contentLoaded: true
+                    },
+                    {
+                        id: 'W-0002', title: 'WissenHub Archive System Tasks', rubrik: 'task',
+                        tags: ['wissenhub', 'task', 'checklist'], source: 'antigravity',
+                        created: '2026-03-14T19:53:00Z', snapshot_id: 1, version: 'v0.02',
+                        _content: '# WissenHub Archive System — Task Checklist\n\n## Abgeschlossen\n- [x] Bestehende Dateien analysiert\n- [x] Implementation Plan erstellt\n- [x] R26 in CLAUDE.md eingefuegt (§22)\n- [x] R26 in GEMINI.md eingefuegt\n- [x] R26 in REGELWERK.md eingefuegt\n- [x] Archive-Verzeichnisstruktur erstellt\n- [x] catalog.json (Iceberg Manifest) erstellt\n- [x] Erste Test-Eintraege geseedet\n- [x] index.html Komplett-Rebuild\n- [x] Browser-Test bestanden',
+                        _contentLoaded: true
+                    },
+                    {
+                        id: 'W-0003', title: 'Apache Iceberg Knowledge Pattern', rubrik: 'research',
+                        tags: ['iceberg', 'duckdb', 'architecture', 'research'], source: 'antigravity',
+                        created: '2026-03-14T19:53:00Z', snapshot_id: 1, version: 'v0.02',
+                        _content: '# Apache Iceberg Knowledge Pattern — Research\n\n## Was ist Apache Iceberg?\nApache Iceberg ist ein offenes Tabellenformat fuer analytische Datensaetze.\nIm WissenHub wird das Iceberg-Pattern fuer die Wissensverwaltung adaptiert:\n\n## Iceberg-Prinzipien im WissenHub\n1. **Snapshots**: Jeder neue Eintrag erzeugt einen Snapshot (unveraenderlich)\n2. **Catalog**: catalog.json ist das Manifest aller Eintraege\n3. **Schema Evolution**: Neue Felder koennen hinzugefuegt, nie entfernt werden\n4. **Time Travel**: Alle historischen Zustaende sind nachvollziehbar\n5. **Immutability**: Einmal geschrieben, nie geloescht\n\n## DuckDB Integration\n- DuckDB Query Engine simuliert SQL-Abfragen ueber den Katalog\n- SELECT, WHERE, ORDER BY, LIMIT werden unterstuetzt\n- Tag-basierte Filterung ueber Iceberg Tag-Cloud\n\n## Rubriken-System\n| Rubrik | Zweck | Quellen |\n|:---|:---|:---|\n| impl | Implementierungsplaene | Antigravity, Claude, Gemini |\n| walk | Walkthroughs | Antigravity, Claude, Gemini |\n| research | Forschung, Analysen | Antigravity, Claude, Gemini |\n| task | Aufgaben, Checklisten | Antigravity, Claude, Gemini |',
+                        _contentLoaded: true
+                    }
+                ]
+            };
+            saveCatalog();
+        }
+        return DB.catalog;
+    }
+
+    function saveCatalog() {
+        localStorage.setItem(DB.CATALOG_KEY, JSON.stringify(DB.catalog));
+    }
+
+    // Versuche catalog.json von disk zu lesen (nur beim ersten Load)
+    function tryLoadCatalogFromDisk() {
+        // Fetch catalog.json relative to this HTML file
+        fetch('archive/catalog.json')
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(data) {
+                if (data && data.entries && data.entries.length > 0) {
+                    // Merge: Disk-Eintraege die noch nicht in localStorage sind
+                    var existingIds = {};
+                    DB.catalog.entries.forEach(function(e) { existingIds[e.id] = true; });
+                    var newEntries = 0;
+                    data.entries.forEach(function(e) {
+                        if (!existingIds[e.id]) {
+                            DB.catalog.entries.push(e);
+                            newEntries++;
+                        }
+                    });
+                    // Merge snapshots
+                    if (data.snapshots) {
+                        var existingSnaps = {};
+                        DB.catalog.snapshots.forEach(function(s) { existingSnaps[s.id] = true; });
+                        data.snapshots.forEach(function(s) {
+                            if (!existingSnaps[s.id]) {
+                                DB.catalog.snapshots.push(s);
+                                if (s.id > DB.catalog.current_snapshot_id) {
+                                    DB.catalog.current_snapshot_id = s.id;
+                                }
+                            }
+                        });
+                    }
+                    if (newEntries > 0) {
+                        saveCatalog();
+                        toast('Katalog geladen: ' + newEntries + ' neue Eintraege von Disk');
+                        renderAll();
+                    }
+                }
+            })
+            .catch(function() { /* catalog.json nicht verfuegbar — OK */ });
+
+        // Auch einzelne .md Dateien aus den Rubrik-Ordnern laden
+        ['impl', 'walk', 'research', 'task'].forEach(function(rubrik) {
+            loadArchiveFolder(rubrik);
+        });
+    }
+
+    function loadArchiveFolder(rubrik) {
+        // Versuche bekannte Dateien aus dem Katalog zu laden
+        DB.catalog.entries.forEach(function(entry) {
+            if (entry.rubrik === rubrik && entry.filepath && !entry._contentLoaded) {
+                fetch(entry.filepath)
+                    .then(function(r) { return r.ok ? r.text() : null; })
+                    .then(function(text) {
+                        if (text) {
+                            entry._content = text;
+                            entry._contentLoaded = true;
+                        }
+                    })
+                    .catch(function() { /* Datei nicht verfuegbar */ });
+            }
+        });
+    }
+
+    // ========================================
+    // WISSENHUB API — NUR FUER KI-AGENTEN
+    // Kein manuelles Upload, kein Loeschen!
+    // ========================================
+
+    /**
+     * WissenHub.addEntry() — Fuegt einen neuen Wissens-Eintrag hinzu.
+     * Kann NICHT geloescht werden (immutable).
+     * @param {Object} entry - {title, rubrik, content, tags[], source, version}
+     */
+    var WissenHub = {
+        addEntry: function(entry) {
+            if (!entry.title || !entry.rubrik || !entry.content) {
+                console.error('WissenHub: title, rubrik und content sind Pflicht');
+                return null;
+            }
+            if (!['impl', 'walk', 'research', 'task'].includes(entry.rubrik)) {
+                console.error('WissenHub: rubrik muss impl/walk/research/task sein');
+                return null;
+            }
+            var newId = 'W-' + Date.now();
+            var snapshotId = DB.catalog.current_snapshot_id + 1;
+            DB.catalog.current_snapshot_id = snapshotId;
+
+            var newEntry = {
+                id: newId,
+                title: entry.title,
+                rubrik: entry.rubrik,
+                tags: entry.tags || [],
+                source: entry.source || 'unknown',
+                created: new Date().toISOString(),
+                filepath: 'archive/' + entry.rubrik + '/' + entry.rubrik + '_' + Date.now() + '_' + entry.title.replace(/[^a-zA-Z0-9äöüÄÖÜß-]/g, '-').toLowerCase() + '.md',
+                snapshot_id: snapshotId,
+                version: entry.version || 'v0.01',
+                _content: entry.content,
+                _contentLoaded: true
+            };
+
+            DB.catalog.entries.push(newEntry);
+            DB.catalog.snapshots.push({
+                id: snapshotId,
+                timestamp: new Date().toISOString(),
+                operation: 'append',
+                summary: 'Added: ' + entry.title + ' [' + entry.rubrik + ']',
+                entries_added: 1
+            });
+
+            saveCatalog();
+            renderAll();
+            toast('Archiviert: ' + entry.title);
+            return newId;
+        },
+
+        // Suche ueber alle Eintraege — gibt nie Loeschfunktion zurueck
+        search: function(query) {
+            var q = query.toLowerCase();
+            return DB.catalog.entries.filter(function(e) {
+                return (e.title || '').toLowerCase().includes(q) ||
+                    (e._content || '').toLowerCase().includes(q) ||
+                    (e.tags || []).join(' ').toLowerCase().includes(q) ||
+                    (e.source || '').toLowerCase().includes(q);
+            });
+        },
+
+        // Alle Eintraege einer Rubrik
+        getByRubrik: function(rubrik) {
+            return DB.catalog.entries.filter(function(e) { return e.rubrik === rubrik; });
+        },
+
+        // Einzelnen Eintrag holen (by ID)
+        getById: function(id) {
+            return DB.catalog.entries.find(function(e) { return e.id === id; });
+        },
+
+        // Export — Lesezugriff, kein Loeschen
+        exportAll: function() {
+            return JSON.parse(JSON.stringify(DB.catalog));
+        }
+    };
+
+    // Expose globally for KI-Agenten
+    window.WissenHub = WissenHub;
+
+    // ========================================
+    // TABS
+    // ========================================
+
+    function switchTab(tab) {
+        DB.currentTab = tab;
+        document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+        // Find the clicked tab button
+        document.querySelectorAll('.tab').forEach(function(t) {
+            var onclick = t.getAttribute('onclick');
+            if (onclick && onclick.includes("'" + tab + "'")) t.classList.add('active');
+        });
+        renderEntries();
+    }
+
+    // ========================================
+    // RENDER ENTRIES
+    // ========================================
+
+    function renderEntries(filter) {
+        var entries = DB.currentTab === 'all'
+            ? DB.catalog.entries.slice()
+            : DB.catalog.entries.filter(function(e) { return e.rubrik === DB.currentTab; });
+
+        if (filter) {
+            var q = filter.toLowerCase();
+            entries = entries.filter(function(e) {
+                return (e.title || '').toLowerCase().includes(q) ||
+                    (e._content || '').toLowerCase().includes(q) ||
+                    (e.tags || []).join(' ').toLowerCase().includes(q) ||
+                    (e.source || '').toLowerCase().includes(q);
+            });
+        }
+
+        entries.sort(function(a, b) { return new Date(b.created) - new Date(a.created); });
+
+        // Pagination — max 200 gleichzeitig rendern
+        var PAGE_SIZE = 200;
+        var displayEntries = entries.slice(0, PAGE_SIZE);
+        var remaining = entries.length - PAGE_SIZE;
+
+        var html = '';
+        if (displayEntries.length === 0) {
+            html = '<div class="empty-state"><div class="empty-icon">&#128237;</div>'
+                + '<div>Keine Eintr&#228;ge' + (DB.currentTab !== 'all' ? ' in dieser Rubrik' : '') + '</div>'
+                + '<div style="font-size:.75rem;margin-top:.5rem;color:var(--muted)">Eintr&#228;ge werden automatisch von KI-Agenten erstellt (R26)</div></div>';
+        } else {
+            displayEntries.forEach(function(e) {
+                var rubrikIcon = {impl:'&#128203;', walk:'&#128214;', research:'&#128300;', task:'&#9989;'}[e.rubrik] || '&#128196;';
+                var sourceClass = 'source-' + (e.source || 'unknown');
+                html += '<div class="entry-card" onclick="openEntry(\'' + esc(e.id) + '\')">';
+                html += '<div class="entry-immutable">&#128274; immutable</div>';
+                html += '<div class="entry-head"><div class="entry-title">' + rubrikIcon + ' ' + esc(e.title) + '</div>';
+                html += '<div style="display:flex;gap:.3rem"><span class="entry-source ' + sourceClass + '">' + esc(e.source || '?') + '</span>';
+                html += '<span class="entry-version">' + esc(e.version || 'v0.01') + '</span></div></div>';
+                var contentStr = (typeof e._content === 'string') ? e._content : (e._content ? String(e._content) : '');
+                html += '<div class="entry-desc">' + esc(contentStr.substring(0, 200)) + (contentStr.length > 200 ? '...' : '') + '</div>';
+                html += '<div class="entry-tags">';
+                (e.tags || []).forEach(function(t) {
+                    html += '<span class="tag" onclick="event.stopPropagation();filterByTag(\'' + esc(t) + '\')">' + esc(t) + '</span>';
+                });
+                html += '<span class="tag" style="color:var(--muted)">' + new Date(e.created).toLocaleDateString('de-DE') + '</span>';
+                html += '<span class="tag" style="color:var(--purple)">S#' + (e.snapshot_id || 0) + '</span>';
+                html += '</div></div>';
+            });
+            // Mehr-laden Button
+            if (remaining > 0) {
+                html += '<div style="text-align:center;padding:1rem"><button class="btn btn-primary" onclick="loadMoreEntries()" style="padding:.6rem 2rem">'
+                    + '\u2b07 Mehr laden (' + remaining.toLocaleString('de-DE') + ' verbleibend)</button></div>';
+            }
+        }
+        document.getElementById('entries-list').innerHTML = html;
+        // Store for "load more"
+        document.getElementById('entries-list')._allEntries = entries;
+        document.getElementById('entries-list')._shown = PAGE_SIZE;
+    }
+
+    function loadMoreEntries() {
+        var list = document.getElementById('entries-list');
+        var entries = list._allEntries || [];
+        var shown = list._shown || 200;
+        var nextBatch = entries.slice(shown, shown + 200);
+        if (nextBatch.length === 0) return;
+        var html = '';
+        nextBatch.forEach(function(e) {
+            var rubrikIcon = {impl:'&#128203;', walk:'&#128214;', research:'&#128300;', task:'&#9989;'}[e.rubrik] || '&#128196;';
+            var sourceClass = 'source-' + (e.source || 'unknown');
+            var contentStr = (typeof e._content === 'string') ? e._content : (e._content ? String(e._content) : '');
+            html += '<div class="entry-card" onclick="openEntry(\'' + esc(e.id) + '\')">';
+            html += '<div class="entry-immutable">&#128274; immutable</div>';
+            html += '<div class="entry-head"><div class="entry-title">' + rubrikIcon + ' ' + esc(e.title) + '</div>';
+            html += '<div style="display:flex;gap:.3rem"><span class="entry-source ' + sourceClass + '">' + esc(e.source || '?') + '</span>';
+            html += '<span class="entry-version">' + esc(e.version || 'v0.01') + '</span></div></div>';
+            html += '<div class="entry-desc">' + esc(contentStr.substring(0, 200)) + (contentStr.length > 200 ? '...' : '') + '</div>';
+            html += '<div class="entry-tags">';
+            (e.tags || []).forEach(function(t) {
+                html += '<span class="tag" onclick="event.stopPropagation();filterByTag(\'' + esc(t) + '\')">' + esc(t) + '</span>';
+            });
+            html += '<span class="tag" style="color:var(--muted)">' + new Date(e.created).toLocaleDateString('de-DE') + '</span>';
+            html += '</div></div>';
+        });
+        list._shown = shown + nextBatch.length;
+        var remaining = entries.length - list._shown;
+        if (remaining > 0) {
+            html += '<div style="text-align:center;padding:1rem"><button class="btn btn-primary" onclick="loadMoreEntries()" style="padding:.6rem 2rem">'
+                + '\u2b07 Mehr laden (' + remaining.toLocaleString('de-DE') + ' verbleibend)</button></div>';
+        }
+        // Remove old "load more" button and append
+        var oldBtn = list.querySelector('[onclick="loadMoreEntries()"]');
+        if (oldBtn && oldBtn.parentElement) oldBtn.parentElement.remove();
+        list.insertAdjacentHTML('beforeend', html);
+        toast('Seite geladen — ' + list._shown + ' von ' + entries.length);
+    }
+
+    // ========================================
+    // OPEN ENTRY — Markdown Viewer (Read-Only)
+    // ========================================
+
+    function openEntry(id) {
+        var entry = WissenHub.getById(id);
+        if (!entry) return;
+
+        var meta = '<div class="md-meta">'
+            + '<span>&#128203; ' + esc(entry.rubrik) + '</span>'
+            + '<span>&#128100; ' + esc(entry.source || '?') + '</span>'
+            + '<span>&#128197; ' + new Date(entry.created).toLocaleDateString('de-DE') + '</span>'
+            + '<span>S#' + (entry.snapshot_id || 0) + '</span>'
+            + '<span>' + esc(entry.version || 'v0.01') + '</span>'
+            + '</div>';
+
+        var tagsHtml = '<div class="entry-tags" style="margin-bottom:1rem">';
+        (entry.tags || []).forEach(function(t) {
+            tagsHtml += '<span class="tag">' + esc(t) + '</span>';
+        });
+        tagsHtml += '</div>';
+
+        var content = entry._content || '(Inhalt wird geladen...)';
+        var rendered = renderMarkdown(content);
+
+        document.getElementById('md-body').innerHTML = '<h1>' + esc(entry.title) + '</h1>' + meta + tagsHtml + rendered
+            + '<div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border);font-size:.65rem;color:var(--muted)">'
+            + '&#128274; Dieser Eintrag ist immutable — er kann nicht gel&#246;scht oder ver&#228;ndert werden (R26)'
+            + '</div>';
+        document.getElementById('md-viewer').classList.add('show');
+    }
+
+    function closeMdViewer() {
+        document.getElementById('md-viewer').classList.remove('show');
+    }
+
+    // Simple Markdown Renderer
+    function renderMarkdown(md) {
+        if (!md) return '';
+        var html = esc(md);
+        // Headers
+        html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+        html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+        html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+        // Bold & italic
+        html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+        // Code inline
+        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+        // Lists
+        html = html.replace(/^- \[x\] (.+)$/gm, '<li style="color:var(--green)">&#9989; $1</li>');
+        html = html.replace(/^- \[\/\] (.+)$/gm, '<li style="color:var(--yellow)">&#128296; $1</li>');
+        html = html.replace(/^- \[ \] (.+)$/gm, '<li style="color:var(--muted)">&#9723; $1</li>');
+        html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+        html = html.replace(/^(\d+)\. (.+)$/gm, '<li>$1. $2</li>');
+        // Tables (simple)
+        html = html.replace(/^\|(.+)\|$/gm, function(match, row) {
+            if (row.match(/^[\s\-:|]+$/)) return '';
+            var cells = row.split('|').map(function(c) { return c.trim(); });
+            return '<tr>' + cells.map(function(c) { return '<td>' + c + '</td>'; }).join('') + '</tr>';
+        });
+        // Paragraphs
+        html = html.replace(/\n\n/g, '</p><p>');
+        html = '<p>' + html + '</p>';
+        // Cleanup
+        html = html.replace(/<p>\s*<\/p>/g, '');
+        html = html.replace(/<p>(<h[123]>)/g, '$1');
+        html = html.replace(/(<\/h[123]>)<\/p>/g, '$1');
+        html = html.replace(/<p>(<li)/g, '<ul>$1');
+        html = html.replace(/(<\/li>)<\/p>/g, '$1</ul>');
+        html = html.replace(/<p>(<tr)/g, '<table>$1');
+        html = html.replace(/(<\/tr>)<\/p>/g, '$1</table>');
+        return html;
+    }
+
+    // ========================================
+    // SEARCH (JAMEZ)
+    // ========================================
+
+    function searchEntries() {
+        var q = document.getElementById('search').value;
+        renderEntries(q);
+    }
+
+    function filterByTag(tag) {
+        document.getElementById('search').value = tag;
+        renderEntries(tag);
+    }
+
+    // ========================================
+    // DUCKDB QUERY ENGINE (Simulated)
+    // ========================================
+
+    function toggleDuckDB() {
+        var p = document.getElementById('duckdb-panel');
+        p.style.display = p.style.display === 'none' ? 'block' : 'none';
+        if (p.style.display === 'block') runSQL();
+    }
+
+    function runSQL() {
+        var sql = document.getElementById('sql-query').value.toLowerCase().trim();
+        var entries = DB.catalog.entries.slice();
+
+        // Parse WHERE rubrik = 'xxx'
+        var rubrikMatch = sql.match(/rubrik\s*=\s*'(\w+)'/);
+        if (rubrikMatch) {
+            var rubrik = rubrikMatch[1];
+            entries = entries.filter(function(e) { return e.rubrik === rubrik; });
+        }
+
+        // Parse WHERE source = 'xxx'
+        var sourceMatch = sql.match(/source\s*=\s*'(\w+)'/);
+        if (sourceMatch) {
+            entries = entries.filter(function(e) { return e.source === sourceMatch[1]; });
+        }
+
+        // Parse WHERE tag LIKE '%xxx%' or tags contains 'xxx'
+        var tagMatch = sql.match(/tag[s]?\s+(?:like|contains|=)\s+'%?(\w+)%?'/i);
+        if (tagMatch) {
+            var tagQ = tagMatch[1].toLowerCase();
+            entries = entries.filter(function(e) {
+                return (e.tags || []).some(function(t) { return t.toLowerCase().includes(tagQ); });
+            });
+        }
+
+        // Parse WHERE title LIKE '%xxx%'
+        var titleMatch = sql.match(/title\s+like\s+'%(.+?)%'/i);
+        if (titleMatch) {
+            var titleQ = titleMatch[1].toLowerCase();
+            entries = entries.filter(function(e) { return (e.title || '').toLowerCase().includes(titleQ); });
+        }
+
+        // Parse ORDER BY
+        var orderMatch = sql.match(/order\s+by\s+(\w+)\s*(asc|desc)?/i);
+        if (orderMatch) {
+            var field = orderMatch[1];
+            var dir = (orderMatch[2] || 'asc').toLowerCase();
+            entries.sort(function(a, b) {
+                var va = a[field] || '', vb = b[field] || '';
+                if (typeof va === 'string') va = va.toLowerCase();
+                if (typeof vb === 'string') vb = vb.toLowerCase();
+                return dir === 'desc' ? (vb > va ? 1 : -1) : (va > vb ? 1 : -1);
+            });
+        } else {
+            entries.sort(function(a, b) { return new Date(b.created) - new Date(a.created); });
+        }
+
+        // Parse LIMIT
+        var limit = 20;
+        var limitMatch = sql.match(/limit\s+(\d+)/);
+        if (limitMatch) limit = parseInt(limitMatch[1]);
+        entries = entries.slice(0, limit);
+
+        // Render
+        var html = '';
+        entries.forEach(function(e) {
+            html += '<tr onclick="openEntry(\'' + esc(e.id) + '\')" style="cursor:pointer">'
+                + '<td>' + esc(e.id || '-') + '</td>'
+                + '<td>' + esc(e.title) + '</td>'
+                + '<td>' + esc(e.rubrik) + '</td>'
+                + '<td>' + esc(e.source || '?') + '</td>'
+                + '<td>' + esc((e.tags || []).join(', ')) + '</td>'
+                + '<td>' + new Date(e.created).toLocaleDateString('de-DE') + '</td>'
+                + '<td>S#' + (e.snapshot_id || 0) + '</td>'
+                + '</tr>';
+        });
+        if (!html) html = '<tr><td colspan="7" style="text-align:center;padding:1rem;color:var(--muted)">Keine Ergebnisse</td></tr>';
+        document.getElementById('db-rows').innerHTML = html;
+    }
+
+    // ========================================
+    // ICEBERG TAGS
+    // ========================================
+
+    function toggleIceberg() {
+        var p = document.getElementById('iceberg-panel');
+        p.style.display = p.style.display === 'none' ? 'block' : 'none';
+        if (p.style.display === 'block') renderTagCloud();
+    }
+
+    function renderTagCloud() {
+        var tags = {};
+        DB.catalog.entries.forEach(function(e) {
+            (e.tags || []).forEach(function(t) { tags[t] = (tags[t] || 0) + 1; });
+        });
+        var html = '';
+        var sorted = Object.keys(tags).sort(function(a, b) { return tags[b] - tags[a]; });
+        sorted.forEach(function(t) {
+            var size = Math.min(1.2, 0.7 + tags[t] * 0.1);
+            html += '<span class="iceberg-tag" onclick="filterByTag(\'' + esc(t) + '\')" style="font-size:' + size + 'rem">'
+                + esc(t) + '<span class="tag-count">' + tags[t] + '</span></span>';
+        });
+        if (!html) html = '<span style="color:var(--muted);font-size:.75rem">Noch keine Tags vorhanden</span>';
+        document.getElementById('tag-cloud').innerHTML = html;
+    }
+
+    // ========================================
+    // SNAPSHOT LOG
+    // ========================================
+
+    function renderSnapshots() {
+        var html = '';
+        var snaps = (DB.catalog.snapshots || []).slice().reverse();
+        snaps.forEach(function(s) {
+            html += '<div class="snapshot-item">'
+                + '<strong>S#' + s.id + '</strong> — ' + esc(s.summary || s.operation)
+                + '<br><span style="color:var(--purple)">' + new Date(s.timestamp).toLocaleString('de-DE') + '</span>'
+                + '</div>';
+        });
+        if (!html) html = '<div style="font-size:.7rem;color:var(--muted)">Noch keine Snapshots</div>';
+        document.getElementById('snapshot-log').innerHTML = html;
+    }
+
+    // ========================================
+    // CHAT (NEXUZ Network)
+    // ========================================
+
+    function sendChat() {
+        var input = document.getElementById('chat-input');
+        var msg = input.value.trim();
+        if (!msg) return;
+        addChatMsg('user', msg);
+        input.value = '';
+
+        var results = WissenHub.search(msg);
+
+        setTimeout(function() {
+            if (results.length > 0) {
+                var resp = '&#128270; **' + results.length + ' Treffer** im Wissensarchiv:\n\n';
+                results.slice(0, 5).forEach(function(r) {
+                    var rubrikName = {impl:'&#128203; Impl', walk:'&#128214; Walk', research:'&#128300; Research', task:'&#9989; Task'}[r.rubrik] || r.rubrik;
+                    resp += '&#8226; ' + rubrikName + ' — **' + r.title + '** (' + r.source + ', S#' + (r.snapshot_id || 0) + ')\n';
+                });
+                if (results.length > 5) resp += '\n...und ' + (results.length - 5) + ' weitere Treffer.';
+                resp += '\n\n_JAMEZ Relevanz: ' + Math.min(100, 60 + results.length * 10) + '/100_';
+                addChatMsg('ai', resp);
+            } else {
+                addChatMsg('ai', '&#128270; Keine Treffer im Archiv.\n\n&#128161; Tipp: Nutze andere Suchbegriffe oder filtere nach Rubrik/Tags.');
+            }
+        }, 400);
+    }
+
+    function addChatMsg(role, text) {
+        var msgs = document.getElementById('chat-messages');
+        var icon = role === 'user' ? '&#128100;' : '&#127919;';
+        var cls = role === 'user' ? 'msg-user' : 'msg-ai';
+        var formatted = esc(text).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>').replace(/_(.+?)_/g, '<em>$1</em>');
+        msgs.innerHTML += '<div class="chat-msg ' + cls + '"><div class="chat-avatar">' + icon + '</div><div class="chat-bubble">' + formatted + '</div></div>';
+        msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    // ========================================
+    // STATS
+    // ========================================
+
+    function updateStats() {
+        var entries = DB.catalog.entries;
+        var counts = {impl: 0, walk: 0, research: 0, task: 0};
+        var tags = {};
+        entries.forEach(function(e) {
+            if (counts[e.rubrik] !== undefined) counts[e.rubrik]++;
+            (e.tags || []).forEach(function(t) { tags[t] = true; });
+        });
+
+        document.getElementById('s-impl').textContent = counts.impl;
+        document.getElementById('s-walk').textContent = counts.walk;
+        document.getElementById('s-research').textContent = counts.research;
+        document.getElementById('s-task').textContent = counts.task;
+        document.getElementById('s-tags').textContent = Object.keys(tags).length;
+        document.getElementById('s-snap').textContent = (DB.catalog.snapshots || []).length;
+        document.getElementById('s-total').textContent = entries.length;
+
+        // Workspace Stats
+        var wsCounts = {documentation:0, readme:0, archive:0, blueprint:0, changelog:0};
+        entries.forEach(function(e) {
+            if (wsCounts[e.rubrik] !== undefined) wsCounts[e.rubrik]++;
+        });
+        var el;
+        el = document.getElementById('s-doc'); if (el) el.textContent = wsCounts.documentation;
+        el = document.getElementById('s-readme'); if (el) el.textContent = wsCounts.readme;
+        el = document.getElementById('s-archive'); if (el) el.textContent = wsCounts.archive;
+        el = document.getElementById('s-blueprint'); if (el) el.textContent = wsCounts.blueprint;
+        el = document.getElementById('s-changelog'); if (el) el.textContent = wsCounts.changelog;
+
+        // Tab counts
+        document.getElementById('tc-all').textContent = entries.length ? ' (' + entries.length + ')' : '';
+        document.getElementById('tc-impl').textContent = counts.impl ? ' (' + counts.impl + ')' : '';
+        document.getElementById('tc-walk').textContent = counts.walk ? ' (' + counts.walk + ')' : '';
+        document.getElementById('tc-research').textContent = counts.research ? ' (' + counts.research + ')' : '';
+        document.getElementById('tc-task').textContent = counts.task ? ' (' + counts.task + ')' : '';
+        el = document.getElementById('tc-doc'); if (el) el.textContent = wsCounts.documentation ? ' (' + wsCounts.documentation + ')' : '';
+        el = document.getElementById('tc-readme'); if (el) el.textContent = wsCounts.readme ? ' (' + wsCounts.readme + ')' : '';
+        el = document.getElementById('tc-archive'); if (el) el.textContent = wsCounts.archive ? ' (' + wsCounts.archive + ')' : '';
+        el = document.getElementById('tc-blueprint'); if (el) el.textContent = wsCounts.blueprint ? ' (' + wsCounts.blueprint + ')' : '';
+        el = document.getElementById('tc-changelog'); if (el) el.textContent = wsCounts.changelog ? ' (' + wsCounts.changelog + ')' : '';
+
+        document.getElementById('total-count').textContent = entries.length + ' Eintr\u00e4ge';
+    }
+
+    // ========================================
+    // EXPORT (read-only, kein Delete)
+    // ========================================
+
+    function exportAll() {
+        var data = WissenHub.exportAll();
+        var blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'NEXUZ_WissenHub_Export_' + new Date().toISOString().slice(0, 10) + '.json';
+        a.click();
+        toast('Export erstellt — ' + data.entries.length + ' Eintr\u00e4ge');
+    }
+
+    // ========================================
+    // UTILS
+    // ========================================
+
+    function esc(s) { if (!s) return ''; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    function toast(m) { var t = document.getElementById('toast'); document.getElementById('tt').textContent = m; t.classList.add('show'); setTimeout(function() { t.classList.remove('show'); }, 3000); }
+
+    function renderAll() {
+        renderEntries();
+        updateStats();
+        renderSnapshots();
+    }
+
+    // ========================================
+    // KEYBOARD SHORTCUTS
+    // ========================================
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeMdViewer();
+        if (e.key === '/' && !e.ctrlKey && document.activeElement.tagName !== 'INPUT') {
+            e.preventDefault();
+            document.getElementById('search').focus();
+        }
+    });
+
+    // ========================================
+    // WORKSPACE DATA INTEGRATION (master-data.js)
+    // Merge 4.100+ Workspace-Dateien in den Katalog
+    // ========================================
+
+    function loadWorkspaceData() {
+        if (typeof MASTER_INDEX === 'undefined') return;
+        var data = MASTER_INDEX;
+        var existingPaths = {};
+        DB.catalog.entries.forEach(function(e) {
+            if (e.filepath) existingPaths[e.filepath] = true;
+            if (e._wsPath) existingPaths[e._wsPath] = true;
+        });
+
+        var added = 0;
+
+        // Brain-Artefakte
+        (data.brain_artifacts || []).forEach(function(a) {
+            var key = 'brain:' + (a.path || a.file);
+            if (existingPaths[key]) return;
+            existingPaths[key] = true;
+            var rubrik = (a.type || '').toLowerCase().replace('artifact_type_','');
+            if (rubrik === 'implementation_plan') rubrik = 'impl';
+            if (rubrik === 'walkthrough') rubrik = 'walk';
+            if (!['impl','walk','research','task','documentation','readme','archive','blueprint','changelog'].includes(rubrik)) rubrik = 'documentation';
+            DB.catalog.entries.push({
+                id: 'B-' + (added + 1000),
+                title: a.file || 'Brain Artifact',
+                rubrik: rubrik,
+                tags: ['brain', rubrik],
+                source: 'brain',
+                created: a.date || new Date().toISOString(),
+                _content: a.summary || '',
+                _contentLoaded: true,
+                _wsPath: key,
+                version: 'v1.0'
+            });
+            added++;
+        });
+
+        // Workspace-Dateien (.md + .zip/.rar)
+        (data.workspace_files || []).forEach(function(w) {
+            var key = 'ws:' + (w.path || w.file);
+            if (existingPaths[key]) return;
+            existingPaths[key] = true;
+            var rubrik = w.type || 'documentation';
+            // Map to WissenHub-kompatible Rubriken
+            if (rubrik === 'implementation_plan') rubrik = 'impl';
+            if (rubrik === 'walkthrough') rubrik = 'walk';
+            DB.catalog.entries.push({
+                id: 'WS-' + (added + 1000),
+                title: w.file || 'Workspace File',
+                rubrik: rubrik,
+                tags: ['workspace', rubrik],
+                source: 'workspace',
+                created: w.date || new Date().toISOString(),
+                filepath: w.path || '',
+                _content: w.summary || '',
+                _contentLoaded: true,
+                _wsPath: key,
+                version: 'v1.0',
+                _size: w.size || 0
+            });
+            added++;
+        });
+
+        if (added > 0) {
+            toast(added.toLocaleString('de-DE') + ' Workspace-Dateien integriert');
+            renderAll();
+        }
+    }
+
+    // ========================================
+    // INIT
+    // ========================================
+
+    loadCatalog();
+    tryLoadCatalogFromDisk();
+    loadWorkspaceData();
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam) {
+        switchTab(tabParam);
+        updateStats();
+        renderSnapshots();
+    } else {
+        renderAll();
+    }
+    </script>
+
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/nexuz.js"></script>
+    <footer style="text-align:center;padding:.75rem;font-size:.7rem;color:#606060;font-family:monospace;border-top:1px solid #2a2a2e">
+        &copy; 2024-2026 <span style="color:#55ACEE">DEVKiTZ&#8482;</span> &middot; NEXUZ&#8482; WissenHub v1.00 &middot; MOD-075 &middot; R26 IMMUTABLE &middot; 4.100+ Einträge
+    </footer>
+
+    <script src="../../shared/dkz-chain-nav.js"></script>
+    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+</html>

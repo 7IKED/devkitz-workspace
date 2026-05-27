@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛡️ DkZ Self-Repair Watchdog — System Health Monitor</title>
+    <meta name="description"
+        content="DkZ Watchdog — Echtzeit-Systemüberwachung, Auto-Restart, Health-Checks und Incident-Response.">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        :root {
+            --bg: #0e0e10;
+            --bg2: #121215;
+            --card: #16161a;
+            --card2: #1e1e24;
+            --border: #1a1a2a;
+            --text: #e8e8f0;
+            --muted: #5e5e78;
+            --accent: #fa1e4e;
+            --cyan: #fa1e4e;
+            --purple: #a855f7;
+            --green: #00ff88;
+            --red: #ff4466;
+            --yellow: #ffb800;
+            --blue: #55acee;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --radius: 16px
+        }
+
+        html,
+        body {
+            height: 100%;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text)
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            background: radial-gradient(ellipse at 30% 20%, rgba(250, 30, 78, .03) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(250, 30, 78, .03) 0%, transparent 50%), var(--bg)
+        }
+
+        .header {
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0
+        }
+
+        .header h1 {
+            font-size: 17px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--cyan), var(--green));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .header .sub {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono);
+            letter-spacing: 1px
+        }
+
+        .header-right {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .2s;
+            text-decoration: none
+        }
+
+        .btn:hover {
+            color: var(--text);
+            border-color: var(--cyan)
+        }
+
+        .status-bar {
+            padding: 12px 24px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            font-size: 11px;
+            font-family: var(--mono)
+        }
+
+        .status-pill .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .4
+            }
+        }
+
+        .status-pill.ok .dot {
+            background: var(--green)
+        }
+
+        .status-pill.warn .dot {
+            background: var(--yellow)
+        }
+
+        .status-pill.err .dot {
+            background: var(--red)
+        }
+
+        .main {
+            flex: 1;
+            overflow: auto;
+            padding: 20px 24px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 14px;
+            align-content: start
+        }
+
+        @media(max-width:900px) {
+            .main {
+                grid-template-columns: 1fr 1fr
+            }
+        }
+
+        @media(max-width:600px) {
+            .main {
+                grid-template-columns: 1fr
+            }
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden
+        }
+
+        .card-head {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 700
+        }
+
+        .card-head .icon {
+            font-size: 18px
+        }
+
+        .card-head .status {
+            margin-left: auto;
+            font-size: 9px;
+            font-family: var(--mono);
+            padding: 3px 8px;
+            border-radius: 6px
+        }
+
+        .card-body {
+            padding: 14px 16px
+        }
+
+        .card.span2 {
+            grid-column: span 2
+        }
+
+        @media(max-width:600px) {
+            .card.span2 {
+                grid-column: span 1
+            }
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, .03);
+            font-size: 12px
+        }
+
+        .metric:last-child {
+            border-bottom: none
+        }
+
+        .metric .label {
+            color: var(--muted)
+        }
+
+        .metric .val {
+            font-family: var(--mono);
+            font-weight: 700
+        }
+
+        .metric .val.ok {
+            color: var(--green)
+        }
+
+        .metric .val.warn {
+            color: var(--yellow)
+        }
+
+        .metric .val.err {
+            color: var(--red)
+        }
+
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 60px;
+            margin-top: 10px
+        }
+
+        .bar {
+            flex: 1;
+            background: var(--green);
+            border-radius: 3px 3px 0 0;
+            min-width: 4px;
+            transition: height .3s;
+            opacity: .7
+        }
+
+        .bar:hover {
+            opacity: 1
+        }
+
+        .bar.warn {
+            background: var(--yellow)
+        }
+
+        .bar.err {
+            background: var(--red)
+        }
+
+        .incident-list {
+            max-height: 200px;
+            overflow-y: auto
+        }
+
+        .incident {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, .03);
+            font-size: 11px;
+            display: flex;
+            gap: 8px;
+            align-items: flex-start
+        }
+
+        .incident:last-child {
+            border-bottom: none
+        }
+
+        .incident .i-icon {
+            font-size: 14px;
+            flex-shrink: 0;
+            margin-top: 1px
+        }
+
+        .incident .i-time {
+            font-family: var(--mono);
+            color: var(--muted);
+            font-size: 9px;
+            flex-shrink: 0;
+            min-width: 50px
+        }
+
+        .incident .i-text {
+            flex: 1;
+            color: var(--muted)
+        }
+
+        .incident .i-text strong {
+            color: var(--text)
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .2s;
+            margin-top: 6px
+        }
+
+        .action-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff
+        }
+
+        .action-btn.green:hover {
+            background: var(--green);
+            border-color: var(--green);
+            color: #000
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div>
+            <h1>🛡️ Self-Repair Watchdog</h1>
+            <div class="sub">SYSTEM HEALTH MONITOR v1.01.1_01</div>
+        </div>
+        <div class="header-right">
+            <a href="../nexuz/index.html" class="btn">⚡ NEXUZ²</a>
+            <a href="../hub/index.html" class="btn">← Hub</a>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-pill ok">
+            <div class="dot"></div> NEXUZ² Core: Online
+        </div>
+        <div class="status-pill ok">
+            <div class="dot"></div> KVM8 VPS: 99.7%
+        </div>
+        <div class="status-pill ok">
+            <div class="dot"></div> LLM Server: Ready
+        </div>
+        <div class="status-pill warn">
+            <div class="dot"></div> Apache: Slow (320ms)
+        </div>
+        <div class="status-pill ok">
+            <div class="dot"></div> CF Worker: Edge OK
+        </div>
+        <div class="status-pill ok">
+            <div class="dot"></div> Nextcloud: Synced
+        </div>
+    </div>
+
+    <div class="main">
+        <!-- SYSTEM OVERVIEW -->
+        <div class="card">
+            <div class="card-head"><span class="icon">🖥️</span> System Overview <span class="status"
+                    style="background:rgba(0,255,136,.1);color:var(--green)">HEALTHY</span></div>
+            <div class="card-body">
+                <div class="metric"><span class="label">Uptime</span><span class="val ok">72d 14h 22m</span></div>
+                <div class="metric"><span class="label">CPU Load</span><span class="val ok">23%</span></div>
+                <div class="metric"><span class="label">RAM Usage</span><span class="val ok">4.2 / 8 GB</span></div>
+                <div class="metric"><span class="label">Disk</span><span class="val warn">78% (156/200 GB)</span></div>
+                <div class="metric"><span class="label">Last Check</span><span class="val">vor 12s</span></div>
+                <div class="metric"><span class="label">Auto-Repairs</span><span class="val ok">3 (letzte 7d)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- BACKEND HEALTH -->
+        <div class="card">
+            <div class="card-head"><span class="icon">🔌</span> Backend Health</div>
+            <div class="card-body">
+                <div class="metric"><span class="label">🖥️ KVM8 VPS</span><span class="val ok">42ms ✓</span></div>
+                <div class="metric"><span class="label">🧠 LLM Dedicated</span><span class="val ok">89ms ✓</span></div>
+                <div class="metric"><span class="label">📊 Google Apps Script</span><span class="val ok">210ms ✓</span>
+                </div>
+                <div class="metric"><span class="label">🌐 Apache</span><span class="val warn">320ms ⚠</span></div>
+                <div class="metric"><span class="label">⚡ CF Worker</span><span class="val ok">18ms ✓</span></div>
+                <div class="metric"><span class="label">🐙 Nextcloud</span><span class="val ok">65ms ✓</span></div>
+            </div>
+        </div>
+
+        <!-- RESPONSE TIMES -->
+        <div class="card">
+            <div class="card-head"><span class="icon">📊</span> Response Times (24h)</div>
+            <div class="card-body">
+                <div class="bar-chart" id="responseChart"></div>
+                <div class="metric" style="margin-top:10px"><span class="label">Ø Latenz</span><span
+                        class="val ok">124ms</span></div>
+                <div class="metric"><span class="label">Peak</span><span class="val warn">480ms (14:22)</span></div>
+                <div class="metric"><span class="label">Requests/h</span><span class="val">847</span></div>
+            </div>
+        </div>
+
+        <!-- INCIDENTS -->
+        <div class="card span2">
+            <div class="card-head"><span class="icon">🚨</span> Incidents & Auto-Repairs <span class="status"
+                    style="background:rgba(255,184,0,.1);color:var(--yellow)">3 letzte 7d</span></div>
+            <div class="card-body">
+                <div class="incident-list">
+                    <div class="incident"><span class="i-icon">🔄</span><span class="i-time">heute 14:22</span><span
+                            class="i-text"><strong>Apache Auto-Restart</strong> — Response time >500ms für 3min,
+                            automatischer Neustart ausgelöst. Latenz normalisiert auf 320ms.</span></div>
+                    <div class="incident"><span class="i-icon">⚠️</span><span class="i-time">gestern 02:15</span><span
+                            class="i-text"><strong>LLM Server OOM</strong> — Out-of-Memory bei großem Batch-Request.
+                            Auto-Purge der GPU-Cache, Model Reload innerhalb 8s.</span></div>
+                    <div class="incident"><span class="i-icon">🔄</span><span class="i-time">06.03 09:44</span><span
+                            class="i-text"><strong>CF Worker Rate-Limit</strong> — 10k requests/min erreicht.
+                            Auto-Throttle aktiviert, Anfragen über VPS umgeleitet.</span></div>
+                    <div class="incident"><span class="i-icon">✅</span><span class="i-time">05.03 16:30</span><span
+                            class="i-text"><strong>SSL Cert Renewal</strong> — Let's Encrypt Zertifikat automatisch
+                            erneuert für 3 Domains. 0 Downtime.</span></div>
+                    <div class="incident"><span class="i-icon">🔄</span><span class="i-time">04.03 11:18</span><span
+                            class="i-text"><strong>Nextcloud Sync Stuck</strong> — WebDAV Lock detected. Automatische
+                            Lock-Release, Sync resumed in 4s.</span></div>
+                    <div class="incident"><span class="i-icon">✅</span><span class="i-time">03.03 20:00</span><span
+                            class="i-text"><strong>Scheduled Maintenance</strong> — Wöchentliches DB-Vacuum,
+                            Log-Rotation, Temp-Cleanup. Alles clean.</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- WATCHDOG RULES -->
+        <div class="card">
+            <div class="card-head"><span class="icon">⚙️</span> Watchdog Rules</div>
+            <div class="card-body">
+                <div class="metric"><span class="label">Health-Check Intervall</span><span class="val">30s</span></div>
+                <div class="metric"><span class="label">Auto-Restart Threshold</span><span class="val">3 fails</span>
+                </div>
+                <div class="metric"><span class="label">Response Timeout</span><span class="val">5000ms</span></div>
+                <div class="metric"><span class="label">Max Retries</span><span class="val">2</span></div>
+                <div class="metric"><span class="label">Fallback Chain</span><span class="val">VPS → CF → Apache</span>
+                </div>
+                <div class="metric"><span class="label">Log Retention</span><span class="val">30 Tage</span></div>
+                <button class="action-btn">⚙️ Rules bearbeiten</button>
+            </div>
+        </div>
+
+        <!-- QUICK ACTIONS -->
+        <div class="card">
+            <div class="card-head"><span class="icon">🚀</span> Quick Actions</div>
+            <div class="card-body">
+                <button class="action-btn green">🔍 Health-Check JETZT</button>
+                <button class="action-btn">🔄 Alle Backends neustarten</button>
+                <button class="action-btn">🧹 Cache + Logs bereinigen</button>
+                <button class="action-btn">📊 Full Report generieren</button>
+                <button class="action-btn">🔕 Alerts stummschalten (1h)</button>
+            </div>
+        </div>
+
+        <!-- DISK USAGE -->
+        <div class="card">
+            <div class="card-head"><span class="icon">💾</span> Storage Monitor</div>
+            <div class="card-body">
+                <div class="metric"><span class="label">KVM8 VPS</span><span class="val warn">78% — 156/200 GB</span>
+                </div>
+                <div class="metric"><span class="label">LLM Server</span><span class="val ok">45% — 900 GB/2 TB</span>
+                </div>
+                <div class="metric"><span class="label">Nextcloud</span><span class="val ok">32% — 64/200 GB</span>
+                </div>
+                <div class="metric"><span class="label">CF R2 Bucket</span><span class="val ok">12% — 1.2/10 GB</span>
+                </div>
+                <div class="metric"><span class="label">Google Drive</span><span class="val ok">8% — 1.2/15 GB</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        // Generate response time chart
+        const chart = document.getElementById('responseChart');
+        const hours = 24;
+        for (let i = 0; i < hours; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'bar';
+            const latency = 80 + Math.random() * 200;
+            const height = Math.min((latency / 500) * 100, 100);
+            bar.style.height = height + '%';
+            if (latency > 300) bar.classList.add('warn');
+            if (latency > 450) bar.classList.add('err');
+            bar.title = `${String(i).padStart(2, '0')}:00 — ${Math.round(latency)}ms`;
+            chart.appendChild(bar);
+        }
+
+        // Simulate live updates
+        setInterval(() => {
+            document.querySelectorAll('.status-pill .dot').forEach(dot => {
+                dot.style.animationDuration = (1.5 + Math.random()) + 's';
+            });
+        }, 5000);
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

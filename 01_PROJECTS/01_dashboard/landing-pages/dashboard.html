@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DEVKiTZ™ — Command Center</title>
+<script src="../../shared/dkz-info.js" defer></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;min-height:100%;background:#000;font-family:'Courier New',monospace;color:#c8c8c8;cursor:none;overflow-x:hidden;}
+
+/* SCANLINES */
+body::before{content:'';position:fixed;inset:0;z-index:200;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.055) 2px,rgba(0,0,0,.055) 4px);}
+
+/* NOISE */
+.noise{position:fixed;inset:0;z-index:199;pointer-events:none;opacity:.018;animation:nz .12s steps(2) infinite;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+@keyframes nz{0%{transform:translate(0,0)}50%{transform:translate(-1%,1%)}100%{transform:translate(1%,-1%)}}
+
+.vignette{position:fixed;inset:0;z-index:198;pointer-events:none;background:radial-gradient(ellipse at 50% 40%,transparent 38%,rgba(0,0,0,.95) 100%);}
+
+/* CURSOR */
+.cursor{position:fixed;width:10px;height:10px;border:1px solid rgba(250,30,78,.7);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .1s,height .1s;mix-blend-mode:difference;}
+.cursor.h{width:20px;height:20px;background:rgba(250,30,78,.06);}
+
+/* CANVAS */
+canvas{position:fixed;inset:0;z-index:0;}
+
+/* PAGE */
+.page{position:relative;z-index:10;max-width:1200px;margin:0 auto;padding:20px 24px 40px;}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid rgba(250,30,78,.08);margin-bottom:28px;}
+.tb-left{display:flex;align-items:center;gap:20px;}
+.logo{font-size:12px;letter-spacing:5px;text-transform:uppercase;color:rgba(250,30,78,.7);}
+.logo b{color:rgba(250,30,78,.95);}
+.sys-badge{font-size:7px;letter-spacing:2px;padding:2px 8px;border:1px solid rgba(0,255,136,.15);color:rgba(0,255,136,.4);border-radius:1px;}
+.tb-right{display:flex;align-items:center;gap:16px;}
+.tb-item{font-size:8px;letter-spacing:2px;color:rgba(50,50,50,.6);}
+.tb-item span{color:rgba(250,30,78,.4);}
+#clock{font-size:9px;letter-spacing:3px;color:rgba(60,60,60,.5);}
+
+/* SOUND VISUALIZER BAR */
+.viz-bar{width:100%;height:36px;display:flex;align-items:flex-end;gap:2px;margin-bottom:28px;padding:0 4px;}
+.vb{flex:1;min-width:2px;border-radius:1px 1px 0 0;background:rgba(250,30,78,.25);transition:height .06s ease;min-height:2px;}
+.vb.green{background:rgba(0,255,136,.2);}
+.vb.blue{background:rgba(85,172,238,.2);}
+
+/* SOUND CONTROLS */
+.sound-row{display:flex;align-items:center;gap:12px;margin-bottom:24px;}
+.snd-btn{padding:6px 14px;font-size:8px;letter-spacing:3px;text-transform:uppercase;font-family:'Courier New',monospace;cursor:none;border:1px solid rgba(250,30,78,.2);background:transparent;color:rgba(80,80,80,.5);border-radius:2px;transition:all .2s;}
+.snd-btn:hover{border-color:rgba(250,30,78,.5);color:rgba(250,30,78,.8);}
+.snd-btn.on{border-color:rgba(250,30,78,.6);color:rgba(250,30,78,.9);background:rgba(250,30,78,.04);}
+.snd-label{font-size:8px;letter-spacing:2px;color:rgba(50,50,50,.5);text-transform:uppercase;}
+.vol-slider{width:100px;accent-color:rgba(250,30,78,.6);cursor:none;}
+
+/* GRID */
+.section-label{font-size:8px;letter-spacing:4px;text-transform:uppercase;color:rgba(50,50,50,.4);margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+.section-label::after{content:'';flex:1;height:1px;background:rgba(250,30,78,.05);}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:32px;}
+
+/* MODULE CARDS */
+.card{background:rgba(3,3,3,.96);border:1px solid rgba(250,30,78,.07);border-radius:2px;padding:18px;transition:border-color .3s,box-shadow .3s;position:relative;overflow:hidden;cursor:none;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent,rgba(250,30,78,.3)),transparent);opacity:0;transition:opacity .3s;}
+.card:hover{border-color:var(--accent,rgba(250,30,78,.25));box-shadow:0 0 30px rgba(250,30,78,.04);}
+.card:hover::before{opacity:1;}
+.card.pulse{animation:cardPulse 2s ease-in-out infinite;}
+@keyframes cardPulse{0%,100%{border-color:rgba(250,30,78,.07)}50%{border-color:rgba(250,30,78,.2)}}
+
+.c-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
+.c-icon{font-size:22px;line-height:1;}
+.c-status{font-size:7px;letter-spacing:2px;padding:2px 7px;border-radius:1px;border:1px solid;}
+.status-on{border-color:rgba(0,255,136,.25);color:rgba(0,255,136,.5);}
+.status-plan{border-color:rgba(255,180,0,.2);color:rgba(255,180,0,.4);}
+.status-off{border-color:rgba(80,80,80,.2);color:rgba(60,60,60,.4);}
+.c-name{font-size:13px;letter-spacing:2px;font-weight:bold;color:rgba(180,180,180,.8);margin-bottom:4px;}
+.c-sub{font-size:8px;letter-spacing:1px;color:rgba(60,60,60,.5);text-transform:uppercase;margin-bottom:10px;}
+.c-desc{font-size:10px;line-height:1.6;color:rgba(100,100,100,.5);}
+
+/* SOUND BAR per card */
+.c-wave{display:flex;gap:2px;align-items:flex-end;margin-top:12px;height:16px;}
+.cw-bar{width:3px;border-radius:1px;background:var(--accent,rgba(250,30,78,.3));min-height:2px;transition:height .08s ease;}
+
+/* MINI VIZ */
+.c-vizmini{display:flex;gap:1px;align-items:flex-end;height:12px;margin-top:10px;}
+.cvm{width:2px;border-radius:1px;background:var(--accent,rgba(250,30,78,.2));}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:32px;}
+.stat{background:rgba(2,2,2,.98);border:1px solid rgba(250,30,78,.06);border-radius:2px;padding:14px;text-align:center;}
+.stat-n{font-size:28px;font-weight:900;color:rgba(250,30,78,.6);letter-spacing:-1px;line-height:1;}
+.stat-l{font-size:7px;letter-spacing:3px;color:rgba(50,50,50,.5);text-transform:uppercase;margin-top:4px;}
+
+/* BOTTOM LOG */
+.log{background:rgba(2,2,2,.98);border:1px solid rgba(250,30,78,.05);border-radius:2px;padding:14px;font-size:9px;line-height:1.8;color:rgba(60,60,60,.5);max-height:120px;overflow:hidden;}
+.log-line{opacity:0;animation:logIn .3s ease forwards;}
+.log-line.red{color:rgba(250,30,78,.4);}
+.log-line.green{color:rgba(0,255,136,.35);}
+@keyframes logIn{to{opacity:1;}}
+
+/* ═══ ANALYSE SYSTEM ═══ */
+.analyse-row{display:flex;align-items:center;gap:12px;margin-bottom:24px;}
+.analyse-btn{
+  padding:10px 28px;font-size:9px;letter-spacing:4px;text-transform:uppercase;
+  font-family:'Courier New',monospace;cursor:none;
+  border:1px solid rgba(250,30,78,.35);background:rgba(250,30,78,.04);
+  color:rgba(250,30,78,.8);border-radius:2px;transition:all .3s;
+  position:relative;overflow:hidden;
+}
+.analyse-btn:hover{border-color:rgba(250,30,78,.7);background:rgba(250,30,78,.08);color:#fa1e4e;box-shadow:0 0 30px rgba(250,30,78,.12);}
+.analyse-btn.scanning{pointer-events:none;border-color:rgba(250,30,78,.6);}
+.analyse-btn.scanning::after{
+  content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(250,30,78,.15),transparent);
+  animation:btnSweep .8s ease infinite;
+}
+@keyframes btnSweep{to{left:100%;}}
+.analyse-status{font-size:8px;letter-spacing:2px;color:rgba(80,80,80,.5);}
+
+/* SCAN OVERLAY on cards */
+.card.scanning{position:relative;}
+.card.scanning::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,transparent 20%,rgba(250,30,78,.8) 50%,transparent 80%);
+  animation:scanLine 1.2s ease-in-out forwards;
+  box-shadow:0 0 20px rgba(250,30,78,.4),0 4px 15px rgba(250,30,78,.15);
+}
+@keyframes scanLine{0%{top:0;opacity:1}100%{top:100%;opacity:0}}
+.card.scan-ok{border-color:rgba(0,255,136,.3)!important;box-shadow:0 0 20px rgba(0,255,136,.06)!important;}
+.card.scan-ok::before{opacity:1!important;background:linear-gradient(90deg,transparent,rgba(0,255,136,.3),transparent)!important;}
+.card.scan-warn{border-color:rgba(255,180,0,.3)!important;box-shadow:0 0 20px rgba(255,180,0,.06)!important;}
+.card.scan-warn::before{opacity:1!important;background:linear-gradient(90deg,transparent,rgba(255,180,0,.3),transparent)!important;}
+.card.scan-err{border-color:rgba(250,30,78,.4)!important;box-shadow:0 0 20px rgba(250,30,78,.08)!important;}
+.card.scan-err::before{opacity:1!important;background:linear-gradient(90deg,transparent,rgba(250,30,78,.4),transparent)!important;}
+
+/* SCAN PROGRESS BAR */
+.scan-progress{width:100%;height:3px;background:rgba(250,30,78,.06);border-radius:2px;margin-bottom:20px;overflow:hidden;opacity:0;transition:opacity .3s;}
+.scan-progress.active{opacity:1;}
+.scan-progress-fill{height:100%;width:0;background:linear-gradient(90deg,rgba(250,30,78,.6),rgba(0,255,136,.5));border-radius:2px;transition:width .3s ease;box-shadow:0 0 10px rgba(250,30,78,.3);}
+
+/* CONFLICT PANEL */
+.conflict-panel{background:rgba(2,2,2,.98);border:1px solid rgba(250,30,78,.1);border-radius:2px;padding:0;margin-bottom:24px;overflow:hidden;max-height:0;opacity:0;transition:max-height .5s ease,opacity .4s ease,padding .4s;}
+.conflict-panel.open{max-height:600px;opacity:1;padding:16px;}
+.conflict-header{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(250,30,78,.5);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.conflict-header .dot{width:6px;height:6px;border-radius:50%;background:#fa1e4e;animation:pulseDot 1.5s ease infinite;}
+@keyframes pulseDot{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.3)}}
+
+.conflict-card{
+  display:flex;align-items:center;gap:12px;
+  background:rgba(10,10,10,.9);border:1px solid rgba(250,30,78,.08);
+  border-radius:3px;padding:10px 14px;margin-bottom:6px;
+  transition:all .3s;animation:conflictSlide .4s ease forwards;
+  opacity:0;transform:translateX(-20px);
+}
+@keyframes conflictSlide{to{opacity:1;transform:translateX(0)}}
+.conflict-card:hover{border-color:rgba(250,30,78,.25);background:rgba(15,15,15,.95);}
+.conflict-sev{
+  width:36px;height:36px;border-radius:4px;display:flex;
+  align-items:center;justify-content:center;font-size:16px;flex-shrink:0;
+}
+.conflict-sev.crit{background:rgba(250,30,78,.12);border:1px solid rgba(250,30,78,.3);}
+.conflict-sev.warn{background:rgba(255,180,0,.1);border:1px solid rgba(255,180,0,.25);}
+.conflict-sev.info{background:rgba(85,172,238,.1);border:1px solid rgba(85,172,238,.2);}
+.conflict-body{flex:1;}
+.conflict-title{font-size:10px;letter-spacing:1px;color:rgba(200,200,200,.7);font-weight:bold;}
+.conflict-detail{font-size:8px;color:rgba(100,100,100,.5);margin-top:2px;letter-spacing:.5px;}
+.conflict-tags{display:flex;gap:4px;margin-top:4px;}
+.conflict-tag{
+  font-size:6px;letter-spacing:1.5px;padding:1px 6px;border-radius:1px;text-transform:uppercase;
+  border:1px solid rgba(250,30,78,.15);color:rgba(250,30,78,.4);
+}
+.conflict-tag.ok{border-color:rgba(0,255,136,.2);color:rgba(0,255,136,.4);}
+.conflict-tag.w{border-color:rgba(255,180,0,.2);color:rgba(255,180,0,.4);}
+
+/* ═══ CONSOLE BUBBLES ═══ */
+.console-bubble{
+  position:fixed;z-index:150;pointer-events:none;white-space:nowrap;
+  display:flex;align-items:center;gap:8px;
+  background:rgba(8,8,10,.92);backdrop-filter:blur(12px);
+  border:1px solid rgba(250,30,78,.15);border-radius:20px;
+  padding:6px 16px 6px 10px;font-family:'Courier New',monospace;
+  font-size:9px;letter-spacing:1px;color:rgba(200,200,200,.6);
+  box-shadow:0 4px 20px rgba(0,0,0,.5),0 0 30px rgba(250,30,78,.04);
+  animation:bubbleFloat linear forwards;
+  will-change:transform;
+}
+.console-bubble .cb-icon{
+  width:24px;height:24px;border-radius:50%;display:flex;
+  align-items:center;justify-content:center;font-size:11px;
+  flex-shrink:0;
+}
+.console-bubble .cb-icon.ok{background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.25);}
+.console-bubble .cb-icon.err{background:rgba(250,30,78,.1);border:1px solid rgba(250,30,78,.25);}
+.console-bubble .cb-icon.sys{background:rgba(85,172,238,.1);border:1px solid rgba(85,172,238,.2);}
+.console-bubble .cb-icon.warn{background:rgba(255,180,0,.1);border:1px solid rgba(255,180,0,.2);}
+.console-bubble .cb-text{opacity:.8;}
+.console-bubble .cb-time{font-size:7px;color:rgba(100,100,100,.4);margin-left:6px;}
+@keyframes bubbleFloat{
+  0%{transform:translateX(-110%);opacity:0}
+  8%{opacity:1}
+  92%{opacity:1}
+  100%{transform:translateX(110vw);opacity:0}
+}
+</style>
+</head>
+<body>
+<div class="cursor" id="cur"></div>
+<div class="noise"></div>
+<div class="vignette"></div>
+<canvas id="bg"></canvas>
+
+<div class="page">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="logo">DEVKiTZ<b>™</b></div>
+      <div class="sys-badge">◉ SYSTEM ONLINE</div>
+    </div>
+    <div class="tb-right">
+      <div class="tb-item">BAZE<span>²</span></div>
+      <div id="clock">--:--:--</div>
+      <a href="index.html" style="font-size:8px;letter-spacing:2px;color:rgba(80,80,80,.35);text-decoration:none;border:1px solid rgba(80,80,80,.1);padding:3px 10px;border-radius:1px;transition:all .2s" onmouseover="this.style.color='rgba(85,172,238,.5)'" onmouseout="this.style.color='rgba(80,80,80,.35)'">⬡ Landing</a>
+      <a href="login.html" style="font-size:8px;letter-spacing:2px;color:rgba(80,80,80,.35);text-decoration:none;border:1px solid rgba(80,80,80,.1);padding:3px 10px;border-radius:1px;transition:all .2s" onmouseover="this.style.color='rgba(140,140,140,.6)'" onmouseout="this.style.color='rgba(80,80,80,.35)'">← Login</a>
+      <a href="../hub/index.html" style="font-size:8px;letter-spacing:2px;color:rgba(80,80,80,.35);text-decoration:none;border:1px solid rgba(80,80,80,.1);padding:3px 10px;border-radius:1px;transition:all .2s" onmouseover="this.style.color='rgba(250,30,78,.5)'" onmouseout="this.style.color='rgba(80,80,80,.35)'">🚀 Hub</a>
+      <a href="../mainboard/index.html" style="font-size:8px;letter-spacing:2px;color:rgba(80,80,80,.35);text-decoration:none;border:1px solid rgba(80,80,80,.1);padding:3px 10px;border-radius:1px;transition:all .2s" onmouseover="this.style.color='rgba(0,255,136,.5)'" onmouseout="this.style.color='rgba(80,80,80,.35)'">🖥️ Mainboard</a>
+      <button class="snd-btn" id="sndToggle" onclick="toggleSound()"
+        data-info="Schaltet den Ambient-Sound ein/aus. Bei erstem Klick initialisiert der Web Audio API. Sound hat keinen Einfluss auf die Seiten-Funktion — nur Atmosphäre."
+        data-infotitle="Sound Toggle">♪ Sound</button>
+    </div>
+  </div>
+
+  <!-- SOUND VISUALIZER -->
+  <div class="viz-bar" id="vizBar"></div>
+
+  <!-- SOUND CONTROLS -->
+  <div class="sound-row">
+    <span class="snd-label">Engine:</span>
+    <button class="snd-btn on" id="droneBtn" onclick="setDroneMode('drone')"
+      data-info="Drone: Langsame, eerie Schwebestöne aus 4 Sinus-Oszillatoren. Entspannend und atmosphärisch — ideal für Langzeit-Sessions."
+      data-infotitle="Sound: Drone">Drone</button>
+    <button class="snd-btn" id="pulseBtn" onclick="setDroneMode('pulse')"
+      data-info="Puls: Rhythmisch pulsierende Bassfrequenzen (40/80/160 Hz). Strukturiert und fokussierend."
+      data-infotitle="Sound: Puls">Puls</button>
+    <button class="snd-btn" id="stormBtn" onclick="setDroneMode('storm')"
+      data-info="Storm: Weißes Rauschen + zufällige Donner-Impulse. Masking für Umgebungslärm. Stark atmospharisch."
+      data-infotitle="Sound: Storm">Storm</button>
+    <span class="snd-label" style="margin-left:8px">Lautstärke:</span>
+    <input type="range" class="vol-slider" id="volSlider" min="0" max="1" step="0.01" value="0.18" oninput="setVol(this.value)"
+      data-info="Regelt die Master-Lautstärke des Web Audio Systems. 0 = still, 1 = volle Lautstärke. Standard: 18%."
+      data-infotitle="Lautstärke">
+  </div>
+
+  <!-- ANALYSE -->
+  <div class="analyse-row">
+    <button class="analyse-btn" id="analyseBtn" onclick="startAnalyse()">⚡ ANALYSIERE ALLES</button>
+    <span class="analyse-status" id="analyseStatus">Bereit</span>
+  </div>
+  <div class="scan-progress" id="scanProgress"><div class="scan-progress-fill" id="scanFill"></div></div>
+
+  <!-- CONFLICT PANEL -->
+  <div class="conflict-panel" id="conflictPanel"></div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat"><div class="stat-n" id="s1">15</div><div class="stat-l">Projekte</div></div>
+    <div class="stat"><div class="stat-n" id="s2">6</div><div class="stat-l">Blaupausen</div></div>
+    <div class="stat"><div class="stat-n" id="s3">44</div><div class="stat-l">n8n Workflows</div></div>
+    <div class="stat"><div class="stat-n" id="s4" style="color:rgba(250,30,78,.7)">0</div><div class="stat-l">Fehler aktiv</div></div>
+    <div class="stat"><div class="stat-n" id="s5">3</div><div class="stat-l">Agents</div></div>
+  </div>
+
+  <!-- MODULES -->
+  <div class="section-label">// Module</div>
+  <div class="grid" id="moduleGrid"></div>
+
+  <!-- SYSTEM SECTION -->
+  <div class="section-label">// XPER™ Voice</div>
+  <div class="grid" id="voiceGrid"></div>
+
+  <!-- LOG -->
+  <div class="section-label">// REDNOTE™ Live Log
+    <span data-info="REDNOTE™ ist das zentrale Operations-Log von DEVKiTZ™. Zeigt System-Events in Echtzeit. Definiert über James™ Guardian Monitor. Logs werden alle 4 Sekunden ergänzt."
+      data-infotitle="REDNOTE™"
+      data-doc="04_SYSTEM/DEVKITZ_WIKI/wiki/"></span>
+  </div>
+  <div class="log" id="logBox"></div>
+
+</div>
+
+<script>
+// ─── CURSOR ───
+const cur = document.getElementById('cur');
+document.addEventListener('mousemove', e => { cur.style.left=e.clientX+'px'; cur.style.top=e.clientY+'px'; });
+document.addEventListener('mouseover', e => { if(e.target.closest('.card,.snd-btn,.vol-slider')) cur.classList.add('h'); });
+document.addEventListener('mouseout', () => cur.classList.remove('h'));
+
+// ─── CLOCK ───
+setInterval(() => { document.getElementById('clock').textContent = new Date().toLocaleTimeString('de-DE') + ' LOCAL'; }, 1000);
+
+// ─── BG CANVAS ───
+const cvs = document.getElementById('bg');
+const ctx = cvs.getContext('2d');
+cvs.width = window.innerWidth; cvs.height = window.innerHeight;
+window.addEventListener('resize', () => { cvs.width = window.innerWidth; cvs.height = window.innerHeight; });
+
+(function animBg() {
+  requestAnimationFrame(animBg);
+  ctx.fillStyle = 'rgba(0,0,0,0.04)';
+  ctx.fillRect(0, 0, cvs.width, cvs.height);
+  const t = Date.now() * 0.0004;
+  const g = ctx.createRadialGradient(cvs.width/2, cvs.height*0.35, 0, cvs.width/2, cvs.height*0.35, cvs.width*0.5);
+  g.addColorStop(0, `rgba(250,30,78,${0.008 + Math.sin(t)*0.004})`);
+  g.addColorStop(1, 'transparent');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, cvs.width, cvs.height);
+})();
+
+// ─── WEB AUDIO ───
+let ac = null, masterGain = null, soundOn = false, droneOscs = [], droneMode = 'drone';
+
+function initAudio() {
+  if (ac) return;
+  ac = new (window.AudioContext || window.webkitAudioContext)();
+  masterGain = ac.createGain();
+  masterGain.gain.setValueAtTime(0, ac.currentTime);
+  masterGain.gain.linearRampToValueAtTime(0.18, ac.currentTime + 3);
+  masterGain.connect(ac.destination);
+  startDrones();
+}
+
+function startDrones() {
+  stopDrones();
+  const mode = droneMode;
+
+  if (mode === 'drone') {
+    [[55,.35],[55.4,.2],[110,.12],[82.4,.1]].forEach(([f,g]) => {
+      const osc = ac.createOscillator(), gain = ac.createGain();
+      osc.type = 'sawtooth'; osc.frequency.value = f;
+      const lfo = ac.createOscillator(), lfog = ac.createGain();
+      lfo.frequency.value = 0.07 + Math.random()*0.05;
+      lfog.gain.value = f * 0.003;
+      lfo.connect(lfog); lfog.connect(osc.frequency); lfo.start();
+      gain.gain.value = g;
+      const filt = ac.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 500;
+      osc.connect(filt); filt.connect(gain); gain.connect(masterGain);
+      osc.start(); droneOscs.push(osc, lfo, gain, filt);
+    });
+  } else if (mode === 'pulse') {
+    [40,80,160].forEach(f => {
+      const osc = ac.createOscillator(), g = ac.createGain();
+      osc.type = 'sine'; osc.frequency.value = f;
+      g.gain.value = 0; osc.connect(g); g.connect(masterGain); osc.start();
+      let up = true;
+      const iv = setInterval(() => {
+        if (!soundOn) return;
+        const t = ac.currentTime;
+        g.gain.cancelScheduledValues(t);
+        g.gain.setValueAtTime(g.gain.value, t);
+        g.gain.linearRampToValueAtTime(up ? 0.25 : 0.02, t + 0.8);
+        up = !up;
+      }, 900 + Math.random()*400);
+      droneOscs.push(osc, g, { stop: () => clearInterval(iv) });
+    });
+  } else if (mode === 'storm') {
+    const bufSz = ac.sampleRate * 3;
+    const buf = ac.createBuffer(1, bufSz, ac.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i=0;i<bufSz;i++) d[i] = Math.random()*2-1;
+    const src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+    const filt = ac.createBiquadFilter(); filt.type = 'bandpass'; filt.frequency.value = 150; filt.Q.value = 0.3;
+    const g = ac.createGain(); g.gain.value = 0.3;
+    src.connect(filt); filt.connect(g); g.connect(masterGain); src.start();
+    // Random thunder
+    function thunder() {
+      if (!soundOn) return;
+      const t = ac.createOscillator(), tg = ac.createGain();
+      t.frequency.value = 40 + Math.random()*20;
+      tg.gain.setValueAtTime(0, ac.currentTime);
+      tg.gain.linearRampToValueAtTime(0.3 + Math.random()*0.2, ac.currentTime + 0.05);
+      tg.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 1.5 + Math.random()*2);
+      t.connect(tg); tg.connect(masterGain); t.start(); t.stop(ac.currentTime + 2.5);
+      setTimeout(thunder, 4000 + Math.random()*12000);
+    }
+    setTimeout(thunder, 2000);
+    droneOscs.push(src, filt, g);
+  }
+}
+
+function stopDrones() {
+  droneOscs.forEach(n => { try { if (n.stop) n.stop(); } catch(e){} });
+  droneOscs = [];
+}
+
+function toggleSound() {
+  const btn = document.getElementById('sndToggle');
+  if (!soundOn) {
+    initAudio();
+    if (ac.state==='suspended') ac.resume();
+    soundOn = true;
+    btn.textContent = '♫ Sound'; btn.classList.add('on');
+  } else {
+    ac.suspend(); soundOn = false;
+    btn.textContent = '♪ Sound'; btn.classList.remove('on');
+  }
+}
+
+function setDroneMode(m) {
+  droneMode = m;
+  ['drone','pulse','storm'].forEach(x => document.getElementById(x+'Btn').classList.remove('on'));
+  document.getElementById(m+'Btn').classList.add('on');
+  if (soundOn) startDrones();
+}
+
+function setVol(v) {
+  if (masterGain) masterGain.gain.setTargetAtTime(parseFloat(v), ac.currentTime, 0.1);
+}
+
+// Auto-start on click
+document.addEventListener('click', function autoSnd() {
+  if (!soundOn) { initAudio(); soundOn = true; document.getElementById('sndToggle').textContent='♫ Sound'; document.getElementById('sndToggle').classList.add('on'); }
+  document.removeEventListener('click', autoSnd);
+});
+
+// ─── VIZ BARS ───
+const VIZ_N = 60;
+const vizBar = document.getElementById('vizBar');
+for (let i=0;i<VIZ_N;i++) {
+  const b = document.createElement('div');
+  b.className = 'vb' + (i<20?' green':i>40?' blue':'');
+  b.style.height = '2px';
+  vizBar.appendChild(b);
+}
+const vizBars = vizBar.querySelectorAll('.vb');
+
+// Analyser for real audio viz
+let analyser = null;
+function ensureAnalyser() {
+  if (analyser || !ac) return;
+  analyser = ac.createAnalyser();
+  analyser.fftSize = 128;
+  masterGain.connect(analyser);
+}
+
+(function animViz() {
+  requestAnimationFrame(animViz);
+  const t = Date.now() * 0.002;
+  ensureAnalyser();
+  if (analyser && soundOn) {
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(data);
+    vizBars.forEach((b, i) => {
+      const v = data[Math.floor(i * data.length / VIZ_N)];
+      const h = 2 + (v / 255) * 34;
+      b.style.height = h + 'px';
+      b.style.opacity = soundOn ? '0.7' : '0.2';
+    });
+  } else {
+    vizBars.forEach((b, i) => {
+      const h = 3 + Math.sin(t + i * 0.3) * 6 + Math.sin(t * 0.5 + i * 0.15) * 4;
+      b.style.height = Math.max(2, h) + 'px';
+      b.style.opacity = '0.2';
+    });
+  }
+})();
+
+// ─── MODULES ───
+const MODS = [
+  { icon:'🌐', name:'NEXUZ™', sub:'Team Portal', accent:'rgba(85,172,238,.3)', status:'plan',
+    desc:'Chat · Video · Meetings · Second Brain · CLOUDIA²', link:'#nexuz' },
+  { icon:'🤖', name:'OpenClaw™', sub:'Master Agent', accent:'rgba(250,30,78,.3)', status:'plan',
+    desc:'Nextcloud MCP · Orchestriert PicoClaws™', link:'#openclaw' },
+  { icon:'🐾', name:'PicoClaw™', sub:'Specialized Agents', accent:'rgba(168,85,247,.3)', status:'plan',
+    desc:'PiCo-DE · PiCo-RE · PiCo-DO · PiCo-AN · 7 Agenten', link:'#pico' },
+  { icon:'⚙️', name:'SYMPHONY™', sub:'n8n Orchestration', accent:'rgba(255,180,0,.3)', status:'plan',
+    desc:'44 Workflows · Python · Go · Rust · CF Workers', link:'#symphony' },
+  { icon:'☁️', name:'CLOUDIA²', sub:'Drive Automation', accent:'rgba(0,255,136,.3)', status:'on',
+    desc:'00-99 Ordner · Google Sheets Index · Apps Script', link:'../14_cloudia2/drive/Index.html' },
+  { icon:'🧠', name:'Second Brain', sub:'Anytype · NEXUZ™ Funktion', accent:'rgba(250,30,78,.25)', status:'plan',
+    desc:'PARA Methode · 4-Ordner · Zettelkasten · E2E', link:'#brain' },
+  { icon:'🛡️', name:'James™', sub:'Guardian Monitor', accent:'rgba(255,100,0,.3)', status:'plan',
+    desc:'ICEberg™ Health · REDNOTE™ Live Log', link:'#james' },
+  { icon:'🔐', name:'Passkeys™', sub:'Self-Hosted Auth', accent:'rgba(0,255,136,.3)', status:'plan',
+    desc:'Vaultwarden Cloud · KeePassXC Offline · FIDO2 WebAuthn', link:'../../16_passkeys/README.md' },
+  { icon:'🚀', name:'DEVKiTZ Hub', sub:'Command Center', accent:'rgba(250,30,78,.4)', status:'on',
+    desc:'73 Module · 16 Projekte · Alle Tools', link:'../hub/index.html' },
+];
+
+const VOICE_MODS = [
+  { icon:'🎙️', name:'XPER™', sub:'Voice Interface', accent:'rgba(250,30,78,.3)', status:'on',
+    desc:'Push-to-Talk · Meeting-Modus · Web Speech API', link:'../../15_xper/index.html' },
+  { icon:'🔊', name:'XPER™ Snippets', sub:'Snippet Manager + TTS', accent:'rgba(0,255,136,.3)', status:'on',
+    desc:'Browser TTS · Fish Audio (3s Fallback) · Qwen3-TTS · Selection Tooltip', link:'../../15_xper/snippets.html' },
+  { icon:'🔐', name:'Login', sub:'Atmosphärischer Zugang', accent:'rgba(250,30,78,.25)', status:'on',
+    desc:'Mortis-Design · Web Audio · Glitch', link:'login.html' },
+];
+
+function renderCards(mods, containerId) {
+  const g = document.getElementById(containerId);
+  g.innerHTML = mods.map((m, idx) => {
+    const bars = Array.from({length:8},(_,i) => `<div class="cw-bar" data-card="${containerId}-${idx}" data-bar="${i}" style="--accent:${m.accent};height:2px"></div>`).join('');
+    return `<div class="card" style="--accent:${m.accent}" onclick="window.open('${m.link}','_blank')" onmouseenter="hoverCard(${idx},'${containerId}')">
+      <div class="c-top">
+        <div class="c-icon">${m.icon}</div>
+        <div class="c-status status-${m.status}">${m.status==='on'?'◉ AKTIV':m.status==='plan'?'◌ GEPLANT':'⊘ AUS'}</div>
+      </div>
+      <div class="c-name">${m.name}</div>
+      <div class="c-sub">${m.sub}</div>
+      <div class="c-desc">${m.desc}</div>
+      <div class="c-wave" id="wave-${containerId}-${idx}">${bars}</div>
+    </div>`;
+  }).join('');
+}
+renderCards(MODS, 'moduleGrid');
+renderCards(VOICE_MODS, 'voiceGrid');
+
+// Animate card waves
+(function animWaves() {
+  requestAnimationFrame(animWaves);
+  const t = Date.now() * 0.003;
+  document.querySelectorAll('.cw-bar').forEach((b, i) => {
+    const phase = parseFloat(b.dataset.bar || 0) * 0.5;
+    const h = 2 + Math.sin(t + phase) * 5 + (soundOn ? Math.random() * 6 : 0);
+    b.style.height = Math.max(2, h) + 'px';
+  });
+})();
+
+function hoverCard(i, grid) {
+  if (soundOn && ac) {
+    const osc = ac.createOscillator(), g = ac.createGain();
+    osc.frequency.value = 300 + i * 80;
+    osc.type = 'sine';
+    g.gain.setValueAtTime(0.04, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.15);
+    osc.connect(g); g.connect(masterGain); osc.start(); osc.stop(ac.currentTime + 0.15);
+  }
+}
+
+// ─── REDNOTE LOG ───
+const LOG_ENTRIES = [
+  '[02:21:07] DEVKiTZ™ gestartet — alle Systeme bereit',
+  '[02:21:08] CLOUDIA² online — Drive scan initialisiert',
+  '[02:21:09] XPER™ Snippet Manager geladen',
+  '[02:22:01] Login-Page aktiviert — Mortis-Design v1',
+  '[02:22:15] TTS Engine bereit — Browser TTS + Fish Audio (3s Fallback)',
+  '[02:22:16] Qwen3-TTS Cloud-Endpoint konfiguriert',
+  '[02:40:00] Command Center initialisiert',
+  '[02:40:01] Sound Engine: DRONE-MODE aktiv',
+  '[02:40:02] SYMPHONY™ — Blaupause geladen',
+];
+const logBox = document.getElementById('logBox');
+LOG_ENTRIES.forEach((l, i) => {
+  const d = document.createElement('div');
+  d.className = 'log-line' + (l.includes('Fehler')||l.includes('Error')?' red': l.includes('online')||l.includes('aktiv')||l.includes('bereit')?' green':'');
+  d.textContent = l;
+  d.style.animationDelay = (i * 0.15) + 's';
+  logBox.appendChild(d);
+});
+
+// Live log append
+let logIdx = 0;
+const LIVE_LOGS = [
+  '◉ REDNOTE™ — Heartbeat OK',
+  '◉ James™ — No alerts',
+  '◉ Git — master @ current',
+  '◉ DuckDB — 0 queries pending',
+  '◉ NEXUZ™ — Connection in Planung',
+];
+setInterval(() => {
+  const d = document.createElement('div');
+  d.className = 'log-line green';
+  d.textContent = '[' + new Date().toLocaleTimeString('de-DE') + '] ' + LIVE_LOGS[logIdx++ % LIVE_LOGS.length];
+  logBox.appendChild(d);
+  if (logBox.children.length > 20) logBox.removeChild(logBox.firstChild);
+  logBox.scrollTop = logBox.scrollHeight;
+}, 4000);
+
+// Stat counter animation
+function animCount(id, target) {
+  let cur = 0;
+  const iv = setInterval(() => {
+    cur += Math.ceil((target - cur) / 6);
+    document.getElementById(id).textContent = cur;
+    if (cur >= target) { document.getElementById(id).textContent = target; clearInterval(iv); }
+  }, 80);
+}
+setTimeout(() => {
+  animCount('s1',15); animCount('s2',6); animCount('s3',44); animCount('s5',3);
+}, 500);
+
+// ═══════════════════════════════════════
+// ANALYSE SYSTEM — Scan + Konflikte + Bubbles
+// ═══════════════════════════════════════
+
+const SCAN_RESULTS = [
+  { module:'NEXUZ™', status:'warn', msg:'API Endpoint nicht konfiguriert', tags:['NETWORK','CONFIG'] },
+  { module:'OpenClaw™', status:'warn', msg:'MCP Server noch nicht deployed', tags:['AGENT','DEPLOY'] },
+  { module:'PicoClaw™', status:'info', msg:'7 Agenten definiert — 0 aktiv', tags:['AGENT','IDLE'] },
+  { module:'SYMPHONY™', status:'ok', msg:'44 Workflows korrekt geladen', tags:['N8N','OK'] },
+  { module:'CLOUDIA²', status:'ok', msg:'Drive Index synchronisiert', tags:['DRIVE','SYNC'] },
+  { module:'Second Brain', status:'warn', msg:'PARA-Ordner nicht vollständig', tags:['PARA','MISSING'] },
+  { module:'James™', status:'err', msg:'Guardian Monitor nicht erreichbar', tags:['HEALTH','CRITICAL'] },
+  { module:'DEVKiTZ Hub', status:'ok', msg:'73 Module registriert', tags:['HUB','REGISTRY'] },
+  { module:'XPER™', status:'ok', msg:'Speech API bereit', tags:['VOICE','API'] },
+  { module:'XPER™ Snippets', status:'ok', msg:'TTS Engine bereit (3s Fallback)', tags:['TTS','BROWSER'] },
+  { module:'Login', status:'ok', msg:'Mortis-Design v1 aktiv', tags:['AUTH','DESIGN'] },
+];
+
+const CONFLICTS = [
+  { sev:'crit', icon:'🔴', title:'James™ Guardian — Verbindung fehlgeschlagen',
+    detail:'Health-Endpoint /api/health antwortet nicht. Letzer Kontakt vor 47 Min.',
+    tags:[{t:'CRITICAL',c:''},{t:'HEALTH',c:''},{t:'TIMEOUT',c:'w'}] },
+  { sev:'warn', icon:'🟡', title:'NEXUZ™ — API Key fehlt',
+    detail:'Umgebungsvariable NEXUZ_API_KEY nicht gesetzt. Chat-Funktion deaktiviert.',
+    tags:[{t:'CONFIG',c:'w'},{t:'ENV',c:'w'},{t:'NETWORK',c:''}] },
+  { sev:'warn', icon:'🟡', title:'Second Brain — 2 von 4 PARA-Ordnern fehlen',
+    detail:'"Resources" und "Archive" existieren nicht im PARA-Root.',
+    tags:[{t:'STRUCTURE',c:'w'},{t:'PARA',c:'w'},{t:'MISSING',c:''}] },
+  { sev:'info', icon:'🔵', title:'PicoClaw™ Agenten nicht deployed',
+    detail:'7 Agent-Definitionen gefunden, aber keine aktive Instanz registriert.',
+    tags:[{t:'INFO',c:'ok'},{t:'AGENTS',c:'ok'},{t:'DEPLOY',c:'w'}] },
+];
+
+let isScanning = false;
+
+function startAnalyse() {
+  if (isScanning) return;
+  isScanning = true;
+  const btn = document.getElementById('analyseBtn');
+  const status = document.getElementById('analyseStatus');
+  const progress = document.getElementById('scanProgress');
+  const fill = document.getElementById('scanFill');
+  const panel = document.getElementById('conflictPanel');
+
+  btn.classList.add('scanning');
+  btn.textContent = '◎ SCANNING...';
+  progress.classList.add('active');
+  panel.classList.remove('open');
+  panel.innerHTML = '';
+  fill.style.width = '0%';
+
+  // Clear previous scan states
+  document.querySelectorAll('.card').forEach(c => {
+    c.classList.remove('scanning','scan-ok','scan-warn','scan-err');
+  });
+
+  const allCards = document.querySelectorAll('.card');
+  const total = allCards.length;
+  let scanned = 0;
+  let errors = 0, warns = 0, oks = 0;
+
+  // Sequentially scan each card
+  function scanNext() {
+    if (scanned >= total) {
+      finishScan();
+      return;
+    }
+    const card = allCards[scanned];
+    const result = SCAN_RESULTS[scanned] || { status:'ok', msg:'OK', module:'Module' };
+    card.classList.add('scanning');
+
+    status.textContent = `Scanning ${result.module || 'Module ' + (scanned+1)}... (${scanned+1}/${total})`;
+    fill.style.width = ((scanned+1)/total*100) + '%';
+
+    // Spawn console bubble
+    spawnBubble(result);
+
+    setTimeout(() => {
+      card.classList.remove('scanning');
+      card.classList.add('scan-' + result.status);
+      if(result.status==='ok') oks++;
+      if(result.status==='warn') warns++;
+      if(result.status==='err') errors++;
+      scanned++;
+      scanNext();
+    }, 400 + Math.random()*300);
+  }
+
+  scanNext();
+
+  function finishScan() {
+    btn.classList.remove('scanning');
+    btn.textContent = '⚡ ANALYSIERE ALLES';
+    status.textContent = `✓ ${total} Module gescannt — ${oks} OK · ${warns} Warnung${warns!==1?'en':''} · ${errors} Fehler`;
+    status.style.color = errors > 0 ? 'rgba(250,30,78,.6)' : warns > 0 ? 'rgba(255,180,0,.5)' : 'rgba(0,255,136,.4)';
+
+    // Update error stat
+    document.getElementById('s4').textContent = errors + warns;
+    document.getElementById('s4').style.color = errors > 0 ? 'rgba(250,30,78,.8)' : 'rgba(255,180,0,.5)';
+
+    // Show conflict panel
+    if (CONFLICTS.length > 0) {
+      setTimeout(() => showConflicts(), 500);
+    }
+
+    setTimeout(() => {
+      progress.classList.remove('active');
+      fill.style.width = '100%';
+    }, 1500);
+
+    setTimeout(() => { isScanning = false; }, 2000);
+  }
+}
+
+function showConflicts() {
+  const panel = document.getElementById('conflictPanel');
+  let html = `<div class="conflict-header"><span class="dot"></span> KONFLIKTE ERKANNT — ${CONFLICTS.length} PROBLEME</div>`;
+
+  CONFLICTS.forEach((c, i) => {
+    const tags = c.tags.map(t => `<span class="conflict-tag ${t.c}">${t.t}</span>`).join('');
+    html += `<div class="conflict-card" style="animation-delay:${i*0.12}s">
+      <div class="conflict-sev ${c.sev}">${c.icon}</div>
+      <div class="conflict-body">
+        <div class="conflict-title">${c.title}</div>
+        <div class="conflict-detail">${c.detail}</div>
+        <div class="conflict-tags">${tags}</div>
+      </div>
+    </div>`;
+  });
+
+  panel.innerHTML = html;
+  panel.classList.add('open');
+}
+
+// ═══ CONSOLE BUBBLES ═══
+function spawnBubble(result) {
+  const bubble = document.createElement('div');
+  bubble.className = 'console-bubble';
+
+  const iconClass = result.status === 'ok' ? 'ok' : result.status === 'err' ? 'err' : result.status === 'warn' ? 'warn' : 'sys';
+  const iconEmoji = result.status === 'ok' ? '✓' : result.status === 'err' ? '✗' : result.status === 'warn' ? '!' : '◉';
+  const time = new Date().toLocaleTimeString('de-DE');
+
+  bubble.innerHTML = `
+    <span class="cb-icon ${iconClass}">${iconEmoji}</span>
+    <span class="cb-text">${result.module} — ${result.msg}</span>
+    <span class="cb-time">${time}</span>
+  `;
+
+  // Random vertical position
+  const yPos = 15 + Math.random() * 70; // 15-85% from top
+  bubble.style.top = yPos + 'vh';
+  bubble.style.left = '0';
+  bubble.style.animationDuration = (6 + Math.random() * 4) + 's';
+
+  document.body.appendChild(bubble);
+
+  // Remove after animation
+  bubble.addEventListener('animationend', () => bubble.remove());
+  setTimeout(() => { if(bubble.parentNode) bubble.remove(); }, 12000);
+}
+
+// Live log bubbles (periodic)
+let bubbleInterval = null;
+function startLiveBubbles() {
+  if (bubbleInterval) return;
+  const liveMsgs = [
+    { module:'REDNOTE™', status:'ok', msg:'Heartbeat — alle Systeme operational' },
+    { module:'Git', status:'ok', msg:'master @ HEAD — keine pending changes' },
+    { module:'James™', status:'sys', msg:'Guardian watchdog ping...' },
+    { module:'CLOUDIA²', status:'ok', msg:'Drive sync complete — 0 Konflikte' },
+    { module:'DuckDB', status:'ok', msg:'0 queries pending — idle' },
+    { module:'SYMPHONY™', status:'ok', msg:'44/44 Workflows healthy' },
+    { module:'Hub', status:'ok', msg:'73 Module geladen — 0 Fehler' },
+  ];
+  let idx = 0;
+  bubbleInterval = setInterval(() => {
+    spawnBubble(liveMsgs[idx++ % liveMsgs.length]);
+  }, 8000);
+}
+
+// Start live bubbles after 10s
+setTimeout(startLiveBubbles, 10000);
+
+</script>
+    <script src="../shared/dkz-copilot.js"></script>
+    <script src="../shared/dkz-navbar.js"></script>
+</body>
+</html>

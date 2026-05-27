@@ -1,0 +1,418 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>😊 Emoji Picker — DkZâ„¢</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #fa1e4e;
+            --accent: #fa1e4e;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(14, 14, 22, .72);
+            --blur: blur(24px)
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .08);
+            border-radius: 6px
+        }
+
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .06;
+            animation: bf 20s ease-in-out infinite
+        }
+
+        .bg-blob:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: var(--yellow);
+            top: -10%;
+            left: 10%
+        }
+
+        .bg-blob:nth-child(2) {
+            width: 350px;
+            height: 350px;
+            background: var(--accent);
+            bottom: 10%;
+            right: 10%;
+            animation-delay: -8s
+        }
+
+        @keyframes bf {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(30px, -40px) scale(1.1)
+            }
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        .header {
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .back-btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: none;
+            font-family: var(--font)
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--yellow), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .hdr-right {
+            margin-left: auto
+        }
+
+        .ver {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono)
+        }
+
+        .content {
+            padding: 20px 28px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px
+        }
+
+        .search {
+            padding: 12px 18px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 14px;
+            outline: none;
+            width: 100%
+        }
+
+        .search:focus {
+            border-color: var(--accent)
+        }
+
+        .cat-row {
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+            padding-bottom: 4px
+        }
+
+        .cat-btn {
+            padding: 6px 14px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+            font-family: var(--font);
+            white-space: nowrap;
+            transition: all .2s;
+            flex-shrink: 0
+        }
+
+        .cat-btn:hover {
+            border-color: var(--accent);
+            color: var(--text)
+        }
+
+        .cat-btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent)
+        }
+
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+            gap: 4px
+        }
+
+        .emoji-cell {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all .15s;
+            border: 1px solid transparent
+        }
+
+        .emoji-cell:hover {
+            background: var(--card2);
+            border-color: var(--border);
+            transform: scale(1.2)
+        }
+
+        .recent-grid {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px
+        }
+
+        .card h3 {
+            font-size: 13px;
+            font-weight: 800;
+            margin-bottom: 12px
+        }
+
+        .copied-display {
+            text-align: center;
+            padding: 20px;
+            font-size: 64px;
+            margin-bottom: 12px
+        }
+
+        .emoji-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 8px;
+            margin-bottom: 12px
+        }
+
+        .info-item {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .info-item:hover {
+            border-color: var(--accent)
+        }
+
+        .info-item .ii-label {
+            font-size: 9px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 2px
+        }
+
+        .info-item .ii-value {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--green)
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: var(--green);
+            color: #000;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 10px;
+            z-index: 300;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all .3s;
+            pointer-events: none
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0)
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="emoji-picker" data-dkz-appid="DKZ-MOD-EMO" data-dkz-version="v0.01" data-dkz-title="😊 Emoji Picker —" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+    </div>
+    <div class="app">
+        <div class="header"><a href="../../hub/index.html" class="back-btn">← Hub</a>
+            <h1>😊 Emoji Picker</h1>
+            <div class="hdr-right"><span class="ver">v0.01</span></div>
+        </div>
+        <div class="content">
+            <input class="search" id="search" placeholder="🔍 Emoji suchen..." oninput="renderEmojis()">
+            <div class="cat-row" id="catRow"></div>
+            <div class="card" id="infoCard" style="display:none">
+                <div class="copied-display" id="bigEmoji"></div>
+                <div class="emoji-info" id="emojiInfo"></div>
+            </div>
+            <div class="card">
+                <h3>⭐ Kürzlich verwendet</h3>
+                <div class="recent-grid" id="recentGrid"></div>
+            </div>
+            <div class="card">
+                <div class="emoji-grid" id="emojiGrid"></div>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        const EMOJIS = {
+            "😀 Smileys": "😀😃😄😁😆😅🤣😂🙂🙃😉😊😇🥰😍🤩😘😗😚😙🥲😋😛😜🤪😝🤑🤗🤭🤫🤔🫡🤐🤨😐😑😶🫥😏😒🙄😬🤥🫨😌😔😪🤤😴😷🤒🤕🤢🤮🤧🥵🥶🥴😵🤯🤠🥳🥸",
+            "👋 Hände": "👋🤚🖐️✋🖖🫱🫲🫳👌🤌🤏✌️🤞🫰🤟🤘🤙👈👉👆🖕👇☝️🫵👍👎✊👊🤛🤜👏🙌🫶👐🤲🤝🙏",
+            "❤️ Herzen": "❤️🧡💛💚💙💜🖤🤍🤎💔❣️💕💞💓💗💖💘💝💟",
+            "🐱 Tiere": "🐶🐱🐭🐹🐰🦊🐻🐼🐻‍❄️🐨🐯🦁🐮🐷🐸🐵🐔🐧🐦🦆🦅🦉🦇🐺🐗🐴🦄🐝🪱🐛🦋🐌🐞🐜🪲🪳🦟🦗🕷️🦂🐢🐍🦎🦖🦕🐙🦑🦐🦞🦀🐡🐠🐟🐬🐳🦈",
+            "🍎 Essen": "🍏🍎🍐🍊🍋🍌🍉🍇🍓🫐🍈🍒🍑🥭🍍🥥🥝🍅🍆🥑🥦🥬🥒🌶️🫑🌽🥕🫒🧄🧅🥔🍠🥐🥖🫓🥨🥯🍞🧀🥚🍳🧈🥞🧇🥓🥩🍗🍖🦴🌭🍔🍟🍕",
+            "🚗 Transport": "🚗🚕🚙🚌🚎🏎️🚓🚑🚒🚐🛻🚚🚛🚜🏍️🛵🚲🛴🛹🛼🚁✈️🛩️🚀🛸🚢⛵🚤",
+            "⚡ Symbole": "⚡🔥💧🌊🌟⭐💫✨🎯💯🔴🟠🟡🟢🔵🟣⚫⚪🟤🔶🔷▶️⏸️⏹️⏺️⏭️⏮️🔀🔁🔂➕➖✖️➗💲💱™️©️®️",
+            "🏢 Objekte": "💻🖥️🖨️⌨️🖱️💾💿📱📲☎️📞📟📠📺📻🎙️🎚️🎛️⏰⏱️⏲️🕰️📡🔋🔌💡🔦🕯️🪫🧯🛢️",
+            "🎮 Aktivität": "⚽🏀🏈⚾🥎🎾🏐🏉🥏🎱🏓🏸🏒🥅⛳🏹🎣🤿🥊🥋🎽🛹🛼🛷⛸️🥌🎿⛷️🎮🕹️🎲🧩",
+            "🏳️ Flaggen": "🏳️🏴🏁🚩🏳️‍🌈🏳️‍⚧️🇩🇪🇦🇹🇨🇭🇺🇸🇬🇧🇫🇷🇪🇸🇮🇹🇯🇵🇨🇳🇰🇷🇧🇷🇷🇺🇮🇳🇦🇺🇨🇦🇲🇽🇹🇷🇸🇦🇦🇪🇵🇱🇳🇱🇧🇪🇸🇪"
+        };
+        let recent = JSON.parse(localStorage.getItem('dkz-emoji-recent') || '[]'); let activeCat = null;
+        function renderCats() { document.getElementById('catRow').innerHTML = Object.keys(EMOJIS).map(c => `<button class="cat-btn ${c === activeCat - 'active' : ''}" onclick="activeCat=this.textContent===activeCat?null:this.textContent;renderCats();renderEmojis()">${c}</button>`).join('') }
+        function renderEmojis() {
+            const q = document.getElementById('search').value.toLowerCase(); let all = [];
+            Object.entries(EMOJIS).forEach(([cat, emojis]) => { if (activeCat && cat !== activeCat) return; const chars = [...emojis]; chars.forEach(e => { if (e.trim()) all.push(e) }) });
+            if (q) all = all.filter(e => e.includes(q));
+            document.getElementById('emojiGrid').innerHTML = all.map(e => `<div class="emoji-cell" onclick="selectEmoji('${e}')">${e}</div>`).join('');
+        }
+        function selectEmoji(e) {
+            navigator.clipboard.writeText(e);
+            if (!recent.includes(e)) { recent.unshift(e); if (recent.length > 30) recent = recent.slice(0, 30); localStorage.setItem('dkz-emoji-recent', JSON.stringify(recent)); renderRecent() }
+            document.getElementById('bigEmoji').textContent = e;
+            const cp = e.codePointAt(0);
+            document.getElementById('emojiInfo').innerHTML = [
+                { l: 'Emoji', v: e }, { l: 'Unicode', v: 'U+' + cp.toString(16).toUpperCase() }, { l: 'HTML', v: '&#' + cp + ';' }, { l: 'CSS', v: '\\' + cp.toString(16) }, { l: 'UTF-8', v: encodeURIComponent(e) }, { l: 'Hex', v: '0x' + cp.toString(16).toUpperCase() }
+            ].map(i => `<div class="info-item" onclick="navigator.clipboard.writeText('${i.v.replace(/'/g, "\\'")}');showToast('📋 ${i.l} kopiert!')"><div class="ii-label">${i.l}</div><div class="ii-value">${i.v}</div></div>`).join('');
+            document.getElementById('infoCard').style.display = 'block';
+            showToast(`${e} kopiert!`);
+        }
+        function renderRecent() { document.getElementById('recentGrid').innerHTML = recent.length - recent.map(e => `<div class="emoji-cell" onclick="selectEmoji('${e}')">${e}</div>`).join('') : '<span style="color:var(--muted);font-size:12px">Noch keine</span>' }
+        function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500) }
+        renderCats(); renderEmojis(); renderRecent();
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Emoji picker</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Finde und kopiere Emojis schnell.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Emoji picker</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Finde und kopiere Emojis schnell.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-emoji-picker-onboarded','1')}if(!localStorage.getItem('dkz-emoji-picker-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+</html>
+
+

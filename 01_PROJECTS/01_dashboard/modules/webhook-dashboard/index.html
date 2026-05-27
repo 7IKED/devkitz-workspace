@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Webhook Dashboard — DkZ</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#060608;--surface:#0d0d12;--card:#111118;--border:#1a1a24;--text:#e8e8ed;--muted:#6b6b80;--accent:#fa1e4e;--green:#00ff88;--yellow:#ffb800;--blue:#3b82f6;--purple:#a855f7;--cyan:#06b6d4;--radius:12px;--glass:rgba(17,17,24,0.85)}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(20px)}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--cyan));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.title{font-size:16px;font-weight:600}
+.badge{background:var(--accent);color:#fff;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;font-family:'Inter',sans-serif}
+.btn:hover{border-color:var(--accent);background:rgba(250,30,78,.1)}
+.btn-accent{background:var(--accent);border-color:var(--accent);color:#fff}
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px 24px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;transition:all .3s}
+.stat:hover{border-color:var(--accent);transform:translateY(-2px)}
+.stat-val{font-size:28px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-label{font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+.content{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px 24px}
+@media(max-width:900px){.content{grid-template-columns:1fr}.stats-bar{grid-template-columns:repeat(2,1fr)}}
+.panel{background:var(--glass);border:1px solid var(--border);border-radius:var(--radius);backdrop-filter:blur(12px);overflow:hidden}
+.panel-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.panel-body{padding:16px;max-height:500px;overflow-y:auto}
+.wh-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;transition:all .3s}
+.wh-card:hover{border-color:var(--accent);box-shadow:0 4px 16px rgba(250,30,78,.1)}
+.wh-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.wh-name{font-size:13px;font-weight:600}
+.wh-url{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:6px;word-break:break-all}
+.wh-events{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
+.wh-event{background:rgba(59,130,246,.1);color:var(--blue);padding:2px 8px;border-radius:4px;font-size:10px;font-weight:500}
+.wh-actions{display:flex;gap:6px}
+.toggle{position:relative;width:36px;height:20px;cursor:pointer}
+.toggle input{display:none}
+.toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:20px;transition:all .3s}
+.toggle-slider:before{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:var(--muted);top:2px;left:2px;transition:all .3s}
+.toggle input:checked+.toggle-slider{background:var(--green)}
+.toggle input:checked+.toggle-slider:before{transform:translateX(16px);background:#fff}
+.log-entry{padding:8px 12px;border-radius:6px;margin-bottom:4px;font-size:11px;font-family:'JetBrains Mono',monospace;background:rgba(0,0,0,.3);display:flex;align-items:center;gap:8px;transition:all .2s}
+.log-entry:hover{background:rgba(250,30,78,.05)}
+.log-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.log-time{color:var(--muted);white-space:nowrap}
+.log-type{padding:1px 6px;border-radius:4px;font-size:9px;font-weight:600;text-transform:uppercase}
+.log-type.push{background:rgba(0,255,136,.15);color:var(--green)}
+.log-type.pull_request{background:rgba(168,85,247,.15);color:var(--purple)}
+.log-type.issues{background:rgba(59,130,246,.15);color:var(--blue)}
+.log-type.release{background:rgba(250,30,78,.15);color:var(--accent)}
+.log-type.custom{background:rgba(255,184,0,.15);color:var(--yellow)}
+.log-payload{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.form-input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px;outline:none;font-family:'Inter',sans-serif}
+.form-input:focus{border-color:var(--accent)}
+.checkbox-group{display:flex;flex-wrap:wrap;gap:8px}
+.cb-item{display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer}
+.cb-item input{accent-color:var(--accent)}
+.template-btns{display:flex;gap:6px;margin-bottom:16px}
+.tmpl-btn{padding:6px 12px;border-radius:8px;font-size:11px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .2s;font-family:'Inter',sans-serif}
+.tmpl-btn:hover{border-color:var(--accent);color:var(--accent)}
+.tmpl-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.info-box{background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:14px;margin-top:16px;font-size:11px;color:var(--blue);line-height:1.6}
+.info-box code{background:rgba(0,0,0,.3);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:10px}
+.empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="header">
+ <div class="header-left">
+  <a href="../../hub/index.html" style="color:var(--accent,#fa1e4e);text-decoration:none;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;border:1px solid rgba(250,30,78,0.2);background:rgba(250,30,78,0.05);transition:all 0.2s" onmouseenter="this.style.background='rgba(250,30,78,0.15)'" onmouseleave="this.style.background='rgba(250,30,78,0.05)'">← Hub</a>
+  <div class="logo">🔗</div>
+  <span class="title">Webhook Dashboard</span>
+  <span class="badge">DkZ</span>
+ </div>
+ <div style="display:flex;gap:8px">
+  <button class="btn" onclick="simulateEvent()">⚡ Test Event</button>
+  <button class="btn btn-accent" onclick="showAddForm()">+ Webhook</button>
+ </div>
+</div>
+<div class="stats-bar" id="statsBar"></div>
+<div class="content">
+ <div>
+  <div class="panel" id="addPanel" style="display:none;margin-bottom:16px">
+   <div class="panel-header"><span class="panel-title">🔧 Webhook konfigurieren</span><button class="btn" onclick="hideAddForm()">✕</button></div>
+   <div class="panel-body">
+    <div class="template-btns">
+     <button class="tmpl-btn" onclick="applyTemplate('github',this)">🐙 GitHub</button>
+     <button class="tmpl-btn" onclick="applyTemplate('blogger',this)">📝 Blogger</button>
+     <button class="tmpl-btn" onclick="applyTemplate('cloudflare',this)">☁️ Cloudflare</button>
+     <button class="tmpl-btn" onclick="applyTemplate('custom',this)">⚙️ Custom</button>
+    </div>
+    <div class="form-group"><label>Name</label><input class="form-input" id="whName" placeholder="z.B. GitHub Push Hook"></div>
+    <div class="form-group"><label>Endpoint URL</label><input class="form-input" id="whUrl" placeholder="https://devkitz.eu/api/webhooks/github"></div>
+    <div class="form-group"><label>Secret (HMAC SHA256)</label><input class="form-input" id="whSecret" placeholder="whsec_..." type="password"></div>
+    <div class="form-group"><label>Events</label>
+     <div class="checkbox-group" id="eventCheckboxes">
+      <label class="cb-item"><input type="checkbox" value="push" checked> push</label>
+      <label class="cb-item"><input type="checkbox" value="pull_request"> pull_request</label>
+      <label class="cb-item"><input type="checkbox" value="issues"> issues</label>
+      <label class="cb-item"><input type="checkbox" value="release"> release</label>
+      <label class="cb-item"><input type="checkbox" value="custom"> custom</label>
+     </div>
+    </div>
+    <button class="btn btn-accent" onclick="saveWebhook()" style="width:100%">Speichern</button>
+   </div>
+  </div>
+  <div class="panel">
+   <div class="panel-header"><span class="panel-title">📡 Konfigurierte Webhooks</span><span id="whCount" style="font-size:11px;color:var(--muted)"></span></div>
+   <div class="panel-body" id="webhookList"></div>
+  </div>
+  <div class="info-box" style="margin-top:16px">
+   <strong>🔐 HMAC SHA256 Signatur-Verifizierung</strong><br>
+   Eingehende Requests werden mit <code>X-Hub-Signature-256</code> verifiziert.<br>
+   Berechnung: <code>HMAC-SHA256(secret, request_body)</code><br>
+   ONTHERUN Route: <code>routes/webhooks.js</code>
+  </div>
+ </div>
+ <div class="panel">
+  <div class="panel-header">
+   <span class="panel-title"><span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block"></span> Live Event Log</span>
+   <button class="btn" onclick="clearLog()">🗑️ Clear</button>
+  </div>
+  <div class="panel-body" id="logList" style="max-height:600px"></div>
+ </div>
+</div>
+<script>
+const WH_KEY='dkz-webhooks',LOG_KEY='dkz-webhook-log';
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+let webhooks=JSON.parse(localStorage.getItem(WH_KEY)||'null')||[
+ {id:'wh-001',name:'GitHub Push',url:'https://devkitz.eu/api/webhooks/github',secret:'***',events:['push','pull_request','issues','release'],active:true},
+ {id:'wh-002',name:'Blogger Auto-Publish',url:'https://devkitz.eu/api/webhooks/blogger',secret:'***',events:['push','release'],active:true},
+ {id:'wh-003',name:'Cloudflare Cache Purge',url:'https://devkitz.eu/api/webhooks/cloudflare',secret:'***',events:['push'],active:false},
+];
+let logs=JSON.parse(localStorage.getItem(LOG_KEY)||'null')||[];
+let whCounter=webhooks.reduce((m,w)=>Math.max(m,parseInt(w.id.split('-')[1])||0),0)+1;
+function save(){localStorage.setItem(WH_KEY,JSON.stringify(webhooks));localStorage.setItem(LOG_KEY,JSON.stringify(logs))}
+const TEMPLATES={github:{name:'GitHub Webhook',url:'https://devkitz.eu/api/webhooks/github',events:['push','pull_request','issues','release']},blogger:{name:'Blogger Auto-Publish',url:'https://devkitz.eu/api/webhooks/blogger',events:['push','release']},cloudflare:{name:'Cloudflare Cache Purge',url:'https://devkitz.eu/api/webhooks/cloudflare',events:['push']},custom:{name:'',url:'',events:['custom']}};
+function applyTemplate(key,el){const t=TEMPLATES[key];document.getElementById('whName').value=t.name;document.getElementById('whUrl').value=t.url;document.querySelectorAll('#eventCheckboxes input').forEach(cb=>cb.checked=t.events.includes(cb.value));document.querySelectorAll('.tmpl-btn').forEach(b=>b.classList.remove('active'));if(el)el.classList.add('active')}
+function render(){renderStats();renderWebhooks();renderLog()}
+function renderStats(){const a=webhooks.filter(w=>w.active).length,t=webhooks.length,e=logs.filter(l=>l.date===new Date().toISOString().slice(0,10)).length,er=logs.filter(l=>l.status==='error').length;document.getElementById('statsBar').innerHTML=`<div class="stat"><div class="stat-val">${t}</div><div class="stat-label">Webhooks</div></div><div class="stat"><div class="stat-val">${a}</div><div class="stat-label">Aktiv</div></div><div class="stat"><div class="stat-val">${e}</div><div class="stat-label">Events heute</div></div><div class="stat"><div class="stat-val">${er}</div><div class="stat-label">Fehler</div></div>`}
+function renderWebhooks(){const l=document.getElementById('webhookList');document.getElementById('whCount').textContent=webhooks.length+' konfiguriert';if(!webhooks.length){l.innerHTML='<div class="empty">Noch keine Webhooks</div>';return}l.innerHTML=webhooks.map(w=>`<div class="wh-card"><div class="wh-card-top"><span class="wh-name">${esc(w.name)}</span><label class="toggle"><input type="checkbox" ${w.active?'checked':''} onchange="toggleWh('${esc(w.id)}')"><span class="toggle-slider"></span></label></div><div class="wh-url">${esc(w.url)}</div><div class="wh-events">${(w.events||[]).map(e=>'<span class="wh-event">'+esc(e)+'</span>').join('')}</div><div class="wh-actions"><button class="btn" onclick="testWebhook('${esc(w.id)}')">⚡ Test</button><button class="btn" onclick="deleteWh('${esc(w.id)}')" style="color:var(--accent)">🗑️</button></div></div>`).join('')}
+function renderLog(){const l=document.getElementById('logList');if(!logs.length){l.innerHTML='<div class="empty">Noch keine Events</div>';return}l.innerHTML=logs.slice(0,50).map(l=>`<div class="log-entry"><div class="log-dot" style="background:${l.status==='error'?'var(--accent)':'var(--green)'}"></div><span class="log-time">${esc(l.time||'')}</span><span class="log-type ${l.event||''}">${esc(l.event||'?')}</span><span style="color:var(--cyan)">${esc(l.webhook||'')}</span><span class="log-payload">${esc(l.payload||'')}</span></div>`).join('')}
+function showAddForm(){document.getElementById('addPanel').style.display=''}
+function hideAddForm(){document.getElementById('addPanel').style.display='none'}
+function saveWebhook(){const n=document.getElementById('whName').value.trim(),u=document.getElementById('whUrl').value.trim(),s=document.getElementById('whSecret').value.trim();if(!n||!u)return;const ev=Array.from(document.querySelectorAll('#eventCheckboxes input:checked')).map(cb=>cb.value);webhooks.push({id:'wh-'+String(whCounter++).padStart(3,'0'),name:n,url:u,secret:s||'***',events:ev,active:true});save();render();hideAddForm();document.getElementById('whName').value='';document.getElementById('whUrl').value='';document.getElementById('whSecret').value=''}
+function toggleWh(id){const w=webhooks.find(x=>x.id===id);if(w){w.active=!w.active;save();renderStats()}}
+function deleteWh(id){webhooks=webhooks.filter(x=>x.id!==id);save();render()}
+function testWebhook(id){const w=webhooks.find(x=>x.id===id);if(!w)return;const ev=(w.events||['push'])[0];addLog(w.name,ev,'Test-Payload gesendet','success');fetch(w.url,{method:'POST',headers:{'Content-Type':'application/json','X-DkZ-Event':ev},body:JSON.stringify({action:'test',sender:'DkZ Webhook Dashboard',timestamp:new Date().toISOString()})}).then(r=>addLog(w.name,ev,'Response: '+r.status,r.ok?'success':'error')).catch(e=>addLog(w.name,ev,'Fehler: '+e.message,'error'))}
+function simulateEvent(){const evs=['push','pull_request','issues','release','custom'],ev=evs[Math.floor(Math.random()*evs.length)],msgs={push:'feat(modules): upgrade v2.0',pull_request:'PR #42: Hermes 3D',issues:'Issue #88: Webhook Test',release:'v0.9.0: Skills Release',custom:'System Health Check'};const wh=webhooks.filter(w=>w.active&&w.events.includes(ev));if(wh.length)wh.forEach(w=>addLog(w.name,ev,msgs[ev],'success'));else addLog('System',ev,msgs[ev]+' (kein Webhook)','error')}
+function addLog(webhook,event,payload,status){const now=new Date();logs.unshift({webhook,event,payload,status,time:now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),date:now.toISOString().slice(0,10)});if(logs.length>100)logs.pop();save();renderLog();renderStats()}
+function clearLog(){logs=[];save();renderLog();renderStats()}
+render();
+</script>
+<script src="../../shared/dkz-debug.js"></script>
+<script src="../../shared/dkz-navbar.js"></script>
+</body>
+</html>

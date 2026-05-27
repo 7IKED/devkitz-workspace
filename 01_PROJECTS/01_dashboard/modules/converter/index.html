@@ -1,0 +1,483 @@
+﻿<!-- 
+=============================================================================
+DKZ ECOSYSTEM BLUEPRINT v0.01.1
+BRAND: AntiCrav / DkZ 
+MODULE: AI ENGINE (CONVERTER)
+=============================================================================
+-->
+<!DOCTYPE html>
+<html lang="de" class="dark">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI CONVERTER - DkZâ„¢ Ecosystem</title>
+
+    <script src="https://cdn.tailwindcss.com">
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }</script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#a855f7', // Purple focus for converter
+                        darkBg: '#0e0e10',
+                        darkBox: '#1a1a1c',
+                        darkPanel: '#131315',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif']
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800;900&display=swap"
+        rel="stylesheet">
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Puter.js Integration -->
+    <script src="https://js.puter.com/v2/"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #0e0e10;
+            color: white;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 85% 50%, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 15% 30%, rgba(32, 105, 223, 0.05) 0%, transparent 50%);
+        }
+
+        .glass {
+            background: rgba(26, 26, 28, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(168, 85, 247, 0.5);
+            border-radius: 4px;
+        }
+
+        .custom-scroll:hover::-webkit-scrollbar-thumb {
+            background: rgba(168, 85, 247, 0.8);
+        }
+
+        .btn-brand {
+            background: linear-gradient(135deg, #a855f7, #c084fc);
+            box-shadow: 0 4px 15px -3px rgba(168, 85, 247, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .btn-brand:hover {
+            box-shadow: 0 6px 20px -3px rgba(168, 85, 247, 0.6);
+            transform: translateY(-2px);
+        }
+
+        /* Markdown Styles for Results */
+        .markdown-body h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+
+        .markdown-body h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #c084fc;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0.25rem;
+        }
+
+        .markdown-body h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            color: #e2e8f0;
+        }
+
+        .markdown-body p {
+            margin-bottom: 1rem;
+            color: #cbd5e1;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .markdown-body ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+            color: #cbd5e1;
+            font-size: 0.95rem;
+        }
+
+        .markdown-body li {
+            margin-bottom: 0.25rem;
+        }
+
+        .markdown-body strong {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .markdown-body pre {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .markdown-body code {
+            font-family: monospace;
+            color: #d8b4fe;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.1rem 0.3rem;
+            border-radius: 0.25rem;
+        }
+    /* DkZ v2 BG Blobs */body::before{content:"";position:fixed;top:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(250,30,78,.07),transparent 70%);pointer-events:none;z-index:0}body::after{content:"";position:fixed;bottom:-150px;left:-150px;width:500px;height:500px;background:radial-gradient(circle,rgba(168,85,247,.06),transparent 70%);pointer-events:none;z-index:0}
+</style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="converter" data-dkz-appid="DKZ-MOD-CON" data-dkz-version="v0.01" data-dkz-title="AI CONVERTER - Ecosystem" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const Icon = ({ name, size = 20, className = '', weight = 'regular' }) => {
+            return <i className={`ph-${weight} ph-${name} text-[${size}px] ${className}`}></i>;
+        };
+
+        const useIsMobile = () => {
+            const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+            useEffect(() => {
+                const check = () => setIsMobile(window.innerWidth < 1024);
+                window.addEventListener('resize', check);
+                return () => window.removeEventListener('resize', check);
+            }, []);
+            return isMobile;
+        };
+
+        const App = () => {
+            const isMobile = useIsMobile();
+            const [activeTab, setActiveTab] = useState('input');
+            const [inputContent, setInputContent] = useState('');
+            const [contextContent, setContextContent] = useState('');
+            const [isScanning, setIsScanning] = useState(false);
+            const [isSyncing, setIsSyncing] = useState(false);
+            const [result, setResult] = useState(null);
+            const [error, setError] = useState(null);
+            const [syncStatus, setSyncStatus] = useState(null);
+
+            const displayResultRef = useRef(null);
+
+            const handleScan = async () => {
+                if (!inputContent.trim()) {
+                    setError("Bitte Quellcode eingeben.");
+                    return;
+                }
+
+                setIsScanning(true);
+                setError(null);
+                setResult(null);
+
+                try {
+                    const prompt = `Act as an expert Senior Software Engineer. I need to convert, explain, or refactor the following code.` +
+                        (contextContent - ` Instructions/Target Language:\n${contextContent}\n\n` : `\n\n`) +
+                        `Source Code:\n${inputContent}\n\n` +
+                        `Provide the converted code block formatted in Markdown. If explaining, be concise.`;
+
+                    // Call Puter.js AI
+                    const response = await puter.ai.chat(prompt);
+
+                    if (response && response.message && response.message.content) {
+                        setResult(response.message.content);
+                    } else if (typeof response === 'string') {
+                        setResult(response);
+                    } else {
+                        setError("Fehler bei der AI Antwort. Unbekanntes Format.");
+                    }
+                } catch (err) {
+                    console.error(err);
+                    setError(err.message || "Fehler bei der AI Verarbeitung mit Puter.js");
+                } finally {
+                    setIsScanning(false);
+                }
+            };
+
+            const handleSyncRepo = async () => {
+                setIsSyncing(true);
+                setSyncStatus(null);
+                try {
+                    const response = await fetch('http://localhost:3040/api/sync', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        setSyncStatus({ type: 'success', message: data.message });
+                    } else {
+                        setSyncStatus({ type: 'error', message: data.error || 'Sync failed.' });
+                    }
+                } catch (err) {
+                    console.error('Sync request failed:', err);
+                    setSyncStatus({
+                        type: 'error',
+                        message: 'Konnte keine Verbindung zum lokalen Sync-Server (Port 3040) herstellen. Bitte starte ihn mit "node sync-server.js"'
+                    });
+                } finally {
+                    setIsSyncing(false);
+                    // Hide sync status after 5s
+                    setTimeout(() => setSyncStatus(null), 5000);
+                }
+            };
+
+            // Parse markdown to HTML
+            const renderMarkdown = () => {
+                if (!result) return { __html: '' };
+                return { __html: marked.parse(result) };
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col p-2 md:p-8">
+                    {/* Header */}
+                    <header className="flex items-center justify-between mb-4 md:mb-8 z-10 glass rounded-2xl p-3 md:p-4 px-4 md:px-6 relative overflow-hidden shrink-0">
+                        <div className="absolute inset-0 bg-gradient-to-r from-brand/10 to-transparent pointer-events-none"></div>
+                        <div className="flex items-center gap-3 md:gap-4 relative z-10">
+                            <a
+                                href={isMobile - "../../dashboard/hub/index_panel.html" : "../../dashboard/hub/index.html"}
+                                className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-gray-400 hover:text-white shrink-0"
+                                title="Back to Dashboard"
+                            >
+                                <Icon name="caret-left" weight="bold" size={isMobile - 20 : 24} />
+                            </a>
+                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-brand to-pink-600 flex items-center justify-center shadow-[0_0_20px_rgba(168,85,247,0.4)]">
+                                <Icon name="code" weight="duotone" size={isMobile - 24 : 28} className="text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-lg md:text-2xl font-display font-black tracking-widest uppercase bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+                                    AI <span className="text-brand">CONVERTER</span>
+                                </h1>
+                                <p className="text-[9px] md:text-[10px] text-gray-400 uppercase tracking-[0.3em] font-bold">Code Translation & Refactoring Module</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4 relative z-10">
+                            {syncStatus && !isMobile && (
+                                <span className={`text-xs font-bold ${syncStatus.type === 'success' - 'text-green-400' : 'text-red-400'} animate-pulse`}>
+                                    {syncStatus.message}
+                                </span>
+                            )}
+                            <button
+                                onClick={handleSyncRepo}
+                                disabled={isSyncing}
+                                className={`flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-wider ${isSyncing - 'bg-white/10 text-gray-400 cursor-not-allowed' : 'bg-[#1a1a1c] border border-[#333338] text-gray-300 hover:text-white hover:border-[#3a3a40] shadow-lg'}`}
+                                title="Fhrt 'git add .' und 'git commit' via lokalem Server aus."
+                            >
+                                <Icon name="git-commit" className={isSyncing - "animate-spin" : ""} />
+                                {!isMobile && (isSyncing - 'Syncing...' : 'Auto-Update Repo')}
+                            </button>
+                        </div>
+                    </header>
+
+                    {/* Main Workspace */}
+                    <div className="flex-1 flex flex-col lg:grid lg:grid-cols-2 gap-4 lg:gap-6 relative z-10 h-0">
+
+                        {isMobile && (
+                            <div className="flex gap-2 shrink-0">
+                                <button onClick={() => setActiveTab('input')} className={`flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeTab === 'input' - 'bg-brand text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]' : 'bg-black/40 text-gray-400 border border-white/5'}`}>Input Data</button>
+                                <button onClick={() => setActiveTab('output')} className={`flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeTab === 'output' - 'bg-brand text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]' : 'bg-black/40 text-gray-400 border border-white/5'}`}>Result</button>
+                            </div>
+                        )}
+
+                        {/* INPUT PANEL */}
+                        <div className={`glass rounded-3xl border border-white/10 p-4 md:p-6 flex-col h-full shadow-2xl relative overflow-hidden ${isMobile && activeTab !== 'input' - 'hidden' : 'flex'}`}>
+                            <h2 className="text-lg font-bold mb-4 flex items-center gap-2 shrink-0">
+                                <Icon name="braces" className="text-brand" weight="duotone" />
+                                Source Code
+                            </h2>
+
+                            <div className="flex-1 flex flex-col gap-4">
+                                <div className="flex-1 flex flex-col">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 flex justify-between">
+                                        <span>Code to Convert</span>
+                                        <button onClick={() => setInputContent('')} className="text-gray-600 hover:text-white transition-colors" title="Clear">
+                                            <Icon name="trash" />
+                                        </button>
+                                    </label>
+                                    <textarea
+                                        value={inputContent}
+                                        onChange={(e) => setInputContent(e.target.value)}
+                                        placeholder="Paste your source code here..."
+                                        className="flex-1 w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm font-mono focus:border-brand focus:ring-1 focus:ring-brand/50 focus:outline-none transition-all resize-none custom-scroll text-gray-200"
+                                    ></textarea>
+                                </div>
+
+                                <div className="h-[200px] flex flex-col">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                                        Target Language / Instructions
+                                    </label>
+                                    <textarea
+                                        value={contextContent}
+                                        onChange={(e) => setContextContent(e.target.value)}
+                                        placeholder="e.g. 'Convert this old jQuery code into modern React hooks' or 'Explain what this Python script does'"
+                                        className="flex-1 w-full bg-black/20 border border-white/10 rounded-xl p-4 text-sm focus:border-brand focus:ring-1 focus:ring-brand/50 focus:outline-none transition-all resize-none custom-scroll text-gray-300"
+                                    ></textarea>
+                                </div>
+                            </div>
+
+                            <div className="mt-6 pt-6 border-t border-white/5 flex gap-4 items-center">
+                                <button
+                                    onClick={handleScan}
+                                    disabled={isScanning || !inputContent.trim()}
+                                    className={`flex-1 py-4 rounded-xl font-black uppercase tracking-widest flex justify-center items-center gap-2 ${isScanning || !inputContent.trim() - 'bg-white/5 text-gray-600 cursor-not-allowed border border-white/5' : 'btn-brand text-white border border-brand/50 shadow-[0_0_20px_rgba(168,85,247,0.3)]'}`}
+                                >
+                                    {isScanning - (
+                                        <><Icon name="spinner" className="animate-spin" size={24} /> EXECUTING...</>
+                                    ) : (
+                                        <><Icon name="magic-wand" weight="fill" size={24} /> EXECUTE CONVERSION</>
+                                    )}
+                                </button>
+                            </div>
+
+                            {error && (
+                                <div className="mt-4 p-3 rounded-lg bg-red-500/20 border border-red-500/50 text-red-200 text-xs font-bold flex items-center gap-2">
+                                    <Icon name="warning-circle" weight="fill" className="text-red-400 shrink-0" size={18} />
+                                    {error}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* OUTPUT PANEL */}
+                        <div className={`glass rounded-3xl border border-white/10 p-4 md:p-6 flex-col h-full shadow-2xl relative overflow-hidden ${isMobile && activeTab !== 'output' - 'hidden' : 'flex'}`}>
+                            <h2 className="text-lg font-bold mb-4 flex items-center gap-2 shrink-0">
+                                <Icon name="terminal-window" className="text-brand" weight="duotone" />
+                                Converted Result
+                            </h2>
+
+                            <div
+                                className="flex-1 w-full bg-[#050810] border border-white/5 rounded-xl p-6 overflow-y-auto custom-scroll relative"
+                                ref={displayResultRef}
+                            >
+                                {isScanning - (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm z-10">
+                                        <div className="w-16 h-16 rounded-full bg-brand/10 border-2 border-brand/50 flex flex-col items-center justify-center animate-pulse-slow mb-4 shadow-[0_0_30px_rgba(168,85,247,0.3)]">
+                                            <Icon name="cpu" weight="duotone" size={32} className="text-brand animate-bounce" />
+                                        </div>
+                                        <div className="text-brand font-bold uppercase tracking-widest text-sm">Processing Rulesets...</div>
+                                        <div className="text-[10px] text-gray-500 mt-2 font-mono">Puter.js AI Cluster Initialized</div>
+                                    </div>
+                                ) : result - (
+                                    <div
+                                        className="markdown-body"
+                                        dangerouslySetInnerHTML={renderMarkdown()}
+                                    />
+                                ) : (
+                                    <div className="h-full flex flex-col items-center justify-center text-gray-600">
+                                        <Icon name="ghost" weight="duotone" size={64} className="mb-4 opacity-50" />
+                                        <p className="text-sm font-bold uppercase tracking-widest">Awaiting Input</p>
+                                        <p className="text-xs mt-2 text-gray-500 text-center max-w-xs leading-relaxed">
+                                            Insert source code and target instructions, then execute to generate the new snippet.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="mt-4 flex justify-end gap-3">
+                                <button
+                                    disabled={!result}
+                                    onClick={() => navigator.clipboard.writeText(result)}
+                                    className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest flex items-center gap-2 transition-all ${result - 'bg-white/10 hover:bg-white/20 text-white' : 'bg-white/5 text-gray-600 cursor-not-allowed'}`}
+                                >
+                                    <Icon name="copy" /> Copy Raw Text
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Converter</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Konvertiere Dateien zwischen verschiedenen Formaten.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Converter</div><div style="font-size:.875rem;color:#a0a0a0;line-height:1.8;text-align:left"><div style="display:flex;gap:.75rem;margin-bottom:.5rem"><span style="background:rgba(250,30,78,.2);border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:900;font-size:.7rem;color:#fa1e4e">1</span><span><b style="color:#f6f6f7">Datei waehlen</b> - Lade oder fuege Datei ein</span></div><div style="display:flex;gap:.75rem;margin-bottom:.5rem"><span style="background:rgba(0,208,132,.2);border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:900;font-size:.7rem;color:#00D084">2</span><span><b style="color:#f6f6f7">Format waehlen</b> - Zielformat auswaehlen</span></div><div style="display:flex;gap:.75rem"><span style="background:rgba(85,172,238,.2);border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:900;font-size:.7rem;color:#55ACEE">3</span><span><b style="color:#f6f6f7">Konvertieren</b> - Download oder Zwischenablage</span></div></div><button style="margin-top:1rem;width:100%;padding:.5rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer" onclick="closeOnboarding()">Los geht's!</button></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-converter-onboarded','1')}if(!localStorage.getItem('dkz-converter-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}</script>
+<script id="dkz-info-inject">
+setTimeout(function(){var c=document.querySelector('header > div:last-child');if(!c)return;var b=document.createElement('button');b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer;margin-right:8px;transition:all .2s';b.onmouseover=function(){this.style.background='rgba(255,255,255,.15)'};b.onmouseout=function(){this.style.background='rgba(255,255,255,.05)'};b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)},500);
+</script>    <script src="../../shared/dkz-headbar.js"></script>    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+
+<!-- &#8212; DEVKiTZ 2026 &#8212; All Rights Reserved -->
+</html>
+
+

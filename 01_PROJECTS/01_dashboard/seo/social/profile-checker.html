@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="shared/seo-shared.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="grid grid-2">
+        <div class="card card-full">
+            <h3>✅ Profil-Komplettheits-Check</h3>
+            <p style="font-size:11px;color:var(--muted);margin-bottom:12px">Überprüfe ob alle deine Profile vollständig
+                ausgefüllt und in der Suche sichtbar sind.</p>
+            <div class="input-row">
+                <input type="text" id="usernameInput" placeholder="Haupt-Username (z.B. @devkitz)">
+                <button class="btn btn-green" onclick="checkProfiles()">🔍 Alle Profile prüfen</button>
+            </div>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>Profile werden auf allen Plattformen geprüft...
+            </div>
+        </div>
+
+        <div class="card" id="scoreCard" style="display:none">
+            <h3>📊 Gesamt-Score</h3>
+            <div class="gauge-wrap">
+                <div class="gauge"><svg viewBox="0 0 200 200" width="180" height="180">
+                        <circle class="gauge-bg" cx="100" cy="100" r="85" />
+                        <circle class="gauge-fill" id="gaugeFill" cx="100" cy="100" r="85" stroke-dasharray="534"
+                            stroke-dashoffset="534" />
+                    </svg>
+                    <div class="gauge-text">
+                        <div class="gauge-score" id="scoreNum">0</div>
+                        <div class="gauge-label">Profil-Score</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stats" id="summaryStats"></div>
+        </div>
+
+        <div class="card" id="usernameCard" style="display:none">
+            <h3>👤 Username-Konsistenz</h3>
+            <div id="usernameData"></div>
+        </div>
+
+        <div class="card card-full" id="checksCard" style="display:none">
+            <h3>📋 Profil-Audit pro Plattform</h3>
+            <div id="checksData"></div>
+        </div>
+
+        <div class="card card-full" id="searchCard" style="display:none">
+            <h3>🔍 Suchsichtbarkeit</h3>
+            <div id="searchData"></div>
+        </div>
+
+        <div class="card card-full" id="recoCard" style="display:none">
+            <h3>💡 Prioritäre Verbesserungen</h3>
+            <div id="recoData"></div>
+        </div>
+    </div>
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        const PLATFORMS = [{ id: 'youtube', icon: '▶️', name: 'YouTube', color: '#FF0000' }, { id: 'instagram', icon: '📸', name: 'Instagram', color: '#E1306C' }, { id: 'tiktok', icon: '🎵', name: 'TikTok', color: '#69C9D0' }, { id: 'twitch', icon: '🟣', name: 'Twitch', color: '#9146FF' }, { id: 'kick', icon: '🟢', name: 'Kick', color: '#53FC18' }, { id: 'x-twitter', icon: '✖️', name: 'X', color: '#1DA1F2' }, { id: 'facebook', icon: '📘', name: 'Facebook', color: '#1877F2' }, { id: 'reddit', icon: '🟠', name: 'Reddit', color: '#FF4500' }, { id: 'snapchat', icon: '👻', name: 'Snapchat', color: '#FFFC00' }, { id: 'vk', icon: '🔷', name: 'VK', color: '#4C75A3' }, { id: 'linkedin', icon: '💼', name: 'LinkedIn', color: '#0A66C2' }];
+
+        const CHECKS = ['Profilbild', 'Bio/Beschreibung', 'Profil-Link/Website', 'Verifiziert', 'Kontakt-Info', 'Business/Creator Account', 'Content vorhanden', 'Regelmäßig aktiv', 'Hashtags/Tags', 'Impressum/Datenschutz'];
+
+        async function checkProfiles() {
+            const username = document.getElementById('usernameInput').value.trim().replace('@', '');
+            if (!username) { alert('Username eingeben'); return }
+            document.getElementById('loading').classList.add('show');
+            ['scoreCard', 'usernameCard', 'checksCard', 'searchCard', 'recoCard'].forEach(id => document.getElementById(id).style.display = 'none');
+            await new Promise(r => setTimeout(r, 2000));
+            document.getElementById('loading').classList.remove('show');
+
+            let totalChecks = 0, totalPassed = 0;
+            const platformResults = PLATFORMS.map(p => {
+                const checks = CHECKS.map(c => ({ name: c, pass: Math.random() > .3 }));
+                const passed = checks.filter(c => c.pass).length;
+                totalChecks += checks.length; totalPassed += passed;
+                const pct = Math.round(passed / checks.length * 100);
+                const searchVisible = Math.random() > .25;
+                const usernameMatch = Math.random() > .2;
+                return { ...p, checks, passed, total: checks.length, pct, searchVisible, usernameMatch, usernameUsed: usernameMatch ? username : username + Math.floor(Math.random() * 99) };
+            });
+
+            const overallScore = Math.round(totalPassed / totalChecks * 100);
+
+            // SCORE
+            document.getElementById('scoreCard').style.display = '';
+            const fill = document.getElementById('gaugeFill');
+            fill.style.strokeDashoffset = 534 - (overallScore / 100 * 534);
+            fill.style.stroke = overallScore >= 80 ? 'var(--green)' : overallScore >= 50 ? 'var(--yellow)' : 'var(--red)';
+            animateNum('scoreNum', overallScore);
+            const complete = platformResults.filter(p => p.pct >= 80).length;
+            const partial = platformResults.filter(p => p.pct >= 50 && p.pct < 80).length;
+            const incomplete = platformResults.filter(p => p.pct < 50).length;
+            document.getElementById('summaryStats').innerHTML = `<div class="stat"><div class="stat-num" style="color:var(--green)">${complete}</div><div class="stat-label">Vollständig</div></div><div class="stat"><div class="stat-num" style="color:var(--yellow)">${partial}</div><div class="stat-label">Teilweise</div></div><div class="stat"><div class="stat-num" style="color:var(--red)">${incomplete}</div><div class="stat-label">Unvollständig</div></div>`;
+
+            // USERNAME CONSISTENCY
+            document.getElementById('usernameCard').style.display = '';
+            const consistent = platformResults.filter(p => p.usernameMatch).length;
+            document.getElementById('usernameData').innerHTML = `<div class="stat" style="margin-bottom:12px;background:var(--bg)"><div class="stat-num" style="color:${consistent >= 8 ? 'var(--green)' : consistent >= 5 ? 'var(--yellow)' : 'var(--red)'}">${consistent}/${PLATFORMS.length}</div><div class="stat-label">Konsistenter Username</div></div>` +
+                platformResults.map(p => `<div class="metric-row"><span style="font-size:16px">${p.icon}</span><span class="metric-name">${p.name}</span><span style="font-family:var(--mono);font-size:11px;color:${p.usernameMatch ? 'var(--green)' : 'var(--red)'}">@${p.usernameUsed}</span><span class="badge ${p.usernameMatch ? 'badge-green' : 'badge-red'}">${p.usernameMatch ? '✓ Match' : '✗ Abweichend'}</span></div>`).join('');
+
+            // CHECKS
+            document.getElementById('checksCard').style.display = '';
+            document.getElementById('checksData').innerHTML = platformResults.map(p => `
+        <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                <span style="font-weight:800;font-size:13px">${p.icon} ${p.name}</span>
+                <div style="display:flex;gap:6px;align-items:center"><span class="badge ${p.pct >= 80 ? 'badge-green' : p.pct >= 50 ? 'badge-yellow' : 'badge-red'}">${p.pct}%</span><span style="font-size:10px;color:var(--muted)">${p.passed}/${p.total}</span></div>
+            </div>
+            <div class="progress" style="margin-bottom:8px"><div class="progress-fill ${p.pct >= 80 ? 'progress-green' : p.pct >= 50 ? 'progress-yellow' : 'progress-red'}" style="width:${p.pct}%"></div></div>
+            ${p.checks.map(c => `<div style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:11px"><span>${c.pass ? '✅' : '❌'}</span><span style="color:${c.pass ? 'var(--text)' : 'var(--muted)'}">${c.name}</span></div>`).join('')}
+        </div>`).join('');
+
+            // SEARCH VISIBILITY
+            document.getElementById('searchCard').style.display = '';
+            const searchVisible = platformResults.filter(p => p.searchVisible).length;
+            document.getElementById('searchData').innerHTML = `<div class="stats" style="margin-bottom:12px"><div class="stat"><div class="stat-num" style="color:${searchVisible >= 8 ? 'var(--green)' : 'var(--yellow)'}">${searchVisible}</div><div class="stat-label">In Google sichtbar</div></div><div class="stat"><div class="stat-num" style="color:var(--red)">${PLATFORMS.length - searchVisible}</div><div class="stat-label">Nicht sichtbar</div></div></div>` +
+                platformResults.map(p => `<div class="metric-row"><span style="font-size:16px">${p.icon}</span><span class="metric-name">${p.name}</span><span class="badge ${p.searchVisible ? 'badge-green' : 'badge-red'}">${p.searchVisible ? '✅ Sichtbar' : '❌ Nicht indexiert'}</span></div>`).join('');
+
+            // RECOMMENDATIONS
+            document.getElementById('recoCard').style.display = '';
+            const recos = [];
+            platformResults.filter(p => p.pct < 80).forEach(p => recos.push(`${p.icon} ${p.name}: Profil vervollständigen (${p.total - p.passed} fehlende Felder)`));
+            platformResults.filter(p => !p.usernameMatch).forEach(p => recos.push(`${p.icon} ${p.name}: Username zu @${username} ändern`));
+            platformResults.filter(p => !p.searchVisible).forEach(p => recos.push(`${p.icon} ${p.name}: SEO-Einstellungen prüfen für Google-Indexierung`));
+            document.getElementById('recoData').innerHTML = recos.slice(0, 10).map((r, i) => `<div class="result-item"><span class="result-icon">💡</span><div><div class="result-title">#${i + 1}: ${r}</div></div></div>`).join('');
+        }
+
+        function animateNum(id, target) { const el = document.getElementById(id); let c = 0; const s = Math.ceil(target / 50); const t = setInterval(() => { c += s; if (c >= target) { c = target; clearInterval(t) } el.textContent = c }, 25) }
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

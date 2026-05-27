@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Commander — DEVKiTZ™</title>
+    <meta name="description" content="Blogger API Automation Dashboard — 53 Blogs zentral steuern">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #fa1e4e;
+            --bg: #060608;
+            --bg-card: rgba(18, 18, 24, 0.85);
+            --bg-card-solid: #12121a;
+            --text-primary: #e8e8ec;
+            --text-secondary: #8a8a9a;
+            --green: #00ff88;
+            --yellow: #ffb800;
+            --red: #ff3b5c;
+            --blue: #3b82f6;
+            --glass: rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.08);
+            --radius: 12px;
+            --font-main: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text-primary); font-family: var(--font-main); min-height: 100vh; }
+        
+        /* ═══ HEADER ═══ */
+        .header { display: flex; align-items: center; gap: 16px; padding: 16px 24px; background: var(--bg-card); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(20px); }
+        .header svg { width: 32px; height: 32px; }
+        .header h1 { font-size: 1.2rem; font-weight: 700; }
+        .header h1 span { color: var(--accent); }
+        .header .status { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-secondary); }
+        .header .status .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .header .status .dot.green { background: var(--green); box-shadow: 0 0 8px var(--green); }
+        .header .status .dot.red { background: var(--red); box-shadow: 0 0 8px var(--red); }
+        .header .status .dot.yellow { background: var(--yellow); }
+        .auth-btn { padding: 8px 20px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-family: var(--font-main); transition: all .2s; }
+        .auth-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(250,30,78,.4); }
+
+        /* ═══ TABS ═══ */
+        .tabs { display: flex; gap: 4px; padding: 12px 24px; background: var(--bg-card); border-bottom: 1px solid var(--border); overflow-x: auto; }
+        .tab { padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 500; color: var(--text-secondary); background: transparent; border: 1px solid transparent; transition: all .2s; white-space: nowrap; }
+        .tab:hover { background: var(--glass); color: var(--text-primary); }
+        .tab.active { background: rgba(250,30,78,.12); color: var(--accent); border-color: rgba(250,30,78,.3); }
+        .tab .count { background: var(--glass); padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; margin-left: 6px; }
+
+        /* ═══ MAIN ═══ */
+        .main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        /* ═══ BLOG GRID ═══ */
+        .blog-controls { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .search-input { padding: 10px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-family: var(--font-main); width: 280px; font-size: 0.9rem; outline: none; transition: border-color .2s; }
+        .search-input:focus { border-color: var(--accent); }
+        .vertical-filter { padding: 10px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-family: var(--font-main); font-size: 0.9rem; cursor: pointer; outline: none; }
+        .vertical-filter option { background: var(--bg-card-solid); }
+        .blog-stats { margin-left: auto; font-size: 0.85rem; color: var(--text-secondary); }
+        
+        .blog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+        .blog-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; cursor: pointer; transition: all .2s; position: relative; overflow: hidden; }
+        .blog-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--panel-color, var(--accent)); opacity: 0.8; }
+        .blog-card:hover { border-color: rgba(250,30,78,.3); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,.3); }
+        .blog-card.selected { border-color: var(--accent); background: rgba(250,30,78,.05); }
+        .blog-card .name { font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
+        .blog-card .url { font-size: 0.75rem; color: var(--text-secondary); font-family: var(--font-mono); margin-bottom: 8px; }
+        .blog-card .meta { display: flex; gap: 12px; font-size: 0.8rem; color: var(--text-secondary); }
+        .blog-card .meta .badge { padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+        .blog-card .check { position: absolute; top: 12px; right: 12px; width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+        .blog-card.selected .check { background: var(--accent); border-color: var(--accent); }
+        .blog-card.selected .check::after { content: '✓'; color: #fff; font-size: 12px; font-weight: 700; }
+
+        /* ═══ CREATOR PANEL ═══ */
+        .creator { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .creator-form { display: flex; flex-direction: column; gap: 16px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); }
+        .form-group input, .form-group select, .form-group textarea { padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-family: var(--font-main); font-size: 0.9rem; outline: none; resize: vertical; }
+        .form-group textarea { min-height: 300px; font-family: var(--font-mono); font-size: 0.85rem; }
+        .form-group input:focus, .form-group textarea:focus { border-color: var(--accent); }
+        .preview-pane { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; overflow-y: auto; max-height: 600px; }
+        .preview-pane h3 { margin-bottom: 16px; font-weight: 600; font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+        .target-selector { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .target-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); font-size: 0.8rem; cursor: pointer; transition: all .2s; font-family: var(--font-main); }
+        .target-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .target-btn.active { background: rgba(250,30,78,.12); border-color: var(--accent); color: var(--accent); }
+        .send-btn { padding: 14px; background: linear-gradient(135deg, var(--accent), #d6163e); color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: var(--font-main); transition: all .2s; }
+        .send-btn:hover { transform: scale(1.02); box-shadow: 0 4px 20px rgba(250,30,78,.4); }
+        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* ═══ LOG PANEL ═══ */
+        .log { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; font-family: var(--font-mono); font-size: 0.8rem; max-height: 400px; overflow-y: auto; }
+        .log-entry { padding: 4px 0; border-bottom: 1px solid var(--border); }
+        .log-entry.success { color: var(--green); }
+        .log-entry.error { color: var(--red); }
+        .log-entry .time { color: var(--text-secondary); margin-right: 8px; }
+
+        /* ═══ EMPTY STATE ═══ */
+        .empty-state { text-align: center; padding: 80px 20px; }
+        .empty-state h2 { font-size: 1.5rem; margin-bottom: 12px; }
+        .empty-state p { color: var(--text-secondary); margin-bottom: 24px; }
+
+        /* ═══ LOADING ═══ */
+        .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; display: inline-block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ═══ TOAST ═══ */
+        .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; }
+        .toast { padding: 12px 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; backdrop-filter: blur(20px); font-size: 0.85rem; animation: slideIn .3s ease; }
+        .toast.success { border-color: var(--green); }
+        .toast.error { border-color: var(--red); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        @media (max-width: 768px) {
+            .creator { grid-template-columns: 1fr; }
+            .blog-grid { grid-template-columns: 1fr; }
+            .tabs { padding: 8px 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header class="header">
+    <svg viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#fa1e4e"/><text x="16" y="22" text-anchor="middle" fill="#fff" font-size="16" font-weight="bold" font-family="Inter">B</text></svg>
+    <h1><span>Blog</span> Commander</h1>
+    <div class="status" id="authStatus">
+        <div class="dot red"></div>
+        <span>Nicht verbunden</span>
+    </div>
+    <button class="auth-btn" id="authBtn" onclick="startAuth()">🔑 Mit Google verbinden</button>
+</header>
+
+<!-- ═══ TABS ═══ -->
+<nav class="tabs">
+    <div class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 Dashboard <span class="count" id="blogCount">0</span></div>
+    <div class="tab" data-tab="creator" onclick="switchTab('creator')">✍️ Post Creator</div>
+    <div class="tab" data-tab="pages" onclick="switchTab('pages')">📄 Page Manager</div>
+    <div class="tab" data-tab="search" onclick="switchTab('search')">🔍 Suche</div>
+    <div class="tab" data-tab="log" onclick="switchTab('log')">📋 Log</div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main">
+
+    <!-- Dashboard -->
+    <div class="panel active" id="panel-dashboard">
+        <div class="blog-controls">
+            <input type="text" class="search-input" id="blogSearch" placeholder="🔍 Blog suchen..." oninput="filterBlogs()">
+            <select class="vertical-filter" id="verticalFilter" onchange="filterBlogs()">
+                <option value="all">Alle Verticals</option>
+                <option value="core">🔴 CORE</option>
+                <option value="sports">🟢 SPORTS</option>
+                <option value="cs2">🎮 CS2</option>
+                <option value="investigativ">🔍 INVESTIGATIV</option>
+                <option value="ki">🤖 KI & PROMPTS</option>
+                <option value="entertainment">📺 ENTERTAINMENT</option>
+                <option value="health">💊 HEALTH</option>
+                <option value="coding">💻 CODING</option>
+                <option value="labs">🧪 LABS</option>
+                <option value="underground">🌑 UNDERGROUND</option>
+                <option value="launch">🚀 LAUNCH</option>
+                <option value="reisen">🌍 REISEN</option>
+            </select>
+            <span class="blog-stats" id="blogStats">Lade Blogs...</span>
+        </div>
+        <div class="blog-grid" id="blogGrid"></div>
+    </div>
+
+    <!-- Post Creator -->
+    <div class="panel" id="panel-creator">
+        <h2 style="margin-bottom: 16px; font-size: 1.1rem;">✍️ Neuen Post erstellen</h2>
+        <div class="target-selector" id="targetSelector"></div>
+        <div class="creator">
+            <div class="creator-form">
+                <div class="form-group">
+                    <label>Titel</label>
+                    <input type="text" id="postTitle" placeholder="Post-Titel eingeben...">
+                </div>
+                <div class="form-group">
+                    <label>Labels (kommasepariert)</label>
+                    <input type="text" id="postLabels" placeholder="z.B. CS2, Guide, Esports">
+                </div>
+                <div class="form-group">
+                    <label>Inhalt (HTML)</label>
+                    <textarea id="postContent" placeholder="<h2>Überschrift</h2>\n<p>Text hier...</p>"></textarea>
+                </div>
+                <div style="display:flex;gap:12px;">
+                    <label style="display:flex;align-items:center;gap:8px;font-size:.85rem;cursor:pointer;">
+                        <input type="checkbox" id="postDraft"> Als Entwurf speichern
+                    </label>
+                </div>
+                <button class="send-btn" id="sendPostBtn" onclick="sendPost()">🚀 Post veröffentlichen</button>
+            </div>
+            <div class="preview-pane">
+                <h3>Vorschau</h3>
+                <div id="postPreview" style="color:var(--text-secondary);font-size:0.9rem;">Tippe einen Titel und Inhalt ein...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Manager -->
+    <div class="panel" id="panel-pages">
+        <h2 style="margin-bottom: 16px; font-size: 1.1rem;">📄 Pages verwalten</h2>
+        <div class="target-selector" id="pageTargetSelector"></div>
+        <div class="creator">
+            <div class="creator-form">
+                <div class="form-group">
+                    <label>Seiten-Titel</label>
+                    <input type="text" id="pageTitle" placeholder="z.B. llms">
+                </div>
+                <div class="form-group">
+                    <label>Inhalt (HTML)</label>
+                    <textarea id="pageContent" placeholder="Seiten-Inhalt hier..."></textarea>
+                </div>
+                <button class="send-btn" onclick="sendPage()">📄 Page erstellen</button>
+            </div>
+            <div class="preview-pane">
+                <h3>Vorschau</h3>
+                <div id="pagePreview" style="color:var(--text-secondary);font-size:0.9rem;">Tippe Titel und Inhalt ein...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search -->
+    <div class="panel" id="panel-search">
+        <h2 style="margin-bottom: 16px; font-size: 1.1rem;">🔍 Über alle Blogs suchen</h2>
+        <div style="display:flex;gap:12px;margin-bottom:20px;">
+            <input type="text" class="search-input" id="globalSearch" placeholder="Suchbegriff eingeben..." style="flex:1;">
+            <button class="auth-btn" onclick="globalSearchExec()">Suchen</button>
+        </div>
+        <div id="searchResults"></div>
+    </div>
+
+    <!-- Log -->
+    <div class="panel" id="panel-log">
+        <h2 style="margin-bottom: 16px; font-size: 1.1rem;">📋 Aktivitäts-Log</h2>
+        <div class="log" id="activityLog">
+            <div class="log-entry"><span class="time">--:--:--</span> Blog Commander gestartet</div>
+        </div>
+    </div>
+</main>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+// ═══ CONFIG ═══
+const API_BASE = 'http://localhost:3040/api/v1/blogger';
+let allBlogs = [];
+let selectedBlogIds = new Set();
+
+// ═══ VERTICAL COLORS ═══
+const VERTICAL_COLORS = {
+    core: '#fa1e4e', sports: '#00ff88', cs2: '#f97316', investigativ: '#d97706',
+    ki: '#ec4899', entertainment: '#eab308', health: '#14b8a6', reisen: '#ca8a04',
+    coding: '#22d3ee', labs: '#38bdf8', underground: '#7c3aed', launch: '#f97316'
+};
+
+// ═══ INIT ═══
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+    setupPreview();
+});
+
+// ═══ AUTH ═══
+async function checkAuth() {
+    try {
+        const res = await fetch(`${API_BASE}/status`);
+        const data = await res.json();
+        const dot = document.querySelector('#authStatus .dot');
+        const text = document.querySelector('#authStatus span');
+        const btn = document.getElementById('authBtn');
+        
+        if (data.authenticated) {
+            dot.className = 'dot green';
+            text.textContent = `${data.blogCount} Blogs verbunden`;
+            btn.textContent = '✅ Verbunden';
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            loadBlogs();
+        } else {
+            dot.className = 'dot red';
+            text.textContent = 'Nicht verbunden';
+        }
+    } catch (e) {
+        const dot = document.querySelector('#authStatus .dot');
+        const text = document.querySelector('#authStatus span');
+        dot.className = 'dot yellow';
+        text.textContent = 'Gateway offline';
+        addLog('Gateway nicht erreichbar — npm run gateway starten', 'error');
+    }
+}
+
+function startAuth() {
+    window.open(`${API_BASE}/auth`, '_blank', 'width=600,height=700');
+    addLog('OAuth2 Login gestartet...', 'info');
+    // Poll for auth completion
+    const poll = setInterval(async () => {
+        try {
+            const res = await fetch(`${API_BASE}/status`);
+            const data = await res.json();
+            if (data.authenticated) {
+                clearInterval(poll);
+                checkAuth();
+                showToast('Erfolgreich verbunden!', 'success');
+            }
+        } catch(e) {}
+    }, 3000);
+    setTimeout(() => clearInterval(poll), 120000);
+}
+
+// ═══ BLOGS ═══
+async function loadBlogs() {
+    try {
+        const res = await fetch(`${API_BASE}/blogs`);
+        const data = await res.json();
+        allBlogs = data.blogs || [];
+        document.getElementById('blogCount').textContent = allBlogs.length;
+        renderBlogs(allBlogs);
+        buildTargetSelectors();
+        addLog(`${allBlogs.length} Blogs geladen`, 'success');
+    } catch (e) {
+        addLog('Blogs laden fehlgeschlagen: ' + e.message, 'error');
+    }
+}
+
+function renderBlogs(blogs) {
+    const grid = document.getElementById('blogGrid');
+    document.getElementById('blogStats').textContent = `${blogs.length} Blogs angezeigt`;
+    
+    if (blogs.length === 0) {
+        grid.innerHTML = '<div class="empty-state"><h2>Keine Blogs gefunden</h2><p>Ändere den Filter oder verbinde dich mit Google.</p></div>';
+        return;
+    }
+
+    grid.innerHTML = blogs.map(blog => {
+        const color = VERTICAL_COLORS[blog.vertical] || '#8a8a9a';
+        const selected = selectedBlogIds.has(blog.id) ? 'selected' : '';
+        return `
+        <div class="blog-card ${selected}" style="--panel-color:${color}" data-id="${esc(blog.id)}" onclick="toggleBlog('${esc(blog.id)}')">
+            <div class="check"></div>
+            <div class="name">${esc(blog.name)}</div>
+            <div class="url">${esc((blog.url || '').replace('http://', ''))}</div>
+            <div class="meta">
+                <span class="badge" style="background:${color}22;color:${color}">${esc(blog.vertical)}</span>
+                <span>📝 ${blog.posts} Posts</span>
+                <span>📄 ${blog.pages} Pages</span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function filterBlogs() {
+    const search = document.getElementById('blogSearch').value.toLowerCase();
+    const vertical = document.getElementById('verticalFilter').value;
+    let filtered = allBlogs;
+    if (vertical !== 'all') filtered = filtered.filter(b => b.vertical === vertical);
+    if (search) filtered = filtered.filter(b => b.name.toLowerCase().includes(search) || (b.url || '').toLowerCase().includes(search));
+    renderBlogs(filtered);
+}
+
+function toggleBlog(id) {
+    if (selectedBlogIds.has(id)) { selectedBlogIds.delete(id); }
+    else { selectedBlogIds.add(id); }
+    renderBlogs(allBlogs.filter(b => {
+        const search = document.getElementById('blogSearch').value.toLowerCase();
+        const vertical = document.getElementById('verticalFilter').value;
+        if (vertical !== 'all' && b.vertical !== vertical) return false;
+        if (search && !b.name.toLowerCase().includes(search) && !(b.url || '').toLowerCase().includes(search)) return false;
+        return true;
+    }));
+}
+
+// ═══ TARGET SELECTORS ═══
+function buildTargetSelectors() {
+    const verticals = [...new Set(allBlogs.map(b => b.vertical))];
+    const html = `
+        <button class="target-btn" onclick="selectTarget('all')">🌐 Alle (${allBlogs.length})</button>
+        ${verticals.map(v => {
+            const emoji = { core:'🔴', sports:'🟢', cs2:'🎮', investigativ:'🔍', ki:'🤖', entertainment:'📺', health:'💊', coding:'💻', labs:'🧪', underground:'🌑', launch:'🚀', reisen:'🌍' }[v] || '📁';
+            const count = allBlogs.filter(b => b.vertical === v).length;
+            return `<button class="target-btn" data-vertical="${esc(v)}" onclick="selectTarget('${esc(v)}')">${emoji} ${esc(v)} (${count})</button>`;
+        }).join('')}
+        <button class="target-btn" onclick="selectTarget('selected')">✅ Ausgewählte (${selectedBlogIds.size})</button>`;
+    document.getElementById('targetSelector').innerHTML = html;
+    document.getElementById('pageTargetSelector').innerHTML = html;
+}
+
+let currentTarget = 'all';
+function selectTarget(target) {
+    currentTarget = target;
+    document.querySelectorAll('.target-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll(`.target-btn[data-vertical="${target}"]`).forEach(b => b.classList.add('active'));
+    if (target === 'all') document.querySelectorAll('.target-btn:first-child').forEach(b => b.classList.add('active'));
+}
+
+// ═══ POST CREATOR ═══
+function setupPreview() {
+    const titleInput = document.getElementById('postTitle');
+    const contentInput = document.getElementById('postContent');
+    const preview = document.getElementById('postPreview');
+    
+    const update = () => {
+        const title = titleInput.value || 'Kein Titel';
+        const content = contentInput.value || '<p style="color:var(--text-secondary)">Kein Inhalt</p>';
+        preview.innerHTML = `<h2 style="color:var(--accent);margin-bottom:12px;">${esc(title)}</h2><div style="line-height:1.6;">${content}</div>`;
+    };
+    titleInput.addEventListener('input', update);
+    contentInput.addEventListener('input', update);
+}
+
+async function sendPost() {
+    const title = document.getElementById('postTitle').value;
+    const content = document.getElementById('postContent').value;
+    const labels = document.getElementById('postLabels').value.split(',').map(l => l.trim()).filter(Boolean);
+    const isDraft = document.getElementById('postDraft').checked;
+
+    if (!title || !content) { showToast('Titel und Inhalt benötigt', 'error'); return; }
+
+    const btn = document.getElementById('sendPostBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Wird gesendet...';
+
+    try {
+        let targetIds = [];
+        if (currentTarget === 'all') {
+            targetIds = allBlogs.map(b => b.id);
+        } else if (currentTarget === 'selected') {
+            targetIds = [...selectedBlogIds];
+        } else {
+            targetIds = allBlogs.filter(b => b.vertical === currentTarget).map(b => b.id);
+        }
+
+        if (targetIds.length === 0) { showToast('Keine Ziel-Blogs ausgewählt', 'error'); return; }
+
+        const res = await fetch(`${API_BASE}/bulk/posts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ blogIds: targetIds, title, content, labels, isDraft })
+        });
+        const data = await res.json();
+
+        addLog(`Bulk Post: ${data.success}/${data.total} erfolgreich`, data.failed > 0 ? 'error' : 'success');
+        showToast(`${data.success} Posts erstellt${data.failed > 0 ? `, ${data.failed} fehlgeschlagen` : ''}`, data.failed > 0 ? 'error' : 'success');
+    } catch (e) {
+        addLog('Post fehlgeschlagen: ' + e.message, 'error');
+        showToast('Fehler: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '🚀 Post veröffentlichen';
+    }
+}
+
+// ═══ PAGE MANAGER ═══
+async function sendPage() {
+    const title = document.getElementById('pageTitle').value;
+    const content = document.getElementById('pageContent').value;
+    if (!title || !content) { showToast('Titel und Inhalt benötigt', 'error'); return; }
+
+    try {
+        let targetIds = [];
+        if (currentTarget === 'all') { targetIds = allBlogs.map(b => b.id); }
+        else if (currentTarget === 'selected') { targetIds = [...selectedBlogIds]; }
+        else { targetIds = allBlogs.filter(b => b.vertical === currentTarget).map(b => b.id); }
+
+        const res = await fetch(`${API_BASE}/bulk/pages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ blogIds: targetIds, title, content })
+        });
+        const data = await res.json();
+        addLog(`Bulk Page: ${data.success}/${data.total} erstellt`, data.failed > 0 ? 'error' : 'success');
+        showToast(`${data.success} Pages erstellt`, 'success');
+    } catch (e) {
+        showToast('Fehler: ' + e.message, 'error');
+    }
+}
+
+// ═══ GLOBAL SEARCH ═══
+async function globalSearchExec() {
+    const query = document.getElementById('globalSearch').value;
+    if (!query) return;
+    const container = document.getElementById('searchResults');
+    container.innerHTML = '<div class="spinner"></div> Suche läuft...';
+
+    try {
+        const res = await fetch(`${API_BASE}/bulk/search`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query })
+        });
+        const data = await res.json();
+        if (data.totalPosts === 0) {
+            container.innerHTML = '<div class="empty-state"><h2>Keine Ergebnisse</h2><p>Kein Post enthält diesen Suchbegriff.</p></div>';
+            return;
+        }
+        container.innerHTML = data.results.map(blog => `
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;">
+                <h3 style="color:var(--accent);font-size:.95rem;margin-bottom:8px;">${esc(blog.blogName)} (${blog.posts.length})</h3>
+                ${blog.posts.map(p => `<div style="padding:4px 0;"><a href="${esc(p.url)}" target="_blank" style="color:var(--blue);text-decoration:none;">${esc(p.title)}</a></div>`).join('')}
+            </div>
+        `).join('');
+        addLog(`Suche "${query}": ${data.totalPosts} Treffer in ${data.blogsWithResults} Blogs`, 'success');
+    } catch (e) {
+        container.innerHTML = '<p style="color:var(--red);">Fehler: ' + esc(e.message) + '</p>';
+    }
+}
+
+// ═══ TABS ═══
+function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+    document.getElementById(`panel-${tab}`).classList.add('active');
+}
+
+// ═══ HELPERS ═══
+function esc(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function addLog(message, type = 'info') {
+    const log = document.getElementById('activityLog');
+    const time = new Date().toLocaleTimeString('de-DE');
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${type}`;
+    entry.innerHTML = `<span class="time">${time}</span> ${esc(message)}`;
+    log.insertBefore(entry, log.firstChild);
+}
+
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toasts');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+</script>
+</body>
+</html>

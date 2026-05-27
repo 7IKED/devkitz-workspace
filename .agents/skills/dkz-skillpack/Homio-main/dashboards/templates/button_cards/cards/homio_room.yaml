@@ -1,0 +1,185 @@
+homio_room:
+  triggers_update:
+    - '[[[ return variables.motion_sensor ]]]'
+  variables:
+    show_motion: false
+    motion_sensor: variables.motion_sensor
+    show_temp: false
+    temp_sensor: variables.temp_sensor
+    show_humid: false
+    humid_sensor: variables.humid_sensor
+  template:
+    - homio_default
+  tap_action:
+    action: call-service
+    service: input_boolean.toggle
+    service_data:
+      entity_id: input_boolean.homio_mobile_navigation
+  extra_styles: |
+    @media only screen and (max-width: 1249px)  {
+      .button-card-main {
+        position: fixed !important;
+      }
+    }
+  styles:
+    card:
+      - height: 100vh
+      - padding-left: 8vw
+      - padding-bottom: 40px
+      - overflow: hidden
+      - pointer-events: |
+          [[[
+            if (states['input_boolean.homio_mobile_navigation'].state === 'on')
+              return "all";
+            else
+              return "none";
+          ]]]
+      - background: |
+          [[[
+            return `linear-gradient(to bottom, rgba(51,51,51,0.7)0%, rgba(51,51,51,0.7)50%, rgba(51,51,51,0.5)100%), 
+            url('/local/images/Homio/rooms/${variables.image}.jpg') ${variables.image_position || 'center center'} / cover no-repeat`;
+          ]]]
+    name:
+      - color: var(--primary-text-color)
+      - opacity: 0.9
+      - font-size: 80px
+      - font-size: "clamp(40px, 6.897vw + 17.931px, 80px)"
+      - letter-spacing: "-2px"
+      - font-weight: 700
+      - justify-self: start
+    grid:
+      - grid-template-columns: 1fr
+      - grid-template-rows: min-content
+      - grid-template-areas: '"temperature" "n" "humidity"'
+      - place-content: center
+    custom_fields:
+      motion_detection:
+        - display: |
+            [[[
+              if (!variables.motion_sensor) {
+                return 'none';
+              }
+              else {
+                return 'block'
+              }
+            ]]]      
+        - position: fixed
+        - right: 0
+        - left: 0
+        - bottom: 0
+        - transform: |
+            [[[
+              if (!variables.motion_sensor) {
+                return '';
+              }
+              else {
+                return states[variables.motion_sensor].state === "on"
+                ? "translateY(0)"
+                : "translateY(100%)";
+              }            
+
+            ]]]
+        - transition: transform 0.5s
+        - padding: 20px
+        - color: white
+        - font-size: 13px
+        - text-transform: uppercase
+        - letter-spacing: 2px
+        - font-weight: 700
+        - background: rgba(255,255,255,0.1)
+        - backdrop-filter: blur(12px)
+        - z-index: 999
+      temperature:
+        - display: |
+            [[[
+              return (variables.show_temp && variables.temp_sensor && states[variables.temp_sensor])
+                ? "block"
+                : "none";
+            ]]]
+        - color: var(--primary-text-color)
+        - font-size: 15px
+        - font-weight: 600
+        - opacity: 0.9
+        - justify-self: start
+        - letter-spacing: 1px
+        - text-transform: uppercase
+      humidity:
+        - display: |
+            [[[
+              return (variables.show_humid && variables.humid_sensor && states[variables.humid_sensor])
+                ? "block"
+                : "none";
+            ]]]
+        - font-size: "clamp(16px, 1.75vw, 19px)"
+        - justify-self: start
+        - font-weight: 500
+        - margin-top: 10px
+        - margin-left: 5px
+        - color: var(--primary-text-color)
+        - opacity: 0.9
+      mobile_logo:
+        - position: absolute
+        - top: 60px
+        - left: 8vw
+        - z-index: 999
+        - display: |
+            [[[
+              if (states["input_boolean.homio_mobile_navigation"].state === "on") {
+                return "none";
+              } else {
+                return "block";
+              }
+            ]]]
+      mobile_menu_icon:
+        - position: absolute
+        - top: 60px
+        - right: 8vw
+        - z-index: 999
+      navigation:
+        - position: absolute
+        - top: 0
+        - left: 0
+        - right: 0
+        # - overflow: visible
+  custom_fields:
+    mobile_logo:
+      card:
+        type: "custom:button-card"
+        template:
+          - homio_default
+          - homio_mobile_logo
+    mobile_menu_icon:
+      card:
+        type: "custom:button-card"
+        template:
+          - homio_default
+          - homio_menu_icon
+    navigation:
+      card: !include /config/dashboards/templates/includes/homio_navigation.yaml
+    temperature: |
+      [[[
+        if (!variables.show_temp || !variables.temp_sensor || !states[variables.temp_sensor]) return;
+
+        const temperatureValue = parseFloat(states[variables.temp_sensor].state);
+        const temperature = temperatureValue.toFixed(1);
+
+        if (temperatureValue <= 15.99) return `${temperature}° - Very Cold`;
+        if (temperatureValue >= 16 && temperatureValue <= 17.99) return `${temperature}° - Cool`;
+        if (temperatureValue >= 18 && temperatureValue <= 20.99) return `${temperature}° - Comfortable`;
+        if (temperatureValue >= 21) return `${temperature}° - Very Hot`;
+      ]]]
+    humidity: |
+      [[[
+        if (!variables.show_humid || !variables.humid_sensor || !states[variables.humid_sensor]) return;
+
+        const humidityValue = parseFloat(states[variables.humid_sensor].state);
+        const humidity = humidityValue.toFixed(0);
+
+        if (humidityValue <= 29.99) return `Humidity is very dry at ${humidity}%`;
+        if (humidityValue >= 30 && humidityValue <= 60.99) return `Humidity is good at ${humidity}%`;
+        if (humidityValue >= 61) return `Humidity is high at ${humidity}%`;
+      ]]]
+    motion_detection: |
+      [[[
+        return "Motion detected"
+      ]]]

@@ -1,0 +1,473 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>&#128187; Code Differ &#8212; DkZâ„¢</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #fa1e4e;
+            --accent: #fa1e4e;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(14, 14, 22, .72);
+            --blur: blur(24px)
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .08);
+            border-radius: 6px
+        }
+
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .06;
+            animation: bf 20s ease-in-out infinite
+        }
+
+        .bg-blob:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: var(--green);
+            top: -10%;
+            left: 10%
+        }
+
+        .bg-blob:nth-child(2) {
+            width: 350px;
+            height: 350px;
+            background: var(--accent);
+            bottom: 10%;
+            right: 10%;
+            animation-delay: -8s
+        }
+
+        @keyframes bf {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(30px, -40px) scale(1.1)
+            }
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        .header {
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .back-btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: none;
+            font-family: var(--font)
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--green), var(--red));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .hdr-right {
+            margin-left: auto;
+            display: flex;
+            gap: 8px
+        }
+
+        .ver {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono)
+        }
+
+        .content {
+            padding: 20px 28px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px
+        }
+
+        .stat {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center
+        }
+
+        .stat .sv {
+            font-size: 18px;
+            font-weight: 800;
+            font-family: var(--mono)
+        }
+
+        .stat .sl {
+            font-size: 9px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 3px
+        }
+
+        .editors {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px
+        }
+
+        .editor-pane {
+            display: flex;
+            flex-direction: column;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden
+        }
+
+        .pane-header {
+            padding: 10px 14px;
+            background: var(--card2);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-weight: 700
+        }
+
+        .pane-header .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%
+        }
+
+        textarea {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 12px;
+            resize: none;
+            outline: none;
+            line-height: 1.6;
+            tab-size: 2;
+            min-height: 250px
+        }
+
+        .btn-bar {
+            display: flex;
+            gap: 8px;
+            justify-content: center
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 10px;
+            background: var(--accent);
+            color: #fff;
+            font-family: var(--font);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        .btn.secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text)
+        }
+
+        .diff-output {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden
+        }
+
+        .diff-header {
+            padding: 10px 14px;
+            background: var(--card2);
+            border-bottom: 1px solid var(--border);
+            font-size: 11px;
+            font-weight: 700
+        }
+
+        .diff-body {
+            padding: 0;
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.7;
+            max-height: 500px;
+            overflow-y: auto
+        }
+
+        .diff-line {
+            padding: 2px 14px;
+            display: flex;
+            gap: 8px;
+            border-left: 3px solid transparent
+        }
+
+        .diff-line.add {
+            background: rgba(0, 255, 136, .06);
+            border-left-color: var(--green);
+            color: var(--green)
+        }
+
+        .diff-line.rem {
+            background: rgba(250, 30, 78, .06);
+            border-left-color: var(--red);
+            color: var(--red)
+        }
+
+        .diff-line.ctx {
+            color: var(--muted)
+        }
+
+        .diff-line .ln {
+            min-width: 30px;
+            color: var(--muted);
+            text-align: right;
+            user-select: none;
+            font-size: 10px
+        }
+
+        .diff-line .lc {
+            flex: 1;
+            white-space: pre-wrap
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: var(--green);
+            color: #000;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 10px;
+            z-index: 300;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all .3s;
+            pointer-events: none
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0)
+        }
+
+        @media(max-width:768px) {
+            .editors {
+                grid-template-columns: 1fr
+            }
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="code-differ" data-dkz-appid="DKZ-MOD-COD" data-dkz-version="v0.01" data-dkz-title="Code Differ" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+    </div>
+    <div class="app">
+        <div class="header"><a href="../../hub/index.html" class="back-btn">? Hub</a>
+            <h1>&#128187; Code Differ</h1>
+            <div class="hdr-right"><span class="ver">v0.01</span></div>
+        </div>
+        <div class="content">
+            <div class="stats-row">
+                <div class="stat">
+                    <div class="sv" style="color:var(--green)" id="sAdd">0</div>
+                    <div class="sl">Hinzugefgt</div>
+                </div>
+                <div class="stat">
+                    <div class="sv" style="color:var(--red)" id="sRem">0</div>
+                    <div class="sl">Entfernt</div>
+                </div>
+                <div class="stat">
+                    <div class="sv" style="color:var(--muted)" id="sUnch">0</div>
+                    <div class="sl">Unverndert</div>
+                </div>
+                <div class="stat">
+                    <div class="sv" style="color:var(--yellow)" id="sSim">0%</div>
+                    <div class="sl">aehnlichkeit</div>
+                </div>
+            </div>
+            <div class="editors">
+                <div class="editor-pane">
+                    <div class="pane-header">
+                        <div class="dot" style="background:var(--red)"></div>Original (A)
+                    </div><textarea id="codeA" placeholder="Code A hier...">function greet(name) {
+  console.log("Hello " + name);
+  return true;
+}
+
+const x = 42;
+const y = "world";</textarea>
+                </div>
+                <div class="editor-pane">
+                    <div class="pane-header">
+                        <div class="dot" style="background:var(--green)"></div>Gendert (B)
+                    </div><textarea id="codeB" placeholder="Code B hier...">function greet(name, greeting) {
+  console.log(greeting + " " + name);
+  return { success: true };
+}
+
+const x = 42;
+const msg = "hello world";</textarea>
+                </div>
+            </div>
+            <div class="btn-bar">
+                <button class="btn" onclick="diffCode()">&#9881; Vergleichen</button>
+                <button class="btn secondary" onclick="swapCode()">&#9881; Tauschen</button>
+                <button class="btn secondary" onclick="clearCode()">&#9881; Reset</button>
+                <button class="btn secondary" onclick="copyDiff()">&#9881; Diff kopieren</button>
+            </div>
+            <div class="diff-output">
+                <div class="diff-header" id="diffHeader">Ergebnis</div>
+                <div class="diff-body" id="diffBody">
+                    <div class="diff-line ctx"><span class="lc">Klicke "Vergleichen" um den Diff zu sehen.</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+        function diffCode() {
+            const a = document.getElementById('codeA').value.split('\n'), b = document.getElementById('codeB').value.split('\n'); const result = myersDiff(a, b); let html = '', adds = 0, rems = 0, same = 0, plainDiff = '';
+            result.forEach(d => {
+                const e = esc(d.line); if (d.type === 'add') { html += `<div class="diff-line add"><span class="ln">+</span><span class="lc">+ ${e}</span></div>`; plainDiff += `+ ${d.line}\n`; adds++ }
+                else if (d.type === 'rem') { html += `<div class="diff-line rem"><span class="ln">-</span><span class="lc">- ${e}</span></div>`; plainDiff += `- ${d.line}\n`; rems++ }
+                else { html += `<div class="diff-line ctx"><span class="ln"> </span><span class="lc">  ${e}</span></div>`; plainDiff += `  ${d.line}\n`; same++ }
+            });
+            document.getElementById('diffBody').innerHTML = html || '<div class="diff-line ctx"><span class="lc">? Identisch!</span></div>';
+            document.getElementById('sAdd').textContent = adds; document.getElementById('sRem').textContent = rems; document.getElementById('sUnch').textContent = same;
+            const total = adds + rems + same; document.getElementById('sSim').textContent = total - (same / total * 100).toFixed(0) + '%' : '100%';
+            document.getElementById('diffHeader').textContent = `Ergebnis: +${adds} -${rems} ~${same} Zeilen`;
+            window._lastDiff = plainDiff
+        }
+        function myersDiff(a, b) { const result = []; let ia = 0, ib = 0; while (ia < a.length || ib < b.length) { if (ia >= a.length) { result.push({ type: 'add', line: b[ib] }); ib++ } else if (ib >= b.length) { result.push({ type: 'rem', line: a[ia] }); ia++ } else if (a[ia] === b[ib]) { result.push({ type: 'same', line: a[ia] }); ia++; ib++ } else { const fA = b.indexOf(a[ia], ib), fB = a.indexOf(b[ib], ia); if (fA >= 0 && (fB < 0 || fA - ib <= fB - ia)) { while (ib < fA) { result.push({ type: 'add', line: b[ib] }); ib++ } } else if (fB >= 0) { while (ia < fB) { result.push({ type: 'rem', line: a[ia] }); ia++ } } else { result.push({ type: 'rem', line: a[ia] }); result.push({ type: 'add', line: b[ib] }); ia++; ib++ } } } return result }
+        function swapCode() { const a = document.getElementById('codeA').value, b = document.getElementById('codeB').value; document.getElementById('codeA').value = b; document.getElementById('codeB').value = a; showToast('Getauscht!') }
+        function clearCode() { document.getElementById('codeA').value = ''; document.getElementById('codeB').value = ''; document.getElementById('diffBody').innerHTML = ''; showToast('Reset!') }
+        function copyDiff() { if (window._lastDiff) { navigator.clipboard.writeText(window._lastDiff); showToast('Diff kopiert!') } else showToast('Erst vergleichen!') }
+        function esc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;') }
+        function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500) }
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Code differ</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Vergleiche Code-Dateien visuell.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Code differ</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Vergleiche Code-Dateien visuell.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-code-differ-onboarded','1')}if(!localStorage.getItem('dkz-code-differ-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+
+<!-- &#8212; DEVKiTZ 2026 &#8212; All Rights Reserved -->
+</html>
+
+

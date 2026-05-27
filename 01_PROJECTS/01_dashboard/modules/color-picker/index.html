@@ -1,0 +1,749 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>&#9881; Color Picker &#8212; DkZâ„¢</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #fa1e4e;
+            --accent: #fa1e4e;
+            --accent-rgb: 250, 30, 78;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(14, 14, 22, .72);
+            --blur: blur(24px)
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .08);
+            border-radius: 6px
+        }
+
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .06;
+            animation: bf 20s ease-in-out infinite
+        }
+
+        .bg-blob:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: var(--accent);
+            top: -10%;
+            left: 10%
+        }
+
+        .bg-blob:nth-child(2) {
+            width: 350px;
+            height: 350px;
+            background: var(--blue);
+            bottom: 10%;
+            right: 10%;
+            animation-delay: -8s
+        }
+
+        @keyframes bf {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(30px, -40px) scale(1.1)
+            }
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        .header {
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .back-btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .25s;
+            text-decoration: none;
+            font-family: var(--font)
+        }
+
+        .back-btn:hover {
+            color: var(--text);
+            border-color: var(--accent)
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .hdr-right {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .ver {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono)
+        }
+
+        .content {
+            padding: 20px 28px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: var(--card);
+            border-radius: 12px;
+            border: 1px solid var(--border)
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border: none;
+            background: none;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 700;
+            font-family: var(--font);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all .2s;
+            flex: 1;
+            text-align: center
+        }
+
+        .tab:hover {
+            color: var(--text);
+            background: var(--card2)
+        }
+
+        .tab.active {
+            background: var(--accent);
+            color: #fff
+        }
+
+        .tab-body {
+            display: none;
+            animation: fi .3s ease
+        }
+
+        .tab-body.active {
+            display: block
+        }
+
+        @keyframes fi {
+            from {
+                opacity: 0;
+                transform: translateY(8px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 16px
+        }
+
+        .card h3 {
+            font-size: 13px;
+            font-weight: 800;
+            margin-bottom: 12px
+        }
+
+        .picker-area {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px
+        }
+
+        .color-main {
+            display: flex;
+            flex-direction: column;
+            gap: 12px
+        }
+
+        .preview-box {
+            height: 120px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 900;
+            transition: all .3s
+        }
+
+        .sliders label {
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: block;
+            margin-bottom: 4px;
+            margin-top: 10px
+        }
+
+        .sliders input[type=range] {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: var(--card2);
+            border-radius: 3px;
+            outline: none
+        }
+
+        .sliders input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--text)
+        }
+
+        .values {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 12px
+        }
+
+        .val-box {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+            font-family: var(--mono);
+            font-size: 11px
+        }
+
+        .val-box:hover {
+            border-color: var(--accent)
+        }
+
+        .val-box .vl {
+            font-size: 8px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 2px
+        }
+
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+            gap: 6px
+        }
+
+        .pal-swatch {
+            height: 50px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all .2s;
+            position: relative
+        }
+
+        .pal-swatch:hover {
+            border-color: var(--text);
+            transform: scale(1.1)
+        }
+
+        .pal-swatch.selected {
+            border-color: var(--accent)
+        }
+
+        .saved-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 300px;
+            overflow-y: auto
+        }
+
+        .saved-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .saved-item:hover {
+            border-color: var(--accent)
+        }
+
+        .saved-swatch {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            flex-shrink: 0
+        }
+
+        .saved-info {
+            flex: 1;
+            font-size: 11px
+        }
+
+        .saved-info .name {
+            font-weight: 700
+        }
+
+        .saved-info .hex {
+            font-family: var(--mono);
+            color: var(--muted);
+            font-size: 10px
+        }
+
+        .saved-item button {
+            padding: 4px 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 10px
+        }
+
+        .contrast-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 12px
+        }
+
+        .contrast-demo {
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--border)
+        }
+
+        .contrast-demo .score {
+            font-size: 24px;
+            font-weight: 900;
+            font-family: var(--mono)
+        }
+
+        .contrast-demo .label {
+            font-size: 10px;
+            margin-top: 4px
+        }
+
+        .harmony-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 12px;
+            flex-wrap: wrap
+        }
+
+        .harmony-swatch {
+            width: 60px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            transition: all .2s;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 4px;
+            font-size: 8px;
+            font-family: var(--mono);
+            color: rgba(255, 255, 255, .7)
+        }
+
+        .harmony-swatch:hover {
+            transform: scale(1.05)
+        }
+
+        .gradient-preview {
+            height: 80px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-top: 12px
+        }
+
+        .gradient-code {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--green);
+            padding: 8px;
+            background: var(--card2);
+            border-radius: 6px;
+            margin-top: 8px;
+            cursor: pointer
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: #fff;
+            font-family: var(--font);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .25s
+        }
+
+        .btn:hover {
+            box-shadow: 0 0 16px rgba(var(--accent-rgb), .3)
+        }
+
+        .btn.secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text)
+        }
+
+        .btn.secondary:hover {
+            border-color: var(--accent)
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: var(--green);
+            color: #000;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 10px;
+            z-index: 300;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all .3s;
+            pointer-events: none
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0)
+        }
+
+        @media(max-width:768px) {
+            .picker-area {
+                grid-template-columns: 1fr
+            }
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="color-picker" data-dkz-appid="DKZ-MOD-COL" data-dkz-version="v0.01" data-dkz-title="Color Picker" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+    </div>
+    <div class="app">
+        <div class="header">
+            <a href="../../hub/index.html" class="back-btn">? Hub</a>
+            <h1>&#9881; Color Picker & Palette</h1>
+            <div class="hdr-right"><span class="ver">v0.01</span></div>
+        </div>
+        <div class="content">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('picker',this)">&#9881; Picker</button>
+                <button class="tab" onclick="switchTab('palettes',this)">&#9881; Paletten</button>
+                <button class="tab" onclick="switchTab('contrast',this)">&#9881; Kontrast</button>
+                <button class="tab" onclick="switchTab('gradient',this)">&#9881; Gradient</button>
+                <button class="tab" onclick="switchTab('saved',this)">&#9881; Gespeichert</button>
+            </div>
+            <div class="tab-body active" id="tab-picker">
+                <div class="card">
+                    <h3>&#9881; Farbauswahl</h3>
+                    <div class="picker-area">
+                        <div class="color-main">
+                            <div class="preview-box" id="preview">DkZ</div>
+                            <div class="sliders">
+                                <label>Rot (R)</label><input type="range" min="0" max="255" value="250" id="rSlider"
+                                    oninput="updateFromRGB()">
+                                <label>Grn (G)</label><input type="range" min="0" max="255" value="30" id="gSlider"
+                                    oninput="updateFromRGB()">
+                                <label>Blau (B)</label><input type="range" min="0" max="255" value="78" id="bSlider"
+                                    oninput="updateFromRGB()">
+                                <label>Hue (H)</label><input type="range" min="0" max="360" value="0" id="hSlider"
+                                    oninput="updateFromHSL()">
+                                <label>Saturation (S)</label><input type="range" min="0" max="100" value="100"
+                                    id="sSlider" oninput="updateFromHSL()">
+                                <label>Lightness (L)</label><input type="range" min="0" max="100" value="55"
+                                    id="lSlider" oninput="updateFromHSL()">
+                            </div>
+                        </div>
+                        <div>
+                            <div class="values">
+                                <div class="val-box" onclick="copyVal(this)">
+                                    <div class="vl">HEX</div>
+                                    <div id="vHex">#FA1E4E</div>
+                                </div>
+                                <div class="val-box" onclick="copyVal(this)">
+                                    <div class="vl">RGB</div>
+                                    <div id="vRgb">250, 30, 78</div>
+                                </div>
+                                <div class="val-box" onclick="copyVal(this)">
+                                    <div class="vl">HSL</div>
+                                    <div id="vHsl">347, 96%, 55%</div>
+                                </div>
+                                <div class="val-box" onclick="copyVal(this)">
+                                    <div class="vl">CMYK</div>
+                                    <div id="vCmyk">0, 88, 69, 2</div>
+                                </div>
+                                <div class="val-box" onclick="copyVal(this)">
+                                    <div class="vl">CSS</div>
+                                    <div id="vCss">var(--accent)</div>
+                                </div>
+                                <div class="val-box" onclick="copyVal(this)">
+                                    <div class="vl">RGBA</div>
+                                    <div id="vRgba">rgba(250,30,78,1)</div>
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:8px;margin-top:12px">
+                                <button class="btn" onclick="saveCurrent()">&#128190; Speichern</button>
+                                <button class="btn secondary" onclick="randomColor()">&#9881; Zufall</button>
+            <button class="btn secondary" onclick="pickFromScreen()" title="Farbe vom Bildschirm">&#9881; Pipette</button>
+                                <input type="color" id="nativePicker"
+                                    style="width:40px;height:34px;border:1px solid var(--border);border-radius:8px;background:var(--card2);cursor:pointer"
+                                    onchange="loadNative(this.value)">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-body" id="tab-palettes">
+                <div class="card">
+                    <h3>&#9881; Curated Paletten</h3>
+                    <div id="paletteList"></div>
+                </div>
+            </div>
+            <div class="tab-body" id="tab-contrast">
+                <div class="card">
+                    <h3>&#9881; Kontrast-Checker (WCAG)</h3>
+                    <div style="display:flex;gap:10px;margin-bottom:12px">
+                        <div style="flex:1"><label style="font-size:10px;color:var(--muted)">Vordergrund</label><input
+                                type="color" id="fgColor" value="#f6f6f7" onchange="checkContrast()"
+                                style="width:100%;height:36px;border:1px solid var(--border);border-radius:8px;background:var(--card2);cursor:pointer">
+                        </div>
+                        <div style="flex:1"><label style="font-size:10px;color:var(--muted)">Hintergrund</label><input
+                                type="color" id="bgColorC" value="#0e0e10" onchange="checkContrast()"
+                                style="width:100%;height:36px;border:1px solid var(--border);border-radius:8px;background:var(--card2);cursor:pointer">
+                        </div>
+                    </div>
+                    <div class="contrast-box" id="contrastResult"></div>
+                </div>
+            </div>
+            <div class="tab-body" id="tab-gradient">
+                <div class="card">
+                    <h3>&#9881; Gradient Generator</h3>
+                    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+                        <input type="color" id="g1" value="#fa1e4e" onchange="buildGradient()"
+                            style="width:50px;height:36px;border:1px solid var(--border);border-radius:8px;cursor:pointer">
+                        <input type="color" id="g2" value="#00ff88" onchange="buildGradient()"
+                            style="width:50px;height:36px;border:1px solid var(--border);border-radius:8px;cursor:pointer">
+                        <input type="color" id="g3" value="#55ACEE" onchange="buildGradient()"
+                            style="width:50px;height:36px;border:1px solid var(--border);border-radius:8px;cursor:pointer">
+                        <select id="gDir" onchange="buildGradient()"
+                            style="padding:8px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font);font-size:11px">
+                            <option value="90deg">?</option>
+                            <option value="135deg" selected>?</option>
+                            <option value="180deg">?</option>
+                            <option value="to right">Linear ?</option>
+                            <option value="circle">Radial</option>
+                        </select>
+                        <select id="gStops" onchange="buildGradient()"
+                            style="padding:8px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font);font-size:11px">
+                            <option value="2">2 Farben</option>
+                            <option value="3" selected>3 Farben</option>
+                        </select>
+                    </div>
+                    <div class="gradient-preview" id="gradPreview"></div>
+                    <div class="gradient-code" id="gradCode"
+                        onclick="navigator.clipboard.writeText(this.textContent);showToast('Kopiert!')"></div>
+                </div>
+            </div>
+            <div class="tab-body" id="tab-saved">
+                <div class="card">
+                    <h3>&#9881; Gespeicherte Farben</h3>
+                    <div style="margin-bottom:12px;display:flex;gap:8px">
+                        <button class="btn secondary" onclick="exportSaved()">&#11015; Export</button>
+                        <button class="btn secondary" onclick="clearSaved()">&#128465; Loeschen</button>
+                    </div>
+                    <div class="saved-list" id="savedList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+        let r = 250, g = 30, b = 78; let saved = JSON.parse(localStorage.getItem('dkz-colors') || '[]');
+        const PALETTES = [
+            { name: 'DkZ System', colors: ['#fa1e4e', '#00ff88', '#55ACEE', '#FFB800', '#ec4899', '#0e0e10', '#1a1a1c', '#f6f6f7'] },
+            { name: 'Neon Nights', colors: ['#ff006e', '#fb5607', '#ffbe0b', '#3a86ff', '#8338ec', '#06d6a0'] },
+            { name: 'Pastel Dream', colors: ['#ffd6ff', '#e7c6ff', '#c8b6ff', '#b8c0ff', '#bbd0ff', '#c1ffd7'] },
+            { name: 'Ocean Deep', colors: ['#03045e', '#023e8a', '#0077b6', '#0096c7', '#00b4d8', '#48cae4'] },
+            { name: 'Sunset Warm', colors: ['#ff7b00', '#ff8800', '#ff9500', '#ffa200', '#ffaa00', '#ffb700'] },
+            { name: 'Forest', colors: ['#004b23', '#006400', '#007200', '#008000', '#38b000', '#70e000'] },
+            { name: 'Retro Wave', colors: ['#7400b8', '#6930c3', '#5e60ce', '#5390d9', '#4ea8de', '#48bfe3'] },
+            { name: 'Cherry Blossom', colors: ['#ffccd5', '#ffb3c1', '#ff8fa3', '#ff758f', '#ff4d6d', '#c9184a'] },
+        ];
+        function updateFromRGB() { r = +document.getElementById('rSlider').value; g = +document.getElementById('gSlider').value; b = +document.getElementById('bSlider').value; const [h, s, l] = rgbToHsl(r, g, b); document.getElementById('hSlider').value = h; document.getElementById('sSlider').value = s; document.getElementById('lSlider').value = l; render() }
+        function updateFromHSL() { const h = +document.getElementById('hSlider').value, s = +document.getElementById('sSlider').value, l = +document.getElementById('lSlider').value;[r, g, b] = hslToRgb(h, s, l); document.getElementById('rSlider').value = r; document.getElementById('gSlider').value = g; document.getElementById('bSlider').value = b; render() }
+        function render() {
+            const hex = rgbToHex(r, g, b); const [h, s, l] = rgbToHsl(r, g, b); const [c, m, y, k] = rgbToCmyk(r, g, b);
+            document.getElementById('preview').style.background = hex; document.getElementById('preview').style.color = luminance(r, g, b) > .5 - '#000' : '#fff';
+            document.getElementById('vHex').textContent = hex; document.getElementById('vRgb').textContent = `${r}, ${g}, ${b}`; document.getElementById('vHsl').textContent = `${h}, ${s}%, ${l}%`; document.getElementById('vCmyk').textContent = `${c}, ${m}, ${y}, ${k}`; document.getElementById('vCss').textContent = hex; document.getElementById('vRgba').textContent = `rgba(${r},${g},${b},1)`;
+            document.getElementById('nativePicker').value = hex; document.getElementById('rSlider').style.background = `linear-gradient(90deg,rgb(0,${g},${b}),rgb(255,${g},${b}))`; document.getElementById('gSlider').style.background = `linear-gradient(90deg,rgb(${r},0,${b}),rgb(${r},255,${b}))`; document.getElementById('bSlider').style.background = `linear-gradient(90deg,rgb(${r},${g},0),rgb(${r},${g},255))`;
+        }
+        function rgbToHex(r, g, b) { return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase() }
+        function hexToRgb(h) { h = h.replace('#', ''); return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)] }
+        function rgbToHsl(r, g, b) { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b); let h, s, l = (mx + mn) / 2; if (mx === mn) { h = s = 0 } else { const d = mx - mn; s = l > .5 - d / (2 - mx - mn) : d / (mx + mn); switch (mx) { case r: h = ((g - b) / d + (g < b - 6 : 0)) / 6; break; case g: h = ((b - r) / d + 2) / 6; break; case b: h = ((r - g) / d + 4) / 6; break } } return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)] }
+        function hslToRgb(h, s, l) { h /= 360; s /= 100; l /= 100; let r, g, b; if (s === 0) { r = g = b = l } else { const hue2rgb = (p, q, t) => { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1 / 6) return p + (q - p) * 6 * t; if (t < 1 / 2) return q; if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6; return p }; const q = l < .5 - l * (1 + s) : l + s - l * s, p = 2 * l - q; r = hue2rgb(p, q, h + 1 / 3); g = hue2rgb(p, q, h); b = hue2rgb(p, q, h - 1 / 3) } return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)] }
+        function rgbToCmyk(r, g, b) { if (r === 0 && g === 0 && b === 0) return [0, 0, 0, 100]; const k = 1 - Math.max(r, g, b) / 255; return [Math.round((1 - r / 255 - k) / (1 - k) * 100), Math.round((1 - g / 255 - k) / (1 - k) * 100), Math.round((1 - b / 255 - k) / (1 - k) * 100), Math.round(k * 100)] }
+        function luminance(r, g, b) { return (0.299 * r + 0.587 * g + 0.114 * b) / 255 }
+        function loadNative(hex) { [r, g, b] = hexToRgb(hex); document.getElementById('rSlider').value = r; document.getElementById('gSlider').value = g; document.getElementById('bSlider').value = b; updateFromRGB() }
+        function randomColor() { r = Math.floor(Math.random() * 256); g = Math.floor(Math.random() * 256); b = Math.floor(Math.random() * 256); document.getElementById('rSlider').value = r; document.getElementById('gSlider').value = g; document.getElementById('bSlider').value = b; updateFromRGB(); showToast('Zufallsfarbe!') }
+        function copyVal(el) { navigator.clipboard.writeText(el.querySelector('div:last-child').textContent); showToast('Kopiert!') }
+        function saveCurrent() { const hex = rgbToHex(r, g, b); const name = prompt('Farbname:', hex); if (!name) return; saved.unshift({ hex, name, r, g, b, created: new Date().toISOString() }); localStorage.setItem('dkz-colors', JSON.stringify(saved)); renderSaved(); showToast('Gespeichert!') }
+        function renderSaved() { document.getElementById('savedList').innerHTML = saved.length - saved.map((c, i) => `<div class="saved-item" onclick="loadNative('${c.hex}');switchTab('picker',document.querySelectorAll('.tab')[0])"><div class="saved-swatch" style="background:${c.hex}"></div><div class="saved-info"><div class="name">${esc(c.name)}</div><div class="hex">${c.hex}</div></div><button onclick="event.stopPropagation();saved.splice(${i},1);localStorage.setItem('dkz-colors',JSON.stringify(saved));renderSaved()">?</button></div>`).join('') : '<div style="text-align:center;padding:20px;color:var(--muted)">Keine gespeicherten Farben</div>' }
+        function exportSaved() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(saved, null, 2)], { type: 'application/json' })); a.download = 'dkz-colors.json'; a.click(); showToast('&#11015; Export!') }
+        function clearSaved() { if (!confirm('Alle loeschen?')) return; saved = []; localStorage.removeItem('dkz-colors'); renderSaved(); showToast('Gelscht!') }
+        function renderPalettes() { document.getElementById('paletteList').innerHTML = PALETTES.map(p => `<div style="margin-bottom:16px"><div style="font-size:12px;font-weight:700;margin-bottom:6px">${p.name}</div><div class="palette-grid">${p.colors.map(c => `<div class="pal-swatch" style="background:${c}" title="${c}" onclick="loadNative('${c}');switchTab('picker',document.querySelectorAll('.tab')[0]);showToast('${c}')"></div>`).join('')}</div></div>`).join('') }
+        function checkContrast() { const fg = hexToRgb(document.getElementById('fgColor').value), bg = hexToRgb(document.getElementById('bgColorC').value); const l1 = relLum(...fg), l2 = relLum(...bg); const ratio = ((Math.max(l1, l2) + .05) / (Math.min(l1, l2) + .05)); const fgH = document.getElementById('fgColor').value, bgH = document.getElementById('bgColorC').value; document.getElementById('contrastResult').innerHTML = `<div class="contrast-demo" style="background:${bgH};color:${fgH}"><div class="score">${ratio.toFixed(2)}:1</div><div class="label">Normal Text ${ratio >= 4.5 - '? AA' : '? Fail'}</div><div style="font-size:18px;margin-top:8px">Sample Text</div></div><div class="contrast-demo" style="background:${bgH};color:${fgH}"><div class="score">${ratio >= 7 - 'AAA ?' : ratio >= 4.5 - 'AA ?' : ratio >= 3 - 'AA Large ?' : 'Fail ?'}</div><div class="label">WCAG Level</div><div style="font-size:13px;margin-top:8px">Kleiner Text Beispiel</div></div>` }
+        function relLum(r, g, b) { const [rs, gs, bs] = [r, g, b].map(c => { c /= 255; return c <= .03928 - c / 12.92 : Math.pow((c + .055) / 1.055, 2.4) }); return .2126 * rs + .7152 * gs + .0722 * bs }
+        function buildGradient() { const c1 = document.getElementById('g1').value, c2 = document.getElementById('g2').value, c3 = document.getElementById('g3').value; const dir = document.getElementById('gDir').value, stops = document.getElementById('gStops').value; const colors = stops === '2' - `${c1}, ${c2}` : `${c1}, ${c2}, ${c3}`; const type = dir === 'circle' - `radial-gradient(circle, ${colors})` : `linear-gradient(${dir}, ${colors})`; document.getElementById('gradPreview').style.background = type; document.getElementById('gradCode').textContent = `background: ${type};` }
+        function switchTab(id, btn) { document.querySelectorAll('.tab-body').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); document.getElementById('tab-' + id).classList.add('active'); btn.classList.add('active') }
+        function esc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;') }
+        function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500) }
+        render(); renderPalettes(); renderSaved(); checkContrast(); buildGradient();
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+<script>async function pickFromScreen(){if(!("EyeDropper" in window)){showToast("EyeDropper nicht verfuegbar");return}try{const ed=new EyeDropper();const res=await ed.open();const hex=res.sRGBHex;const rr=parseInt(hex.slice(1,3),16),gg=parseInt(hex.slice(3,5),16),bb=parseInt(hex.slice(5,7),16);r=rr;g=gg;b=bb;render();showToast(""+hex)}catch{showToast("Abgebrochen")}}</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Color picker</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Waehle und konvertiere Farben (HEX, RGB, HSL).</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Color picker</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Waehle und konvertiere Farben (HEX, RGB, HSL).</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-color-picker-onboarded','1')}if(!localStorage.getItem('dkz-color-picker-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+
+<!-- &#8212; DEVKiTZ 2026 &#8212; All Rights Reserved -->
+</html>
+
+

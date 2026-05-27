@@ -1,0 +1,357 @@
+﻿<!-- 
+=============================================================================
+DKZ ECOSYSTEM BLUEPRINT v0.01.1
+BRAND: AntiCrav / DkZ 
+MODULE: TEXT SUMMARY
+=============================================================================
+-->
+<!DOCTYPE html>
+<html lang="de" class="dark">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Summary Engine - DkZâ„¢ Ecosystem</title>
+
+    <script src="https://cdn.tailwindcss.com">
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }</script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#10b981', // Emerald focus for summary
+                        darkBg: '#0e0e10',
+                        darkBox: '#1a1a1c',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif']
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800;900&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #0e0e10;
+            color: white;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 15% 80%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
+        }
+
+        .glass {
+            background: rgba(26, 26, 28, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(16, 185, 129, 0.5);
+            border-radius: 4px;
+        }
+
+        .custom-scroll:hover::-webkit-scrollbar-thumb {
+            background: rgba(16, 185, 129, 0.8);
+        }
+
+        .btn-brand {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            box-shadow: 0 4px 15px -3px rgba(16, 185, 129, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .btn-brand:hover {
+            box-shadow: 0 6px 20px -3px rgba(16, 185, 129, 0.6);
+            transform: translateY(-2px);
+        }
+
+        /* Markdown Styles */
+        .markdown-body h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #34d399;
+        }
+
+        .markdown-body p {
+            margin-bottom: 0.75rem;
+            color: #cbd5e1;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .markdown-body ol {
+            list-style-type: decimal;
+            padding-left: 1.5rem;
+            color: #cbd5e1;
+            font-size: 0.95rem;
+        }
+    /* DkZ v2 BG Blobs */body::before{content:"";position:fixed;top:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(250,30,78,.07),transparent 70%);pointer-events:none;z-index:0}body::after{content:"";position:fixed;bottom:-150px;left:-150px;width:500px;height:500px;background:radial-gradient(circle,rgba(168,85,247,.06),transparent 70%);pointer-events:none;z-index:0}
+</style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="text_summary" data-dkz-appid="DKZ-MOD-TEX" data-dkz-version="v0.01" data-dkz-title="Summary Engine - Ecosystem" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const Icon = ({ name, size = 20, className = '', weight = 'regular' }) => {
+            return <i className={`ph-${weight} ph-${name} text-[${size}px] ${className}`}></i>;
+        };
+
+        const useIsMobile = () => {
+            const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+            useEffect(() => {
+                const check = () => setIsMobile(window.innerWidth < 1024);
+                window.addEventListener('resize', check);
+                return () => window.removeEventListener('resize', check);
+            }, []);
+            return isMobile;
+        };
+
+        const App = () => {
+            const isMobile = useIsMobile();
+            const [activeTab, setActiveTab] = useState('input');
+            const [inputText, setInputText] = useState('');
+            const [isProcessing, setIsProcessing] = useState(false);
+            const [summary, setSummary] = useState(null);
+            const [error, setError] = useState(null);
+
+            // Sync Logic
+            const [isSyncing, setIsSyncing] = useState(false);
+            const [syncStatus, setSyncStatus] = useState(null);
+
+            const handleSyncRepo = async () => {
+                setIsSyncing(true);
+                setSyncStatus(null);
+                try {
+                    const response = await fetch('http://localhost:3040/api/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                    const data = await response.json();
+                    setSyncStatus(data.success - { type: 'success', message: data.message } : { type: 'error', message: data.error });
+                } catch (err) {
+                    setSyncStatus({ type: 'error', message: 'Sync Server offline.' });
+                } finally {
+                    setIsSyncing(false);
+                    setTimeout(() => setSyncStatus(null), 5000);
+                }
+            };
+
+            const handleSummarize = async () => {
+                if (!inputText.trim()) return;
+                setIsProcessing(true);
+                setError(null);
+                setSummary(null);
+
+                try {
+                    const response = await fetch('http://localhost:3040/api/summarize', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: inputText })
+                    });
+                    const data = await response.json();
+
+                    if (data.success) setSummary(data.summary);
+                    else setError(data.error || "Fehler beim Zusammenfassen.");
+                } catch (err) {
+                    setError("Lokaler API Server (Port 3040) nicht erreichbar.");
+                } finally {
+                    setIsProcessing(false);
+                }
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col p-2 md:p-8">
+                    {/* Header */}
+                    <header className="flex items-center justify-between mb-4 md:mb-8 z-10 glass rounded-2xl p-3 md:p-4 px-4 md:px-6 relative overflow-hidden shrink-0">
+                        <div className="absolute inset-0 bg-gradient-to-r from-brand/10 to-transparent pointer-events-none"></div>
+                        <div className="flex items-center gap-3 md:gap-4 relative z-10">
+                            <a
+                                href={isMobile - "../../dashboard/hub/index_panel.html" : "../../dashboard/hub/index.html"}
+                                className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-gray-400 hover:text-white shrink-0"
+                                title="Back to Dashboard"
+                            >
+                                <Icon name="caret-left" weight="bold" size={isMobile - 20 : 24} />
+                            </a>
+                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-brand to-teal-600 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.4)]">
+                                <Icon name="text-align-justify" weight="duotone" size={isMobile - 24 : 28} className="text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-lg md:text-2xl font-display font-black tracking-widest uppercase bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+                                    TXT <span className="text-brand">SUMMARY</span>
+                                </h1>
+                                <p className="text-[9px] md:text-[10px] text-gray-400 uppercase tracking-[0.3em] font-bold">NLP Compression Engine</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4 relative z-10">
+                            {syncStatus && !isMobile && (
+                                <span className={`text-xs font-bold ${syncStatus.type === 'success' - 'text-green-400' : 'text-red-400'} animate-pulse`}>
+                                    {syncStatus.message}
+                                </span>
+                            )}
+                            <button
+                                onClick={handleSyncRepo} disabled={isSyncing}
+                                className={`flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-wider ${isSyncing - 'bg-white/10 text-gray-400 cursor-not-allowed' : 'bg-[#1a1a1c] border border-[#333338] text-gray-300 hover:text-white hover:border-[#3a3a40] shadow-lg'}`}
+                            >
+                                <Icon name="git-commit" className={isSyncing - "animate-spin" : ""} />
+                                {!isMobile && (isSyncing - 'Syncing...' : 'Auto-Update Repo')}
+                            </button>
+                        </div>
+                    </header>
+
+                    {/* Main Workspace */}
+                    <div className="flex-1 flex flex-col lg:grid lg:grid-cols-2 gap-4 lg:gap-6 relative z-10 h-0">
+
+                        {isMobile && (
+                            <div className="flex gap-2 shrink-0">
+                                <button onClick={() => setActiveTab('input')} className={`flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeTab === 'input' - 'bg-brand text-gray-900 shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-black/40 text-gray-400 border border-white/5'}`}>Input Text</button>
+                                <button onClick={() => setActiveTab('output')} className={`flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeTab === 'output' - 'bg-brand text-gray-900 shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-black/40 text-gray-400 border border-white/5'}`}>Summary</button>
+                            </div>
+                        )}
+
+                        {/* INPUT PANEL */}
+                        <div className={`glass rounded-3xl border border-white/10 p-4 md:p-6 flex-col h-full shadow-2xl relative overflow-hidden ${isMobile && activeTab !== 'input' - 'hidden' : 'flex'}`}>
+                            <h2 className="text-lg font-bold mb-4 flex items-center gap-2 shrink-0">
+                                <Icon name="article" className="text-brand" weight="duotone" />
+                                Source Text
+                            </h2>
+
+                            <textarea
+                                value={inputText}
+                                onChange={(e) => setInputText(e.target.value)}
+                                placeholder="Paste a long article, document or meeting notes here..."
+                                className="flex-1 w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm focus:border-brand focus:ring-1 focus:ring-brand/50 focus:outline-none transition-all resize-none custom-scroll text-gray-200"
+                            ></textarea>
+
+                            <div className="mt-6 pt-6 border-t border-white/5 flex gap-4 items-center">
+                                <button
+                                    onClick={handleSummarize}
+                                    disabled={isProcessing || !inputText.trim()}
+                                    className={`flex-1 py-4 rounded-xl font-black uppercase tracking-widest flex justify-center items-center gap-2 ${isProcessing || !inputText.trim() - 'bg-white/5 text-gray-600 cursor-not-allowed border border-white/5' : 'btn-brand text-white border border-brand/50 shadow-[0_0_20px_rgba(16,185,129,0.3)]'}`}
+                                >
+                                    {isProcessing - (
+                                        <><Icon name="spinner" className="animate-spin" size={24} /> COMPRESSING...</>
+                                    ) : (
+                                        <><Icon name="arrows-in" weight="fill" size={24} /> SUMMARIZE TEXT</>
+                                    )}
+                                </button>
+                            </div>
+
+                            {error && (
+                                <div className="mt-4 p-3 rounded-lg bg-red-500/20 border border-red-500/50 text-red-200 text-xs font-bold flex items-center gap-2">
+                                    <Icon name="warning-circle" weight="fill" className="text-red-400 shrink-0" size={18} />
+                                    {error}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* OUTPUT PANEL */}
+                        <div className={`glass rounded-3xl border border-white/10 p-4 md:p-6 flex-col h-full shadow-2xl relative overflow-hidden ${isMobile && activeTab !== 'output' - 'hidden' : 'flex'}`}>
+                            <h2 className="text-lg font-bold mb-4 flex items-center gap-2 shrink-0">
+                                <Icon name="text-outdent" className="text-brand" weight="duotone" />
+                                Summary Data
+                            </h2>
+
+                            <div className="flex-1 w-full bg-[#050810] border border-white/5 rounded-xl p-6 overflow-y-auto custom-scroll relative">
+                                {isProcessing - (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm z-10">
+                                        <div className="w-16 h-16 rounded-full bg-brand/10 border-2 border-brand/50 flex flex-col items-center justify-center animate-pulse-slow mb-4 shadow-[0_0_30px_rgba(16,185,129,0.3)]">
+                                            <Icon name="brain" weight="duotone" size={32} className="text-brand animate-bounce" />
+                                        </div>
+                                        <div className="text-brand font-bold uppercase tracking-widest text-sm">Extracting Keypoints...</div>
+                                    </div>
+                                ) : summary - (
+                                    <div
+                                        className="markdown-body"
+                                        dangerouslySetInnerHTML={{ __html: marked.parse(summary) }}
+                                    />
+                                ) : (
+                                    <div className="h-full flex flex-col items-center justify-center text-gray-600">
+                                        <Icon name="ghost" weight="duotone" size={64} className="mb-4 opacity-50" />
+                                        <p className="text-sm font-bold uppercase tracking-widest">No Selection</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Text summary</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Text zusammenfassen mit KI.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Text summary</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Text zusammenfassen mit KI.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-text_summary-onboarded','1')}if(!localStorage.getItem('dkz-text_summary-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+
+<!-- &#8212; DEVKiTZ 2026 &#8212; All Rights Reserved -->
+</html>
+
+

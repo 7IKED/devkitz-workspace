@@ -1,0 +1,822 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v1.02.0_01">
+    <meta name="dkz-module" content="skill-builder">
+    <title>Skill Builder &#8212; DkZâ„¢</title>
+    <meta name="description" content="DkZ Skill Builder -- Actions zu wiederverwendbaren Skills kombinieren">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+    <style>
+        :root {
+            --neon-red: #fa1e4e;
+            --pink: #ec4899;
+            --matrix-green: #00D084;
+            --blue: #55ACEE;
+            --dark-base: #0e0e10;
+            --soft-white: #f6f6f7;
+            --card-bg: #1a1a1c;
+            --border-color: #2a2a2e;
+            --node-bg: #252528;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--dark-base);
+            color: var(--soft-white);
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 350px;
+            grid-template-rows: 60px 1fr;
+            height: 100vh;
+        }
+
+        header {backdrop-filter:blur(20px);
+            grid-column: 1/-1;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--neon-red), var(--blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: .625rem 1.25rem;
+            border: none;
+            border-radius: 6px;
+            font-size: .875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .3s;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon-red), var(--pink));
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(250, 30, 78, .4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, .05);
+            color: var(--soft-white);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, .1);
+        }
+
+        .sidebar-left {
+            background: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-title {
+            font-size: .75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: #808080;
+            margin-bottom: 1rem;
+        }
+
+        .component-list {
+            display: flex;
+            flex-direction: column;
+            gap: .75rem;
+        }
+
+        .component-item {
+            background: var(--node-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: .875rem;
+            cursor: grab;
+            transition: all .3s;
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+        }
+
+        .component-item:hover {
+            background: rgba(255, 255, 255, .05);
+            transform: translateX(5px);
+        }
+
+        .component-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .component-icon.trigger {
+            background: rgba(250, 30, 78, .2);
+        }
+
+        .component-icon.action {
+            background: rgba(0, 208, 132, .2);
+        }
+
+        .component-icon.condition {
+            background: rgba(85, 172, 238, .2);
+        }
+
+        .component-icon.llm {
+            background: rgba(236, 72, 153, .2);
+        }
+
+        .component-label {
+            font-size: .875rem;
+            font-weight: 600;
+        }
+
+        .canvas {
+            background: repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(255, 255, 255, .03) 19px, rgba(255, 255, 255, .03) 20px), repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(255, 255, 255, .03) 19px, rgba(255, 255, 255, .03) 20px);
+            position: relative;
+            overflow: auto;
+        }
+
+        .workflow-container {
+            min-width: 100%;
+            min-height: 100%;
+            position: relative;
+            padding: 2rem;
+        }
+
+        .workflow-node {
+            position: absolute;
+            background: var(--node-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            width: 260px;
+            cursor: move;
+            transition: all .3s;
+            z-index: 10;
+        }
+
+        .workflow-node:hover {
+            box-shadow: 0 5px 20px rgba(0, 0, 0, .3);
+            border-color: var(--blue);
+        }
+
+        .workflow-node.selected {
+            border-color: var(--neon-red);
+            box-shadow: 0 0 0 3px rgba(250, 30, 78, .2);
+        }
+
+        .node-header {backdrop-filter:blur(20px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: .75rem;
+        }
+
+        .node-type {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            font-weight: 700;
+            font-size: .875rem;
+        }
+
+        .node-type-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .node-action-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: rgba(255, 255, 255, .05);
+            border-radius: 4px;
+            color: var(--soft-white);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .node-body {
+            font-size: .875rem;
+            color: #a0a0a0;
+        }
+
+        .node-input,
+        .node-select {
+            width: 100%;
+            background: rgba(0, 0, 0, .3);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: .5rem;
+            color: var(--soft-white);
+            font-size: .875rem;
+            margin-top: .5rem;
+            font-family: inherit;
+        }
+
+        .node-input:focus {
+            outline: none;
+            border-color: var(--neon-red);
+        }
+
+        .sidebar-right {
+            background: var(--card-bg);
+            border-left: 1px solid var(--border-color);
+            overflow-y: auto;
+        }
+
+        .properties-panel {
+            padding: 1.5rem;
+        }
+
+        .panel-section {
+            margin-bottom: 2rem;
+        }
+
+        .panel-section-title {
+            font-size: .875rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .property-group {
+            margin-bottom: 1rem;
+        }
+
+        .property-label {
+            font-size: .75rem;
+            font-weight: 600;
+            color: #808080;
+            margin-bottom: .5rem;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+        .property-input,
+        .property-select,
+        .property-textarea {
+            width: 100%;
+            background: rgba(0, 0, 0, .3);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: .625rem;
+            color: var(--soft-white);
+            font-size: .875rem;
+            font-family: inherit;
+        }
+
+        .property-textarea {
+            min-height: 80px;
+            resize: vertical;
+            font-family: monospace;
+        }
+
+        .property-input:focus,
+        .property-textarea:focus {
+            outline: none;
+            border-color: var(--neon-red);
+        }
+
+        .template-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .template-card {
+            background: var(--node-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all .3s;
+        }
+
+        .template-card:hover {
+            background: rgba(255, 255, 255, .05);
+            transform: translateY(-2px);
+        }
+
+        .template-title {
+            font-weight: 700;
+            font-size: .875rem;
+            margin-bottom: .5rem;
+        }
+
+        .template-description {
+            font-size: .75rem;
+            color: #808080;
+        }
+
+        .code-preview {
+            background: rgba(0, 0, 0, .4);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .code-preview-header {backdrop-filter:blur(20px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: .75rem;
+        }
+
+        .code-preview-title {
+            font-size: .75rem;
+            font-weight: 600;
+            color: #808080;
+        }
+
+        .code-copy-btn {
+            padding: .375rem .75rem;
+            background: rgba(255, 255, 255, .05);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--soft-white);
+            font-size: .75rem;
+            cursor: pointer;
+        }
+
+        pre {
+            margin: 0;
+            overflow-x: auto;
+        }
+
+        code {
+            font-family: monospace;
+            font-size: .75rem;
+            line-height: 1.6;
+        }
+
+        .empty-state {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #808080;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: .5rem;
+        }
+
+        .empty-state-text {
+            font-size: 1rem;
+            color: #606060;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--card-bg);
+            border: 1px solid var(--matrix-green);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .5);
+            transform: translateX(400px);
+            transition: transform .3s;
+            z-index: 10000;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .chain-nav {
+            display: flex;
+            gap: .5rem;
+        }
+
+        .chain-btn {
+            padding: .4rem .8rem;
+            border-radius: 6px;
+            font-size: .7rem;
+            font-weight: 700;
+            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, .03);
+            color: #808080;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all .2s;
+        }
+
+        .chain-btn:hover {
+            border-color: var(--neon-red);
+            color: var(--soft-white);
+        }
+
+        .chain-btn.active {
+            background: var(--neon-red);
+            border-color: var(--neon-red);
+            color: #fff;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--dark-base);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+    /* DkZ v2 BG Blobs */body::before{content:"";position:fixed;top:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(250,30,78,.07),transparent 70%);pointer-events:none;z-index:0}body::after{content:"";position:fixed;bottom:-150px;left:-150px;width:500px;height:500px;background:radial-gradient(circle,rgba(168,85,247,.06),transparent 70%);pointer-events:none;z-index:0}
+
+        /* DkZ Builder Fix — Canvas min-height (R36) */
+        #canvas, .canvas, .workspace, .builder-canvas, .editor-area {
+            min-height: calc(100vh - 100px) !important;
+        }
+        /* Overlay-Cleanup — leere Modals entfernen */
+        .pg-overlay:empty, .modal:empty { display: none !important; }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="skill-builder" data-dkz-appid="DKZ-MOD-SKI" data-dkz-version="v0.01" data-dkz-title="Skill Builder" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="app-container">
+        <header>
+            <div style="display:flex;align-items:center;gap:1rem">
+                <a href="../../hub/index.html" style="color:#808080;text-decoration:none;font-size:1.2rem">&#8592;</a>
+                <div class="logo">&#9881; SKILL BUILDER</div>
+            </div>
+            <div class="chain-nav">
+                <a class="chain-btn" href="../action-builder/index.html">Actions</a>
+                <a class="chain-btn active">Skills</a>
+                <a class="chain-btn" href="../workflow-builder/index.html">Workflows</a>
+                <a class="chain-btn" href="../agent-builder/index.html">Agents</a>
+                <a class="chain-btn" href="../team-builder/index.html">Teams</a>
+                <a class="chain-btn" href="../source-registry/index.html">Quellen</a>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="showModuleInfo()" title="Modul-Info" style="font-size:1.1rem">&#8505;</button>
+                <button class="btn btn-secondary" onclick="clearAll()">&#128465; Clear</button>
+                <button class="btn btn-secondary" onclick="generateCode()">&#128187; Code</button>
+                <button class="btn btn-primary" onclick="exportSkill()">&#11015; Export</button>
+            </div>
+        </header>
+
+        <aside class="sidebar-left">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Aktionen (Basis)</div>
+                <div class="component-list">
+                    <div class="component-item" draggable="true" data-type="action" data-subtype="http">
+                        <div class="component-icon action">&#9881;</div>
+                        <div class="component-label">HTTP Action</div>
+                    </div>
+                    <div class="component-item" draggable="true" data-type="action" data-subtype="file">
+                        <div class="component-icon action">&#9881;</div>
+                        <div class="component-label">Datei Action</div>
+                    </div>
+                    <div class="component-item" draggable="true" data-type="action" data-subtype="transform">
+                        <div class="component-icon condition">&#9881;</div>
+                        <div class="component-label">Transform</div>
+                    </div>
+                </div>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">AI Faehigkeiten</div>
+                <div class="component-list">
+                    <div class="component-item" draggable="true" data-type="llm" data-subtype="prompt">
+                        <div class="component-icon llm">&#9881;</div>
+                        <div class="component-label">AI Prompt</div>
+                    </div>
+                    <div class="component-item" draggable="true" data-type="llm" data-subtype="chain">
+                        <div class="component-icon llm">&#9881;</div>
+                        <div class="component-label">Prompt Chain</div>
+                    </div>
+                    <div class="component-item" draggable="true" data-type="llm" data-subtype="eval">
+                        <div class="component-icon llm">&#9881;</div>
+                        <div class="component-label">Evaluieren</div>
+                    </div>
+                </div>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Skill Logik</div>
+                <div class="component-list">
+                    <div class="component-item" draggable="true" data-type="condition" data-subtype="if">
+                        <div class="component-icon condition">?</div>
+                        <div class="component-label">Bedingung</div>
+                    </div>
+                    <div class="component-item" draggable="true" data-type="condition" data-subtype="loop">
+                        <div class="component-icon condition">&#9881;</div>
+                        <div class="component-label">Schleife</div>
+                    </div>
+                    <div class="component-item" draggable="true" data-type="condition" data-subtype="parallel">
+                        <div class="component-icon condition">?</div>
+                        <div class="component-label">Parallel</div>
+                    </div>
+                    <div class="component-item" draggable="true" data-type="condition" data-subtype="fallback">
+                        <div class="component-icon trigger">&#127991;</div>
+                        <div class="component-label">Fallback</div>
+                    </div>
+                </div>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Importierte Actions</div>
+                <div class="component-list" id="imported-actions">
+                    <div style="font-size:.75rem;color:#606060;padding:.5rem">Noch keine Actions importiert</div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="canvas" id="canvas">
+            <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5"></svg>
+            <div class="workflow-container" id="workflow-container">
+                <div class="empty-state" id="empty-state">
+                    <div class="empty-state-icon">&#9889;</div>
+                    <div class="empty-state-title">Skill Builder</div>
+                    <div class="empty-state-text">Kombiniere Actions zu einem wiederverwendbaren Skill</div>
+                </div>
+            </div>
+        </main>
+
+        <aside class="sidebar-right">
+            <div class="properties-panel">
+                <div class="panel-section">
+                    <div class="panel-section-title">Skill Properties</div>
+                    <div class="property-group">
+                        <div class="property-label">Skill Name</div><input type="text" class="property-input"
+                            id="skill-name" value="Neuer Skill">
+                    </div>
+                    <div class="property-group">
+                        <div class="property-label">Beschreibung</div><textarea class="property-textarea"
+                            id="skill-desc" placeholder="Was kann dieser Skill?"></textarea>
+                    </div>
+                    <div class="property-group">
+                        <div class="property-label">Kategorie</div><select class="property-select" id="skill-cat">
+                            <option>data</option>
+                            <option>ai</option>
+                            <option>automation</option>
+                            <option>communication</option>
+                            <option>file</option>
+                        </select>
+                    </div>
+                    <div class="property-group">
+                        <div class="property-label">Input Schema</div><textarea class="property-textarea"
+                            id="skill-input" placeholder='{ "query": "string" }'></textarea>
+                    </div>
+                </div>
+                <div class="panel-section">
+                    <div class="panel-section-title">Templates</div>
+                    <div class="template-grid">
+                        <div class="template-card" onclick="loadTpl('research')">
+                            <div class="template-title">&#9881; Research Skill</div>
+                            <div class="template-description">Suchen - Sammeln - Analysieren - Zusammenfassen</div>
+                        </div>
+                        <div class="template-card" onclick="loadTpl('content')">
+                            <div class="template-title">&#9881; Content Skill</div>
+                            <div class="template-description">Prompt - Generieren - Evaluieren - Format</div>
+                        </div>
+                        <div class="template-card" onclick="loadTpl('data')">
+                            <div class="template-title">&#9881; Data Skill</div>
+                            <div class="template-description">Fetch - Parse - Transform - Validate</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-section">
+                    <div class="panel-section-title">Weiterleiten</div>
+                    <button class="btn btn-primary" onclick="sendToWorkflow()"
+                        style="width:100%;justify-content:center">? An Workflow Builder</button>
+                    <button class="btn btn-secondary" onclick="sendToAgent()"
+                        style="width:100%;justify-content:center;margin-top:.5rem">? An Agent Builder</button>
+                </div>
+                <div class="panel-section">
+                    <div class="panel-section-title">Live Code</div>
+                    <div class="code-preview">
+                        <div class="code-preview-header">
+                            <div class="code-preview-title">Skill JSON</div><button class="code-copy-btn"
+                                onclick="copyCode()">Copy</button>
+                        </div>
+                        <pre><code id="generated-code">{}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+    <div class="toast" id="toast">
+        <div id="toast-text"></div>
+    </div>
+
+    <!-- INFO POPUP -->
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal">
+        <div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px;max-height:80vh;overflow-y:auto">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+                <div style="font-size:1.25rem;font-weight:800">&#9881; Skill Builder</div>
+                <button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&#10005;</button>
+            </div>
+            <div style="font-size:.875rem;line-height:1.8;color:#a0a0a0">
+                <p><strong style="color:#f6f6f7">Was ist der Skill Builder?</strong></p>
+                <p>Hier kombinierst du einzelne Actions zu wiederverwendbaren Skills &#8212; Bausteine fuer Workflows und Agenten.</p>
+                <p><strong style="color:#f6f6f7">&#128279; Builder-Kette:</strong></p>
+                <p style="font-family:monospace;color:#00D084">Action - <span style="color:#fa1e4e;font-weight:900">Skill</span> - Workflow - Agent - Team</p>
+                <p><strong style="color:#f6f6f7">So gehts:</strong></p>
+                <ol style="margin-left:1.5rem"><li>Ziehe Actions von links auf die Flaeche</li><li>Benenne deinen Skill und whle eine Kategorie</li><li>Exportiere oder sende direkt an Workflow/Agent Builder</li></ol>
+                <p style="margin-top:1rem"><strong style="color:#f6f6f7">&#128161; Tipp:</strong> Actions knnen aus dem Action Builder importiert werden!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ONBOARDING -->
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding">
+        <div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center">
+            <div style="font-size:3rem;margin-bottom:.5rem">&#9889;</div>
+            <div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Skill Builder</div>
+            <div style="font-size:.875rem;color:#a0a0a0;line-height:1.8;text-align:left">
+                <div style="display:flex;align-items:flex-start;gap:.75rem;margin-bottom:.75rem">
+                    <span style="background:rgba(250,30,78,.2);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:900;font-size:.75rem;color:#fa1e4e">1</span>
+                    <span><strong style="color:#f6f6f7">Actions hinzufuegen</strong> &#8212; Ziehe HTTP, AI oder Logik-Bausteine auf die Flaeche</span>
+                </div>
+                <div style="display:flex;align-items:flex-start;gap:.75rem;margin-bottom:.75rem">
+                    <span style="background:rgba(0,208,132,.2);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:900;font-size:.75rem;color:#00D084">2</span>
+                    <span><strong style="color:#f6f6f7">Skill benennen</strong> &#8212; Name + Kategorie im rechten Panel einstellen</span>
+                </div>
+                <div style="display:flex;align-items:flex-start;gap:.75rem">
+                    <span style="background:rgba(85,172,238,.2);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:900;font-size:.75rem;color:#55ACEE">3</span>
+                    <span><strong style="color:#f6f6f7">Weiterleiten</strong> &#8212; An Workflow Builder oder Agent Builder senden</span>
+                </div>
+            </div>
+            <button class="btn btn-primary" style="margin-top:1.25rem;width:100%;justify-content:center" onclick="closeOnboarding()">&#128640; Los gehts!</button>
+            <div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt. &#8505; Button oben rechts</div>
+        </div>
+    </div>
+
+    <script>
+        var nodes = [], draggedElement = null, nodeIdCounter = 1;
+        var iconMap = { action: '&#9881;', llm: '&#129504;', condition: '&#10067;', trigger: '&#128214;' };
+        var colorMap = { action: 'rgba(0,208,132,.2)', llm: 'rgba(236,72,153,.2)', condition: 'rgba(85,172,238,.2)', trigger: 'rgba(250,30,78,.2)' };
+
+        // Check for imported action from Action Builder
+        (function () {
+            var imported = localStorage.getItem('dkz-action-to-skill');
+            if (imported) {
+                try {
+                    var data = JSON.parse(imported);
+                    localStorage.removeItem('dkz-action-to-skill');
+                    if (data.steps) {
+                        data.steps.forEach(function (s, i) { addNode(s.type || 'action', s.subtype || 'custom', s.label || 'Action ' + (i + 1), 80 + i * 280, 100); });
+                        showToast('Action importiert: ' + (data.action || 'Unbenannt'));
+                    }
+                } catch (e) { }
+            }
+        })();
+
+        document.querySelectorAll('.component-item').forEach(function (item) {
+            item.addEventListener('dragstart', function (e) { draggedElement = { type: e.target.dataset.type, subtype: e.target.dataset.subtype, label: e.target.querySelector('.component-label').textContent }; });
+        });
+        var container = document.getElementById('workflow-container');
+        container.addEventListener('dragover', function (e) { e.preventDefault(); });
+        container.addEventListener('drop', function (e) {
+            e.preventDefault(); if (!draggedElement) return;
+            var r = container.getBoundingClientRect();
+            addNode(draggedElement.type, draggedElement.subtype, draggedElement.label, e.clientX - r.left, e.clientY - r.top);
+            draggedElement = null;
+        });
+
+        function addNode(type, sub, label, x, y) {
+            var n = { id: 'node_' + nodeIdCounter++, type: type, subtype: sub, label: label, x: x, y: y, config: {} };
+            nodes.push(n); renderNode(n); updateCode();
+            document.getElementById('empty-state').style.display = 'none';
+            showToast('Hinzugefuegt: ' + label);
+        }
+        function renderNode(n) {
+            var el = document.createElement('div'); el.className = 'workflow-node'; el.id = n.id;
+            el.style.left = n.x + 'px'; el.style.top = n.y + 'px';
+            el.innerHTML = '<div class="node-header"><div class="node-type"><div class="node-type-icon" style="background:' + (colorMap[n.type] || colorMap.action) + '">' + (iconMap[n.type] || '&#9881;') + '</div><span>' + n.label + '</span></div><button class="node-action-btn" onclick="deleteNode(\'' + n.id + '\')">&#9881;</button></div><div class="node-body"><div style="font-size:.75rem;color:#606060">' + n.subtype + '</div>' + (n.type === 'llm' - '<textarea class="node-input" style="min-height:50px;resize:vertical;font-family:monospace" placeholder="Prompt..." onchange="updateCfg(\'' + n.id + '\',\'prompt\',this.value)"></textarea>' : '<input class="node-input" placeholder="Config..." onchange="updateCfg(\'' + n.id + '\',\'config\',this.value)">') + '</div>';
+            var isDrag = false, ix, iy;
+            el.addEventListener('mousedown', function (e) { if (e.target.closest('.node-action-btn') || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; isDrag = true; ix = e.clientX - n.x; iy = e.clientY - n.y; });
+            document.addEventListener('mousemove', function (e) { if (!isDrag) return; n.x = e.clientX - ix; n.y = e.clientY - iy; el.style.left = n.x + 'px'; el.style.top = n.y + 'px'; });
+            document.addEventListener('mouseup', function () { isDrag = false; });
+            container.appendChild(el);
+        }
+        function updateCfg(id, k, v) { var n = nodes.find(function (x) { return x.id === id }); if (n) { n.config[k] = v; updateCode(); } }
+        function deleteNode(id) { nodes = nodes.filter(function (x) { return x.id !== id }); var el = document.getElementById(id); if (el) el.remove(); updateCode(); }
+        function clearAll() { if (!confirm('Alles loeschen?')) return; nodes = []; document.querySelectorAll('.workflow-node').forEach(function (n) { n.remove() }); document.getElementById('empty-state').style.display = 'block'; updateCode(); }
+        function updateCode() {
+            var code = JSON.stringify({ skill: document.getElementById('skill-name').value, category: document.getElementById('skill-cat').value, steps: nodes.map(function (n) { return { id: n.id, type: n.type, subtype: n.subtype, label: n.label, config: n.config } }) }, null, 2);
+            document.getElementById('generated-code').textContent = code;
+        }
+        function copyCode() { navigator.clipboard.writeText(document.getElementById('generated-code').textContent); showToast('Kopiert!'); }
+        function generateCode() { updateCode(); showToast('Code generiert!'); }
+        function exportSkill() { var d = { skill: document.getElementById('skill-name').value, nodes: nodes }; var b = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' }); var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = d.skill.replace(/\s+/g, '_') + '.skill.json'; a.click(); showToast('Skill exportiert!'); }
+        function sendToWorkflow() { localStorage.setItem('dkz-skill-to-workflow', JSON.stringify({ skill: document.getElementById('skill-name').value, nodes: nodes })); window.location.href = '../workflow-builder/index.html'; }
+        function sendToAgent() { localStorage.setItem('dkz-skill-to-agent', JSON.stringify({ skill: document.getElementById('skill-name').value, nodes: nodes })); window.location.href = '../agent-builder/index.html'; }
+        function loadTpl(name) {
+            nodes = []; document.querySelectorAll('.workflow-node').forEach(function (n) { n.remove() });
+            var t = {
+                'research': [{ type: 'action', subtype: 'http', label: 'Suchen', x: 80, y: 80 }, { type: 'action', subtype: 'transform', label: 'Sammeln', x: 360, y: 80 }, { type: 'llm', subtype: 'chain', label: 'Analysieren', x: 640, y: 80 }, { type: 'llm', subtype: 'prompt', label: 'Zusammenfassen', x: 920, y: 80 }],
+                'content': [{ type: 'llm', subtype: 'prompt', label: 'Prompt', x: 80, y: 80 }, { type: 'llm', subtype: 'chain', label: 'Generieren', x: 360, y: 80 }, { type: 'llm', subtype: 'eval', label: 'Evaluieren', x: 640, y: 80 }, { type: 'action', subtype: 'transform', label: 'Format', x: 920, y: 80 }],
+                'data': [{ type: 'action', subtype: 'http', label: 'Fetch', x: 80, y: 80 }, { type: 'action', subtype: 'transform', label: 'Parse', x: 360, y: 80 }, { type: 'action', subtype: 'transform', label: 'Transform', x: 640, y: 80 }, { type: 'condition', subtype: 'if', label: 'Validate', x: 920, y: 80 }]
+            };
+            if (t[name]) { t[name].forEach(function (d) { addNode(d.type, d.subtype, d.label, d.x, d.y); }); } showToast('Template: ' + name);
+        }
+        function showToast(msg) { var t = document.getElementById('toast'); document.getElementById('toast-text').textContent = msg; t.classList.add('show'); setTimeout(function () { t.classList.remove('show'); }, 3000); }
+        document.getElementById('skill-name').addEventListener('input', updateCode);
+        updateCode();
+
+        // --- INFO + ONBOARDING ---
+        function showModuleInfo() { var m=document.getElementById('info-modal'); m.style.opacity='1'; m.style.pointerEvents='all'; }
+        function closeOnboarding() {
+            var m=document.getElementById('onboarding'); m.style.opacity='0'; m.style.pointerEvents='none';
+            localStorage.setItem('dkz-skill-builder-onboarded','1');
+            showToast('&#128161; Tipp: Ziehe Actions von links auf die Flaeche');
+        }
+        if(!localStorage.getItem('dkz-skill-builder-onboarded')){
+            var ob=document.getElementById('onboarding'); ob.style.opacity='1'; ob.style.pointerEvents='all';
+        }
+    </script>
+        <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script src="../../shared/nexuz.js"></script>
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+
+<script src="../../shared/dkz-chain-nav.js"></script>
+
+    <script src="../../shared/dkz-prompt-hub.js"></script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+</html>
+
+
+

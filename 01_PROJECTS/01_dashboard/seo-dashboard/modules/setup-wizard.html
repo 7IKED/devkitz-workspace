@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #1a1a1e;
+            --border2: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --cyan: #00FFD5;
+            --purple: #ec4899;
+            --yellow: #FFB800;
+            --orange: #ff8844;
+            --red: #fa1e4e;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            padding: 20px;
+            overflow-y: auto
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg)
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 3px
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto
+        }
+
+        /* PROGRESS */
+        .progress-wrap {
+            margin-bottom: 24px
+        }
+
+        .progress-bar {
+            height: 12px;
+            border-radius: 6px;
+            background: var(--card2);
+            overflow: hidden;
+            border: 1px solid var(--border)
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 6px;
+            background: linear-gradient(90deg, var(--green), var(--cyan), var(--blue));
+            transition: width .6s;
+            position: relative
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 20px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .2));
+            animation: shimmer 1.5s infinite
+        }
+
+        @keyframes shimmer {
+            0% {
+                opacity: 0
+            }
+
+            50% {
+                opacity: 1
+            }
+
+            100% {
+                opacity: 0
+            }
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            margin-top: 6px;
+            color: var(--muted)
+        }
+
+        .progress-pct {
+            color: var(--green);
+            font-weight: 800;
+            font-size: 13px
+        }
+
+        /* STEPS */
+        .wizard-step {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: all .3s
+        }
+
+        .wizard-step.completed {
+            border-color: var(--green);
+            opacity: .8
+        }
+
+        .wizard-step.active {
+            border-color: var(--blue);
+            box-shadow: 0 0 20px rgba(68, 136, 255, .1)
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: background .2s
+        }
+
+        .step-header:hover {
+            background: rgba(68, 136, 255, .03)
+        }
+
+        .step-marker {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 14px;
+            flex-shrink: 0;
+            transition: all .3s
+        }
+
+        .step-marker.pending {
+            background: var(--card2);
+            border: 2px solid var(--border2);
+            color: var(--muted)
+        }
+
+        .step-marker.done {
+            background: var(--green);
+            color: #000;
+            border: none
+        }
+
+        .step-marker.current {
+            background: var(--blue);
+            color: #fff;
+            border: none;
+            animation: pulse 2s infinite
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(68, 136, 255, .4)
+            }
+
+            50% {
+                box-shadow: 0 0 0 8px rgba(68, 136, 255, 0)
+            }
+        }
+
+        .step-info {
+            flex: 1
+        }
+
+        .step-title {
+            font-weight: 700;
+            font-size: 13px
+        }
+
+        .step-subtitle {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 2px
+        }
+
+        .step-body {
+            padding: 0 16px 16px;
+            display: none
+        }
+
+        .wizard-step.active .step-body {
+            display: block
+        }
+
+        .step-content {
+            background: var(--card2);
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 12px;
+            line-height: 1.8;
+            color: var(--muted)
+        }
+
+        .step-content strong {
+            color: var(--text)
+        }
+
+        .step-content a {
+            color: var(--cyan)
+        }
+
+        .step-content code {
+            background: var(--bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--yellow)
+        }
+
+        .step-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-family: var(--font);
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .btn:hover {
+            transform: translateY(-1px)
+        }
+
+        .btn-green {
+            background: var(--green);
+            color: #000
+        }
+
+        .btn-blue {
+            background: var(--blue);
+            color: #fff
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted)
+        }
+
+        .btn-outline:hover {
+            border-color: var(--blue);
+            color: var(--blue)
+        }
+
+        .ext-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(0, 212, 255, .08);
+            border: 1px solid rgba(0, 212, 255, .2);
+            border-radius: 8px;
+            color: var(--cyan);
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 600;
+            margin: 4px 4px 4px 0;
+            transition: all .2s
+        }
+
+        .ext-link:hover {
+            background: rgba(0, 212, 255, .15);
+            transform: translateY(-1px)
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="progress-wrap">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width:0%"></div>
+            </div>
+            <div class="progress-label"><span id="progressText">0 von 10 Schritten</span><span class="progress-pct"
+                    id="progressPct">0%</span></div>
+        </div>
+        <div id="steps"></div>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        const STEPS = [
+            {
+                title: 'Google Search Console einrichten', sub: 'Grundlage für SEO-Monitoring', links: [{ t: 'Search Console', u: 'https://search.google.com/search-console' }, { t: 'Anleitung', u: 'https://support.google.com/webmasters/answer/9008080' }],
+                content: '<strong>Was:</strong> Die Search Console zeigt dir, wie Google deine Seite sieht.<br><br><strong>Schritte:</strong><br>1. Gehe zur <a href="https://search.google.com/search-console" target="_blank">Search Console</a><br>2. Klicke "Property hinzufügen"<br>3. Wähle "URL-Präfix" und gib deine Domain ein<br>4. Verifiziere per <code>DNS TXT Record</code> oder <code>HTML-Tag</code><br>5. Warte 24-48h auf erste Daten<br><br><strong>Beispiel:</strong> Wie ein Arzt-Check für deine Website – zeigt Probleme bevor sie schlimm werden.'
+            },
+            {
+                title: 'Google Analytics 4 verbinden', sub: 'Besucher-Tracking & Verhalten', links: [{ t: 'Analytics', u: 'https://analytics.google.com' }, { t: 'Setup Guide', u: 'https://support.google.com/analytics/answer/9304153' }],
+                content: '<strong>Was:</strong> GA4 zeigt dir wer deine Besucher sind und was sie machen.<br><br><strong>Schritte:</strong><br>1. <a href="https://analytics.google.com" target="_blank">Analytics</a> → Konto erstellen<br>2. Property anlegen (GA4)<br>3. Mess-ID kopieren: <code>G-XXXXXXXXXX</code><br>4. GA4-Tag in den <code>&lt;head&gt;</code> einbauen oder via GTM<br>5. Echtzeit-Bericht prüfen<br><br><strong>Beispiel:</strong> Wie eine Überwachungskamera im Laden – du siehst wer kommt, wo er hingeht und wo er abbricht.'
+            },
+            {
+                title: 'Sitemap.xml erstellen & einreichen', sub: 'Google alle Seiten zeigen', links: [{ t: 'Sitemap Generator', u: 'https://www.xml-sitemaps.com' }, { t: 'Search Console Sitemaps', u: 'https://search.google.com/search-console/sitemaps' }],
+                content: '<strong>Was:</strong> Eine Sitemap ist wie ein Inhaltsverzeichnis für Google.<br><br><strong>Schritte:</strong><br>1. Sitemap generieren: <a href="https://www.xml-sitemaps.com" target="_blank">xml-sitemaps.com</a> (kostenlos bis 500 Seiten)<br>2. Datei als <code>sitemap.xml</code> im Root hochladen<br>3. In Search Console → "Sitemaps" → URL einreichen<br>4. Status prüfen nach 24h<br><br><strong>Beispiel:</strong> Wie ein Restaurantmenü – ohne Karte weiß der Gast nicht was es alles gibt.'
+            },
+            {
+                title: 'robots.txt konfigurieren', sub: 'Crawling steuern', links: [{ t: 'robots.txt Tester', u: 'https://www.google.com/webmasters/tools/robots-testing-tool' }],
+                content: '<strong>Was:</strong> robots.txt sagt Google-Bots welche Seiten sie besuchen dürfen.<br><br><strong>Datei-Inhalt:</strong><br><code>User-agent: *<br>Allow: /<br>Disallow: /admin/<br>Disallow: /api/<br>Sitemap: https://deine-domain.de/sitemap.xml</code><br><br>Hochladen als <code>/robots.txt</code> im Root-Verzeichnis.<br><br><strong>Beispiel:</strong> Wie ein "Zutritt verboten"-Schild – manche Räume soll Google nicht sehen.'
+            },
+            {
+                title: 'SSL/HTTPS aktivieren', sub: 'Sicherheit & Ranking-Faktor', links: [{ t: 'Let\'s Encrypt', u: 'https://letsencrypt.org' }, { t: 'SSL Check', u: 'https://www.ssllabs.com/ssltest/' }],
+                content: '<strong>Was:</strong> HTTPS verschlüsselt die Verbindung und ist ein Google-Rankingfaktor.<br><br><strong>Schritte:</strong><br>1. Bei Hoster: SSL-Zertifikat aktivieren (oft gratis via Let\'s Encrypt)<br>2. HTTP → HTTPS Redirect einrichten: <code>301 Redirect</code><br>3. Alle internen Links auf HTTPS umstellen<br>4. Mixed Content Fehler beheben<br>5. Testen: <a href="https://www.ssllabs.com/ssltest/" target="_blank">SSL Labs Test</a><br><br><strong>Beispiel:</strong> Wie ein Schloss an der Tür – ohne HTTPS steht "Nicht sicher" im Browser.'
+            },
+            {
+                title: 'Core Web Vitals optimieren', sub: 'Ladezeit & Nutzererfahrung', links: [{ t: 'PageSpeed Insights', u: 'https://pagespeed.web.dev' }, { t: 'Web Vitals', u: 'https://web.dev/vitals/' }],
+                content: '<strong>Was:</strong> Google misst 3 Werte: LCP (Ladezeit), FID (Reaktionszeit), CLS (Layout-Stabilität).<br><br><strong>Zielwerte:</strong><br>• LCP < 2.5s – Bilder in WebP, Lazy Loading<br>• FID < 100ms – JS optimieren, Code Splitting<br>• CLS < 0.1 – Bildgrößen angeben, Fonts preloaden<br><br><strong>Tools:</strong><br>• <a href="https://pagespeed.web.dev" target="_blank">PageSpeed Insights</a><br>• Chrome DevTools → Lighthouse<br><br><strong>Beispiel:</strong> Wie Wartezeit im Restaurant – wenn es zu lange dauert, gehen die Gäste.'
+            },
+            {
+                title: 'Schema.org Markup hinzufügen', sub: 'Rich Snippets in Google', links: [{ t: 'Schema.org', u: 'https://schema.org' }, { t: 'Rich Results Test', u: 'https://search.google.com/test/rich-results' }],
+                content: '<strong>Was:</strong> Structured Data gibt Google maschinenlesbare Infos über deinen Content.<br><br><strong>Wichtigste Typen:</strong><br>• <code>LocalBusiness</code> – Für lokale Unternehmen<br>• <code>FAQPage</code> – FAQ-Bereich<br>• <code>HowTo</code> – Anleitungen<br>• <code>Product</code> – Produkte mit Preis<br>• <code>Article</code> – Blog/News<br><br><strong>Einbau:</strong> Als <code>&lt;script type="application/ld+json"&gt;</code> im <code>&lt;head&gt;</code><br><br><strong>Beispiel:</strong> Wie ein Namensschild mit QR-Code – Google sieht sofort wer du bist und was du machst.'
+            },
+            {
+                title: 'Google AdSense einrichten', sub: 'Website monetarisieren', links: [{ t: 'AdSense', u: 'https://www.google.com/adsense' }, { t: 'Richtlinien', u: 'https://support.google.com/adsense/answer/48182' }],
+                content: '<strong>Was:</strong> AdSense zeigt Werbeanzeigen auf deiner Seite → du verdienst pro Klick/Impression.<br><br><strong>Voraussetzungen:</strong><br>• Min. 30 Seiten mit einzigartigem Content<br>• Impressum & Datenschutz<br>• Min. 3 Monate alte Domain (empfohlen)<br>• Kein illegaler/kopierter Content<br><br>→ Details im <strong>AdSense Panel</strong> dieses Dashboards.'
+            },
+            {
+                title: 'Google Business Profil erstellen', sub: 'Lokale Sichtbarkeit', links: [{ t: 'Business Profile', u: 'https://business.google.com' }, { t: 'Erstellen', u: 'https://business.google.com/create' }],
+                content: '<strong>Was:</strong> Dein Eintrag in Google Maps & lokaler Suche.<br><br><strong>Wichtig:</strong><br>• Alle Felder ausfüllen (Name, Adresse, Tel, Öffnungszeiten)<br>• Min. 10 Fotos hochladen<br>• Regelmäßig Posts erstellen<br>• Bewertungen aktiv sammeln<br><br>→ Details im <strong>Business Panel</strong> dieses Dashboards.<br><br><strong>Beispiel:</strong> Wie ein Eintrag in den Gelben Seiten – nur 100x mächtiger und kostenlos.'
+            },
+            {
+                title: 'Monitoring & regelmäßige Checks', sub: 'Wöchentliche Routine', links: [{ t: 'Search Console', u: 'https://search.google.com/search-console' }, { t: 'PageSpeed', u: 'https://pagespeed.web.dev' }],
+                content: '<strong>Wöchentliche Routine:</strong><br>1. Search Console: Neue Fehler? Indexierung OK?<br>2. Analytics: Traffic-Trends, Bounce Rate<br>3. Rankings: Haben sich Keywords verändert?<br>4. Speed: PageSpeed Score noch gut?<br>5. Backlinks: Neue Links gewonnen?<br><br><strong>Monatlich:</strong><br>• Content aktualisieren<br>• Neue Blog-Posts (min. 2/Monat)<br>• Bewertungen checken & antworten<br>• Konkurrenz-Analyse<br><br><strong>Beispiel:</strong> Wie ein Auto-Service – regelmäßig prüfen verhindert große Probleme.'
+            }
+        ];
+
+        let currentStep = 0;
+
+        function renderSteps() {
+            const container = document.getElementById('steps');
+            container.innerHTML = STEPS.map((s, i) => {
+                const state = i < currentStep ? 'completed' : i === currentStep ? 'active' : '';
+                const marker = i < currentStep ? 'done' : i === currentStep ? 'current' : 'pending';
+                return `<div class="wizard-step ${state}" id="step-${i}">
+      <div class="step-header" onclick="toggleStep(${i})">
+        <div class="step-marker ${marker}">${i < currentStep ? '✓' : i + 1}</div>
+        <div class="step-info"><div class="step-title">${s.title}</div><div class="step-subtitle">${s.sub}</div></div>
+      </div>
+      <div class="step-body">
+        <div class="step-content">${s.content}</div>
+        <div style="margin-top:10px">${s.links.map(l => `<a class="ext-link" href="${l.u}" target="_blank">🔗 ${l.t}</a>`).join('')}</div>
+        <div class="step-actions">
+          <button class="btn btn-green" onclick="completeStep(${i})">✅ Erledigt</button>
+          ${i > 0 ? `<button class="btn btn-outline" onclick="undoStep(${i})">↩ Zurück</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+            }).join('');
+            updateProgress();
+        }
+
+        function toggleStep(i) { document.querySelectorAll('.wizard-step').forEach((s, idx) => { if (idx === i) s.classList.toggle('active'); else s.classList.remove('active') }) }
+        function completeStep(i) { if (i >= currentStep) currentStep = i + 1; renderSteps(); if (currentStep < STEPS.length) document.getElementById('step-' + currentStep).scrollIntoView({ behavior: 'smooth', block: 'center' }) }
+        function undoStep(i) { currentStep = Math.max(0, i - 1); renderSteps() }
+        function updateProgress() {
+            const pct = Math.round(currentStep / STEPS.length * 100);
+            document.getElementById('progressFill').style.width = pct + '%';
+            document.getElementById('progressPct').textContent = pct + '%';
+            document.getElementById('progressText').textContent = `${currentStep} von ${STEPS.length} Schritten`;
+        }
+        renderSteps();
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

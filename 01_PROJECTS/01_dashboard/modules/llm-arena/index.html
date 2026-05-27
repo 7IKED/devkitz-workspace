@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DkZ™ LLM Arena — Model Benchmark & Vergleich</title>
+    <meta name="description" content="DkZ™ LLM Arena: Vergleiche lokale VPS-Modelle in 1-4 Panels. Sequentieller Test mit Latenz, Token-Count und Ampel-Rating.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #060608; --surface: #0d0d12; --card: #12121a;
+            --border: #1a1a2e; --text: #e2e2e8; --text-dim: #8888a0;
+            --accent: #fa1e4e; --green: #00ff88; --yellow: #ffb800;
+            --red: #ff3b5c; --blue: #4488ff; --purple: #9966ff; --cyan: #00d4ff;
+            --radius: 12px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+        /* ═══ HEADER ═══ */
+        .header {
+            background: linear-gradient(135deg, #0d0d12 0%, #1a0a1a 50%, #0a1a0d 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px; display:flex; align-items:center; gap:12px;
+        }
+        .header h1 { font-size:20px; font-weight:700; }
+        .header h1 span { color:var(--accent); }
+        .header .badge { background:var(--accent); color:#fff; font-size:10px; font-weight:700;
+            padding:3px 8px; border-radius:20px; letter-spacing:1px; }
+        .header .heartbeat { margin-left:auto; display:flex; align-items:center; gap:6px; font-size:11px; color:var(--green); }
+        .header .heartbeat .dot { width:8px; height:8px; border-radius:50%; background:var(--green);
+            box-shadow:0 0 8px var(--green); animation:pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+
+        /* ═══ CONTROLS ═══ */
+        .controls {
+            padding:12px 24px; background:var(--surface); border-bottom:1px solid var(--border);
+            display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+        }
+        .controls select, .controls input {
+            background:var(--card); border:1px solid var(--border); border-radius:8px;
+            padding:8px 12px; color:var(--text); font-family:'Inter',sans-serif; font-size:12px; outline:none;
+        }
+        .controls input { flex:1; min-width:200px; }
+        .controls input:focus { border-color:var(--accent); }
+        .controls button {
+            background:var(--accent); border:none; border-radius:8px; padding:8px 16px;
+            color:#fff; font-weight:600; font-size:12px; cursor:pointer; transition:all .2s;
+        }
+        .controls button:hover { opacity:.85; transform:scale(1.02); }
+        .controls button:disabled { opacity:.4; cursor:not-allowed; }
+        .controls .grid-select {
+            display:flex; gap:4px;
+        }
+        .controls .grid-btn {
+            width:28px; height:28px; background:var(--card); border:1px solid var(--border);
+            border-radius:6px; color:var(--text-dim); font-size:11px; font-weight:700;
+            cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:center;
+        }
+        .controls .grid-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(250,30,78,.1); }
+        .test-prompts { display:flex; gap:4px; }
+        .test-prompt-btn {
+            background:var(--card); border:1px solid var(--border); border-radius:6px;
+            padding:4px 10px; font-size:10px; color:var(--text-dim); cursor:pointer; transition:all .2s;
+        }
+        .test-prompt-btn:hover { border-color:var(--cyan); color:var(--cyan); }
+
+        /* ═══ ARENA GRID ═══ */
+        .arena {
+            padding:16px 24px; display:grid; gap:12px; flex:1;
+            grid-template-columns: 1fr;
+        }
+        .arena.grid-2 { grid-template-columns: 1fr 1fr; }
+        .arena.grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .arena.grid-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+
+        /* ═══ PANEL ═══ */
+        .panel {
+            background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+            display:flex; flex-direction:column; min-height:300px; overflow:hidden;
+            transition:all .3s;
+        }
+        .panel.running { border-color:var(--yellow); box-shadow:0 0 12px rgba(255,184,0,.15); }
+        .panel.done { border-color:var(--green); }
+        .panel.error { border-color:var(--red); }
+        .panel-header {
+            padding:10px 14px; border-bottom:1px solid var(--border);
+            display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.02);
+        }
+        .panel-header select {
+            background:var(--surface); border:1px solid var(--border); border-radius:6px;
+            padding:4px 8px; color:var(--text); font-size:11px; outline:none; flex:1;
+        }
+        .panel-header .status-dot {
+            width:8px; height:8px; border-radius:50%; background:var(--text-dim);
+        }
+        .panel-header .status-dot.running { background:var(--yellow); animation:pulse 1s infinite; }
+        .panel-header .status-dot.done { background:var(--green); }
+        .panel-header .status-dot.error { background:var(--red); }
+        .panel-meta {
+            padding:6px 14px; font-size:10px; color:var(--text-dim); display:flex; gap:12px;
+            font-family:'JetBrains Mono',monospace; border-bottom:1px solid rgba(255,255,255,.03);
+        }
+        .panel-meta .latency { color:var(--cyan); }
+        .panel-meta .tokens { color:var(--purple); }
+        .panel-meta .ampel { font-weight:700; }
+        .panel-output {
+            flex:1; padding:12px 14px; font-family:'JetBrains Mono',monospace; font-size:11px;
+            white-space:pre-wrap; line-height:1.7; color:var(--text-dim); overflow-y:auto;
+            max-height:400px;
+        }
+        .panel-output .thinking { color:var(--yellow); font-style:italic; }
+        .panel-output .result { color:var(--text); }
+
+        /* ═══ FOOTER ═══ */
+        .footer {
+            padding:8px 24px; background:var(--surface); border-top:1px solid var(--border);
+            display:flex; gap:16px; font-size:10px; color:var(--text-dim);
+            font-family:'JetBrains Mono',monospace;
+        }
+        .footer b { color:var(--green); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚔️ <span>DkZ™</span> LLM Arena</h1>
+        <span class="badge">BENCHMARK</span>
+        <div class="heartbeat">
+            <div class="dot"></div>
+            <span id="heartbeatModel">gemma4:e2b</span>
+            <span id="heartbeatStatus">Heartbeat</span>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="grid-select">
+            <button class="grid-btn active" data-grid="1">1</button>
+            <button class="grid-btn" data-grid="2">2</button>
+            <button class="grid-btn" data-grid="3">3</button>
+            <button class="grid-btn" data-grid="4">4</button>
+        </div>
+        <input type="text" id="arenaPrompt" placeholder="Prompt eingeben oder Test-Prompt waehlen..." />
+        <button id="runBtn" onclick="runArena()">▶ Starten</button>
+        <button onclick="stopArena()" style="background:var(--red)">■ Stop</button>
+        <div class="test-prompts">
+            <button class="test-prompt-btn" onclick="setTestPrompt(0)">🔨 Builder</button>
+            <button class="test-prompt-btn" onclick="setTestPrompt(1)">📋 Plan</button>
+            <button class="test-prompt-btn" onclick="setTestPrompt(2)">🎨 Kreativ</button>
+        </div>
+    </div>
+
+    <div class="arena" id="arenaGrid"></div>
+
+    <div class="footer">
+        <span>Modus: <b id="footerMode">Sequentiell</b></span>
+        <span>Panels: <b id="footerPanels">1</b></span>
+        <span>VPS: <b id="footerVps">srv1298466</b></span>
+        <span>Backend: <b>vLLM + llama-swap</b></span>
+        <span>Heartbeat: <b id="footerHeartbeat">gemma4:e2b (Always-On)</b></span>
+    </div>
+
+    <script>
+    // ═══ CONFIG ═══
+    const VPS_API = 'http://srv1298466.hstgr.cloud:8080'; // llama-swap proxy
+    const OLLAMA_API = 'http://72.61.93.129:8811'; // Fallback
+
+    const MODELS = [
+        { id:'gemma4-e2b', name:'Gemma4 E2B', size:'1.5GB', role:'Heartbeat', tier:'quick' },
+        { id:'gemma4-e4b', name:'Gemma4 E4B', size:'3GB', role:'Balance', tier:'quick' },
+        { id:'qwen3-4b', name:'Qwen3 4B', size:'2.5GB', role:'Quick', tier:'quick' },
+        { id:'qwen3-5-9b', name:'Qwen3.5 9B', size:'6GB', role:'Coder', tier:'medium' },
+        { id:'qwen3-14b', name:'Qwen3 14B', size:'9.3GB', role:'Standard', tier:'medium' },
+        { id:'gemma4-26b', name:'Gemma4 26B (MoE)', size:'16GB', role:'Frontend Hermes', tier:'large' },
+        { id:'qwen3-6-27b', name:'Qwen3.6 27B (Dense)', size:'17GB', role:'Test/Dense', tier:'large' },
+        { id:'qwen3-6-35b', name:'Qwen3.6 35B (MoE)', size:'22GB', role:'Backend Hermes', tier:'large' },
+    ];
+
+    const TEST_PROMPTS = [
+        'Schreibe eine JavaScript-Funktion die ein Array dedupliziert, sortiert und die Top-5 haeufigsten Elemente zurueckgibt. Mit JSDoc.',
+        'Erstelle einen Architektur-Plan fuer einen E-Commerce Shop mit Microservices: API Gateway, Product Service, Order Service, Payment Integration. Diagramm als ASCII.',
+        'Beschreibe ein futuristisches Dashboard-Design fuer ein KI-Kontrollzentrum. Nenne Farben, Animationen, Layout-Struktur und UX-Patterns. Sei kreativ und detailliert.'
+    ];
+
+    let panelCount = 1;
+    let isRunning = false;
+    let abortController = null;
+
+    // ═══ RENDER PANELS ═══
+    function renderPanels() {
+        const grid = document.getElementById('arenaGrid');
+        const defaults = ['qwen3-4b', 'gemma4-e4b', 'gemma4-e2b', 'qwen3-5-9b'];
+        grid.className = 'arena' + (panelCount > 1 ? ' grid-' + panelCount : '');
+        grid.innerHTML = '';
+        for (let i = 0; i < panelCount; i++) {
+            const panel = document.createElement('div');
+            panel.className = 'panel';
+            panel.id = 'panel-' + i;
+            panel.innerHTML = `
+                <div class="panel-header">
+                    <div class="status-dot" id="dot-${i}"></div>
+                    <select id="model-${i}">
+                        ${MODELS.map(m => `<option value="${m.id}" ${m.id === defaults[i] ? 'selected' : ''}>${m.name} (${m.size}) — ${m.role}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="panel-meta">
+                    <span class="latency" id="latency-${i}">Latenz: —</span>
+                    <span class="tokens" id="tokens-${i}">Tokens: —</span>
+                    <span class="ampel" id="ampel-${i}">Ampel: ⚪</span>
+                </div>
+                <div class="panel-output" id="output-${i}">Warte auf Prompt...</div>
+            `;
+            grid.appendChild(panel);
+        }
+        document.getElementById('footerPanels').textContent = panelCount;
+    }
+
+    // ═══ GRID BUTTONS ═══
+    document.querySelectorAll('.grid-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.grid-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            panelCount = parseInt(btn.dataset.grid);
+            renderPanels();
+        });
+    });
+
+    // ═══ TEST PROMPTS ═══
+    function setTestPrompt(idx) {
+        document.getElementById('arenaPrompt').value = TEST_PROMPTS[idx];
+    }
+
+    // ═══ RUN ARENA (SEQUENTIELL) ═══
+    async function runArena() {
+        const prompt = document.getElementById('arenaPrompt').value.trim();
+        if (!prompt) return;
+        isRunning = true;
+        abortController = new AbortController();
+        document.getElementById('runBtn').disabled = true;
+
+        for (let i = 0; i < panelCount; i++) {
+            if (!isRunning) break;
+            const modelId = document.getElementById('model-' + i).value;
+            const model = MODELS.find(m => m.id === modelId);
+            const panel = document.getElementById('panel-' + i);
+            const dot = document.getElementById('dot-' + i);
+            const output = document.getElementById('output-' + i);
+            const latencyEl = document.getElementById('latency-' + i);
+            const tokensEl = document.getElementById('tokens-' + i);
+            const ampelEl = document.getElementById('ampel-' + i);
+
+            panel.className = 'panel running';
+            dot.className = 'status-dot running';
+            output.innerHTML = '<span class="thinking">⏳ Lade ' + esc(model.name) + '... (sequentiell, Panel ' + (i+1) + '/' + panelCount + ')</span>';
+
+            const startTime = performance.now();
+            try {
+                // Versuche llama-swap API (OpenAI-kompatibel)
+                const r = await fetch(VPS_API + '/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: modelId,
+                        messages: [{ role: 'user', content: prompt }],
+                        max_tokens: 1024,
+                        temperature: 0.7,
+                        stream: false
+                    }),
+                    signal: abortController.signal
+                });
+
+                const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+                if (r.ok) {
+                    const d = await r.json();
+                    const reply = d.choices?.[0]?.message?.content || JSON.stringify(d);
+                    const tokens = d.usage?.total_tokens || reply.length / 4;
+
+                    output.innerHTML = '<span class="result">' + esc(reply) + '</span>';
+                    latencyEl.textContent = 'Latenz: ' + elapsed + 's';
+                    tokensEl.textContent = 'Tokens: ~' + Math.round(tokens);
+
+                    // Ampel-Rating basierend auf Latenz + Laenge
+                    const ampel = elapsed < 5 ? '🟢' : elapsed < 15 ? '🟡' : '🔴';
+                    ampelEl.textContent = 'Ampel: ' + ampel;
+                    panel.className = 'panel done';
+                    dot.className = 'status-dot done';
+                } else {
+                    const errText = await r.text();
+                    output.innerHTML = '<span style="color:var(--red)">❌ ' + r.status + ': ' + esc(errText) + '</span>';
+                    panel.className = 'panel error';
+                    dot.className = 'status-dot error';
+                    latencyEl.textContent = 'Latenz: ' + elapsed + 's';
+                    ampelEl.textContent = 'Ampel: 🔴';
+                }
+            } catch(e) {
+                if (e.name === 'AbortError') {
+                    output.innerHTML = '<span style="color:var(--yellow)">⚠️ Abgebrochen</span>';
+                } else {
+                    // Fallback: Ollama API
+                    try {
+                        const ollamaModel = modelId.replace(/-/g, ':').replace(':e', ':e');
+                        output.innerHTML = '<span class="thinking">🔄 Fallback: Ollama (' + esc(ollamaModel) + ')...</span>';
+                        const r2 = await fetch(OLLAMA_API + '/api/generate', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ model: ollamaModel, prompt: prompt, stream: false }),
+                            signal: abortController.signal
+                        });
+                        const elapsed2 = ((performance.now() - startTime) / 1000).toFixed(1);
+                        if (r2.ok) {
+                            const d2 = await r2.json();
+                            output.innerHTML = '<span class="result">[Ollama] ' + esc(d2.response || '') + '</span>';
+                            latencyEl.textContent = 'Latenz: ' + elapsed2 + 's (Ollama)';
+                            panel.className = 'panel done';
+                            dot.className = 'status-dot done';
+                        } else {
+                            throw new Error('Ollama: ' + r2.status);
+                        }
+                    } catch(e2) {
+                        const elapsed3 = ((performance.now() - startTime) / 1000).toFixed(1);
+                        output.innerHTML = '<span style="color:var(--red)">❌ Beide APIs offline\n\nvLLM: ' + esc(e.message) + '\nOllama: ' + esc(e2.message) + '</span>';
+                        panel.className = 'panel error';
+                        dot.className = 'status-dot error';
+                        latencyEl.textContent = 'Latenz: ' + elapsed3 + 's';
+                        ampelEl.textContent = 'Ampel: 🔴';
+                    }
+                }
+            }
+        }
+        isRunning = false;
+        document.getElementById('runBtn').disabled = false;
+    }
+
+    function stopArena() {
+        isRunning = false;
+        if (abortController) abortController.abort();
+        document.getElementById('runBtn').disabled = false;
+    }
+
+    // ═══ HEARTBEAT CHECK ═══
+    async function checkHeartbeat() {
+        try {
+            const r = await fetch(VPS_API + '/v1/models', { signal: AbortSignal.timeout(5000) });
+            if (r.ok) {
+                document.getElementById('heartbeatStatus').textContent = 'Active ✓';
+                document.querySelector('.heartbeat .dot').style.background = 'var(--green)';
+            } else { throw new Error(); }
+        } catch {
+            try {
+                const r2 = await fetch(OLLAMA_API + '/api/tags', { signal: AbortSignal.timeout(5000) });
+                if (r2.ok) {
+                    document.getElementById('heartbeatStatus').textContent = 'Ollama ✓';
+                    document.querySelector('.heartbeat .dot').style.background = 'var(--yellow)';
+                } else { throw new Error(); }
+            } catch {
+                document.getElementById('heartbeatStatus').textContent = 'Offline ✗';
+                document.querySelector('.heartbeat .dot').style.background = 'var(--red)';
+            }
+        }
+    }
+
+    // ═══ XSS ═══
+    function esc(s) { if (!s) return ''; const d=document.createElement('div'); d.textContent=String(s); return d.innerHTML; }
+
+    // ═══ ENTER KEY ═══
+    document.getElementById('arenaPrompt').addEventListener('keydown', e => { if(e.key==='Enter') runArena(); });
+
+    // ═══ INIT ═══
+    renderPanels();
+    checkHeartbeat();
+    setInterval(checkHeartbeat, 30000);
+    </script>
+    <script src="/shared/dkz-test.js" defer></script>
+</body>
+</html>

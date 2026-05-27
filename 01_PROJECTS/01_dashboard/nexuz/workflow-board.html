@@ -1,0 +1,2184 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ DkZ Workflow Board — Prozess-Tracking</title>
+    <meta name="description"
+        content="DkZ Workflow Process Board — Kanban-artiges Tracking aller aktiven Prozesse mit Live-Reports">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        :root {
+            --bg: #0e0e10;
+            --bg2: #121215;
+            --card: #16161a;
+            --card2: #1e1e24;
+            --border: #1a1a2a;
+            --border2: #252538;
+            --text: #e8e8f0;
+            --muted: #5e5e78;
+            --accent: #fa1e4e;
+            --cyan: #fa1e4e;
+            --purple: #a855f7;
+            --green: #00ff88;
+            --red: #ff4466;
+            --yellow: #ffb800;
+            --blue: #55acee;
+            --orange: #ff8c42;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(15, 15, 24, .75);
+            --blur: blur(24px);
+            --radius: 16px;
+        }
+
+        html,
+        body {
+            min-height: 100vh;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text)
+        }
+
+        body {
+            background: radial-gradient(ellipse at 20% 0%, rgba(250, 30, 78, .04) 0%, transparent 50%), radial-gradient(ellipse at 80% 100%, rgba(168, 85, 247, .03) 0%, transparent 50%), var(--bg)
+        }
+
+        /* HEADER */
+        .header {
+            padding: 20px 28px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: var(--blur);
+            background: var(--glass);
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
+
+        .header-brand h1 {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent), var(--purple), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .badge {
+            font-size: 9px;
+            font-family: var(--mono);
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: rgba(250, 30, 78, .12);
+            color: var(--accent);
+            font-weight: 700;
+            letter-spacing: 1px
+        }
+
+        .header-right {
+            margin-left: auto;
+            display: flex;
+            gap: 10px;
+            align-items: center
+        }
+
+        .hstat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-family: var(--mono);
+            color: var(--muted);
+            padding: 6px 12px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px
+        }
+
+        .hstat .v {
+            color: var(--text);
+            font-weight: 700
+        }
+
+        .pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: p 2s infinite
+        }
+
+        @keyframes p {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1)
+            }
+
+            50% {
+                opacity: .3;
+                transform: scale(.7)
+            }
+        }
+
+        .btn-nav {
+            padding: 8px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all .2s;
+            text-decoration: none
+        }
+
+        .btn-nav:hover {
+            color: var(--cyan);
+            border-color: var(--cyan)
+        }
+
+        /* MAIN LAYOUT */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 200px 1fr 380px;
+            height: calc(100vh - 65px);
+            overflow: hidden
+        }
+
+        /* LEFT SIDEBAR — FILTERS */
+        .sidebar-left {
+            background: var(--card);
+            border-right: 1px solid var(--border);
+            padding: 20px 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px
+        }
+
+        .filter-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .filter-title {
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--muted)
+        }
+
+        .filter-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+            text-align: left
+        }
+
+        .filter-btn:hover {
+            background: rgba(255, 255, 255, .03);
+            color: var(--text)
+        }
+
+        .filter-btn.active {
+            background: rgba(250, 30, 78, .08);
+            color: var(--accent);
+            border-color: rgba(250, 30, 78, .2)
+        }
+
+        .filter-btn .count {
+            margin-left: auto;
+            font-family: var(--mono);
+            font-size: 10px;
+            background: rgba(255, 255, 255, .05);
+            padding: 2px 6px;
+            border-radius: 4px
+        }
+
+        .filter-btn.active .count {
+            background: rgba(250, 30, 78, .15)
+        }
+
+        .filter-icon {
+            font-size: 14px
+        }
+
+        .sidebar-stats {
+            margin-top: auto;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 6px
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            font-family: var(--mono)
+        }
+
+        .stat-label {
+            color: var(--muted)
+        }
+
+        .stat-val {
+            font-weight: 700
+        }
+
+        /* KANBAN BOARD */
+        .kanban {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            padding: 20px 16px;
+            overflow-x: auto;
+            overflow-y: hidden
+        }
+
+        .kanban-col {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 0
+        }
+
+        .col-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            margin-bottom: 4px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 5
+        }
+
+        .col-icon {
+            font-size: 16px
+        }
+
+        .col-title {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px
+        }
+
+        .col-count {
+            font-size: 10px;
+            font-family: var(--mono);
+            padding: 2px 8px;
+            border-radius: 6px;
+            margin-left: auto;
+            font-weight: 700
+        }
+
+        .col-queue .col-count {
+            background: rgba(85, 172, 238, .12);
+            color: var(--blue)
+        }
+
+        .col-running .col-count {
+            background: rgba(250, 30, 78, .12);
+            color: var(--accent)
+        }
+
+        .col-done .col-count {
+            background: rgba(0, 255, 136, .12);
+            color: var(--green)
+        }
+
+        .col-failed .col-count {
+            background: rgba(255, 68, 102, .12);
+            color: var(--red)
+        }
+
+        .col-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+            flex: 1;
+            padding-right: 4px
+        }
+
+        .col-cards::-webkit-scrollbar {
+            width: 4px
+        }
+
+        .col-cards::-webkit-scrollbar-track {
+            background: transparent
+        }
+
+        .col-cards::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px
+        }
+
+        /* PROCESS CARD */
+        .process-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all .3s;
+            position: relative;
+            overflow: hidden
+        }
+
+        .process-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
+            border-radius: 2px 0 0 2px;
+            transition: all .3s
+        }
+
+        .process-card[data-priority="high"]::before {
+            background: var(--accent)
+        }
+
+        .process-card[data-priority="medium"]::before {
+            background: var(--yellow)
+        }
+
+        .process-card[data-priority="low"]::before {
+            background: var(--blue)
+        }
+
+        .process-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--border2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .4)
+        }
+
+        .process-card.selected {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(250, 30, 78, .15), 0 8px 32px rgba(0, 0, 0, .4)
+        }
+
+        .card-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px
+        }
+
+        .card-agent-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0
+        }
+
+        .card-name {
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.3
+        }
+
+        .card-agent {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--muted)
+        }
+
+        .card-progress {
+            margin: 10px 0 8px
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: rgba(255, 255, 255, .06);
+            border-radius: 2px;
+            overflow: hidden
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 1s ease
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4px;
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--muted)
+        }
+
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 8px
+        }
+
+        .tag {
+            font-size: 8px;
+            font-family: var(--mono);
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, .04);
+            color: var(--muted);
+            border: 1px solid var(--border)
+        }
+
+        .card-time {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--muted);
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px
+        }
+
+        /* RIGHT PANEL — HOVER REPORT */
+        .report-panel {
+            background: var(--card);
+            border-left: 1px solid var(--border);
+            overflow-y: auto;
+            transition: all .4s;
+            display: flex;
+            flex-direction: column
+        }
+
+        .report-panel::-webkit-scrollbar {
+            width: 6px
+        }
+
+        .report-panel::-webkit-scrollbar-track {
+            background: transparent
+        }
+
+        .report-panel::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px
+        }
+
+        .report-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--muted);
+            text-align: center;
+            padding: 30px
+        }
+
+        .report-empty .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: .3
+        }
+
+        .report-empty .title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 6px
+        }
+
+        .report-empty .desc {
+            font-size: 11px;
+            line-height: 1.6
+        }
+
+        .report-content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            animation: fadeIn .3s ease
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(10px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0)
+            }
+        }
+
+        /* REPORT HEADER */
+        .report-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .report-header-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px
+        }
+
+        .report-title {
+            font-size: 16px;
+            font-weight: 800
+        }
+
+        .report-status {
+            font-size: 9px;
+            font-family: var(--mono);
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px
+        }
+
+        /* REPORT SECTIONS */
+        .report-section {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            position: relative;
+            overflow: hidden
+        }
+
+        .report-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--purple));
+            opacity: .5
+        }
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px
+        }
+
+        .section-icon {
+            font-size: 14px
+        }
+
+        .section-title {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--muted)
+        }
+
+        /* MINDMAP */
+        .mindmap {
+            position: relative;
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .mindmap svg {
+            width: 100%;
+            height: 180px
+        }
+
+        .mm-node {
+            cursor: default
+        }
+
+        .mm-node rect {
+            rx: 8;
+            ry: 8;
+            transition: all .3s
+        }
+
+        .mm-node:hover rect {
+            filter: brightness(1.3)
+        }
+
+        .mm-node text {
+            font-family: var(--mono);
+            font-size: 9px;
+            fill: var(--text);
+            font-weight: 600
+        }
+
+        .mm-edge {
+            stroke: var(--border2);
+            stroke-width: 1.5;
+            fill: none
+        }
+
+        .mm-edge.active {
+            stroke: var(--accent);
+            stroke-dasharray: 4 2;
+            animation: dash 1s linear infinite
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -6
+            }
+        }
+
+        /* PROGRESS STEPS */
+        .progress-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .step-row {
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .step-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            flex-shrink: 0;
+            position: relative
+        }
+
+        .step-dot::after {
+            content: '';
+            position: absolute;
+            bottom: -14px;
+            left: 50%;
+            width: 1px;
+            height: 10px;
+            background: var(--border);
+            transform: translateX(-50%)
+        }
+
+        .step-row:last-child .step-dot::after {
+            display: none
+        }
+
+        .step-dot.done {
+            background: rgba(0, 255, 136, .15);
+            color: var(--green)
+        }
+
+        .step-dot.running {
+            background: rgba(250, 30, 78, .15);
+            color: var(--accent);
+            animation: p 1.5s infinite
+        }
+
+        .step-dot.pending {
+            background: rgba(255, 255, 255, .05);
+            color: var(--muted)
+        }
+
+        .step-info {
+            flex: 1;
+            min-width: 0
+        }
+
+        .step-name {
+            font-size: 11px;
+            font-weight: 600
+        }
+
+        .step-detail {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--muted)
+        }
+
+        .step-bar-wrap {
+            flex: 0 0 80px
+        }
+
+        .step-bar {
+            height: 3px;
+            background: rgba(255, 255, 255, .06);
+            border-radius: 2px;
+            overflow: hidden
+        }
+
+        .step-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 1.5s ease
+        }
+
+        .step-bar-fill.done {
+            background: var(--green)
+        }
+
+        .step-bar-fill.running {
+            background: linear-gradient(90deg, var(--accent), var(--purple));
+            animation: barPulse 2s ease infinite
+        }
+
+        .step-bar-fill.pending {
+            background: var(--muted);
+            opacity: .3
+        }
+
+        @keyframes barPulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .6
+            }
+        }
+
+        .step-pct {
+            font-size: 9px;
+            font-family: var(--mono);
+            font-weight: 700;
+            text-align: right;
+            width: 32px;
+            flex-shrink: 0
+        }
+
+        /* FILE TREE */
+        .file-tree {
+            font-family: var(--mono);
+            font-size: 10px;
+            line-height: 2;
+            color: var(--muted)
+        }
+
+        .tree-line {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 1px 0;
+            cursor: default;
+            transition: all .2s;
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin: -2px -6px
+        }
+
+        .tree-line:hover {
+            background: rgba(255, 255, 255, .03);
+            color: var(--text)
+        }
+
+        .tree-indent {
+            color: var(--border2);
+            flex-shrink: 0;
+            white-space: pre;
+            user-select: none
+        }
+
+        .tree-icon {
+            font-size: 12px;
+            flex-shrink: 0
+        }
+
+        .tree-name {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap
+        }
+
+        .tree-name.folder {
+            color: var(--cyan);
+            font-weight: 600
+        }
+
+        .tree-name.file {
+            color: var(--text)
+        }
+
+        .tree-size {
+            font-size: 8px;
+            color: var(--border2)
+        }
+
+        .tree-status {
+            font-size: 8px;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-weight: 700
+        }
+
+        .tree-status.new {
+            background: rgba(0, 255, 136, .1);
+            color: var(--green)
+        }
+
+        .tree-status.mod {
+            background: rgba(255, 184, 0, .1);
+            color: var(--yellow)
+        }
+
+        .tree-status.del {
+            background: rgba(255, 68, 102, .1);
+            color: var(--red)
+        }
+
+        /* PROCESS PLAN */
+        .process-plan {
+            display: flex;
+            flex-direction: column;
+            gap: 6px
+        }
+
+        .plan-phase {
+            display: flex;
+            align-items: stretch;
+            gap: 10px
+        }
+
+        .plan-timeline {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 20px;
+            flex-shrink: 0
+        }
+
+        .plan-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0
+        }
+
+        .plan-line {
+            flex: 1;
+            width: 1px;
+            background: var(--border)
+        }
+
+        .plan-phase:last-child .plan-line {
+            display: none
+        }
+
+        .plan-body {
+            flex: 1;
+            padding-bottom: 12px
+        }
+
+        .plan-phase-name {
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 2px
+        }
+
+        .plan-phase-desc {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono);
+            line-height: 1.6
+        }
+
+        .plan-phase-time {
+            font-size: 8px;
+            color: var(--border2);
+            font-family: var(--mono);
+            margin-top: 2px
+        }
+
+        /* OVERALL PROGRESS */
+        .overall-bar {
+            margin-top: 4px
+        }
+
+        .overall-track {
+            height: 8px;
+            background: rgba(255, 255, 255, .04);
+            border-radius: 4px;
+            overflow: hidden
+        }
+
+        .overall-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, var(--accent), var(--purple), var(--cyan));
+            transition: width 1.5s ease;
+            position: relative
+        }
+
+        .overall-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 40px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .2));
+            animation: shine 2s ease infinite
+        }
+
+        @keyframes shine {
+            0% {
+                transform: translateX(-40px)
+            }
+
+            100% {
+                transform: translateX(40px)
+            }
+        }
+
+        .overall-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            font-size: 10px;
+            font-family: var(--mono)
+        }
+
+        .overall-pct {
+            font-weight: 800;
+            color: var(--accent)
+        }
+
+        /* SCROLLBAR GLOBAL */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border2)
+        }
+
+        /* ══════ DETAIL MODAL ══════ */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .85);
+            backdrop-filter: blur(12px);
+            z-index: 9000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: all .3s
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: all
+        }
+
+        .modal-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            width: 90vw;
+            max-width: 820px;
+            max-height: 88vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: scale(.92);
+            transition: transform .3s
+        }
+
+        .modal-overlay.open .modal-box {
+            transform: scale(1)
+        }
+
+        .modal-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg2);
+            flex-shrink: 0
+        }
+
+        .modal-btn {
+            width: 34px;
+            height: 34px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .2s
+        }
+
+        .modal-btn:hover {
+            background: rgba(255, 255, 255, .06);
+            color: var(--text);
+            border-color: var(--border2)
+        }
+
+        .modal-btn.close-btn {
+            color: var(--red)
+        }
+
+        .modal-btn.close-btn:hover {
+            background: rgba(255, 68, 102, .12);
+            border-color: var(--red)
+        }
+
+        .modal-title-bar {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 12px;
+            min-width: 0
+        }
+
+        .modal-title-bar h2 {
+            font-size: 15px;
+            font-weight: 800;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .modal-title-bar .mbadge {
+            font-size: 8px;
+            font-family: var(--mono);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-weight: 700;
+            flex-shrink: 0
+        }
+
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px
+        }
+
+        .modal-body::-webkit-scrollbar {
+            width: 6px
+        }
+
+        .modal-body::-webkit-scrollbar-track {
+            background: transparent
+        }
+
+        .modal-body::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px
+        }
+
+        /* DOWNLOAD BAR */
+        .dl-bar {
+            border-top: 1px solid var(--border);
+            padding: 14px 20px;
+            background: var(--bg2);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            flex-shrink: 0
+        }
+
+        .dl-label {
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--muted);
+            margin-right: 4px
+        }
+
+        .dl-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .25s
+        }
+
+        .dl-btn:hover {
+            background: rgba(250, 30, 78, .08);
+            color: var(--accent);
+            border-color: rgba(250, 30, 78, .3);
+            transform: translateY(-1px)
+        }
+
+        .dl-btn .dl-icon {
+            font-size: 14px
+        }
+
+        .dl-btn.dl-desktop:hover {
+            color: var(--cyan);
+            border-color: var(--cyan);
+            background: rgba(250, 30, 78, .06)
+        }
+
+        .dl-btn.dl-docs:hover {
+            color: var(--green);
+            border-color: var(--green);
+            background: rgba(0, 255, 136, .06)
+        }
+
+        .dl-btn.dl-nextcloud:hover {
+            color: var(--blue);
+            border-color: var(--blue);
+            background: rgba(85, 172, 238, .06)
+        }
+
+        .dl-btn.dl-apache:hover {
+            color: var(--orange);
+            border-color: var(--orange);
+            background: rgba(255, 140, 66, .06)
+        }
+
+        .dl-btn.dl-drive:hover {
+            color: var(--yellow);
+            border-color: var(--yellow);
+            background: rgba(255, 184, 0, .06)
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: var(--card);
+            border: 1px solid var(--green);
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--green);
+            z-index: 10000;
+            transform: translateX(120%);
+            transition: transform .3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .5)
+        }
+
+        .toast.show {
+            transform: translateX(0)
+        }
+    </style>
+</head>
+
+<body>
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-brand">
+            <a href="index.html" class="btn-nav">← NEXUZ²</a>
+            <h1>📋 WORKFLOW BOARD</h1>
+            <span class="badge">PROCESS TRACKER v1.0</span>
+        </div>
+        <div class="header-right">
+            <div class="hstat">
+                <div class="pulse"></div> Live <span class="v">ACTIVE</span>
+            </div>
+            <div class="hstat">Prozesse <span class="v" id="totalCount">0</span></div>
+            <div class="hstat">Running <span class="v" id="runningCount">0</span></div>
+            <div class="hstat">Done <span class="v" id="doneCount">0</span></div>
+        </div>
+    </div>
+
+    <!-- MAIN 3-COL LAYOUT -->
+    <div class="main-grid">
+        <!-- LEFT SIDEBAR -->
+        <aside class="sidebar-left">
+            <div class="filter-section">
+                <div class="filter-title">Status</div>
+                <button class="filter-btn active" data-filter="all" onclick="setFilter('status','all',this)">
+                    <span class="filter-icon">🔵</span>Alle<span class="count" id="fAll">0</span>
+                </button>
+                <button class="filter-btn" data-filter="running" onclick="setFilter('status','running',this)">
+                    <span class="filter-icon">⚡</span>Running<span class="count" id="fRunning">0</span>
+                </button>
+                <button class="filter-btn" data-filter="queue" onclick="setFilter('status','queue',this)">
+                    <span class="filter-icon">📥</span>Queue<span class="count" id="fQueue">0</span>
+                </button>
+                <button class="filter-btn" data-filter="done" onclick="setFilter('status','done',this)">
+                    <span class="filter-icon">✅</span>Done<span class="count" id="fDone">0</span>
+                </button>
+                <button class="filter-btn" data-filter="failed" onclick="setFilter('status','failed',this)">
+                    <span class="filter-icon">❌</span>Failed<span class="count" id="fFailed">0</span>
+                </button>
+            </div>
+            <div class="filter-section">
+                <div class="filter-title">Priorität</div>
+                <button class="filter-btn active" onclick="setFilter('priority','all',this)">
+                    <span class="filter-icon">⚪</span>Alle
+                </button>
+                <button class="filter-btn" onclick="setFilter('priority','high',this)">
+                    <span class="filter-icon">🔴</span>Hoch
+                </button>
+                <button class="filter-btn" onclick="setFilter('priority','medium',this)">
+                    <span class="filter-icon">🟡</span>Mittel
+                </button>
+                <button class="filter-btn" onclick="setFilter('priority','low',this)">
+                    <span class="filter-icon">🔵</span>Niedrig
+                </button>
+            </div>
+            <div class="filter-section">
+                <div class="filter-title">Agent</div>
+                <button class="filter-btn active" onclick="setFilter('agent','all',this)">
+                    <span class="filter-icon">👥</span>Alle
+                </button>
+                <button class="filter-btn" onclick="setFilter('agent','PicoClaw',this)">
+                    <span class="filter-icon">🐙</span>PicoClaw
+                </button>
+                <button class="filter-btn" onclick="setFilter('agent','Gemini',this)">
+                    <span class="filter-icon">💎</span>Gemini
+                </button>
+                <button class="filter-btn" onclick="setFilter('agent','AutoPilot',this)">
+                    <span class="filter-icon">🤖</span>AutoPilot
+                </button>
+            </div>
+            <div class="sidebar-stats">
+                <div class="stat-row"><span class="stat-label">Erfolgsrate</span><span class="stat-val"
+                        style="color:var(--green)">87%</span></div>
+                <div class="stat-row"><span class="stat-label">Ø Dauer</span><span class="stat-val">4.2min</span></div>
+                <div class="stat-row"><span class="stat-label">Heute</span><span class="stat-val"
+                        style="color:var(--accent)">12</span></div>
+            </div>
+        </aside>
+
+        <!-- KANBAN BOARD -->
+        <div class="kanban" id="kanban"></div>
+
+        <!-- RIGHT REPORT PANEL -->
+        <div class="report-panel" id="reportPanel">
+            <div class="report-empty" id="reportEmpty">
+                <div class="icon">📊</div>
+                <div class="title">Prozess-Report</div>
+                <div class="desc">Fahre mit der Maus über eine Prozesskarte um den detaillierten Report mit Mindmap,
+                    Fortschritt und Dateistruktur zu sehen.</div>
+            </div>
+            <div class="report-content" id="reportContent" style="display:none"></div>
+        </div>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        // ═══════════════════════════════════════════════════════
+        //  DEMO PROCESS DATA
+        // ═══════════════════════════════════════════════════════
+        const PROCESSES = [
+            {
+                id: 'seo-audit', name: 'SEO Full Audit', agent: 'Gemini', agentIcon: '💎',
+                status: 'running', priority: 'high', progress: 62,
+                color: '#a855f7', started: '16:12', elapsed: '38min',
+                tags: ['seo', 'audit', 'metrics'],
+                steps: [
+                    { name: 'Site Crawl', pct: 100, state: 'done', detail: '847 URLs gecrawlt' },
+                    { name: 'Keyword Analysis', pct: 100, state: 'done', detail: '312 Keywords analysiert' },
+                    { name: 'Backlink Check', pct: 75, state: 'running', detail: 'Ahrefs API läuft...' },
+                    { name: 'Report Generation', pct: 0, state: 'pending', detail: 'Wartend' },
+                    { name: 'PDF Export', pct: 0, state: 'pending', detail: 'Wartend' }
+                ],
+                mindmap: {
+                    center: 'SEO Audit',
+                    branches: [
+                        { label: 'Crawl', children: ['URLs', 'Sitemap', 'Robots'] },
+                        { label: 'Keywords', children: ['Rankings', 'Volume', 'Difficulty'] },
+                        { label: 'Backlinks', children: ['Ahrefs', 'Quality', 'Anchors'] },
+                        { label: 'Report', children: ['PDF', 'Dashboard', 'Alerts'] }
+                    ]
+                },
+                files: [
+                    { type: 'folder', name: 'seo-audit/', indent: 0, status: null },
+                    { type: 'file', name: 'crawl-results.json', indent: 1, size: '2.4MB', status: 'new' },
+                    { type: 'file', name: 'keywords.csv', indent: 1, size: '156KB', status: 'new' },
+                    { type: 'file', name: 'backlinks.json', indent: 1, size: '890KB', status: 'mod' },
+                    { type: 'folder', name: 'reports/', indent: 1, status: null },
+                    { type: 'file', name: 'report-draft.md', indent: 2, size: '45KB', status: 'mod' },
+                    { type: 'file', name: 'screenshots/', indent: 1, size: '—', status: null }
+                ],
+                plan: [
+                    { phase: 'Init', desc: 'Projekt-Setup, API-Keys laden', time: '16:12 – 16:13', dot: 'var(--green)' },
+                    { phase: 'Crawling', desc: 'Full-Site Crawl mit 847 URLs', time: '16:13 – 16:28', dot: 'var(--green)' },
+                    { phase: 'Analyse', desc: 'Keyword + Backlink Analyse', time: '16:28 – jetzt', dot: 'var(--accent)' },
+                    { phase: 'Report', desc: 'Markdown + PDF Report erstellen', time: 'geplant', dot: 'var(--muted)' },
+                    { phase: 'Delivery', desc: 'Report per E-Mail versenden', time: 'geplant', dot: 'var(--muted)' }
+                ]
+            },
+            {
+                id: 'blog-auto', name: 'Blog Automation Pipeline', agent: 'PicoClaw', agentIcon: '🐙',
+                status: 'running', priority: 'high', progress: 45,
+                color: '#fa1e4e', started: '15:55', elapsed: '56min',
+                tags: ['blog', 'automation', 'content'],
+                steps: [
+                    { name: 'Topic Research', pct: 100, state: 'done', detail: '5 Topics gefunden' },
+                    { name: 'Content Generation', pct: 80, state: 'running', detail: 'Artikel 3/5 wird geschrieben' },
+                    { name: 'Image Generation', pct: 20, state: 'running', detail: '2/10 Bilder erstellt' },
+                    { name: 'SEO Optimization', pct: 0, state: 'pending', detail: 'Wartend' },
+                    { name: 'Publish to Blogger', pct: 0, state: 'pending', detail: 'Wartend' }
+                ],
+                mindmap: {
+                    center: 'Blog Pipeline',
+                    branches: [
+                        { label: 'Research', children: ['Trends', 'Keywords', 'Competition'] },
+                        { label: 'Content', children: ['Draft', 'Review', 'Polish'] },
+                        { label: 'Media', children: ['Images', 'Thumbnails', 'Alt-Tags'] },
+                        { label: 'Publish', children: ['Blogger', 'SEO', 'Social'] }
+                    ]
+                },
+                files: [
+                    { type: 'folder', name: 'blog-pipeline/', indent: 0, status: null },
+                    { type: 'folder', name: 'articles/', indent: 1, status: null },
+                    { type: 'file', name: 'article-01.md', indent: 2, size: '12KB', status: 'new' },
+                    { type: 'file', name: 'article-02.md', indent: 2, size: '14KB', status: 'new' },
+                    { type: 'file', name: 'article-03.md', indent: 2, size: '8KB', status: 'mod' },
+                    { type: 'folder', name: 'images/', indent: 1, status: null },
+                    { type: 'file', name: 'thumb-01.webp', indent: 2, size: '64KB', status: 'new' },
+                    { type: 'file', name: 'thumb-02.webp', indent: 2, size: '58KB', status: 'new' }
+                ],
+                plan: [
+                    { phase: 'Research', desc: 'Trend-Analyse, Keyword-Recherche', time: '15:55 – 16:10', dot: 'var(--green)' },
+                    { phase: 'Writing', desc: 'AI Content Generation (5 Artikel)', time: '16:10 – jetzt', dot: 'var(--accent)' },
+                    { phase: 'Media', desc: 'Bilder generieren + optimieren', time: 'laufend', dot: 'var(--yellow)' },
+                    { phase: 'SEO', desc: 'On-Page SEO + Meta Tags', time: 'geplant', dot: 'var(--muted)' },
+                    { phase: 'Publish', desc: 'Blogger API + Social Media', time: 'geplant', dot: 'var(--muted)' }
+                ]
+            },
+            {
+                id: 'drive-sync', name: 'Drive Reorganisation', agent: 'AutoPilot', agentIcon: '🤖',
+                status: 'running', priority: 'medium', progress: 78,
+                color: '#fa1e4e', started: '15:30', elapsed: '1h 21min',
+                tags: ['drive', 'sync', 'organize'],
+                steps: [
+                    { name: 'Inventory Scan', pct: 100, state: 'done', detail: '2.847 Dateien erfasst' },
+                    { name: 'Classification', pct: 100, state: 'done', detail: 'AI Kategorisierung abgeschlossen' },
+                    { name: 'Folder Creation', pct: 100, state: 'done', detail: '5x99 Struktur erstellt' },
+                    { name: 'File Moving', pct: 65, state: 'running', detail: '1.852/2.847 verschoben' },
+                    { name: 'Verification', pct: 0, state: 'pending', detail: 'Wartend' }
+                ],
+                mindmap: {
+                    center: 'Drive Sync',
+                    branches: [
+                        { label: 'Scan', children: ['Files', 'Types', 'Sizes'] },
+                        { label: 'Classify', children: ['AI Sort', 'Tags', 'Meta'] },
+                        { label: 'Structure', children: ['5x99', 'Templates', 'Archive'] },
+                        { label: 'Verify', children: ['Integrity', 'Links', 'Report'] }
+                    ]
+                },
+                files: [
+                    { type: 'folder', name: 'drive-organizer/', indent: 0, status: null },
+                    { type: 'file', name: 'inventory.json', indent: 1, size: '1.2MB', status: 'new' },
+                    { type: 'file', name: 'classification.csv', indent: 1, size: '340KB', status: 'new' },
+                    { type: 'file', name: 'move-log.json', indent: 1, size: '890KB', status: 'mod' },
+                    { type: 'file', name: 'errors.log', indent: 1, size: '12KB', status: 'mod' },
+                    { type: 'folder', name: 'reports/', indent: 1, status: null },
+                    { type: 'file', name: 'summary.md', indent: 2, size: '28KB', status: 'new' }
+                ],
+                plan: [
+                    { phase: 'Scan', desc: 'Google Drive Inventar erstellen', time: '15:30 – 15:42', dot: 'var(--green)' },
+                    { phase: 'Classify', desc: 'AI-basierte Datei-Klassifizierung', time: '15:42 – 15:58', dot: 'var(--green)' },
+                    { phase: 'Create', desc: 'Jeff Su 5x99 Ordner-Struktur', time: '15:58 – 16:05', dot: 'var(--green)' },
+                    { phase: 'Move', desc: 'Dateien in Zielordner verschieben', time: '16:05 – jetzt', dot: 'var(--accent)' },
+                    { phase: 'Verify', desc: 'Integritäts-Check + Report', time: 'geplant', dot: 'var(--muted)' }
+                ]
+            },
+            {
+                id: 'agent-deploy', name: 'Agent Deployment', agent: 'PicoClaw', agentIcon: '🐙',
+                status: 'queue', priority: 'medium', progress: 0,
+                color: '#00ff88', started: '—', elapsed: '—',
+                tags: ['agent', 'deploy', 'docker'],
+                steps: [
+                    { name: 'Config Validation', pct: 0, state: 'pending', detail: 'Wartend' },
+                    { name: 'Docker Build', pct: 0, state: 'pending', detail: 'Wartend' },
+                    { name: 'Health Check', pct: 0, state: 'pending', detail: 'Wartend' },
+                    { name: 'Registration', pct: 0, state: 'pending', detail: 'Wartend' }
+                ],
+                mindmap: {
+                    center: 'Deployment',
+                    branches: [
+                        { label: 'Config', children: ['Env', 'Secrets', 'Ports'] },
+                        { label: 'Build', children: ['Docker', 'Compose', 'Registry'] },
+                        { label: 'Deploy', children: ['Cloud Run', 'Health', 'DNS'] },
+                        { label: 'Verify', children: ['Logs', 'Metrics', 'Alerts'] }
+                    ]
+                },
+                files: [
+                    { type: 'folder', name: 'agent-deploy/', indent: 0, status: null },
+                    { type: 'file', name: 'Dockerfile', indent: 1, size: '1.2KB', status: null },
+                    { type: 'file', name: 'docker-compose.yml', indent: 1, size: '800B', status: null },
+                    { type: 'file', name: '.env', indent: 1, size: '256B', status: null }
+                ],
+                plan: [
+                    { phase: 'Prepare', desc: 'Konfiguration validieren', time: 'geplant', dot: 'var(--muted)' },
+                    { phase: 'Build', desc: 'Docker Image bauen + pushen', time: 'geplant', dot: 'var(--muted)' },
+                    { phase: 'Deploy', desc: 'Cloud Run Deployment', time: 'geplant', dot: 'var(--muted)' },
+                    { phase: 'Verify', desc: 'Health-Check + Registrierung', time: 'geplant', dot: 'var(--muted)' }
+                ]
+            },
+            {
+                id: 'domain-check', name: 'Domain Monitoring', agent: 'Gemini', agentIcon: '💎',
+                status: 'done', priority: 'low', progress: 100,
+                color: '#ffb800', started: '14:20', elapsed: '12min',
+                tags: ['domains', 'ssl', 'monitoring'],
+                steps: [
+                    { name: 'DNS Lookup', pct: 100, state: 'done', detail: '42 Domains geprüft' },
+                    { name: 'SSL Validation', pct: 100, state: 'done', detail: 'Alle Zertifikate gültig' },
+                    { name: 'Uptime Check', pct: 100, state: 'done', detail: '100% Erreichbarkeit' },
+                    { name: 'Report', pct: 100, state: 'done', detail: 'Report erstellt' }
+                ],
+                mindmap: {
+                    center: 'Domains',
+                    branches: [
+                        { label: 'DNS', children: ['A-Records', 'CNAME', 'MX'] },
+                        { label: 'SSL', children: ['Expiry', 'Chain', 'HSTS'] },
+                        { label: 'Uptime', children: ['Ping', 'HTTP', 'Latency'] },
+                        { label: 'Report', children: ['PDF', 'Email', 'Alerts'] }
+                    ]
+                },
+                files: [
+                    { type: 'folder', name: 'domain-monitor/', indent: 0, status: null },
+                    { type: 'file', name: 'dns-results.json', indent: 1, size: '78KB', status: 'new' },
+                    { type: 'file', name: 'ssl-report.json', indent: 1, size: '24KB', status: 'new' },
+                    { type: 'file', name: 'uptime-log.csv', indent: 1, size: '12KB', status: 'new' },
+                    { type: 'file', name: 'report.pdf', indent: 1, size: '1.1MB', status: 'new' }
+                ],
+                plan: [
+                    { phase: 'DNS', desc: 'DNS Records für 42 Domains', time: '14:20 – 14:24', dot: 'var(--green)' },
+                    { phase: 'SSL', desc: 'SSL Zertifikats-Validierung', time: '14:24 – 14:27', dot: 'var(--green)' },
+                    { phase: 'Uptime', desc: 'Erreichbarkeits-Tests', time: '14:27 – 14:30', dot: 'var(--green)' },
+                    { phase: 'Report', desc: 'PDF Report generiert + versendet', time: '14:30 – 14:32', dot: 'var(--green)' }
+                ]
+            },
+            {
+                id: 'cost-calc', name: 'Cost Calculator Update', agent: 'AutoPilot', agentIcon: '🤖',
+                status: 'done', priority: 'medium', progress: 100,
+                color: '#55acee', started: '13:45', elapsed: '8min',
+                tags: ['costs', 'api', 'tracking'],
+                steps: [
+                    { name: 'API Data Fetch', pct: 100, state: 'done', detail: 'OpenRouter + Gemini' },
+                    { name: 'Cost Aggregation', pct: 100, state: 'done', detail: 'Tages-/Monats-Kosten berechnet' },
+                    { name: 'Dashboard Update', pct: 100, state: 'done', detail: 'Charts aktualisiert' },
+                    { name: 'Budget Alerts', pct: 100, state: 'done', detail: 'Keine Überschreitungen' }
+                ],
+                mindmap: {
+                    center: 'Kosten',
+                    branches: [
+                        { label: 'APIs', children: ['OpenRouter', 'Gemini', 'Claude'] },
+                        { label: 'Tracking', children: ['Tokens', 'Requests', 'Latency'] },
+                        { label: 'Budget', children: ['Daily', 'Monthly', 'Alerts'] },
+                        { label: 'Report', children: ['Dashboard', 'CSV', 'Trends'] }
+                    ]
+                },
+                files: [
+                    { type: 'folder', name: 'cost-system/', indent: 0, status: null },
+                    { type: 'file', name: 'daily-costs.json', indent: 1, size: '34KB', status: 'mod' },
+                    { type: 'file', name: 'monthly-summary.csv', indent: 1, size: '8KB', status: 'mod' },
+                    { type: 'file', name: 'budget-config.json', indent: 1, size: '1KB', status: null }
+                ],
+                plan: [
+                    { phase: 'Fetch', desc: 'API Kosten-Daten laden', time: '13:45 – 13:47', dot: 'var(--green)' },
+                    { phase: 'Aggregate', desc: 'Kosten berechnen & gruppieren', time: '13:47 – 13:50', dot: 'var(--green)' },
+                    { phase: 'Update', desc: 'Dashboard + Charts aktualisieren', time: '13:50 – 13:52', dot: 'var(--green)' },
+                    { phase: 'Verify', desc: 'Budget-Alerts prüfen', time: '13:52 – 13:53', dot: 'var(--green)' }
+                ]
+            },
+            {
+                id: 'playbook-gen', name: 'Playbook Generation', agent: 'PicoClaw', agentIcon: '🐙',
+                status: 'queue', priority: 'low', progress: 0,
+                color: '#ff8c42', started: '—', elapsed: '—',
+                tags: ['playbook', 'docs', 'registry'],
+                steps: [
+                    { name: 'Template Scan', pct: 0, state: 'pending', detail: 'Wartend' },
+                    { name: 'Content Generation', pct: 0, state: 'pending', detail: 'Wartend' },
+                    { name: 'Registry Update', pct: 0, state: 'pending', detail: 'Wartend' },
+                    { name: 'Validation', pct: 0, state: 'pending', detail: 'Wartend' }
+                ],
+                mindmap: {
+                    center: 'Playbooks',
+                    branches: [
+                        { label: 'Templates', children: ['System', 'Deploy', 'Debug'] },
+                        { label: 'Generate', children: ['MD Files', 'YAML', 'Tags'] },
+                        { label: 'Registry', children: ['Index', 'Search', 'Links'] },
+                        { label: 'Validate', children: ['Schema', 'Format', 'Test'] }
+                    ]
+                },
+                files: [
+                    { type: 'folder', name: 'playbooks/', indent: 0, status: null },
+                    { type: 'file', name: 'playbook-registry.json', indent: 1, size: '24KB', status: null },
+                    { type: 'folder', name: 'templates/', indent: 1, status: null },
+                    { type: 'file', name: 'system-ops.md', indent: 2, size: '—', status: null }
+                ],
+                plan: [
+                    { phase: 'Scan', desc: 'Bestehende Playbooks scannen', time: 'geplant', dot: 'var(--muted)' },
+                    { phase: 'Generate', desc: 'Fehlende Playbooks erstellen', time: 'geplant', dot: 'var(--muted)' },
+                    { phase: 'Registry', desc: 'Registry aktualisieren', time: 'geplant', dot: 'var(--muted)' },
+                    { phase: 'Validate', desc: 'Schema-Validierung', time: 'geplant', dot: 'var(--muted)' }
+                ]
+            },
+            {
+                id: 'color-rollout', name: 'Enterprise Color Rollout', agent: 'Gemini', agentIcon: '💎',
+                status: 'failed', priority: 'high', progress: 34,
+                color: '#ff4466', started: '12:10', elapsed: '22min',
+                tags: ['design', 'css', 'rollout'],
+                steps: [
+                    { name: 'File Discovery', pct: 100, state: 'done', detail: '38 HTML-Dateien gefunden' },
+                    { name: 'Color Mapping', pct: 100, state: 'done', detail: 'Farb-Mapping erstellt' },
+                    { name: 'Apply Changes', pct: 35, state: 'done', detail: '13/38 Dateien geändert' },
+                    { name: 'Build Verification', pct: 0, state: 'pending', detail: 'CSS Fehler in 3 Dateien' },
+                    { name: 'Visual Review', pct: 0, state: 'pending', detail: 'Abgebrochen' }
+                ],
+                mindmap: {
+                    center: 'Color Rollout',
+                    branches: [
+                        { label: 'Discovery', children: ['HTML', 'CSS', 'Templates'] },
+                        { label: 'Mapping', children: ['Old→New', 'Variables', 'Gradients'] },
+                        { label: 'Apply', children: ['Batch', 'Validate', 'Backup'] },
+                        { label: 'Review', children: ['Visual', 'Build', 'Deploy'] }
+                    ]
+                },
+                files: [
+                    { type: 'folder', name: 'color-rollout/', indent: 0, status: null },
+                    { type: 'file', name: 'color-map.json', indent: 1, size: '4KB', status: 'new' },
+                    { type: 'file', name: 'changes.log', indent: 1, size: '18KB', status: 'mod' },
+                    { type: 'file', name: 'errors.log', indent: 1, size: '3KB', status: 'new' },
+                    { type: 'folder', name: 'backup/', indent: 1, status: null },
+                    { type: 'file', name: 'pre-rollout.zip', indent: 2, size: '2.1MB', status: 'new' }
+                ],
+                plan: [
+                    { phase: 'Discover', desc: 'HTML/CSS Dateien scannen', time: '12:10 – 12:14', dot: 'var(--green)' },
+                    { phase: 'Map', desc: 'Farb-Mapping definieren', time: '12:14 – 12:18', dot: 'var(--green)' },
+                    { phase: 'Apply', desc: '13/38 Dateien geändert → CSS Fehler', time: '12:18 – 12:32', dot: 'var(--red)' },
+                    { phase: 'Fix', desc: 'Fehler beheben + erneut versuchen', time: 'abgebrochen', dot: 'var(--red)' },
+                    { phase: 'Review', desc: 'Visueller Review', time: 'abgebrochen', dot: 'var(--muted)' }
+                ]
+            }
+        ];
+
+        // ═══════════════════════════════════════════════════════
+        //  FILTERS STATE
+        // ═══════════════════════════════════════════════════════
+        const filters = { status: 'all', priority: 'all', agent: 'all' };
+
+        function setFilter(type, val, btn) {
+            filters[type] = val;
+            btn.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderBoard();
+        }
+
+        function filterMatch(p) {
+            if (filters.status !== 'all' && p.status !== filters.status) return false;
+            if (filters.priority !== 'all' && p.priority !== filters.priority) return false;
+            if (filters.agent !== 'all' && p.agent !== filters.agent) return false;
+            return true;
+        }
+
+        // ═══════════════════════════════════════════════════════
+        //  KANBAN RENDERING
+        // ═══════════════════════════════════════════════════════
+        function renderBoard() {
+            const cols = { queue: [], running: [], done: [], failed: [] };
+            const visible = PROCESSES.filter(filterMatch);
+            visible.forEach(p => cols[p.status]?.push(p));
+
+            const colDefs = [
+                { key: 'queue', icon: '📥', title: 'Queue', cls: 'col-queue' },
+                { key: 'running', icon: '⚡', title: 'Running', cls: 'col-running' },
+                { key: 'done', icon: '✅', title: 'Done', cls: 'col-done' },
+                { key: 'failed', icon: '❌', title: 'Failed', cls: 'col-failed' }
+            ];
+
+            document.getElementById('kanban').innerHTML = colDefs.map(c => `
+            <div class="kanban-col">
+                <div class="col-header ${c.cls}">
+                    <span class="col-icon">${c.icon}</span>
+                    <span class="col-title">${c.title}</span>
+                    <span class="col-count">${cols[c.key].length}</span>
+                </div>
+                <div class="col-cards">${cols[c.key].map(renderCard).join('')}</div>
+            </div>
+        `).join('');
+
+            // Update counts
+            document.getElementById('totalCount').textContent = PROCESSES.length;
+            document.getElementById('runningCount').textContent = PROCESSES.filter(p => p.status === 'running').length;
+            document.getElementById('doneCount').textContent = PROCESSES.filter(p => p.status === 'done').length;
+            const byStatus = s => PROCESSES.filter(p => p.status === s).length;
+            document.getElementById('fAll').textContent = PROCESSES.length;
+            document.getElementById('fRunning').textContent = byStatus('running');
+            document.getElementById('fQueue').textContent = byStatus('queue');
+            document.getElementById('fDone').textContent = byStatus('done');
+            document.getElementById('fFailed').textContent = byStatus('failed');
+
+            // Attach hover + click events
+            document.querySelectorAll('.process-card').forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    document.querySelectorAll('.process-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    showReport(card.dataset.id);
+                });
+                card.addEventListener('click', () => {
+                    openModal(card.dataset.id);
+                });
+            });
+        }
+
+        function renderCard(p) {
+            const pColor = p.status === 'running' ? 'var(--accent)' : p.status === 'done' ? 'var(--green)' : p.status === 'failed' ? 'var(--red)' : 'var(--blue)';
+            return `<div class="process-card" data-id="${p.id}" data-priority="${p.priority}">
+            <div class="card-top">
+                <div class="card-agent-icon" style="background:${hexBg(p.color, .15)}">${p.agentIcon}</div>
+                <div>
+                    <div class="card-name">${p.name}</div>
+                    <div class="card-agent">${p.agent}</div>
+                </div>
+            </div>
+            <div class="card-progress">
+                <div class="progress-bar"><div class="progress-fill" style="width:${p.progress}%;background:${pColor}"></div></div>
+                <div class="progress-label"><span>${p.progress}%</span><span>${p.elapsed}</span></div>
+            </div>
+            <div class="card-tags">${p.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+            <div class="card-time">🕐 ${p.started}</div>
+        </div>`;
+        }
+
+        function hexBg(hex, a) { const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16); return `rgba(${r},${g},${b},${a})` }
+
+        // ═══════════════════════════════════════════════════════
+        //  REPORT PANEL
+        // ═══════════════════════════════════════════════════════
+        function showReport(id) {
+            const p = PROCESSES.find(x => x.id === id);
+            if (!p) return;
+            document.getElementById('reportEmpty').style.display = 'none';
+            const rc = document.getElementById('reportContent');
+            rc.style.display = 'flex';
+
+            const statusColors = { running: 'var(--accent)', done: 'var(--green)', failed: 'var(--red)', queue: 'var(--blue)' };
+            const statusLabels = { running: 'RUNNING', done: 'DONE', failed: 'FAILED', queue: 'QUEUE' };
+            const sc = statusColors[p.status];
+            const sl = statusLabels[p.status];
+
+            rc.innerHTML = `
+            <!-- HEADER -->
+            <div class="report-header">
+                <div class="report-header-icon" style="background:${hexBg(p.color, .15)}">${p.agentIcon}</div>
+                <div style="flex:1">
+                    <div class="report-title">${p.name}</div>
+                    <div style="font-size:10px;font-family:var(--mono);color:var(--muted);margin-top:2px">${p.agent} · ${p.elapsed}</div>
+                </div>
+                <span class="report-status" style="background:${hexBg(p.color, .12)};color:${sc}">${sl}</span>
+            </div>
+
+            <!-- OVERALL PROGRESS -->
+            <div class="overall-bar">
+                <div class="overall-track"><div class="overall-fill" style="width:${p.progress}%"></div></div>
+                <div class="overall-labels"><span class="overall-pct">${p.progress}%</span><span style="color:var(--muted)">Gesamtfortschritt</span></div>
+            </div>
+
+            <!-- MINDMAP -->
+            <div class="report-section">
+                <div class="section-head"><span class="section-icon">🧠</span><span class="section-title">Mindmap</span></div>
+                <div class="mindmap">${renderMindmap(p.mindmap, p.color, p.status)}</div>
+            </div>
+
+            <!-- PROGRESS STEPS -->
+            <div class="report-section">
+                <div class="section-head"><span class="section-icon">📊</span><span class="section-title">Fortschritt</span></div>
+                <div class="progress-steps">${p.steps.map(renderStep).join('')}</div>
+            </div>
+
+            <!-- FILE TREE -->
+            <div class="report-section">
+                <div class="section-head"><span class="section-icon">📁</span><span class="section-title">Ordnerstruktur</span></div>
+                <div class="file-tree">${p.files.map(renderTreeLine).join('')}</div>
+            </div>
+
+            <!-- PROCESS PLAN -->
+            <div class="report-section">
+                <div class="section-head"><span class="section-icon">📋</span><span class="section-title">Prozess-Plan</span></div>
+                <div class="process-plan">${p.plan.map(renderPlanPhase).join('')}</div>
+            </div>
+        `;
+
+            // animate progress bars with slight delay
+            setTimeout(() => {
+                rc.querySelectorAll('.step-bar-fill').forEach(el => {
+                    el.style.width = el.dataset.w;
+                });
+                rc.querySelector('.overall-fill').style.width = p.progress + '%';
+            }, 50);
+        }
+
+        // ═══════════════════════════════════════════════════════
+        //  MINDMAP SVG RENDERER
+        // ═══════════════════════════════════════════════════════
+        function renderMindmap(mm, color, status) {
+            const W = 340, H = 180, cx = W / 2, cy = H / 2;
+            let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+
+            // Center node
+            svg += `<rect x="${cx - 45}" y="${cy - 14}" width="90" height="28" rx="8" fill="${hexBg(color, .25)}" stroke="${color}" stroke-width="1.5"/>`;
+            svg += `<text x="${cx}" y="${cy + 4}" text-anchor="middle" fill="${color}" font-family="var(--mono)" font-size="9" font-weight="700">${mm.center}</text>`;
+
+            const branchAngles = [-1, -.33, .33, 1];
+            const branchColors = [color, 'var(--cyan)', 'var(--purple)', 'var(--green)'];
+
+            mm.branches.forEach((br, i) => {
+                const angle = branchAngles[i] * Math.PI * 0.4 + (i < 2 ? Math.PI : 0);
+                const bx = cx + Math.cos(angle) * 95;
+                const by = cy + Math.sin(angle) * 55;
+                const activeClass = (status === 'running' && i <= 2) ? ' active' : '';
+
+                // Edge to branch
+                svg += `<path class="mm-edge${activeClass}" d="M${cx},${cy} Q${(cx + bx) / 2},${cy} ${bx},${by}"/>`;
+
+                // Branch node
+                const bw = Math.max(br.label.length * 7 + 16, 50);
+                svg += `<g class="mm-node"><rect x="${bx - bw / 2}" y="${by - 11}" width="${bw}" height="22" fill="${hexBg(branchColors[i], .15)}" stroke="${branchColors[i]}" stroke-width="1"/>`;
+                svg += `<text x="${bx}" y="${by + 3}" text-anchor="middle" fill="${branchColors[i]}" font-size="8" font-weight="600">${br.label}</text></g>`;
+
+                // Children
+                br.children.forEach((child, j) => {
+                    const cAngle = angle + (j - 1) * 0.35;
+                    const childX = bx + Math.cos(cAngle) * 58;
+                    const childY = by + Math.sin(cAngle) * 32;
+                    svg += `<path class="mm-edge" d="M${bx},${by} L${childX},${childY}" stroke-opacity="0.4"/>`;
+                    const cw = Math.max(child.length * 6 + 10, 36);
+                    svg += `<g class="mm-node"><rect x="${childX - cw / 2}" y="${childY - 8}" width="${cw}" height="16" fill="rgba(255,255,255,.04)" stroke="var(--border)" stroke-width="0.5"/>`;
+                    svg += `<text x="${childX}" y="${childY + 3}" text-anchor="middle" font-size="7" fill="var(--muted)">${child}</text></g>`;
+                });
+            });
+
+            svg += '</svg>';
+            return svg;
+        }
+
+        // ═══════════════════════════════════════════════════════
+        //  PROGRESS STEPS RENDERER
+        // ═══════════════════════════════════════════════════════
+        function renderStep(s) {
+            const icons = { done: '✓', running: '⚡', pending: '○' };
+            return `<div class="step-row">
+            <div class="step-dot ${s.state}">${icons[s.state]}</div>
+            <div class="step-info">
+                <div class="step-name">${s.name}</div>
+                <div class="step-detail">${s.detail}</div>
+            </div>
+            <div class="step-bar-wrap">
+                <div class="step-bar"><div class="step-bar-fill ${s.state}" data-w="${s.pct}%" style="width:0%"></div></div>
+            </div>
+            <div class="step-pct" style="color:${s.state === 'done' ? 'var(--green)' : s.state === 'running' ? 'var(--accent)' : 'var(--muted)'}">${s.pct}%</div>
+        </div>`;
+        }
+
+        // ═══════════════════════════════════════════════════════
+        //  FILE TREE RENDERER
+        // ═══════════════════════════════════════════════════════
+        function renderTreeLine(f) {
+            const indent = '│  '.repeat(f.indent > 0 ? f.indent - 1 : 0) + (f.indent > 0 ? '├─ ' : '');
+            const icon = f.type === 'folder' ? '📂' : getFileIcon(f.name);
+            const nameClass = f.type === 'folder' ? 'folder' : 'file';
+            const statusHtml = f.status ? `<span class="tree-status ${f.status}">${f.status === 'new' ? 'NEW' : f.status === 'mod' ? 'MOD' : 'DEL'}</span>` : '';
+            const sizeHtml = f.size ? `<span class="tree-size">${f.size}</span>` : '';
+            return `<div class="tree-line">
+            <span class="tree-indent">${indent}</span>
+            <span class="tree-icon">${icon}</span>
+            <span class="tree-name ${nameClass}">${f.name}</span>
+            ${sizeHtml}${statusHtml}
+        </div>`;
+        }
+
+        function getFileIcon(name) {
+            if (name.endsWith('.json')) return '📋';
+            if (name.endsWith('.csv')) return '📊';
+            if (name.endsWith('.md')) return '📝';
+            if (name.endsWith('.pdf')) return '📕';
+            if (name.endsWith('.log')) return '📜';
+            if (name.endsWith('.webp') || name.endsWith('.png') || name.endsWith('.jpg')) return '🖼️';
+            if (name.endsWith('.yml') || name.endsWith('.yaml')) return '⚙️';
+            if (name.endsWith('.zip')) return '📦';
+            if (name.includes('Dockerfile')) return '🐳';
+            if (name.startsWith('.env')) return '🔐';
+            return '📄';
+        }
+
+        // ═══════════════════════════════════════════════════════
+        //  PROCESS PLAN RENDERER
+        // ═══════════════════════════════════════════════════════
+        function renderPlanPhase(ph) {
+            return `<div class="plan-phase">
+            <div class="plan-timeline">
+                <div class="plan-dot" style="background:${ph.dot}; box-shadow:0 0 8px ${ph.dot}"></div>
+                <div class="plan-line"></div>
+            </div>
+            <div class="plan-body">
+                <div class="plan-phase-name">${ph.phase}</div>
+                <div class="plan-phase-desc">${ph.desc}</div>
+                <div class="plan-phase-time">${ph.time}</div>
+            </div>
+        </div>`;
+        }
+
+        // ═══════════════════════════════════════════════════════
+        //  DETAIL MODAL — CLICK HANDLER
+        // ═══════════════════════════════════════════════════════
+        let currentModalProcess = null;
+
+        function openModal(id) {
+            const p = PROCESSES.find(x => x.id === id);
+            if (!p) return;
+            currentModalProcess = p;
+            const overlay = document.getElementById('modalOverlay');
+            const sc = { running: 'var(--accent)', done: 'var(--green)', failed: 'var(--red)', queue: 'var(--blue)' };
+            const sl = { running: 'RUNNING', done: 'DONE', failed: 'FAILED', queue: 'QUEUE' };
+
+            document.getElementById('modalTitle').textContent = p.name;
+            const mbadge = document.getElementById('modalBadge');
+            mbadge.textContent = sl[p.status];
+            mbadge.style.background = hexBg(p.color, .12);
+            mbadge.style.color = sc[p.status];
+
+            // Build full report content inside modal body
+            document.getElementById('modalBody').innerHTML = `
+                <!-- OVERALL PROGRESS -->
+                <div class="overall-bar" style="margin-bottom:20px">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                        <span style="font-size:12px;font-weight:700">${p.agentIcon} ${p.agent} — ${p.name}</span>
+                        <span style="font-size:12px;font-family:var(--mono);color:var(--muted)">Gestartet: ${p.started} · Dauer: ${p.elapsed}</span>
+                    </div>
+                    <div class="overall-track"><div class="overall-fill" style="width:${p.progress}%"></div></div>
+                    <div class="overall-labels"><span class="overall-pct">${p.progress}%</span><span style="color:var(--muted)">Gesamtfortschritt</span></div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                    <!-- MINDMAP -->
+                    <div class="report-section">
+                        <div class="section-head"><span class="section-icon">🧠</span><span class="section-title">Mindmap</span></div>
+                        <div class="mindmap">${renderMindmap(p.mindmap, p.color, p.status)}</div>
+                    </div>
+                    <!-- PROGRESS STEPS -->
+                    <div class="report-section">
+                        <div class="section-head"><span class="section-icon">📊</span><span class="section-title">Fortschritt</span></div>
+                        <div class="progress-steps">${p.steps.map(renderStep).join('')}</div>
+                    </div>
+                    <!-- FILE TREE -->
+                    <div class="report-section">
+                        <div class="section-head"><span class="section-icon">📁</span><span class="section-title">Ordnerstruktur</span></div>
+                        <div class="file-tree">${p.files.map(renderTreeLine).join('')}</div>
+                    </div>
+                    <!-- PROCESS PLAN -->
+                    <div class="report-section">
+                        <div class="section-head"><span class="section-icon">📋</span><span class="section-title">Prozess-Plan</span></div>
+                        <div class="process-plan">${p.plan.map(renderPlanPhase).join('')}</div>
+                    </div>
+                </div>
+
+                <!-- BUILD SUMMARY (from actual session) -->
+                <div class="report-section" style="margin-top:16px">
+                    <div class="section-head"><span class="section-icon">🏗️</span><span class="section-title">Build-Zusammenfassung</span></div>
+                    <div style="font-family:var(--mono);font-size:10px;line-height:1.9;color:var(--muted)">
+                        <div style="color:var(--text);font-weight:700;margin-bottom:6px">Tags: ${p.tags.map(t => '<span class="tag">' + t + '</span>').join(' ')}</div>
+                        <div>Priorität: <span style="color:${p.priority === 'high' ? 'var(--accent)' : p.priority === 'medium' ? 'var(--yellow)' : 'var(--blue)'};font-weight:700">${p.priority.toUpperCase()}</span></div>
+                        <div>Steps: ${p.steps.filter(s => s.state === 'done').length}/${p.steps.length} abgeschlossen</div>
+                        <div>Dateien: ${p.files.filter(f => f.type === 'file').length} Dateien in ${p.files.filter(f => f.type === 'folder').length} Ordnern</div>
+                        <div>Phasen: ${p.plan.length} geplant, ${p.plan.filter(ph => ph.dot.includes('green')).length} abgeschlossen</div>
+                    </div>
+                </div>
+            `;
+
+            // animate step bars
+            setTimeout(() => {
+                document.getElementById('modalBody').querySelectorAll('.step-bar-fill').forEach(el => {
+                    el.style.width = el.dataset.w;
+                });
+            }, 100);
+
+            overlay.classList.add('open');
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('open');
+            currentModalProcess = null;
+        }
+
+        // Close on backdrop click
+        document.getElementById('modalOverlay').addEventListener('click', e => {
+            if (e.target.id === 'modalOverlay') closeModal();
+        });
+
+        // ESC to close
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // ═══════════════════════════════════════════════════════
+        //  GENERATE MD REPORT
+        // ═══════════════════════════════════════════════════════
+        function generateMdReport(p) {
+            let md = `# ${p.name}\n\n`;
+            md += `> **Agent:** ${p.agent} ${p.agentIcon}  \n`;
+            md += `> **Status:** ${p.status.toUpperCase()}  \n`;
+            md += `> **Fortschritt:** ${p.progress}%  \n`;
+            md += `> **Gestartet:** ${p.started}  \n`;
+            md += `> **Dauer:** ${p.elapsed}  \n`;
+            md += `> **Priorität:** ${p.priority.toUpperCase()}  \n\n`;
+
+            // Progress bar ASCII
+            const filled = Math.round(p.progress / 100 * 30);
+            md += `## Gesamtfortschritt\n\n`;
+            md += `\`\`\`\n${'█'.repeat(filled)}${'░'.repeat(30 - filled)} ${p.progress}%\n\`\`\`\n\n`;
+
+            // Mindmap
+            md += `## 🧠 Mindmap\n\n`;
+            md += `\`\`\`\n`;
+            md += `                    ${p.mindmap.center}\n`;
+            md += `         ┌──────────┼──────────┐\n`;
+            p.mindmap.branches.forEach((br, i) => {
+                md += `     ${i === 0 ? '┌' : i === p.mindmap.branches.length - 1 ? '└' : '├'}── ${br.label}\n`;
+                br.children.forEach((c, j) => {
+                    const pre = i === p.mindmap.branches.length - 1 ? ' ' : '│';
+                    md += `     ${pre}   ${j === br.children.length - 1 ? '└' : '├'}── ${c}\n`;
+                });
+            });
+            md += `\`\`\`\n\n`;
+
+            // Steps
+            md += `## 📊 Fortschritt\n\n`;
+            md += `| Step | Status | Fortschritt | Detail |\n`;
+            md += `|------|--------|-------------|--------|\n`;
+            p.steps.forEach(s => {
+                const icon = s.state === 'done' ? '✅' : s.state === 'running' ? '⚡' : '⏳';
+                const bar = '█'.repeat(Math.round(s.pct / 100 * 10)) + '░'.repeat(10 - Math.round(s.pct / 100 * 10));
+                md += `| ${s.name} | ${icon} ${s.state} | \`${bar}\` ${s.pct}% | ${s.detail} |\n`;
+            });
+            md += `\n`;
+
+            // File tree
+            md += `## 📁 Ordnerstruktur\n\n`;
+            md += `\`\`\`\n`;
+            p.files.forEach(f => {
+                const indent = '│  '.repeat(f.indent > 0 ? f.indent - 1 : 0) + (f.indent > 0 ? '├── ' : '');
+                const icon = f.type === 'folder' ? '📂' : '📄';
+                const status = f.status ? ` [${f.status.toUpperCase()}]` : '';
+                const size = f.size ? ` (${f.size})` : '';
+                md += `${indent}${icon} ${f.name}${size}${status}\n`;
+            });
+            md += `\`\`\`\n\n`;
+
+            // Plan
+            md += `## 📋 Prozess-Plan\n\n`;
+            p.plan.forEach((ph, i) => {
+                const dot = ph.dot.includes('green') ? '🟢' : ph.dot.includes('accent') || ph.dot.includes('red') ? (ph.dot.includes('red') ? '🔴' : '🟡') : '⚪';
+                md += `${i + 1}. ${dot} **${ph.phase}** — ${ph.desc}  \n   _${ph.time}_\n\n`;
+            });
+
+            md += `---\n_Report generiert: ${new Date().toLocaleString('de-DE')}_\n`;
+            return md;
+        }
+
+        // ═══════════════════════════════════════════════════════
+        //  COPY TO CLIPBOARD
+        // ═══════════════════════════════════════════════════════
+        function copyReport() {
+            if (!currentModalProcess) return;
+            const md = generateMdReport(currentModalProcess);
+            navigator.clipboard.writeText(md).then(() => showToast('📋 Report kopiert!'));
+        }
+
+        // ═══════════════════════════════════════════════════════
+        //  DOWNLOAD FUNCTIONS
+        // ═══════════════════════════════════════════════════════
+        function getFileName(p, target) {
+            // Format: _Projektname_step.dateiendung
+            const safeName = p.id.replace(/[^a-zA-Z0-9-]/g, '_');
+            const stepNum = p.steps.filter(s => s.state === 'done').length;
+            return `_${safeName}_step${stepNum}.md`;
+        }
+
+        function downloadReport(target) {
+            if (!currentModalProcess) return;
+            const p = currentModalProcess;
+            const md = generateMdReport(p);
+            const filename = getFileName(p, target);
+
+            // For browser-based download (Desktop/Dokumente)
+            if (target === 'desktop' || target === 'dokumente') {
+                const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast(`💾 ${filename} → ${target === 'desktop' ? 'Desktop' : 'Dokumente'}`);
+                return;
+            }
+
+            // For remote targets (Nextcloud, Apache, Drive) — simulate with API placeholder
+            const targets = {
+                nextcloud: { label: 'Nextcloud', icon: '☁️', endpoint: '/api/nextcloud/upload' },
+                apache: { label: 'Apache Server', icon: '🌐', endpoint: '/api/apache/upload' },
+                drive: { label: 'Google Drive', icon: '📁', endpoint: '/api/drive/upload' }
+            };
+            const t = targets[target];
+            if (t) {
+                // Simulate upload — in production this would be a real API call
+                console.log(`[UPLOAD] ${filename} → ${t.label}`, { endpoint: t.endpoint, size: md.length });
+                showToast(`${t.icon} ${filename} → ${t.label} (bereit für API)`);
+
+                // Also trigger local download as backup
+                const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════
+        //  TOAST
+        // ═══════════════════════════════════════════════════════
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        // ═══════════════════════════════════════════════════════
+        //  INIT
+        // ═══════════════════════════════════════════════════════
+        renderBoard();
+    </script>
+
+    <!-- DETAIL MODAL -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-box">
+            <div class="modal-toolbar">
+                <button class="modal-btn close-btn" onclick="closeModal()" title="Schließen">✕</button>
+                <div class="modal-title-bar">
+                    <h2 id="modalTitle">—</h2>
+                    <span class="mbadge" id="modalBadge">—</span>
+                </div>
+                <button class="modal-btn" onclick="copyReport()" title="Report kopieren">📋</button>
+                <button class="modal-btn" onclick="closeModal();window.location.href='index.html'"
+                    title="Home">🏠</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="dl-bar">
+                <span class="dl-label">Export →</span>
+                <button class="dl-btn dl-desktop" onclick="downloadReport('desktop')">
+                    <span class="dl-icon">🖥️</span>Desktop
+                </button>
+                <button class="dl-btn dl-docs" onclick="downloadReport('dokumente')">
+                    <span class="dl-icon">📁</span>Dokumente
+                </button>
+                <button class="dl-btn dl-nextcloud" onclick="downloadReport('nextcloud')">
+                    <span class="dl-icon">☁️</span>Nextcloud
+                </button>
+                <button class="dl-btn dl-apache" onclick="downloadReport('apache')">
+                    <span class="dl-icon">🌐</span>Apache
+                </button>
+                <button class="dl-btn dl-drive" onclick="downloadReport('drive')">
+                    <span class="dl-icon">📁</span>Drive
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script src="shared/sidebar.js"></script>
+    <script src="shared/auth.js"></script>
+    <script src="shared/versioning.js"></script>
+    <script src="shared/nanobot.js"></script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

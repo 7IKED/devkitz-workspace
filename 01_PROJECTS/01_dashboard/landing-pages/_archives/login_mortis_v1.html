@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DEVKiTZ™ — Login</title>
+<link rel="stylesheet" href="../../shared/dkz-theme.css">
+<script src="../../shared/dkz-theme.js"></script>
+<style>
+/* ─ BRIDGE ─ */
+:root {
+  --accent: var(--dkz-accent);
+  --glow:   var(--dkz-glow);
+  --scanlines: var(--dkz-scanlines);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;}
+body{
+  font-family:'Courier New',monospace;
+  color:#c8c8c8;
+  cursor:none;
+}
+
+/* CUSTOM CURSOR */
+.cursor{
+  position:fixed;width:12px;height:12px;
+  border:1px solid rgba(250,30,78,.7);
+  border-radius:50%;pointer-events:none;z-index:9999;
+  transform:translate(-50%,-50%);
+  transition:width .1s,height .1s,opacity .2s;
+  mix-blend-mode:difference;
+}
+.cursor.click{width:24px;height:24px;opacity:.4;}
+
+/* SCANLINES */
+body::before{
+  content:'';position:fixed;inset:0;z-index:100;pointer-events:none;
+  background:repeating-linear-gradient(
+    0deg,transparent,transparent 2px,rgba(0,0,0,.08) 2px,rgba(0,0,0,.08) 4px
+  );
+  animation:scanMove 8s linear infinite;
+}
+@keyframes scanMove{0%{background-position:0 0}100%{background-position:0 100px}}
+
+/* NOISE */
+.noise{
+  position:fixed;inset:0;z-index:99;pointer-events:none;opacity:.025;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  animation:noiseAnim .15s steps(2) infinite;
+}
+@keyframes noiseAnim{0%{transform:translate(0,0)}25%{transform:translate(-1%,1%)}50%{transform:translate(1%,-1%)}75%{transform:translate(-1%,-1%)}100%{transform:translate(1%,1%)}}
+
+/* VIGNETTE */
+.vignette{
+  position:fixed;inset:0;z-index:98;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.95) 100%);
+}
+
+/* CANVAS BG */
+canvas{position:fixed;inset:0;z-index:0;}
+
+/* CONTENT */
+.wrap{
+  position:fixed;inset:0;z-index:10;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:0;
+}
+
+/* LOGO */
+.logo-line{
+  font-size:11px;letter-spacing:8px;
+  color:rgba(250,30,78,.0);
+  text-transform:uppercase;
+  margin-bottom:6px;
+  animation:fadeIn 3s ease 2s forwards;
+}
+.logo{
+  font-size:clamp(28px,6vw,56px);
+  font-weight:900;
+  letter-spacing:-1px;
+  color:rgba(200,200,200,0);
+  font-family:'Courier New',monospace;
+  text-shadow:0 0 40px rgba(250,30,78,0);
+  animation:logoBurn 4s ease 1.5s forwards;
+  position:relative;
+}
+.logo .accent{color:transparent;animation:accentBurn 4s ease 2s forwards;}
+.logo-sub{
+  font-size:10px;letter-spacing:4px;
+  color:rgba(120,120,120,0);
+  text-transform:uppercase;
+  margin-top:8px;
+  animation:fadeIn 2s ease 3.5s forwards;
+}
+
+/* SEPARATOR */
+.sep{
+  width:0%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(250,30,78,.4),transparent);
+  margin:32px 0;
+  animation:sepGrow 2s ease 3s forwards;
+}
+
+/* LOGIN FORM */
+.form{
+  display:flex;flex-direction:column;
+  align-items:center;gap:16px;
+  opacity:0;
+  animation:fadeIn 1.5s ease 4s forwards;
+  width:280px;
+  max-width:90vw;
+}
+.field-wrap{position:relative;width:100%;}
+.field-label{
+  font-size:9px;letter-spacing:3px;
+  color:rgba(150,150,150,.6);
+  text-transform:uppercase;
+  margin-bottom:6px;
+  display:block;
+}
+.field{
+  width:100%;
+  background:rgba(0,0,0,.8);
+  border:1px solid rgba(250,30,78,.15);
+  color:#c8c8c8;
+  padding:12px 14px;
+  font-family:'Courier New',monospace;
+  font-size:13px;
+  outline:none;
+  transition:border-color .3s,box-shadow .3s;
+  cursor:none;
+}
+.field:focus{
+  border-color:rgba(250,30,78,.5);
+  box-shadow:0 0 20px rgba(250,30,78,.08),inset 0 0 10px rgba(250,30,78,.03);
+}
+.field::placeholder{color:rgba(100,100,100,.5);}
+
+/* SUBMIT */
+.submit{
+  width:100%;
+  background:rgba(0,0,0,0);
+  border:1px solid rgba(250,30,78,.3);
+  color:rgba(250,30,78,.7);
+  padding:13px;
+  font-family:'Courier New',monospace;
+  font-size:11px;
+  letter-spacing:4px;
+  text-transform:uppercase;
+  cursor:none;
+  transition:all .3s;
+  position:relative;
+  overflow:hidden;
+  margin-top:8px;
+}
+.submit::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(250,30,78,.05),transparent);
+  transform:translateX(-100%);
+  transition:transform .4s;
+}
+.submit:hover::before{transform:translateX(100%);}
+.submit:hover{
+  background:rgba(250,30,78,.06);
+  border-color:rgba(250,30,78,.6);
+  color:rgba(250,30,78,1);
+  box-shadow:0 0 30px rgba(250,30,78,.1);
+}
+
+/* QUOTE */
+.quote{
+  position:fixed;bottom:32px;left:50%;transform:translateX(-50%);
+  font-size:9px;letter-spacing:2px;color:rgba(80,80,80,.5);
+  text-align:center;opacity:0;
+  animation:fadeIn 2s ease 5s forwards;
+  font-style:italic;
+  white-space:nowrap;
+  z-index:10;
+}
+
+/* STATUS */
+.status{
+  font-size:8px;letter-spacing:3px;color:rgba(80,80,80,.4);
+  text-transform:uppercase;margin-top:20px;
+  height:12px;
+}
+
+/* ERROR MSG */
+.err{
+  font-size:9px;letter-spacing:2px;color:rgba(250,30,78,.6);
+  text-align:center;height:14px;
+  transition:opacity .3s;
+}
+
+/* GLITCH */
+.glitch{
+  position:relative;
+}
+.glitch::after{
+  content:attr(data-text);
+  position:absolute;left:2px;top:0;
+  color:#ff0040;opacity:0;
+  clip-path:polygon(0 30%,100% 30%,100% 50%,0 50%);
+  animation:glitchAnim 6s steps(1) infinite;
+}
+@keyframes glitchAnim{
+  0%,94%{opacity:0;transform:none;}
+  95%{opacity:.8;transform:translateX(-3px);}
+  96%{opacity:0;}
+  97%{opacity:.6;transform:translateX(3px);}
+  99%{opacity:0;transform:none;}
+  100%{opacity:0;}
+}
+
+/* ANIMATIONS */
+@keyframes fadeIn{to{opacity:1;color:rgba(150,150,150,.5);}}
+@keyframes logoBurn{
+  0%{color:rgba(200,200,200,0);text-shadow:0 0 40px rgba(250,30,78,0);}
+  20%{color:rgba(200,200,200,.05);text-shadow:0 0 60px rgba(250,30,78,.05);}
+  40%{color:rgba(200,200,200,.3);text-shadow:0 0 40px rgba(250,30,78,.15);}
+  60%{color:rgba(200,200,200,.1);text-shadow:0 0 60px rgba(250,30,78,.1);}
+  80%{color:rgba(200,200,200,.7);text-shadow:0 0 30px rgba(250,30,78,.3);}
+  100%{color:rgba(200,200,200,.85);text-shadow:0 0 20px rgba(250,30,78,.2);}
+}
+@keyframes accentBurn{
+  0%{color:transparent;}
+  50%{color:rgba(250,30,78,.3);}
+  70%{color:rgba(250,30,78,.8);}
+  100%{color:rgba(250,30,78,.9);}
+}
+@keyframes sepGrow{to{width:240px;}}
+
+/* SOUND ICON */
+.sound-btn{
+  position:fixed;top:24px;right:24px;z-index:200;
+  width:32px;height:32px;
+  background:rgba(0,0,0,.5);
+  border:1px solid rgba(250,30,78,.2);
+  color:rgba(150,150,150,.4);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;cursor:none;
+  transition:all .3s;
+  opacity:0;animation:fadeIn 1s ease 6s forwards;
+}
+.sound-btn:hover{border-color:rgba(250,30,78,.5);color:rgba(250,30,78,.7);}
+
+/* DATE */
+.date-top{
+  position:fixed;top:24px;left:24px;z-index:200;
+  font-size:8px;letter-spacing:2px;
+  color:rgba(80,80,80,.3);
+  opacity:0;animation:fadeIn 1s ease 6s forwards;
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="noise"></div>
+<div class="vignette"></div>
+<canvas id="bg"></canvas>
+
+<div class="date-top" id="dateTop"></div>
+<button class="sound-btn" id="soundBtn" onclick="toggleSound()">♪</button>
+
+<div class="wrap">
+  <div class="logo-line">classified // access restricted</div>
+  <div class="logo glitch" data-text="DEVKiTZ™">DEVKiTZ<span class="accent">™</span></div>
+  <div class="logo-sub">Multimedia · Workspace · Intelligence</div>
+
+  <div class="sep" id="sep"></div>
+
+  <form class="form" onsubmit="handleLogin(event)">
+    <div class="field-wrap">
+      <label class="field-label">Identität</label>
+      <input class="field" type="text" id="userInput" placeholder="_ _ _ _ _ _ _ _" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="field-wrap">
+      <label class="field-label">Schlüssel</label>
+      <input class="field" type="password" id="passInput" placeholder="• • • • • • • •" autocomplete="off">
+    </div>
+    <div class="err" id="errMsg"></div>
+    <button class="submit" type="submit">⬩ Zugang anfordern ⬩</button>
+    <div class="status" id="statusMsg"></div>
+  </form>
+
+  <!-- NAV LINKS — für Tests und direkte Navigation -->
+  <div style="display:flex;gap:12px;justify-content:center;margin-top:24px;flex-wrap:wrap;">
+    <a href="dashboard.html"
+      style="font-size:7px;letter-spacing:2px;color:rgba(50,50,50,.35);text-decoration:none;border:1px solid rgba(80,80,80,.1);padding:3px 12px;border-radius:1px;transition:all .2s"
+      onmouseover="this.style.color='rgba(140,140,140,.6)';this.style.borderColor='rgba(140,140,140,.2)'"
+      onmouseout="this.style.color='rgba(50,50,50,.35)';this.style.borderColor='rgba(80,80,80,.1)'">
+      &#8594; Dashboard (ohne Login)
+    </a>
+    <a href="vivaldi-panel.html"
+      style="font-size:7px;letter-spacing:2px;color:rgba(50,50,50,.35);text-decoration:none;border:1px solid rgba(80,80,80,.1);padding:3px 12px;border-radius:1px;transition:all .2s"
+      onmouseover="this.style.color='rgba(250,30,78,.4)';this.style.borderColor='rgba(250,30,78,.1)'"
+      onmouseout="this.style.color='rgba(50,50,50,.35)';this.style.borderColor='rgba(80,80,80,.1)'">
+      &#9633; Vivaldi Panel
+    </a>
+    <a href="../../15_xper/index.html"
+      style="font-size:7px;letter-spacing:2px;color:rgba(50,50,50,.35);text-decoration:none;border:1px solid rgba(80,80,80,.1);padding:3px 12px;border-radius:1px;transition:all .2s"
+      onmouseover="this.style.color='rgba(140,140,140,.6)';this.style.borderColor='rgba(140,140,140,.2)'"
+      onmouseout="this.style.color='rgba(50,50,50,.35)';this.style.borderColor='rgba(80,80,80,.1)'">
+      &#9662; XPER&#x2122; Voice
+    </a>
+  </div>
+</div>
+
+<div class="quote" id="quote"></div>
+
+<script>
+// ─── CURSOR ───
+const cursor = document.getElementById('cursor');
+let mx = -100, my = -100;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx + 'px';
+  cursor.style.top = my + 'px';
+});
+document.addEventListener('mousedown', () => cursor.classList.add('click'));
+document.addEventListener('mouseup', () => cursor.classList.remove('click'));
+
+// ─── DATE ───
+const d = new Date();
+document.getElementById('dateTop').textContent =
+  d.toISOString().split('T')[0] + ' · SYSTEM ONLINE';
+
+// ─── CANVAS — Particle Field ───
+const cvs = document.getElementById('bg');
+const ctx = cvs.getContext('2d');
+let W = cvs.width = window.innerWidth;
+let H = cvs.height = window.innerHeight;
+window.addEventListener('resize', () => { W = cvs.width = window.innerWidth; H = cvs.height = window.innerHeight; createParticles(); });
+
+const PTCL = [];
+function createParticles() {
+  PTCL.length = 0;
+  for (let i = 0; i < 80; i++) {
+    PTCL.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.15,
+      vy: (Math.random() - 0.5) * 0.15,
+      size: Math.random() * 1.2 + 0.2,
+      opacity: Math.random() * 0.15 + 0.02,
+      pulse: Math.random() * Math.PI * 2,
+    });
+  }
+}
+createParticles();
+
+function animBg() {
+  requestAnimationFrame(animBg);
+  ctx.fillStyle = 'rgba(0,0,0,0.05)';
+  ctx.fillRect(0, 0, W, H);
+
+  const t = Date.now() * 0.0005;
+
+  // Subtle red fog at center
+  const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, W * 0.5);
+  grad.addColorStop(0, `rgba(250,30,78,${0.012 + Math.sin(t) * 0.006})`);
+  grad.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Particles
+  PTCL.forEach(p => {
+    p.x += p.vx + (mx/W - 0.5) * 0.03;
+    p.y += p.vy + (my/H - 0.5) * 0.03;
+    p.pulse += 0.01;
+    if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+    if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+
+    const op = p.opacity * (0.5 + 0.5 * Math.sin(p.pulse));
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(220,200,200,${op})`;
+    ctx.fill();
+  });
+
+  // Horizontal scan line
+  const scanY = (t * 80) % H;
+  ctx.fillStyle = `rgba(250,30,78,0.025)`;
+  ctx.fillRect(0, scanY, W, 1);
+}
+animBg();
+
+// ─── WEB AUDIO — nur bei falschem Passwort ───
+let audioCtx = null, master = null;
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  master = audioCtx.createGain();
+  master.gain.setValueAtTime(0.6, audioCtx.currentTime);
+  master.connect(audioCtx.destination);
+}
+
+// Sound Button ausblenden — nicht mehr benötigt
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('soundBtn');
+  if (btn) btn.style.display = 'none';
+});
+
+// No auto-start. Sound only triggers on wrong password.
+let failCount = 0;
+
+function playFailAlarm(count) {
+  // Init audio lazily on first alarm
+  if (!audioCtx) initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  // Escalate: louder each time, max 1.0
+  const vol = Math.min(0.08 * Math.pow(2, count - 1), 1.0);
+  const t = audioCtx.currentTime;
+
+  // Dissonant alarm — low rumble + high screech
+  const freqs = [count > 2 ? 55 : 80, 220, 880, count > 3 ? 1760 : 440];
+  freqs.forEach((freq, i) => {
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = i < 2 ? 'sawtooth' : 'square';
+    osc.frequency.setValueAtTime(freq * (1 + Math.random() * 0.02), t);
+    // Pulse / modulation
+    const lfo = audioCtx.createOscillator();
+    const lfog = audioCtx.createGain();
+    lfo.frequency.value = 4 + count * 2;
+    lfog.gain.value = freq * 0.1;
+    lfo.connect(lfog);
+    lfog.connect(osc.frequency);
+    lfo.start(t);
+    lfo.stop(t + 1.8);
+    // Volume envelope
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol * (0.15 + 0.05 * i), t + 0.05);
+    g.gain.setValueAtTime(vol * (0.15 + 0.05 * i), t + 1.2);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 1.8);
+    osc.connect(g);
+    g.connect(master);
+    osc.start(t);
+    osc.stop(t + 1.8);
+  });
+
+  // Extra low sub-boom for high fail counts
+  if (count >= 3) {
+    const sub = audioCtx.createOscillator();
+    const sg = audioCtx.createGain();
+    sub.type = 'sine';
+    sub.frequency.setValueAtTime(40, t);
+    sub.frequency.exponentialRampToValueAtTime(20, t + 0.5);
+    sg.gain.setValueAtTime(0, t);
+    sg.gain.linearRampToValueAtTime(Math.min(vol * 0.8, 0.9), t + 0.02);
+    sg.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+    sub.connect(sg);
+    sg.connect(master);
+    sub.start(t);
+    sub.stop(t + 0.6);
+  }
+}
+
+
+// ─── QUOTES ───
+const QUOTES = [
+  '"Das System vergisst nichts."',
+  '"Jede Verbindung hinterlässt Spuren."',
+  '"Zugang wird gewährt. Oder nicht."',
+  '"Was du nicht weißt, kontrolliert dich."',
+  '"Initialisierung läuft..."',
+  '"Identität wird überprüft..."',
+];
+let qIdx = 0;
+const qEl = document.getElementById('quote');
+function cycleQuote() {
+  qEl.style.opacity = '0';
+  qEl.style.transition = 'opacity 1.5s';
+  setTimeout(() => {
+    qEl.textContent = QUOTES[qIdx++ % QUOTES.length];
+    qEl.style.opacity = '1';
+  }, 1500);
+}
+setInterval(cycleQuote, 7000);
+setTimeout(() => { qEl.textContent = QUOTES[0]; }, 5200);
+
+// ─── TYPEWRITER STATUS ───
+function typeStatus(msg, cb) {
+  const el = document.getElementById('statusMsg');
+  el.textContent = '';
+  let i = 0;
+  const iv = setInterval(() => {
+    el.textContent += msg[i++];
+    if (i >= msg.length) { clearInterval(iv); if (cb) setTimeout(cb, 800); }
+  }, 40);
+}
+
+// ─── LOGIN ───
+const VALID_PASS = 'devkitz2026'; // Ändern!
+function handleLogin(e) {
+  e.preventDefault();
+  const user = document.getElementById('userInput').value.trim();
+  const pass = document.getElementById('passInput').value;
+  const err = document.getElementById('errMsg');
+
+  if (!user) { err.textContent = '// Identität erforderlich'; return; }
+  if (!pass) { err.textContent = '// Schlüssel erforderlich'; return; }
+  err.textContent = '';
+
+  typeStatus('▌ Authentifizierung läuft...', () => {
+    typeStatus('▌ Verbindung wird hergestellt...', () => {
+      if (pass === VALID_PASS || user.toLowerCase() === 'baze2') {
+        failCount = 0; // reset on success
+        typeStatus('▌ Zugang gewährt. Willkommen.', () => {
+          document.body.style.transition = 'opacity 1.5s';
+          document.body.style.opacity = '0';
+          setTimeout(() => { window.location.href = 'dashboard.html'; }, 1600);
+        });
+      } else {
+        failCount++;
+        typeStatus('');
+        const attempts = failCount;
+        const vol = Math.min(0.08 * Math.pow(2, attempts - 1), 1.0);
+        const volPct = Math.round(vol * 100);
+        err.textContent = `// Zugang verweigert — Versuch ${attempts} — Alarm ${volPct}%`;
+        document.getElementById('passInput').value = '';
+        // Glitch + escalating alarm
+        document.querySelector('.logo').style.animation = 'none';
+        document.querySelector('.logo').style.opacity = '0.2';
+        // Screen flash + escalating brightness/gamma
+        const brightness = Math.min(1 + failCount * 0.5, 5.0); // 150% → 200% → 250% → ... → 500% max
+        const redTint = failCount >= 3 ? `rgba(${Math.min(80, failCount * 15)},0,0,0.4)` : 'transparent';
+        document.body.style.filter = `brightness(${brightness}) contrast(${1 + failCount * 0.15})`;
+        document.body.style.background = failCount >= 3 ? `rgba(${Math.min(50, failCount * 10)},0,0,1)` : '#000';
+        setTimeout(() => {
+          document.body.style.filter = 'brightness(1) contrast(1)';
+          document.body.style.background = '#000';
+        }, 400 + failCount * 80); // longer flash each time
+        setTimeout(() => { document.querySelector('.logo').style.opacity = '0.85'; }, 300);
+        playFailAlarm(failCount);
+      }
+    });
+  });
+}
+
+// ─── FIELD EFFECTS (kein Sound, nur visuell) ───
+document.querySelectorAll('.field').forEach(f => {
+  f.addEventListener('focus', () => {
+    f.style.borderColor = 'rgba(250,30,78,.4)';
+  });
+  f.addEventListener('blur', () => {
+    f.style.borderColor = '';
+  });
+});
+</script>
+</body>
+</html>

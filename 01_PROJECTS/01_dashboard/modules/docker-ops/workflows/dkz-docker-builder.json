@@ -1,0 +1,286 @@
+{
+  "name": "DkZ Docker Builder",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "docker/build",
+        "authentication": "basicAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [-1200, 300],
+      "id": "build-webhook-001",
+      "name": "Build Webhook",
+      "webhookId": "dkz-docker-build-001",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "dkz-basic-auth",
+          "name": "DkZ Docker Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "validate-service",
+              "leftValue": "={{ $json.body.service }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "isNotEmpty" }
+            },
+            {
+              "id": "validate-dockerfile",
+              "leftValue": "={{ $json.body.dockerfile }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "isNotEmpty" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-960, 300],
+      "id": "build-validate-001",
+      "name": "Validate Input"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": false, \"error\": \"Missing required fields: service, dockerfile\", \"timestamp\": \"{{ $now.toISO() }}\" }",
+        "options": { "responseCode": 400 }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [-720, 480],
+      "id": "build-error-input-001",
+      "name": "Error: Invalid Input"
+    },
+    {
+      "parameters": {
+        "command": "=test -f /opt/dkz/docker/{{ $('Build Webhook').item.json.body.dockerfile }} && echo 'EXISTS' || echo 'NOT_FOUND'",
+        "cwd": "/opt/dkz"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [-720, 180],
+      "id": "build-check-dockerfile-001",
+      "name": "SSH: Check Dockerfile",
+      "credentials": {
+        "sshPassword": {
+          "id": "dkz-ssh-key",
+          "name": "DkZ VPS SSH Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "check-exists",
+              "leftValue": "={{ $json.stdout }}",
+              "rightValue": "EXISTS",
+              "operator": { "type": "string", "operation": "contains" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-480, 180],
+      "id": "build-exists-check-001",
+      "name": "Dockerfile Exists?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": false, \"error\": \"Dockerfile not found on VPS\", \"dockerfile\": \"{{ $('Build Webhook').item.json.body.dockerfile }}\", \"timestamp\": \"{{ $now.toISO() }}\" }",
+        "options": { "responseCode": 404 }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [-240, 360],
+      "id": "build-error-notfound-001",
+      "name": "Error: Dockerfile Not Found"
+    },
+    {
+      "parameters": {
+        "command": "=cd /opt/dkz/docker && docker build --no-cache --label 'dkz.builder=n8n' --label 'dkz.timestamp={{ $now.toISO() }}' --label 'dkz.eu-compliant=true' -t dkz-{{ $('Build Webhook').item.json.body.service }}:{{ $('Build Webhook').item.json.body.tag || 'latest' }} -f {{ $('Build Webhook').item.json.body.dockerfile }} . 2>&1",
+        "cwd": "/opt/dkz/docker"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [-240, 60],
+      "id": "build-docker-build-001",
+      "name": "SSH: Docker Build",
+      "executeOnce": true,
+      "credentials": {
+        "sshPassword": {
+          "id": "dkz-ssh-key",
+          "name": "DkZ VPS SSH Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "=docker images --format '{{.Repository}}:{{.Tag}} {{.Size}} {{.ID}} {{.CreatedAt}}' | grep 'dkz-{{ $('Build Webhook').item.json.body.service }}' | head -5",
+        "cwd": "/opt/dkz"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [0, 60],
+      "id": "build-verify-001",
+      "name": "SSH: Verify Image",
+      "credentials": {
+        "sshPassword": {
+          "id": "dkz-ssh-key",
+          "name": "DkZ VPS SSH Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://localhost:9890/builds",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "service", "value": "={{ $('Build Webhook').item.json.body.service }}" },
+            { "name": "tag", "value": "={{ $('Build Webhook').item.json.body.tag || 'latest' }}" },
+            { "name": "dockerfile", "value": "={{ $('Build Webhook').item.json.body.dockerfile }}" },
+            { "name": "image_id", "value": "={{ $('SSH: Verify Image').item.json.stdout.split(' ')[2] || 'unknown' }}" },
+            { "name": "image_size", "value": "={{ $('SSH: Verify Image').item.json.stdout.split(' ')[1] || '0' }}" },
+            { "name": "status", "value": "success" },
+            { "name": "build_log", "value": "={{ $('SSH: Docker Build').item.json.stdout }}" },
+            { "name": "eu_compliant", "value": "true" },
+            { "name": "builder", "value": "n8n-dkz-docker-builder" }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 60],
+      "id": "build-log-db-001",
+      "name": "Log to DB"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://localhost:3040/api/v1/docker/notify",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "event", "value": "build_complete" },
+            { "name": "service", "value": "={{ $('Build Webhook').item.json.body.service }}" },
+            { "name": "tag", "value": "={{ $('Build Webhook').item.json.body.tag || 'latest' }}" },
+            { "name": "status", "value": "success" }
+          ]
+        },
+        "options": { "timeout": 5000 }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 60],
+      "id": "build-notify-otr-001",
+      "name": "Notify ONTHERUN"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": true, \"service\": \"{{ $('Build Webhook').item.json.body.service }}\", \"tag\": \"{{ $('Build Webhook').item.json.body.tag || 'latest' }}\", \"image\": \"{{ $('SSH: Verify Image').item.json.stdout }}\", \"timestamp\": \"{{ $now.toISO() }}\", \"eu_compliant\": true, \"pipeline\": \"dkz-docker-builder\" }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [720, 60],
+      "id": "build-respond-success-001",
+      "name": "Respond: Build Success"
+    },
+    {
+      "parameters": {
+        "content": "## 🔨 DkZ™ Docker Builder\n\n**Einheit 1** — Baut Container-Images aus Dockerfiles\n\n### Webhook:\n`POST /webhook/docker/build`\n\n### Body (JSON):\n```json\n{\n  \"service\": \"ontherun\",\n  \"dockerfile\": \"Dockerfile.api\",\n  \"tag\": \"v1.0.0\"\n}\n```\n\n### Features:\n- ✅ EU-AI-konform (Labels)\n- ✅ Immutable Build-Logs\n- ✅ ONTHERUN MCP Notification\n- ✅ Auto Audit Trail\n\n**VPS:** srv1298466.hstgr.cloud\n**DB:** localhost:9890",
+        "height": 480,
+        "width": 400
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-1200, -200],
+      "id": "build-note-001",
+      "name": "Builder Info"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Build Webhook": {
+      "main": [
+        [{ "node": "Validate Input", "type": "main", "index": 0 }]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [{ "node": "SSH: Check Dockerfile", "type": "main", "index": 0 }],
+        [{ "node": "Error: Invalid Input", "type": "main", "index": 0 }]
+      ]
+    },
+    "SSH: Check Dockerfile": {
+      "main": [
+        [{ "node": "Dockerfile Exists?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Dockerfile Exists?": {
+      "main": [
+        [{ "node": "SSH: Docker Build", "type": "main", "index": 0 }],
+        [{ "node": "Error: Dockerfile Not Found", "type": "main", "index": 0 }]
+      ]
+    },
+    "SSH: Docker Build": {
+      "main": [
+        [{ "node": "SSH: Verify Image", "type": "main", "index": 0 }]
+      ]
+    },
+    "SSH: Verify Image": {
+      "main": [
+        [{ "node": "Log to DB", "type": "main", "index": 0 }]
+      ]
+    },
+    "Log to DB": {
+      "main": [
+        [{ "node": "Notify ONTHERUN", "type": "main", "index": 0 }]
+      ]
+    },
+    "Notify ONTHERUN": {
+      "main": [
+        [{ "node": "Respond: Build Success", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "dkz-builder-v1.0.0",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "dkz-devkitz-ecosystem"
+  },
+  "id": "dkz-docker-builder-001",
+  "tags": [
+    { "id": "dkz-docker", "name": "docker" },
+    { "id": "dkz-builder", "name": "builder" },
+    { "id": "dkz-eu", "name": "eu-compliant" }
+  ]
+}

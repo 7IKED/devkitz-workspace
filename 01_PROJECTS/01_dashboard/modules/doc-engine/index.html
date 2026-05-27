@@ -1,0 +1,883 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEVKiTZâ„¢ DocEngineâ„¢ — Omnipotent Scraper & Wiki Builder</title>
+    <meta name="description"
+        content="Deep HTML scraping, research hub, and dynamic wiki builder with multi-engine fallback, DuckDB search, and export pipelines.">
+    <link rel="stylesheet" href="style.css">
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="doc-engine" data-dkz-appid="DKZ-MOD-DOC" data-dkz-version="v0.01" data-dkz-title="DEVKiTZ DocEngine — Omnipotent Scraper & Wiki Builder" data-dkz-icon="📦" data-dkz-separable="true">
+    <a href="../../hub/index.html" class="back-btn" style="padding:6px 12px;border:1px solid var(--border,#333);border-radius:8px;background:rgba(255,255,255,.03);color:var(--muted,#888);font-size:11px;text-decoration:none;position:fixed;top:10px;left:10px;z-index:200">? Hub</a>
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Modal Overlay -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modalContent">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Modal</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer" id="modalFooter"></div>
+        </div>
+    </div>
+
+    <div class="app-layout">
+        <!-- ═══ SIDEBAR ═══ -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon">{7&gt;</div>
+                <div>
+                    <div class="brand-text">DEVKiTZ</div>
+                    <div class="brand-sub">DocEngine</div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-label" data-i18n="nav.overview">Overview</div>
+                <div class="nav-item active" data-panel="dashboard" id="nav-dashboard">
+                    <span class="nav-icon">⚡</span>
+                    <span data-i18n="nav.dashboard">Dashboard</span>
+                </div>
+
+                <div class="nav-section-label" data-i18n="nav.management">Management</div>
+                <div class="nav-item" data-panel="scraper" id="nav-scraper">
+                    <span class="nav-icon">🕸️</span>
+                    <span data-i18n="nav.scraper">Scraper</span>
+                </div>
+                <div class="nav-item" data-panel="results" id="nav-results">
+                    <span class="nav-icon">📊</span>
+                    <span data-i18n="nav.results">Results</span>
+                    <span class="nav-badge" id="resultCount">0</span>
+                </div>
+                <div class="nav-item" data-panel="wiki" id="nav-wiki">
+                    <span class="nav-icon">📖</span>
+                    <span data-i18n="nav.wiki">Wiki Browser</span>
+                </div>
+
+                <div class="nav-section-label" data-i18n="nav.tools">Tools</div>
+                <div class="nav-item" data-panel="search" id="nav-search">
+                    <span class="nav-icon">🔍</span>
+                    <span data-i18n="nav.search_engine">Search Engine</span>
+                </div>
+                <div class="nav-item" data-panel="exports" id="nav-exports">
+                    <span class="nav-icon">📦</span>
+                    <span data-i18n="nav.exports">Export Hub</span>
+                </div>
+
+                <div class="nav-section-label" data-i18n="nav.integrations">Integrations</div>
+                <div class="nav-item" data-panel="cse" id="nav-cse">
+                    <span class="nav-icon">🔎</span>
+                    <span data-i18n="nav.cse">CSE Manager</span>
+                </div>
+                <div class="nav-item" data-panel="publisher" id="nav-publisher">
+                    <span class="nav-icon">🚀</span>
+                    <span data-i18n="nav.publisher">Publisher</span>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- ═══ MAIN CONTENT ═══ -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-title">
+                    <span class="title-icon" id="headerIcon">⚡</span>
+                    <span id="headerText" data-i18n="nav.dashboard">Dashboard</span>
+                </div>
+                <div class="header-actions"><button style="padding:.625rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer" onclick="showModuleInfo()" title="Info">&#9432;</button>
+                    <div class="header-toggle" id="langToggle" onclick="handleLangToggle()" title="Toggle Language">
+                        <span>🌐</span>
+                        <span id="langLabel">EN</span>
+                    </div>
+                    <div class="header-toggle" id="themeToggle" onclick="handleThemeToggle()" title="Toggle Theme">
+                        <span id="themeIcon">🌙</span>
+                        <span id="themeLabel">Dark</span>
+                    </div>
+                    <div class="header-status">
+                        <span class="status-dot"></span>
+                        <span data-i18n="header.online">Systems Online</span>
+                    </div>
+                    <div class="header-clock" id="headerClock">--:--:--</div>
+                    <span class="info-tip" data-tip="tip.shortcuts">ℹ️
+                        <span class="tip-content" data-i18n="tip.shortcuts">Keyboard shortcuts: Ctrl+K = Search,
+                            Ctrl+Enter = Start Scrape, Ctrl+E = Export, Esc = Close modal</span>
+                    </span>
+                </div>
+            </header>
+
+            <div class="panels-container">
+
+                <!-- ═══════════════════════════════════════════════ -->
+                <!-- PANEL: Dashboard                               -->
+                <!-- ═══════════════════════════════════════════════ -->
+                <div class="panel active" id="panel-dashboard">
+                    <div class="panel-header">
+                        <h2 data-i18n="dash.title">System Overview</h2>
+                        <p data-i18n="dash.subtitle">All scraping sessions and data at a glance</p>
+                    </div>
+
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <div class="stat-value" id="statPages">0</div>
+                            <div class="stat-label" data-i18n="dash.pages">Pages</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statImages">0</div>
+                            <div class="stat-label" data-i18n="dash.images">Images Found</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statVideos">0</div>
+                            <div class="stat-label" data-i18n="dash.videos">Videos Found</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statExports">0</div>
+                            <div class="stat-label" data-i18n="dash.exports">Exports</div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">📋 <span data-i18n="dash.recent">Recent Activity</span></span>
+                            </div>
+                            <div id="dashRecentActivity">
+                                <div class="empty-state">
+                                    <div class="empty-icon">🕸️</div>
+                                    <p>No scraping sessions yet. Start scraping to see activity here.</p>
+                                    <button class="btn btn-primary" onclick="switchPanel('scraper')">
+                                        <span data-i18n="dash.start_scrape">Start New Scrape</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">⚡ <span data-i18n="dash.quick_actions">Quick
+                                        Actions</span></span>
+                            </div>
+                            <div style="display:flex;flex-direction:column;gap:8px">
+                                <div class="result-item" style="cursor:pointer" onclick="switchPanel('scraper')">
+                                    <div class="result-status" style="background:rgba(250,30,78,0.1)">🕸️</div>
+                                    <div class="result-info">
+                                        <div class="result-title" data-i18n="dash.start_scrape">Start New Scrape</div>
+                                        <div class="result-url">Enter URLs and scrape content</div>
+                                    </div>
+                                    <span class="badge badge-active">→</span>
+                                </div>
+                                <div class="result-item" style="cursor:pointer" onclick="switchPanel('search')">
+                                    <div class="result-status" style="background:rgba(68,138,255,0.1)">🔍</div>
+                                    <div class="result-info">
+                                        <div class="result-title" data-i18n="dash.search_data">Search Data</div>
+                                        <div class="result-url">DuckDB-powered tag search</div>
+                                    </div>
+                                    <span class="badge badge-info">→</span>
+                                </div>
+                                <div class="result-item" style="cursor:pointer" onclick="switchPanel('exports')">
+                                    <div class="result-status" style="background:rgba(0,230,118,0.1)">📦</div>
+                                    <div class="result-info">
+                                        <div class="result-title" data-i18n="dash.export_all">Export All</div>
+                                        <div class="result-url">JSON, CSV, Markdown, ZIP</div>
+                                    </div>
+                                    <span class="badge badge-active">→</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══════════════════════════════════════════════ -->
+                <!-- PANEL: Scraper                                 -->
+                <!-- ═══════════════════════════════════════════════ -->
+                <div class="panel" id="panel-scraper">
+                    <div class="panel-header">
+                        <h2 data-i18n="scraper.title">HTML Scraper</h2>
+                        <p data-i18n="scraper.subtitle">Enter URLs to scrape deeply — content, images, videos, and site
+                            structure</p>
+                    </div>
+
+                    <!-- Engine Selector -->
+                    <div class="tab-bar" id="engineTabs">
+                        <div class="tab-item active" data-engine="fetch" onclick="selectEngine('fetch', this)">
+                            <span>🌐</span> <span data-i18n="scraper.engine_fetch">fetch() + CORS Proxy</span>
+                        </div>
+                        <div class="tab-item" data-engine="proxy" onclick="selectEngine('proxy', this)">
+                            <span>🖥️</span> <span data-i18n="scraper.engine_proxy">Node.js Proxy</span>
+                        </div>
+                        <div class="tab-item" data-engine="paste" onclick="selectEngine('paste', this)">
+                            <span>📋</span> <span data-i18n="scraper.engine_paste">Paste HTML</span>
+                        </div>
+                        <span class="info-tip" data-tip="tip.engine" style="flex-shrink:0">ℹ️
+                            <span class="tip-content">The scraper tries fetch() first with a CORS proxy. If that fails,
+                                it falls back to a local Node.js proxy, or you can paste HTML directly.</span>
+                        </span>
+                    </div>
+
+                    <!-- URL Input (fetch/proxy mode) -->
+                    <div class="card" id="urlInputCard">
+                        <div class="card-header">
+                            <span class="card-title">🔗 <span data-i18n="scraper.url_label">Target URLs (one per
+                                    line)</span></span>
+                        </div>
+                        <div class="url-input-area">
+                            <textarea class="form-textarea" id="urlInput" data-i18n="scraper.url_placeholder"
+                                placeholder="https://example.com&#10;https://docs.example.com/guide&#10;https://blog.example.com"></textarea>
+                            <div class="url-count"><span id="urlCount">0</span> <span
+                                    data-i18n="scraper.url_count">URLs</span></div>
+                        </div>
+                    </div>
+
+                    <!-- HTML Paste Input (paste mode) -->
+                    <div class="card" id="pasteInputCard" style="display:none">
+                        <div class="card-header">
+                            <span class="card-title">📋 <span data-i18n="scraper.paste_label">Paste raw HTML
+                                    here</span></span>
+                        </div>
+                        <div class="form-group" style="margin-bottom:8px">
+                            <label class="form-label">Source URL (optional)</label>
+                            <input type="text" class="form-input" id="pasteSourceUrl"
+                                placeholder="https://example.com/page">
+                        </div>
+                        <div class="url-input-area">
+                            <textarea class="form-textarea" id="pasteInput"
+                                placeholder="<!DOCTYPE html>&#10;<html>&#10;  <head>...<script src="../../shared/dkz-updater.js"></script>
+</head>&#10;  <body data-dkz-module="doc-engine" data-dkz-appid="DKZ-MOD-DOC" data-dkz-version="v0.01" data-dkz-title="DEVKiTZ DocEngine — Omnipotent Scraper & Wiki Builder" data-dkz-icon="📦" data-dkz-separable="true">
+    <a href="../../hub/index.html" class="back-btn" style="padding:6px 12px;border:1px solid var(--border,#333);border-radius:8px;background:rgba(255,255,255,.03);color:var(--muted,#888);font-size:11px;text-decoration:none;position:fixed;top:10px;left:10px;z-index:200">? Hub</a>
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>...
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- INFO POPUP -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal">
+<div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px;max-height:80vh;overflow-y:auto">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+<div style="font-size:1.25rem;font-weight:800">Doc Engine Info</div>
+<button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button>
+</div>
+<div style="font-size:.875rem;line-height:1.8;color:#a0a0a0">
+<p><strong style="color:#f6f6f7">Erstelle und verwalte Dokumentation f&uuml;r deine Projekte.</strong></p>
+</div></div></div>
+<!-- ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding">
+<div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center">
+<div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Doc Engine</div>
+<div style="font-size:.875rem;color:#a0a0a0;line-height:1.8;text-align:left">
+<div style="display:flex;align-items:flex-start;gap:.75rem;margin-bottom:.75rem"><span style="background:rgba(250,30,78,.2);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:900;font-size:.75rem;color:#fa1e4e">1</span><span><strong style="color:#f6f6f7">Projekt w&auml;hlen</strong> &mdash; Ordner oder Repository ausw&auml;hlen</span></div>
+<div style="display:flex;align-items:flex-start;gap:.75rem;margin-bottom:.75rem"><span style="background:rgba(0,208,132,.2);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:900;font-size:.75rem;color:#00D084">2</span><span><strong style="color:#f6f6f7">Docs generieren</strong> &mdash; Automatische Dokumentation erstellen</span></div>
+<div style="display:flex;align-items:flex-start;gap:.75rem"><span style="background:rgba(85,172,238,.2);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:900;font-size:.75rem;color:#55ACEE">3</span><span><strong style="color:#f6f6f7">Exportieren</strong> &mdash; Als MD, HTML oder PDF exportieren</span></div>
+</div>
+<button style="margin-top:1.25rem;width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button>
+<div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div>
+</div></div>
+<script>
+function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}
+function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-doc-engine-onboarded','1')}
+if(!localStorage.getItem('dkz-doc-engine-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}
+</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>&#10;</html>"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Scrape Options -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">⚙️ <span data-i18n="scraper.options">Scrape Options</span></span>
+                        </div>
+                        <div class="grid-2">
+                            <label
+                                style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text-secondary)">
+                                <input type="checkbox" id="optImages" checked> <span
+                                    data-i18n="scraper.extract_images">Extract & compress images</span>
+                                <span class="info-tip" data-tip="tip.images">ℹ️
+                                    <span class="tip-content">Images are downloaded, compressed via Canvas API, and
+                                        stored in Archive/Pic/.</span>
+                                </span>
+                            </label>
+                            <label
+                                style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text-secondary)">
+                                <input type="checkbox" id="optYoutube" checked> <span
+                                    data-i18n="scraper.extract_yt">Detect YouTube embeds</span>
+                            </label>
+                            <label
+                                style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text-secondary)">
+                                <input type="checkbox" id="optMenu" checked> <span
+                                    data-i18n="scraper.extract_menu">Auto-detect navigation menus</span>
+                                <span class="info-tip" data-tip="tip.menu">ℹ️
+                                    <span class="tip-content">Menu extraction scans nav, ul and sidebar elements to
+                                        reconstruct navigation hierarchy.</span>
+                                </span>
+                            </label>
+                            <label
+                                style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text-secondary)">
+                                <input type="checkbox" id="optDeep"> <span data-i18n="scraper.deep_links">Follow
+                                    internal links (depth: 1)</span>
+                            </label>
+                        </div>
+                        <div style="margin-top:16px;display:flex;gap:8px">
+                            <button class="btn btn-primary" id="btnStartScrape" onclick="startScraping()">
+                                <span data-i18n="scraper.start">🚀 Start Scraping</span>
+                            </button>
+                            <button class="btn btn-danger" id="btnStopScrape" onclick="stopScraping()"
+                                style="display:none">
+                                <span data-i18n="scraper.stop">⏹ Stop</span>
+                            </button>
+                            <button class="btn" onclick="clearScraper()">
+                                <span data-i18n="scraper.clear">🗑️ Clear</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Progress -->
+                    <div class="card" id="progressCard" style="display:none">
+                        <div class="card-header">
+                            <span class="card-title">📈 <span data-i18n="scraper.progress">Scraping
+                                    Progress</span></span>
+                            <div class="spinner" id="scrapeSpinner"></div>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" id="progressFill"></div>
+                            </div>
+                            <div class="progress-info">
+                                <span class="progress-label" id="progressLabel">Initializing...</span>
+                                <span class="progress-percent" id="progressPercent">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Activity Log -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">📝 <span data-i18n="scraper.log">Activity Log</span></span>
+                            <button class="btn btn-sm" onclick="clearLog()">Clear</button>
+                        </div>
+                        <div class="log-console" id="logConsole">
+                            <div class="log-line">
+                                <span class="log-time">--:--:--</span>
+                                <span class="log-msg-info">DocEngine ready. Enter URLs and start scraping.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══════════════════════════════════════════════ -->
+                <!-- PANEL: Results                                 -->
+                <!-- ═══════════════════════════════════════════════ -->
+                <div class="panel" id="panel-results">
+                    <div class="panel-header">
+                        <h2 data-i18n="results.title">Scrape Results</h2>
+                        <p data-i18n="results.subtitle">Browse, filter, and export your scraped data</p>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="tab-bar">
+                        <div class="tab-item active" onclick="filterResults('all', this)"
+                            data-i18n="results.filter_all">All</div>
+                        <div class="tab-item" onclick="filterResults('text', this)" data-i18n="results.filter_text">Text
+                        </div>
+                        <div class="tab-item" onclick="filterResults('images', this)" data-i18n="results.filter_img">
+                            Images</div>
+                        <div class="tab-item" onclick="filterResults('videos', this)" data-i18n="results.filter_vid">
+                            Videos</div>
+                    </div>
+
+                    <!-- Results List -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">📋 <span id="resultsCountLabel">0</span> <span
+                                    data-i18n="results.items">items</span></span>
+                            <div class="btn-group">
+                                <button class="btn btn-sm" onclick="viewFolderTree()">🌳 <span
+                                        data-i18n="results.folder_tree">Folder Tree</span></button>
+                                <button class="btn btn-sm btn-primary" onclick="switchPanel('exports')">📦
+                                    Export</button>
+                            </div>
+                        </div>
+                        <div id="resultsList">
+                            <div class="empty-state">
+                                <div class="empty-icon">📊</div>
+                                <p>No results yet. Run a scrape to see data here.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Preview Modal-like Area -->
+                    <div class="card" id="dataPreviewCard" style="display:none">
+                        <div class="card-header">
+                            <span class="card-title" id="previewTitle">📄 Page Data</span>
+                            <button class="btn btn-sm"
+                                onclick="document.getElementById('dataPreviewCard').style.display='none'">Close</button>
+                        </div>
+                        <div id="dataPreviewContent"></div>
+                        <div class="table-actions">
+                            <button class="btn btn-sm" onclick="saveToSheets()">📊 Save to Sheets</button>
+                            <button class="btn btn-sm" onclick="downloadResultZip()">📦 Download ZIP (JSON/CSV)</button>
+                            <button class="btn btn-sm" onclick="copyAsMarkdown()">📝 Copy as Markdown</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══════════════════════════════════════════════ -->
+                <!-- PANEL: Wiki Browser                            -->
+                <!-- ═══════════════════════════════════════════════ -->
+                <div class="panel" id="panel-wiki">
+                    <div class="panel-header">
+                        <h2 data-i18n="nav.wiki">Wiki Browser</h2>
+                        <p>Navigate the auto-generated wiki from scraped content</p>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">🌳 Site Structure</span>
+                            </div>
+                            <div class="tree-view" id="wikiTree">
+                                <div class="empty-state">
+                                    <div class="empty-icon">📖</div>
+                                    <p>No wiki pages generated yet. Scrape a site with menu extraction enabled.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title" id="wikiPageTitle">📄 Select a page</span>
+                            </div>
+                            <div id="wikiPageContent">
+                                <div class="empty-state">
+                                    <div class="empty-icon">📖</div>
+                                    <p>Click a page in the tree to view its content.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══════════════════════════════════════════════ -->
+                <!-- PANEL: Search                                  -->
+                <!-- ═══════════════════════════════════════════════ -->
+                <div class="panel" id="panel-search">
+                    <div class="panel-header">
+                        <h2 data-i18n="search.title">Tag Search Engine</h2>
+                        <p>
+                            <span data-i18n="search.subtitle">DuckDB-powered search across all scraped content</span>
+                            <span class="info-tip" data-tip="tip.duckdb">ℹ️
+                                <span class="tip-content">DuckDB-WASM runs an analytical database directly in your
+                                    browser for fast tag-based searching.</span>
+                            </span>
+                        </p>
+                    </div>
+
+                    <div class="search-container">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" class="search-input" id="searchInput" data-i18n="search.placeholder"
+                            placeholder="Search tags, titles, content..." oninput="handleSearch(this.value)"
+                            autocomplete="off">
+                        <div class="search-suggestions" id="searchSuggestions"></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title" id="searchResultsTitle">
+                                <span data-i18n="search.powered_by">Powered by DuckDB-WASM</span>
+                            </span>
+                            <span class="badge badge-purple" id="searchResultCount" style="display:none">0</span>
+                        </div>
+                        <div id="searchResults">
+                            <div class="empty-state">
+                                <div class="empty-icon">🔍</div>
+                                <p>Start typing to search across all scraped content, tags, and titles.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══════════════════════════════════════════════ -->
+                <!-- PANEL: Export Hub                              -->
+                <!-- ═══════════════════════════════════════════════ -->
+                <div class="panel" id="panel-exports">
+                    <div class="panel-header">
+                        <h2 data-i18n="exports.title">Export Hub</h2>
+                        <p data-i18n="exports.subtitle">Download your data in multiple formats</p>
+                    </div>
+
+                    <div class="grid-3">
+                        <div class="card" style="text-align:center">
+                            <div style="font-size:36px;margin-bottom:8px">{ }</div>
+                            <div style="font-weight:600;margin-bottom:4px" data-i18n="exports.json">JSON Export</div>
+                            <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Structured data with
+                                full metadata</div>
+                            <button class="btn btn-primary btn-sm" onclick="exportJSON()"
+                                data-i18n="exports.download">Download</button>
+                        </div>
+                        <div class="card" style="text-align:center">
+                            <div style="font-size:36px;margin-bottom:8px">📊</div>
+                            <div style="font-weight:600;margin-bottom:4px" data-i18n="exports.csv">CSV Export</div>
+                            <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Tabular data for
+                                spreadsheets</div>
+                            <button class="btn btn-primary btn-sm" onclick="exportCSV()"
+                                data-i18n="exports.download">Download</button>
+                        </div>
+                        <div class="card" style="text-align:center">
+                            <div style="font-size:36px;margin-bottom:8px">📝</div>
+                            <div style="font-weight:600;margin-bottom:4px" data-i18n="exports.md">Markdown Files</div>
+                            <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">One .md per page in
+                                folder tree</div>
+                            <button class="btn btn-primary btn-sm" onclick="exportMarkdown()"
+                                data-i18n="exports.download">Download</button>
+                        </div>
+                        <div class="card" style="text-align:center">
+                            <div style="font-size:36px;margin-bottom:8px">📦</div>
+                            <div style="font-weight:600;margin-bottom:4px" data-i18n="exports.zip">ZIP Bundle</div>
+                            <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">JSON + CSV + MD in
+                                one package</div>
+                            <button class="btn btn-success btn-sm" onclick="exportZIP()"
+                                data-i18n="exports.download">Download</button>
+                        </div>
+                        <div class="card" style="text-align:center">
+                            <div style="font-size:36px;margin-bottom:8px">📋</div>
+                            <div style="font-weight:600;margin-bottom:4px" data-i18n="exports.sheets">Google Sheets
+                            </div>
+                            <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">
+                                Sync to Google Sheets
+                                <span class="info-tip" data-tip="tip.sheets">ℹ️
+                                    <span class="tip-content">Requires a Google API key with Sheets API enabled.</span>
+                                </span>
+                            </div>
+                            <button class="btn btn-sm" onclick="exportSheets()"
+                                data-i18n="exports.download">Download</button>
+                        </div>
+                        <div class="card" style="text-align:center">
+                            <div style="font-size:36px;margin-bottom:8px">📁</div>
+                            <div style="font-weight:600;margin-bottom:4px" data-i18n="exports.ini">Folder .ini</div>
+                            <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">
+                                Auto-create directory structure
+                                <span class="info-tip" data-tip="tip.ini">ℹ️
+                                    <span class="tip-content">The .ini file describes the folder tree. PowerShell:
+                                        Get-Content dirs.ini | ForEach-Object { mkdir $_ }</span>
+                                </span>
+                            </div>
+                            <button class="btn btn-sm" onclick="exportINI()"
+                                data-i18n="exports.download">Download</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══════════════════════════════════════════════ -->
+                <!-- PANEL: CSE Manager                             -->
+                <!-- ═══════════════════════════════════════════════ -->
+                <div class="panel" id="panel-cse">
+                    <div class="panel-header">
+                        <h2 data-i18n="cse.title">Google CSE Manager</h2>
+                        <p>
+                            <span data-i18n="cse.subtitle">Configure and manage Custom Search Engine variants</span>
+                            <span class="info-tip" data-tip="tip.cse">ℹ️
+                                <span class="tip-content">Google Programmable Search lets you create custom search
+                                    experiences. Get your API key from console.cloud.google.com.</span>
+                            </span>
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">🔑 Configuration</span>
+                        </div>
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="cse.api_key">CSE API Key</label>
+                                <div class="token-input-wrap">
+                                    <input type="password" class="form-input" id="cseApiKey" placeholder="AIza...">
+                                    <button class="btn btn-sm" onclick="toggleTokenVisibility('cseApiKey')">👁️</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="cse.cx_id">Search Engine ID (CX)</label>
+                                <input type="text" class="form-input" id="cseCxId" placeholder="a1b2c3d4e5f6g7h8i">
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="saveCSEConfig()">
+                            <span data-i18n="cse.save">Save Configuration</span>
+                        </button>
+                    </div>
+
+                    <div class="section-title" data-i18n="cse.variants">Output Variants</div>
+                    <div class="grid-3">
+                        <div class="cse-variant" onclick="selectCSEVariant('topbar', this)">
+                            <div class="cse-variant-icon">🔍</div>
+                            <div class="cse-variant-name" data-i18n="cse.var_topbar">Top Bar</div>
+                        </div>
+                        <div class="cse-variant" onclick="selectCSEVariant('center', this)">
+                            <div class="cse-variant-icon">⊙</div>
+                            <div class="cse-variant-name" data-i18n="cse.var_center">Center Input</div>
+                        </div>
+                        <div class="cse-variant selected" onclick="selectCSEVariant('popup', this)">
+                            <div class="cse-variant-icon">💬</div>
+                            <div class="cse-variant-name" data-i18n="cse.var_popup">Popup Results</div>
+                        </div>
+                        <div class="cse-variant" onclick="selectCSEVariant('images', this)">
+                            <div class="cse-variant-icon">🖼️</div>
+                            <div class="cse-variant-name" data-i18n="cse.var_images">Image Grid</div>
+                        </div>
+                        <div class="cse-variant" onclick="selectCSEVariant('list', this)">
+                            <div class="cse-variant-icon">📋</div>
+                            <div class="cse-variant-name" data-i18n="cse.var_list">List View</div>
+                        </div>
+                        <div class="cse-variant" onclick="selectCSEVariant('youtube', this)">
+                            <div class="cse-variant-icon">▶️</div>
+                            <div class="cse-variant-name" data-i18n="cse.var_youtube">YouTube Carousel</div>
+                        </div>
+                    </div>
+
+                    <!-- CSE Preview -->
+                    <div class="card" style="margin-top:20px">
+                        <div class="card-header">
+                            <span class="card-title">👁️ <span data-i18n="cse.preview">Preview</span></span>
+                        </div>
+                        <div id="csePreview" style="min-height:200px">
+                            <div class="search-container" style="margin-bottom:0">
+                                <span class="search-icon">🔎</span>
+                                <input type="text" class="search-input" id="cseSearchInput"
+                                    placeholder="Search with CSE...">
+                            </div>
+                            <div id="cseResults" style="margin-top:16px">
+                                <div class="empty-state">
+                                    <div class="empty-icon">🔎</div>
+                                    <p>Configure API key and CX, then search to see results here.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══════════════════════════════════════════════ -->
+                <!-- PANEL: Publisher                               -->
+                <!-- ═══════════════════════════════════════════════ -->
+                <div class="panel" id="panel-publisher">
+                    <div class="panel-header">
+                        <h2 data-i18n="pub.title">Publishing Hub</h2>
+                        <p data-i18n="pub.subtitle">Connect and publish to external platforms</p>
+                    </div>
+
+                    <div class="grid-2">
+                        <!-- Blogger -->
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">📝 <span data-i18n="pub.blogger">Blogger</span></span>
+                                <span class="badge badge-warning" data-i18n="pub.disconnected">Not Connected</span>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Blogger API Token</label>
+                                <div class="token-input-wrap">
+                                    <input type="password" class="form-input" id="bloggerToken"
+                                        placeholder="Blogger API Token...">
+                                    <button class="btn btn-sm"
+                                        onclick="toggleTokenVisibility('bloggerToken')">👁️</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="pub.select_blog">Select target blog</label>
+                                <select class="form-select" id="bloggerBlogSelect">
+                                    <option value="">— Select Blog —</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" onclick="connectBlogger()">
+                                <span data-i18n="pub.connect">Connect</span>
+                            </button>
+                        </div>
+
+                        <!-- GitHub -->
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">🐙 <span data-i18n="pub.github">GitHub</span></span>
+                                <span class="badge badge-warning" data-i18n="pub.disconnected">Not Connected</span>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">GitHub Personal Access Token</label>
+                                <div class="token-input-wrap">
+                                    <input type="password" class="form-input" id="githubPubToken"
+                                        placeholder="ghp_xxxxxxxxxxxxx...">
+                                    <button class="btn btn-sm"
+                                        onclick="toggleTokenVisibility('githubPubToken')">👁️</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Repository</label>
+                                <input type="text" class="form-input" id="githubPubRepo"
+                                    placeholder="username/repo-name">
+                            </div>
+                            <button class="btn btn-primary" onclick="connectGithub()">
+                                <span data-i18n="pub.connect">Connect</span>
+                            </button>
+                        </div>
+
+                        <!-- Notion -->
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">📓 <span data-i18n="pub.notion">Notion</span></span>
+                                <span class="badge badge-warning" data-i18n="pub.disconnected">Not Connected</span>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Notion Integration Token</label>
+                                <div class="token-input-wrap">
+                                    <input type="password" class="form-input" id="notionToken"
+                                        placeholder="secret_xxxxxxxxxxxxx...">
+                                    <button class="btn btn-sm"
+                                        onclick="toggleTokenVisibility('notionToken')">👁️</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Database / Page ID</label>
+                                <input type="text" class="form-input" id="notionDbId" placeholder="Database or Page ID">
+                            </div>
+                            <button class="btn btn-primary" onclick="connectNotion()">
+                                <span data-i18n="pub.connect">Connect</span>
+                            </button>
+                        </div>
+
+                        <!-- Google Drive -->
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">📁 <span data-i18n="pub.drive">Google Drive</span></span>
+                                <span class="badge badge-warning" data-i18n="pub.disconnected">Not Connected</span>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Drive Folder ID</label>
+                                <input type="text" class="form-input" id="drivePubFolderId"
+                                    placeholder="Google Drive folder ID...">
+                            </div>
+                            <button class="btn btn-primary" onclick="connectDrive()">
+                                <span data-i18n="pub.connect">Connect</span>
+                            </button>
+                        </div>
+
+                        <!-- SSH Upload -->
+                        <div class="card" style="grid-column: span 2">
+                            <div class="card-header">
+                                <span class="card-title">🖥️ <span data-i18n="pub.ssh">SSH Upload</span></span>
+                                <span class="badge badge-warning" data-i18n="pub.disconnected">Not Connected</span>
+                            </div>
+                            <div class="grid-4">
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="pub.ssh_host">Host</label>
+                                    <input type="text" class="form-input" id="sshPubHost"
+                                        placeholder="server.example.com">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="pub.ssh_port">Port</label>
+                                    <input type="text" class="form-input" id="sshPubPort" value="22" style="width:80px">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="pub.ssh_user">Username</label>
+                                    <input type="text" class="form-input" id="sshPubUser" placeholder="root">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="pub.ssh_path">Remote Path</label>
+                                    <input type="text" class="form-input" id="sshPubPath" placeholder="/var/www/html/">
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:8px">
+                                <button class="btn btn-primary" onclick="generateSSHCommand()">
+                                    📋 Generate SCP Command
+                                </button>
+                                <button class="btn" onclick="generateRsyncCommand()">
+                                    📋 Generate rsync Command
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="i18n.js"></script>
+    <script src="app.js"></script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- INFO POPUP -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal">
+<div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px;max-height:80vh;overflow-y:auto">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+<div style="font-size:1.25rem;font-weight:800">Doc Engine Info</div>
+<button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button>
+</div>
+<div style="font-size:.875rem;line-height:1.8;color:#a0a0a0">
+<p><strong style="color:#f6f6f7">Erstelle und verwalte Dokumentation f&uuml;r deine Projekte.</strong></p>
+</div></div></div>
+<!-- ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding">
+<div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center">
+<div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Doc Engine</div>
+<div style="font-size:.875rem;color:#a0a0a0;line-height:1.8;text-align:left">
+<div style="display:flex;align-items:flex-start;gap:.75rem;margin-bottom:.75rem"><span style="background:rgba(250,30,78,.2);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:900;font-size:.75rem;color:#fa1e4e">1</span><span><strong style="color:#f6f6f7">Projekt w&auml;hlen</strong> &mdash; Ordner oder Repository ausw&auml;hlen</span></div>
+<div style="display:flex;align-items:flex-start;gap:.75rem;margin-bottom:.75rem"><span style="background:rgba(0,208,132,.2);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:900;font-size:.75rem;color:#00D084">2</span><span><strong style="color:#f6f6f7">Docs generieren</strong> &mdash; Automatische Dokumentation erstellen</span></div>
+<div style="display:flex;align-items:flex-start;gap:.75rem"><span style="background:rgba(85,172,238,.2);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:900;font-size:.75rem;color:#55ACEE">3</span><span><strong style="color:#f6f6f7">Exportieren</strong> &mdash; Als MD, HTML oder PDF exportieren</span></div>
+</div>
+<button style="margin-top:1.25rem;width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button>
+<div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div>
+</div></div>
+<script>
+function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}
+function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-doc-engine-onboarded','1')}
+if(!localStorage.getItem('dkz-doc-engine-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}
+</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+</html>
+
+

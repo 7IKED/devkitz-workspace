@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../shared/dkz-theme.css">
+    <link rel="manifest" href="../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>☁️ DkZ EU Cloud — Infrastructure · Docker · K8s</title>
+    <meta name="description"
+        content="DkZ EU Cloud — 100% EU-souveränes Hosting: Docker, Kubernetes, Standorte Frankfurt + Amsterdam.">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        :root {
+            --bg: #0e0e10;
+            --bg2: #121215;
+            --card: #16161a;
+            --card2: #1e1e24;
+            --border: #1a1a2a;
+            --text: #e8e8f0;
+            --muted: #5e5e78;
+            --accent: #fa1e4e;
+            --cyan: #fa1e4e;
+            --purple: #a855f7;
+            --green: #00ff88;
+            --red: #ff4466;
+            --yellow: #ffb800;
+            --blue: #55acee;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --radius: 16px
+        }
+
+        html,
+        body {
+            height: 100%;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text)
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            background: radial-gradient(ellipse at 40% 30%, rgba(14, 165, 233, .04) 0%, transparent 50%), radial-gradient(ellipse at 70% 70%, rgba(250, 30, 78, .03) 0%, transparent 50%), var(--bg)
+        }
+
+        .header {
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0
+        }
+
+        .header h1 {
+            font-size: 17px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #0EA5E9, var(--cyan));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .header .sub {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono);
+            letter-spacing: 1px
+        }
+
+        .header-right {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .2s;
+            text-decoration: none
+        }
+
+        .btn:hover {
+            color: var(--text);
+            border-color: #0EA5E9
+        }
+
+        .eu-banner {
+            padding: 8px 24px;
+            background: linear-gradient(90deg, rgba(14, 165, 233, .08), rgba(250, 30, 78, .05));
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-family: var(--mono)
+        }
+
+        .eu-banner strong {
+            color: #0EA5E9
+        }
+
+        .main {
+            flex: 1;
+            overflow: auto;
+            padding: 20px 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 14px;
+            align-content: start
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden
+        }
+
+        .card-head {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 700
+        }
+
+        .card-head .icon {
+            font-size: 18px
+        }
+
+        .card-head .badge {
+            margin-left: auto;
+            font-size: 9px;
+            font-family: var(--mono);
+            padding: 3px 8px;
+            border-radius: 6px
+        }
+
+        .card-body {
+            padding: 14px 16px
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, .03);
+            font-size: 12px
+        }
+
+        .metric:last-child {
+            border-bottom: none
+        }
+
+        .metric .label {
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .metric .val {
+            font-family: var(--mono);
+            font-weight: 700
+        }
+
+        .metric .val.ok {
+            color: var(--green)
+        }
+
+        .metric .val.warn {
+            color: var(--yellow)
+        }
+
+        .metric .val.blue {
+            color: #0EA5E9
+        }
+
+        .region-card {
+            padding: 14px;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 10px
+        }
+
+        .region-card:last-child {
+            margin-bottom: 0
+        }
+
+        .region-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: 700
+        }
+
+        .region-flag {
+            font-size: 20px
+        }
+
+        .region-status {
+            margin-left: auto;
+            font-size: 9px;
+            font-family: var(--mono);
+            padding: 3px 8px;
+            border-radius: 6px
+        }
+
+        .container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-top: 6px;
+            font-size: 11px
+        }
+
+        .container .c-icon {
+            font-size: 16px
+        }
+
+        .container .c-info {
+            flex: 1
+        }
+
+        .container .c-name {
+            font-weight: 600
+        }
+
+        .container .c-meta {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--muted)
+        }
+
+        .container .c-status {
+            font-size: 8px;
+            font-family: var(--mono);
+            padding: 2px 6px;
+            border-radius: 4px
+        }
+
+        .c-running {
+            background: rgba(0, 255, 136, .1);
+            color: var(--green)
+        }
+
+        .c-stopped {
+            background: rgba(255, 68, 102, .1);
+            color: var(--red)
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .2s;
+            margin-top: 6px
+        }
+
+        .action-btn:hover {
+            background: #0EA5E9;
+            border-color: #0EA5E9;
+            color: #fff
+        }
+
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 14px
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 12px;
+            background: var(--bg2);
+            border-radius: 10px;
+            border: 1px solid var(--border)
+        }
+
+        .stat-box .num {
+            font-size: 20px;
+            font-weight: 900;
+            font-family: var(--mono)
+        }
+
+        .stat-box .lbl {
+            font-size: 8px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 3px
+        }
+
+        .card.full {
+            grid-column: 1/-1
+        }
+
+        @media(max-width:600px) {
+            .stat-row {
+                grid-template-columns: repeat(2, 1fr)
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
+    <div class="header">
+        <div>
+            <h1>☁️ EU Cloud</h1>
+            <div class="sub">INFRASTRUCTURE · DOCKER · K8S v1.01.1_01</div>
+        </div>
+        <div class="header-right">
+            <a href="../cicd-pipeline/index.html" class="btn">⚙️ CI/CD</a>
+            <a href="../watchdog/index.html" class="btn">🛡️ Watchdog</a>
+            <a href="../nexuz/index.html" class="btn">⚡ NEXUZ²</a>
+            <a href="../hub/index.html" class="btn">← Hub</a>
+        </div>
+    </div>
+
+    <div class="eu-banner">
+        🇪🇺 <strong>100% EU-souverän</strong> · Alle Daten in Frankfurt (DE) + Amsterdam (NL) · DSGVO-konform · Keine
+        US-Cloud-Abhängigkeit
+    </div>
+
+    <div class="main">
+        <!-- OVERVIEW STATS -->
+        <div class="card full">
+            <div class="card-body">
+                <div class="stat-row">
+                    <div class="stat-box">
+                        <div class="num" style="color:var(--green)">12</div>
+                        <div class="lbl">Container Running</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="num" style="color:#0EA5E9">2</div>
+                        <div class="lbl">Regionen</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="num" style="color:var(--cyan)">99.7%</div>
+                        <div class="lbl">Uptime (30d)</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="num" style="color:var(--accent)">47€</div>
+                        <div class="lbl">Kosten / Monat</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- REGION: FRANKFURT -->
+        <div class="card">
+            <div class="card-head"><span class="icon">🇩🇪</span> Frankfurt (DE) <span class="badge"
+                    style="background:rgba(0,255,136,.1);color:var(--green)">PRIMARY</span></div>
+            <div class="card-body">
+                <div class="region-card">
+                    <div class="region-header"><span class="region-flag">🖥️</span> KVM8 VPS <span class="region-status"
+                            style="background:rgba(0,255,136,.1);color:var(--green)">RUNNING</span></div>
+                    <div class="container"><span class="c-icon">🐳</span>
+                        <div class="c-info">
+                            <div class="c-name">nexuz-api</div>
+                            <div class="c-meta">Node.js · Port 3000 · 256MB</div>
+                        </div><span class="c-status c-running">UP</span>
+                    </div>
+                    <div class="container"><span class="c-icon">🐳</span>
+                        <div class="c-info">
+                            <div class="c-name">nexuz-worker</div>
+                            <div class="c-meta">Node.js · Background Jobs · 128MB</div>
+                        </div><span class="c-status c-running">UP</span>
+                    </div>
+                    <div class="container"><span class="c-icon">🐳</span>
+                        <div class="c-info">
+                            <div class="c-name">postgres-main</div>
+                            <div class="c-meta">PostgreSQL 16 · Port 5432 · 512MB</div>
+                        </div><span class="c-status c-running">UP</span>
+                    </div>
+                    <div class="container"><span class="c-icon">🐳</span>
+                        <div class="c-info">
+                            <div class="c-name">redis-cache</div>
+                            <div class="c-meta">Redis 7 · Port 6379 · 64MB</div>
+                        </div><span class="c-status c-running">UP</span>
+                    </div>
+                    <div class="container"><span class="c-icon">🐳</span>
+                        <div class="c-info">
+                            <div class="c-name">nginx-proxy</div>
+                            <div class="c-meta">Nginx · SSL · Ports 80/443 · 32MB</div>
+                        </div><span class="c-status c-running">UP</span>
+                    </div>
+                </div>
+                <div class="metric"><span class="label">CPU</span><span class="val ok">23% · 4 vCPU</span></div>
+                <div class="metric"><span class="label">RAM</span><span class="val ok">4.2 / 8 GB</span></div>
+                <div class="metric"><span class="label">Disk</span><span class="val warn">156 / 200 GB (78%)</span>
+                </div>
+                <div class="metric"><span class="label">Bandwidth</span><span class="val blue">2.4 TB / 10 TB</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- REGION: AMSTERDAM -->
+        <div class="card">
+            <div class="card-head"><span class="icon">🇳🇱</span> Amsterdam (NL) <span class="badge"
+                    style="background:rgba(250,30,78,.1);color:var(--cyan)">EDGE / BACKUP</span></div>
+            <div class="card-body">
+                <div class="region-card">
+                    <div class="region-header"><span class="region-flag">⚡</span> CF Worker (EU) <span
+                            class="region-status"
+                            style="background:rgba(0,255,136,.1);color:var(--green)">RUNNING</span></div>
+                    <div class="container"><span class="c-icon">⚡</span>
+                        <div class="c-info">
+                            <div class="c-name">edge-proxy</div>
+                            <div class="c-meta">Cloudflare Worker · Edge · 0ms cold start</div>
+                        </div><span class="c-status c-running">UP</span>
+                    </div>
+                    <div class="container"><span class="c-icon">📦</span>
+                        <div class="c-info">
+                            <div class="c-name">r2-storage</div>
+                            <div class="c-meta">Cloudflare R2 · S3-kompatibel · 1.2 GB</div>
+                        </div><span class="c-status c-running">UP</span>
+                    </div>
+                </div>
+                <div class="region-card">
+                    <div class="region-header"><span class="region-flag">🐙</span> Nextcloud <span class="region-status"
+                            style="background:rgba(0,255,136,.1);color:var(--green)">SYNCED</span></div>
+                    <div class="container"><span class="c-icon">🐳</span>
+                        <div class="c-info">
+                            <div class="c-name">nextcloud-app</div>
+                            <div class="c-meta">Nextcloud 28 · Port 8080 · 512MB</div>
+                        </div><span class="c-status c-running">UP</span>
+                    </div>
+                    <div class="container"><span class="c-icon">🐳</span>
+                        <div class="c-info">
+                            <div class="c-name">mariadb</div>
+                            <div class="c-meta">MariaDB 11 · Port 3306 · 256MB</div>
+                        </div><span class="c-status c-running">UP</span>
+                    </div>
+                    <div class="container"><span class="c-icon">🐳</span>
+                        <div class="c-info">
+                            <div class="c-name">picoclaw-agent</div>
+                            <div class="c-meta">Python 3.12 · Agent Runtime · 128MB</div>
+                        </div><span class="c-status c-running">UP</span>
+                    </div>
+                </div>
+                <div class="metric"><span class="label">CPU</span><span class="val ok">15% · 8 vCPU</span></div>
+                <div class="metric"><span class="label">RAM</span><span class="val ok">6.1 / 16 GB</span></div>
+                <div class="metric"><span class="label">Disk</span><span class="val ok">64 / 200 GB (32%)</span></div>
+            </div>
+        </div>
+
+        <!-- LLM SERVER -->
+        <div class="card">
+            <div class="card-head"><span class="icon">🧠</span> LLM Dedicated (DE) <span class="badge"
+                    style="background:rgba(255,184,0,.1);color:var(--yellow)">GPU HOST</span></div>
+            <div class="card-body">
+                <div class="container"><span class="c-icon">🐳</span>
+                    <div class="c-info">
+                        <div class="c-name">ollama</div>
+                        <div class="c-meta">Ollama · GPU · Port 11434 · 8GB VRAM</div>
+                    </div><span class="c-status c-running">UP</span>
+                </div>
+                <div class="container"><span class="c-icon">🐳</span>
+                    <div class="c-info">
+                        <div class="c-name">vllm-api</div>
+                        <div class="c-meta">vLLM · OpenAI-kompatibel · Port 8000</div>
+                    </div><span class="c-status c-running">UP</span>
+                </div>
+                <div class="metric" style="margin-top:10px"><span class="label">GPU</span><span class="val ok">RTX 4070
+                        · 12GB VRAM</span></div>
+                <div class="metric"><span class="label">Models geladen</span><span class="val blue">3 (Qwen3.5,
+                        Deepseek, Mistral)</span></div>
+                <div class="metric"><span class="label">Tokens/s</span><span class="val ok">45 t/s (Qwen3.5 7B)</span>
+                </div>
+                <div class="metric"><span class="label">Disk (Models)</span><span class="val ok">180 / 2000 GB</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- NETWORKING -->
+        <div class="card">
+            <div class="card-head"><span class="icon">🌐</span> Networking</div>
+            <div class="card-body">
+                <div class="metric"><span class="label">🔒 SSL/TLS</span><span class="val ok">Let's Encrypt ·
+                        Auto-Renew</span></div>
+                <div class="metric"><span class="label">🌍 DNS</span><span class="val blue">Cloudflare DNS · 7
+                        Domains</span></div>
+                <div class="metric"><span class="label">🔄 CDN</span><span class="val ok">CF Edge · 250+ PoPs</span>
+                </div>
+                <div class="metric"><span class="label">🛡️ DDoS</span><span class="val ok">CF Shield aktiv</span></div>
+                <div class="metric"><span class="label">🔐 VPN</span><span class="val ok">WireGuard ·
+                        Server-to-Server</span></div>
+                <div class="metric"><span class="label">📊 Bandwidth</span><span class="val blue">4.8 TB / 20 TB
+                        (24%)</span></div>
+            </div>
+        </div>
+
+        <!-- COMPLIANCE -->
+        <div class="card">
+            <div class="card-head"><span class="icon">🇪🇺</span> EU Compliance</div>
+            <div class="card-body">
+                <div class="metric"><span class="label">🔒 DSGVO</span><span class="val ok">✓ Konform</span></div>
+                <div class="metric"><span class="label">📍 Daten-Standort</span><span class="val ok">✓ Nur EU</span>
+                </div>
+                <div class="metric"><span class="label">🚫 US Cloud Act</span><span class="val ok">✓ Nicht
+                        betroffen</span></div>
+                <div class="metric"><span class="label">📋 DPA</span><span class="val ok">✓ Auftragsverarbeitung</span>
+                </div>
+                <div class="metric"><span class="label">🔐 Verschlüsselung</span><span class="val ok">✓ AES-256 at rest
+                        + TLS</span></div>
+                <div class="metric"><span class="label">📊 Audit-Log</span><span class="val ok">✓ 90 Tage</span></div>
+            </div>
+        </div>
+
+        <!-- QUICK ACTIONS -->
+        <div class="card">
+            <div class="card-head"><span class="icon">🚀</span> Quick Actions</div>
+            <div class="card-body">
+                <button class="action-btn">🔄 Alle Container neustarten</button>
+                <button class="action-btn">📊 Resource Report generieren</button>
+                <button class="action-btn">🧹 Docker Cleanup (Images/Volumes)</button>
+                <button class="action-btn">📦 Backup JETZT erstellen</button>
+                <button class="action-btn">🔐 SSL Certs erneuern</button>
+                <button class="action-btn">📈 Scaling-Vorschläge anzeigen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    <script src="../shared/dkz-debug.js"></script>
+    <script src="../shared/dkz-guide.js"></script>
+    <script src="../shared/dkz-copilot.js"></script>
+    <script src="../shared/dkz-shortcuts.js"></script>
+    <script src="../shared/dkz-export.js"></script>
+    <script src="../shared/dkz-crosslinks.js"></script>
+    <script src="../shared/dkz-a11y.js"></script>
+    <script src="../shared/dkz-test.js"></script>
+    <script src="../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../shared/sw.js").catch(()=>{});</script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

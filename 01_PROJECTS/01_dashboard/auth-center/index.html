@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../shared/dkz-theme.css">
+    <link rel="manifest" href="../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 DkZ Auth Center — Passkey Authentication</title>
+    <meta name="description"
+        content="DkZ Auth Center — Zero-Password Authentifizierung mit WebAuthn/FIDO2. Passkeys, Biometrie, Session-Management.">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        :root {
+            --bg: #0e0e10;
+            --bg2: #121215;
+            --card: #16161a;
+            --card2: #1e1e24;
+            --border: #1a1a2a;
+            --text: #e8e8f0;
+            --muted: #5e5e78;
+            --accent: #fa1e4e;
+            --cyan: #fa1e4e;
+            --purple: #a855f7;
+            --green: #00ff88;
+            --red: #ff4466;
+            --yellow: #ffb800;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --radius: 16px
+        }
+
+        html,
+        body {
+            height: 100%;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text)
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            background: radial-gradient(ellipse at 50% 30%, rgba(250, 30, 78, .04) 0%, transparent 50%), var(--bg)
+        }
+
+        .header {
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0
+        }
+
+        .header h1 {
+            font-size: 17px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .header .sub {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono);
+            letter-spacing: 1px
+        }
+
+        .header-right {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .2s;
+            text-decoration: none
+        }
+
+        .btn:hover {
+            color: var(--text);
+            border-color: var(--accent)
+        }
+
+        .main {
+            flex: 1;
+            overflow: auto;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 40px 24px
+        }
+
+        .auth-container {
+            width: min(900px, 100%);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px
+        }
+
+        @media(max-width:700px) {
+            .auth-container {
+                grid-template-columns: 1fr
+            }
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden
+        }
+
+        .card-head {
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 700
+        }
+
+        .card-head .icon {
+            font-size: 20px
+        }
+
+        .card-body {
+            padding: 18px
+        }
+
+        .card.full {
+            grid-column: span 2
+        }
+
+        @media(max-width:700px) {
+            .card.full {
+                grid-column: span 1
+            }
+        }
+
+        .passkey-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .passkey-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 12px
+        }
+
+        .passkey-item .pk-icon {
+            font-size: 24px
+        }
+
+        .passkey-item .pk-info {
+            flex: 1
+        }
+
+        .passkey-item .pk-name {
+            font-weight: 700;
+            margin-bottom: 2px
+        }
+
+        .passkey-item .pk-meta {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--muted)
+        }
+
+        .passkey-item .pk-status {
+            font-size: 9px;
+            font-family: var(--mono);
+            padding: 3px 8px;
+            border-radius: 6px
+        }
+
+        .pk-active {
+            background: rgba(0, 255, 136, .1);
+            color: var(--green)
+        }
+
+        .pk-inactive {
+            background: rgba(255, 68, 102, .1);
+            color: var(--red)
+        }
+
+        .register-btn {
+            width: 100%;
+            padding: 14px;
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            background: transparent;
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .3s;
+            margin-top: 12px
+        }
+
+        .register-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(250, 30, 78, .05)
+        }
+
+        .session {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, .03);
+            font-size: 12px
+        }
+
+        .session:last-child {
+            border-bottom: none
+        }
+
+        .session .s-icon {
+            font-size: 16px
+        }
+
+        .session .s-info {
+            flex: 1
+        }
+
+        .session .s-device {
+            font-weight: 600
+        }
+
+        .session .s-meta {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--muted)
+        }
+
+        .session .s-current {
+            font-size: 8px;
+            font-family: var(--mono);
+            color: var(--green);
+            padding: 2px 6px;
+            background: rgba(0, 255, 136, .1);
+            border-radius: 4px
+        }
+
+        .setting {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, .03)
+        }
+
+        .setting:last-child {
+            border-bottom: none
+        }
+
+        .setting-label {
+            font-size: 12px
+        }
+
+        .setting-desc {
+            font-size: 9px;
+            color: var(--muted);
+            margin-top: 2px
+        }
+
+        .toggle {
+            width: 40px;
+            height: 22px;
+            border-radius: 11px;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            transition: background .3s
+        }
+
+        .toggle.on {
+            background: var(--green)
+        }
+
+        .toggle.off {
+            background: var(--muted)
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #fff;
+            transition: left .2s
+        }
+
+        .toggle.on::after {
+            left: 21px
+        }
+
+        .toggle.off::after {
+            left: 3px
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 14px;
+            background: var(--bg2);
+            border-radius: 10px;
+            border: 1px solid var(--border)
+        }
+
+        .stat-box .num {
+            font-size: 24px;
+            font-weight: 900;
+            font-family: var(--mono)
+        }
+
+        .stat-box .lbl {
+            font-size: 9px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
+    <div class="header">
+        <div>
+            <h1>🔐 Auth Center</h1>
+            <div class="sub">PASSKEY AUTHENTICATION v1.01.1_01</div>
+        </div>
+        <div class="header-right">
+            <a href="../nexuz/index.html" class="btn">⚡ NEXUZ²</a>
+            <a href="../hub/index.html" class="btn">← Hub</a>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="auth-container">
+            <!-- STATS -->
+            <div class="card full">
+                <div class="card-body">
+                    <div class="stat-grid">
+                        <div class="stat-box">
+                            <div class="num" style="color:var(--green)">3</div>
+                            <div class="lbl">Aktive Passkeys</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="num" style="color:var(--cyan)">2</div>
+                            <div class="lbl">Aktive Sessions</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="num" style="color:var(--accent)">0</div>
+                            <div class="lbl">Fehlversuche (24h)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASSKEYS -->
+            <div class="card">
+                <div class="card-head"><span class="icon">🔑</span> Registrierte Passkeys</div>
+                <div class="card-body">
+                    <div class="passkey-list">
+                        <div class="passkey-item">
+                            <div class="pk-icon">💻</div>
+                            <div class="pk-info">
+                                <div class="pk-name">Windows 11 Desktop</div>
+                                <div class="pk-meta">Windows Hello · Angelegt: 2026-02-15 · Letzter Login: heute</div>
+                            </div>
+                            <span class="pk-status pk-active">Aktiv</span>
+                        </div>
+                        <div class="passkey-item">
+                            <div class="pk-icon">📱</div>
+                            <div class="pk-info">
+                                <div class="pk-name">Android Pixel 8</div>
+                                <div class="pk-meta">Fingerprint · Angelegt: 2026-02-20 · Letzter Login: gestern</div>
+                            </div>
+                            <span class="pk-status pk-active">Aktiv</span>
+                        </div>
+                        <div class="passkey-item">
+                            <div class="pk-icon">🍎</div>
+                            <div class="pk-info">
+                                <div class="pk-name">MacBook Pro (Backup)</div>
+                                <div class="pk-meta">Touch ID · Angelegt: 2026-03-01 · Letzter Login: vor 5d</div>
+                            </div>
+                            <span class="pk-status pk-active">Aktiv</span>
+                        </div>
+                    </div>
+                    <button class="register-btn" id="registerBtn">+ Neuen Passkey registrieren</button>
+                </div>
+            </div>
+
+            <!-- SESSIONS -->
+            <div class="card">
+                <div class="card-head"><span class="icon">📡</span> Aktive Sessions</div>
+                <div class="card-body">
+                    <div class="session">
+                        <span class="s-icon">💻</span>
+                        <div class="s-info">
+                            <div class="s-device">Chrome 124 · Windows 11</div>
+                            <div class="s-meta">IP: 85.xxx.xxx.42 · Berlin · seit 2h</div>
+                        </div>
+                        <span class="s-current">AKTUELL</span>
+                    </div>
+                    <div class="session">
+                        <span class="s-icon">📱</span>
+                        <div class="s-info">
+                            <div class="s-device">Chrome Mobile · Android 15</div>
+                            <div class="s-meta">IP: 85.xxx.xxx.42 · Berlin · seit 45min</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECURITY SETTINGS -->
+            <div class="card full">
+                <div class="card-head"><span class="icon">⚙️</span> Sicherheitseinstellungen</div>
+                <div class="card-body">
+                    <div class="setting">
+                        <div>
+                            <div class="setting-label">🔒 Biometrische Verifizierung erzwingen</div>
+                            <div class="setting-desc">Fingerabdruck oder Face ID bei jedem Login erforderlich</div>
+                        </div>
+                        <button class="toggle on"
+                            onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
+                    </div>
+                    <div class="setting">
+                        <div>
+                            <div class="setting-label">🔔 Login-Benachrichtigungen</div>
+                            <div class="setting-desc">Push-Nachricht bei neuem Login von unbekanntem Gerät</div>
+                        </div>
+                        <button class="toggle on"
+                            onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
+                    </div>
+                    <div class="setting">
+                        <div>
+                            <div class="setting-label">⏰ Session-Timeout</div>
+                            <div class="setting-desc">Automatisch abmelden nach 24h Inaktivität</div>
+                        </div>
+                        <button class="toggle on"
+                            onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
+                    </div>
+                    <div class="setting">
+                        <div>
+                            <div class="setting-label">🌍 Geo-Blocking</div>
+                            <div class="setting-desc">Nur Logins aus EU erlauben</div>
+                        </div>
+                        <button class="toggle off"
+                            onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
+                    </div>
+                    <div class="setting">
+                        <div>
+                            <div class="setting-label">🛡️ NEXUZ² API-Keys mit Passkey schützen</div>
+                            <div class="setting-desc">Backend-Tokens nur nach biometrischer Verifizierung freigeben
+                            </div>
+                        </div>
+                        <button class="toggle on"
+                            onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        // WebAuthn Registration Demo
+        document.getElementById('registerBtn').addEventListener('click', async () => {
+            if (!window.PublicKeyCredential) {
+                alert('WebAuthn wird in diesem Browser nicht unterstützt.');
+                return;
+            }
+            try {
+                const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+                if (available) {
+                    alert('✅ Plattform-Authenticator erkannt!\n\nIn der Produktionsversion würde hier die Passkey-Registrierung starten (Fingerprint / Face ID / Windows Hello).\n\nDies ist eine Demo-Version des Auth Centers.');
+                } else {
+                    alert('⚠️ Kein Plattform-Authenticator gefunden.\n\nBitte verwende ein Gerät mit Fingerprint-Sensor, Face ID oder Windows Hello.');
+                }
+            } catch (e) {
+                alert('WebAuthn Check failed: ' + e.message);
+            }
+        });
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    <script src="../shared/dkz-debug.js"></script>
+    <script src="../shared/dkz-guide.js"></script>
+    <script src="../shared/dkz-copilot.js"></script>
+    <script src="../shared/dkz-shortcuts.js"></script>
+    <script src="../shared/dkz-export.js"></script>
+    <script src="../shared/dkz-crosslinks.js"></script>
+    <script src="../shared/dkz-a11y.js"></script>
+    <script src="../shared/dkz-test.js"></script>
+    <script src="../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../shared/sw.js").catch(()=>{});</script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

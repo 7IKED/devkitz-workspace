@@ -1,0 +1,427 @@
+<!-- @DKZ:RULES → Lies REGELWERK.md + ORDNER.ini bevor du hier arbeitest! -->
+<!-- @DKZ:DOCS  → features.json (MOD-021) | REGISTRY.json | BLAUPAUSE.md -->
+<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 AI Chat — DkZâ„¢ v0.01.1_01</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --accent: #fa1e4e;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --radius: 14px
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .12;
+            pointer-events: none
+        }
+
+        .blob-1 {
+            width: 500px;
+            height: 500px;
+            background: var(--accent);
+            top: -150px;
+            right: -100px
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            background: rgba(26, 26, 28, .7);
+            backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--border)
+        }
+
+        .header a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600
+        }
+
+        .header h1 {
+            font-size: 1.1rem
+        }
+
+        .header .v {
+            color: var(--muted);
+            font-size: .85rem
+        }
+
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px
+        }
+
+        .msg {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 14px;
+            font-size: .88rem;
+            line-height: 1.6;
+            animation: fadeIn .3s ease
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .msg.user {
+            align-self: flex-end;
+            background: rgba(250, 30, 78, .12);
+            border: 1px solid rgba(250, 30, 78, .25);
+            border-bottom-right-radius: 4px
+        }
+
+        .msg.bot {
+            align-self: flex-start;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px
+        }
+
+        .msg .label {
+            font-size: .65rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-bottom: 4px
+        }
+
+        .input-bar {
+            display: flex;
+            gap: 10px;
+            padding: 14px 24px;
+            border-top: 1px solid var(--border);
+            background: rgba(10, 10, 12, .9);
+            backdrop-filter: blur(16px)
+        }
+
+        .input-bar input {
+            flex: 1;
+            padding: 12px 16px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: .9rem
+        }
+
+        .input-bar input:focus {
+            outline: none;
+            border-color: var(--accent)
+        }
+
+        .input-bar button {
+            padding: 12px 24px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: box-shadow .2s
+        }
+
+        .input-bar button:hover {
+            box-shadow: 0 0 24px rgba(250, 30, 78, .4)
+        }
+
+        .settings-bar {
+            display: flex;
+            gap: 8px;
+            padding: 8px 24px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(10, 10, 12, .6)
+        }
+
+        .settings-bar select,
+        .settings-bar input {
+            padding: 6px 10px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: .8rem
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--green);
+            color: #000;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transform: translateY(100px);
+            transition: transform .3s;
+            z-index: 999
+        }
+
+        .toast.show {
+            transform: translateY(0)
+        }
+
+        .empty-state {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: var(--muted);
+            gap: 12px
+        }
+
+        .empty-state span {
+            font-size: 3rem
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            display: inline-block;
+            box-shadow: 0 0 6px var(--green)
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="ai_chat" data-dkz-appid="DKZ-WIS-004" data-dkz-version="v0.01.1" data-dkz-title="AI Chat" data-dkz-icon="🤖" data-dkz-separable="true">
+    <a href="../../hub/index.html" class="back-btn" style="padding:6px 12px;border:1px solid var(--border,#333);border-radius:8px;background:rgba(255,255,255,.03);color:var(--muted,#888);font-size:11px;text-decoration:none;position:fixed;top:10px;left:10px;z-index:200">? Hub</a>
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
+    <div class="blob blob-1"></div>
+    <header class="header">
+        <a href="../hub/">← Hub</a>
+        <h1>🤖 AI Chat</h1>
+        <span class="v">v0.01.1_01</span>
+    </header>
+    <div class="settings-bar">
+        <select id="modeSelect" style="border-color: var(--accent); font-weight: 600;">
+            <option value="chat">💬 Chat</option>
+            <option value="plan">📐 Plan Modus</option>
+            <option value="builder">🔨 Builder Modus</option>
+        </select>
+        <select id="modelSelect">
+            <optgroup label="── Tier 1: Direkte APIs ──">
+                <option value="openai">OpenAI (GPT-4o-mini)</option>
+                <option value="anthropic">Anthropic (Claude Sonnet)</option>
+                <option value="gemini-flash">Gemini Flash (2.5)</option>
+                <option value="gemini-pro">Gemini Pro (2.5)</option>
+                <option value="grok">Grok Reasoning (3)</option>
+                <option value="grok-fast">Grok Fast (3)</option>
+                <option value="mistral">Mistral AI</option>
+                <option value="deepseek">DeepSeek Chat</option>
+                <option value="groq">Groq (Llama 3.3)</option>
+                <option value="perplexity">Perplexity (Sonar Pro)</option>
+                <option value="cohere">Cohere (Command R+)</option>
+                <option value="together">Together AI (Llama 3.3)</option>
+            </optgroup>
+            <optgroup label="── Aggregatoren ──">
+                <option value="openrouter">OpenRouter</option>
+                <option value="huggingface">HuggingFace</option>
+                <option value="nvidia">NVIDIA NIM</option>
+            </optgroup>
+            <optgroup label="── Lokal ──">
+                <option value="ollama" selected>Ollama (Lokal)</option>
+            </optgroup>
+        </select>
+        <input type="password" id="apiKey" placeholder="API Key (optional)" style="width:200px">
+        <span style="margin-left:auto;font-size:.8rem;color:var(--muted)"><span class="status-dot"></span> Bereit · 17 Provider</span>
+    </div>
+    <div class="chat-area" id="chatArea">
+        <div class="empty-state" id="emptyState">
+            <span>🤖</span>
+            <p>Starte einen Chat — wähle ein Modell und tippe los.</p>
+            <p style="font-size:.75rem">API-Key für externe Modelle benötigt. Lokal via Ollama möglich.<br>
+            Tipp: Der 🤖 DkZ Copilot Button (unten rechts) nutzt den gleichen Provider.</p>
+        </div>
+    </div>
+    <div class="input-bar">
+        <input type="text" id="chatInput" placeholder="Nachricht eingeben..."
+            onkeydown="if(event.key==='Enter')sendMessage()">
+        <button onclick="sendMessage()">Senden →</button>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const chatArea = document.getElementById('chatArea');
+        const chatInput = document.getElementById('chatInput');
+        let history = JSON.parse(localStorage.getItem('dkz-chat-hist') || '[]');
+
+        function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML }
+
+        function addMsg(role, text) {
+            const empty = document.getElementById('emptyState');
+            if (empty) empty.remove();
+            const div = document.createElement('div');
+            div.className = 'msg ' + role;
+            div.innerHTML = `<div class="label">${role === 'user' ? 'Du' : '🤖 AI'}</div>${esc(text)}`;
+            chatArea.appendChild(div);
+            chatArea.scrollTop = chatArea.scrollHeight;
+            history.push({ role, text, time: new Date().toISOString() });
+            localStorage.setItem('dkz-chat-hist', JSON.stringify(history));
+        }
+
+        async function sendMessage() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+            chatInput.value = '';
+            
+            const mode = document.getElementById('modeSelect') ? document.getElementById('modeSelect').value : 'chat';
+            let commandPrefix = "";
+            let modeBadge = "";
+            if (mode === "plan") {
+                commandPrefix = "/superpowers /grill-with-docs\n\n";
+                modeBadge = "📐 [Plan Modus] ";
+            } else if (mode === "builder") {
+                commandPrefix = "/goal /superpowers /openspec\n\n";
+                modeBadge = "🔨 [Builder Modus] ";
+            }
+
+            addMsg('user', modeBadge + text);
+            const payloadText = commandPrefix + text;
+
+            const model = document.getElementById('modelSelect').value;
+            const key = document.getElementById('apiKey').value;
+
+            // Sync provider + key to DkZ Copilot
+            localStorage.setItem('dkz-copilot-provider', model);
+            if (key) localStorage.setItem(`dkz-copilot-key-${model}`, key);
+
+            // Use DkZ Copilot if available (full LLM integration)
+            if (typeof DkzCopilot !== 'undefined') {
+                addMsg('bot', `⏳ Verbinde mit ${model}...`);
+                try {
+                    const result = await DkzCopilot.chat(payloadText, { name: 'AI Chat' });
+                    // Remove loading message
+                    chatArea.lastChild?.remove();
+                    history.pop();
+                    if (result.ok) {
+                        addMsg('bot', result.text);
+                    } else {
+                        addMsg('bot', `❌ ${result.text}`);
+                    }
+                } catch (e) {
+                    chatArea.lastChild?.remove();
+                    history.pop();
+                    addMsg('bot', `❌ Fehler: ${e.message}`);
+                }
+                return;
+            }
+
+            // Fallback wenn DkZ Copilot nicht geladen
+            if (!key && model !== 'ollama') {
+                addMsg('bot', '⚠️ Bitte API-Key eintragen um ' + model + ' zu nutzen. Oder wähle "Lokal (Ollama)" für lokale Modelle.');
+                return;
+            }
+            addMsg('bot', '🔄 Verbindung zu ' + model + '... (API-Integration via DkZ Copilot)');
+            showToast('💬 Chat bereit — DkZ Copilot wird geladen');
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg; t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        // Restore history
+        if (history.length > 0) {
+            const empty = document.getElementById('emptyState');
+            if (empty) empty.remove();
+            history.forEach(h => {
+                const div = document.createElement('div');
+                div.className = 'msg ' + h.role;
+                div.innerHTML = `<div class="label">${h.role === 'user' ? 'Du' : '🤖 AI'}</div>${esc(h.text)}`;
+                chatArea.appendChild(div);
+            });
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+    </script>
+    <script src="../../shared/dkz-eventbus.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+    <script src="../../shared/dkz-health.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Ai chat</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">KI-Chat mit verschiedenen LLM-Modellen.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Ai chat</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">KI-Chat mit verschiedenen LLM-Modellen.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-ai_chat-onboarded','1')}if(!localStorage.getItem('dkz-ai_chat-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>
+
+    <script src="../../shared/dkz-prompt-hub.js"></script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+</body>
+
+</html>
+
+

@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graphify — DkZ Playbook Viewer</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent: #fa1e4e; --bg: #060608; --bg-card: rgba(18,18,24,0.92);
+  --text-primary: #e8e8ec; --text-secondary: #8a8a9a;
+  --green: #00ff88; --yellow: #ffb800; --red: #ff3b5c; --blue: #3b82f6;
+  --font-main: 'Inter', sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  --radius: 12px; --shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background: var(--bg); color: var(--text-primary); font-family: var(--font-main); overflow: hidden; height: 100vh; }
+#app { display: grid; grid-template-columns: 340px 1fr; grid-template-rows: 48px 1fr 220px; height: 100vh; }
+
+/* Header */
+#header { grid-column: 1/-1; background: var(--bg-card); backdrop-filter: blur(20px);
+  display: flex; align-items: center; padding: 0 16px; gap: 12px;
+  border-bottom: 1px solid rgba(250,30,78,0.15); z-index: 10; }
+#header h1 { font-size: 15px; font-weight: 600; color: var(--accent); }
+#header .stats { font-size: 12px; color: var(--text-secondary); margin-left: auto; }
+#header .stats span { color: var(--green); font-weight: 600; }
+.breadcrumb { font-size: 12px; color: var(--text-secondary); display: flex; gap: 4px; }
+.breadcrumb a { color: var(--blue); cursor: pointer; text-decoration: none; }
+.filter-bar { display: flex; gap: 6px; margin-left: 16px; }
+.filter-btn { padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);
+  background: transparent; color: var(--text-secondary); font-size: 11px; cursor: pointer; font-family: var(--font-main); }
+.filter-btn.active, .filter-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.search-box { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px; padding: 4px 10px; color: var(--text-primary); font-size: 12px;
+  font-family: var(--font-main); width: 180px; outline: none; }
+.search-box:focus { border-color: var(--accent); }
+
+/* Side Panel */
+#side { background: var(--bg-card); backdrop-filter: blur(20px); overflow-y: auto;
+  border-right: 1px solid rgba(255,255,255,0.05); padding: 12px; }
+#side h2 { font-size: 14px; color: var(--accent); margin-bottom: 8px; }
+#side .node-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; line-height: 1.3; }
+#side .node-meta { font-size: 11px; color: var(--text-secondary); margin-bottom: 10px; }
+#side .node-meta .cat { display: inline-block; padding: 2px 8px; border-radius: 8px;
+  font-size: 10px; font-weight: 600; text-transform: uppercase; }
+#side .node-content { font-size: 12px; line-height: 1.6; color: var(--text-secondary);
+  font-family: var(--font-mono); white-space: pre-wrap; word-break: break-word;
+  background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; max-height: 300px; overflow-y: auto; }
+#side .children-list { margin-top: 12px; }
+#side .children-list h3 { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+#side .child-item { padding: 6px 8px; border-radius: 6px; font-size: 12px; cursor: pointer;
+  border: 1px solid transparent; transition: all 0.2s; }
+#side .child-item:hover { background: rgba(250,30,78,0.08); border-color: rgba(250,30,78,0.2); }
+.no-sel { text-align: center; padding: 40px 20px; color: var(--text-secondary); font-size: 13px; }
+
+/* Canvas */
+#canvas-wrap { position: relative; overflow: hidden; background: var(--bg); }
+canvas#graph { display: block; width: 100%; height: 100%; cursor: grab; }
+canvas#graph.dragging { cursor: grabbing; }
+#minimap { position: absolute; bottom: 10px; right: 10px; width: 160px; height: 100px;
+  background: rgba(6,6,8,0.85); border: 1px solid rgba(250,30,78,0.2); border-radius: 8px; }
+#zoom-ctrl { position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 4px; }
+#zoom-ctrl button { width: 32px; height: 32px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+  background: var(--bg-card); color: var(--text-primary); font-size: 16px; cursor: pointer; }
+#zoom-ctrl button:hover { border-color: var(--accent); color: var(--accent); }
+.legend { position: absolute; bottom: 10px; left: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text-secondary); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* Chat Panel */
+#chat { grid-column: 1/-1; background: var(--bg-card); backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(250,30,78,0.15); display: flex; flex-direction: column; }
+#chat-header { padding: 8px 16px; font-size: 12px; color: var(--text-secondary);
+  border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 8px; }
+#chat-header .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+#chat-messages { flex: 1; overflow-y: auto; padding: 8px 16px; font-size: 12px; }
+.chat-msg { margin-bottom: 6px; line-height: 1.5; }
+.chat-msg.system { color: var(--text-secondary); font-style: italic; }
+.chat-msg.user { color: var(--blue); }
+.chat-msg.ai { color: var(--green); }
+#chat-input-wrap { display: flex; padding: 8px; gap: 8px; }
+#chat-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px; padding: 8px 12px; color: var(--text-primary); font-size: 13px;
+  font-family: var(--font-main); outline: none; resize: none; }
+#chat-input:focus { border-color: var(--accent); }
+#chat-send { padding: 8px 16px; background: var(--accent); color: #fff; border: none;
+  border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; font-family: var(--font-main); }
+#chat-send:hover { opacity: 0.85; }
+</style>
+<script src="playbook-graph.js"></script>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <a href="../../hub/index.html" style="color:var(--accent,#fa1e4e);text-decoration:none;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;border:1px solid rgba(250,30,78,0.2);background:rgba(250,30,78,0.05);transition:all 0.2s" onmouseenter="this.style.background='rgba(250,30,78,0.15)'" onmouseleave="this.style.background='rgba(250,30,78,0.05)'">← Hub</a>
+    <h1>&#9670; Graphify</h1>
+    <div class="breadcrumb" id="breadcrumb"><a onclick="resetView()">Root</a></div>
+    <input class="search-box" id="search" placeholder="Suche..." oninput="onSearch(this.value)">
+    <div class="filter-bar" id="filters"></div>
+    <div class="stats">Knoten: <span id="nodeCount">0</span> | Kanten: <span id="edgeCount">0</span></div>
+  </div>
+  <div id="side">
+    <div class="no-sel" id="noSel">Klicke einen Knoten um Details zu sehen</div>
+    <div id="nodeDetail" style="display:none">
+      <div class="node-title" id="ndTitle"></div>
+      <div class="node-meta"><span class="cat" id="ndCat"></span> &middot; Zeile <span id="ndLines"></span></div>
+      <div class="node-content" id="ndContent"></div>
+      <div class="children-list" id="ndChildren"><h3>Sub-Knoten</h3><div id="ndChildList"></div></div>
+    </div>
+  </div>
+  <div id="canvas-wrap">
+    <canvas id="graph"></canvas>
+    <canvas id="minimap"></canvas>
+    <div id="zoom-ctrl"><button onclick="zoomIn()">+</button><button onclick="zoomOut()">&minus;</button><button onclick="resetView()">&#8962;</button></div>
+    <div class="legend" id="legend"></div>
+  </div>
+  <div id="chat">
+    <div id="chat-header"><div class="dot"></div> Chat &mdash; Frage zum ausgewaehlten Knoten</div>
+    <div id="chat-messages"><div class="chat-msg system">Waehle einen Knoten und stelle eine Frage...</div></div>
+    <div id="chat-input-wrap">
+      <input id="chat-input" placeholder="Frage zum Knoten..." onkeydown="if(event.key==='Enter')sendChat()">
+      <button id="chat-send" onclick="sendChat()">Senden</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// === GLOBALS ===
+let graphData = null, nodes = [], edges = [];
+let canvas, ctx, miniCanvas, miniCtx;
+let camX = 0, camY = 0, camZoom = 1;
+let selectedNode = null, hoveredNode = null;
+let dragNode = null, dragOffX = 0, dragOffY = 0;
+let isPanning = false, panStartX = 0, panStartY = 0;
+let activeFilter = null, searchTerm = '';
+let simRunning = true, simAlpha = 1;
+
+const CAT_COLORS = {
+  output:'#3b82f6', backend:'#8b5cf6', git:'#f59e0b', module:'#10b981',
+  rules:'#ef4444', nlm:'#ec4899', design:'#06b6d4', data:'#84cc16',
+  security:'#f97316', agent:'#a855f7', research:'#14b8a6', infra:'#6366f1', general:'#6b7280'
+};
+
+function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+// === LOAD DATA ===
+function loadGraph(){
+  graphData = window.__PLAYBOOK_GRAPH__;
+  if(!graphData){ if(window.DKZ_DEBUG) console.error('Graph-Daten nicht gefunden'); return; }
+  nodes = graphData.nodes.map(n=>({...n, x:Math.random()*2000-1000, y:Math.random()*2000-1000, vx:0, vy:0, fx:null, fy:null,
+    radius: n.level===1?18:n.level===2?12:n.level===3?8:6, visible:true }));
+  edges = graphData.edges;
+  document.getElementById('nodeCount').textContent = nodes.length;
+  document.getElementById('edgeCount').textContent = edges.length;
+  buildFilters();
+  buildLegend();
+  startSim();
+}
+
+function buildFilters(){
+  const cats = [...new Set(nodes.map(n=>n.category))].sort();
+  const wrap = document.getElementById('filters');
+  const allBtn = document.createElement('button');
+  allBtn.className = 'filter-btn active'; allBtn.textContent = 'Alle';
+  allBtn.onclick = ()=>{ activeFilter=null; applyFilters(); document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); allBtn.classList.add('active'); };
+  wrap.appendChild(allBtn);
+  cats.forEach(c=>{
+    const b = document.createElement('button'); b.className='filter-btn'; b.textContent=c;
+    b.style.borderColor = CAT_COLORS[c]||'#666';
+    b.onclick = ()=>{ activeFilter=c; applyFilters(); document.querySelectorAll('.filter-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); };
+    wrap.appendChild(b);
+  });
+}
+
+function buildLegend(){
+  const lg = document.getElementById('legend');
+  Object.entries(CAT_COLORS).forEach(([k,v])=>{
+    if(!nodes.some(n=>n.category===k)) return;
+    const d = document.createElement('div'); d.className='legend-item';
+    d.innerHTML = `<div class="legend-dot" style="background:${v}"></div>${esc(k)}`;
+    lg.appendChild(d);
+  });
+}
+
+function applyFilters(){
+  nodes.forEach(n=>{
+    let vis = true;
+    if(activeFilter && n.category !== activeFilter) vis = false;
+    if(searchTerm && !n.title.toLowerCase().includes(searchTerm.toLowerCase())) vis = false;
+    n.visible = vis;
+  });
+}
+function onSearch(v){ searchTerm=v; applyFilters(); }
+
+// === PHYSICS ===
+function startSim(){ simAlpha=1; simRunning=true; tick(); }
+function tick(){
+  if(!simRunning) return;
+  for(let i=0;i<3;i++) simStep();
+  simAlpha *= 0.995;
+  if(simAlpha < 0.001){ simRunning=false; simAlpha=0; }
+  draw();
+  drawMinimap();
+  requestAnimationFrame(tick);
+}
+function simStep(){
+  const alpha = simAlpha, N = nodes.length;
+  // Repulsion
+  for(let i=0;i<N;i++){
+    if(!nodes[i].visible) continue;
+    for(let j=i+1;j<N;j++){
+      if(!nodes[j].visible) continue;
+      let dx=nodes[j].x-nodes[i].x, dy=nodes[j].y-nodes[i].y;
+      let d2=dx*dx+dy*dy+1;
+      let f=300*alpha/d2;
+      nodes[i].vx-=dx*f; nodes[i].vy-=dy*f;
+      nodes[j].vx+=dx*f; nodes[j].vy+=dy*f;
+    }
+  }
+  // Attraction (edges)
+  const nodeMap={}; nodes.forEach(n=>nodeMap[n.id]=n);
+  edges.forEach(e=>{
+    const s=nodeMap[e.source], t=nodeMap[e.target];
+    if(!s||!t||!s.visible||!t.visible) return;
+    let dx=t.x-s.x, dy=t.y-s.y, d=Math.sqrt(dx*dx+dy*dy)+1;
+    let f=(d-80)*0.005*alpha;
+    s.vx+=dx/d*f; s.vy+=dy/d*f;
+    t.vx-=dx/d*f; t.vy-=dy/d*f;
+  });
+  // Center gravity
+  nodes.forEach(n=>{
+    if(!n.visible) return;
+    n.vx-=n.x*0.001*alpha; n.vy-=n.y*0.001*alpha;
+    n.vx*=0.85; n.vy*=0.85;
+    if(n.fx!==null){ n.x=n.fx; n.y=n.fy; n.vx=0; n.vy=0; }
+    else { n.x+=n.vx; n.y+=n.vy; }
+  });
+}
+
+// === DRAW ===
+function draw(){
+  const W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.save();
+  ctx.translate(W/2+camX, H/2+camY);
+  ctx.scale(camZoom, camZoom);
+  // Edges
+  const nodeMap={}; nodes.forEach(n=>nodeMap[n.id]=n);
+  ctx.lineWidth = 0.5/camZoom;
+  edges.forEach(e=>{
+    const s=nodeMap[e.source], t=nodeMap[e.target];
+    if(!s||!t||!s.visible||!t.visible) return;
+    ctx.strokeStyle = e.type==='cross-reference'?'rgba(250,30,78,0.3)':'rgba(255,255,255,0.08)';
+    ctx.beginPath(); ctx.moveTo(s.x,s.y); ctx.lineTo(t.x,t.y); ctx.stroke();
+  });
+  // Nodes
+  nodes.forEach(n=>{
+    if(!n.visible) return;
+    const col = CAT_COLORS[n.category]||'#6b7280';
+    const isSelected = selectedNode && selectedNode.id===n.id;
+    const isHovered = hoveredNode && hoveredNode.id===n.id;
+    ctx.beginPath(); ctx.arc(n.x,n.y,n.radius,0,Math.PI*2);
+    ctx.fillStyle = isSelected ? '#fff' : col;
+    ctx.globalAlpha = isHovered?1:0.85;
+    ctx.fill();
+    if(isSelected){ ctx.strokeStyle=var_accent; ctx.lineWidth=3/camZoom; ctx.stroke(); }
+    ctx.globalAlpha=1;
+    // Label
+    if(camZoom>0.5 || n.level<=2){
+      ctx.fillStyle = isSelected?'#fff':'rgba(232,232,236,0.7)';
+      ctx.font = `${Math.max(9,11/camZoom)}px Inter`;
+      ctx.textAlign='center';
+      const label = n.title.length>30?n.title.substring(0,28)+'...':n.title;
+      ctx.fillText(label, n.x, n.y+n.radius+12/camZoom);
+    }
+  });
+  ctx.restore();
+}
+const var_accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#fa1e4e';
+
+function drawMinimap(){
+  const W=miniCanvas.width, H=miniCanvas.height;
+  miniCtx.clearRect(0,0,W,H);
+  miniCtx.fillStyle='rgba(6,6,8,0.8)'; miniCtx.fillRect(0,0,W,H);
+  if(!nodes.length) return;
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  nodes.filter(n=>n.visible).forEach(n=>{ minX=Math.min(minX,n.x); maxX=Math.max(maxX,n.x); minY=Math.min(minY,n.y); maxY=Math.max(maxY,n.y); });
+  const pad=50, rngX=maxX-minX+pad*2, rngY=maxY-minY+pad*2;
+  const sc = Math.min(W/rngX, H/rngY);
+  nodes.filter(n=>n.visible).forEach(n=>{
+    const mx=(n.x-minX+pad)*sc, my=(n.y-minY+pad)*sc;
+    miniCtx.fillStyle=CAT_COLORS[n.category]||'#666';
+    miniCtx.fillRect(mx-1,my-1,2,2);
+  });
+}
+
+// === INTERACTION ===
+function screenToWorld(sx,sy){
+  const W=canvas.width, H=canvas.height;
+  return { x:(sx-W/2-camX)/camZoom, y:(sy-H/2-camY)/camZoom };
+}
+function findNode(wx,wy){
+  for(let i=nodes.length-1;i>=0;i--){
+    const n=nodes[i]; if(!n.visible) continue;
+    const dx=n.x-wx, dy=n.y-wy;
+    if(dx*dx+dy*dy < (n.radius+4)*(n.radius+4)) return n;
+  }
+  return null;
+}
+
+function selectNode(n){
+  selectedNode = n;
+  if(!n){ document.getElementById('noSel').style.display=''; document.getElementById('nodeDetail').style.display='none'; return; }
+  document.getElementById('noSel').style.display='none';
+  document.getElementById('nodeDetail').style.display='';
+  document.getElementById('ndTitle').textContent = n.title;
+  const catEl = document.getElementById('ndCat');
+  catEl.textContent = n.category;
+  catEl.style.background = CAT_COLORS[n.category]||'#666';
+  catEl.style.color = '#fff';
+  document.getElementById('ndLines').textContent = `${n.line_start}-${n.line_end}`;
+  document.getElementById('ndContent').textContent = n.content_preview || '(kein Inhalt)';
+  const childList = document.getElementById('ndChildList');
+  childList.innerHTML = '';
+  if(n.children && n.children.length){
+    document.getElementById('ndChildren').style.display='';
+    n.children.forEach(cid=>{
+      const cn = nodes.find(x=>x.id===cid);
+      if(!cn) return;
+      const d = document.createElement('div'); d.className='child-item';
+      d.textContent = cn.title;
+      d.onclick = ()=>{ selectNode(cn); centerOn(cn); };
+      childList.appendChild(d);
+    });
+  } else { document.getElementById('ndChildren').style.display='none'; }
+  if(!simRunning){ draw(); drawMinimap(); }
+}
+
+function centerOn(n){ camX=-n.x*camZoom; camY=-n.y*camZoom; if(!simRunning){draw();drawMinimap();} }
+function zoomIn(){ camZoom=Math.min(camZoom*1.3,5); if(!simRunning){draw();drawMinimap();} }
+function zoomOut(){ camZoom=Math.max(camZoom/1.3,0.1); if(!simRunning){draw();drawMinimap();} }
+function resetView(){ camX=0;camY=0;camZoom=1; activeFilter=null; searchTerm='';
+  document.getElementById('search').value='';
+  applyFilters(); if(!simRunning){draw();drawMinimap();} }
+
+// === MOUSE EVENTS ===
+function initEvents(){
+  canvas.addEventListener('mousedown', e=>{
+    const r=canvas.getBoundingClientRect();
+    const sx=e.clientX-r.left, sy=e.clientY-r.top;
+    const w=screenToWorld(sx,sy);
+    const n=findNode(w.x,w.y);
+    if(n && e.button===0){
+      dragNode=n; dragOffX=n.x-w.x; dragOffY=n.y-w.y;
+      n.fx=n.x; n.fy=n.y;
+      selectNode(n);
+      canvas.classList.add('dragging');
+    } else if(e.button===0){
+      isPanning=true; panStartX=e.clientX-camX; panStartY=e.clientY-camY;
+      canvas.classList.add('dragging');
+    }
+  });
+  canvas.addEventListener('mousemove', e=>{
+    const r=canvas.getBoundingClientRect();
+    const sx=e.clientX-r.left, sy=e.clientY-r.top;
+    const w=screenToWorld(sx,sy);
+    if(dragNode){ dragNode.fx=w.x+dragOffX; dragNode.fy=w.y+dragOffY; dragNode.x=dragNode.fx; dragNode.y=dragNode.fy;
+      if(!simRunning){draw();drawMinimap();} }
+    else if(isPanning){ camX=e.clientX-panStartX; camY=e.clientY-panStartY; if(!simRunning){draw();drawMinimap();} }
+    else { const prev=hoveredNode; hoveredNode=findNode(w.x,w.y); if(prev!==hoveredNode&&!simRunning){draw();} canvas.style.cursor=hoveredNode?'pointer':'grab'; }
+  });
+  canvas.addEventListener('mouseup', ()=>{
+    if(dragNode){ dragNode.fx=null; dragNode.fy=null; dragNode=null; }
+    isPanning=false; canvas.classList.remove('dragging');
+  });
+  canvas.addEventListener('wheel', e=>{
+    e.preventDefault();
+    const f = e.deltaY<0?1.1:0.9;
+    camZoom = Math.max(0.1, Math.min(5, camZoom*f));
+    if(!simRunning){draw();drawMinimap();}
+  }, {passive:false});
+  canvas.addEventListener('contextmenu', e=>{
+    e.preventDefault();
+    const r=canvas.getBoundingClientRect();
+    const w=screenToWorld(e.clientX-r.left, e.clientY-r.top);
+    const n=findNode(w.x,w.y);
+    if(n && n.children && n.children.length){
+      activeFilter=null; searchTerm='';
+      nodes.forEach(nd=>nd.visible=false);
+      const showIds=new Set([n.id, ...n.children]);
+      if(n.parent) showIds.add(n.parent);
+      nodes.forEach(nd=>{ if(showIds.has(nd.id)) nd.visible=true; });
+      document.getElementById('breadcrumb').innerHTML =
+        `<a onclick="resetView()">Root</a> &rsaquo; <a>${esc(n.title)}</a>`;
+      selectNode(n); centerOn(n);
+      if(!simRunning){draw();drawMinimap();}
+    }
+  });
+  window.addEventListener('resize', resize);
+}
+
+function resize(){
+  const wrap=document.getElementById('canvas-wrap');
+  canvas.width=wrap.clientWidth; canvas.height=wrap.clientHeight;
+  miniCanvas.width=160; miniCanvas.height=100;
+  if(!simRunning){draw();drawMinimap();}
+}
+
+// === CHAT ===
+async function sendChat(){
+  const input=document.getElementById('chat-input');
+  const msg=input.value.trim(); if(!msg) return;
+  input.value='';
+  addChatMsg('user', msg);
+  const context = selectedNode ? `Kontext: §${selectedNode.paragraph_num||'?'} "${selectedNode.title}"\n${selectedNode.content_preview}\n\nFrage: ${msg}` : msg;
+  addChatMsg('system', 'Denke nach...');
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const r = await fetch('http://localhost:3040/api/v1/free-hub/cascade', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({message:context, max_tokens:500}),
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    const data = await r.json();
+    removeLast('system');
+    addChatMsg('ai', data.response || data.content || JSON.stringify(data));
+  } catch(e){
+    removeLast('system');
+    if (e.name === 'AbortError') {
+      addChatMsg('system', 'API Timeout — NanoChat Bridge (Port 3040) antwortet nicht. Starte den Server mit: dkz-opencode-start.bat');
+    } else {
+      addChatMsg('system', 'API offline — NanoChat Bridge nicht erreichbar. Chat funktioniert erst wenn localhost:3040 laeuft.');
+    }
+  }
+}
+function addChatMsg(type,text){
+  const wrap=document.getElementById('chat-messages');
+  const d=document.createElement('div'); d.className=`chat-msg ${type}`;
+  d.textContent=text; wrap.appendChild(d); wrap.scrollTop=wrap.scrollHeight;
+}
+function removeLast(type){
+  const msgs=document.querySelectorAll(`.chat-msg.${type}`);
+  if(msgs.length) msgs[msgs.length-1].remove();
+}
+
+// === INIT ===
+window.addEventListener('DOMContentLoaded', ()=>{
+  canvas=document.getElementById('graph'); ctx=canvas.getContext('2d');
+  miniCanvas=document.getElementById('minimap'); miniCtx=miniCanvas.getContext('2d');
+  resize(); initEvents(); loadGraph();
+});
+</script>
+<script src="../../shared/dkz-debug.js"></script>
+<script src="../../shared/dkz-navbar.js"></script>
+</body>
+</html>

@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../shared/dkz-theme.css">
+    <link rel="manifest" href="../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎙️ DkZ Community Hub — Channels · Voice · Bots</title>
+    <meta name="description"
+        content="DkZ Community Hub — Self-Hosted Discord-Alternative mit Channels, Voice (Jitsi), Bots und Threads.">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        :root {
+            --bg: #0e0e10;
+            --bg2: #121215;
+            --card: #16161a;
+            --card2: #1e1e24;
+            --border: #1a1a2a;
+            --text: #e8e8f0;
+            --muted: #5e5e78;
+            --accent: #fa1e4e;
+            --cyan: #fa1e4e;
+            --purple: #a855f7;
+            --green: #00ff88;
+            --red: #ff4466;
+            --yellow: #ffb800;
+            --blue: #55acee;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --radius: 16px
+        }
+
+        html,
+        body {
+            height: 100%;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text)
+        }
+
+        body {
+            display: flex;
+            background: radial-gradient(ellipse at 50% 50%, rgba(124, 58, 237, .03) 0%, transparent 50%), var(--bg)
+        }
+
+        /* SERVER SIDEBAR */
+        .server-bar {
+            width: 64px;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 0;
+            gap: 8px;
+            flex-shrink: 0
+        }
+
+        .server-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all .2s;
+            border: 1px solid var(--border);
+            background: var(--card)
+        }
+
+        .server-icon:hover {
+            border-radius: 10px;
+            border-color: var(--purple)
+        }
+
+        .server-icon.active {
+            border-color: var(--purple);
+            background: rgba(124, 58, 237, .15);
+            border-radius: 10px
+        }
+
+        .server-divider {
+            width: 32px;
+            height: 1px;
+            background: var(--border);
+            margin: 4px 0
+        }
+
+        /* CHANNEL SIDEBAR */
+        .channel-bar {
+            width: 220px;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0
+        }
+
+        .channel-head {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .channel-head span {
+            background: linear-gradient(135deg, #7C3AED, var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .channel-section {
+            padding: 16px 12px 4px;
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .channel-list {
+            overflow-y: auto;
+            flex: 1
+        }
+
+        .channel-item {
+            padding: 7px 12px;
+            margin: 1px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all .15s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--muted)
+        }
+
+        .channel-item:hover {
+            background: var(--card);
+            color: var(--text)
+        }
+
+        .channel-item.active {
+            background: rgba(124, 58, 237, .1);
+            color: var(--text)
+        }
+
+        .channel-item .ch-icon {
+            font-size: 14px;
+            width: 18px;
+            text-align: center
+        }
+
+        .channel-item .ch-badge {
+            margin-left: auto;
+            font-size: 9px;
+            font-family: var(--mono);
+            background: var(--accent);
+            color: #fff;
+            padding: 1px 6px;
+            border-radius: 8px;
+            min-width: 16px;
+            text-align: center
+        }
+
+        /* USER PANEL */
+        .user-panel {
+            padding: 10px 12px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg2)
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            background: rgba(250, 30, 78, .15)
+        }
+
+        .user-name {
+            font-size: 11px;
+            font-weight: 600
+        }
+
+        .user-status {
+            font-size: 8px;
+            font-family: var(--mono);
+            color: var(--green)
+        }
+
+        .user-btns {
+            margin-left: auto;
+            display: flex;
+            gap: 4px
+        }
+
+        .user-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .user-btn:hover {
+            background: var(--card);
+            color: var(--text)
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column
+        }
+
+        .main-header {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .main-header .mh-channel {
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .main-header .mh-topic {
+            font-size: 11px;
+            color: var(--muted);
+            margin-left: 12px;
+            padding-left: 12px;
+            border-left: 1px solid var(--border)
+        }
+
+        .main-header .mh-right {
+            margin-left: auto;
+            display: flex;
+            gap: 8px
+        }
+
+        .mh-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 10px;
+            cursor: pointer;
+            text-decoration: none;
+            font-family: var(--font)
+        }
+
+        .mh-btn:hover {
+            color: var(--text);
+            border-color: var(--purple)
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px
+        }
+
+        .message {
+            display: flex;
+            gap: 12px
+        }
+
+        .m-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0
+        }
+
+        .m-content {
+            flex: 1
+        }
+
+        .m-header {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 3px
+        }
+
+        .m-name {
+            font-size: 13px;
+            font-weight: 700
+        }
+
+        .m-role {
+            font-size: 8px;
+            font-family: var(--mono);
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-weight: 600
+        }
+
+        .m-time {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--muted)
+        }
+
+        .m-text {
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--text)
+        }
+
+        .m-text code {
+            background: var(--card2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: var(--mono);
+            font-size: 11px
+        }
+
+        .m-reaction {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            margin-top: 6px;
+            cursor: pointer
+        }
+
+        .m-reaction:hover {
+            border-color: var(--purple)
+        }
+
+        .m-embed {
+            margin-top: 8px;
+            padding: 10px 14px;
+            border-left: 3px solid var(--purple);
+            background: var(--card);
+            border-radius: 0 8px 8px 0;
+            font-size: 11px
+        }
+
+        .m-embed .embed-title {
+            font-weight: 700;
+            margin-bottom: 3px
+        }
+
+        .m-embed .embed-desc {
+            color: var(--muted);
+            font-size: 10px
+        }
+
+        .msg-input {
+            padding: 14px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+            align-items: center
+        }
+
+        .msg-input input {
+            flex: 1;
+            padding: 12px 16px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 13px;
+            outline: none
+        }
+
+        .msg-input input::placeholder {
+            color: var(--muted)
+        }
+
+        .msg-input input:focus {
+            border-color: var(--purple)
+        }
+
+        /* MEMBER SIDEBAR */
+        .member-bar {
+            width: 200px;
+            border-left: 1px solid var(--border);
+            padding: 14px;
+            flex-shrink: 0;
+            overflow-y: auto
+        }
+
+        .member-section {
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+            margin: 12px 0 8px
+        }
+
+        .member-section:first-child {
+            margin-top: 0
+        }
+
+        .member {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background .15s;
+            font-size: 12px
+        }
+
+        .member:hover {
+            background: var(--card)
+        }
+
+        .member .m-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0
+        }
+
+        .member .m-role-tag {
+            margin-left: auto;
+            font-size: 7px;
+            font-family: var(--mono);
+            padding: 1px 4px;
+            border-radius: 3px
+        }
+
+        @media(max-width:900px) {
+            .member-bar {
+                display: none
+            }
+        }
+
+        @media(max-width:700px) {
+            .channel-bar {
+                display: none
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
+
+    <!-- SERVER BAR -->
+    <div class="server-bar">
+        <div class="server-icon active">🏠</div>
+        <div class="server-divider"></div>
+        <div class="server-icon" style="background:rgba(250,30,78,.1)">⚡</div>
+        <div class="server-icon" style="background:rgba(168,85,247,.1)">🐙</div>
+        <div class="server-icon" style="background:rgba(250,30,78,.1)">🧠</div>
+        <div class="server-divider"></div>
+        <div class="server-icon" style="font-size:20px">+</div>
+    </div>
+
+    <!-- CHANNEL SIDEBAR -->
+    <div class="channel-bar">
+        <div class="channel-head">🎙️ <span>DkZ Community</span></div>
+
+        <div class="channel-list">
+            <div class="channel-section">📢 Info</div>
+            <div class="channel-item"><span class="ch-icon">#</span> willkommen</div>
+            <div class="channel-item"><span class="ch-icon">#</span> regeln</div>
+            <div class="channel-item"><span class="ch-icon">#</span> ankündigungen <span class="ch-badge">2</span></div>
+
+            <div class="channel-section">💬 Text-Channels</div>
+            <div class="channel-item active"><span class="ch-icon">#</span> allgemein <span class="ch-badge">5</span>
+            </div>
+            <div class="channel-item"><span class="ch-icon">#</span> dev-talk</div>
+            <div class="channel-item"><span class="ch-icon">#</span> nexuz-status</div>
+            <div class="channel-item"><span class="ch-icon">#</span> showcase</div>
+            <div class="channel-item"><span class="ch-icon">#</span> bugs-feedback</div>
+            <div class="channel-item"><span class="ch-icon">#</span> off-topic</div>
+
+            <div class="channel-section">🔊 Voice</div>
+            <div class="channel-item"><span class="ch-icon">🔊</span> Lounge <span class="ch-badge"
+                    style="background:var(--green)">2</span></div>
+            <div class="channel-item"><span class="ch-icon">🔊</span> Dev Session</div>
+            <div class="channel-item"><span class="ch-icon">🔊</span> 1:1 Meeting</div>
+
+            <div class="channel-section">🤖 Bot-Channels</div>
+            <div class="channel-item"><span class="ch-icon">🤖</span> watchdog-alerts</div>
+            <div class="channel-item"><span class="ch-icon">🤖</span> cicd-logs</div>
+            <div class="channel-item"><span class="ch-icon">🤖</span> picoclaw-status</div>
+        </div>
+
+        <div class="user-panel">
+            <div class="user-avatar">B</div>
+            <div>
+                <div class="user-name">BAZE²</div>
+                <div class="user-status">● Online</div>
+            </div>
+            <div class="user-btns">
+                <button class="user-btn">🎤</button>
+                <button class="user-btn">🔊</button>
+                <button class="user-btn">⚙️</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main-content">
+        <div class="main-header">
+            <div class="mh-channel"># allgemein</div>
+            <div class="mh-topic">Alles rund ums DkZ-Ökosystem — be nice, build cool stuff 🚀</div>
+            <div class="mh-right">
+                <a href="../messenger/index.html" class="mh-btn">💬 Messenger</a>
+                <a href="../hub/index.html" class="mh-btn">← Hub</a>
+            </div>
+        </div>
+
+        <div class="messages">
+            <div class="message">
+                <div class="m-avatar" style="background:rgba(250,30,78,.1)">B</div>
+                <div class="m-content">
+                    <div class="m-header"><span class="m-name" style="color:var(--accent)">BAZE²</span><span
+                            class="m-role" style="background:rgba(250,30,78,.15);color:var(--accent)">ADMIN</span><span
+                            class="m-time">heute 16:00</span></div>
+                    <div class="m-text">⚡ <strong>Ecosystem Update:</strong> Wir sind bei ~65% Fortschritt! Hub zeigt 30
+                        Module (20 aktiv), NEXUZ² Core läuft mit allen 6 Backends. Die neuen Dashboards (Watchdog, Auth,
+                        CI/CD) sind live. 🎉</div>
+                    <span class="m-reaction">🚀 4</span>
+                    <span class="m-reaction">🔥 3</span>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="m-avatar" style="background:rgba(85,172,238,.1)">M</div>
+                <div class="m-content">
+                    <div class="m-header"><span class="m-name" style="color:var(--blue)">Marcus</span><span
+                            class="m-role" style="background:rgba(85,172,238,.15);color:var(--blue)">DEV</span><span
+                            class="m-time">heute 16:05</span></div>
+                    <div class="m-text">Hey nice! Der Smart-Router in <code>router.js</code> mit Fallback-Chain ist mega
+                        clever. VPS → CF → Apache als Fallback funktioniert echt smooth. 👏</div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="m-avatar" style="background:rgba(168,85,247,.1)">L</div>
+                <div class="m-content">
+                    <div class="m-header"><span class="m-name" style="color:var(--purple)">Lisa</span><span
+                            class="m-role"
+                            style="background:rgba(168,85,247,.15);color:var(--purple)">DESIGN</span><span
+                            class="m-time">heute 16:12</span></div>
+                    <div class="m-text">Die Glassmorphism-Cards im Knowledge Hub sehen so clean aus! 😍 Kann man die
+                        auch für die Mobile Landing Page nutzen?</div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="m-avatar" style="background:rgba(250,30,78,.1)">🤖</div>
+                <div class="m-content">
+                    <div class="m-header"><span class="m-name" style="color:var(--cyan)">Watchdog Bot</span><span
+                            class="m-role" style="background:rgba(250,30,78,.15);color:var(--cyan)">BOT</span><span
+                            class="m-time">heute 16:20</span></div>
+                    <div class="m-text">📊 Stündlicher Health-Report: Alle Systeme grün.</div>
+                    <div class="m-embed">
+                        <div class="embed-title">🛡️ Health Status</div>
+                        <div class="embed-desc">KVM8: ✅ 42ms | LLM: ✅ 89ms | GAS: ✅ 210ms | Apache: ⚠️ 320ms | CF: ✅
+                            18ms | NC: ✅ 65ms</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="message">
+                <div class="m-avatar" style="background:rgba(0,255,136,.1)">T</div>
+                <div class="m-content">
+                    <div class="m-header"><span class="m-name" style="color:var(--green)">Tom</span><span class="m-role"
+                            style="background:rgba(0,255,136,.15);color:var(--green)">MOD</span><span
+                            class="m-time">heute 16:35</span></div>
+                    <div class="m-text">Hab den Action Deck YOLO JOLO Modus ausprobiert — einfach ⚡ klicken und alle
+                        Cards ratten durch. Wie Tinder auf Speed 😂</div>
+                    <span class="m-reaction">😂 5</span>
+                    <span class="m-reaction">⚡ 2</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="msg-input">
+            <input type="text" placeholder="Nachricht an #allgemein">
+        </div>
+    </div>
+
+    <!-- MEMBER SIDEBAR -->
+    <div class="member-bar">
+        <div class="member-section">ONLINE — 4</div>
+        <div class="member">
+            <div class="m-dot" style="background:var(--green)"></div> BAZE² <span class="m-role-tag"
+                style="background:rgba(250,30,78,.15);color:var(--accent)">Admin</span>
+        </div>
+        <div class="member">
+            <div class="m-dot" style="background:var(--green)"></div> Marcus <span class="m-role-tag"
+                style="background:rgba(85,172,238,.15);color:var(--blue)">Dev</span>
+        </div>
+        <div class="member">
+            <div class="m-dot" style="background:var(--green)"></div> Lisa <span class="m-role-tag"
+                style="background:rgba(168,85,247,.15);color:var(--purple)">Design</span>
+        </div>
+        <div class="member">
+            <div class="m-dot" style="background:var(--green)"></div> Tom <span class="m-role-tag"
+                style="background:rgba(0,255,136,.15);color:var(--green)">Mod</span>
+        </div>
+
+        <div class="member-section">BOTS — 3</div>
+        <div class="member">
+            <div class="m-dot" style="background:var(--cyan)"></div> Watchdog Bot <span class="m-role-tag"
+                style="background:rgba(250,30,78,.15);color:var(--cyan)">Bot</span>
+        </div>
+        <div class="member">
+            <div class="m-dot" style="background:var(--cyan)"></div> CI/CD Bot <span class="m-role-tag"
+                style="background:rgba(250,30,78,.15);color:var(--cyan)">Bot</span>
+        </div>
+        <div class="member">
+            <div class="m-dot" style="background:var(--cyan)"></div> PicoClaw <span class="m-role-tag"
+                style="background:rgba(250,30,78,.15);color:var(--cyan)">Bot</span>
+        </div>
+
+        <div class="member-section">OFFLINE — 2</div>
+        <div class="member">
+            <div class="m-dot" style="background:var(--muted)"></div> Sarah
+        </div>
+        <div class="member">
+            <div class="m-dot" style="background:var(--muted)"></div> Alex
+        </div>
+    </div>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    <script src="../shared/dkz-debug.js"></script>
+    <script src="../shared/dkz-guide.js"></script>
+    <script src="../shared/dkz-copilot.js"></script>
+    <script src="../shared/dkz-shortcuts.js"></script>
+    <script src="../shared/dkz-export.js"></script>
+    <script src="../shared/dkz-crosslinks.js"></script>
+    <script src="../shared/dkz-a11y.js"></script>
+    <script src="../shared/dkz-test.js"></script>
+    <script src="../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../shared/sw.js").catch(()=>{});</script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 SEO Command Center – Full Toolkit</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --bg2: #1a1a1c;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --glass: rgba(26, 26, 28, .85);
+            --border: #1a1a1e;
+            --border2: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --dim: #71717a;
+            --green: #00ff88;
+            --green2: #00D084;
+            --blue: #55ACEE;
+            --blue2: #6aa4ff;
+            --cyan: #00FFD5;
+            --purple: #ec4899;
+            --purple2: #f472b6;
+            --pink: #ec4899;
+            --yellow: #FFB800;
+            --orange: #ff8844;
+            --red: #fa1e4e;
+            --accent: #fa1e4e;
+            --accent-rgb: 250, 30, 78;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg)
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 3px
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden
+        }
+
+        /* HEADER */
+        .topbar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, var(--card), var(--card2));
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            z-index: 100
+        }
+
+        .topbar::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--red), var(--purple), transparent)
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--red), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            white-space: nowrap
+        }
+
+        .logo-sub {
+            font-size: 10px;
+            color: var(--muted);
+            margin-left: -2px
+        }
+
+        /* NAV TABS */
+        .nav {
+            display: flex;
+            gap: 4px;
+            flex: 1;
+            overflow-x: auto;
+            padding: 0 8px
+        }
+
+        .nav-btn {
+            padding: 8px 14px;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .25s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .nav-btn:hover {
+            color: var(--text);
+            background: var(--card2);
+            border-color: var(--border)
+        }
+
+        .nav-btn.active {
+            color: var(--red);
+            background: rgba(250, 30, 78, .06);
+            border-color: rgba(250, 30, 78, .25);
+            box-shadow: 0 0 20px rgba(250, 30, 78, .08)
+        }
+
+        .nav-btn .icon {
+            font-size: 14px
+        }
+
+        /* GUIDE BUTTONS */
+        .guide-btns {
+            display: flex;
+            gap: 6px;
+            margin-left: auto
+        }
+
+        .guide-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card2);
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .25s;
+            white-space: nowrap
+        }
+
+        .guide-btn:hover {
+            color: var(--yellow);
+            border-color: var(--yellow);
+            background: rgba(255, 204, 0, .06)
+        }
+
+        .guide-btn.open {
+            color: var(--yellow);
+            border-color: var(--yellow);
+            background: rgba(255, 204, 0, .1)
+        }
+
+        /* MAIN CONTENT */
+        .main {
+            flex: 1;
+            overflow: hidden;
+            position: relative
+        }
+
+        .module-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0
+        }
+
+        .module-frame.active {
+            display: block
+        }
+
+        /* GUIDE MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .7);
+            z-index: 500;
+            backdrop-filter: blur(8px);
+            animation: fadeIn .2s
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .modal {
+            background: var(--card);
+            border: 1px solid var(--border2);
+            border-radius: 16px;
+            width: 90vw;
+            max-width: 900px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 80px rgba(0, 0, 0, .6);
+            animation: slideUp .3s
+        }
+
+        .modal-head {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0
+        }
+
+        .modal-head h2 {
+            font-size: 16px;
+            font-weight: 700;
+            flex: 1;
+            background: linear-gradient(90deg, var(--yellow), var(--orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card2);
+            color: var(--muted);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .2s
+        }
+
+        .modal-close:hover {
+            color: var(--red);
+            border-color: var(--red)
+        }
+
+        .modal-search {
+            padding: 0 20px 12px;
+            flex-shrink: 0
+        }
+
+        .modal-search input {
+            width: 100%;
+            padding: 8px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg2);
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            outline: none;
+            transition: border .2s
+        }
+
+        .modal-search input:focus {
+            border-color: var(--blue)
+        }
+
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 20px 20px
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0
+            }
+
+            to {
+                opacity: 1
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1
+            }
+        }
+
+        /* STATUS BAR */
+        .statusbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 20px;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            font-size: 10px;
+            color: var(--muted)
+        }
+
+        .statusbar .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: pulse 2s infinite
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .3
+            }
+        }
+
+        @media(max-width:768px) {
+            .topbar {
+                flex-wrap: wrap
+            }
+
+            .nav {
+                order: 3;
+                width: 100%
+            }
+
+            .guide-btns {
+                order: 2
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="topbar">
+        <div>
+            <div class="logo">🔍 SEO Command Center</div>
+            <div class="logo-sub">Full Toolkit • v1.0.0</div>
+        </div>
+        <nav class="nav" id="nav">
+            <button class="nav-btn active" data-mod="seo-analyzer" onclick="loadModule(this)"><span
+                    class="icon">🎯</span> SEO Analyzer</button>
+            <button class="nav-btn" data-mod="adsense" onclick="loadModule(this)"><span class="icon">📊</span>
+                AdSense</button>
+            <button class="nav-btn" data-mod="google-business" onclick="loadModule(this)"><span class="icon">🏢</span>
+                Business</button>
+            <button class="nav-btn" data-mod="google-maps" onclick="loadModule(this)"><span class="icon">🗺️</span>
+                Maps</button>
+            <button class="nav-btn" data-mod="ai-console" onclick="loadModule(this)"><span class="icon">🤖</span> AI
+                Konsole</button>
+            <button class="nav-btn" data-mod="setup-wizard" onclick="loadModule(this)"><span class="icon">📋</span>
+                Setup</button>
+            <button class="nav-btn" data-mod="domain-analysis" onclick="loadModule(this)"><span class="icon">💎</span>
+                Domain</button>
+            <button class="nav-btn" data-mod="dns-builder" onclick="loadModule(this)"><span class="icon">🌐</span> DNS
+                Builder</button>
+            <button class="nav-btn" data-mod="ssh-deploy" onclick="loadModule(this)"><span class="icon">🔐</span>
+                SSH</button>
+            <button class="nav-btn" data-mod="wordpress-release" onclick="loadModule(this)"><span class="icon">📝</span>
+                WordPress</button>
+            <button class="nav-btn" data-mod="hostinger-manager" onclick="loadModule(this)"><span class="icon">🏠</span>
+                Hostinger</button>
+        </nav>
+        <div class="guide-btns">
+            <button class="guide-btn" onclick="openGuide('seo-hacks')">📖 50 SEO Hacks</button>
+            <button class="guide-btn" onclick="openGuide('clicks')">🖱️ Klicks</button>
+            <button class="guide-btn" onclick="openGuide('customers')">🤝 Kunden</button>
+        </div>
+    </div>
+
+    <div class="main" id="main">
+        <iframe class="module-frame active" id="frame-seo-analyzer" src="modules/seo-analyzer.html"></iframe>
+        <iframe class="module-frame" id="frame-adsense" data-src="modules/adsense.html"></iframe>
+        <iframe class="module-frame" id="frame-google-business" data-src="modules/google-business.html"></iframe>
+        <iframe class="module-frame" id="frame-google-maps" data-src="modules/google-maps.html"></iframe>
+        <iframe class="module-frame" id="frame-ai-console" data-src="modules/ai-console.html"></iframe>
+        <iframe class="module-frame" id="frame-setup-wizard" data-src="modules/setup-wizard.html"></iframe>
+        <iframe class="module-frame" id="frame-domain-analysis" data-src="modules/domain-analysis.html"></iframe>
+        <iframe class="module-frame" id="frame-dns-builder" data-src="modules/dns-builder.html"></iframe>
+        <iframe class="module-frame" id="frame-ssh-deploy" data-src="modules/ssh-deploy.html"></iframe>
+        <iframe class="module-frame" id="frame-wordpress-release" data-src="modules/wordpress-release.html"></iframe>
+        <iframe class="module-frame" id="frame-hostinger-manager" data-src="modules/hostinger-manager.html"></iframe>
+    </div>
+
+    <!-- GUIDE MODALS -->
+    <div class="modal-overlay" id="modal-seo-hacks">
+        <div class="modal">
+            <div class="modal-head">
+                <h2>📖 50 SEO Hacks & Tricks → Score 100</h2><button class="modal-close"
+                    onclick="closeGuide('seo-hacks')">✕</button>
+            </div>
+            <div class="modal-search"><input type="text" placeholder="Hack suchen..."
+                    oninput="filterGuide(this,'seo-hacks')"></div>
+            <div class="modal-body" id="guide-body-seo-hacks"></div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="modal-clicks">
+        <div class="modal">
+            <div class="modal-head">
+                <h2>🖱️ Klicks bekommen – Strategien</h2><button class="modal-close"
+                    onclick="closeGuide('clicks')">✕</button>
+            </div>
+            <div class="modal-search"><input type="text" placeholder="Strategie suchen..."
+                    oninput="filterGuide(this,'clicks')"></div>
+            <div class="modal-body" id="guide-body-clicks"></div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="modal-customers">
+        <div class="modal">
+            <div class="modal-head">
+                <h2>🤝 Kunden gewinnen – Kaltakquise Guide</h2><button class="modal-close"
+                    onclick="closeGuide('customers')">✕</button>
+            </div>
+            <div class="modal-search"><input type="text" placeholder="Methode suchen..."
+                    oninput="filterGuide(this,'customers')"></div>
+            <div class="modal-body" id="guide-body-customers"></div>
+        </div>
+    </div>
+
+    <div class="statusbar">
+        <div class="dot"></div>
+        <span>System bereit</span>
+        <span style="margin-left:auto">SEO Command Center v1.0.0 • DEVKiTZ</span>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        // MODULE LOADER
+        function loadModule(btn) {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const mod = btn.dataset.mod;
+            document.querySelectorAll('.module-frame').forEach(f => { f.classList.remove('active') });
+            const frame = document.getElementById('frame-' + mod);
+            if (frame.dataset.src && !frame.src.includes(frame.dataset.src)) { frame.src = frame.dataset.src }
+            frame.classList.add('active');
+        }
+        // GUIDE MODALS
+        function openGuide(id) {
+            document.getElementById('modal-' + id).classList.add('show');
+            document.querySelectorAll('.guide-btn').forEach(b => { if (b.textContent.toLowerCase().includes(id.replace('-', ' '))) b.classList.add('open') });
+        }
+        function closeGuide(id) {
+            document.getElementById('modal-' + id).classList.remove('show');
+            document.querySelectorAll('.guide-btn').forEach(b => b.classList.remove('open'));
+        }
+        function filterGuide(input, id) {
+            const q = input.value.toLowerCase();
+            document.querySelectorAll('#guide-body-' + id + ' .hack-card').forEach(c => {
+                c.style.display = c.textContent.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+        // ESC closes modals
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show')); document.querySelectorAll('.guide-btn').forEach(b => b.classList.remove('open')) } });
+
+        // POPULATE GUIDES
+        const hackStyle = `<style>.hack-card{background:rgba(15,15,36,.6);border:1px solid #1e1e48;border-radius:10px;padding:14px;margin-bottom:8px;transition:all .2s}.hack-card:hover{border-color:#4488ff;transform:translateX(4px)}.hack-num{display:inline-block;width:28px;height:28px;border-radius:6px;text-align:center;line-height:28px;font-weight:800;font-size:11px;margin-right:10px}.hack-title{font-weight:700;font-size:13px}.hack-desc{font-size:11px;color:#7878a0;margin-top:6px;line-height:1.6}.hack-meta{display:flex;gap:12px;margin-top:8px;font-size:10px;color:#50506a}.cat-onpage{background:rgba(0,255,136,.12);color:#00ff88}.cat-tech{background:rgba(68,136,255,.12);color:#4488ff}.cat-offpage{background:rgba(153,68,255,.12);color:#9944ff}.cat-local{background:rgba(255,136,68,.12);color:#ff8844}.cat-content{background:rgba(0,212,255,.12);color:#00d4ff}</style>`;
+
+        const seoHacks = [
+            { n: 1, t: 'Title Tag optimieren', d: 'Jede Seite braucht ein einzigartiges Title Tag mit dem Hauptkeyword am Anfang. Max 60 Zeichen. Format: "Keyword – Brand".', c: 'onpage', diff: '⭐', imp: '🔥🔥🔥' },
+            { n: 2, t: 'Meta Description verfassen', d: 'Unique, aktive Sprache, CTA einbauen. Max 155 Zeichen. Nicht das Ranking direkt, aber CTR boost!', c: 'onpage', diff: '⭐', imp: '🔥🔥' },
+            { n: 3, t: 'H1 Tag – Nur einer pro Seite', d: 'Genau ein H1 pro Seite mit dem primären Keyword. Muss sich vom Title unterscheiden.', c: 'onpage', diff: '⭐', imp: '🔥🔥🔥' },
+            { n: 4, t: 'Heading-Hierarchie (H1→H6)', d: 'Saubere Hierarchie: H1>H2>H3. Keine Sprünge. Keywords natürlich einbauen.', c: 'onpage', diff: '⭐', imp: '🔥🔥' },
+            { n: 5, t: 'URL-Struktur: kurz & keywordreich', d: 'URLs kurz halten: domain.de/keyword statt domain.de/p?id=123. Bindestriche statt Unterstriche.', c: 'tech', diff: '⭐', imp: '🔥🔥🔥' },
+            { n: 6, t: 'Alt-Tags für alle Bilder', d: 'Jedes Bild braucht beschreibenden Alt-Text mit Keywords. Hilft für Image-Search + Accessibility.', c: 'onpage', diff: '⭐', imp: '🔥🔥' },
+            { n: 7, t: 'Internal Linking Strategie', d: 'Mindestens 3–5 interne Links pro Seite. Anchor-Text soll das Zielkeyword enthalten.', c: 'onpage', diff: '⭐⭐', imp: '🔥🔥🔥' },
+            { n: 8, t: 'Core Web Vitals optimieren', d: 'LCP < 2.5s, FID < 100ms, CLS < 0.1. Bilder komprimieren, CSS/JS minifyen, Lazy Loading.', c: 'tech', diff: '⭐⭐⭐', imp: '🔥🔥🔥' },
+            { n: 9, t: 'Mobile First Design', d: 'Google indexiert Mobile-Version zuerst. Responsive Design ist Pflicht, nicht optional.', c: 'tech', diff: '⭐⭐', imp: '🔥🔥🔥' },
+            { n: 10, t: 'SSL/HTTPS aktivieren', d: 'HTTPS ist Ranking-Faktor. Kostenloses SSL via Let\'s Encrypt bei jedem Hoster.', c: 'tech', diff: '⭐', imp: '🔥🔥🔥' },
+            { n: 11, t: 'XML Sitemap einreichen', d: 'Sitemap.xml erstellen und in Google Search Console einreichen. Automatisch generieren lassen.', c: 'tech', diff: '⭐', imp: '🔥🔥' },
+            { n: 12, t: 'robots.txt richtig konfigurieren', d: 'Wichtige Seiten freigeben, unwichtige blockieren. Sitemap-URL in robots.txt angeben.', c: 'tech', diff: '⭐⭐', imp: '🔥🔥' },
+            { n: 13, t: 'Schema.org Markup (JSON-LD)', d: 'Structured Data für: LocalBusiness, FAQ, HowTo, Product, Review. Erzeugt Rich Snippets in Google.', c: 'tech', diff: '⭐⭐', imp: '🔥🔥🔥' },
+            { n: 14, t: 'Canonical Tags setzen', d: 'Duplicate Content vermeiden mit rel="canonical". Besonders wichtig bei Pagination/Filter-Seiten.', c: 'tech', diff: '⭐⭐', imp: '🔥🔥' },
+            { n: 15, t: 'Page Speed: Bilder in WebP', d: 'Alle Bilder in WebP konvertieren. 25-35% kleiner als JPEG bei gleicher Qualität.', c: 'tech', diff: '⭐', imp: '🔥🔥' },
+            { n: 16, t: 'Lazy Loading implementieren', d: 'loading="lazy" für Bilder und iframes unterhalb des Folds. Spart initialen Ladeaufwand.', c: 'tech', diff: '⭐', imp: '🔥🔥' },
+            { n: 17, t: 'Content-Länge: min 1500 Wörter', d: 'Ausführlicher Content rankt besser. Pillar-Pages mit 2000-3000 Wörtern. Qualität > Quantität.', c: 'content', diff: '⭐⭐', imp: '🔥🔥🔥' },
+            { n: 18, t: 'Keyword Research mit kostenlosen Tools', d: 'Google Keyword Planner, Ubersuggest, AnswerThePublic, Google Trends nutzen. Long-Tail Keywords finden.', c: 'content', diff: '⭐⭐', imp: '🔥🔥🔥' },
+            { n: 19, t: 'LSI Keywords einbauen', d: 'Semantisch verwandte Begriffe natürlich im Text verwenden. Google versteht Kontext besser.', c: 'content', diff: '⭐⭐', imp: '🔥🔥' },
+            { n: 20, t: 'Featured Snippet Optimierung', d: 'Fragen direkt beantworten in <40 Wörtern. Listen/Tabellen nutzen. Frage als H2, Antwort direkt darunter.', c: 'content', diff: '⭐⭐', imp: '🔥🔥🔥' },
+            { n: 21, t: 'Google Business Profil optimieren', d: 'Alle Felder ausfüllen, Fotos hochladen, Kategorien wählen, Öffnungszeiten, Q&A beantworten.', c: 'local', diff: '⭐', imp: '🔥🔥🔥' },
+            { n: 22, t: 'NAP Consistency prüfen', d: 'Name, Adresse, Phone müssen überall identisch sein: Website, Google Business, Verzeichnisse.', c: 'local', diff: '⭐', imp: '🔥🔥🔥' },
+            { n: 23, t: 'Google Reviews aktiv sammeln', d: 'Kunden nach Bewertungen fragen. Auf jede Review antworten. Minimum: 10+ Reviews anstreben.', c: 'local', diff: '⭐⭐', imp: '🔥🔥🔥' },
+            { n: 24, t: 'Lokale Keywords nutzen', d: '"Keyword + Stadt" in Title, H1, Content, Meta. z.B. "Friseur Berlin Mitte".', c: 'local', diff: '⭐', imp: '🔥🔥🔥' },
+            { n: 25, t: 'Backlinks von .edu und .gov', d: 'Höchste Autorität. Sponsoring, Stipendien, Gastbeiträge an Universitäten/Behörden.', c: 'offpage', diff: '⭐⭐⭐', imp: '🔥🔥🔥' },
+            { n: 26, t: 'Gastbeiträge schreiben', d: 'Fachbeiträge auf relevanten Blogs = Backlink + Expertise. Qualität der Seite prüfen (DA > 30).', c: 'offpage', diff: '⭐⭐', imp: '🔥🔥🔥' },
+            { n: 27, t: 'Broken Link Building', d: '404-Seiten bei Konkurrenten finden, eigenen Content als Ersatz anbieten. Tools: Ahrefs, Check My Links.', c: 'offpage', diff: '⭐⭐⭐', imp: '🔥🔥' },
+            { n: 28, t: 'Social Signals aufbauen', d: 'Shares auf Social Media = indirekte Ranking-Signale. Content teilbar machen, Social Buttons einbauen.', c: 'offpage', diff: '⭐', imp: '🔥' },
+            { n: 29, t: 'Google Search Console nutzen', d: 'Wöchentlich prüfen: Indexierung, Crawl-Errors, Keywords, Click-Through-Rates. Kostenlos!', c: 'tech', diff: '⭐', imp: '🔥🔥🔥' },
+            { n: 30, t: '404 Seiten fixen', d: 'Broken Links intern finden und fixen. Custom 404-Seite mit Navigation erstellen.', c: 'tech', diff: '⭐', imp: '🔥🔥' },
+            { n: 31, t: 'Content regelmäßig aktualisieren', d: 'Alte Artikel updaten mit neuen Infos, Datum aktualisieren. Google liebt frischen Content.', c: 'content', diff: '⭐⭐', imp: '🔥🔥🔥' },
+            { n: 32, t: 'FAQ Section auf jeder Seite', d: 'FAQ-Schema Markup + echte Antworten. Google zeigt FAQs direkt in Suchergebnissen.', c: 'content', diff: '⭐', imp: '🔥🔥🔥' },
+            { n: 33, t: 'Breadcrumbs implementieren', d: 'Navigation-Pfad anzeigen. Google zeigt Breadcrumbs in SERPs. Schema.org BreadcrumbList nutzen.', c: 'tech', diff: '⭐', imp: '🔥🔥' },
+            { n: 34, t: 'Open Graph & Twitter Cards', d: 'og:title, og:description, og:image. Bessere Social Media Vorschau = mehr Klicks.', c: 'onpage', diff: '⭐', imp: '🔥🔥' },
+            { n: 35, t: 'Duplicate Content eliminieren', d: '301 Redirects für doppelte Seiten. www vs non-www. HTTP vs HTTPS. Trailing Slashes vereinheitlichen.', c: 'tech', diff: '⭐⭐', imp: '🔥🔥🔥' },
+            { n: 36, t: 'Content Hub / Pillar Pages', d: 'Ein Hauptartikel (Pillar) + 10-20 Unterartikel (Cluster) die sich verlinken. Topical Authority.', c: 'content', diff: '⭐⭐⭐', imp: '🔥🔥🔥' },
+            { n: 37, t: 'Click Depth reduzieren', d: 'Jede Seite sollte in max 3 Klicks erreichbar sein. Flache Seitenarchitektur aufbauen.', c: 'tech', diff: '⭐⭐', imp: '🔥🔥' },
+            { n: 38, t: 'Google Discover Optimierung', d: 'Große, hochwertige Bilder (min 1200px breit), Trending Topics, E-E-A-T Signale.', c: 'content', diff: '⭐⭐', imp: '🔥🔥' },
+            { n: 39, t: 'E-E-A-T aufbauen', d: 'Experience, Expertise, Authoritativeness, Trustworthiness. Über-Uns, Autor-Seiten, Quellen angeben.', c: 'content', diff: '⭐⭐', imp: '🔥🔥🔥' },
+            { n: 40, t: 'Lokale Verzeichnisse eintragen', d: 'Yelp, Das Örtliche, Gelbe Seiten, Branchenverzeichnisse. NAP überall gleich.', c: 'local', diff: '⭐', imp: '🔥🔥' },
+            { n: 41, t: 'Video Content einbetten', d: 'YouTube-Videos einbetten erhöht Verweildauer. VideoObject Schema Markup nutzen.', c: 'content', diff: '⭐⭐', imp: '🔥🔥' },
+            { n: 42, t: 'Exit Intent Popups statt Bounce', d: 'Besucher vorm Verlassen abfangen. Newsletter, Download, Angebot. Bounce Rate senken.', c: 'content', diff: '⭐⭐', imp: '🔥' },
+            { n: 43, t: 'Hreflang für mehrsprachige Seiten', d: 'Internationales SEO: hreflang-Tags für jede Sprachversion setzen. Verhindert Duplicate Content.', c: 'tech', diff: '⭐⭐⭐', imp: '🔥🔥' },
+            { n: 44, t: 'AMP Seiten (optional)', d: 'Accelerated Mobile Pages für News/Blog. Schnellere mobile Ladezeiten. Google priorisiert teils AMP.', c: 'tech', diff: '⭐⭐⭐', imp: '🔥' },
+            { n: 45, t: 'Table of Contents einbauen', d: 'Inhaltsverzeichnis mit Sprungmarken. Google nutzt es für Sitelinks in SERPs.', c: 'onpage', diff: '⭐', imp: '🔥🔥' },
+            { n: 46, t: 'Google Analytics 4 einrichten', d: 'GA4 installieren, Events tracken, Conversions definieren. Datenbasierte SEO-Entscheidungen.', c: 'tech', diff: '⭐⭐', imp: '🔥🔥' },
+            { n: 47, t: 'Konkurrenz-Analyse durchführen', d: 'Top 3 Konkurrenten analysieren: Keywords, Backlinks, Content-Struktur. Lücken finden.', c: 'content', diff: '⭐⭐', imp: '🔥🔥🔥' },
+            { n: 48, t: 'Bilder SEO: Dateinamen optimieren', d: 'statt IMG_1234.jpg → keyword-beschreibung.webp. Bindestriche, lowercase, beschreibend.', c: 'onpage', diff: '⭐', imp: '🔥🔥' },
+            { n: 49, t: 'CDN für globale Performance', d: 'Content Delivery Network (Cloudflare Free) für weltweite Ladezeiten < 1s.', c: 'tech', diff: '⭐⭐', imp: '🔥🔥' },
+            { n: 50, t: 'Log-File Analyse für Crawl Budget', d: 'Server-Logs analysieren: welche Seiten crawlt Google? Unwichtige Seiten blockieren.', c: 'tech', diff: '⭐⭐⭐', imp: '🔥🔥' }
+        ];
+
+        const clickGuide = [
+            { n: 1, t: 'Click-Through-Rate (CTR) im Title optimieren', d: 'Zahlen, Power-Words, Klammern: "10 Tipps [2026 Update]". CTR-Boost bis zu 37%.' },
+            { n: 2, t: 'Meta Description als Mini-Werbeanzeige', d: 'CTA einbauen: "Jetzt entdecken", "Gratis Checkliste". Emoji ✅ steigert Aufmerksamkeit.' },
+            { n: 3, t: 'Rich Snippets durch Schema Markup', d: 'Sternebewertungen, Preise, FAQ in den SERPs. Visuell hervorstechend = mehr Klicks.' },
+            { n: 4, t: 'Featured Snippet erobern', d: 'Frage als H2, Antwort in 40-60 Wörtern direkt darunter. Listen & Tabellen bevorzugt.' },
+            { n: 5, t: 'Google Sitelinks erzwingen', d: 'Klare Navigation, Table of Contents, aussagekräftige Menüpunkte = Google zeigt Sitelinks.' },
+            { n: 6, t: 'Social Media Cross-Promotion', d: 'Jeden neuen Content auf LinkedIn, Twitter, Facebook, Instagram teilen. Hashtag-Strategie.' },
+            { n: 7, t: 'Email Newsletter aufbauen', d: 'Wöchentlicher Newsletter mit neuem Content. Direkte Klicks, kein Algorithmus dazwischen.' },
+            { n: 8, t: 'Pinterest für visuellen Content', d: 'Infografiken, Anleitungen, Rezepte auf Pinterest = langfristiger Traffic-Strom.' },
+            { n: 9, t: 'YouTube SEO + Website-Verlinks', d: 'YouTube-Videos mit Link in Beschreibung + Pinned Comment. Cards & End Screens nutzen.' },
+            { n: 10, t: 'Quora & Reddit Engagement', d: 'Fachfragen beantworten mit Link zur vertiefenden Seite. Nicht spammen, echten Mehrwert bieten.' },
+            { n: 11, t: 'Google Discover Feed optimieren', d: 'Große Bilder (1200px+), aktuelle Themen, E-E-A-T. Kann massiven Traffic bringen.' },
+            { n: 12, t: 'Interne Suche optimieren', d: 'Beliebte Suchbegriffe auf der eigenen Seite analysieren. Content-Lücken schließen.' },
+            { n: 13, t: 'Breadcrumbs für bessere SERPs', d: 'Breadcrumbs werden in Google Ergebnissen angezeigt statt der URL. Professioneller Look.' },
+            { n: 14, t: 'Update-Datum im Title/Snippet', d: '"[Updated März 2026]" zeigt Aktualität. Google und User bevorzugen frische Inhalte.' },
+            { n: 15, t: 'Keyword in URL sichtbar machen', d: 'User sehen die URL in SERPs. /seo-tipps-anfaenger sagt mehr als /article?id=4923.' },
+            { n: 16, t: 'A/B Testing für Titles', d: 'Google Search Console: CTR pro Seite prüfen. Title anpassen, 2 Wochen messen, vergleichen.' },
+            { n: 17, t: 'Kostenlose Lead Magnets anbieten', d: '"Gratis PDF", "Kostenlose Checkliste" im Title/Description. Pull statt Push.' },
+            { n: 18, t: 'Community-Building auf Discord/Slack', d: 'Eigene Community aufbauen = direkter Kanal für neue Inhalte. Kein Algorithmus-Risiko.' },
+            { n: 19, t: 'Gastbeiträge mit Autor-Bio', d: 'Auf etablierten Blogs schreiben. Link in der Autor-Bio = Referral-Traffic + Backlink.' },
+            { n: 20, t: 'Webinare & Live Events', d: 'Kostenlose Webinare zu Fach-Themen. Registrierung = Lead + direkter Kontakt.' },
+            { n: 21, t: 'Content Repurposing', d: 'Einen Artikel → Thread, Infografik, Video, Podcast, Carousel. 5x Reichweite.' },
+            { n: 22, t: 'Google Trends nutzen', d: 'Trending Topics früh erkennen. Erster Content = Position 1. Timing ist alles.' },
+            { n: 23, t: 'Emotionale Headlines schreiben', d: 'Neugier, Urgency, Überraschung: "Das wussten 90% nicht..." — Höhere Click-Rate.' },
+            { n: 24, t: 'FAQ-Sektion mit Sprungmarken', d: 'Google zeigt FAQ-Ergebnisse in SERPs. Mehr SERP-Fläche = mehr Klick-Chancen.' },
+            { n: 25, t: 'Lokale Events & Kooperationen', d: 'Lokale Workshops, Meetups, Sponsor-Deals. Offline-Kontakt → Online-Traffic.' }
+        ];
+
+        const customerGuide = [
+            { n: 1, t: 'Google Business Profil perfektionieren', d: 'Vollständiges Profil mit Fotos, Posts, Q&A. Kunden finden dich über Maps-Suche ohne dich zu kennen.' },
+            { n: 2, t: 'Content Marketing Funnel aufbauen', d: 'TOFU (Awareness): Blog, Video. MOFU (Interest): Guides, Webinare. BOFU (Decision): Case Studies, Demo.' },
+            { n: 3, t: 'Lead Magnets erstellen', d: 'Kostenlose PDFs, Checklisten, Templates im Tausch gegen E-Mail. Automatisierter Erstkontakt.' },
+            { n: 4, t: 'Landing Pages für jedes Angebot', d: 'Eine Seite, ein Ziel, ein CTA. Keine Navigation, kein Ablenkung. Conversion-fokussiert.' },
+            { n: 5, t: 'Google Ads (Search)', d: 'Keyword-basierte Werbung. Kunden suchen aktiv → du erscheinst. Budget: ab 5€/Tag testbar.' },
+            { n: 6, t: 'Facebook/Instagram Ads', d: 'Lookalike Audiences + Interest Targeting. Video-Ads performen 3x besser als Bilder.' },
+            { n: 7, t: 'Lokale Sichtbarkeit maximieren', d: 'Google Maps, lokale Verzeichnisse, Bewertungen. "Friseur in meiner Nähe" → du erscheinst.' },
+            { n: 8, t: 'Referral/Empfehlungs-Programm', d: 'Bestehende Kunden werben neue. Bonus für beide Seiten. Viral Loop einbauen.' },
+            { n: 9, t: 'Cold Email Outreach', d: 'Personalisierte Emails an potenzielle Kunden. Pain Point ansprechen, Lösung anbieten, CTA.' },
+            { n: 10, t: 'LinkedIn Akquise für B2B', d: 'Profil optimieren, wertvolle Posts, Connection Requests mit Nachricht. Nicht sofort verkaufen.' },
+            { n: 11, t: 'Webinare als Vertrauens-Builder', d: 'Kostenloser Mehrwert live. Teilnehmer kennen dich nicht → am Ende kennen sie dich als Experte.' },
+            { n: 12, t: 'Trust Signals auf der Website', d: 'Bewertungen, Logos von Kunden/Partnern, Zertifikate, "Bekannt aus..." Section.' },
+            { n: 13, t: 'Social Proof: Testimonials & Case Studies', d: 'Echte Erfolgsgeschichten mit Zahlen: "+150% Umsatz in 3 Monaten". Screenshot/Video.' },
+            { n: 14, t: 'Comment Marketing', d: 'Hilfreiche Kommentare auf relevanten Blogs/YouTube/LinkedIn. Expertenstatus ohne Budget.' },
+            { n: 15, t: 'Podcast Gast-Auftritte', d: 'Auf Podcasts in deiner Nische eingeladen werden. Neue Zielgruppe ohne eigenes Publikum.' },
+            { n: 16, t: 'Free Tools / Rechner anbieten', d: 'Kostenloser Online-Rechner, Generator, Analyzer. Virale Verbreitung + Lead-Generierung.' },
+            { n: 17, t: 'Partnerships & Kooperationen', d: 'Komplementäre Businesses: Webdesigner + SEO-Agentur. Cross-Promotion, geteilte Leads.' },
+            { n: 18, t: 'Retargeting Pixel einsetzen', d: 'Website-Besucher mit Ads erneut ansprechen. 96% kaufen nicht beim ersten Besuch.' },
+            { n: 19, t: 'WhatsApp Business & Chatbots', d: 'Direkter Kanal. Automatische Antworten, Katalog, Quick Replies. Niedrigschwellig.' },
+            { n: 20, t: 'Lokale Gruppen & Communities', d: 'Facebook-Gruppen, Nextdoor, lokale Foren. Hilfreich sein ohne sofort zu verkaufen.' },
+            { n: 21, t: 'Influencer Micro-Kooperationen', d: 'Kleine Influencer (1K-10K Follower) sind günstiger und haben höhere Engagement-Rates.' },
+            { n: 22, t: 'Print & Offline → Online', d: 'QR Codes auf Flyern, Visitenkarten, Aufklebern. Offline-Kontakt → Website-Besucher.' },
+            { n: 23, t: 'Kostenlose Erstberatung anbieten', d: '15-30 Min. Strategie-Call. Kein Risiko für den Kunden. Du zeigst Expertise, sie vertrauen dir.' },
+            { n: 24, t: 'Google Reviews aktiv einfordern', d: 'Nach jedem Auftrag: "Wäre eine Google-Bewertung möglich?" Link direkt zusenden.' },
+            { n: 25, t: 'Email Drip Campaigns', d: 'Automatisierte Email-Serie: Tag 1 Welcome, Tag 3 Tipp, Tag 7 Case Study, Tag 14 Angebot.' }
+        ];
+
+        function renderHacks(data, id, cat) {
+            const body = document.getElementById('guide-body-' + id);
+            body.innerHTML = hackStyle + data.map(h => {
+                const catClass = h.c ? 'cat-' + h.c : 'cat-content';
+                return `<div class="hack-card"><span class="hack-num ${catClass}">${h.n}</span><span class="hack-title">${h.t}</span><div class="hack-desc">${h.d}</div><div class="hack-meta">${h.diff ? ' Schwierigkeit: ' + h.diff : ''}${h.imp ? ' Impact: ' + h.imp : ''}</div></div>`;
+            }).join('');
+        }
+        renderHacks(seoHacks, 'seo-hacks');
+        renderHacks(clickGuide, 'clicks');
+        renderHacks(customerGuide, 'customers');
+    </script>
+</body>
+
+</html>

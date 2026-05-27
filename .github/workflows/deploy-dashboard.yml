@@ -1,0 +1,70 @@
+name: 🚀 DkZ Dashboard — Auto-Deploy (3 Domains)
+
+on:
+  push:
+    branches: [main, feat/second-brain-v2-dashy-nexus]
+    paths:
+      - '01_PROJECTS/01_dashboard/**'
+  workflow_dispatch:
+
+env:
+  VPS_HOST: srv1298466.hstgr.cloud
+  VPS_PATH: /var/www/devkitz-dashboard/
+
+jobs:
+  deploy:
+    name: 📦 Deploy Dashboard → devkitz.sites + web.dkz.app + devkitz.eu
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            01_PROJECTS/01_dashboard
+
+      - name: 🔑 Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: 🔒 Add known host
+        run: ssh-keyscan -H ${{ env.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: 🚀 Deploy via rsync
+        run: |
+          rsync -avz --delete \
+            --exclude='node_modules' \
+            --exclude='test-results' \
+            --exclude='test-reports' \
+            --exclude='.git' \
+            --exclude='*.spec.js' \
+            01_PROJECTS/01_dashboard/ \
+            root@${{ env.VPS_HOST }}:${{ env.VPS_PATH }}
+
+      - name: 🔧 Set permissions + reload Nginx
+        run: |
+          ssh root@${{ env.VPS_HOST }} << 'EOF'
+            chown -R www-data:www-data /var/www/devkitz-dashboard
+            chmod -R 755 /var/www/devkitz-dashboard
+            nginx -t && systemctl reload nginx
+          EOF
+
+      - name: ✅ Health Check (3 Domains)
+        run: |
+          echo "=== devkitz.sites ==="
+          curl -s -o /dev/null -w "HTTP %{http_code}\n" https://devkitz.sites/health || echo "⚠️ devkitz.sites not reachable"
+
+          echo "=== web.dkz.app ==="
+          curl -s -o /dev/null -w "HTTP %{http_code}\n" https://web.dkz.app/health || echo "⚠️ web.dkz.app not reachable"
+
+          echo "=== devkitz.eu (redirect) ==="
+          curl -s -o /dev/null -w "HTTP %{http_code}\n" -L https://devkitz.eu/ || echo "⚠️ devkitz.eu not reachable"
+
+      - name: 📢 Summary
+        if: always()
+        run: |
+          echo "::notice::✅ Deployed to 3 domains:"
+          echo "::notice::  🟢 https://devkitz.sites (Hub)"
+          echo "::notice::  🚀 https://web.dkz.app (App)"
+          echo "::notice::  🔵 https://devkitz.eu (→ redirect)"
+          echo "::notice::  📦 130 Module deployed"

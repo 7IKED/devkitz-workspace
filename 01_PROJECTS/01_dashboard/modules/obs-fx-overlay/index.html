@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OBS FX Control Panel - DEVKiTZ™</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- DkZ CSS Design System v2 -->
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <main class="dashboard-container">
+        <header class="module-header">
+            <h1 class="module-title">OBS FX Control Panel <span class="badge neon-badge">MOD-087</span></h1>
+            <p class="module-subtitle">Interaktive Partikel-Engine & Neon Effekte für Twitch Streams</p>
+        </header>
+
+        <section class="card glass-panel control-section">
+            <div class="card-header">
+                <h2><span class="icon">🚀</span> Live Effekte Auslösen</h2>
+            </div>
+            <div class="card-body">
+                <div class="button-grid">
+                    <button class="dkz-btn primary neon-btn" onclick="triggerEffect('liebe')">
+                        <span class="icon">❤️</span> Liebe dalassen
+                    </button>
+                    <button class="dkz-btn secondary neon-btn" onclick="triggerEffect('danke')">
+                        <span class="icon">✨</span> Danke, ich liebe euch
+                    </button>
+                    <button class="dkz-btn warning neon-btn" onclick="triggerEffect('hype')">
+                        <span class="icon">🔥</span> Hype Mode
+                    </button>
+                    <button class="dkz-btn danger neon-btn" onclick="triggerEffect('scene')">
+                        <span class="icon">🌌</span> Szenenwechsel / Waben
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="card glass-panel settings-section">
+            <div class="card-header">
+                <h2><span class="icon">⚙️</span> Overlay Einstellungen</h2>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="bg-mode">OBS Hintergrund-Modus</label>
+                    <select id="bg-mode" class="dkz-input" onchange="updateSettings()">
+                        <option value="transparent">Transparent (Empfohlen für OBS)</option>
+                        <option value="neon-green">Neon Grün (Chroma Key)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="particle-density">Partikel-Dichte</label>
+                    <input type="range" id="particle-density" class="dkz-range" min="10" max="200" value="50" onchange="updateSettings()">
+                </div>
+
+                <div class="form-group">
+                    <label for="particle-color">Partikel Basis-Farbe (Herzen/Sterne)</label>
+                    <input type="color" id="particle-color" class="dkz-input" value="#fa1e4e" onchange="updateSettings()">
+                </div>
+
+                <div class="form-group">
+                    <label for="hex-color">Waben (Hexagon) Farbe</label>
+                    <input type="color" id="hex-color" class="dkz-input" value="#00ff88" onchange="updateSettings()">
+                </div>
+            </div>
+            <div class="card-footer">
+                <button class="dkz-btn primary" onclick="openOverlay()">
+                    <span class="icon">🖥️</span> OBS Overlay Starten (Pop-out)
+                </button>
+                <p class="help-text" style="margin-top: 10px; font-size: 0.85rem; color: var(--text-secondary);">
+                    Füge <code id="overlay-url">.../overlay.html</code> in OBS als "Browser" Quelle ein, setze Breite auf 1920 und Höhe auf 1080.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Shared Scripts -->
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script>
+        // Setze die URL für OBS
+        document.getElementById('overlay-url').textContent = window.location.href.replace('index.html', 'overlay.html');
+
+        // Funktion um XSS zu vermeiden
+        function esc(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // Steuerung der Effekte via localStorage (wird im overlay.html ausgelesen)
+        function triggerEffect(type) {
+            const event = {
+                type: type,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('dkz_obs_fx_event', JSON.stringify(event));
+            
+            // Visual Feedback im Button (kurz aufleuchten)
+            console.log("Triggered:", type);
+        }
+
+        // Steuerung der Settings
+        function updateSettings() {
+            const bgMode = document.getElementById('bg-mode').value;
+            const density = document.getElementById('particle-density').value;
+            const pColor = document.getElementById('particle-color').value;
+            const hColor = document.getElementById('hex-color').value;
+            
+            const settings = {
+                bgMode: bgMode,
+                particleDensity: density,
+                particleColor: pColor,
+                hexColor: hColor,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('dkz_obs_fx_settings', JSON.stringify(settings));
+        }
+
+        // Öffne Overlay als neues Fenster (zum Testen ohne OBS)
+        function openOverlay() {
+            window.open('overlay.html', 'OBS Overlay', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
+        }
+        
+        // Initial Settings setzen
+        updateSettings();
+    </script>
+</body>
+</html>

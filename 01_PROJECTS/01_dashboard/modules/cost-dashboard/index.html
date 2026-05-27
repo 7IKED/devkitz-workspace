@@ -1,0 +1,1322 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💰 DkZ Cost Command Center</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #fa1e4e;
+            --purple: #ec4899;
+            --orange: #ff8800;
+            --accent: #fa1e4e;
+            --accent-rgb: 250, 30, 78;
+            --accent-glow: rgba(250, 30, 78, 0.25);
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh;
+            padding: 16px;
+            background-image: radial-gradient(rgba(250, 30, 78, .03) 1px, transparent 1px);
+            background-size: 24px 24px
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--card)
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--muted)
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none
+        }
+
+        a:hover {
+            text-decoration: underline
+        }
+
+        /* HEADER */
+        .header {
+            text-align: center;
+            padding: 28px 20px;
+            background: linear-gradient(135deg, #1a1a1c 0%, #222226 60%, #1a1214 100%);
+            border-radius: 20px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at center, rgba(250, 30, 78, .06) 0%, transparent 60%);
+            animation: hGlow 6s ease-in-out infinite alternate
+        }
+
+        @keyframes hGlow {
+            0% {
+                transform: translate(0, 0)
+            }
+
+            100% {
+                transform: translate(10%, 5%)
+            }
+        }
+
+        .header h1 {
+            font-size: 26px;
+            font-weight: 800;
+            background: linear-gradient(90deg, var(--red), var(--purple), var(--blue));
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 4s linear infinite;
+            position: relative
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 0% center
+            }
+
+            100% {
+                background-position: 200% center
+            }
+        }
+
+        .header p {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 6px;
+            position: relative
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-family: var(--font);
+            cursor: pointer;
+            z-index: 2;
+            transition: all .2s
+        }
+
+        .back-btn:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 12px var(--accent-glow)
+        }
+
+        /* KPI ROW */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-bottom: 16px
+        }
+
+        .kpi {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+            transition: all .3s;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04), 0 2px 8px rgba(0, 0, 0, .3)
+        }
+
+        .kpi::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0;
+            transition: opacity .3s
+        }
+
+        .kpi:hover {
+            border-color: rgba(var(--accent-rgb), .35);
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(var(--accent-rgb), .1)
+        }
+
+        .kpi:hover::after {
+            opacity: 1
+        }
+
+        .kpi .val {
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1
+        }
+
+        .kpi .lbl {
+            font-size: 9px;
+            color: var(--muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: .8px
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            padding: 4px;
+            background: rgba(26, 26, 28, .85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .3)
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border: none;
+            background: none;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 700;
+            font-family: var(--font);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all .2s;
+            white-space: nowrap
+        }
+
+        .tab:hover {
+            color: var(--text);
+            background: var(--card2)
+        }
+
+        .tab.active {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 0 16px var(--accent-glow)
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn .3s ease
+        }
+
+        .tab-content.active {
+            display: block
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            transition: all .3s;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .03), 0 4px 16px rgba(0, 0, 0, .25)
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0;
+            transition: opacity .3s
+        }
+
+        .card:hover {
+            border-color: rgba(var(--accent-rgb), .35);
+            box-shadow: 0 0 24px rgba(var(--accent-rgb), .1)
+        }
+
+        .card:hover::after {
+            opacity: 1
+        }
+
+        .card-title {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px
+        }
+
+        /* FORM */
+        select,
+        input[type="text"],
+        input[type="number"] {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: var(--font);
+            transition: border-color .3s;
+            width: 100%
+        }
+
+        select:focus,
+        input:focus {
+            outline: none;
+            border-color: var(--accent)
+        }
+
+        label {
+            font-size: 11px;
+            color: var(--muted);
+            display: block;
+            margin-bottom: 4px
+        }
+
+        .form-row {
+            margin-bottom: 12px
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 12px;
+            font-family: var(--font);
+            transition: all .2s
+        }
+
+        .btn:active {
+            transform: scale(.97) !important
+        }
+
+        .btn-accent {
+            background: var(--accent);
+            color: #fff
+        }
+
+        .btn-accent:hover {
+            box-shadow: 0 0 18px var(--accent-glow);
+            transform: scale(1.03)
+        }
+
+        .btn-green {
+            background: var(--green);
+            color: #000
+        }
+
+        .btn-green:hover {
+            box-shadow: 0 0 18px rgba(0, 255, 136, .4);
+            transform: scale(1.03)
+        }
+
+        .btn-blue {
+            background: var(--blue);
+            color: #fff
+        }
+
+        .btn-blue:hover {
+            box-shadow: 0 0 18px rgba(85, 172, 238, .4);
+            transform: scale(1.03)
+        }
+
+        /* RESULT BOX */
+        .result {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 12px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, .2)
+        }
+
+        .result .big {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--green)
+        }
+
+        .result .sub {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 4px
+        }
+
+        /* TABLE */
+        .tbl {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px
+        }
+
+        .tbl th {
+            background: var(--card2);
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 700;
+            color: var(--muted);
+            border-bottom: 1px solid var(--border);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .5px
+        }
+
+        .tbl td {
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(51, 51, 56, .5)
+        }
+
+        .tbl tr:hover td {
+            background: rgba(255, 255, 255, .02)
+        }
+
+        .tbl .num {
+            font-family: var(--mono);
+            text-align: right
+        }
+
+        .tbl .highlight {
+            color: var(--green);
+            font-weight: 700
+        }
+
+        /* BADGES */
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700
+        }
+
+        .badge-green {
+            background: rgba(0, 255, 136, .15);
+            color: var(--green)
+        }
+
+        .badge-blue {
+            background: rgba(85, 172, 238, .15);
+            color: var(--blue)
+        }
+
+        .badge-yellow {
+            background: rgba(255, 184, 0, .15);
+            color: var(--yellow)
+        }
+
+        .badge-red {
+            background: rgba(250, 30, 78, .15);
+            color: var(--red)
+        }
+
+        .badge-purple {
+            background: rgba(236, 72, 153, .15);
+            color: var(--purple)
+        }
+
+        /* PROGRESS */
+        .prog-bar {
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 6px
+        }
+
+        .prog-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width .5s ease
+        }
+
+        /* BUILDER ITEMS */
+        .builder-item {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all .2s;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, .15)
+        }
+
+        .builder-item:hover {
+            border-color: rgba(var(--accent-rgb), .3)
+        }
+
+        .builder-item .bi-icon {
+            font-size: 20px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--card);
+            border-radius: 8px
+        }
+
+        .builder-item .bi-info {
+            flex: 1
+        }
+
+        .builder-item .bi-name {
+            font-weight: 700;
+            font-size: 12px
+        }
+
+        .builder-item .bi-meta {
+            font-size: 10px;
+            color: var(--muted)
+        }
+
+        .builder-item .bi-cost {
+            font-family: var(--mono);
+            font-weight: 800;
+            font-size: 14px;
+            color: var(--green)
+        }
+
+        .builder-item .bi-remove {
+            background: none;
+            border: none;
+            color: var(--red);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 4px
+        }
+
+        .builder-item .bi-remove:hover {
+            background: rgba(250, 30, 78, .15)
+        }
+
+        /* SLIDER */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            outline: none
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            box-shadow: 0 0 8px var(--accent-glow)
+        }
+
+        /* EU LINKS */
+        .eu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 8px
+        }
+
+        .eu-item {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            transition: all .2s;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, .15)
+        }
+
+        .eu-item:hover {
+            border-color: rgba(var(--accent-rgb), .4);
+            transform: translateY(-2px);
+            box-shadow: 0 0 16px rgba(var(--accent-rgb), .1)
+        }
+
+        .eu-item .eu-name {
+            font-weight: 700;
+            font-size: 12px
+        }
+
+        .eu-item .eu-count {
+            font-size: 10px;
+            color: var(--muted)
+        }
+
+        /* RESPONSIVE */
+        @media(max-width:900px) {
+            .kpi-row {
+                grid-template-columns: repeat(3, 1fr)
+            }
+
+            .grid-2,
+            .grid-3 {
+                grid-template-columns: 1fr
+            }
+        }
+
+        @media(max-width:600px) {
+            .kpi-row {
+                grid-template-columns: repeat(2, 1fr)
+            }
+
+            .tabs {
+                flex-wrap: wrap
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <div class="header">
+        <button class="back-btn" onclick="window.location.href='../hub/index.html'">← Hub</button>
+        <h1>💰 DkZ Cost Command Center</h1>
+        <p>Universeller Kostenrechner • Budget-Builder • Provider-Vergleich • EU Alternatives</p>
+    </div>
+    <!-- ALERT STATUS BAR -->
+    <div
+        style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;font-size:11px;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)">
+        <div style="display:flex;align-items:center;gap:6px">
+            <div
+                style="width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;box-shadow:0 0 6px var(--green)">
+            </div><span style="color:var(--green);font-weight:700">SCHUTZ AKTIV</span>
+        </div>
+        <div style="width:1px;height:20px;background:var(--border)"></div>
+        <span style="color:var(--muted)">🔒 Deletion Protection</span>
+        <span style="color:var(--muted)">📊 Cost Spike Detection</span>
+        <span style="color:var(--muted)">⚠️ Rate Change Alerts</span>
+        <span style="color:var(--muted)">🚫 Zero-Rate Warnings</span>
+        <span style="color:var(--muted)">👤 Dev-Hour: 15€/h</span>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-row">
+        <div class="kpi">
+            <div class="val" style="color:var(--green)" id="kpi-today">0.00€</div>
+            <div class="lbl">Heute</div>
+        </div>
+        <div class="kpi">
+            <div class="val" style="color:var(--blue)" id="kpi-week">0.00€</div>
+            <div class="lbl">Diese Woche</div>
+        </div>
+        <div class="kpi">
+            <div class="val" style="color:var(--purple)" id="kpi-month">0.00€</div>
+            <div class="lbl">Dieser Monat</div>
+        </div>
+        <div class="kpi">
+            <div class="val" style="color:var(--yellow)" id="kpi-budget">50.00€</div>
+            <div class="lbl">Tages-Budget</div>
+        </div>
+        <div class="kpi">
+            <div class="val" style="color:var(--green)" id="kpi-remaining">50.00€</div>
+            <div class="lbl">Verbleibend</div>
+        </div>
+        <div class="kpi">
+            <div class="val" style="color:var(--accent)" id="kpi-models">16</div>
+            <div class="lbl">Modelle</div>
+        </div>
+    </div>
+
+    <!-- TAB NAV -->
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('calc')">🧮 Token-Rechner</button>
+        <button class="tab" onclick="switchTab('builder')">🏗️ Projekt-Builder</button>
+        <button class="tab" onclick="switchTab('compare')">⚖️ Provider-Vergleich</button>
+        <button class="tab" onclick="switchTab('sim')">📊 Kosten-Simulator</button>
+        <button class="tab" onclick="switchTab('budget')">🎯 Budget-Manager</button>
+        <button class="tab" onclick="switchTab('eu')">🇪🇺 EU Alternatives</button>
+    </div>
+
+    <!-- TAB 1: TOKEN CALCULATOR -->
+    <div class="tab-content active" id="tab-calc">
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-title">🧮 Universeller Token-Rechner</div>
+                <div class="form-row">
+                    <label>Provider</label>
+                    <select id="calc-provider" onchange="updateModelList()">
+                        <option value="openrouter">OpenRouter (alle Modelle)</option>
+                        <option value="openai">OpenAI Direkt</option>
+                        <option value="google">Google AI Direkt</option>
+                        <option value="anthropic">Anthropic Direkt</option>
+                        <option value="mistral">Mistral Direkt</option>
+                        <option value="custom">Custom / Self-Hosted</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label>Modell</label>
+                    <select id="calc-model" onchange="calcTokenCost()"></select>
+                </div>
+                <div class="form-row">
+                    <label>Input Tokens</label>
+                    <input type="number" id="calc-input" value="1000" oninput="calcTokenCost()">
+                </div>
+                <div class="form-row">
+                    <label>Output Tokens</label>
+                    <input type="number" id="calc-output" value="500" oninput="calcTokenCost()">
+                </div>
+                <div class="form-row">
+                    <label>Anzahl Anfragen</label>
+                    <input type="number" id="calc-requests" value="1" oninput="calcTokenCost()">
+                </div>
+                <button class="btn btn-accent" onclick="calcTokenCost()" style="width:100%">Berechnen</button>
+                <div class="result" id="calc-result">
+                    <div class="big" id="calc-total">0.0000€</div>
+                    <div class="sub" id="calc-breakdown">Input: 0.0000€ • Output: 0.0000€</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">📋 Preistabelle — Alle Modelle</div>
+                <div style="max-height:420px;overflow-y:auto">
+                    <table class="tbl" id="price-table">
+                        <thead>
+                            <tr>
+                                <th>Modell</th>
+                                <th>Provider</th>
+                                <th class="num">Input/1K</th>
+                                <th class="num">Output/1K</th>
+                            </tr>
+                        </thead>
+                        <tbody id="price-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: PROJECT BUILDER -->
+    <div class="tab-content" id="tab-builder">
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-title">🏗️ Universeller Projekt-Kosten-Builder</div>
+                <p style="font-size:11px;color:var(--muted);margin-bottom:14px">Stelle dein Projekt zusammen —
+                    KI-Modelle, Agenten, Workflows, Infrastruktur. Der Builder berechnet die Gesamtkosten.</p>
+                <div class="form-row">
+                    <label>Komponente hinzufügen</label>
+                    <select id="bld-type">
+                        <option value="ai">🤖 KI-Modell / Agent</option>
+                        <option value="workflow">⚡ Workflow / Automation</option>
+                        <option value="infra">🖥️ Infrastruktur</option>
+                        <option value="storage">💾 Speicher</option>
+                        <option value="api">🔗 Externe API</option>
+                        <option value="human">👤 Arbeitszeit</option>
+                    </select>
+                </div>
+                <div id="bld-ai-fields">
+                    <div class="grid-2">
+                        <div class="form-row"><label>Modell</label><select id="bld-model"
+                                onchange="bldUpdatePreview()"></select></div>
+                        <div class="form-row"><label>Tokens/Anfrage (avg)</label><input type="number" id="bld-tokens"
+                                value="2000" oninput="bldUpdatePreview()"></div>
+                        <div class="form-row"><label>Anfragen/Tag</label><input type="number" id="bld-daily" value="50"
+                                oninput="bldUpdatePreview()"></div>
+                        <div class="form-row"><label>Laufzeit (Tage)</label><input type="number" id="bld-days"
+                                value="30" oninput="bldUpdatePreview()"></div>
+                    </div>
+                </div>
+                <div class="result" style="margin-bottom:12px">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <div><span style="font-size:11px;color:var(--muted)">Preview:</span> <span id="bld-preview"
+                                style="font-family:var(--mono);font-weight:700;color:var(--yellow)">0.00€</span></div>
+                        <button class="btn btn-green" onclick="bldAdd()">+ Hinzufügen</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">📦 Projekt-Zusammenfassung</div>
+                <div id="bld-items"></div>
+                <div class="result" style="margin-top:12px;border:1px solid rgba(0,255,136,.3)">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <div>
+                            <div class="big" id="bld-total">0.00€</div>
+                            <div class="sub" id="bld-total-sub">Füge Komponenten hinzu</div>
+                        </div>
+                        <div style="text-align:right">
+                            <div style="font-size:20px;font-weight:800;color:var(--yellow)" id="bld-monthly">0.00€</div>
+                            <div style="font-size:10px;color:var(--muted)">pro Monat</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:12px">
+                    <button class="btn btn-blue" onclick="bldExport()" style="flex:1">📋 Export JSON</button>
+                    <button class="btn btn-accent" onclick="bldClear()" style="flex:1">🗑️ Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: PROVIDER COMPARISON -->
+    <div class="tab-content" id="tab-compare">
+        <div class="card">
+            <div class="card-title">⚖️ Provider-Vergleich — OpenRouter vs. Direkt-API</div>
+            <p style="font-size:11px;color:var(--muted);margin-bottom:14px">Vergleiche Kosten für identische Workloads
+                bei verschiedenen Providern. OpenRouter hat keinen Aufpreis — gleiche Preise wie direkt.</p>
+            <div class="grid-3" style="margin-bottom:14px">
+                <div class="form-row"><label>Modell-Klasse</label>
+                    <select id="cmp-class" onchange="runCompare()">
+                        <option value="budget">Budget (Llama, Gemma, DeepSeek)</option>
+                        <option value="mid">Mittelklasse (GPT-4o, Gemini Flash)</option>
+                        <option value="premium" selected>Premium (GPT-5, Claude 4, Gemini Pro)</option>
+                        <option value="ultra">Ultra (GPT-5 Pro, Claude Opus)</option>
+                    </select>
+                </div>
+                <div class="form-row"><label>Tokens/Tag</label><input type="number" id="cmp-tokens" value="100000"
+                        oninput="runCompare()"></div>
+                <div class="form-row"><label>Tage</label><input type="number" id="cmp-days" value="30"
+                        oninput="runCompare()"></div>
+            </div>
+            <table class="tbl" id="cmp-table">
+                <thead>
+                    <tr>
+                        <th>Modell</th>
+                        <th>Provider</th>
+                        <th class="num">Input/1K</th>
+                        <th class="num">Output/1K</th>
+                        <th class="num">Kosten/Tag</th>
+                        <th class="num">Gesamt</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="cmp-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 4: COST SIMULATOR -->
+    <div class="tab-content" id="tab-sim">
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-title">📊 Workload-Simulator</div>
+                <div class="form-row">
+                    <label>Szenario</label>
+                    <select id="sim-scenario" onchange="runSim()">
+                        <option value="solo">Solo-Entwickler (light)</option>
+                        <option value="team">Team (3-5 Agents)</option>
+                        <option value="heavy" selected>Heavy Usage (10+ Agents)</option>
+                        <option value="enterprise">Enterprise (50+ Agents)</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                </div>
+                <div class="form-row"><label>Agenten / Bots aktiv</label><input type="range" id="sim-agents" min="1"
+                        max="100" value="10"
+                        oninput="document.getElementById('sim-agents-val').textContent=this.value;runSim()"><span
+                        id="sim-agents-val" style="font-family:var(--mono);font-size:12px;margin-left:8px">10</span>
+                </div>
+                <div class="form-row"><label>Anfragen/Agent/Tag</label><input type="range" id="sim-req" min="1"
+                        max="500" value="50"
+                        oninput="document.getElementById('sim-req-val').textContent=this.value;runSim()"><span
+                        id="sim-req-val" style="font-family:var(--mono);font-size:12px;margin-left:8px">50</span></div>
+                <div class="form-row"><label>Avg Tokens/Anfrage</label><input type="range" id="sim-tok" min="100"
+                        max="10000" value="2000" step="100"
+                        oninput="document.getElementById('sim-tok-val').textContent=this.value;runSim()"><span
+                        id="sim-tok-val" style="font-family:var(--mono);font-size:12px;margin-left:8px">2000</span>
+                </div>
+                <div class="form-row"><label>Mix: Budget-Modelle</label><input type="range" id="sim-budget" min="0"
+                        max="100" value="30" oninput="runSim()"> <span style="font-size:10px;color:var(--muted)"
+                        id="sim-mix-info">30% Budget • 50% Mid • 20% Premium</span></div>
+                <div class="form-row"><label>Mix: Mid-Modelle</label><input type="range" id="sim-mid" min="0" max="100"
+                        value="50" oninput="runSim()"></div>
+            </div>
+            <div class="card">
+                <div class="card-title">📈 Prognose</div>
+                <div class="result" style="border:1px solid rgba(0,255,136,.3)">
+                    <div style="display:flex;justify-content:space-between">
+                        <div>
+                            <div style="font-size:10px;color:var(--muted)">PRO TAG</div>
+                            <div style="font-size:24px;font-weight:800;color:var(--yellow)" id="sim-daily">0.00€</div>
+                        </div>
+                        <div>
+                            <div style="font-size:10px;color:var(--muted)">PRO WOCHE</div>
+                            <div style="font-size:24px;font-weight:800;color:var(--blue)" id="sim-weekly">0.00€</div>
+                        </div>
+                        <div>
+                            <div style="font-size:10px;color:var(--muted)">PRO MONAT</div>
+                            <div style="font-size:24px;font-weight:800;color:var(--green)" id="sim-monthly">0.00€</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top:14px">
+                    <div style="font-size:11px;font-weight:700;margin-bottom:6px">Kostenverteilung</div>
+                    <div id="sim-bars"></div>
+                </div>
+                <div class="result" style="margin-top:12px">
+                    <div style="font-size:11px;font-weight:700;margin-bottom:8px">💡 Optimierungsvorschläge</div>
+                    <div id="sim-tips" style="font-size:11px;color:var(--muted)"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 5: BUDGET MANAGER -->
+    <div class="tab-content" id="tab-budget">
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-title">🎯 Budget konfigurieren</div>
+                <div class="form-row"><label>Tages-Budget (€)</label><input type="number" id="bdg-daily" value="50"
+                        oninput="updateBudget()"></div>
+                <div class="form-row"><label>Wochen-Budget (€)</label><input type="number" id="bdg-weekly" value="200"
+                        oninput="updateBudget()"></div>
+                <div class="form-row"><label>Monats-Budget (€)</label><input type="number" id="bdg-monthly" value="500"
+                        oninput="updateBudget()"></div>
+                <div class="form-row"><label>Warnung bei (%)</label><input type="number" id="bdg-warn" value="80"
+                        oninput="updateBudget()"></div>
+                <div class="form-row"><label>Hard-Stop bei (%)</label><input type="number" id="bdg-stop" value="100"
+                        oninput="updateBudget()"></div>
+                <button class="btn btn-green" onclick="saveBudget()" style="width:100%;margin-top:8px">💾 Budget
+                    speichern in cost-calculator.json</button>
+            </div>
+            <div class="card">
+                <div class="card-title">📊 Budget-Status</div>
+                <div id="bdg-status">
+                    <div style="margin-bottom:14px">
+                        <div style="display:flex;justify-content:space-between;font-size:11px">
+                            <span>Tages-Budget</span><span id="bdg-d-pct" style="font-weight:700">0%</span>
+                        </div>
+                        <div class="prog-bar">
+                            <div class="prog-fill" id="bdg-d-fill" style="width:0%;background:var(--green)"></div>
+                        </div>
+                        <div style="font-size:10px;color:var(--muted);margin-top:2px"><span id="bdg-d-used">0.00€</span>
+                            / <span id="bdg-d-total">50.00€</span></div>
+                    </div>
+                    <div style="margin-bottom:14px">
+                        <div style="display:flex;justify-content:space-between;font-size:11px">
+                            <span>Wochen-Budget</span><span id="bdg-w-pct" style="font-weight:700">0%</span>
+                        </div>
+                        <div class="prog-bar">
+                            <div class="prog-fill" id="bdg-w-fill" style="width:0%;background:var(--blue)"></div>
+                        </div>
+                        <div style="font-size:10px;color:var(--muted);margin-top:2px"><span id="bdg-w-used">0.00€</span>
+                            / <span id="bdg-w-total">200.00€</span></div>
+                    </div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:11px">
+                            <span>Monats-Budget</span><span id="bdg-m-pct" style="font-weight:700">0%</span>
+                        </div>
+                        <div class="prog-bar">
+                            <div class="prog-fill" id="bdg-m-fill" style="width:0%;background:var(--purple)"></div>
+                        </div>
+                        <div style="font-size:10px;color:var(--muted);margin-top:2px"><span id="bdg-m-used">0.00€</span>
+                            / <span id="bdg-m-total">500.00€</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 6: EU ALTERNATIVES -->
+    <div class="tab-content" id="tab-eu">
+        <div class="card">
+            <div class="card-title">🇪🇺 European Alternatives — by The Morpheus</div>
+            <p style="font-size:11px;color:var(--muted);margin-bottom:14px">Kuratierte europäische Alternativen zu
+                US-Diensten — Datenschutz, Open Source, DSGVO-konform. <a href="https://european-alternatives.eu"
+                    target="_blank">european-alternatives.eu →</a></p>
+            <div class="eu-grid" id="eu-grid"></div>
+        </div>
+        <div class="grid-2" style="margin-top:12px">
+            <div class="card">
+                <div class="card-title">📰 MorphReader — News Feed</div>
+                <p style="font-size:11px;color:var(--muted);margin-bottom:10px">Algorithmus-freier RSS-Reader von The
+                    Morpheus. Keine Tracker, eigene Feeds, Audio-Autoplay.</p>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">
+                    <span class="badge badge-green">RSS Feed Management</span>
+                    <span class="badge badge-blue">Audio TTS</span>
+                    <span class="badge badge-yellow">Read Tracking</span>
+                    <span class="badge badge-purple">Algorithm-free</span>
+                    <span class="badge badge-red">Dark Mode</span>
+                </div>
+                <a href="https://mwm.ai/morphreader" target="_blank" class="btn btn-accent"
+                    style="display:block;text-align:center">MorphReader öffnen →</a>
+            </div>
+            <div class="card">
+                <div class="card-title">🤖 GitHub Models — KI-Katalog</div>
+                <p style="font-size:11px;color:var(--muted);margin-bottom:10px">Aktueller Stand aller KI-Modelle —
+                    filterbar nach Hersteller und Kategorie.</p>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">
+                    <span class="badge badge-green">OpenAI</span>
+                    <span class="badge badge-blue">Anthropic</span>
+                    <span class="badge badge-yellow">Google</span>
+                    <span class="badge badge-purple">xAI</span>
+                    <span class="badge badge-red">Mistral</span>
+                </div>
+                <a href="https://github.com/marketplace/models" target="_blank" class="btn btn-blue"
+                    style="display:block;text-align:center">GitHub Models →</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        // ═══════════════════════════════════════
+        // MODEL DATABASE — Universell
+        // ═══════════════════════════════════════
+        const MODELS = [
+            // OpenRouter
+            { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'openrouter', input: 0.00125, output: 0.01, tier: 'premium' },
+            { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'openrouter', input: 0.00015, output: 0.0006, tier: 'mid' },
+            { id: 'deepseek-v3', name: 'DeepSeek V3', provider: 'openrouter', input: 0.0002, output: 0.0008, tier: 'budget' },
+            { id: 'deepseek-r1', name: 'DeepSeek R1', provider: 'openrouter', input: 0.0008, output: 0.002, tier: 'mid' },
+            { id: 'gpt-5', name: 'GPT-5', provider: 'openrouter', input: 0.002, output: 0.008, tier: 'premium' },
+            { id: 'gpt-5-pro', name: 'GPT-5 Pro', provider: 'openrouter', input: 0.01, output: 0.03, tier: 'ultra' },
+            { id: 'claude-4-sonnet', name: 'Claude 4 Sonnet', provider: 'openrouter', input: 0.003, output: 0.015, tier: 'premium' },
+            { id: 'claude-4-opus', name: 'Claude 4 Opus', provider: 'openrouter', input: 0.015, output: 0.075, tier: 'ultra' },
+            { id: 'grok-3', name: 'Grok 3', provider: 'openrouter', input: 0.003, output: 0.015, tier: 'premium' },
+            { id: 'llama-4-maverick', name: 'Llama 4 Maverick', provider: 'openrouter', input: 0.0002, output: 0.0008, tier: 'budget' },
+            // Direct APIs
+            { id: 'gpt-4o', name: 'GPT-4o', provider: 'openai', input: 0.005, output: 0.015, tier: 'premium' },
+            { id: 'claude-sonnet', name: 'Claude Sonnet', provider: 'anthropic', input: 0.003, output: 0.015, tier: 'premium' },
+            { id: 'mistral-large', name: 'Mistral Large', provider: 'mistral', input: 0.002, output: 0.006, tier: 'mid' },
+            { id: 'mistral-nemo', name: 'Mistral Nemo', provider: 'mistral', input: 0.00015, output: 0.00015, tier: 'budget' },
+            { id: 'gemma-2', name: 'Gemma 2', provider: 'google', input: 0.0001, output: 0.0001, tier: 'budget' },
+            { id: 'llama-3.1-8b', name: 'Llama 3.1 8B', provider: 'openrouter', input: 0.00005, output: 0.00005, tier: 'budget' },
+        ];
+
+        // ═══════════════════════════════════════
+        // TAB SWITCHING
+        // ═══════════════════════════════════════
+        function switchTab(id) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + id).classList.add('active');
+        }
+
+        // ═══════════════════════════════════════
+        // TOKEN CALCULATOR
+        // ═══════════════════════════════════════
+        function updateModelList() {
+            const prov = document.getElementById('calc-provider').value;
+            const sel = document.getElementById('calc-model');
+            sel.innerHTML = '';
+            const filtered = prov === 'custom' - MODELS : MODELS.filter(m => prov === 'openrouter' - true : m.provider === prov);
+            filtered.forEach(m => {
+                const o = document.createElement('option');
+                o.value = m.id; o.textContent = `${m.name} (${m.provider})`;
+                sel.appendChild(o);
+            });
+            calcTokenCost();
+        }
+        function calcTokenCost() {
+            const mid = document.getElementById('calc-model').value;
+            const m = MODELS.find(x => x.id === mid);
+            if (!m) return;
+            const inp = parseInt(document.getElementById('calc-input').value) || 0;
+            const out = parseInt(document.getElementById('calc-output').value) || 0;
+            const req = parseInt(document.getElementById('calc-requests').value) || 1;
+            const ic = (inp / 1000) * m.input * req;
+            const oc = (out / 1000) * m.output * req;
+            const total = ic + oc;
+            document.getElementById('calc-total').textContent = total.toFixed(4) + '€';
+            document.getElementById('calc-breakdown').textContent = `Input: ${ic.toFixed(4)}€ • Output: ${oc.toFixed(4)}€ • ${req} Anfrage(n) • ${((inp + out) * req).toLocaleString()} Tokens gesamt`;
+        }
+        function buildPriceTable() {
+            const tb = document.getElementById('price-tbody');
+            tb.innerHTML = '';
+            MODELS.sort((a, b) => a.input - b.input).forEach(m => {
+                const tierBadge = { budget: 'badge-green', mid: 'badge-blue', premium: 'badge-yellow', ultra: 'badge-red' }[m.tier] || 'badge-green';
+                tb.innerHTML += `<tr><td>${m.name} <span class="badge ${tierBadge}">${m.tier}</span></td><td>${m.provider}</td><td class="num">$${m.input}</td><td class="num">$${m.output}</td></tr>`;
+            });
+        }
+
+        // ═══════════════════════════════════════
+        // PROJECT BUILDER
+        // ═══════════════════════════════════════
+        let builderItems = [];
+        const COMPONENT_TYPES = {
+            ai: { icon: '🤖', label: 'KI-Modell' },
+            workflow: { icon: '⚡', label: 'Workflow' },
+            infra: { icon: '🖥️', label: 'Infrastruktur' },
+            storage: { icon: '💾', label: 'Speicher' },
+            api: { icon: '🔗', label: 'API' },
+            human: { icon: '👤', label: 'Arbeitszeit' }
+        };
+        const DEV_HOUR_RATE = 15.00; // Interner Tracking-Stundensatz
+
+        function bldUpdatePreview() {
+            const mid = document.getElementById('bld-model').value;
+            const m = MODELS.find(x => x.id === mid);
+            if (!m) return;
+            const tok = parseInt(document.getElementById('bld-tokens').value) || 0;
+            const daily = parseInt(document.getElementById('bld-daily').value) || 0;
+            const days = parseInt(document.getElementById('bld-days').value) || 1;
+            const cost = (tok / 1000) * (m.input + m.output) * daily * days;
+            document.getElementById('bld-preview').textContent = cost.toFixed(2) + '€ für ' + days + ' Tage';
+        }
+        function bldAdd() {
+            const type = document.getElementById('bld-type').value;
+            if (type === 'human') { bldAddHuman(); return; }
+            const mid = document.getElementById('bld-model').value;
+            const m = MODELS.find(x => x.id === mid);
+            if (!m) return;
+            const tok = parseInt(document.getElementById('bld-tokens').value) || 0;
+            const daily = parseInt(document.getElementById('bld-daily').value) || 0;
+            const days = parseInt(document.getElementById('bld-days').value) || 1;
+            const cost = (tok / 1000) * (m.input + m.output) * daily * days;
+            const monthly = (tok / 1000) * (m.input + m.output) * daily * 30;
+            const ct = COMPONENT_TYPES[type] || COMPONENT_TYPES.ai;
+            builderItems.push({ name: m.name, provider: m.provider, tier: m.tier, tok, daily, days, cost, monthly, icon: ct.icon, type: ct.label });
+            bldRender();
+        }
+        function bldAddHuman() {
+            const hours = parseFloat(prompt('Stunden pro Tag:') || '0');
+            const days = parseInt(prompt('Anzahl Tage:') || '0');
+            if (!hours || !days) return;
+            const cost = hours * DEV_HOUR_RATE * days;
+            const monthly = hours * DEV_HOUR_RATE * 30;
+            builderItems.push({ name: `Entwicklerzeit (${hours}h/Tag)`, provider: 'intern', tier: 'time', tok: 0, daily: hours, days, cost, monthly, icon: '👤', type: 'Arbeitszeit' });
+            bldRender();
+        }
+        function bldRemove(i) { builderItems.splice(i, 1); bldRender(); }
+        function bldClear() { builderItems = []; bldRender(); }
+        function bldRender() {
+            const cont = document.getElementById('bld-items');
+            cont.innerHTML = '';
+            let total = 0, totalM = 0;
+            builderItems.forEach((item, i) => {
+                total += item.cost; totalM += item.monthly;
+                const tierBadge = { budget: 'badge-green', mid: 'badge-blue', premium: 'badge-yellow', ultra: 'badge-red', time: 'badge-purple' }[item.tier] || 'badge-green';
+                const meta = item.type === 'Arbeitszeit'
+                    - `${item.provider} • ${item.daily}h/Tag • ${item.days}d • ${DEV_HOUR_RATE}€/h`
+                    : `${item.provider} • ${item.daily}×/Tag • ${item.tok} tok • ${item.days}d`;
+                cont.innerHTML += `<div class="builder-item"><div class="bi-icon">${item.icon}</div><div class="bi-info"><div class="bi-name">${item.name} <span class="badge ${tierBadge}">${item.tier}</span></div><div class="bi-meta">${meta}</div></div><div class="bi-cost">${item.cost.toFixed(2)}€</div><button class="bi-remove" onclick="bldRemove(${i})">✕</button></div>`;
+            });
+            if (builderItems.length === 0) {
+                cont.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:11px">Keine Komponenten — füge KI-Modelle, Agenten, Arbeitsstunden etc. hinzu</div>';
+            }
+            document.getElementById('bld-total').textContent = total.toFixed(2) + '€';
+            document.getElementById('bld-total-sub').textContent = builderItems.length + ' Komponenten • Gesamtlaufzeit';
+            document.getElementById('bld-monthly').textContent = totalM.toFixed(2) + '€';
+        }
+        function bldExport() {
+            const data = { project: 'DkZ Cost Estimate', date: new Date().toISOString().split('T')[0], items: builderItems, total: builderItems.reduce((s, i) => s + i.cost, 0), devHourRate: DEV_HOUR_RATE };
+            navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+            alert('📋 Projekt-Daten in Zwischenablage kopiert!');
+        }
+
+        // ═══════════════════════════════════════
+        // PROVIDER COMPARISON
+        // ═══════════════════════════════════════
+        function runCompare() {
+            const cls = document.getElementById('cmp-class').value;
+            const tokDay = parseInt(document.getElementById('cmp-tokens').value) || 0;
+            const days = parseInt(document.getElementById('cmp-days').value) || 1;
+            const filtered = MODELS.filter(m => cls === 'budget' - m.tier === 'budget' : cls === 'mid' - m.tier === 'mid' || m.tier === 'budget' : cls === 'premium' - m.tier === 'premium' || m.tier === 'mid' : m.tier === 'ultra' || m.tier === 'premium');
+            const tb = document.getElementById('cmp-tbody');
+            tb.innerHTML = '';
+            const results = filtered.map(m => {
+                const daily = (tokDay / 1000) * ((m.input + m.output) / 2);
+                const total = daily * days;
+                return { ...m, daily, total };
+            }).sort((a, b) => a.total - b.total);
+            const cheapest = results[0]?.total || 0;
+            results.forEach((r, i) => {
+                const saving = i === 0 - '<span class="badge badge-green">GÜNSTIGSTER</span>' : `+${((r.total - cheapest) / cheapest * 100).toFixed(0)}%`;
+                tb.innerHTML += `<tr><td>${r.name} <span class="badge badge-${r.tier === 'budget' - 'green' : r.tier === 'mid' - 'blue' : r.tier === 'premium' - 'yellow' : 'red'}">${r.tier}</span></td><td>${r.provider}</td><td class="num">$${r.input}</td><td class="num">$${r.output}</td><td class="num">${r.daily.toFixed(4)}€</td><td class="num highlight">${r.total.toFixed(2)}€</td><td>${saving}</td></tr>`;
+            });
+        }
+
+        // ═══════════════════════════════════════
+        // COST SIMULATOR
+        // ═══════════════════════════════════════
+        function runSim() {
+            const agents = parseInt(document.getElementById('sim-agents').value) || 1;
+            const req = parseInt(document.getElementById('sim-req').value) || 1;
+            const tok = parseInt(document.getElementById('sim-tok').value) || 1000;
+            const budgetPct = parseInt(document.getElementById('sim-budget').value) || 0;
+            const midPct = parseInt(document.getElementById('sim-mid').value) || 0;
+            const premPct = Math.max(0, 100 - budgetPct - midPct);
+            document.getElementById('sim-mix-info').textContent = `${budgetPct}% Budget • ${midPct}% Mid • ${premPct}% Premium`;
+            const avgBudget = 0.0003, avgMid = 0.003, avgPrem = 0.015;
+            const avgCostPer1k = (budgetPct / 100 * avgBudget) + (midPct / 100 * avgMid) + (premPct / 100 * avgPrem);
+            const dailyTokens = agents * req * tok;
+            const daily = (dailyTokens / 1000) * avgCostPer1k;
+            const weekly = daily * 7;
+            const monthly = daily * 30;
+            document.getElementById('sim-daily').textContent = daily.toFixed(2) + '€';
+            document.getElementById('sim-weekly').textContent = weekly.toFixed(2) + '€';
+            document.getElementById('sim-monthly').textContent = monthly.toFixed(2) + '€';
+            // Bars
+            const bars = document.getElementById('sim-bars');
+            const budgetCost = daily * (budgetPct / 100), midCost = daily * (midPct / 100), premCost = daily * (premPct / 100);
+            bars.innerHTML = `
+        <div style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;font-size:10px"><span style="color:var(--green)">Budget Models</span><span>${(budgetCost * 30).toFixed(2)}€/mo</span></div><div class="prog-bar"><div class="prog-fill" style="width:${budgetPct}%;background:var(--green)"></div></div></div>
+        <div style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;font-size:10px"><span style="color:var(--blue)">Mid Models</span><span>${(midCost * 30).toFixed(2)}€/mo</span></div><div class="prog-bar"><div class="prog-fill" style="width:${midPct}%;background:var(--blue)"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:10px"><span style="color:var(--yellow)">Premium Models</span><span>${(premCost * 30).toFixed(2)}€/mo</span></div><div class="prog-bar"><div class="prog-fill" style="width:${premPct}%;background:var(--yellow)"></div></div></div>`;
+            // Tips
+            const tips = document.getElementById('sim-tips');
+            let tipsList = [];
+            if (premPct > 50) tipsList.push('⚡ Tipp: Nutze DeepSeek V3 oder Llama 4 für Routineaufgaben — 98% günstiger als Premium.');
+            if (monthly > 100) tipsList.push('💰 Tipp: Bei ' + monthly.toFixed(0) + '€/Monat lohnt sich ein OpenRouter Credit-Bulk-Kauf.');
+            if (agents > 20) tipsList.push('🤖 Tipp: Caching-Layer (Redis) kann bis zu 60% Token-Kosten sparen bei wiederholten Queries.');
+            if (budgetPct < 20) tipsList.push('🎯 Tipp: Erhöhe Budget-Model-Anteil — für Routing, Parsing und einfache Tasks reichen günstige Modelle.');
+            if (tipsList.length === 0) tipsList.push('✅ Dein Setup ist kosteneffizient!');
+            tips.innerHTML = tipsList.map(t => `<div style="margin-bottom:4px">${t}</div>`).join('');
+        }
+
+        // ═══════════════════════════════════════
+        // BUDGET MANAGER
+        // ═══════════════════════════════════════
+        function updateBudget() {
+            const d = parseFloat(document.getElementById('bdg-daily').value) || 0;
+            const w = parseFloat(document.getElementById('bdg-weekly').value) || 0;
+            const m = parseFloat(document.getElementById('bdg-monthly').value) || 0;
+            document.getElementById('bdg-d-total').textContent = d.toFixed(2) + '€';
+            document.getElementById('bdg-w-total').textContent = w.toFixed(2) + '€';
+            document.getElementById('bdg-m-total').textContent = m.toFixed(2) + '€';
+            document.getElementById('kpi-budget').textContent = d.toFixed(2) + '€';
+            document.getElementById('kpi-remaining').textContent = d.toFixed(2) + '€';
+        }
+        function saveBudget() {
+            const data = { daily: parseFloat(document.getElementById('bdg-daily').value), weekly: parseFloat(document.getElementById('bdg-weekly').value), monthly: parseFloat(document.getElementById('bdg-monthly').value), warn: parseInt(document.getElementById('bdg-warn').value), stop: parseInt(document.getElementById('bdg-stop').value) };
+            navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+            alert('📋 Budget-Konfiguration in Zwischenablage kopiert!\n\nFüge die Werte in cost-calculator.json → budgets ein.');
+        }
+
+        // ═══════════════════════════════════════
+        // EU ALTERNATIVES
+        // ═══════════════════════════════════════
+        const EU_CATS = [
+            { name: 'Cloud Computing', count: 12, url: 'https://european-alternatives.eu/category/cloud-computing-platforms', icon: '☁️' },
+            { name: 'Email Providers', count: 20, url: 'https://european-alternatives.eu/category/email-providers', icon: '📧' },
+            { name: 'VPS Hosters', count: 23, url: 'https://european-alternatives.eu/category/vps-virtual-private-server-hosters', icon: '🖥️' },
+            { name: 'Search Engines', count: 6, url: 'https://european-alternatives.eu/category/search-engines', icon: '🔍' },
+            { name: 'CDN Services', count: 6, url: 'https://european-alternatives.eu/category/cdn-content-delivery-network', icon: '🌐' },
+            { name: 'Domain Registrars', count: 17, url: 'https://european-alternatives.eu/category/domain-name-registrar', icon: '🏷️' },
+            { name: 'File Hosting', count: 11, url: 'https://european-alternatives.eu/category/file-hosting-services', icon: '📁' },
+            { name: 'Time Tracking', count: 13, url: 'https://european-alternatives.eu/category/timetracking-apps', icon: '⏱️' },
+            { name: 'Web Analytics', count: 8, url: 'https://european-alternatives.eu/category/web-analytics-services', icon: '📊' },
+            { name: 'Uptime Monitoring', count: 12, url: 'https://european-alternatives.eu/category/uptime-monitoring-services', icon: '🔔' },
+            { name: 'Translation', count: 5, url: 'https://european-alternatives.eu/category/machine-translation-services', icon: '🌍' },
+            { name: 'Object Storage', count: 8, url: 'https://european-alternatives.eu/category/object-storage-providers', icon: '💾' },
+            { name: 'Transactional Email', count: 7, url: 'https://european-alternatives.eu/category/transactional-email-service', icon: '📬' },
+            { name: 'Navigation', count: 8, url: 'https://european-alternatives.eu/category/navigation-apps', icon: '🗺️' },
+            { name: 'Microblogging', count: 5, url: 'https://european-alternatives.eu/category/microblogging-services', icon: '💬' },
+        ];
+        function buildEU() {
+            const grid = document.getElementById('eu-grid');
+            grid.innerHTML = '';
+            EU_CATS.forEach(c => {
+                grid.innerHTML += `<div class="eu-item" onclick="window.open('${c.url}','_blank')"><div class="eu-name">${c.icon} ${c.name}</div><div class="eu-count">${c.count} Alternativen →</div></div>`;
+            });
+        }
+
+        // ═══════════════════════════════════════
+        // INIT
+        // ═══════════════════════════════════════
+        function init() {
+            updateModelList();
+            buildPriceTable();
+            // Builder model list
+            const bSel = document.getElementById('bld-model');
+            MODELS.forEach(m => { const o = document.createElement('option'); o.value = m.id; o.textContent = `${m.name} (${m.provider})`; bSel.appendChild(o); });
+            bldUpdatePreview();
+            runCompare();
+            runSim();
+            updateBudget();
+            buildEU();
+        }
+        init();
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

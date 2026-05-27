@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v1.0.0_01">
+    <meta name="dkz-module" content="nanobot-center">
+    <title>🤖 NanoBot™ Center — DkZ™</title>
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="nanobot-optimized.css">
+</head>
+<body>
+    <div class="bg-mesh"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
+    <header class="header">
+        <a href="../../hub/index.html" class="back-btn">←</a>
+        <h1>🤖 Nano<span>Bot</span>™ Center</h1>
+        <div class="tabs">
+            <button class="tab active" onclick="showPanel('agents',this)">🤖 Agents</button>
+            <button class="tab" onclick="showPanel('chat',this)">💬 Chat</button>
+            <button class="tab" onclick="showPanel('tasks',this)">📋 Tasks</button>
+            <button class="tab" onclick="showPanel('mcp',this)">🔌 MCP</button>
+        </div>
+        <button class="guide-trigger" onclick="startGuide()" title="Interaktiver Guide (Ctrl+G)">📖 Guide</button>
+        <span class="shortcut-badge inactive" id="numLockBadge" title="NumLock OFF = Agenten-Switch (1-7)">⌨ NUM OFF</span>
+    </header>
+    <!-- Onboarding Guide Overlay -->
+    <div class="guide-overlay" id="guideOverlay">
+        <div class="guide-card">
+            <span class="guide-emoji" id="guideEmoji">🤖</span>
+            <div class="guide-title" id="guideTitle">Willkommen im NanoBot™ Center!</div>
+            <div class="guide-text" id="guideText">Hier steuerst du alle 8 KI-Agenten des DEVKiTZ™ Ökosystems. Lass mich dir die wichtigsten Features zeigen!</div>
+            <div class="guide-steps" id="guideSteps"></div>
+            <div class="guide-btns">
+                <button class="guide-btn guide-btn-skip" onclick="closeGuide()">Überspringen</button>
+                <button class="guide-btn guide-btn-primary" id="guideNext" onclick="nextGuideStep()">Weiter →</button>
+            </div>
+        </div>
+    </div>
+    <div class="content">
+        <!-- AGENTS TAB -->
+        <div class="panel active" id="panel-agents">
+            <div class="section">
+                <div class="section-title">🤖 Agent-Übersicht</div>
+                <div class="section-desc">Alle DEVKiTZ™ Agenten — Status, Aufgaben und Steuerung.</div>
+                <div class="agent-grid">
+                    <div class="agent-card" data-theme="nanobot">
+                        <span class="status-badge badge-online">● Online</span>
+                        <span class="agent-shortcut">NUM 1</span>
+                        <div class="agent-icon">⚡</div>
+                        <div class="agent-name">NanoBot™</div>
+                        <div class="agent-desc">Ultra-leichtgewichtiger Chat-Agent. Nutzt nur Flash/Nano-Modelle (~$0.01/1M).</div>
+                        <div class="agent-stats">
+                            <span class="agent-stat">LLM: <b>Gemini Flash Lite</b></span>
+                            <span class="agent-stat">Tasks: <b>0</b></span>
+                        </div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 🔧 Capabilities</div><div class="feat-body"><div class="feat-body-inner" style="font-size:10px;color:var(--muted)">Quick Chat · Fragen · einfache Tasks · Status Reports · Script-Listen</div></div></div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 📋 Letzte Tasks</div><div class="feat-body"><div class="feat-body-inner" style="font-size:10px;color:var(--muted)">— Noch keine Tasks —</div></div></div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 📊 Performance</div><div class="feat-body"><div class="feat-body-inner"><div class="perf-chart"><canvas class="perf-canvas" data-agent="nanobot" width="120" height="32"></canvas><div><div class="perf-stat">Tasks/Tag: <b>—</b></div><div class="perf-stat">Avg: <b>0.8s</b></div></div></div></div></div></div>
+                    </div>
+                    <div class="agent-card" data-theme="picoclaw">
+                        <span class="status-badge badge-online">● Online</span>
+                        <span class="agent-shortcut">NUM 2</span>
+                        <div class="agent-icon">🐾</div>
+                        <div class="agent-name">PicoClaw™</div>
+                        <div class="agent-desc">Wissens-Agent mit FAISS Vektordatenbank. Semantische Suche über DEVKiTZ™ Wiki.</div>
+                        <div class="agent-stats">
+                            <span class="agent-stat">Index: <b>3.800 Docs</b></span>
+                            <span class="agent-stat">Tasks: <b>0</b></span>
+                        </div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 🔧 Capabilities</div><div class="feat-body"><div class="feat-body-inner" style="font-size:10px;color:var(--muted)">Semantische Suche · FAISS Vektoren · Wiki-Abfragen · Iceberg Archiv</div></div></div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 📋 Letzte Tasks</div><div class="feat-body"><div class="feat-body-inner" style="font-size:10px;color:var(--muted)">— Noch keine Tasks —</div></div></div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 📊 Performance</div><div class="feat-body"><div class="feat-body-inner"><div class="perf-chart"><canvas class="perf-canvas" data-agent="picoclaw" width="120" height="32"></canvas><div><div class="perf-stat">Queries/Tag: <b>—</b></div><div class="perf-stat">Avg: <b>1.2s</b></div></div></div></div></div></div>
+                    </div>
+                    <div class="agent-card" data-theme="jamez">
+                        <span class="status-badge badge-online">● Online</span>
+                        <span class="agent-shortcut">NUM 3</span>
+                        <div class="agent-icon">🎯</div>
+                        <div class="agent-name">JAMEZ™</div>
+                        <div class="agent-desc">Guardian Agent — überwacht Constitution, löst R24 aus, coded NICHT.</div>
+                        <div class="agent-stats">
+                            <span class="agent-stat">Score: <b>—</b></span>
+                            <span class="agent-stat">Alerts: <b>0</b></span>
+                        </div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 🔧 Capabilities</div><div class="feat-body"><div class="feat-body-inner" style="font-size:10px;color:var(--muted)">R24 ALARM · Constitution Check · Archiv-Schutz · Quality Gate</div></div></div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 📋 Letzte Tasks</div><div class="feat-body"><div class="feat-body-inner" style="font-size:10px;color:var(--muted)">System Health Check ✅</div></div></div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 📊 Performance</div><div class="feat-body"><div class="feat-body-inner"><div class="perf-chart"><canvas class="perf-canvas" data-agent="jamez" width="120" height="32"></canvas><div><div class="perf-stat">Alerts/Tag: <b>—</b></div><div class="perf-stat">Score: <b>98%</b></div></div></div></div></div></div>
+                    </div>
+                    <div class="agent-card" data-theme="syntex">
+                        <span class="status-badge badge-idle">● Idle</span>
+                        <span class="agent-shortcut">NUM 4</span>
+                        <div class="agent-icon">🔧</div>
+                        <div class="agent-name">SYNTEX™</div>
+                        <div class="agent-desc">NanoBot + PicoClaw kombiniert — Kontext-Retrieval + Quick-Answer.</div>
+                        <div class="agent-stats">
+                            <span class="agent-stat">Mode: <b>Hybrid</b></span>
+                            <span class="agent-stat">Tasks: <b>0</b></span>
+                        </div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 🔧 Capabilities</div><div class="feat-body"><div class="feat-body-inner" style="font-size:10px;color:var(--muted)">Hybrid RAG · Quick-Answer + Kontext · Regelwerk-Analyse</div></div></div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 📋 Letzte Tasks</div><div class="feat-body"><div class="feat-body-inner" style="font-size:10px;color:var(--muted)">— Noch keine Tasks —</div></div></div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 📊 Performance</div><div class="feat-body"><div class="feat-body-inner"><div class="perf-chart"><canvas class="perf-canvas" data-agent="syntex" width="120" height="32"></canvas><div><div class="perf-stat">Tasks/Tag: <b>—</b></div><div class="perf-stat">Avg: <b>1.5s</b></div></div></div></div></div></div>
+                    </div>
+                    <div class="agent-card" data-theme="coderabbit">
+                        <span class="status-badge badge-idle">● Idle</span>
+                        <span class="agent-shortcut">NUM 5</span>
+                        <div class="agent-icon">🐰</div>
+                        <div class="agent-name">CodeRabbit™</div>
+                        <div class="agent-desc">Automatischer Code-Review Agent. Prüft esc(), CSS Variables, Shared Scripts.</div>
+                        <div class="agent-stats">
+                            <span class="agent-stat">Reviews: <b>0</b></span>
+                            <span class="agent-stat">Score: <b>—</b></span>
+                        </div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 🔧 Capabilities</div><div class="feat-body"><div class="feat-body-inner" style="font-size:10px;color:var(--muted)">esc() Check · CSS Variables · Shared Scripts · Code Quality Score</div></div></div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 📋 Letzte Tasks</div><div class="feat-body"><div class="feat-body-inner" style="font-size:10px;color:var(--muted)">— Noch keine Reviews —</div></div></div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 📊 Performance</div><div class="feat-body"><div class="feat-body-inner"><div class="perf-chart"><canvas class="perf-canvas" data-agent="coderabbit" width="120" height="32"></canvas><div><div class="perf-stat">Reviews/Tag: <b>—</b></div><div class="perf-stat">Score: <b>—</b></div></div></div></div></div></div>
+                    </div>
+                    <div class="agent-card" data-theme="openspec">
+                        <span class="status-badge badge-idle">● Idle</span>
+                        <span class="agent-shortcut">NUM 6</span>
+                        <div class="agent-icon">📜</div>
+                        <div class="agent-name">OpenSpec™</div>
+                        <div class="agent-desc">API-Dokumentation Generator. OpenAPI 3.1 Format.</div>
+                        <div class="agent-stats">
+                            <span class="agent-stat">APIs: <b>0</b></span>
+                        </div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 🔧 Capabilities</div><div class="feat-body"><div class="feat-body-inner" style="font-size:10px;color:var(--muted)">OpenAPI 3.1 · Endpoint-Scan · Schema-Gen · Swagger Export</div></div></div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 📋 Letzte Tasks</div><div class="feat-body"><div class="feat-body-inner" style="font-size:10px;color:var(--muted)">— Noch keine APIs —</div></div></div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 📊 Performance</div><div class="feat-body"><div class="feat-body-inner"><div class="perf-chart"><canvas class="perf-canvas" data-agent="openspec" width="120" height="32"></canvas><div><div class="perf-stat">APIs/Tag: <b>—</b></div><div class="perf-stat">Avg: <b>2.1s</b></div></div></div></div></div></div>
+                    </div>
+                    <div class="agent-card" data-theme="stitch">
+                        <span class="status-badge badge-online">● Online</span>
+                        <span class="agent-shortcut">NUM 7</span>
+                        <div class="agent-icon">🪡</div>
+                        <div class="agent-name">Stitch™</div>
+                        <div class="agent-desc">Google Stitch MCP — AI UI Design Generator. Erzeugt Screens, Prototypen und HTML/CSS.</div>
+                        <div class="agent-stats">
+                            <span class="agent-stat">MCP: <b>stitch.googleapis.com</b></span>
+                            <span class="agent-stat">Screens: <b>0</b></span>
+                        </div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 🔧 Capabilities</div><div class="feat-body"><div class="feat-body-inner" style="font-size:10px;color:var(--muted)">create_project · generate_screen · export_html · edit_screen</div></div></div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 📋 Letzte Tasks</div><div class="feat-body"><div class="feat-body-inner" style="font-size:10px;color:var(--muted)">— Noch keine Screens —</div></div></div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 📊 Performance</div><div class="feat-body"><div class="feat-body-inner"><div class="perf-chart"><canvas class="perf-canvas" data-agent="stitch" width="120" height="32"></canvas><div><div class="perf-stat">Screens/Tag: <b>—</b></div><div class="perf-stat">Avg: <b>3.2s</b></div></div></div></div></div></div>
+                    </div>
+                    <div class="agent-card" data-theme="nanobanna">
+                        <span class="status-badge badge-online">● Online</span>
+                        <div class="agent-icon">🍌</div>
+                        <div class="agent-name">NanoBanna™ PRO</div>
+                        <div class="agent-desc">Content Marketing Agent — 4K/8K Reels, Stories, Banner, Logos. NLM Infografiken + Gemini Musik.</div>
+                        <div class="agent-stats">
+                            <span class="agent-stat">Assets: <b>0</b></span>
+                            <span class="agent-stat">Quality: <b>8K</b></span>
+                        </div>
+                        <div class="feat-block ghost-target"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 🔧 Capabilities</div><div class="feat-body"><div class="feat-body-inner" style="font-size:10px;color:var(--muted)">Veo 4K/8K · Gemini Audio · NLM Infografiken · Banner · Reels</div></div></div>
+                        <div class="feat-block"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> 📋 Letzte Tasks</div><div class="feat-body"><div class="feat-body-inner" style="font-size:10px;color:var(--muted)">— Noch keine Assets —</div></div></div>
+                    </div>
+                </div>
+                <!-- Activity Heatmap -->
+                <div class="heatmap-wrap">
+                    <div class="heatmap-title">🔥 Agent Activity Heatmap <span style="font-size:9px;color:var(--muted);font-weight:400">— 7 Tage</span></div>
+                    <div class="heatmap-grid" id="heatmapGrid"></div>
+                    <div class="hm-legend" id="heatmapLegend"></div>
+                </div>
+            </div>
+        </div>
+        <!-- Action History Panel -->
+        <div class="history-overlay" id="historyOverlay" onclick="if(event.target===this)HistoryPanel.close()">
+            <div class="history-panel">
+                <button class="history-close" onclick="HistoryPanel.close()">&times;</button>
+                <div class="history-agent-name" id="historyAgentName"></div>
+                <div class="history-meta" id="historyMeta"></div>
+                <input class="history-filter" id="historyFilter" placeholder="🔍 Aktionen filtern..." oninput="HistoryPanel.filter(this.value)">
+                <ul class="history-list" id="historyList"></ul>
+            </div>
+        </div>
+        <!-- BUILDER TAB -->
+        <div class="panel" id="panel-chat">
+            <div class="section">
+                <div class="section-title">🏗️ Builder Hub — 5 Builder gleichzeitig</div>
+                <div class="section-desc">Alle Builder sind parallel nutzbar. Klicke einen Button um direkt zum Builder zu scrollen.</div>
+                <!-- 5 Builder Buttons -->
+                <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
+                    <button class="tab active" onclick="scrollToBuilder('builder-nlm',this)" style="background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.3);color:#818cf8;font-weight:700">📓 NLM</button>
+                    <button class="tab" onclick="scrollToBuilder('builder-prompt',this)" style="background:rgba(250,30,78,.06);border-color:rgba(250,30,78,.2);color:var(--accent);font-weight:700">💬 PROMPT</button>
+                    <button class="tab" onclick="scrollToBuilder('builder-stitch',this)" style="background:rgba(139,92,246,.08);border-color:rgba(139,92,246,.25);color:#8b5cf6;font-weight:700">🪡 STITCH</button>
+                    <button class="tab" onclick="scrollToBuilder('builder-flow',this)" style="background:rgba(0,255,136,.06);border-color:rgba(0,255,136,.2);color:var(--green);font-weight:700">🔄 FLOW</button>
+                    <button class="tab" onclick="scrollToBuilder('builder-banapro',this)" style="background:rgba(234,179,8,.08);border-color:rgba(234,179,8,.25);color:#eab308;font-weight:700">🍌 BANAPRO</button>
+                </div>
+                <!-- Builder Stats Widget -->
+                <div class="bstats-row" id="builderStats">
+                    <div class="bstat" data-builder="nlm"><div class="bstat-icon">📓</div><div class="bstat-count" id="bstat-nlm-count">0</div><div class="bstat-label">NLM Runs</div><div class="bstat-badges"><span class="bstat-ok" id="bstat-nlm-ok">✓ 0</span><span class="bstat-fail" id="bstat-nlm-fail">✗ 0</span></div></div>
+                    <div class="bstat" data-builder="prompt"><div class="bstat-icon">💬</div><div class="bstat-count" id="bstat-prompt-count">0</div><div class="bstat-label">Prompt Runs</div><div class="bstat-badges"><span class="bstat-ok" id="bstat-prompt-ok">✓ 0</span><span class="bstat-fail" id="bstat-prompt-fail">✗ 0</span></div></div>
+                    <div class="bstat" data-builder="stitch"><div class="bstat-icon">🪡</div><div class="bstat-count" id="bstat-stitch-count">0</div><div class="bstat-label">Stitch Runs</div><div class="bstat-badges"><span class="bstat-ok" id="bstat-stitch-ok">✓ 0</span><span class="bstat-fail" id="bstat-stitch-fail">✗ 0</span></div></div>
+                    <div class="bstat" data-builder="flow"><div class="bstat-icon">🔄</div><div class="bstat-count" id="bstat-flow-count">0</div><div class="bstat-label">Flow Runs</div><div class="bstat-badges"><span class="bstat-ok" id="bstat-flow-ok">✓ 0</span><span class="bstat-fail" id="bstat-flow-fail">✗ 0</span></div></div>
+                    <div class="bstat" data-builder="banapro"><div class="bstat-icon">🍌</div><div class="bstat-count" id="bstat-banapro-count">0</div><div class="bstat-label">BanaPRO Runs</div><div class="bstat-badges"><span class="bstat-ok" id="bstat-banapro-ok">✓ 0</span><span class="bstat-fail" id="bstat-banapro-fail">✗ 0</span></div></div>
+                </div>
+                <!-- Pipeline Config -->
+                <div class="pipeline-config">
+                    <div class="pipeline-toggle" id="pipelineToggle" onclick="BuilderPipeline.toggle()" title="Pipeline ein/aus"></div>
+                    <span class="pipeline-label">Cross-Builder Pipeline</span>
+                    <div class="pipeline-steps">
+                        <span class="pipeline-step idle" id="pipe-nlm">📓 NLM</span>
+                        <span class="pipeline-arrow">→</span>
+                        <span class="pipeline-step idle" id="pipe-stitch">🪡 Stitch</span>
+                        <span class="pipeline-arrow">→</span>
+                        <span class="pipeline-step idle" id="pipe-banapro">🍌 BanaPRO</span>
+                    </div>
+                    <!-- Pipeline Presets -->
+                    <div class="preset-row">
+                        <span class="preset-label">⚡ Presets:</span>
+                        <button class="preset-btn" data-preset="content" onclick="PipelinePresets.load('content')" title="NLM → BanaPRO (Content-Fokus)">📝 Content</button>
+                        <button class="preset-btn" data-preset="design" onclick="PipelinePresets.load('design')" title="Stitch → BanaPRO (Design-Fokus)">🎨 Design</button>
+                        <button class="preset-btn" data-preset="fullstack" onclick="PipelinePresets.load('fullstack')" title="NLM → Stitch → BanaPRO (Full-Stack)">🚀 Full-Stack</button>
+                        <button class="preset-btn" style="background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.08);color:var(--muted)" onclick="PipelinePresets.saveCustom()" title="Aktuelle Konfiguration als Custom-Preset speichern">💾 Speichern</button>
+                    </div>
+                    <!-- Stats Export -->
+                    <div class="export-row">
+                        <span class="export-label">📊 Export:</span>
+                        <button class="export-btn" onclick="StatsExport.asJSON()" title="Tagesbericht als JSON herunterladen">📥 JSON</button>
+                        <button class="export-btn" onclick="StatsExport.asMD()" title="Tagesbericht als Markdown herunterladen">📄 Markdown</button>
+                    </div>
+                    <!-- Custom Pipeline Editor -->
+                    <div class="pipe-editor">
+                        <div class="pipe-editor-title">🏛️ Custom Pipeline Editor <span class="pipe-hint">Drag & Drop zum Umsortieren</span></div>
+                        <div class="pipe-chain" id="pipeChain"></div>
+                        <div class="pipe-editor-actions">
+                            <button class="pipe-editor-btn apply" onclick="PipeEditor.apply()">✅ Anwenden</button>
+                            <button class="pipe-editor-btn" onclick="PipeEditor.reset()">↩️ Reset</button>
+                            <button class="pipe-editor-btn" onclick="PipeEditor.saveAsPreset()">💾 Als Preset</button>
+                            <span class="pipe-editor-status" id="pipeEditorStatus">5 Builder verfügbar</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Weekly Stats Dashboard -->
+                <div class="weekly-dash">
+                    <div class="weekly-title">📈 Weekly Stats Dashboard <span>7-Tage Verlauf</span></div>
+                    <div class="weekly-canvas-wrap">
+                        <canvas id="weeklyChart" width="800" height="160"></canvas>
+                    </div>
+                    <div class="weekly-legend" id="weeklyLegend"></div>
+                    <div class="weekly-totals" id="weeklyTotals"></div>
+                </div>
+                <!-- Pipeline Run Validator -->
+                <div class="validator-wrap">
+                    <div class="validator-title">🎯 Pipeline Run Validator <span>Automatische Qualitätsprüfung</span></div>
+                    <div class="validator-grid">
+                        <div>
+                            <div class="validator-score-ring"><canvas id="validatorRing" width="100" height="100"></canvas><div class="validator-score-num" id="validatorScoreNum">--</div></div>
+                            <div class="validator-score-label" id="validatorScoreLabel">Kein Run</div>
+                        </div>
+                        <div>
+                            <ul class="validator-checks" id="validatorChecks">
+                                <li><span class="vcheck-icon warn">—</span><span class="vcheck-label">Starte einen Builder-Run für die Validierung</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="validator-actions">
+                        <button class="validator-run-btn" onclick="PipeValidator.runNow()">🎯 Jetzt validieren</button>
+                        <span class="validator-last" id="validatorLast"></span>
+                    </div>
+                </div>
+                <!-- Builder Dependency Graph -->
+                <div class="depgraph-wrap">
+                    <div class="depgraph-title">🔀 Builder Dependency Graph <span>Interaktiver Abhängigkeitsgraph</span></div>
+                    <div class="depgraph-canvas-wrap">
+                        <canvas id="depGraphCanvas" width="900" height="260"></canvas>
+                    </div>
+                    <div class="depgraph-info" id="depGraphInfo"></div>
+                </div>
+            </div>
+
+            <!-- BUILDER 1: NLM (Vollständig) -->
+            <div class="section" id="builder-nlm" style="border-left:3px solid #6366f1">
+                <div class="section-title" style="color:#818cf8">📓 NLM Builder — NotebookLM Content</div>
+                <div class="section-desc">Erstelle alle 10 NLM Content-Typen. Source hochladen → Content-Typ wählen → Generieren.</div>
+                <div class="feat-block"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow open">▶</span> 📋 Content-Typen (10)</div><div class="feat-body open"><div class="feat-body-inner" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px">
+                    <button onclick="setNlmType('podcast',this)" class="tab active" style="font-size:10px;padding:6px 8px;text-align:left">🎙️ Podcast</button>
+                    <button onclick="setNlmType('video',this)" class="tab" style="font-size:10px;padding:6px 8px;text-align:left">🎬 Video</button>
+                    <button onclick="setNlmType('slides',this)" class="tab" style="font-size:10px;padding:6px 8px;text-align:left">📊 Slides</button>
+                    <button onclick="setNlmType('report',this)" class="tab" style="font-size:10px;padding:6px 8px;text-align:left">📄 Report</button>
+                    <button onclick="setNlmType('mindmap',this)" class="tab" style="font-size:10px;padding:6px 8px;text-align:left">🧠 Mind Map</button>
+                    <button onclick="setNlmType('infographic',this)" class="tab" style="font-size:10px;padding:6px 8px;text-align:left">📈 Infografik</button>
+                    <button onclick="setNlmType('datatable',this)" class="tab" style="font-size:10px;padding:6px 8px;text-align:left">📊 Data Table</button>
+                    <button onclick="setNlmType('quiz',this)" class="tab" style="font-size:10px;padding:6px 8px;text-align:left">❓ Quiz</button>
+                    <button onclick="setNlmType('flashcards',this)" class="tab" style="font-size:10px;padding:6px 8px;text-align:left">🃏 Flashcards</button>
+                    <button onclick="setNlmType('studio',this)" class="tab" style="font-size:10px;padding:6px 8px;text-align:left">🎛️ Studio</button>
+                </div></div></div>
+                <div class="chat-box" style="margin-top:8px">
+                    <input class="chat-input" id="nlmInput" placeholder="Source-Thema oder URL eingeben..." onkeydown="if(event.key==='Enter')sendNlm()">
+                    <button class="chat-send" onclick="sendNlm()" style="background:#6366f1">NLM Go</button>
+                </div>
+                <div class="chat-output" id="nlmOutput" style="border-color:rgba(99,102,241,.15)">📓 NLM bereit. Wähle Content-Typ und gib ein Thema ein.</div>
+            </div>
+
+            <!-- BUILDER 2: PROMPT (Chat + Copilot Enhance) -->
+            <div class="section" id="builder-prompt" style="border-left:3px solid var(--accent)">
+                <div class="section-title" style="color:var(--accent)">💬 Prompt Builder — Chat + Copilot</div>
+                <div class="section-desc">Schnelle Antworten über NanoBot, PicoClaw oder SYNTEX. Copilot optimiert Prompts via Gemini Flash.</div>
+                <div style="display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap">
+                    <button class="tab active" id="chatAgent-nanobot" onclick="setChatAgent('nanobot',this)" style="font-size:10px">⚡ NanoBot</button>
+                    <button class="tab" id="chatAgent-picoclaw" onclick="setChatAgent('picoclaw',this)" style="font-size:10px">🐾 PicoClaw</button>
+                    <button class="tab" id="chatAgent-syntex" onclick="setChatAgent('syntex',this)" style="font-size:10px">🔧 SYNTEX</button>
+                    <button class="tab" id="chatAgent-orchestrate" onclick="setChatAgent('orchestrate',this)" style="font-size:10px;border-color:rgba(250,30,78,.3);color:var(--accent)">🎯 Orchestrate</button>
+                    <button class="tab" id="chatAgent-qloop" onclick="setChatAgent('qloop',this)" style="font-size:10px;border-color:rgba(0,255,136,.3);color:var(--green)">♾️ Q-Loop</button>
+                </div>
+                <div class="chat-box">
+                    <input class="chat-input" id="chatInput" placeholder="Frag NanoBot etwas..." onkeydown="if(event.key==='Enter')sendChat()">
+                    <button class="chat-send" onclick="sendChat()">Senden</button>
+                </div>
+                <div class="chat-output" id="chatOutput">Bereit. Gib eine Frage ein...</div>
+                <div class="feat-block" style="margin-top:6px"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow">▶</span> ✨ Copilot Enhance</div><div class="feat-body"><div class="feat-body-inner"><button onclick="enhanceWithCopilot()" style="padding:4px 10px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:8px;color:#818cf8;font-size:10px;font-family:inherit;cursor:pointer;transition:all .2s">✨ Prompt optimieren</button> <span style="color:var(--muted);font-size:9px">via Gemini Flash</span></div></div></div>
+            </div>
+
+            <!-- BUILDER 3: STITCH (APP/WEB UI) -->
+            <div class="section" id="builder-stitch" style="border-left:3px solid #8b5cf6">
+                <div class="section-title" style="color:#8b5cf6">🪡 Stitch Builder — APP/WEB UI Design</div>
+                <div class="section-desc">Google Stitch MCP — Generiere Screens, Prototypen und HTML/CSS für Apps und Websites.</div>
+                <div class="feat-block"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow open">▶</span> 💡 Stitch Startprompts</div><div class="feat-body open"><div class="feat-body-inner" style="display:flex;flex-wrap:wrap;gap:6px">
+                    <button onclick="useBuilderPrompt('stitch','Landing Page mit Hero-Banner')" style="padding:5px 12px;background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.15);border-radius:16px;color:#a78bfa;font-size:11px;font-family:inherit;cursor:pointer">Landing Page</button>
+                    <button onclick="useBuilderPrompt('stitch','Dashboard mit 4 KPI Cards')" style="padding:5px 12px;background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.15);border-radius:16px;color:#a78bfa;font-size:11px;font-family:inherit;cursor:pointer">Dashboard KPIs</button>
+                    <button onclick="useBuilderPrompt('stitch','Login Screen dark mode')" style="padding:5px 12px;background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.15);border-radius:16px;color:#a78bfa;font-size:11px;font-family:inherit;cursor:pointer">Login Dark</button>
+                    <button onclick="useBuilderPrompt('stitch','E-Commerce Produktseite')" style="padding:5px 12px;background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.15);border-radius:16px;color:#a78bfa;font-size:11px;font-family:inherit;cursor:pointer">E-Commerce</button>
+                    <button onclick="useBuilderPrompt('stitch','Kanban Board responsive')" style="padding:5px 12px;background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.15);border-radius:16px;color:#a78bfa;font-size:11px;font-family:inherit;cursor:pointer">Kanban Board</button>
+                    <button onclick="useBuilderPrompt('stitch','Settings Page mit Tabs')" style="padding:5px 12px;background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.15);border-radius:16px;color:#a78bfa;font-size:11px;font-family:inherit;cursor:pointer">Settings Tabs</button>
+                </div></div></div>
+                <div class="chat-box" style="margin-top:8px">
+                    <input class="chat-input" id="stitchInput" placeholder="Beschreibe dein UI-Design..." onkeydown="if(event.key==='Enter')sendStitchBuilder()">
+                    <button class="chat-send" onclick="sendStitchBuilder()" style="background:#8b5cf6">🪡 Build</button>
+                </div>
+                <div class="chat-output" id="stitchOutput" style="border-color:rgba(139,92,246,.15)">🪡 Stitch bereit. Beschreibe dein Design...</div>
+            </div>
+
+            <!-- BUILDER 4: FLOW (Multi-Agent Orchestring) -->
+            <div class="section" id="builder-flow" style="border-left:3px solid var(--green)">
+                <div class="section-title" style="color:var(--green)">🔄 Flow Builder — Multi-Agent Orchestrierung</div>
+                <div class="section-desc">Delegiere Tasks an mehrere Agenten parallel. NanoBot orchestriert den Pipeline-Flow.</div>
+                <div class="feat-block"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow open">▶</span> 🎯 Flow Templates</div><div class="feat-body open"><div class="feat-body-inner" style="display:flex;flex-wrap:wrap;gap:6px">
+                    <button onclick="useBuilderPrompt('flow','Komplett neues Dashboard-Modul')" style="padding:5px 12px;background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.15);border-radius:16px;color:var(--green);font-size:11px;font-family:inherit;cursor:pointer">Neues Modul</button>
+                    <button onclick="useBuilderPrompt('flow','Landing Page + Content + Code')" style="padding:5px 12px;background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.15);border-radius:16px;color:var(--green);font-size:11px;font-family:inherit;cursor:pointer">Full-Stack</button>
+                    <button onclick="useBuilderPrompt('flow','System Health-Check aller Module')" style="padding:5px 12px;background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.15);border-radius:16px;color:var(--green);font-size:11px;font-family:inherit;cursor:pointer">Health Check</button>
+                    <button onclick="useBuilderPrompt('flow','Release-Package schnüren')" style="padding:5px 12px;background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.15);border-radius:16px;color:var(--green);font-size:11px;font-family:inherit;cursor:pointer">Release Pack</button>
+                </div></div></div>
+                <div class="chat-box" style="margin-top:8px">
+                    <input class="chat-input" id="flowInput" placeholder="Multi-Agent Task beschreiben..." onkeydown="if(event.key==='Enter')sendFlowBuilder()">
+                    <button class="chat-send" onclick="sendFlowBuilder()" style="background:var(--green);color:#000">🔄 Flow</button>
+                </div>
+                <div class="chat-output" id="flowOutput" style="border-color:rgba(0,255,136,.15)">🔄 Flow bereit. Beschreibe den Multi-Agent Task...</div>
+            </div>
+
+            <!-- BUILDER 5: BANAPRO (Content Marketing) -->
+            <div class="section" id="builder-banapro" style="border-left:3px solid #eab308">
+                <div class="section-title" style="color:#eab308">🍌 BanaPRO Builder — Content Marketing</div>
+                <div class="section-desc">NanoBanna™ PRO — 4K/8K Reels, Stories, Banner, Logos. Gemini Veo + Audio + NLM Infografiken.</div>
+                <div class="feat-block"><div class="feat-header" onclick="toggleFeatBlock(this)"><span class="feat-arrow open">▶</span> 🎨 Content Pipelines</div><div class="feat-body open"><div class="feat-body-inner" style="display:flex;flex-wrap:wrap;gap:6px">
+                    <button onclick="useBuilderPrompt('banapro','Instagram Reel Product Launch')" style="padding:5px 12px;background:rgba(234,179,8,.06);border:1px solid rgba(234,179,8,.15);border-radius:16px;color:#eab308;font-size:11px;font-family:inherit;cursor:pointer">📹 Reel</button>
+                    <button onclick="useBuilderPrompt('banapro','4K YouTube Thumbnail')" style="padding:5px 12px;background:rgba(234,179,8,.06);border:1px solid rgba(234,179,8,.15);border-radius:16px;color:#eab308;font-size:11px;font-family:inherit;cursor:pointer">📸 Thumbnail</button>
+                    <button onclick="useBuilderPrompt('banapro','Story Template Glassmorphism')" style="padding:5px 12px;background:rgba(234,179,8,.06);border:1px solid rgba(234,179,8,.15);border-radius:16px;color:#eab308;font-size:11px;font-family:inherit;cursor:pointer">📱 Story</button>
+                    <button onclick="useBuilderPrompt('banapro','Banner für Google Ads')" style="padding:5px 12px;background:rgba(234,179,8,.06);border:1px solid rgba(234,179,8,.15);border-radius:16px;color:#eab308;font-size:11px;font-family:inherit;cursor:pointer">🖼️ Banner</button>
+                    <button onclick="useBuilderPrompt('banapro','30s Musik-Loop via Gemini')" style="padding:5px 12px;background:rgba(234,179,8,.06);border:1px solid rgba(234,179,8,.15);border-radius:16px;color:#eab308;font-size:11px;font-family:inherit;cursor:pointer">🎵 Audio</button>
+                    <button onclick="useBuilderPrompt('banapro','NLM Infografik DEVKiTZ')" style="padding:5px 12px;background:rgba(234,179,8,.06);border:1px solid rgba(234,179,8,.15);border-radius:16px;color:#eab308;font-size:11px;font-family:inherit;cursor:pointer">📊 Infografik</button>
+                </div></div></div>
+                <div class="chat-box" style="margin-top:8px">
+                    <input class="chat-input" id="banaproInput" placeholder="Content beschreiben — Reel, Banner, Logo..." onkeydown="if(event.key==='Enter')sendBanaproBuilder()">
+                    <button class="chat-send" onclick="sendBanaproBuilder()" style="background:#eab308;color:#000">🍌 Create</button>
+                </div>
+                <div class="chat-output" id="banaproOutput" style="border-color:rgba(234,179,8,.15)">🍌 BanaPRO bereit. Beschreibe den Content...</div>
+            </div>
+        </div>
+        <!-- TASKS TAB -->
+        <div class="panel" id="panel-tasks">
+            <div class="section">
+                <div class="section-title">📋 JAMEZ™ Task-Liste</div>
+                <div class="section-desc">Alle Tasks die NanoBot, PicoClaw und andere Agenten bearbeiten.</div>
+                <div class="task-list" id="taskList">
+                    <div class="task-item"><div class="task-dot" style="background:var(--green)"></div><span class="task-name">System Health Check</span><span class="task-agent">JAMEZ</span></div>
+                    <div class="task-item"><div class="task-dot" style="background:var(--yellow)"></div><span class="task-name">Wiki-Index aktualisieren</span><span class="task-agent">PicoClaw</span></div>
+                    <div class="task-item"><div class="task-dot" style="background:var(--green)"></div><span class="task-name">NanoChat bereit</span><span class="task-agent">NanoBot</span></div>
+                    <div class="task-item"><div class="task-dot" style="background:var(--muted)"></div><span class="task-name">Code-Review Warteschlange leer</span><span class="task-agent">CodeRabbit</span></div>
+                    <div class="task-item"><div class="task-dot" style="background:var(--muted)"></div><span class="task-name">API-Docs Generation pending</span><span class="task-agent">OpenSpec</span></div>
+                </div>
+            </div>
+        </div>
+        <!-- MCP TAB -->
+        <div class="panel" id="panel-mcp">
+            <div class="section">
+                <div class="section-title">🔌 MCP Verbindungen</div>
+                <div class="section-desc">Alle Agenten sind über ONTHERUN™ MCP + externe MCP Server verbunden.</div>
+                <div class="agent-grid">
+                    <div class="agent-card"><div class="agent-icon">🔌</div><div class="agent-name">ONTHERUN™ MCP</div><div class="agent-desc">localhost:3040 — Hauptserver, 34+ Tools</div><span class="status-badge badge-offline">● Offline</span></div>
+                    <div class="agent-card"><div class="agent-icon">🪡</div><div class="agent-name">Stitch MCP</div><div class="agent-desc">stitch.googleapis.com/mcp — AI UI Design</div><span class="status-badge badge-online">● Configured</span></div>
+                    <div class="agent-card"><div class="agent-icon">📓</div><div class="agent-name">NLM MCP</div><div class="agent-desc">NotebookLM — Podcasts, Infografiken, Slides</div><span class="status-badge badge-idle">● Idle</span></div>
+                    <div class="agent-card"><div class="agent-icon">🔧</div><div class="agent-name">Tools</div><div class="agent-desc">34+ ONTHERUN + 4 Stitch + 8 NLM Tools</div></div>
+                    <div class="agent-card"><div class="agent-icon">📡</div><div class="agent-name">WebSocket</div><div class="agent-desc">Echtzeit-Events für Dashboard</div><span class="status-badge badge-offline">● Offline</span></div>
+                    <div class="agent-card"><div class="agent-icon">🎯</div><div class="agent-name">Orchestrator</div><div class="agent-desc">NanoBot delegiert Tasks an Stitch, NLM, PicoClaw</div><span class="status-badge badge-online">● Ready</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <script src="nanobot-optimized.js"></script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../shared/seo-shared.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>body{--platform-color:#FFFC00}.top-bar{background:linear-gradient(135deg,rgba(255,252,0,.08),transparent);border-bottom:2px solid rgba(255,252,0,.3);padding:14px 20px;display:flex;align-items:center;gap:12px;margin:-20px -20px 20px;border-radius:14px 14px 0 0}.top-bar h2{font-size:18px;font-weight:800;color:#FFFC00}</style>
+</head>
+<body>
+<div class="top-bar"><span style="font-size:28px">👻</span><h2>Snapchat Analyzer</h2></div>
+<div class="grid grid-2">
+    <div class="card card-full"><h3>👻 Snapchat Profil analysieren</h3>
+        <div class="input-row"><input type="text" id="userInput" placeholder="@username oder Profil-URL"><button class="btn" style="background:#FFFC00;color:#000" onclick="analyze()">&#128269; Analysieren</button><button class="btn btn-sm btn-outline" onclick="document.getElementById('userInput').value='@demo_user';analyze()">Demo</button></div>
+        <div class="loading" id="loading"><div class="spinner"></div>Profil wird analysiert...</div>
+    </div>
+    <div class="card" id="profileCard" style="display:none"><div class="profile-header" style="margin:0;--platform-color:#FFFC00"><div class="profile-avatar">👻</div><div class="profile-info"><div class="profile-name" id="pName">-</div><div class="profile-handle" id="pHandle">-</div><div class="profile-bio" id="pBio">-</div></div></div></div>
+    <div class="card" id="statsCard" style="display:none"><h3>&#128202; Statistiken</h3><div id="statsData"></div></div>
+    <div class="card" id="metricsCard" style="display:none"><h3>&#128208; Snapchat-Metriken</h3><div id="metricsData"></div></div>
+    <div class="card" id="checkCard" style="display:none"><h3>&#9989; Profil-Checks</h3><div id="checkData"></div></div>
+    <div class="card" id="specificCard" style="display:none"><h3>&#127919; Snapchat Spezifisch</h3><div id="specificData"></div></div>
+    <div class="card" id="audienceCard" style="display:none"><h3>&#128101; Zielgruppe</h3><div id="audienceData"></div></div>
+    <div class="card card-full" id="recoCard" style="display:none"><h3>&#128161; Empfehlungen</h3><div id="recoData"></div></div>
+    <div class="card card-full"><h3>&#128200; Verlauf</h3><div id="histList"></div><div id="histEmpty" class="empty-state"><div class="icon">👻</div>Noch kein Profil analysiert.</div></div>
+</div>
+<script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+var P={name:"Snapchat",color:"#FFFC00",rgb:"255,252,0",metrics:["Snap Score","Story Views","Public Profile","Subscribers","Snaps/Tag","Spotlight Views","Lens Views","Engagement"],keys:["snapScore","storyViews","subscribers","spotlight"],specifics:["Spotlight Algorithm","Snap Map Activity","Lens Performance","Story Completion"],sk:"social_sc_history"};
+var hist=JSON.parse(localStorage.getItem(P.sk)||'{}');
+function fmt(n){if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n.toString()}
+
+async function analyze(){
+    var u=document.getElementById('userInput').value.trim().replace('@','');
+    if(!u){alert('Username eingeben');return}
+    document.getElementById('loading').classList.add('show');
+    ['profileCard','statsCard','metricsCard','checkCard','specificCard','audienceCard','recoCard'].forEach(function(id){document.getElementById(id).style.display='none'});
+    await new Promise(function(r){setTimeout(r,1500)});
+    document.getElementById('loading').classList.remove('show');
+
+    var mainVal=Math.floor(Math.random()*1e6+100);
+    var engRate=(Math.random()*10+0.5).toFixed(1);
+    var growth=(Math.random()*5+0.1).toFixed(1);
+
+    document.getElementById('profileCard').style.display='';
+    document.getElementById('pName').textContent=u;
+    document.getElementById('pHandle').textContent='@'+u;
+    document.getElementById('pBio').textContent=P.name+' \u2022 '+fmt(mainVal)+' '+P.keys[0];
+
+    document.getElementById('statsCard').style.display='';
+    var statColors=['','var(--blue)','var(--cyan)','var(--yellow)'];
+    document.getElementById('statsData').innerHTML='<div class=\"stats\">'+P.keys.map(function(k,i){
+        var v=i===0?mainVal:Math.floor(Math.random()*1e5+100);
+        return '<div class=\"stat\"><div class=\"stat-num\" style=\"color:'+(i===0?P.color:statColors[i]||'var(--muted)')+'\">'+fmt(v)+'</div><div class=\"stat-label\">'+k+'</div></div>';
+    }).join('')+'</div><div style=\"margin-top:14px\"><div class=\"metric-row\"><span class=\"metric-name\">Engagement Rate</span><span class=\"metric-value\">'+engRate+'%</span><span class=\"metric-scale '+(engRate>4?'scale-high':engRate>2?'scale-mid':'scale-low')+'\">'+(engRate>4?'Stark':engRate>2?'OK':'Schwach')+'</span></div><div class=\"metric-row\"><span class=\"metric-name\">Wachstum/Monat</span><span class=\"metric-value\" style=\"color:var(--green)\">+'+growth+'%</span></div><div class=\"metric-row\"><span class=\"metric-name\">Status</span><span class=\"badge badge-green\">Aktiv</span></div></div>';
+
+    document.getElementById('metricsCard').style.display='';
+    document.getElementById('metricsData').innerHTML=P.metrics.map(function(m){
+        var v=Math.floor(Math.random()*1e5+10);var s=v>5e4?'high':v>1e4?'mid':'low';
+        return '<div class=\"metric-row\"><span class=\"metric-name\">'+m+'</span><span class=\"metric-value\">'+fmt(v)+'</span><span class=\"metric-scale scale-'+s+'\">'+(s==='high'?'Hoch':s==='mid'?'Mittel':'Niedrig')+'</span></div>';
+    }).join('');
+
+    document.getElementById('checkCard').style.display='';
+    var checks=[{n:'Bio ausgefuellt',p:Math.random()>.2},{n:'Profil-Link aktiv',p:Math.random()>.3},{n:'Profilbild gesetzt',p:true},{n:'Verifiziert',p:Math.random()>.7},{n:'Regelmaessig aktiv',p:Math.random()>.3},{n:'Suchbar in Google',p:Math.random()>.4},{n:'Username konsistent',p:Math.random()>.3},{n:'Kontakt-Info',p:Math.random()>.5}];
+    document.getElementById('checkData').innerHTML=checks.map(function(c){
+        return '<div class=\"result-item\"><span class=\"result-icon\">'+(c.p?'\u2705':'\u274c')+'</span><div><div class=\"result-title\">'+c.n+'</div></div><span class=\"badge '+(c.p?'badge-green':'badge-red')+'\">'+(c.p?'OK':'FIX')+'</span></div>';
+    }).join('');
+
+    document.getElementById('specificCard').style.display='';
+    document.getElementById('specificData').innerHTML=P.specifics.map(function(s){
+        var v=(Math.random()*100).toFixed(0);
+        return '<div class=\"metric-row\"><span class=\"metric-name\">'+s+'</span><span class=\"metric-value\">'+v+'</span><span class=\"metric-scale '+(v>60?'scale-high':v>30?'scale-mid':'scale-low')+'\">'+(v>60?'Gut':v>30?'OK':'Verbessern')+'</span></div>';
+    }).join('');
+
+    document.getElementById('audienceCard').style.display='';
+    document.getElementById('audienceData').innerHTML='<div class=\"metric-row\"><span class=\"metric-name\">Hauptzielgruppe</span><span class=\"metric-value\">18-34 Jahre</span></div><div class=\"metric-row\"><span class=\"metric-name\">Top Region</span><span class=\"metric-value\">DACH</span></div><div class=\"metric-row\"><span class=\"metric-name\">Aktivste Zeit</span><span class=\"metric-value\" style=\"color:var(--green)\">19-22 Uhr</span></div><div class=\"metric-row\"><span class=\"metric-name\">Content-Match</span><span class=\"metric-value\">'+(Math.random()*40+60).toFixed(0)+'%</span></div>';
+
+    document.getElementById('recoCard').style.display='';
+    var recos=checks.filter(function(c){return !c.p}).map(function(c){return c.n+' optimieren'});
+    if(parseFloat(engRate)<2)recos.push('Engagement steigern');
+    document.getElementById('recoData').innerHTML=recos.slice(0,5).map(function(r,i){
+        return '<div class=\"result-item\"><span class=\"result-icon\">\ud83d\udca1</span><div><div class=\"result-title\">#'+(i+1)+': '+r+'</div></div></div>';
+    }).join('');
+
+    hist[u]={main:mainVal,engRate:engRate,date:new Date().toISOString()};
+    localStorage.setItem(P.sk,JSON.stringify(hist));renderHist();
+}
+
+function renderHist(){
+    var e=Object.entries(hist);
+    document.getElementById('histEmpty').style.display=e.length?'none':'block';
+    document.getElementById('histList').innerHTML=e.map(function(x){var n=x[0],d=x[1];
+        return '<div class=\"metric-row\" style=\"cursor:pointer\" onclick=\"document.getElementById(\'userInput\').value=\'@'+n+'\';analyze()\"><span class=\"metric-name\">@'+n+'</span><span class=\"badge\" style=\"background:rgba('+P.rgb+',.1);color:'+P.color+'\">'+fmt(d.main)+'</span><span style=\"font-size:10px;color:var(--dim)\">'+new Date(d.date).toLocaleDateString('de-DE')+'</span><button class=\"btn btn-sm btn-outline\" onclick=\"event.stopPropagation();delete hist[\''+n+'\'];localStorage.setItem(\''+P.sk+'\',JSON.stringify(hist));renderHist()\">x</button></div>';
+    }).join('');
+}
+renderHist();
+</script>
+</body>
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

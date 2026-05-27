@@ -1,0 +1,137 @@
+# DkZ Issue Triage — Pflegefall-System
+# Runs hourly to check new issues, assign Pflegefall-IDs, and triage
+# @DKZ:RULES -> R21 Pflegefall-System
+
+name: "🏥 Issue Triage — Pflegefall"
+
+on:
+  issues:
+    types: [opened, reopened]
+  schedule:
+    - cron: '0 * * * *'  # Stündlich
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Assign Pflegefall-ID
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 20,
+              sort: 'created',
+              direction: 'desc'
+            });
+
+            for (const issue of issues.data) {
+              // Skip if already triaged
+              if (issue.labels.some(l => l.name.startsWith('pf:'))) continue;
+              if (issue.body && issue.body.includes('PF-')) continue;
+
+              // Generate Pflegefall-ID
+              const now = new Date();
+              const dateStr = now.toISOString().slice(0,10);
+              const num = String(issue.number).padStart(3, '0');
+              const pfId = `PF-${dateStr}-${num}`;
+
+              // Auto-classify priority
+              const title = (issue.title || '').toLowerCase();
+              const body = (issue.body || '').toLowerCase();
+              let priority = 'pf:mittel';
+              let emoji = '🟡';
+
+              if (title.includes('crash') || title.includes('security') || title.includes('kritisch') || body.includes('security')) {
+                priority = 'pf:kritisch';
+                emoji = '🔴';
+              } else if (title.includes('error') || title.includes('bug') || title.includes('broken')) {
+                priority = 'pf:hoch';
+                emoji = '🟠';
+              } else if (title.includes('feature') || title.includes('enhancement') || title.includes('vorsorge')) {
+                priority = 'pf:niedrig';
+                emoji = '🟢';
+              } else if (title.includes('unwichtig') || title.includes('minor') || title.includes('typo')) {
+                priority = 'pf:unwichtig';
+                emoji = '⚪';
+              }
+
+              // Add label
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: [priority, 'triaged']
+              });
+
+              // Add Pflegefall comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `## ${emoji} Pflegefall ${pfId}\n\n` +
+                      `| Feld | Wert |\n|:---|:---|\n` +
+                      `| **ID** | \`${pfId}\` |\n` +
+                      `| **Priorität** | ${priority} |\n` +
+                      `| **Erstellt** | ${now.toISOString()} |\n` +
+                      `| **Status** | 🔍 Analyse |\n\n` +
+                      `---\n` +
+                      `> 🤖 _Automatisch triagiert by DkZ Pflegefall-System (R21)_`
+              });
+
+              console.log(`Triaged #${issue.number} as ${pfId} [${priority}]`);
+            }
+
+      - name: Check Escalations
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Find issues with >3 comments that are still open (stuck issues)
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'pf:hoch,pf:kritisch',
+              per_page: 50
+            });
+
+            for (const issue of issues.data) {
+              const comments = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number
+              });
+
+              // If >3 fix attempts, escalate
+              const fixAttempts = comments.data.filter(c =>
+                c.body && c.body.includes('Fix-Versuch')
+              ).length;
+
+              if (fixAttempts >= 3 && !issue.labels.some(l => l.name === 'pf:escalation')) {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  labels: ['pf:escalation']
+                });
+
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: `## 🚨 Escalation\n\n` +
+                        `Dieses Issue hat **${fixAttempts} Fix-Versuche** ohne Lösung.\n` +
+                        `→ Wird an **Admin Dashboard** (Sicherheitsaufgaben) weitergeleitet.\n\n` +
+                        `> @BAZE2 Bitte manuell prüfen.`
+                });
+              }
+            }

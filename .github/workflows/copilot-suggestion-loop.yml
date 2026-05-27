@@ -1,0 +1,170 @@
+# Copilot Suggestion Loop — Continuous Improvement Scanner
+# Runs every hour, scans for system-relevant improvements
+# Posts as suggestions (NOT issues!) — only meaningful, system-relevant items
+
+name: "🤖 Copilot Suggestion Loop"
+
+on:
+  schedule:
+    - cron: '0 * * * *'       # Every hour
+  workflow_dispatch:
+
+permissions:
+  discussions: write
+  issues: write
+  contents: read
+
+jobs:
+  suggestion-loop:
+    name: "🤖 Copilot Improvement Scan"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "🔍 Copilot Scan — Performance & Logic"
+        id: scan
+        run: |
+          SUGGESTIONS=""
+          COUNT=0
+
+          for MODULE_DIR in 01_PROJECTS/01_dashboard/modules/*/; do
+            MODULE=$(basename "$MODULE_DIR")
+            INDEX="$MODULE_DIR/index.html"
+            [ ! -f "$INDEX" ] && continue
+
+            CONTENT=$(cat "$INDEX")
+            SIZE=$(wc -c < "$INDEX")
+
+            # B03: Toast System missing
+            if ! echo "$CONTENT" | grep -qi "toast\|showToast"; then
+              SUGGESTIONS="${SUGGESTIONS}B03|${MODULE}|UX|Toast-Benachrichtigungen einbauen\n"
+              ((COUNT++))
+            fi
+
+            # B04: Settings Panel missing
+            if ! echo "$CONTENT" | grep -qi "settings\|⚙"; then
+              SUGGESTIONS="${SUGGESTIONS}B04|${MODULE}|UX|Settings Panel einbauen\n"
+              ((COUNT++))
+            fi
+
+            # B05: Large inline JS (>30KB)
+            SCRIPT_SIZE=$(echo "$CONTENT" | sed -n '/<script>/,/<\/script>/p' | wc -c)
+            if [ "$SCRIPT_SIZE" -gt 30000 ] 2>/dev/null; then
+              SUGGESTIONS="${SUGGESTIONS}B05|${MODULE}|Performance|Inline JS >30KB — auslagern\n"
+              ((COUNT++))
+            fi
+
+            # B08: No localStorage usage (not persisting state)
+            if ! echo "$CONTENT" | grep -q "localStorage"; then
+              SUGGESTIONS="${SUGGESTIONS}B08|${MODULE}|Logic|localStorage für Persistenz nutzen\n"
+              ((COUNT++))
+            fi
+
+            # B09: No error handling
+            if ! echo "$CONTENT" | grep -q "try\|catch"; then
+              SUGGESTIONS="${SUGGESTIONS}B09|${MODULE}|Stability|Error Handling (try/catch) einbauen\n"
+              ((COUNT++))
+            fi
+
+            # B10: No keyboard shortcuts
+            if ! echo "$CONTENT" | grep -q "keydown\|keypress\|Ctrl"; then
+              SUGGESTIONS="${SUGGESTIONS}B10|${MODULE}|UX|Keyboard Shortcuts einbauen\n"
+              ((COUNT++))
+            fi
+
+            # Custom: Module too large (>50KB)
+            if [ "$SIZE" -gt 50000 ] 2>/dev/null; then
+              SUGGESTIONS="${SUGGESTIONS}SIZE|${MODULE}|Performance|Modul >50KB — Splitting empfohlen\n"
+              ((COUNT++))
+            fi
+
+            # Custom: Missing EventLog integration
+            if ! echo "$CONTENT" | grep -q "DkzEventLog\|dkz-eventlog"; then
+              SUGGESTIONS="${SUGGESTIONS}ELOG|${MODULE}|System|EventLog Integration fehlt\n"
+              ((COUNT++))
+            fi
+          done
+
+          echo -e "$SUGGESTIONS" > /tmp/copilot-suggestions.txt
+          echo "count=$COUNT" >> $GITHUB_OUTPUT
+          echo "🤖 Found $COUNT improvement suggestions"
+
+      - name: "💡 Post Improvement Suggestions"
+        if: steps.scan.outputs.count > 0
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const suggestions = fs.readFileSync('/tmp/copilot-suggestions.txt', 'utf8')
+              .split('\n')
+              .filter(l => l.includes('|'));
+
+            // Group by category
+            const byCat = {};
+            for (const line of suggestions) {
+              const [checkId, module, cat, desc] = line.split('|');
+              if (!byCat[cat]) byCat[cat] = [];
+              byCat[cat].push({ checkId, module, desc });
+            }
+
+            // Check if suggestion issue already exists this week
+            const weekNum = Math.ceil((new Date().getTime() - new Date(new Date().getFullYear(), 0, 1).getTime()) / 604800000);
+            const title = `🤖 [Copilot] Verbesserungsvorschläge — KW${weekNum}`;
+
+            const { data: existing } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'copilot-suggestion'
+            });
+
+            // Build body
+            let body = `## 🤖 Copilot Improvement Suggestions\n\n`;
+            body += `**Scan:** ${new Date().toISOString()}\n`;
+            body += `**Total:** ${suggestions.length} Vorschläge\n\n`;
+
+            for (const [cat, items] of Object.entries(byCat)) {
+              body += `### ${cat}\n\n`;
+              body += `| Check | Modul | Vorschlag |\n|:---|:---|:---|\n`;
+              body += items.map(i => `| ${i.checkId} | \`${i.module}\` | ${i.desc} |`).join('\n');
+              body += '\n\n';
+            }
+
+            body += `---\n`;
+            body += `> 💡 _Dies sind Verbesserungsvorschläge, keine Fehler._\n`;
+            body += `> _Auto-generated by Copilot Suggestion Loop._\n`;
+            body += `> _Nur system-relevante Vorschläge werden gepostet._`;
+
+            const weekTitle = `🤖 [Copilot] Verbesserungsvorschläge — KW${weekNum}`;
+            const existingWeek = existing.find(i => i.title.includes(`KW${weekNum}`));
+
+            if (existingWeek) {
+              // Update existing suggestion
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingWeek.number,
+                body
+              });
+              console.log(`📝 Updated existing suggestion issue #${existingWeek.number}`);
+            } else {
+              // Create new weekly suggestion
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: weekTitle,
+                body,
+                labels: ['copilot-suggestion', 'enhancement', 'auto-created']
+              });
+              console.log(`✅ Created new suggestion issue for KW${weekNum}`);
+            }
+
+      - name: "📊 Summary"
+        if: always()
+        run: |
+          echo "## 🤖 Copilot Suggestion Loop Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|:---|:---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Suggestions | ${{ steps.scan.outputs.count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Time | $(date -u +%Y-%m-%dT%H:%M:%SZ) |" >> $GITHUB_STEP_SUMMARY

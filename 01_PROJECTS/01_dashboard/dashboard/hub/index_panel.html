@@ -1,0 +1,475 @@
+﻿<!-- 
+=============================================================================
+DKZ ECOSYSTEM - TUB SWITCHER PANEL
+MODULE: BAZE HUB
+=============================================================================
+-->
+<!DOCTYPE html>
+<html lang="de" class="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HUB DkZ™ Switcher</title>
+    <script src="https://cdn.tailwindcss.com">
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }</script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { brand: '#ff0033', darkBg: '#09090b', darkSurface: '#18181b' }, fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Outfit', 'sans-serif'] } } }
+        }
+    </script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            background-color: #09090b;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .iframe-container {
+            flex: 1;
+            border: none;
+            width: 100%;
+            height: 100%;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 0, 51, 0.5);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root" class="h-full flex flex-col"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const Icon = ({ name, size = 16, className = '', weight = 'regular' }) => <i className={`ph-${weight} ph-${name} text-[${size}px] ${className}`}></i>;
+
+        const initialModules = [
+            { id: 'ai_chat_v1', name: 'Core Chat', icon: 'chat-circle-text', color: '#fa1e4e', path: '../../modules/ai_chat/chat_version_1/index.html' },
+            { id: 'ai_chat_v2', name: 'Multi-Core', icon: 'brain', color: '#f59e0b', path: '../../modules/ai_chat/chat_version_2/index.html' },
+            { id: 'analyser', name: 'Analyser', icon: 'scan', color: '#fa1e4e', path: '../../modules/analyser/index.html' },
+            { id: 'converter', name: 'Code Converter', icon: 'code', color: '#a855f7', path: '../../modules/converter/index.html' },
+            { id: 'text_summary', name: 'Txt Summary', icon: 'text-align-justify', color: '#10b981', path: '../../modules/text_summary/index.html' },
+            { id: 'speech_to_text', name: 'Voice Engine', icon: 'microphone-stage', color: '#06b6d4', path: '../../modules/speech_to_text/index.html' },
+            { id: 'text_to_speech', name: 'Audio Synth', icon: 'speaker-high', color: '#ec4899', path: '../../modules/text_to_speech/index.html' },
+            { id: 'markdown_converter', name: 'MD Converter', icon: 'markdown-logo', color: '#f59e0b', path: '../../modules/markdown_converter/index.html' },
+            { id: 'html_viewer', name: 'HTML Viewer', icon: 'file-html', color: '#ef4444', path: '../../modules/html_viewer/index.html' }
+        ];
+
+        const HomeView = ({ onSelectModule }) => {
+            const [isTagsOpen, setIsTagsOpen] = useState(false);
+            const [selectedTag, setSelectedTag] = useState(null);
+
+            const apps = [
+                { id: 'chat1', name: 'Core Chat', category: 'ai/chat/text', icon: 'chat-circle-text', color: '#fa1e4e', path: '../../modules/ai_chat/chat_version_1/index.html' },
+                { id: 'chat2', name: 'Multi-Core', category: 'ai/chat/models', icon: 'brain', color: '#f59e0b', path: '../../modules/ai_chat/chat_version_2/index.html' },
+                { id: '1', name: 'Text Summary', category: 'text/analyser/ai', icon: 'text-aa', color: '#10b981', path: '../../modules/text_summary/index.html' },
+                { id: '2', name: 'Resume Analyser', category: 'code/analyser/ai', icon: 'scan', color: '#fa1e4e', path: '../../modules/analyser/index.html' },
+                { id: '3', name: 'Code Converter', category: 'code/converter/ai', icon: 'arrows-left-right', color: '#a855f7', path: '../../modules/converter/index.html' },
+                { id: '4', name: 'HTML Viewer', category: 'web/html/preview', icon: 'browser', color: '#ef4444', path: '../../modules/html_viewer/index.html' },
+                { id: 'mdc', name: 'MD Converter', category: 'text/markdown/web', icon: 'markdown-logo', color: '#f59e0b', path: '../../modules/markdown_converter/index.html' },
+                { id: 'stt', name: 'Voice Engine', category: 'audio/speech/ai', icon: 'microphone-stage', color: '#06b6d4', path: '../../modules/speech_to_text/index.html' },
+                { id: 'tts', name: 'Audio Synth', category: 'audio/speech/ai', icon: 'speaker-high', color: '#ec4899', path: '../../modules/text_to_speech/index.html' }
+            ];
+
+            const allTags = Array.from(new Set(apps.flatMap(app => app.category.split('/')))).sort();
+
+            const filteredApps = selectedTag
+                ? apps.filter(app => app.category.split('/').includes(selectedTag))
+                : apps;
+
+            return (
+                <div className="flex-1 overflow-y-auto custom-scroll p-4 bg-[#09090b] relative w-full">
+                    {/* Background glow */}
+                    <div className="absolute top-0 right-0 left-0 h-40 bg-gradient-to-b from-[#ff0033]/10 to-transparent pointer-events-none"></div>
+
+                    <div className="relative z-10 w-full mb-6">
+                        <div className="flex justify-between items-end mb-4">
+                            <div>
+                                <h2 className="text-xl font-display font-black text-white drop-shadow-md">Apps & Tags</h2>
+                                <p className="text-xs text-gray-400">Smart Mobile Hub</p>
+                            </div>
+                        </div>
+
+                        {/* Collapsible Tags Section */}
+                        <div className="mb-5 bg-[#18181b]/80 border border-white/10 rounded-xl overflow-hidden backdrop-blur-md shadow-lg">
+                            <button
+                                onClick={() => setIsTagsOpen(!isTagsOpen)}
+                                className="w-full flex justify-between items-center p-3 text-sm font-bold text-gray-300 hover:text-white transition-colors"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Icon name="tag" weight="duotone" className="text-brand" size={18} />
+                                    Filter by Tags {selectedTag && <span className="ml-2 px-2 py-0.5 bg-brand text-white text-[10px] rounded-full uppercase tracking-wider">#{selectedTag}</span>}
+                                </div>
+                                <Icon name={isTagsOpen ? "caret-up" : "caret-down"} size={18} />
+                            </button>
+
+                            {isTagsOpen && (
+                                <div className="p-3 border-t border-white/10 bg-black/40 flex flex-wrap gap-2">
+                                    <button
+                                        onClick={() => setSelectedTag(null)}
+                                        className={`px-3 py-1.5 rounded-full text-[10px] uppercase tracking-widest font-bold border transition-all shadow-sm ${selectedTag === null ? 'bg-[#ff0033] border-[#ff0033] text-white shadow-[#ff0033]/50' : 'bg-[#09090b] border-white/10 text-gray-400 hover:border-white/30'
+                                            }`}
+                                    >
+                                        All Apps
+                                    </button>
+                                    {allTags.map(tag => (
+                                        <button
+                                            key={tag}
+                                            onClick={() => setSelectedTag(tag === selectedTag ? null : tag)}
+                                            className={`px-3 py-1.5 rounded-full text-[10px] uppercase tracking-widest font-bold border transition-all shadow-sm ${selectedTag === tag ? 'bg-[#ff0033]/20 border-[#ff0033] text-[#ff0033] shadow-[#ff0033]/20' : 'bg-[#09090b] border-white/10 text-gray-400 hover:border-white/30'
+                                                }`}
+                                        >
+                                            #{tag}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* App Tiles Grid */}
+                        <div className="grid grid-cols-2 gap-3 pb-8">
+                            {filteredApps.map(app => (
+                                <div
+                                    key={app.id}
+                                    onClick={() => onSelectModule(app)}
+                                    className="relative group cursor-pointer"
+                                    title={app.name}
+                                >
+                                    {/* 3D Glossy Tile - Mobile Kachel */}
+                                    <div className="h-28 rounded-[18px] p-3 flex flex-col justify-between 
+                                                  bg-gradient-to-br from-white/10 to-white/5 
+                                                  border-t border-l border-white/20 border-b border-r border-black/40
+                                                  shadow-[0_8px_16px_rgba(0,0,0,0.6),inset_0_2px_4px_rgba(255,255,255,0.3),inset_0_-2px_6px_rgba(0,0,0,0.6)]
+                                                  backdrop-blur-xl 
+                                                  transition-all duration-300 ease-out
+                                                  group-hover:-translate-y-1.5 group-hover:shadow-[0_12px_24px_rgba(255,0,51,0.25),inset_0_2px_4px_rgba(255,255,255,0.5)]
+                                                  overflow-hidden">
+
+                                        {/* Glossy reflection Top-Left */}
+                                        <div className="absolute -top-6 -left-6 w-16 h-16 bg-white/20 blur-xl rounded-full pointer-events-none z-0"></div>
+                                        {/* Glossy curved sweep */}
+                                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/20 opacity-40 pointer-events-none rounded-[18px]"></div>
+
+                                        {/* Header area in Tile */}
+                                        <div className="flex justify-between items-start z-10 w-full relative">
+                                            <div className="w-8 h-8 rounded-full flex items-center justify-center shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)] bg-black/60 border border-white/10 z-10">
+                                                <Icon name={app.icon} size={16} weight="duotone" style={{ color: app.color }} />
+                                            </div>
+                                            <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_4px_#22c55e]"></div>
+                                        </div>
+
+                                        <div className="z-10 mt-auto relative">
+                                            <h3 className="text-[11px] font-bold text-white drop-shadow-md leading-tight truncate">{app.name}</h3>
+                                            <div className="flex gap-1 mt-1 flex-wrap h-4 overflow-hidden">
+                                                {app.category.split('/').map(c => (
+                                                    <span key={c} className="text-[7.5px] uppercase font-bold tracking-widest bg-black/60 border border-white/10 text-gray-300 px-1 py-0.5 rounded shadow-sm">
+                                                        {c}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            {filteredApps.length === 0 && (
+                                <div className="col-span-2 text-center py-8 text-gray-500 text-sm font-bold border border-white/5 rounded-2xl bg-black/20">
+                                    No apps found for this tag.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const AppCreatorWizard = ({ isOpen, onClose, onAppCreated }) => {
+            const [mode, setMode] = useState('panel');
+            const [youtubeLink, setYoutubeLink] = useState('');
+            const [notes, setNotes] = useState('');
+            const [selectedTags, setSelectedTags] = useState([]);
+            const availableTags = ['text', 'speak', 'code', 'converter', 'analyser', 'etc', 'new', 'fav'];
+
+            const [appPurpose, setAppPurpose] = useState('');
+            const [appResult, setAppResult] = useState('');
+            const [exampleLink, setExampleLink] = useState('');
+
+            const [step, setStep] = useState(1); // 1: input, 2: analyzing, 3: questions, 4: building
+            const [answers, setAnswers] = useState({ q1: '', q2: '', q3: '' });
+
+            useEffect(() => {
+                if (isOpen) {
+                    setStep(1); setMode('panel'); setYoutubeLink(''); setNotes('');
+                    setSelectedTags([]); setAppPurpose(''); setAppResult(''); setExampleLink('');
+                    setAnswers({ q1: '', q2: '', q3: '' });
+                }
+            }, [isOpen]);
+
+            if (!isOpen) return null;
+
+            const handleAnalyze = () => {
+                setStep(2);
+                setTimeout(() => setStep(3), 2000);
+            };
+
+            const handleBuild = () => {
+                setStep(4);
+                setTimeout(() => {
+                    onAppCreated({
+                        id: 'new_app_' + Date.now(),
+                        name: mode === 'smart' ? 'Smart Generated App' : 'New Panel App',
+                        desc: mode === 'smart' ? (appPurpose.substring(0, 40) + '...') : ((notes.substring(0, 40) || 'Custom Panel')),
+                        icon: 'magic-wand',
+                        color: '#ec4899', colorRgb: '236, 72, 153',
+                        path: '#'
+                    });
+                    onClose();
+                }, 3000);
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                    <div className="bg-[#18181b] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto custom-scroll flex flex-col shadow-2xl">
+                        <div className="p-4 border-b border-white/5 flex items-center justify-between sticky top-0 bg-[#18181b]/95 backdrop-blur z-10">
+                            <h2 className="text-xl font-display font-bold flex items-center gap-2 text-white">
+                                <Icon name="magic-wand" className="text-brand" weight="duotone" />
+                                App Generation Wizard
+                            </h2>
+                            <button onClick={onClose} className="text-gray-400 hover:text-white"><Icon name="x" size={24} /></button>
+                        </div>
+
+                        <div className="p-6 flex-1">
+                            {step === 1 && (
+                                <div className="space-y-6">
+                                    <div className="flex bg-black/50 p-1 rounded-lg border border-white/5 mx-auto max-w-xs transition-opacity duration-300">
+                                        <button className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${mode === 'panel' ? 'bg-[#ff0033] text-white shadow' : 'text-gray-500 hover:text-gray-300'}`} onClick={() => setMode('panel')}>Panel Mode</button>
+                                        <button className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${mode === 'smart' ? 'bg-indigo-500 text-white shadow' : 'text-gray-500 hover:text-gray-300'}`} onClick={() => setMode('smart')}>Smart Mode</button>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider">YouTube Link (Reference)</label>
+                                            <input type="text" value={youtubeLink} onChange={e => setYoutubeLink(e.target.value)} className="w-full bg-[#09090b] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#ff0033] transition-colors" placeholder="https://youtube.com/watch?v=..." />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider">Anmerkungen (Notes/Improvements)</label>
+                                            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows="2" className="w-full bg-[#09090b] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#ff0033] transition-colors resize-none" placeholder="Was soll verbessert / angepasst werden?"></textarea>
+                                        </div>
+                                    </div>
+
+                                    {mode === 'panel' ? (
+                                        <div className="space-y-3 pt-4 border-t border-white/5 transition-opacity duration-300">
+                                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Tags (Multiple Select)</label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {availableTags.map(tag => (
+                                                    <button key={tag} onClick={() => setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])}
+                                                        className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${selectedTags.includes(tag) ? 'bg-[#ff0033]/20 border-[#ff0033] text-[#ff0033]' : 'bg-[#09090b] border-white/10 text-gray-400 hover:border-white/30'}`}>
+                                                        #{tag}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4 pt-4 border-t border-white/5 transition-opacity duration-300">
+                                            <div>
+                                                <label className="block text-xs font-bold text-indigo-400 mb-1 uppercase tracking-wider">1. Was soll die App machen?</label>
+                                                <textarea value={appPurpose} onChange={e => setAppPurpose(e.target.value)} rows="2" className="w-full bg-[#09090b] border border-indigo-500/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors resize-none placeholder-gray-600" placeholder="Beschreibe die Kernfunktion..."></textarea>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-indigo-400 mb-1 uppercase tracking-wider">2. Was soll als Endergebnis rauskommen?</label>
+                                                <textarea value={appResult} onChange={e => setAppResult(e.target.value)} rows="2" className="w-full bg-[#09090b] border border-indigo-500/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors resize-none placeholder-gray-600" placeholder="Z.B. Eine formatierte MD Datei, Ein Panel..."></textarea>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-indigo-400 mb-1 uppercase tracking-wider">3. Beispiel Upload (Foto/Code/MD) oder Link (Repo/Web)</label>
+                                                <div className="flex items-center gap-2">
+                                                    <input type="text" value={exampleLink} onChange={e => setExampleLink(e.target.value)} className="flex-1 bg-[#09090b] border border-indigo-500/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder-gray-600" placeholder="https://github.com/... oder click Upload ->" />
+                                                    <button className="bg-[#09090b] border border-indigo-500/30 rounded-lg p-2 text-indigo-400 hover:bg-indigo-500/10 transition-colors"><Icon name="upload-simple" size={20} /></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {step === 2 && (
+                                <div className="py-12 flex flex-col items-center justify-center space-y-4">
+                                    <i className="ph-duotone ph-brain text-4xl text-[#ff0033] animate-pulse"></i>
+                                    <h3 className="text-lg font-bold text-white">Analysiere Anforderungen...</h3>
+                                    <p className="text-sm text-gray-500">DKZ AI Core wertet Repos und Links aus.</p>
+                                </div>
+                            )}
+
+                            {step === 3 && (
+                                <div className="space-y-6">
+                                    <div className="bg-[#ff0033]/10 border border-[#ff0033]/30 rounded-lg p-4 text-sm text-[#ff0033] mb-4 shadow-[0_0_10px_rgba(255,0,51,0.2)]">
+                                        Analyse abgeschlossen. Bitte kläre folgende 3 Fragen, bevor der Build startet:
+                                    </div>
+
+                                    {[1, 2, 3].map(qNum => (
+                                        <div key={qNum} className="space-y-2">
+                                            <label className="block text-sm font-bold text-gray-200">
+                                                {qNum === 1 ? 'Welches UI Framework soll priorisiert werden?' : qNum === 2 ? 'Soll die App in der Sidebar oder als Fullscreen-Panel laufen?' : 'Gibt es eine bevorzugte Datenbank/Speicher-Methode?'}
+                                            </label>
+                                            <div className="flex gap-2 text-sm font-bold">
+                                                {['A', 'B', 'C'].map(opt => (
+                                                    <label key={opt} className={`flex-1 flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${answers['q' + qNum] === opt ? 'bg-white/10 border-white text-white shadow-lg' : 'bg-[#09090b] border-white/10 text-gray-400 hover:border-white/30'}`}>
+                                                        <input type="radio" name={'q' + qNum} value={opt} checked={answers['q' + qNum] === opt} onChange={() => setAnswers({ ...answers, ['q' + qNum]: opt })} className="hidden" />
+                                                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${answers['q' + qNum] === opt ? 'border-[#ff0033]' : 'border-gray-500'}`}>
+                                                            {answers['q' + qNum] === opt && <div className="w-2 h-2 rounded-full bg-[#ff0033]"></div>}
+                                                        </div>
+                                                        Opt {opt}
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {step === 4 && (
+                                <div className="py-12 flex flex-col items-center justify-center space-y-4">
+                                    <i className="ph-duotone ph-gear-fine text-4xl text-indigo-400 animate-spin"></i>
+                                    <h3 className="text-lg font-bold text-white">Application wird kompiliert & getestet...</h3>
+                                    <div className="w-full max-w-sm h-1.5 bg-[#09090b] rounded-full overflow-hidden mt-4">
+                                        <div className="h-full w-full bg-indigo-500 animate-pulse origin-left"></div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {step !== 2 && step !== 4 && (
+                            <div className="p-4 border-t border-white/5 flex justify-end gap-3 bg-[#09090b] rounded-b-2xl">
+                                <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:text-white transition-colors">Abbrechen</button>
+                                {step === 1 ? (
+                                    <button onClick={handleAnalyze} className="px-5 py-2 rounded-lg text-sm font-bold bg-white text-black hover:bg-gray-200 transition-colors shadow-lg">Analysieren & Setup</button>
+                                ) : (
+                                    <button onClick={handleBuild} disabled={!answers.q1 || !answers.q2 || !answers.q3} className="px-5 py-2 rounded-lg text-sm font-bold bg-[#ff0033] text-white hover:bg-[#cc0029] transition-colors shadow-[0_0_15px_rgba(255,0,51,0.5)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                                        <Icon name="rocket-launch" weight="fill" /> Build & Release
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [installedModules, setInstalledModules] = useState(initialModules);
+            const [isCreatorOpen, setCreatorOpen] = useState(false);
+            const [activeModule, setActiveModule] = useState(null);
+            const [isNavOpen, setIsNavOpen] = useState(false);
+
+            return (
+                <div className="h-full flex flex-col relative w-full overflow-hidden max-w-[420px] mx-auto bg-[#09090b] shadow-[0_0_50px_rgba(0,0,0,0.8)] border-x border-white/10">
+                    {/* Compact Header for Web Panel */}
+                    <div className="bg-[#18181b] border-b border-white/10 p-2.5 flex items-center justify-between shrink-0 z-20 shadow-md">
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => setActiveModule(null)} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                                <span className="text-xl font-black text-[#ff0033] drop-shadow-[0_0_8px_rgba(255,0,51,0.8)] leading-none">{'{'}7{'>'}</span>
+                                <div className="flex flex-col text-left">
+                                    <span className="text-[11px] font-display font-black tracking-widest uppercase text-gray-200 leading-tight">HUB <span className="text-[#ff0033]">DkZ™</span></span>
+                                    <span className="text-[8px] text-gray-500 uppercase tracking-widest leading-tight">M-Series</span>
+                                </div>
+                            </button>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => setCreatorOpen(true)} className="w-8 h-8 rounded shrink-0 bg-[#09090b] border border-[#ff0033]/30 flex items-center justify-center text-[#ff0033] shadow-[0_0_8px_rgba(255,0,51,0.2)] hover:bg-[#ff0033]/10 transition-all">
+                                <Icon name="plus" size={18} weight="bold" />
+                            </button>
+                            <button
+                                onClick={() => setIsNavOpen(!isNavOpen)}
+                                className="w-8 h-8 rounded shrink-0 bg-[#09090b] border border-white/10 flex items-center justify-center text-gray-300 hover:text-white transition-all"
+                            >
+                                <Icon name={isNavOpen ? "x" : "list"} size={18} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Navigation Dropdown Overlay */}
+                    {isNavOpen && (
+                        <div className="absolute top-[52px] left-0 w-full bg-[#18181b]/95 backdrop-blur-md border-b border-white/10 z-30 shadow-2xl max-h-[50vh] overflow-y-auto custom-scroll">
+                            <div className="p-2 grid grid-cols-2 gap-2">
+                                {installedModules.map(mod => (
+                                    <button
+                                        key={mod.id}
+                                        onClick={() => { setActiveModule(mod); setIsNavOpen(false); }}
+                                        className={`flex items-center gap-2 p-2 rounded-md transition-all border text-left ${activeModule?.id === mod.id ? 'bg-white/10 border-white/20' : 'bg-[#09090b] border-transparent hover:bg-white/5'}`}
+                                    >
+                                        <Icon name={mod.icon} weight="duotone" style={{ color: mod.color }} />
+                                        <span className="text-[10px] font-bold text-gray-200 truncate">{mod.name}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Active Module Iframe Container or Home View */}
+                    <div className="flex-1 w-full bg-[#09090b] relative flex flex-col overflow-hidden">
+                        {activeModule ? (
+                            <>
+                                <div className="bg-[#18181b] border-b border-white/5 py-1.5 px-3 flex justify-between items-center z-10">
+                                    <div className="flex items-center gap-2">
+                                        <Icon name={activeModule.icon || 'app-window'} size={14} style={{ color: activeModule.color || '#fff' }} weight="duotone" />
+                                        <span className="text-[10px] font-bold text-gray-300 font-mono tracking-wide">{activeModule.name}</span>
+                                    </div>
+                                    <button
+                                        onClick={() => setActiveModule(null)}
+                                        className="text-gray-400 hover:text-[#ff0033] transition-colors flex items-center justify-center"
+                                    >
+                                        <Icon name="x-circle" size={16} weight="fill" />
+                                    </button>
+                                </div>
+                                <iframe
+                                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                                    src={activeModule.path}
+                                    className="w-full h-full border-none m-0 p-0 block flex-1"
+                                ></iframe>
+                            </>
+                        ) : (
+                            <HomeView onSelectModule={(mod) => { setActiveModule(mod); setIsNavOpen(false); }} />
+                        )}
+                    </div>
+
+                    <AppCreatorWizard isOpen={isCreatorOpen} onClose={() => setCreatorOpen(false)} onAppCreated={(newApp) => { setInstalledModules(prev => [...prev, newApp]); setActiveModule(newApp); }} />
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

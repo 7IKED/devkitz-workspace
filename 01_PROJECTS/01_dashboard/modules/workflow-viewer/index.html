@@ -1,0 +1,675 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-module" content="workflow-viewer">
+    <title>🔄 DkZâ„¢ Workflow Viewer — Live Monitor v2.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:#060608;--card:#0d0d11;--card2:#141418;--brd:#1e1e24;
+            --t:#f0f0f2;--m:#71717a;--accent:#6366f1;
+            --g:#00ff88;--r:#fa1e4e;--y:#FFB800;--b:#55ACEE;--p:#a855f7;--c:#22d3ee;--o:#f97316;--pk:#ec4899;
+            --radius:12px;
+        }
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;overflow-x:hidden;}
+
+        /* ═══ ANIMATED BG ═══ */
+        .bg-grid{position:fixed;inset:0;z-index:0;background-image:radial-gradient(circle at 1px 1px,rgba(99,102,241,0.06) 1px,transparent 0);background-size:40px 40px;pointer-events:none;}
+        .blob{position:fixed;border-radius:50%;filter:blur(140px);opacity:0.1;pointer-events:none;z-index:0;animation:blob-float 15s ease-in-out infinite;}
+        .b1{width:600px;height:600px;background:var(--accent);top:-200px;right:-100px;}
+        .b2{width:500px;height:500px;background:var(--pk);bottom:-150px;left:-100px;animation-delay:5s;}
+        .b3{width:400px;height:400px;background:var(--c);top:40%;left:30%;animation-delay:10s;}
+        @keyframes blob-float{0%,100%{transform:translate(0,0) scale(1);}33%{transform:translate(30px,-20px) scale(1.05);}66%{transform:translate(-20px,15px) scale(0.95);}}
+
+        /* ═══ HEADER ═══ */
+        .header{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:rgba(6,6,8,0.85);backdrop-filter:blur(24px);border-bottom:1px solid var(--brd);}
+        .header a{color:var(--r);text-decoration:none;font-weight:800;font-size:12px;transition:0.2s;}
+        .header a:hover{color:#fff;}
+        .header h1{font-size:15px;font-weight:900;display:flex;align-items:center;gap:8px;}
+        .header .ver{font-size:10px;color:var(--m);font-family:'JetBrains Mono',monospace;}
+        .clock{font-size:10px;color:var(--m);font-family:'JetBrains Mono',monospace;}
+
+        /* ═══ TAB BAR (4 Views) ═══ */
+        .tabs{display:flex;gap:4px;padding:6px 20px;background:var(--card);border-bottom:1px solid var(--brd);overflow-x:auto;}
+        .tab{padding:7px 16px;border-radius:8px;border:1px solid transparent;font-size:11px;font-weight:700;cursor:pointer;color:var(--m);transition:all 0.25s;white-space:nowrap;display:flex;align-items:center;gap:6px;}
+        .tab:hover{background:rgba(99,102,241,0.08);color:var(--t);}
+        .tab.active{background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(168,85,247,0.15));border-color:var(--accent);color:#fff;}
+        .tab .tb-dot{width:7px;height:7px;border-radius:50%;}
+
+        /* ═══ STATUS BAR ═══ */
+        .sbar{display:flex;gap:8px;padding:8px 20px;background:rgba(13,13,17,0.6);border-bottom:1px solid var(--brd);overflow-x:auto;}
+        .sbar .s{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);font-size:10px;font-weight:700;white-space:nowrap;}
+        .sbar .s .d{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
+        /* ═══ CANVAS ═══ */
+        .canvas{position:relative;z-index:1;min-height:calc(100vh - 130px);padding:20px;}
+
+        /* ═══ n8n-STYLE NODE ═══ */
+        .node{position:absolute;min-width:160px;background:var(--card2);border:2px solid var(--brd);border-radius:14px;padding:0;cursor:grab;transition:box-shadow 0.3s,border-color 0.3s,transform 0.2s;z-index:10;user-select:none;}
+        .node:hover{transform:scale(1.03);z-index:20;}
+        .node.running{border-color:var(--g);box-shadow:0 0 25px rgba(0,255,136,0.15);animation:node-pulse 2.5s infinite;}
+        .node.done{border-color:rgba(0,255,136,0.3);opacity:0.85;}
+        .node.error{border-color:var(--r);box-shadow:0 0 25px rgba(250,30,78,0.15);animation:node-shake 0.5s ease;}
+        .node.waiting{border-color:var(--y);box-shadow:0 0 15px rgba(255,184,0,0.1);}
+        .node.idle{opacity:0.5;}
+        @keyframes node-pulse{0%,100%{box-shadow:0 0 10px rgba(0,255,136,0.1);}50%{box-shadow:0 0 30px rgba(0,255,136,0.25);}}
+        @keyframes node-shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
+
+        .node-head{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--brd);border-radius:12px 12px 0 0;}
+        .node-icon{font-size:22px;filter:drop-shadow(0 0 6px currentColor);}
+        .node-title{font-size:11px;font-weight:800;flex:1;}
+        .node-badge{font-size:7px;padding:2px 7px;border-radius:4px;font-weight:900;text-transform:uppercase;letter-spacing:0.5px;}
+        .nb-run{background:rgba(0,255,136,0.15);color:var(--g);}
+        .nb-done{background:rgba(0,255,136,0.1);color:rgba(0,255,136,0.5);}
+        .nb-err{background:rgba(250,30,78,0.15);color:var(--r);}
+        .nb-wait{background:rgba(255,184,0,0.15);color:var(--y);}
+        .nb-idle{background:rgba(113,113,122,0.15);color:var(--m);}
+
+        .node-body{padding:8px 14px 10px;}
+        .node-actions{display:flex;flex-direction:column;gap:3px;}
+        .n-act{display:flex;align-items:center;gap:5px;font-size:9px;padding:3px 6px;border-radius:5px;background:rgba(0,0,0,0.25);}
+        .n-act .a-i{font-size:10px;}
+        .n-act .a-n{flex:1;font-weight:600;}
+        .n-act .a-t{font-size:8px;color:var(--m);font-family:'JetBrains Mono',monospace;}
+        .node-bar{height:3px;background:rgba(255,255,255,0.04);border-radius:2px;margin-top:6px;overflow:hidden;}
+        .node-fill{height:100%;border-radius:2px;transition:width 0.6s ease;}
+
+        /* ═══ PORTS ═══ */
+        .port-in,.port-out{position:absolute;width:12px;height:12px;border-radius:50%;border:2px solid var(--brd);background:var(--bg);z-index:15;}
+        .port-in{left:-7px;top:50%;transform:translateY(-50%);}
+        .port-out{right:-7px;top:50%;transform:translateY(-50%);}
+        .node.running .port-out{border-color:var(--g);background:var(--g);box-shadow:0 0 8px var(--g);}
+        .node.done .port-out{border-color:rgba(0,255,136,0.4);background:rgba(0,255,136,0.4);}
+
+        /* ═══ SVG CONNECTORS ═══ */
+        .connectors{position:absolute;inset:0;pointer-events:none;z-index:5;}
+        .conn-line{fill:none;stroke:var(--brd);stroke-width:2;stroke-dasharray:6 4;}
+        .conn-line.active{stroke:var(--g);stroke-dasharray:none;stroke-width:2.5;filter:drop-shadow(0 0 4px rgba(0,255,136,0.4));}
+        .conn-line.active{animation:dash-flow 1s linear infinite;}
+        @keyframes dash-flow{to{stroke-dashoffset:-20;}}
+
+        /* ═══ PARTICLE ALONG CONN ═══ */
+        .flow-dot{fill:var(--g);filter:drop-shadow(0 0 6px var(--g));}
+
+        /* ═══ COLUMN LAYOUT (for list panels) ═══ */
+        .split-view{display:grid;grid-template-columns:260px 1fr 280px;gap:0;min-height:calc(100vh - 130px);}
+        @media(max-width:1000px){.split-view{grid-template-columns:1fr;}}
+
+        .panel-left{background:var(--card);border-right:1px solid var(--brd);overflow-y:auto;padding:10px;}
+        .panel-right{background:var(--card);border-left:1px solid var(--brd);overflow-y:auto;padding:10px;}
+
+        .sec-label{font-size:8px;font-weight:900;color:var(--m);text-transform:uppercase;letter-spacing:1.5px;padding:10px 0 4px;}
+        .li{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;border:1px solid transparent;transition:0.2s;margin-bottom:2px;}
+        .li:hover{background:rgba(99,102,241,0.08);border-color:rgba(99,102,241,0.15);}
+        .li.active{background:rgba(99,102,241,0.12);border-color:var(--accent);}
+        .li .ic{font-size:16px;}
+        .li .nm{font-size:11px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .li .mt{font-size:9px;color:var(--m);}
+        .li .lamp{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+        .lp-g{background:var(--g);box-shadow:0 0 6px var(--g);}
+        .lp-y{background:var(--y);box-shadow:0 0 6px var(--y);}
+        .lp-r{background:var(--r);box-shadow:0 0 6px var(--r);animation:pulse-lamp 1.5s infinite;}
+        .lp-b{background:var(--b);box-shadow:0 0 6px var(--b);}
+        .lp-m{background:var(--m);}
+        @keyframes pulse-lamp{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+        /* ═══ DETAIL PANEL ═══ */
+        .d-kv{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.03);font-size:10px;}
+        .d-kv .k{color:var(--m);}
+        .d-kv .v{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:10px;}
+
+        /* ═══ LOG ═══ */
+        .log{background:rgba(0,0,0,0.4);border-radius:8px;padding:8px;max-height:180px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:9px;line-height:1.8;}
+        .log-l{animation:log-in 0.3s ease;}
+        .log-l .ts{color:var(--m);}
+        .lv-i{color:var(--b);}
+        .lv-o{color:var(--g);}
+        .lv-w{color:var(--y);}
+        .lv-e{color:var(--r);}
+        @keyframes log-in{from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:translateX(0);}}
+
+        /* ═══ AGENT CARD (Agent View) ═══ */
+        .agent-card{background:var(--card2);border:1px solid var(--brd);border-radius:14px;padding:16px;position:relative;overflow:hidden;transition:0.3s;}
+        .agent-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+        .agent-card .ac-glow{position:absolute;top:-30px;right:-30px;width:100px;height:100px;border-radius:50%;filter:blur(40px);opacity:0.15;}
+        .agent-card .ac-icon{font-size:32px;margin-bottom:8px;}
+        .agent-card .ac-name{font-size:13px;font-weight:900;}
+        .agent-card .ac-role{font-size:9px;color:var(--m);margin-top:2px;}
+        .agent-card .ac-stats{display:flex;gap:12px;margin-top:10px;}
+        .agent-card .ac-s{text-align:center;}
+        .agent-card .ac-sv{font-size:16px;font-weight:900;font-family:'JetBrains Mono',monospace;}
+        .agent-card .ac-sl{font-size:7px;color:var(--m);text-transform:uppercase;letter-spacing:1px;}
+        .agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;padding:20px;}
+
+        /* ═══ TEAM VIEW ═══ */
+        .team-container{padding:20px;}
+        .team-row{display:flex;align-items:center;gap:20px;margin-bottom:20px;padding:16px;background:var(--card);border:1px solid var(--brd);border-radius:14px;}
+        .team-label{font-size:12px;font-weight:900;min-width:120px;display:flex;align-items:center;gap:8px;}
+        .team-members{display:flex;gap:8px;flex-wrap:wrap;flex:1;}
+        .tm{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid var(--brd);font-size:10px;font-weight:700;transition:0.2s;}
+        .tm:hover{border-color:var(--accent);background:rgba(99,102,241,0.1);}
+        .team-arrow{font-size:18px;color:var(--m);animation:arrow-pulse 2s ease infinite;}
+        @keyframes arrow-pulse{0%,100%{opacity:0.3;}50%{opacity:1;}}
+
+        /* ═══ LOOP VIEW ═══ */
+        .loop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;padding:20px;}
+        .loop-card{background:var(--card2);border:1px solid var(--brd);border-radius:14px;padding:14px;position:relative;overflow:hidden;}
+        .loop-card.active{border-color:var(--c);box-shadow:0 0 20px rgba(34,211,238,0.1);}
+        .loop-ring{position:absolute;top:10px;right:10px;width:40px;height:40px;}
+        .loop-ring circle{fill:none;stroke-width:3;stroke-linecap:round;}
+        .loop-ring .bg{stroke:rgba(255,255,255,0.05);}
+        .loop-ring .fg{stroke:var(--c);transition:stroke-dashoffset 1s ease;}
+        .lc-name{font-size:12px;font-weight:800;margin-bottom:4px;}
+        .lc-meta{font-size:9px;color:var(--m);}
+        .lc-iters{display:flex;gap:3px;margin-top:8px;}
+        .lc-it{width:6px;height:16px;border-radius:2px;background:rgba(255,255,255,0.05);transition:0.3s;}
+        .lc-it.done{background:var(--c);}
+        .lc-it.curr{background:var(--g);box-shadow:0 0 6px var(--g);animation:iter-pulse 1s infinite;}
+        @keyframes iter-pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+
+        /* ═══ TOAST ═══ */
+        .toast{position:fixed;bottom:24px;right:24px;background:var(--g);color:#000;padding:10px 20px;border-radius:8px;font-weight:800;font-size:12px;transform:translateY(100px);transition:transform 0.3s;z-index:999;}
+        .toast.show{transform:translateY(0);}
+
+        /* ═══ QUICK BTNS ═══ */
+        .qb{padding:5px 12px;border-radius:6px;border:1px solid var(--brd);background:transparent;color:var(--m);font-size:10px;font-weight:700;cursor:pointer;transition:0.2s;text-align:left;width:100%;}
+        .qb:hover{border-color:var(--accent);color:var(--t);}
+    /* DkZ v2 BG Blobs */body::before{content:"";position:fixed;top:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(250,30,78,.07),transparent 70%);pointer-events:none;z-index:0}body::after{content:"";position:fixed;bottom:-150px;left:-150px;width:500px;height:500px;background:radial-gradient(circle,rgba(168,85,247,.06),transparent 70%);pointer-events:none;z-index:0}
+</style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+<body data-dkz-module="workflow-viewer" data-dkz-appid="DKZ-MOD-WOR" data-dkz-version="v0.01" data-dkz-title="🔄 Workflow Viewer — Live Monitor" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-grid"></div>
+    <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+
+    <header class="header">
+        <a href="../../hub/index.html">← Hub</a>
+        <h1>🔄 Workflow Viewer <span class="ver">v2.0</span></h1>
+        <span class="clock" id="clock"></span>
+    </header>
+
+    <div class="tabs" id="tabs"></div>
+    <div class="sbar" id="sbar"></div>
+    <div id="app"></div>
+    <div class="toast" id="toast"></div>
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+<script src="../../shared/dkz-guide.js" defer></script>
+<script src="../../shared/dkz-copilot.js" defer></script>
+    <script>
+    (() => {
+    'use strict';
+
+    // ═══════════════════════════════
+    //  STATE
+    // ═══════════════════════════════
+    const S = {
+        view: 'workflow', // workflow | agent | team | loop
+        selWf: null,
+        tick: 0,
+        logs: [],
+        workflows: [],
+        agents: [],
+        teams: [],
+        loops: []
+    };
+
+    // ═══════════════════════════════
+    //  DATA
+    // ═══════════════════════════════
+    function initData() {
+        S.workflows = [
+            wf('wf-deploy','🚀','Production Deploy','deploy','running',65,[
+                st('📥','Git Pull','done',100,[ac('✅','git fetch origin','2.1s'),ac('✅','git merge main','0.8s')]),
+                st('📦','Install Deps','done',100,[ac('✅','npm ci --silent','12.4s'),ac('✅','Lockfile verified','0.1s')]),
+                st('🔨','Build','running',72,[ac('✅','TypeScript compile','8.2s'),ac('⏳','Bundle assets...','—'),ac('⏸️','Minify CSS/JS','—')]),
+                st('🧪','Test','waiting',0,[ac('⏸️','Unit Tests (142)','—'),ac('⏸️','Integration Tests','—'),ac('⏸️','Lighthouse Audit','—')]),
+                st('🚀','Deploy','idle',0,[ac('⏸️','Docker build','—'),ac('⏸️','Push registry','—'),ac('⏸️','Rolling update','—')])
+            ]),
+            wf('wf-botnet','🤖','BotNet Health Check','monitor','running',45,[
+                st('📡','Ping Agents','done',100,[ac('✅','James Master: UP','12ms'),ac('✅','PicoClaw: UP','8ms'),ac('✅','OpenClaw: UP','15ms')]),
+                st('📻','Channel Scan','running',60,[ac('✅','#general: 3 members','0.2s'),ac('⏳','#optimize: scanning','—'),ac('⏸️','#marketplace','—')]),
+                st('⭐','Karma Update','waiting',0,[ac('⏸️','Calculate scores','—'),ac('⏸️','Update leaderboard','—')]),
+                st('📊','Report','idle',0,[ac('⏸️','Generate health.json','—'),ac('⏸️','Push to dashboard','—')])
+            ]),
+            wf('wf-backup','💾','Nightly Backup','deploy','done',100,[
+                st('🗄️','Snapshot DB','done',100,[ac('✅','DuckDB snapshot','4.2s'),ac('✅','Iceberg commit','1.8s')]),
+                st('📦','Git Bundle','done',100,[ac('✅','git bundle create','6.1s'),ac('✅','Verify bundle','0.3s')]),
+                st('☁️','Cloud Upload','done',100,[ac('✅','Google Drive sync','22.1s'),ac('✅','Puter backup','18.7s')])
+            ]),
+            wf('wf-seo','🔍','SEO Audit','test','error',33,[
+                st('🕷️','Crawl Pages','done',100,[ac('✅','Scanned 85 pages','14.2s')]),
+                st('🏷️','Analyse Meta','error',60,[ac('✅','72 titles OK','2.1s'),ac('❌','13 missing meta-desc','—'),ac('❌','3 duplicate H1','—')]),
+                st('📊','Report','idle',0,[ac('⏸️','Generate PDF','—')])
+            ]),
+            wf('wf-build','🏗️','Module Build Pipeline','build','waiting',0,[
+                st('📁','Scaffold','idle',0,[ac('⏸️','mkdir + templates','—'),ac('⏸️','features.json','—')]),
+                st('🎨','Design','idle',0,[ac('⏸️','DkZ theme CSS','—'),ac('⏸️','Build HTML/JS','—')]),
+                st('📋','Register','idle',0,[ac('⏸️','REGISTRY.json','—'),ac('⏸️','BLAUPAUSE.md','—')]),
+                st('✅','Verify','idle',0,[ac('⏸️','JSON validation','—'),ac('⏸️','Count match','—')])
+            ]),
+            wf('wf-sheets','📊','Google Sheets Sync','deploy','running',80,[
+                st('📥','Fetch Data','done',100,[ac('✅','Read notes.json','0.1s'),ac('✅','Read meetings.json','0.1s')]),
+                st('🔄','Transform','done',100,[ac('✅','Format dates','0.05s'),ac('✅','Merge duplicates','0.2s')]),
+                st('☁️','Push','running',60,[ac('✅','Notes tab: 42 rows','1.2s'),ac('⏳','Meetings tab...','—')])
+            ]),
+            wf('wf-james','🧠','James Evaluation','monitor','running',30,[
+                st('📚','Load Rules','done',100,[ac('✅','REGELWERK parsed','0.4s'),ac('✅','23 rules loaded','0.1s')]),
+                st('🔬','Evaluate','running',35,[ac('⏳','Scanning modules...','—'),ac('⏸️','R21 compliance','—'),ac('⏸️','Score calc','—')]),
+                st('📝','Report','idle',0,[ac('⏸️','eval.json','—'),ac('⏸️','BotNet notify','—')])
+            ]),
+            wf('wf-action','🧩','Action Builder Pipeline','build','running',50,[
+                st('🔍','Scan Context','done',100,[ac('✅','Parse triggers','0.3s'),ac('✅','Load templates','0.2s')]),
+                st('🧩','Build Actions','running',55,[ac('✅','onClick handler','1.1s'),ac('⏳','API call chain...','—'),ac('⏸️','Error handlers','—')]),
+                st('🧪','Validate','idle',0,[ac('⏸️','Dry run test','—'),ac('⏸️','Edge cases','—')])
+            ]),
+            wf('wf-skill','🎯','Skill Builder Pipeline','build','running',40,[
+                st('📋','Define Skills','done',100,[ac('✅','5 skills loaded','0.2s')]),
+                st('🔨','Build Modules','running',45,[ac('✅','NLP parser','3.1s'),ac('⏳','Intent mapper...','—'),ac('⏸️','Response gen','—')]),
+                st('📦','Package','idle',0,[ac('⏸️','Bundle + hash','—')])
+            ]),
+            wf('wf-agent','🤖','Agent Builder Deploy','build','done',100,[
+                st('🧬','Configure','done',100,[ac('✅','Load personality','0.5s'),ac('✅','Set capabilities','0.3s')]),
+                st('🔗','Connect LLM','done',100,[ac('✅','Gemini Flash bind','1.2s'),ac('✅','Fallback: Grok','0.8s')]),
+                st('🚀','Deploy','done',100,[ac('✅','Docker container','8.4s'),ac('✅','Health check pass','0.2s')])
+            ]),
+            wf('wf-team','👥','Team Builder Sync','build','running',70,[
+                st('📡','Discover Agents','done',100,[ac('✅','3 agents found','0.4s')]),
+                st('🔗','Link Channels','done',100,[ac('✅','#general linked','0.1s'),ac('✅','#optimize linked','0.1s')]),
+                st('⚡','Test Comms','running',50,[ac('✅','Ping round-trip','15ms'),ac('⏳','Broadcast test...','—')]),
+                st('📊','Status Report','idle',0,[ac('⏸️','Generate matrix','—')])
+            ]),
+            wf('wf-app','📱','App Builder Compile','build','waiting',0,[
+                st('📐','Layout','idle',0,[ac('⏸️','Parse schema','—'),ac('⏸️','Generate routes','—')]),
+                st('🎨','Theme','idle',0,[ac('⏸️','Apply DkZ v2','—'),ac('⏸️','Responsive check','—')]),
+                st('📦','Bundle','idle',0,[ac('⏸️','Webpack build','—'),ac('⏸️','Asset optimize','—')])
+            ])
+        ];
+
+        S.agents = [
+            {id:'james',icon:'🧠',name:'James GPT',role:'Master Evaluator',color:'var(--accent)',status:'running',tasks:14,karma:97,uptime:'99.8%',llm:'Gemini 2.0 Flash'},
+            {id:'pico',icon:'🦀',name:'PicoClaw',role:'Frontend Specialist',color:'var(--o)',status:'running',tasks:28,karma:94,uptime:'99.5%',llm:'Grok 4.1 Fast'},
+            {id:'open',icon:'🐙',name:'OpenClaw',role:'Backend Orchestrator',color:'var(--p)',status:'running',tasks:19,karma:92,uptime:'98.9%',llm:'Claude 3.5'},
+            {id:'bot1',icon:'🤖',name:'Worker-Alpha',role:'General Worker',color:'var(--c)',status:'idle',tasks:6,karma:78,uptime:'95.2%',llm:'Gemini Flash'},
+            {id:'bot2',icon:'🔧',name:'Worker-Beta',role:'Code Specialist',color:'var(--g)',status:'running',tasks:11,karma:85,uptime:'97.1%',llm:'Grok 4.1'},
+            {id:'bot3',icon:'📊',name:'Analyst-One',role:'Data Analyst',color:'var(--y)',status:'idle',tasks:3,karma:72,uptime:'93.8%',llm:'Gemini Pro'}
+        ];
+
+        S.teams = [
+            {name:'🔨 Builder Squad',members:['🧩 Action','🎯 Skill','🔀 Workflow','📱 App'],status:'active',task:'Module Pipeline'},
+            {name:'🤖 BotNet Core',members:['🧠 James','🦀 PicoClaw','🐙 OpenClaw'],status:'active',task:'Health Monitor'},
+            {name:'👥 Worker Pool',members:['🤖 Alpha','🔧 Beta','📊 Analyst'],status:'partial',task:'SEO Audit Recovery'},
+            {name:'🚀 Deploy Team',members:['🧠 James','🔧 Beta','🐙 OpenClaw'],status:'active',task:'Production Deploy'},
+            {name:'📊 Analytics',members:['📊 Analyst','🧠 James'],status:'idle',task:'—'}
+        ];
+
+        S.loops = [
+            {id:'lp-health',name:'BotNet Health',interval:'15 min',iters:24,current:18,status:'active',last:'13:40'},
+            {id:'lp-sync',name:'Google Sheets Sync',interval:'15 min',iters:10,current:8,status:'active',last:'13:45'},
+            {id:'lp-backup',name:'Nightly Backup',interval:'24h',iters:7,current:7,status:'done',last:'03:00'},
+            {id:'lp-seo',name:'SEO Crawl',interval:'1h',iters:12,current:5,status:'error',last:'12:15'},
+            {id:'lp-eval',name:'James Eval Loop',interval:'30 min',iters:8,current:3,status:'active',last:'13:48'},
+            {id:'lp-karma',name:'Karma Recalc',interval:'6h',iters:4,current:4,status:'done',last:'12:00'},
+            {id:'lp-clean',name:'Inbox Cleanup',interval:'1 week',iters:3,current:2,status:'active',last:'Mo 09:00'},
+            {id:'lp-archive',name:'30-Day Auto-Archive',interval:'24h',iters:7,current:7,status:'done',last:'03:15'}
+        ];
+
+        S.logs = [
+            lg('13:55','i','Workflow Viewer v2.0 gestartet'),
+            lg('13:48','o','REGELWERK.md parsed: 23 rules, 762 lines'),
+            lg('13:45','o','Google Sheets Sync — Notes tab: 42 rows pushed'),
+            lg('13:42','i','Production Deploy — git merge main completed'),
+            lg('13:40','o','BotNet: All 3 agents responding (12-15ms)'),
+            lg('13:38','i','Action Builder: 2/3 handlers built'),
+            lg('13:35','o','Skill Builder: NLP parser compiled (3.1s)'),
+            lg('13:30','i','Team Builder: 3 agents discovered, linking channels'),
+            lg('12:15','e','SEO Audit FAILED: 13 missing meta-desc, 3 dup H1'),
+            lg('03:00','o','Nightly Backup complete: DB+Git+Cloud (47.3s)')
+        ];
+    }
+
+    function wf(id,icon,name,cat,status,progress,stages){return{id,icon,name,cat,status,progress,stages,started:new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})};}
+    function st(icon,name,status,progress,actions){return{icon,name,status,progress,actions};}
+    function ac(icon,name,time){return{icon,name,time};}
+    function lg(ts,lv,msg){return{ts,lv,msg};}
+
+    // ═══════════════════════════════
+    //  TABS
+    // ═══════════════════════════════
+    function renderTabs() {
+        const views = [
+            {id:'workflow',icon:'🔀',label:'Workflow View',color:'var(--accent)'},
+            {id:'agent',icon:'🤖',label:'Agent View',color:'var(--g)'},
+            {id:'team',icon:'👥',label:'Team View',color:'var(--pk)'},
+            {id:'loop',icon:'🔄',label:'Loop View',color:'var(--c)'}
+        ];
+        document.getElementById('tabs').innerHTML = views.map(v =>
+            `<div class="tab ${S.view===v.id?'active':''}" onclick="switchView('${v.id}')">
+                <div class="tb-dot" style="background:${v.color}"></div>${v.icon} ${v.label}
+            </div>`
+        ).join('');
+    }
+
+    window.switchView = function(v) { S.view = v; S.selWf = null; renderAll(); };
+
+    // ═══════════════════════════════
+    //  STATUS BAR
+    // ═══════════════════════════════
+    function renderSbar() {
+        const c = {running:0,done:0,error:0,waiting:0};
+        S.workflows.forEach(w => c[w.status]=(c[w.status]||0)+1);
+        document.getElementById('sbar').innerHTML = `
+            <div class="s"><div class="d lp-g"></div>${c.running} Aktiv</div>
+            <div class="s"><div class="d lp-y"></div>${c.waiting} Wartend</div>
+            <div class="s"><div class="d lp-r"></div>${c.error} Fehler</div>
+            <div class="s"><div class="d lp-m"></div>${c.done} Fertig</div>
+            <div class="s" style="margin-left:auto"><div class="d lp-b"></div>${S.workflows.length} Workflows · ${S.agents.length} Agents · ${S.teams.length} Teams · ${S.loops.length} Loops</div>
+        `;
+    }
+
+    // ═══════════════════════════════
+    //  WORKFLOW VIEW (n8n style)
+    // ═══════════════════════════════
+    function renderWorkflowView() {
+        const app = document.getElementById('app');
+        app.innerHTML = `<div class="split-view"><div class="panel-left" id="wfList"></div><div style="position:relative;overflow:auto" id="wfCanvas"></div><div class="panel-right" id="wfDetail"></div></div>`;
+        renderWfList();
+        renderWfCanvas();
+        renderWfDetail();
+    }
+
+    function renderWfList() {
+        const el = document.getElementById('wfList');
+        const groups = {running:[],waiting:[],error:[],done:[]};
+        S.workflows.forEach(w => (groups[w.status]||groups.done).push(w));
+        const labels = {running:'▶️ Aktiv',waiting:'⏸️ Wartend',error:'❌ Fehler',done:'✅ Fertig'};
+        const dots = {running:'lp-g',waiting:'lp-y',error:'lp-r',done:'lp-m'};
+        let h='';
+        for(const[k,items] of Object.entries(groups)){
+            if(!items.length) continue;
+            h+=`<div class="sec-label">${labels[k]}</div>`;
+            items.forEach(w=>{
+                h+=`<div class="li ${S.selWf===w.id?'active':''}" onclick="selWf('${w.id}')">
+                    <span class="ic">${w.icon}</span><div style="flex:1;min-width:0"><div class="nm">${esc(w.name)}</div><div class="mt">${w.progress}%</div></div>
+                    <div class="lamp ${dots[w.status]}"></div></div>`;
+            });
+        }
+        el.innerHTML = h;
+    }
+
+    window.selWf = function(id) { S.selWf = id; renderWfList(); renderWfCanvas(); renderWfDetail(); };
+
+    function renderWfCanvas() {
+        const el = document.getElementById('wfCanvas');
+        const wf = S.workflows.find(w => w.id === S.selWf);
+        if (!wf) {
+            el.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;opacity:0.25;flex-direction:column;gap:12px;padding:40px">
+                <div style="font-size:48px">🔀</div><div style="font-size:14px;font-weight:800;">Workflow auswaehlen</div>
+                <div style="font-size:10px;color:var(--m)">Klicke links auf einen Workflow</div></div>`;
+            return;
+        }
+
+        const nodeW=190, nodeH=140, gapX=90, gapY=0, startX=40, startY=40;
+        const cats={build:'var(--accent)',deploy:'var(--g)',test:'var(--y)',monitor:'var(--p)'};
+        const catL={build:'BUILD',deploy:'DEPLOY',test:'TEST',monitor:'MONITOR'};
+
+        let nodesH = '';
+        let paths = '';
+        const positions = [];
+
+        wf.stages.forEach((s, i) => {
+            const x = startX + i * (nodeW + gapX);
+            const y = startY;
+            positions.push({x, y, w: nodeW, h: nodeH});
+
+            const nbC = {running:'nb-run',done:'nb-done',error:'nb-err',waiting:'nb-wait',idle:'nb-idle'};
+            const nbL = {running:'▶ RUN',done:'✅ DONE',error:'❌ ERR',waiting:'⏳ WAIT',idle:'⏸ IDLE'};
+            const fillC = s.status==='error'&#10067;'var(--r)':s.status==='running'&#10067;'var(--g)':'var(--y)';
+
+            nodesH += `<div class="node ${s.status}" style="left:${x}px;top:${y}px;width:${nodeW}px">
+                <div class="port-in"></div><div class="port-out"></div>
+                <div class="node-head" style="border-bottom-color:${cats[wf.cat]||'var(--brd)'}">
+                    <span class="node-icon">${s.icon}</span><span class="node-title">${esc(s.name)}</span>
+                    <span class="node-badge ${nbC[s.status]}">${nbL[s.status]}</span>
+                </div>
+                <div class="node-body">
+                    <div class="node-actions">${s.actions.map(a=>
+                        `<div class="n-act"><span class="a-i">${a.icon}</span><span class="a-n">${esc(a.name)}</span><span class="a-t">${a.time}</span></div>`
+                    ).join('')}</div>
+                    <div class="node-bar"><div class="node-fill" style="width:${s.progress}%;background:${fillC}"></div></div>
+                </div>
+            </div>`;
+
+            if (i > 0) {
+                const prev = positions[i-1];
+                const x1 = prev.x + prev.w + 5;
+                const y1 = prev.y + 70;
+                const x2 = x - 5;
+                const y2 = y + 70;
+                const cx1 = x1 + 35, cx2 = x2 - 35;
+                const active = s.status==='running'||s.status==='done';
+                paths += `<path class="conn-line ${active?'active':''}" d="M${x1},${y1} C${cx1},${y1} ${cx2},${y2} ${x2},${y2}"/>`;
+                if(active) paths += `<circle class="flow-dot" r="3"><animateMotion dur="2s" repeatCount="indefinite"><mpath href="#p${i}"/></animateMotion></circle><path id="p${i}" d="M${x1},${y1} C${cx1},${y1} ${cx2},${y2} ${x2},${y2}" fill="none"/>`;
+            }
+        });
+
+        const totalW = startX + wf.stages.length * (nodeW + gapX);
+        const totalH = startY + nodeH + 80;
+
+        el.innerHTML = `
+            <div style="padding:14px 20px;border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:10px">
+                <span style="font-size:22px">${wf.icon}</span>
+                <span style="font-size:13px;font-weight:900">${esc(wf.name)}</span>
+                <span class="node-badge" style="background:${cats[wf.cat]||'var(--card)'};background:rgba(99,102,241,0.15);color:${cats[wf.cat]||'var(--m)'}">${catL[wf.cat]||wf.cat}</span>
+                <div style="flex:1"></div>
+                <span style="font-size:10px;color:var(--m);font-family:'JetBrains Mono',monospace">${wf.progress}% complete</span>
+            </div>
+            <div style="position:relative;min-width:${totalW}px;min-height:${totalH}px;padding:0">
+                <svg class="connectors" width="${totalW}" height="${totalH}" style="position:absolute;inset:0">${paths}</svg>
+                ${nodesH}
+            </div>`;
+    }
+
+    function renderWfDetail() {
+        const el = document.getElementById('wfDetail');
+        const wf = S.workflows.find(w => w.id === S.selWf);
+        let h = '';
+        if (wf) {
+            const totalA = wf.stages.reduce((s,st)=>s+st.actions.length,0);
+            const doneA = wf.stages.reduce((s,st)=>s+st.actions.filter(a=>a.icon==='✅').length,0);
+            h += `<div class="sec-label">📊 Info</div>
+                <div class="d-kv"><span class="k">Status</span><span class="v">${wf.status.toUpperCase()}</span></div>
+                <div class="d-kv"><span class="k">Progress</span><span class="v">${wf.progress}%</span></div>
+                <div class="d-kv"><span class="k">Stages</span><span class="v">${wf.stages.length}</span></div>
+                <div class="d-kv"><span class="k">Actions</span><span class="v">${doneA}/${totalA}</span></div>
+                <div class="sec-label">⚡ Quick Actions</div>
+                <div style="display:flex;flex-direction:column;gap:3px">
+                    <button class="qb" onclick="wfAction('pause')">⏸️ Pausieren</button>
+                    <button class="qb" onclick="wfAction('restart')">🔄 Neu starten</button>
+                    <button class="qb" onclick="wfAction('abort')" style="color:var(--r)">⏹️ Abbrechen</button>
+                    <button class="qb" onclick="copyLog()">📋 Log kopieren</button>
+                </div>`;
+        }
+        h += `<div class="sec-label">📜 Live Log</div><div class="log">`;
+        const lvC = {i:'lv-i',o:'lv-o',w:'lv-w',e:'lv-e'};
+        S.logs.forEach(l => h += `<div class="log-l"><span class="ts">${l.ts}</span> <span class="${lvC[l.lv]}">[${l.lv==='i'&#10067;'INFO':l.lv==='o'&#10067;'OK':l.lv==='w'&#10067;'WARN':'ERR'}]</span> ${esc(l.msg)}</div>`);
+        h += '</div>';
+        el.innerHTML = h;
+    }
+
+    window.wfAction = function(a) {
+        const wf = S.workflows.find(w=>w.id===S.selWf);
+        if(!wf)return;
+        if(a==='pause') wf.status='waiting';
+        if(a==='restart'){wf.status='running';wf.progress=0;wf.stages.forEach(s=>{s.status='idle';s.progress=0;});}
+        if(a==='abort') wf.status='error';
+        S.logs.unshift(lg(now(),a==='abort'&#10067;'e':'w',`${wf.name}: ${a.toUpperCase()}`));
+        renderAll();
+        toast(`${a.toUpperCase()} — ${wf.name}`);
+    };
+    window.copyLog = function(){navigator.clipboard.writeText(S.logs.map(l=>`${l.ts} ${l.msg}`).join('\n')).then(()=>toast('📋 Kopiert!'));};
+
+    // ═══════════════════════════════
+    //  AGENT VIEW
+    // ═══════════════════════════════
+    function renderAgentView() {
+        const app = document.getElementById('app');
+        let h = '<div class="agent-grid">';
+        S.agents.forEach(a => {
+            const lampC = a.status==='running'&#10067;'lp-g':a.status==='error'&#10067;'lp-r':a.status==='idle'&#10067;'lp-m':'lp-y';
+            h += `<div class="agent-card">
+                <div class="ac-glow" style="background:${a.color}"></div>
+                <div style="display:flex;align-items:center;gap:10px;justify-content:space-between">
+                    <span class="ac-icon">${a.icon}</span>
+                    <div class="lamp ${lampC}" style="width:10px;height:10px"></div>
+                </div>
+                <div class="ac-name">${esc(a.name)}</div>
+                <div class="ac-role">${esc(a.role)} · ${a.llm}</div>
+                <div class="ac-stats">
+                    <div class="ac-s"><div class="ac-sv" style="color:${a.color}">${a.tasks}</div><div class="ac-sl">Tasks</div></div>
+                    <div class="ac-s"><div class="ac-sv" style="color:var(--g)">${a.karma}</div><div class="ac-sl">Karma</div></div>
+                    <div class="ac-s"><div class="ac-sv" style="color:var(--c)">${a.uptime}</div><div class="ac-sl">Uptime</div></div>
+                </div>
+                <div class="node-bar" style="margin-top:10px"><div class="node-fill" style="width:${a.karma}%;background:${a.color}"></div></div>
+            </div>`;
+        });
+        h += '</div>';
+        app.innerHTML = h;
+    }
+
+    // ═══════════════════════════════
+    //  TEAM VIEW
+    // ═══════════════════════════════
+    function renderTeamView() {
+        const app = document.getElementById('app');
+        const stColors = {active:'var(--g)',partial:'var(--y)',idle:'var(--m)'};
+        let h = '<div class="team-container">';
+        S.teams.forEach(t => {
+            h += `<div class="team-row" style="border-left:3px solid ${stColors[t.status]}">
+                <div class="team-label" style="color:${stColors[t.status]}">${t.name}</div>
+                <div class="team-members">${t.members.map(m=>
+                    `<div class="tm">${m}</div>`
+                ).join('<span class="team-arrow">→</span>')}</div>
+                <div style="text-align:right;min-width:100px">
+                    <div style="font-size:10px;font-weight:800">${t.task}</div>
+                    <div style="font-size:8px;color:${stColors[t.status]};font-weight:700;text-transform:uppercase">${t.status}</div>
+                </div>
+            </div>`;
+        });
+        h += '</div>';
+        app.innerHTML = h;
+    }
+
+    // ═══════════════════════════════
+    //  LOOP VIEW
+    // ═══════════════════════════════
+    function renderLoopView() {
+        const app = document.getElementById('app');
+        let h = '<div class="loop-grid">';
+        S.loops.forEach(l => {
+            const pct = Math.round(l.current / l.iters * 100);
+            const circumf = 2 * Math.PI * 16;
+            const offset = circumf - (pct / 100) * circumf;
+            const stCol = l.status==='active'&#10067;'var(--c)':l.status==='error'&#10067;'var(--r)':l.status==='done'&#10067;'var(--g)':'var(--m)';
+            h += `<div class="loop-card ${l.status==='active'&#10067;'active':''}">
+                <svg class="loop-ring" viewBox="0 0 40 40">
+                    <circle class="bg" cx="20" cy="20" r="16"/>
+                    <circle class="fg" cx="20" cy="20" r="16" stroke="${stCol}" stroke-dasharray="${circumf}" stroke-dashoffset="${offset}" transform="rotate(-90 20 20)"/>
+                </svg>
+                <div class="lc-name">${esc(l.name)}</div>
+                <div class="lc-meta">⏱ ${l.interval} · Letzter: ${l.last}</div>
+                <div class="lc-iters">${Array.from({length:l.iters},(_, i) =>
+                    `<div class="lc-it ${i<l.current?(i===l.current-1&&l.status==='active'&#10067;'curr':'done'):''}"></div>`
+                ).join('')}</div>
+                <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:9px">
+                    <span style="color:var(--m)">${l.current}/${l.iters} Iterationen</span>
+                    <span style="color:${stCol};font-weight:800">${l.status.toUpperCase()}</span>
+                </div>
+            </div>`;
+        });
+        h += '</div>';
+        app.innerHTML = h;
+    }
+
+    // ═══════════════════════════════
+    //  SIMULATION
+    // ═══════════════════════════════
+    function simTick() {
+        S.tick++;
+        S.workflows.forEach(wf => {
+            if(wf.status!=='running') return;
+            const rs = wf.stages.find(s=>s.status==='running');
+            if(rs){
+                rs.progress = Math.min(100, rs.progress + Math.random()*6);
+                if(rs.progress>=100){
+                    rs.status='done';rs.progress=100;
+                    rs.actions.forEach(a=>{a.icon='✅';if(a.time==='—')a.time=(Math.random()*5+0.5).toFixed(1)+'s';});
+                    const nx = wf.stages.find(s=>s.status==='idle'||s.status==='waiting');
+                    if(nx){nx.status='running';nx.progress=0;}
+                    else{wf.status='done';wf.progress=100;S.logs.unshift(lg(now(),'o',`${wf.name}: COMPLETED ✅`));}
+                }
+            }
+            const ds=wf.stages.filter(s=>s.status==='done').length;
+            const rs2=wf.stages.find(s=>s.status==='running');
+            wf.progress=Math.round((ds/wf.stages.length)*100+(rs2?rs2.progress/wf.stages.length:0));
+        });
+        renderAll();
+    }
+
+    // ═══════════════════════════════
+    //  HELPERS
+    // ═══════════════════════════════
+    function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+    function now(){return new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});}
+    function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+    // ═══════════════════════════════
+    //  RENDER ALL
+    // ═══════════════════════════════
+    function renderAll() {
+        renderTabs();
+        renderSbar();
+        if(S.view==='workflow') renderWorkflowView();
+        else if(S.view==='agent') renderAgentView();
+        else if(S.view==='team') renderTeamView();
+        else if(S.view==='loop') renderLoopView();
+    }
+
+    // ═══════════════════════════════
+    //  INIT
+    // ═══════════════════════════════
+    initData();
+    S.selWf = 'wf-deploy';
+    renderAll();
+    setInterval(simTick, 3500);
+    setInterval(()=>{document.getElementById('clock').textContent='🕐 '+new Date().toLocaleTimeString('de-DE');},1000);
+    document.getElementById('clock').textContent='🕐 '+new Date().toLocaleTimeString('de-DE');
+
+    })();
+    </script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Workflow viewer</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Workflows visualisieren und inspizieren.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Workflow viewer</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Workflows visualisieren und inspizieren.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-workflow-viewer-onboarded','1')}if(!localStorage.getItem('dkz-workflow-viewer-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+</html>
+
+
+

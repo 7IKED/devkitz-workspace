@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v1.0.0_01">
+    <meta name="dkz-module" content="qr-launcher">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>📱 QR Launcher — DkZ™</title>
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --accent:#fa1e4e; --bg:#060608; --bg2:#0e0e12; --bg3:#1a1a20; --text:#e8e8ec; --muted:#8a8a9a; --border:rgba(255,255,255,.06); --green:#00ff88; --yellow:#ffb800; --red:#ff3b5c; --font:'Inter',sans-serif; --mono:'JetBrains Mono',monospace; }
+        * { margin:0;padding:0;box-sizing:border-box; }
+        body { font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh; }
+        .bg-mesh { position:fixed;inset:0;z-index:-1;overflow:hidden; }
+        .bg-mesh .blob { position:absolute;border-radius:50%;filter:blur(120px);opacity:.12; }
+        .bg-mesh .blob-1 { width:600px;height:600px;background:#fa1e4e;top:-200px;left:-100px; }
+        .bg-mesh .blob-2 { width:500px;height:500px;background:#6366f1;bottom:-200px;right:-100px; }
+        .header { background:rgba(14,14,18,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100; }
+        .header h1 { font-size:18px;font-weight:800; }
+        .header h1 span { color:var(--accent); }
+        .back-btn { color:var(--muted);text-decoration:none;font-size:20px; }
+        .back-btn:hover { color:var(--accent); }
+        .content { max-width:1100px;margin:0 auto;padding:24px; }
+        .section { background:rgba(18,18,24,.85);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px); }
+        .section-title { font-size:14px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px; }
+        .section-desc { font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.6; }
+        .search-bar { width:100%;padding:12px 16px;background:var(--bg);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:13px;font-family:var(--font);outline:none;margin-bottom:16px;transition:border-color .2s; }
+        .search-bar:focus { border-color:rgba(250,30,78,.4); }
+        .module-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px; }
+        .module-card { padding:16px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:14px;transition:all .3s;cursor:pointer;text-align:center;position:relative; }
+        .module-card:hover { border-color:rgba(250,30,78,.4);transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.3); }
+        .module-icon { font-size:2rem;margin-bottom:8px; }
+        .module-name { font-size:11px;font-weight:700;margin-bottom:4px; }
+        .module-id { font-size:9px;color:var(--muted);font-family:var(--mono); }
+        /* QR Modal */
+        .qr-modal { position:fixed;inset:0;background:rgba(0,0,0,.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);display:none;align-items:center;justify-content:center;z-index:999; }
+        .qr-modal.visible { display:flex; }
+        .qr-content { background:rgba(18,18,24,.95);border:1px solid var(--border);border-radius:20px;padding:30px;text-align:center;width:90vw;max-width:400px; }
+        .qr-title { font-size:16px;font-weight:800;margin-bottom:6px; }
+        .qr-subtitle { font-size:11px;color:var(--muted);margin-bottom:20px; }
+        .qr-code { width:240px;height:240px;background:white;border-radius:12px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;padding:10px; }
+        .qr-code canvas { max-width:100%;max-height:100%; }
+        .qr-url { font-size:10px;color:var(--muted);font-family:var(--mono);word-break:break-all;margin-bottom:16px; }
+        .qr-actions { display:flex;gap:8px;justify-content:center; }
+        .qr-btn { padding:10px 20px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.03);color:var(--text);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .2s; }
+        .qr-btn:hover { border-color:var(--accent); }
+        .qr-btn.primary { background:linear-gradient(135deg,#fa1e4e,#ec4899);border:none;color:white; }
+        .close-btn { position:absolute;top:16px;right:16px;width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,.03);color:var(--muted);font-size:1.2rem;cursor:pointer; }
+        .vivaldi-info { display:flex;align-items:center;gap:10px;padding:14px;background:rgba(250,30,78,.04);border:1px solid rgba(250,30,78,.12);border-radius:12px; }
+        .vivaldi-icon { font-size:1.5rem; }
+        .vivaldi-text { font-size:11px;line-height:1.5; }
+        @media(max-width:768px) { .content{padding:14px;} .module-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));} }
+    </style>
+</head>
+<body>
+    <div class="bg-mesh"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
+    <header class="header">
+        <a href="../../hub/index.html" class="back-btn">←</a>
+        <h1>📱 QR <span>Launcher</span></h1>
+    </header>
+    <div class="content">
+        <div class="section">
+            <div class="section-title">📱 Module als Mobile App öffnen</div>
+            <div class="section-desc">Klick auf ein Modul → QR-Code scannen → öffnet sich als Fullscreen-App auf dem Handy/Tablet.</div>
+            <div class="vivaldi-info">
+                <div class="vivaldi-icon">🔴</div>
+                <div class="vivaldi-text"><b>Vivaldi Side Panel:</b> Alle Panels sind als Vivaldi Side Panel nutzbar. Installiere die DkZ™ Panels Extension (chrome-extensions/dkz-panels).</div>
+            </div>
+        </div>
+        <div class="section">
+            <input class="search-bar" type="text" id="searchInput" placeholder="🔍 Modul suchen..." oninput="filterModules(this.value)">
+            <div class="module-grid" id="moduleGrid"></div>
+        </div>
+    </div>
+
+    <!-- QR Modal -->
+    <div class="qr-modal" id="qrModal">
+        <button class="close-btn" onclick="closeQR()">✕</button>
+        <div class="qr-content">
+            <div class="qr-title" id="qrTitle">Modul</div>
+            <div class="qr-subtitle">Scanne den QR-Code mit deinem Handy</div>
+            <div class="qr-code" id="qrCanvas"></div>
+            <div class="qr-url" id="qrUrl"></div>
+            <div class="qr-actions">
+                <button class="qr-btn" onclick="downloadQR()">📥 PNG</button>
+                <button class="qr-btn" onclick="copyUrl()">📋 URL</button>
+                <button class="qr-btn primary" onclick="openModule()">↗ Öffnen</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+        const MODULES = [
+            {name:'Cloud Control',icon:'☁️',id:'cloud-control'},
+            {name:'CL0UDiA™',icon:'🏰',id:'claudia-cloud'},
+            {name:'Whisper TTS',icon:'🎧',id:'whisper-tts'},
+            {name:'NanoBot Center',icon:'🤖',id:'nanobot-center'},
+            {name:'CodeRabbit',icon:'🐰',id:'coderabbit-panel'},
+            {name:'QR Launcher',icon:'📱',id:'qr-launcher'},
+            {name:'AI Chat',icon:'💬',id:'ai_chat'},
+            {name:'Settings',icon:'⚙️',id:'settings'},
+            {name:'Prompt Generator',icon:'✨',id:'prompt-generator'},
+            {name:'Tasker',icon:'📋',id:'tasker'},
+            {name:'Color Picker',icon:'🎨',id:'color-picker'},
+            {name:'Emoji Picker',icon:'😀',id:'emoji-picker'},
+            {name:'JSON Formatter',icon:'{}',id:'json-formatter'},
+            {name:'Markdown Gen',icon:'📝',id:'markdown-gen'},
+            {name:'Regex Tester',icon:'🔍',id:'regex-tester'},
+            {name:'QR Generator',icon:'📱',id:'qr-generator'},
+            {name:'Password Gen',icon:'🔐',id:'password-gen'},
+            {name:'Timer Tools',icon:'⏱',id:'timer-tools'},
+            {name:'Base64 Tools',icon:'🔧',id:'base64-tools'},
+            {name:'Hash Generator',icon:'#️⃣',id:'hash-generator'},
+            {name:'IP Tools',icon:'🌐',id:'ip-tools'},
+            {name:'Unit Converter',icon:'📏',id:'unit-converter'},
+            {name:'Converter',icon:'🔄',id:'converter'},
+            {name:'Gallery',icon:'🖼',id:'gallery'},
+            {name:'DevNotes',icon:'📓',id:'devnotes'},
+            {name:'Code Differ',icon:'📊',id:'code-differ'},
+            {name:'SEO Toolkit',icon:'🔎',id:'seo-toolkit'},
+            {name:'Snippet Manager',icon:'💾',id:'snippet-manager'},
+            {name:'CSS Generator',icon:'🎨',id:'css-generator'},
+            {name:'Clipboard',icon:'📋',id:'clipboard'},
+            {name:'Lorem Generator',icon:'📄',id:'lorem-generator'},
+            {name:'HTML Viewer',icon:'🌐',id:'html_viewer'},
+            {name:'Research',icon:'🔬',id:'research'},
+            {name:'Wiki Viewer',icon:'📖',id:'wiki-viewer'},
+            {name:'Notes Manager',icon:'📝',id:'notes-manager'},
+            {name:'BotNet Admin',icon:'🤖',id:'botnet-admin'},
+            {name:'Neural Swarm',icon:'🧬',id:'neural-swarm'},
+            {name:'Loop Dashboard',icon:'🔄',id:'loop-dashboard'},
+            {name:'System Check',icon:'🔧',id:'system-check'},
+            {name:'LLM Cost Board',icon:'💰',id:'llm-cost-board'}
+        ];
+
+        let currentUrl = '';
+
+        function renderModules(filter) {
+            const grid = document.getElementById('moduleGrid');
+            let mods = MODULES;
+            if (filter) mods = mods.filter(m => m.name.toLowerCase().includes(filter.toLowerCase()) || m.id.includes(filter.toLowerCase()));
+            grid.innerHTML = mods.map(m =>
+                '<div class="module-card" onclick="showQR(\'' + esc(m.id) + '\',\'' + esc(m.name) + '\',\'' + esc(m.icon) + '\')">' +
+                '<div class="module-icon">' + m.icon + '</div>' +
+                '<div class="module-name">' + esc(m.name) + '</div>' +
+                '<div class="module-id">' + esc(m.id) + '</div></div>'
+            ).join('');
+        }
+
+        function filterModules(val) { renderModules(val); }
+
+        function showQR(id, name, icon) {
+            const base = window.location.origin + window.location.pathname.replace(/modules\/qr-launcher\/index\.html.*/, 'modules/');
+            currentUrl = base + id + '/index.html';
+            document.getElementById('qrTitle').textContent = icon + ' ' + name;
+            document.getElementById('qrUrl').textContent = currentUrl;
+            document.getElementById('qrModal').classList.add('visible');
+            generateQR(currentUrl);
+        }
+
+        function closeQR() { document.getElementById('qrModal').classList.remove('visible'); }
+
+        function generateQR(url) {
+            const container = document.getElementById('qrCanvas');
+            // Einfacher QR-Code via Google Charts API (Fallback)
+            container.innerHTML = '<img src="https://chart.googleapis.com/chart?cht=qr&chs=220x220&chl=' + encodeURIComponent(url) + '&chco=FA1E4E" alt="QR Code" style="border-radius:8px">';
+        }
+
+        function downloadQR() {
+            const img = document.querySelector('#qrCanvas img');
+            if (!img) return;
+            const a = document.createElement('a');
+            a.href = img.src;
+            a.download = 'dkz-qr-' + currentUrl.split('/modules/')[1]?.replace('/index.html','') + '.png';
+            a.click();
+        }
+
+        function copyUrl() {
+            navigator.clipboard.writeText(currentUrl).then(() => {
+                const t = document.createElement('div');
+                t.textContent = '📋 URL kopiert!';
+                Object.assign(t.style, {position:'fixed',bottom:'20px',left:'50%',transform:'translateX(-50%)',padding:'10px 20px',background:'#1a1a20',border:'1px solid rgba(0,255,136,.3)',borderRadius:'10px',color:'var(--green)',fontSize:'.8rem',zIndex:'99999'});
+                document.body.appendChild(t);
+                setTimeout(()=>t.remove(),2000);
+            });
+        }
+
+        function openModule() { if(currentUrl) window.open(currentUrl,'_blank'); }
+
+        // Init
+        renderModules();
+        // Close on Escape
+        document.addEventListener('keydown', e => { if(e.key==='Escape') closeQR(); });
+    </script>
+    <script>['dkz-headbar.js','dkz-console.js','dkz-tts.js'].forEach(s=>{const el=document.createElement('script');el.src='../../shared/'+s;el.onerror=()=>console.warn('[Portable] '+s);document.body.appendChild(el);});</script>
+</body>
+</html>

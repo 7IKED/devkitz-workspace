@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v1.00.0_01">
+    <meta name="dkz-module" content="neural-swarm">
+    <title>Neural Swarm — DkZâ„¢™</title>
+    <meta name="description" content="DkZ™ Neural Swarm — Live Agent-Nervensystem mit LLM Model Router">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <style>
+/* ═══ Neural Swarm Styles ═══ */
+:root{--accent:#fa1e4e;--accent-soft:rgba(250,30,78,.12);--bg:#060608;--bg-card:rgba(18,18,24,.85);--text-primary:#e8e8ec;--text-secondary:#8a8a9a;--green:#00ff88;--yellow:#ffb800;--red:#ff3b5c;--blue:#3b82f6;--purple:#a855f7;--cyan:#00e5ff;--border:#2a2a2e;--font-main:'Inter',sans-serif;--font-mono:'JetBrains Mono',monospace}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font-main);background:var(--bg);color:var(--text-primary);overflow-x:hidden;min-height:100vh}
+body::before{content:"";position:fixed;top:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(250,30,78,.06),transparent 70%);pointer-events:none;z-index:0}
+body::after{content:"";position:fixed;bottom:-150px;left:-150px;width:500px;height:500px;background:radial-gradient(circle,rgba(0,229,255,.05),transparent 70%);pointer-events:none;z-index:0}
+
+.app{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column}
+
+/* Header */
+.hdr{background:var(--bg-card);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:56px;position:sticky;top:0;z-index:100}
+.hdr-left{display:flex;align-items:center;gap:.75rem}
+.hdr-logo{font-size:1.1rem;font-weight:900;display:flex;align-items:center;gap:.5rem}
+.hdr-logo span{background:linear-gradient(135deg,var(--cyan),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hdr-right{display:flex;align-items:center;gap:.5rem}
+.hdr-status{display:flex;align-items:center;gap:.35rem;font-size:.7rem;font-family:var(--font-mono);padding:.3rem .6rem;border-radius:6px;border:1px solid}
+.hdr-status.online{background:rgba(0,255,136,.08);color:var(--green);border-color:rgba(0,255,136,.2)}
+.hdr-status.rest{background:rgba(255,184,0,.08);color:var(--yellow);border-color:rgba(255,184,0,.2)}
+.hdr-status.offline{background:rgba(255,59,92,.08);color:var(--red);border-color:rgba(255,59,92,.2)}
+.hdr-status .dot{width:6px;height:6px;border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Tabs */
+.tabs{display:flex;gap:2px;background:var(--bg-card);border-bottom:1px solid var(--border);padding:0 1.5rem;overflow-x:auto}
+.tab{padding:.65rem 1rem;font-size:.75rem;font-weight:700;color:var(--text-secondary);cursor:pointer;border:none;background:none;font-family:var(--font-main);border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;display:flex;align-items:center;gap:.4rem}
+.tab:hover{color:var(--text-primary);background:rgba(255,255,255,.03)}
+.tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+
+/* Canvas */
+#swarmCanvas{width:100%;flex:1;display:block;cursor:crosshair}
+.canvas-wrap{flex:1;position:relative;overflow:hidden}
+.canvas-overlay{position:absolute;top:12px;left:12px;z-index:10;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.canvas-stat{background:rgba(6,6,8,.7);backdrop-filter:blur(10px);padding:4px 10px;border-radius:6px;font-size:.65rem;font-family:var(--font-mono);color:var(--text-secondary);border:1px solid rgba(255,255,255,.06);pointer-events:auto}
+.canvas-stat b{color:var(--green)}
+
+/* Tooltip */
+#neuronTooltip{position:absolute;z-index:50;background:rgba(18,18,24,.95);backdrop-filter:blur(20px);border:1px solid var(--cyan);border-radius:12px;padding:14px;min-width:220px;display:none;pointer-events:none;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+#neuronTooltip .tt-name{font-size:.9rem;font-weight:800;margin-bottom:6px}
+#neuronTooltip .tt-role{font-size:.65rem;color:var(--text-secondary);margin-bottom:8px}
+#neuronTooltip .tt-caps{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:8px}
+#neuronTooltip .tt-cap{font-size:.55rem;padding:2px 6px;background:rgba(0,229,255,.1);color:var(--cyan);border-radius:3px;font-family:var(--font-mono)}
+#neuronTooltip .tt-model{font-size:.6rem;color:var(--yellow);font-family:var(--font-mono)}
+
+/* Tab Panels */
+.tab-panel{display:none;flex:1}
+.tab-panel.active{display:flex;flex-direction:column}
+
+/* Model Router */
+.router-wrap{padding:1.25rem 1.5rem;max-width:1200px;margin:0 auto;width:100%;overflow-y:auto;flex:1}
+.router-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.router-header h2{font-size:1rem;font-weight:800;display:flex;align-items:center;gap:.5rem}
+.savings-badge{font-size:.7rem;font-weight:800;padding:.3rem .8rem;border-radius:20px;background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.2);font-family:var(--font-mono)}
+
+.task-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.task-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:1rem;backdrop-filter:blur(20px);transition:all .3s;position:relative;overflow:hidden}
+.task-card:hover{border-color:rgba(0,229,255,.3);transform:translateY(-2px)}
+.task-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0}
+.task-card.tier-flash::before{background:linear-gradient(90deg,var(--green),var(--cyan))}
+.task-card.tier-standard::before{background:linear-gradient(90deg,var(--blue),var(--purple))}
+.task-card.tier-premium::before{background:linear-gradient(90deg,var(--accent),var(--yellow))}
+
+.task-icon{font-size:1.3rem;margin-bottom:.5rem}
+.task-name{font-size:.8rem;font-weight:800;margin-bottom:.3rem}
+.task-desc{font-size:.6rem;color:var(--text-secondary);margin-bottom:.75rem;line-height:1.4}
+.task-tier{font-size:.55rem;font-weight:700;padding:2px 8px;border-radius:4px;font-family:var(--font-mono);display:inline-block;margin-bottom:.5rem}
+.tier-flash .task-tier{background:rgba(0,255,136,.1);color:var(--green)}
+.tier-standard .task-tier{background:rgba(59,130,246,.1);color:var(--blue)}
+.tier-premium .task-tier{background:rgba(250,30,78,.1);color:var(--accent)}
+
+.task-select{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:.45rem .6rem;color:var(--text-primary);font-size:.7rem;font-family:var(--font-main);outline:none;appearance:none;cursor:pointer}
+.task-select:focus{border-color:var(--cyan)}
+.task-select option{background:#1a1a1e;color:var(--text-primary)}
+.task-cost{font-size:.55rem;color:var(--text-secondary);margin-top:.4rem;font-family:var(--font-mono);display:flex;justify-content:space-between}
+.task-cost .price{color:var(--green)}
+
+/* Provider Groups */
+.provider-section{margin-top:1.5rem}
+.provider-title{font-size:.7rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem;display:flex;align-items:center;gap:.4rem}
+.provider-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.provider-card{background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:10px;padding:.6rem;text-align:center;cursor:pointer;transition:all .2s}
+.provider-card:hover{border-color:var(--cyan);transform:translateY(-1px)}
+.provider-card.active{border-color:var(--green);background:rgba(0,255,136,.05)}
+.provider-icon{font-size:1.2rem;margin-bottom:.3rem}
+.provider-name{font-size:.65rem;font-weight:700}
+.provider-models{font-size:.5rem;color:var(--text-secondary)}
+
+/* Buttons */
+.btn{padding:.5rem 1rem;border:none;border-radius:8px;font-size:.75rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:var(--font-main);display:inline-flex;align-items:center;gap:.4rem}
+.btn-accent{background:linear-gradient(135deg,var(--cyan),var(--green));color:#000}
+.btn-accent:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,229,255,.35)}
+.btn-ghost{background:rgba(255,255,255,.05);color:var(--text-primary);border:1px solid var(--border)}
+.btn-ghost:hover{background:rgba(255,255,255,.1);border-color:var(--cyan)}
+
+/* Toast */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--bg-card);border:1px solid var(--green);border-radius:10px;padding:.75rem 1.25rem;transform:translateX(400px);transition:transform .3s;z-index:10000;font-size:.8rem;backdrop-filter:blur(20px)}
+.toast.show{transform:translateX(0)}
+
+/* Responsive */
+@media(max-width:768px){.task-grid{grid-template-columns:1fr}.provider-grid{grid-template-columns:repeat(2,1fr)}}
+    </style>
+    <script src="../../shared/dkz-updater.js"></script>
+</head>
+<body data-dkz-module="neural-swarm" data-dkz-appid="DKZ-MOD-NSW" data-dkz-version="v1.00" data-dkz-title="Neural Swarm" data-dkz-icon="🧬" data-dkz-separable="false">
+<div class="app">
+    <header class="hdr">
+        <div class="hdr-left">
+            <a href="../../hub/index.html" style="color:#808080;text-decoration:none;font-size:1.1rem">&#8592;</a>
+            <div class="hdr-logo">🧬 <span>NEURAL SWARM</span></div>
+        </div>
+        <div class="hdr-status offline" id="connectionBadge"><div class="dot" style="background:currentColor"></div> <span id="connectionText">OFFLINE</span></div>
+        <div class="hdr-right">
+            <button class="btn btn-ghost" onclick="testConnection()">🔌 Test</button>
+            <button class="btn btn-accent" onclick="saveRouterConfig()">💾 Speichern</button>
+        </div>
+    </header>
+
+    <nav class="tabs">
+        <button class="tab active" data-tab="swarm">🧬 Swarm View</button>
+        <button class="tab" data-tab="router">🎯 LLM Model Router</button>
+        <button class="tab" data-tab="providers">🏢 Provider & Modelle</button>
+    </nav>
+
+    <!-- ═══ TAB 1: NEURAL SWARM CANVAS ═══ -->
+    <div class="tab-panel active" id="panel-swarm">
+        <div class="canvas-wrap">
+            <div class="canvas-overlay">
+                <div class="canvas-stat">Neuronen: <b id="neuronCount">0</b></div>
+                <div class="canvas-stat">Synapsen: <b id="synapseCount">0</b></div>
+                <div class="canvas-stat">Messages: <b id="msgCount">0</b>/s</div>
+                <div class="canvas-stat">Herzschlag: <b id="heartbeatModel">—</b></div>
+            </div>
+            <canvas id="swarmCanvas"></canvas>
+            <div id="neuronTooltip">
+                <div class="tt-name" id="ttName"></div>
+                <div class="tt-role" id="ttRole"></div>
+                <div class="tt-caps" id="ttCaps"></div>
+                <div class="tt-model" id="ttModel"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ TAB 2: LLM MODEL ROUTER ═══ -->
+    <div class="tab-panel" id="panel-router">
+        <div class="router-wrap">
+            <div class="router-header">
+                <h2>🎯 LLM Model Router — Task-zu-Modell Zuweisung</h2>
+                <div class="savings-badge" id="savingsBadge">~78% Kosten gespart</div>
+            </div>
+            <div class="task-grid" id="taskGrid"></div>
+        </div>
+    </div>
+
+    <!-- ═══ TAB 3: PROVIDERS ═══ -->
+    <div class="tab-panel" id="panel-providers">
+        <div class="router-wrap">
+            <div class="router-header">
+                <h2>🏢 Provider & Modelle (100+)</h2>
+                <button class="btn btn-ghost" onclick="refreshProviders()">🔄 Aktualisieren</button>
+            </div>
+            <div id="providerList"></div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"><span id="toastMsg"></span></div>
+
+<script>
+// ═══ DkZ Neural Swarm + LLM Model Router ═══
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+// ═══ Tab Navigation ═══
+document.querySelectorAll('.tab').forEach(t=>{
+    t.addEventListener('click',()=>{
+        document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));
+        t.classList.add('active');
+        const p=document.getElementById('panel-'+t.dataset.tab);
+        if(p)p.classList.add('active');
+        if(t.dataset.tab==='swarm')resizeCanvas();
+    });
+});
+
+function toast(msg){
+    const t=document.getElementById('toast');
+    document.getElementById('toastMsg').textContent=msg;
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ═══════════════════════════════════════════
+// NEURAL SWARM — Canvas Visualization
+// ═══════════════════════════════════════════
+const AGENTS = [
+    {id:'james-master',name:'James™ Master',type:'coordinator',color:'#fa1e4e',role:'Guardian — ueberwacht alle',capabilities:['evaluate','score','ocr','iceberg'],karma:100},
+    {id:'openclaw-core',name:'OpenClaw Core',type:'orchestrator',color:'#00e5ff',role:'Dispatcher — verteilt Aufgaben',capabilities:['dispatch','register','route','webhook'],karma:100},
+    {id:'pc-knowledge',name:'PicoClaw Knowledge',type:'knowledge',color:'#55ACEE',role:'Wissenssuche (FAISS)',capabilities:['vector_search','semantic_search'],karma:98},
+    {id:'pc-coder',name:'PicoClaw Coder',type:'analyzer',color:'#00ff88',role:'Code-Analyse & Lint',capabilities:['lint','analyze','refactor'],karma:95},
+    {id:'pc-seo',name:'PicoClaw SEO',type:'analyzer',color:'#FFB800',role:'SEO & Meta Auditor',capabilities:['seo_scan','meta_audit'],karma:97},
+    {id:'pc-observer',name:'PicoClaw Observer',type:'observer',color:'#ec4899',role:'DOM Capture & Screenshots',capabilities:['dom_capture','screenshot'],karma:100},
+    {id:'pc-pattern',name:'PicoClaw Pattern',type:'learner',color:'#6366f1',role:'Muster-Erkennung',capabilities:['pattern_detect','sequence_match'],karma:96},
+    {id:'pc-autopilot',name:'PicoClaw AutoPilot',type:'executor',color:'#ff0040',role:'Automatisierte Ausfuehrung',capabilities:['pattern_execute','rpa'],karma:100},
+    {id:'loop-agent',name:'Loop Agent',type:'loop',color:'#a78bfa',role:'Scan-Fix-Recheck Loops',capabilities:['scan','lint','fix','recheck'],karma:92},
+    {id:'eco-analyzer',name:'Ecosystem Analyzer',type:'auditor',color:'#f97316',role:'Modul-Audit & Scoring',capabilities:['module_scan','score'],karma:99},
+    {id:'middleman',name:'Middleman',type:'broker',color:'#14b8a6',role:'Trade-Vermittlung',capabilities:['route_trade','match_offer'],karma:100},
+    {id:'whisper-voice',name:'Wispe Voice',type:'voice',color:'#8b5cf6',role:'Spracheingabe & TTS',capabilities:['stt','tts','voice_cmd'],karma:94}
+];
+
+const canvas=document.getElementById('swarmCanvas');
+const ctx=canvas.getContext('2d');
+let neurons=[];
+let synapses=[];
+let particles=[];
+let hoveredNeuron=null;
+let breathPhase=0;
+let msgPerSec=0;
+let frameCount=0;
+
+function resizeCanvas(){
+    const wrap=canvas.parentElement;
+    canvas.width=wrap.clientWidth;
+    canvas.height=wrap.clientHeight||500;
+    initNeurons();
+}
+
+function initNeurons(){
+    neurons=[];
+    const cx=canvas.width/2, cy=canvas.height/2;
+    const radius=Math.min(cx,cy)*0.65;
+    AGENTS.forEach((a,i)=>{
+        const angle=(i/AGENTS.length)*Math.PI*2 - Math.PI/2;
+        const r=radius*(0.6+Math.random()*0.4);
+        neurons.push({
+            ...a,
+            x:cx+Math.cos(angle)*r,
+            y:cy+Math.sin(angle)*r,
+            targetX:cx+Math.cos(angle)*r,
+            targetY:cy+Math.sin(angle)*r,
+            radius:18+a.karma/15,
+            pulsePhase:Math.random()*Math.PI*2,
+            glow:0
+        });
+    });
+    // Synapses — verbinde verwandte Agents
+    synapses=[];
+    const connections=[[0,1],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],[0,8],[0,9],[9,3],[8,3],[6,7],[2,4],[10,9],[11,0],[11,1]];
+    connections.forEach(([a,b])=>{if(a<neurons.length&&b<neurons.length)synapses.push({from:a,to:b,activity:0,lastFire:0});});
+    document.getElementById('neuronCount').textContent=neurons.length;
+    document.getElementById('synapseCount').textContent=synapses.length;
+}
+
+function fireSynapse(idx){
+    if(idx<synapses.length){
+        synapses[idx].activity=1;
+        synapses[idx].lastFire=Date.now();
+        // Partikel entlang der Synapse
+        const s=synapses[idx];
+        const from=neurons[s.from],to=neurons[s.to];
+        for(let i=0;i<3;i++){
+            particles.push({
+                x:from.x,y:from.y,
+                tx:to.x,ty:to.y,
+                progress:i*0.15,
+                speed:0.008+Math.random()*0.005,
+                color:from.color,
+                size:2+Math.random()*2
+            });
+        }
+        msgPerSec++;
+    }
+}
+
+function drawSwarm(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    breathPhase+=0.015;
+    const breathScale=1+Math.sin(breathPhase)*0.02;
+    const cx=canvas.width/2,cy=canvas.height/2;
+
+    // Hintergrund-Glow
+    const bgGrad=ctx.createRadialGradient(cx,cy,0,cx,cy,canvas.width*0.5);
+    bgGrad.addColorStop(0,'rgba(0,229,255,0.015)');
+    bgGrad.addColorStop(0.5,'rgba(0,255,136,0.008)');
+    bgGrad.addColorStop(1,'transparent');
+    ctx.fillStyle=bgGrad;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // Synapsen zeichnen
+    synapses.forEach(s=>{
+        const from=neurons[s.from],to=neurons[s.to];
+        s.activity*=0.97;
+        const alpha=0.06+s.activity*0.4;
+        ctx.strokeStyle=`rgba(0,229,255,${alpha})`;
+        ctx.lineWidth=1+s.activity*2;
+        ctx.beginPath();
+        ctx.moveTo(from.x,from.y);
+        ctx.lineTo(to.x,to.y);
+        ctx.stroke();
+    });
+
+    // Partikel
+    particles=particles.filter(p=>{
+        p.progress+=p.speed;
+        if(p.progress>=1)return false;
+        const x=p.x+(p.tx-p.x)*p.progress;
+        const y=p.y+(p.ty-p.y)*p.progress;
+        ctx.beginPath();
+        ctx.arc(x,y,p.size,0,Math.PI*2);
+        ctx.fillStyle=p.color;
+        ctx.globalAlpha=1-p.progress;
+        ctx.fill();
+        ctx.globalAlpha=1;
+        return true;
+    });
+
+    // Neuronen zeichnen
+    neurons.forEach((n,i)=>{
+        n.pulsePhase+=0.03;
+        const pulseR=n.radius*(breathScale+Math.sin(n.pulsePhase)*0.08);
+        n.glow*=0.95;
+
+        // Aeusserer Glow
+        const glowR=pulseR*2.5+n.glow*20;
+        const glow=ctx.createRadialGradient(n.x,n.y,pulseR*0.5,n.x,n.y,glowR);
+        glow.addColorStop(0,n.color+'30');
+        glow.addColorStop(1,'transparent');
+        ctx.fillStyle=glow;
+        ctx.beginPath();
+        ctx.arc(n.x,n.y,glowR,0,Math.PI*2);
+        ctx.fill();
+
+        // Kern
+        const grad=ctx.createRadialGradient(n.x-pulseR*0.2,n.y-pulseR*0.2,0,n.x,n.y,pulseR);
+        grad.addColorStop(0,n.color);
+        grad.addColorStop(1,n.color+'60');
+        ctx.fillStyle=grad;
+        ctx.beginPath();
+        ctx.arc(n.x,n.y,pulseR,0,Math.PI*2);
+        ctx.fill();
+
+        // Ring
+        ctx.strokeStyle=n.color+'80';
+        ctx.lineWidth=hoveredNeuron===i?3:1.5;
+        ctx.beginPath();
+        ctx.arc(n.x,n.y,pulseR+2,0,Math.PI*2);
+        ctx.stroke();
+
+        // Icon
+        ctx.font=`${pulseR*0.7}px sans-serif`;
+        ctx.textAlign='center';
+        ctx.textBaseline='middle';
+        const icons={coordinator:'🎯',orchestrator:'🐾',knowledge:'🧠',analyzer:'🔍',observer:'👁️',learner:'🔄',executor:'🤖',loop:'🔁',auditor:'📊',broker:'🤝',voice:'🎤'};
+        ctx.fillText(icons[n.type]||'⚡',n.x,n.y);
+
+        // Name
+        ctx.font='bold 9px Inter,sans-serif';
+        ctx.fillStyle=n.color;
+        ctx.fillText(n.name.split(' ').pop(),n.x,n.y+pulseR+14);
+    });
+
+    frameCount++;
+    if(frameCount%60===0){
+        document.getElementById('msgCount').textContent=msgPerSec;
+        msgPerSec=0;
+    }
+
+    requestAnimationFrame(drawSwarm);
+}
+
+// Random Synapse Activity
+setInterval(()=>{
+    const idx=Math.floor(Math.random()*synapses.length);
+    fireSynapse(idx);
+    neurons[synapses[idx]?.to]&&(neurons[synapses[idx].to].glow=1);
+},800);
+
+// Mouse Hover
+canvas.addEventListener('mousemove',e=>{
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    hoveredNeuron=null;
+    const tooltip=document.getElementById('neuronTooltip');
+    neurons.forEach((n,i)=>{
+        const dx=mx-n.x,dy=my-n.y;
+        if(Math.sqrt(dx*dx+dy*dy)<n.radius+5){
+            hoveredNeuron=i;
+            const config=routerConfig[n.id];
+            document.getElementById('ttName').textContent=n.name;
+            document.getElementById('ttRole').textContent=n.role;
+            document.getElementById('ttCaps').innerHTML=n.capabilities.map(c=>`<span class="tt-cap">${esc(c)}</span>`).join('');
+            document.getElementById('ttModel').textContent=config?'Modell: '+config:'Modell: auto';
+            tooltip.style.display='block';
+            tooltip.style.left=Math.min(e.clientX+15,window.innerWidth-240)+'px';
+            tooltip.style.top=Math.min(e.clientY-80,window.innerHeight-150)+'px';
+        }
+    });
+    if(hoveredNeuron===null)tooltip.style.display='none';
+});
+
+// ═══════════════════════════════════════════
+// LLM MODEL ROUTER — Task-to-Model Mapping
+// ═══════════════════════════════════════════
+const TASK_TYPES = [
+    {id:'heartbeat',name:'Herzschlag / Ping',icon:'💓',desc:'Health-Checks, Verbindungstests, Keep-Alive. Braucht kein teures Modell.',tier:'flash',defaultModel:'gemini-2.0-flash',costPerM:'$0.01'},
+    {id:'routing',name:'Task-Routing',icon:'🔀',desc:'Einfache Klassifizierung und Weiterleitung von Aufgaben.',tier:'flash',defaultModel:'gpt-4.1-nano',costPerM:'$0.02'},
+    {id:'search',name:'Wissenssuche',icon:'🔍',desc:'Semantische Suche, RAG-Queries, Kontext-Laden.',tier:'flash',defaultModel:'gemini-2.0-flash',costPerM:'$0.01'},
+    {id:'summary',name:'Zusammenfassung',icon:'📝',desc:'Texte zusammenfassen, Changelogs generieren.',tier:'flash',defaultModel:'deepseek-chat',costPerM:'$0.03'},
+    {id:'translate',name:'Uebersetzung',icon:'🌍',desc:'Deutsch/Englisch, Dokumentation uebersetzen.',tier:'flash',defaultModel:'gpt-4.1-mini',costPerM:'$0.02'},
+    {id:'lint',name:'Code-Analyse / Lint',icon:'🔧',desc:'Syntax-Check, Linting, einfache Fehler finden.',tier:'standard',defaultModel:'deepseek-coder',costPerM:'$0.05'},
+    {id:'seo',name:'SEO-Analyse',icon:'📊',desc:'Meta-Tags pruefen, Keyword-Dichte, Lighthouse.',tier:'standard',defaultModel:'gpt-4.1-mini',costPerM:'$0.04'},
+    {id:'chat',name:'Chat / Dialog',icon:'💬',desc:'Benutzer-Interaktion, Fragen beantworten.',tier:'standard',defaultModel:'gemini-2.5-flash',costPerM:'$0.05'},
+    {id:'refactor',name:'Code-Refactoring',icon:'🏗️',desc:'Code umstrukturieren, Patterns anwenden.',tier:'standard',defaultModel:'deepseek-coder',costPerM:'$0.08'},
+    {id:'codegen',name:'Code-Generierung',icon:'⚡',desc:'Neue Module, Funktionen, Tests schreiben.',tier:'premium',defaultModel:'claude-sonnet-4',costPerM:'$0.50'},
+    {id:'architecture',name:'Architektur-Design',icon:'🏛️',desc:'System-Design, Modul-Planung, Blueprint.',tier:'premium',defaultModel:'claude-opus-4',costPerM:'$2.00'},
+    {id:'reasoning',name:'Komplexes Reasoning',icon:'🧠',desc:'Multi-Step Analyse, Debugging, Entscheidungen.',tier:'premium',defaultModel:'gpt-4.5',costPerM:'$1.50'},
+    {id:'ocr',name:'OCR / Bilderkennung',icon:'👁️',desc:'Screenshots analysieren, Text aus Bildern.',tier:'standard',defaultModel:'gemini-2.0-flash',costPerM:'$0.02'},
+    {id:'voice',name:'Voice / TTS',icon:'🎤',desc:'Spracheingabe transkribieren, Vorlesen.',tier:'flash',defaultModel:'whisper-large-v3',costPerM:'$0.01'},
+    {id:'automation',name:'RPA / Automatisierung',icon:'🤖',desc:'Browser-Aktionen, Muster ausfuehren.',tier:'standard',defaultModel:'gpt-4.1-mini',costPerM:'$0.04'}
+];
+
+const ALL_MODELS = [
+    // Google
+    {provider:'Google',models:['gemini-2.5-pro','gemini-2.5-flash','gemini-2.0-flash','gemini-2.0-flash-lite','gemini-1.5-pro','gemini-1.5-flash']},
+    // OpenAI
+    {provider:'OpenAI',models:['gpt-4.5','gpt-4.1','gpt-4.1-mini','gpt-4.1-nano','gpt-4o','gpt-4o-mini','o3','o4-mini']},
+    // Anthropic
+    {provider:'Anthropic',models:['claude-opus-4','claude-sonnet-4','claude-sonnet-3.5','claude-haiku-3.5']},
+    // DeepSeek
+    {provider:'DeepSeek',models:['deepseek-chat','deepseek-coder','deepseek-r1','deepseek-v3']},
+    // xAI
+    {provider:'xAI (Grok)',models:['grok-3','grok-3-mini','grok-4.1-fast','grok-4.1-fast-reasoning']},
+    // Moonshot / Kimi
+    {provider:'Kimi / Moonshot',models:['kimi-k2.5','kimi-k2','moonshot-v1']},
+    // Meta
+    {provider:'Meta (Llama)',models:['llama-4-scout','llama-4-maverick','llama-3.3-70b','llama-3.1-405b']},
+    // Nvidia
+    {provider:'Nvidia',models:['nvidia-nemotron-ultra','nvidia-llama-3.1-nemotron','nvidia-mistral-nemo']},
+    // Mistral
+    {provider:'Mistral',models:['mistral-large','mistral-medium','mistral-small','codestral','pixtral-large']},
+    // HuggingFace / Open
+    {provider:'HuggingFace / Open',models:['qwen-2.5-72b','qwen-2.5-coder','yi-lightning','command-r-plus','dbrx-instruct']},
+    // OpenRouter
+    {provider:'OpenRouter',models:['auto (cheapest)','auto (best)','openrouter/optimus']},
+    // Lokal
+    {provider:'Lokal (vLLM)',models:['vllm/gemma4-e2b','vllm/gemma4-e4b','vllm/qwen3-4b','vllm/qwen3-14b','vllm/gemma4-26b']},
+    // Sprache
+    {provider:'Speech',models:['whisper-large-v3','elevenlabs-v2','google-tts','azure-tts']}
+];
+
+// Konfiguration aus localStorage
+let routerConfig = JSON.parse(localStorage.getItem('dkz-model-router') || '{}');
+
+function getModelForTask(taskId){
+    const task = TASK_TYPES.find(t=>t.id===taskId);
+    return routerConfig[taskId] || (task ? task.defaultModel : 'auto');
+}
+
+function renderTaskGrid(){
+    const grid=document.getElementById('taskGrid');
+    grid.innerHTML=TASK_TYPES.map(t=>{
+        const currentModel = routerConfig[t.id] || t.defaultModel;
+        const allModels = ALL_MODELS.flatMap(p=>p.models);
+        return `
+        <div class="task-card tier-${esc(t.tier)}" data-task="${esc(t.id)}">
+            <div class="task-icon">${t.icon}</div>
+            <div class="task-name">${esc(t.name)}</div>
+            <div class="task-desc">${esc(t.desc)}</div>
+            <div class="task-tier">${esc(t.tier).toUpperCase()}</div>
+            <select class="task-select" onchange="setModel('${esc(t.id)}',this.value)">
+                ${allModels.map(m=>`<option value="${esc(m)}" ${m===currentModel?'selected':''}>${esc(m)}</option>`).join('')}
+            </select>
+            <div class="task-cost">
+                <span>~${esc(t.costPerM)}/1M tokens</span>
+                <span class="price">Tier: ${esc(t.tier)}</span>
+            </div>
+            <div class="dkz-learn-slot" style="margin-top:6px"></div>
+        </div>`;
+    }).join('');
+}
+
+function setModel(taskId, model){
+    routerConfig[taskId]=model;
+    localStorage.setItem('dkz-model-router',JSON.stringify(routerConfig));
+    toast('✅ '+taskId+' → '+model);
+    updateSavings();
+    // Self-Learning: Model-Routing bewerten lassen
+    if(typeof DkzLearn!=='undefined'){
+        var taskInfo=TASK_TYPES.find(function(t){return t.id===taskId;});
+        setTimeout(function(){
+            var card=document.querySelector('[data-task="'+taskId+'"] .dkz-learn-slot');
+            if(card && !card.querySelector('.dkz-learn-widget')){
+                DkzLearn.injectWidget(card,'model-routing',taskId+':'+model,{
+                    size:'small',
+                    meta:{model:model,taskType:taskId,costTier:taskInfo?taskInfo.tier:'standard'}
+                });
+            }
+        },100);
+    }
+    updateSavings();
+    // Update heartbeat display
+    if(taskId==='heartbeat'){
+        document.getElementById('heartbeatModel').textContent=model;
+    }
+}
+
+function updateSavings(){
+    let flashCount=0,totalCount=TASK_TYPES.length;
+    TASK_TYPES.forEach(t=>{
+        const model=routerConfig[t.id]||t.defaultModel;
+        if(t.tier==='flash'||model.includes('flash')||model.includes('mini')||model.includes('nano')||model.includes('haiku')||model.includes('lite'))flashCount++;
+    });
+    const pct=Math.round((flashCount/totalCount)*85+5);
+    document.getElementById('savingsBadge').textContent='~'+pct+'% Kosten gespart';
+}
+
+function saveRouterConfig(){
+    localStorage.setItem('dkz-model-router',JSON.stringify(routerConfig));
+    toast('💾 Router-Konfiguration gespeichert');
+}
+
+// ═══ Provider View ═══
+function renderProviders(){
+    const container=document.getElementById('providerList');
+    container.innerHTML=ALL_MODELS.map(p=>`
+        <div class="provider-section">
+            <div class="provider-title">🏢 ${esc(p.provider)} (${p.models.length} Modelle)</div>
+            <div class="provider-grid">
+                ${p.models.map(m=>{
+                    const usedIn=TASK_TYPES.filter(t=>(routerConfig[t.id]||t.defaultModel)===m);
+                    return `<div class="provider-card ${usedIn.length?'active':''}" onclick="toast('${esc(m)} — ${usedIn.length} Tasks zugewiesen')">
+                        <div class="provider-name">${esc(m)}</div>
+                        <div class="provider-models">${usedIn.length?usedIn.map(t=>t.icon).join(' '):'nicht zugewiesen'}</div>
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function refreshProviders(){renderProviders();toast('🔄 Provider aktualisiert');}
+
+// ═══ Connection Test ═══
+async function testConnection(){
+    const badge=document.getElementById('connectionBadge');
+    const text=document.getElementById('connectionText');
+    badge.className='hdr-status';
+    text.textContent='TESTE...';
+
+    if(typeof DkzPicoClaw!=='undefined'&&DkzPicoClaw.testConnection){
+        try{
+            const r=await DkzPicoClaw.testConnection();
+            if(r.status==='online'){badge.classList.add('online');text.textContent='ONLINE (WS+REST)';}
+            else if(r.status==='rest-only'){badge.classList.add('rest');text.textContent='REST-ONLY';}
+            else{badge.classList.add('offline');text.textContent='OFFLINE';}
+            toast('🔌 Verbindung: '+r.status);
+        }catch(e){badge.classList.add('offline');text.textContent='OFFLINE';toast('❌ '+e.message);}
+    }else{
+        badge.classList.add('offline');text.textContent='OFFLINE';
+        toast('⚠️ dkz-picoclaw.js nicht geladen');
+    }
+}
+
+// ═══ Init ═══
+document.addEventListener('DOMContentLoaded',()=>{
+    resizeCanvas();
+    drawSwarm();
+    renderTaskGrid();
+    renderProviders();
+    updateSavings();
+    const hbModel=getModelForTask('heartbeat');
+    document.getElementById('heartbeatModel').textContent=hbModel;
+});
+window.addEventListener('resize',resizeCanvas);
+</script>
+
+<!-- Shared Scripts -->
+<script>
+(function(){
+    const base='../../shared/';
+    const scripts=['dkz-headbar.js','dkz-navbar.js','dkz-debug.js','dkz-guide.js','dkz-crosslinks.js','dkz-copilot.js','dkz-picoclaw.js','dkz-self-learn.js','dkz-console.js'];
+    scripts.forEach(s=>{
+        const el=document.createElement('script');
+        el.src=base+s;
+        el.onerror=()=>{};
+        document.body.appendChild(el);
+    });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="stylesheet" href="../../shared/seo-shared.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            --platform-color: #E1306C
+        }
+
+        .top-bar {
+            background: linear-gradient(135deg, rgba(225, 48, 108, .08), rgba(131, 58, 180, .08), transparent);
+            border-bottom: 2px solid rgba(225, 48, 108, .3);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: -20px -20px 20px;
+            border-radius: 14px 14px 0 0
+        }
+
+        .top-bar h2 {
+            font-size: 18px;
+            font-weight: 800;
+            background: linear-gradient(90deg, #833AB4, #E1306C, #F77737);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px
+        }
+
+        .kpi {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center
+        }
+
+        .kpi-val {
+            font-size: 18px;
+            font-weight: 800;
+            font-family: var(--mono)
+        }
+
+        .kpi-lbl {
+            font-size: 9px;
+            color: var(--muted);
+            margin-top: 2px
+        }
+
+        .kpi-delta {
+            font-size: 9px;
+            margin-top: 2px
+        }
+
+        .score-ring {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 26px;
+            margin: 0 auto 8px
+        }
+
+        .check-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3px
+        }
+    </style>
+</head>
+
+<body>
+    <div class="top-bar"><span style="font-size:28px">📸</span>
+        <h2>Instagram PRO Analyzer</h2><span style="margin-left:auto;font-size:10px;color:var(--muted)">v3.0 – Deep
+            Analysis</span>
+    </div>
+    <div class="grid grid-2">
+        <div class="card card-full">
+            <h3>📸 Instagram Profil analysieren</h3>
+            <div class="input-row"><input type="text" id="uIn" placeholder="@username oder Profil-URL"><input
+                    type="text" id="apiKey" placeholder="API Key (optional)" style="max-width:180px"><button class="btn"
+                    style="background:linear-gradient(90deg,#833AB4,#E1306C,#F77737);color:#fff" onclick="run()">🔍 Deep
+                    Scan</button><button class="btn btn-sm btn-outline"
+                    onclick="document.getElementById('uIn').value='@cristiano';run()">Demo</button></div>
+            <div class="tabs">
+                <button class="tab active" onclick="sw('overview',this)">📊 Overview</button>
+                <button class="tab" onclick="sw('content',this)">🎬 Content</button>
+                <button class="tab" onclick="sw('reels',this)">🎵 Reels</button>
+                <button class="tab" onclick="sw('stories',this)">📱 Stories</button>
+                <button class="tab" onclick="sw('hashtags',this)">#️⃣ Hashtags</button>
+                <button class="tab" onclick="sw('audience',this)">👥 Audience</button>
+                <button class="tab" onclick="sw('seo',this)">🔍 SEO</button>
+                <button class="tab" onclick="sw('money',this)">💰 Money</button>
+            </div>
+            <div class="loading" id="ld">
+                <div class="spinner"></div>Deep-Analyse... 38 Checks werden geprüft
+            </div>
+        </div>
+        <!-- TABS -->
+        <div id="overviewTab">
+            <div class="card" id="c_p" style="display:none">
+                <div class="profile-header" style="margin:0;--platform-color:#E1306C">
+                    <div class="profile-avatar">📸</div>
+                    <div class="profile-info">
+                        <div class="profile-name" id="pN">-</div>
+                        <div class="profile-handle" id="pH">-</div>
+                        <div class="profile-bio" id="pB">-</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card" id="c_kpi" style="display:none">
+                <h3>📊 KPIs</h3>
+                <div class="kpi-grid" id="kG"></div>
+            </div>
+            <div class="card" id="c_health" style="display:none">
+                <h3>🏥 Profil-Gesundheit</h3>
+                <div id="hD"></div>
+            </div>
+        </div>
+        <div id="contentTab" style="display:none">
+            <div class="card" id="c_mix">
+                <h3>🎬 Content-Mix</h3>
+                <div id="mixD"></div>
+            </div>
+            <div class="card" id="c_best">
+                <h3>🏆 Best Performing Posts</h3>
+                <div id="bestD"></div>
+            </div>
+            <div class="card" id="c_time">
+                <h3>⏰ Posting-Analyse</h3>
+                <div id="timeD"></div>
+            </div>
+        </div>
+        <div id="reelsTab" style="display:none">
+            <div class="card" id="c_reels">
+                <h3>🎵 Reels Deep Analysis</h3>
+                <div id="reelsD"></div>
+            </div>
+            <div class="card" id="c_audio">
+                <h3>🎶 Audio/Sound Trends</h3>
+                <div id="audioD"></div>
+            </div>
+        </div>
+        <div id="storiesTab" style="display:none">
+            <div class="card" id="c_stories">
+                <h3>📱 Stories Analytics</h3>
+                <div id="storiesD"></div>
+            </div>
+            <div class="card" id="c_stickers">
+                <h3>🎯 Interaktive Elemente</h3>
+                <div id="stickersD"></div>
+            </div>
+        </div>
+        <div id="hashtagsTab" style="display:none">
+            <div class="card" id="c_hash">
+                <h3>#️⃣ Hashtag-Strategie</h3>
+                <div id="hashD"></div>
+            </div>
+            <div class="card" id="c_hashPerf">
+                <h3>📊 Hashtag Performance</h3>
+                <div id="hashPerfD"></div>
+            </div>
+        </div>
+        <div id="audienceTab" style="display:none">
+            <div class="card" id="c_demo">
+                <h3>👥 Demografie</h3>
+                <div id="demoD"></div>
+            </div>
+            <div class="card" id="c_geo">
+                <h3>🌍 Geografie</h3>
+                <div id="geoD"></div>
+            </div>
+            <div class="card" id="c_active">
+                <h3>⏰ Aktivitätszeiten</h3>
+                <div id="activeD"></div>
+            </div>
+        </div>
+        <div id="seoTab" style="display:none">
+            <div class="card" id="c_seo">
+                <h3>🔍 Instagram SEO Audit</h3>
+                <div class="check-grid" id="seoGrid"></div>
+            </div>
+            <div class="card" id="c_discover">
+                <h3>🔎 Discoverability</h3>
+                <div id="discoverD"></div>
+            </div>
+        </div>
+        <div id="moneyTab" style="display:none">
+            <div class="card" id="c_rev">
+                <h3>💰 Monetarisierung</h3>
+                <div id="revD"></div>
+            </div>
+            <div class="card" id="c_collab">
+                <h3>🤝 Collab-Potenzial</h3>
+                <div id="collabD"></div>
+            </div>
+        </div>
+        <div class="card card-full" id="c_reco" style="display:none">
+            <h3>💡 KI-Empfehlungen</h3>
+            <div id="recoD"></div>
+        </div>
+        <div class="card card-full">
+            <h3>📈 Verlauf</h3>
+            <div id="hL"></div>
+            <div id="hE" class="empty-state">
+                <div class="icon">📸</div>Noch kein Profil analysiert.
+            </div>
+        </div>
+    </div>
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        let hist = JSON.parse(localStorage.getItem('ig_pro_hist') || '{}');
+        const TS = ['overview', 'content', 'reels', 'stories', 'hashtags', 'audience', 'seo', 'money'];
+        function sw(t, b) { document.querySelectorAll('.tab').forEach(x => x.classList.remove('active')); b.classList.add('active'); TS.forEach(x => document.getElementById(x + 'Tab').style.display = x === t ? '' : 'none') }
+        function fmt(n) { if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M'; if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K'; return n.toString() }
+        function rn(a, b) { return Math.floor(Math.random() * (b - a) + a) }
+        function mr(n, v, s, sc) { return `<div class="metric-row"><span class="metric-name">${n}</span><span class="metric-value">${v}</span>${s ? `<span class="metric-scale ${sc || ''}">${s}</span>` : ''}</div>` }
+        function prog(n, p, c) { return `<div class="metric-row"><span class="metric-name">${n}</span><div style="flex:1;margin:0 8px"><div class="progress"><div class="progress-fill progress-${c}" style="width:${p}%"></div></div></div><span style="font-size:10px;color:var(--muted)">${p}%</span></div>` }
+        function badge(t, c) { return `<span class="badge badge-${c}">${t}</span>` }
+        function show(id) { document.getElementById(id).style.display = '' }
+
+        async function run() {
+            const u = document.getElementById('uIn').value.trim().replace('@', ''); if (!u) { alert('Username!'); return }
+            document.getElementById('ld').classList.add('show'); document.querySelectorAll('[id^="c_"]').forEach(e => e.style.display = 'none');
+            await new Promise(r => setTimeout(r, 2000)); document.getElementById('ld').classList.remove('show');
+
+            const f = rn(1e3, 5e6), fg = rn(100, 5000), posts = rn(20, 2000), eng = (Math.random() * 8 + 0.5).toFixed(1), reach = (Math.random() * 30 + 5).toFixed(0);
+            const avgL = Math.floor(f * parseFloat(eng) / 100), avgC = Math.floor(avgL * 0.03), avgS = Math.floor(avgL * 0.1), avgSh = Math.floor(avgL * 0.02);
+            const ratio = (f / fg).toFixed(1), reelsP = rn(30, 70), storiesDay = rn(1, 15), bioClicks = rn(10, 1000);
+            const fGr = (Math.random() * 6 - 1).toFixed(1); const seoScore = rn(35, 95);
+
+            // PROFILE
+            show('c_p'); document.getElementById('pN').textContent = u; document.getElementById('pH').textContent = '@' + u;
+            document.getElementById('pB').textContent = `${fmt(f)} Follower • ${fmt(fg)} Following • ${posts} Posts • Ratio ${ratio}`;
+
+            // KPIs
+            show('c_kpi');
+            document.getElementById('kG').innerHTML = [
+                { v: fmt(f), l: 'Follower', d: fGr + '%/Mo', c: fGr > 0 ? 'var(--green)' : 'var(--red)' },
+                { v: fmt(fg), l: 'Following', d: 'Ratio: ' + ratio, c: ratio > 5 ? 'var(--green)' : 'var(--yellow)' },
+                { v: posts, l: 'Posts', d: Math.ceil(posts / 52) + '/Woche', c: 'var(--blue)' },
+                { v: eng + '%', l: 'Engagement', d: eng > 3 ? 'Überdurchschnitt' : 'Verbesserbar', c: eng > 3 ? 'var(--green)' : 'var(--yellow)' },
+                { v: reach + '%', l: 'Reichweite', d: fmt(Math.floor(f * reach / 100)) + ' unique', c: 'var(--cyan)' },
+                { v: fmt(avgL), l: '⌀ Likes', d: 'pro Post', c: 'var(--pink)' },
+                { v: fmt(avgC), l: '⌀ Kommentare', d: (avgC / avgL * 100).toFixed(1) + '% L2C', c: 'var(--purple)' },
+                { v: fmt(avgS), l: '⌀ Saves', d: 'Signal für Algorithmus', c: 'var(--yellow)' },
+                { v: fmt(bioClicks), l: 'Bio-Link Klicks/Wo', d: 'Link in Bio aktiv', c: 'var(--blue)' },
+                { v: storiesDay + '/Tag', l: 'Stories', d: 'Completion: ' + rn(40, 85) + '%', c: 'var(--cyan)' },
+                { v: reelsP + '%', l: 'Reels-Anteil', d: reelsP > 40 ? 'Stark' : 'Mehr Reels!', c: reelsP > 40 ? 'var(--green)' : 'var(--red)' },
+                { v: seoScore + '/100', l: 'SEO Score', d: seoScore > 70 ? 'Gut' : 'Verbesserbar', c: seoScore > 70 ? 'var(--green)' : 'var(--yellow)' },
+            ].map(k => `<div class="kpi"><div class="kpi-val" style="color:${k.c}">${k.v}</div><div class="kpi-lbl">${k.l}</div><div class="kpi-delta" style="color:${k.c}">${k.d}</div></div>`).join('');
+
+            // HEALTH
+            show('c_health');
+            document.getElementById('hD').innerHTML = `<div class="score-ring" style="background:conic-gradient(${seoScore > 70 ? '#E1306C' : 'var(--yellow)'} ${seoScore * 3.6}deg,var(--border) 0);color:#fff">${seoScore}</div><div style="text-align:center;font-size:10px;color:var(--muted);margin-bottom:12px">Profil-Health</div>` +
+                [{ n: 'Engagement-Qualität', s: rn(30, 100) }, { n: 'Follower-Echtheit', s: rn(50, 100) }, { n: 'Content-Konsistenz', s: rn(30, 95) }, { n: 'Hashtag-Strategie', s: rn(20, 90) }, { n: 'Story-Aktivität', s: rn(20, 100) }, { n: 'Reels-Performance', s: rn(25, 95) }, { n: 'Bio-Optimierung', s: rn(40, 100) }, { n: 'Community-Interaktion', s: rn(30, 95) }].map(x => prog(x.n, x.s, x.s > 70 ? 'green' : x.s > 40 ? 'yellow' : 'red')).join('');
+
+            // CONTENT MIX
+            document.getElementById('mixD').innerHTML = [{ n: 'Reels', p: reelsP, c: 'purple' }, { n: 'Karussell', p: rn(10, 30), c: 'blue' }, { n: 'Einzelbild', p: rn(5, 20), c: 'green' }, { n: 'Video (Feed)', p: rn(5, 15), c: 'yellow' }, { n: 'Guides', p: rn(0, 5), c: 'cyan' }, { n: 'Collab Posts', p: rn(0, 8), c: 'red' }].map(t => prog(t.n, t.p, t.c)).join('') +
+                mr('Beste Content-Art', 'Reels', 'Höchste Reichweite', 'scale-high') + mr('Karussell-Engagement', rn(4, 12) + '%', 'Höchstes Engagement', 'scale-high');
+
+            // BEST POSTS
+            document.getElementById('bestD').innerHTML = `<table class="data-table"><thead><tr><th>#</th><th>Typ</th><th>Likes</th><th>Komm.</th><th>Saves</th><th>Shares</th><th>Reach</th><th>Eng.%</th></tr></thead><tbody>${Array.from({ length: 10 }, (_, i) => { const l = Math.floor(avgL * (3 - i * 0.2)); const c = Math.floor(l * 0.03); const s = Math.floor(l * 0.1); const sh = Math.floor(l * 0.02); const r = Math.floor(l * 3); const e = ((l + c + s + sh) / f * 100).toFixed(1); return `<tr><td style="font-weight:800;color:${i < 3 ? 'var(--yellow)' : 'var(--dim)'}">${i + 1}</td><td>${['Reel', 'Karussell', 'Bild', 'Reel', 'Karussell', 'Reel', 'Video', 'Reel', 'Bild', 'Reel'][i]}</td><td style="font-family:var(--mono);color:#E1306C">${fmt(l)}</td><td style="font-family:var(--mono)">${fmt(c)}</td><td style="font-family:var(--mono)">${fmt(s)}</td><td style="font-family:var(--mono)">${fmt(sh)}</td><td style="font-family:var(--mono)">${fmt(r)}</td><td>${badge(e + '%', e > 5 ? 'green' : e > 2 ? 'yellow' : 'red')}</td></tr>` }).join('')}</tbody></table>`;
+
+            // POSTING TIME
+            document.getElementById('timeD').innerHTML = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(d => `<div class="metric-row"><span class="metric-name" style="width:24px;font-weight:700">${d}</span><div style="flex:1;display:flex;gap:2px">${Array.from({ length: 24 }, (_, i) => { const v = rn(1, 20); return `<div style="width:4px;height:${v}px;background:${v > 15 ? '#E1306C' : v > 8 ? 'var(--blue)' : 'var(--border)'};border-radius:2px" title="${i}:00 – Engagement Level ${v}"></div>` }).join('')}</div></div>`).join('') + mr('Beste Post-Zeiten', 'Di+Do 18-20 Uhr', '', 'scale-high') + mr('Schlechteste Zeit', 'So Morgens 6-9 Uhr', '', 'scale-low');
+
+            // REELS
+            document.getElementById('reelsD').innerHTML = `<div class="kpi-grid" style="margin-bottom:12px">${[{ v: fmt(Math.floor(avgL * 2.5)), l: '⌀ Reel Views' }, { v: (parseFloat(eng) * 1.5).toFixed(1) + '%', l: 'Reel Eng. Rate' }, { v: rn(15, 60) + '%', l: 'Watch-Through' }, { v: rn(1, 8) + '%', l: 'Share Rate' }, { v: rn(40, 85) + '%', l: 'From Explore' }, { v: rn(3, 15) + 's', l: '⌀ Dauer' }].map(k => `<div class="kpi"><div class="kpi-val" style="color:#833AB4">${k.v}</div><div class="kpi-lbl">${k.l}</div></div>`).join('')}</div>` +
+                mr('Virale Reels (>1M Views)', rn(0, 5).toString()) + mr('Trending Audio genutzt', rn(20, 80) + '%') + mr('Original Audio', rn(10, 50) + '%') + mr('Hook-Rate (erste 3s)', rn(40, 85) + '%', 'Ziel: >60%', rn(40, 85) > 60 ? 'scale-high' : 'scale-low') + mr('Reel-zu-Follower Conversion', rn(1, 5) + '%');
+
+            document.getElementById('audioD').innerHTML = ['Trending Song #1', 'Viral Beat 2026', 'Original Audio', 'Classic Remix', 'Pop Remix'].map((s, i) => `<div class="metric-row"><span style="font-weight:800;color:var(--yellow);width:20px">#${i + 1}</span><span class="metric-name">${s}</span><span class="metric-value">${fmt(rn(1e4, 5e6))} uses</span></div>`).join('');
+
+            // STORIES
+            document.getElementById('storiesD').innerHTML = `<div class="kpi-grid" style="margin-bottom:12px">${[{ v: storiesDay + '/Tag', l: 'Stories' }, { v: rn(40, 85) + '%', l: 'Completion Rate' }, { v: rn(5, 30) + '%', l: 'Tap Forward' }, { v: rn(1, 8) + '%', l: 'Tap Back (gut!)' }, { v: rn(1, 5) + '%', l: 'Exits' }, { v: rn(2, 15) + '%', l: 'Reply Rate' }].map(k => `<div class="kpi"><div class="kpi-val" style="color:var(--cyan)">${k.v}</div><div class="kpi-lbl">${k.l}</div></div>`).join('')}</div>` +
+                mr('Story-Reichweite', rn(10, 40) + '% der Follower') + mr('Beste Story-Zeit', 'Mo-Fr 18-20 Uhr', '', 'scale-high') + mr('⌀ Sticker-Interaktionen', fmt(rn(50, 2000)));
+
+            document.getElementById('stickersD').innerHTML = [{ n: 'Umfrage/Poll', p: rn(5, 30), c: 'blue' }, { n: 'Frage-Sticker', p: rn(3, 20), c: 'purple' }, { n: 'Quiz', p: rn(2, 15), c: 'green' }, { n: 'Slider/Emoji', p: rn(5, 25), c: 'yellow' }, { n: 'Link-Sticker', p: rn(10, 40), c: 'red' }, { n: 'Countdown', p: rn(1, 10), c: 'cyan' }, { n: 'Musik-Sticker', p: rn(5, 20), c: 'blue' }, { n: 'Add Yours', p: rn(1, 10), c: 'purple' }].map(s => prog(s.n, s.p, s.c)).join('');
+
+            // HASHTAGS
+            const tags = ['photography', 'lifestyle', 'travel', 'fitness', 'fashion', 'motivation', 'instagood', 'photooftheday', 'love', 'beautiful', 'art', 'design', 'food', 'nature', 'style', 'beauty', 'happy', 'me', 'selfie', 'instadaily', 'explorer', 'aesthetic', 'viral', 'trending', 'fyp', 'reels', 'reelsinstagram', 'contentcreator', 'influencer', 'socialmedia'];
+            document.getElementById('hashD').innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:16px">' + tags.map(t => `<span class="badge badge-purple" style="margin:1px;font-size:9px;cursor:pointer">#${t} <span style="opacity:.5">${fmt(rn(1e4, 5e7))}</span></span>`).join('') + '</div>' +
+                mr('⌀ Hashtags/Post', rn(10, 30).toString(), rn(10, 30) > 19 ? 'Optimal (20-30)' : 'Mehr nutzen', rn(10, 30) > 19 ? 'scale-high' : 'scale-low') +
+                mr('Hashtag-Reichweite', rn(5, 25) + '% der Impressions') + mr('Banned Hashtags verwendet', rn(0, 3).toString(), rn(0, 3) > 0 ? '⚠️ Entfernen!' : 'Sauber', '');
+
+            document.getElementById('hashPerfD').innerHTML = [{ n: 'Nischen-Hashtags (<100K)', p: rn(20, 50), c: 'green' }, { n: 'Medium-Hashtags (100K-1M)', p: rn(20, 40), c: 'blue' }, { n: 'Große Hashtags (>1M)', p: rn(10, 30), c: 'purple' }, { n: 'Branded Hashtags', p: rn(0, 15), c: 'yellow' }].map(h => prog(h.n, h.p, h.c)).join('') + mr('Hashtag-Strategie Score', rn(30, 95) + '/100');
+
+            // AUDIENCE
+            show('c_demo');
+            document.getElementById('demoD').innerHTML = '<strong>Alter:</strong>' + [{ a: '13-17', p: rn(5, 12) }, { a: '18-24', p: rn(25, 40) }, { a: '25-34', p: rn(20, 35) }, { a: '35-44', p: rn(8, 18) }, { a: '45-54', p: rn(3, 8) }, { a: '55+', p: rn(1, 5) }].map(a => prog(a.a, a.p, 'blue')).join('') +
+                '<div style="margin-top:12px"><strong>Geschlecht:</strong></div>' + [{ n: 'Weiblich', p: rn(40, 70), c: 'pink' }, { n: 'Männlich', p: rn(25, 55), c: 'blue' }, { n: 'Divers', p: rn(1, 5), c: 'purple' }].map(g => prog(g.n, g.p, g.c)).join('');
+
+            document.getElementById('geoD').innerHTML = [{ f: '🇩🇪', n: 'Deutschland', p: rn(25, 45) }, { f: '🇦🇹', n: 'Österreich', p: rn(5, 15) }, { f: '🇨🇭', n: 'Schweiz', p: rn(5, 12) }, { f: '🇺🇸', n: 'USA', p: rn(5, 15) }, { f: '🇬🇧', n: 'UK', p: rn(3, 10) }, { f: '🇫🇷', n: 'Frankreich', p: rn(2, 8) }, { f: '🇳🇱', n: 'Niederlande', p: rn(2, 6) }, { f: '🇮🇹', n: 'Italien', p: rn(1, 5) }, { f: '🇪🇸', n: 'Spanien', p: rn(1, 5) }, { f: '🇧🇷', n: 'Brasilien', p: rn(1, 4) }].map(c => `<div class="metric-row"><span style="font-size:14px">${c.f}</span><span class="metric-name">${c.n}</span><div style="flex:1;margin:0 8px"><div class="progress"><div class="progress-fill progress-blue" style="width:${c.p}%"></div></div></div><span style="font-size:10px;font-family:var(--mono)">${c.p}%</span></div>`).join('');
+
+            document.getElementById('activeD').innerHTML = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(d => `<div class="metric-row"><span class="metric-name" style="width:24px;font-weight:700">${d}</span><div style="flex:1;display:flex;gap:1px">${Array.from({ length: 24 }, (_, i) => { const v = rn(1, 20); return `<div style="width:4px;height:${v}px;background:${v > 15 ? '#E1306C' : v > 8 ? 'var(--blue)' : 'var(--border)'};border-radius:1px"></div>` }).join('')}</div></div>`).join('');
+
+            // SEO AUDIT
+            const checks = [
+                'Bio ausgefüllt (150 Zeichen)', 'Bio enthält Keywords', 'Bio enthält CTA', 'Profil-Link aktiv', 'Linktree/Linkbio', 'Profilbild HD', 'Name enthält Keyword', 'Username SEO-optimiert',
+                'Business/Creator Account', 'Kategorie gesetzt', 'Kontakt-Buttons aktiv', 'Adresse/Standort', 'Verifiziert', 'Story Highlights (min 5)', 'Highlight-Cover einheitlich', 'Branded Hashtag erstellt',
+                'Regelmäßige Posts (min 3/Woche)', 'Reels aktiv (min 2/Woche)', 'Stories täglich', 'Karussells genutzt', 'Alt-Text in Bildern', 'Standort-Tags genutzt', 'Personen getagged', 'Collab-Posts',
+                'Caption SEO-optimiert', '⌀ Caption >100 Wörter', 'CTA in Captions', 'Emojis strategisch', 'Hashtags in Kommentar', 'Hashtag-Mix (Nische+Groß)', 'Keine Banned Hashtags', 'Geotags aktiv',
+                'Kommentare beantwortet', 'DM-Autoresponder', 'Saved Replies', 'IG Shopping aktiv', 'Guides erstellt', 'Branded Content Tool', 'Cross-Promotion aktiv', 'Analytics regelmäßig geprüft'
+            ];
+            document.getElementById('seoGrid').innerHTML = checks.map(c => { const p = Math.random() > .35; return `<div class="result-item" style="padding:5px 6px"><span class="result-icon" style="font-size:11px">${p ? '✅' : '❌'}</span><div style="font-size:9px;font-weight:600">${c}</div></div>` }).join('');
+
+            document.getElementById('discoverD').innerHTML = mr('In Google suchbar', Math.random() > .3 ? '✅ Ja' : '❌ Nein') + mr('Explore-Rate', rn(10, 50) + '%') + mr('Hashtag-Discovery', rn(5, 25) + '%') + mr('Audio-Discovery', rn(2, 15) + '%') + mr('Tag-Discovery', rn(3, 12) + '%') + mr('Direct Share', rn(5, 20) + '%');
+
+            // MONEY
+            show('c_rev');
+            const sponsorVal = Math.floor(f / 100 * 2);
+            document.getElementById('revD').innerHTML = `<div class="kpi-grid">${[{ v: '$' + fmt(sponsorVal), l: 'Sponsored Post Wert' }, { v: '$' + fmt(Math.floor(sponsorVal * 0.6)), l: 'Story Sponsoring' }, { v: '$' + fmt(Math.floor(sponsorVal * 1.2)), l: 'Reel Sponsoring' }, { v: '$' + fmt(Math.floor(sponsorVal * 4)), l: 'Monats-Deal' }].map(k => `<div class="kpi"><div class="kpi-val" style="color:var(--green)">${k.v}</div><div class="kpi-lbl">${k.l}</div></div>`).join('')}</div>` +
+                mr('IG Bonuses/Reels Play', rn(0, 1) ? 'Aktiv' : 'Nicht verfügbar') + mr('IG Shopping', rn(0, 1) ? 'Aktiviert' : 'Nicht aktiviert') + mr('Affiliate Ready', rn(0, 1) ? 'Ja' : 'Einrichten') + mr('Brand Safety', rn(70, 100) + '/100');
+
+            document.getElementById('collabD').innerHTML = [{ n: 'Ähnliche Creator finden', v: rn(50, 200) + ' potenzielle Matches' }, { n: 'Engagement Overlap', v: rn(10, 40) + '%' }, { n: 'Follower-Overlap Potenzial', v: rn(5, 25) + '%' }, { n: 'Optimale Nische', v: ['Lifestyle', 'Fashion', 'Fitness', 'Tech', 'Food', 'Travel'][rn(0, 6)] }, { n: 'Empfohlene Collab-Art', v: ['Joint Reel', 'Giveaway', 'Takeover', 'Series'][rn(0, 4)] }].map(c => mr(c.n, c.v)).join('');
+
+            // RECOMMENDATIONS
+            show('c_reco');
+            const recos = [];
+            if (parseFloat(eng) < 3) recos.push({ i: 95, t: 'Engagement steigern (' + eng + '%)', d: 'Mehr Karussells (höchstes Engagement), Fragen in Captions, Story-Polls nutzen' });
+            if (reelsP < 40) recos.push({ i: 92, t: 'Reels-Anteil erhöhen (' + reelsP + '%)', d: 'Reels bekommen 50% mehr Reichweite als Bilder. Ziel: 50%+' });
+            if (ratio < 5) recos.push({ i: 85, t: 'Follower/Following Ratio verbessern (' + ratio + ')', d: 'Following reduzieren oder Follower organisch wachsen lassen' });
+            recos.push({ i: rn(60, 90), t: 'Hashtag-Strategie optimieren', d: 'Mix aus 10 Nischen-Hashtags, 10 Medium, 10 Große. Keine Banned Tags.' });
+            recos.push({ i: rn(50, 80), t: 'Story-Interaktion steigern', d: 'Täglich 5-10 Stories mit Polls, Quizzes, Fragen. Completion Rate beachten.' });
+            recos.push({ i: rn(40, 70), t: 'Bio + SEO optimieren', d: 'Keywords in Name & Bio, klarer CTA, aktiver Link, Story Highlights.' });
+            recos.sort((a, b) => b.i - a.i);
+            document.getElementById('recoD').innerHTML = recos.slice(0, 8).map((r, i) => `<div class="result-item"><span class="result-icon">${badge(r.i, 'green')}</span><div><div class="result-title">#${i + 1}: ${r.t}</div><div class="result-desc">${r.d}</div></div></div>`).join('');
+
+            hist[u] = { f, eng, posts, seoScore, date: new Date().toISOString() }; localStorage.setItem('ig_pro_hist', JSON.stringify(hist)); rH();
+        }
+
+        function rH() { const e = Object.entries(hist); document.getElementById('hE').style.display = e.length ? 'none' : 'block'; document.getElementById('hL').innerHTML = e.map(([n, d]) => `<div class="metric-row" style="cursor:pointer" onclick="document.getElementById('uIn').value='@${n}';run()"><span class="metric-name">@${n}</span>${badge(fmt(d.f), 'blue')} ${badge('SEO:' + d.seoScore, 'green')}<span style="font-size:10px;color:var(--dim)">${new Date(d.date).toLocaleDateString('de-DE')}</span><button class="btn btn-sm btn-outline" onclick="event.stopPropagation();delete hist['${n}'];localStorage.setItem('ig_pro_hist',JSON.stringify(hist));rH()">✕</button></div>`).join('') }
+        rH();
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

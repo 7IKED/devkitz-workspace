@@ -1,0 +1,33 @@
+FROM node:20-alpine
+
+LABEL maintainer="DkZ devkitz"
+LABEL dkz.service="docker-ops-db"
+LABEL dkz.eu-compliant="true"
+LABEL dkz.version="1.0.0"
+
+WORKDIR /app
+
+# Dependencies installieren
+COPY package.json ./
+RUN npm install --omit=dev
+
+# App kopieren
+COPY server.js schema.sql ./
+
+# Daten-Verzeichnis
+RUN mkdir -p /app/data
+
+# Health Check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD wget --spider -q http://localhost:9890/health || exit 1
+
+# Port
+EXPOSE 9890
+
+# Nicht als Root laufen (EU Security)
+RUN addgroup -S dkz && adduser -S dkz -G dkz
+RUN chown -R dkz:dkz /app
+USER dkz
+
+# Start
+CMD ["node", "server.js"]

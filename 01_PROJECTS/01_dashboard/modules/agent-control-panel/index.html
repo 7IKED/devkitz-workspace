@@ -1,0 +1,673 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v1.00.0_01">
+    <meta name="dkz-module" content="agent-control-panel">
+    <title>Agent Control Panel — DkZâ„¢™</title>
+    <meta name="description" content="DkZ™ AI Agent Control Panel — Zentrales Ökosystem-Dashboard für Multi-Agenten, MCP, Voice und Profile">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <style>
+/* ═══ Agent Control Panel Styles ═══ */
+:root{--accent:#fa1e4e;--accent-soft:rgba(250,30,78,.12);--bg:#060608;--bg-card:rgba(18,18,24,.85);--text-primary:#e8e8ec;--text-secondary:#8a8a9a;--green:#00ff88;--yellow:#ffb800;--red:#ff3b5c;--blue:#3b82f6;--purple:#a855f7;--cyan:#00e5ff;--border:#2a2a2e;--font-main:'Inter',sans-serif;--font-mono:'JetBrains Mono',monospace}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font-main);background:var(--bg);color:var(--text-primary);overflow-x:hidden;min-height:100vh}
+body::before{content:"";position:fixed;top:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(250,30,78,.06),transparent 70%);pointer-events:none;z-index:0}
+body::after{content:"";position:fixed;bottom:-150px;left:-150px;width:500px;height:500px;background:radial-gradient(circle,rgba(168,85,247,.05),transparent 70%);pointer-events:none;z-index:0}
+
+.app{position:relative;z-index:1;min-height:100vh}
+
+/* Header */
+.hdr{background:var(--bg-card);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:56px;position:sticky;top:0;z-index:100}
+.hdr-left{display:flex;align-items:center;gap:.75rem}
+.hdr-logo{font-size:1.1rem;font-weight:900;display:flex;align-items:center;gap:.5rem}
+.hdr-logo span{background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hdr-right{display:flex;align-items:center;gap:.5rem}
+.hdr-status{display:flex;align-items:center;gap:.35rem;font-size:.7rem;font-family:var(--font-mono);padding:.3rem .6rem;border-radius:6px;background:rgba(0,255,136,.08);color:var(--green);border:1px solid rgba(0,255,136,.2)}
+.hdr-status .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Tabs */
+.tabs{display:flex;gap:2px;background:var(--bg-card);border-bottom:1px solid var(--border);padding:0 1.5rem;overflow-x:auto}
+.tab{padding:.65rem 1rem;font-size:.75rem;font-weight:700;color:var(--text-secondary);cursor:pointer;border:none;background:none;font-family:var(--font-main);border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;display:flex;align-items:center;gap:.4rem}
+.tab:hover{color:var(--text-primary);background:rgba(255,255,255,.03)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* Content */
+.content{padding:1.25rem 1.5rem;max-width:1400px;margin:0 auto}
+.tab-panel{display:none;animation:fadeUp .3s ease}
+.tab-panel.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Grid */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem}
+@media(max-width:900px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
+
+/* Cards */
+.panel{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:1.25rem;backdrop-filter:blur(20px);transition:all .3s}
+.panel:hover{border-color:rgba(250,30,78,.15)}
+.panel-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-secondary);margin-bottom:1rem;display:flex;align-items:center;gap:.4rem}
+.panel-title .icon{font-size:.9rem}
+
+/* Stat Cards */
+.stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center;transition:all .3s}
+.stat-card:hover{transform:translateY(-2px);border-color:var(--accent)}
+.stat-val{font-size:1.8rem;font-weight:900;font-family:var(--font-mono)}
+.stat-lbl{font-size:.65rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-top:.2rem}
+
+/* Form Elements */
+.field{margin-bottom:.85rem}
+.field-lbl{font-size:.65rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35rem}
+.field-input{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:.55rem .75rem;color:var(--text-primary);font-size:.8rem;font-family:var(--font-main);outline:none;transition:border-color .2s}
+.field-input:focus{border-color:var(--accent)}
+.field-select{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:.55rem .75rem;color:var(--text-primary);font-size:.8rem;font-family:var(--font-main);outline:none}
+.field-select option{background:#1a1a1e;color:var(--text-primary)}
+
+/* Buttons */
+.btn{padding:.5rem 1rem;border:none;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:var(--font-main);display:inline-flex;align-items:center;gap:.4rem}
+.btn-accent{background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff}
+.btn-accent:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(250,30,78,.35)}
+.btn-ghost{background:rgba(255,255,255,.05);color:var(--text-primary);border:1px solid var(--border)}
+.btn-ghost:hover{background:rgba(255,255,255,.1);border-color:var(--accent)}
+.btn-green{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.25)}
+.btn-green:hover{background:rgba(0,255,136,.2)}
+
+/* Toggle */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.toggle-row:last-child{border:none}
+.toggle-info{display:flex;flex-direction:column;gap:.15rem}
+.toggle-name{font-size:.8rem;font-weight:600}
+.toggle-desc{font-size:.6rem;color:var(--text-secondary)}
+.toggle{width:40px;height:22px;border-radius:11px;background:var(--border);cursor:pointer;position:relative;transition:background .3s;flex-shrink:0}
+.toggle.on{background:var(--green)}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .3s}
+.toggle.on::after{transform:translateX(18px)}
+
+/* Agent Card */
+.agent-card{background:rgba(15,15,20,.9);border:1px solid var(--border);border-radius:12px;padding:1rem;transition:all .3s;cursor:default}
+.agent-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.agent-hdr{display:flex;align-items:center;gap:.6rem;margin-bottom:.75rem}
+.agent-avatar{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.agent-name{font-weight:800;font-size:.85rem}
+.agent-role{font-size:.6rem;color:var(--text-secondary)}
+.agent-status{font-size:.55rem;padding:.15rem .4rem;border-radius:4px;font-weight:700;font-family:var(--font-mono)}
+
+/* MCP Store */
+.mcp-card{background:rgba(15,15,20,.9);border:1px solid var(--border);border-radius:12px;padding:1rem;transition:all .3s}
+.mcp-card:hover{border-color:var(--cyan);transform:translateY(-2px)}
+.mcp-icon{font-size:1.5rem;margin-bottom:.5rem}
+.mcp-name{font-weight:800;font-size:.85rem;margin-bottom:.2rem}
+.mcp-desc{font-size:.65rem;color:var(--text-secondary);margin-bottom:.6rem;line-height:1.4}
+.mcp-connect{width:100%;padding:.4rem;border:1px solid var(--cyan);background:rgba(0,229,255,.08);color:var(--cyan);border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:var(--font-main)}
+.mcp-connect:hover{background:rgba(0,229,255,.2)}
+.mcp-connect.connected{background:rgba(0,255,136,.1);color:var(--green);border-color:var(--green)}
+
+/* Voice Waveform */
+.wave-container{height:80px;display:flex;align-items:center;justify-content:center;gap:3px;padding:1rem;background:rgba(0,0,0,.3);border-radius:12px;margin-bottom:1rem}
+.wave-bar{width:4px;border-radius:2px;background:var(--accent);transition:height .15s}
+
+/* Memory Files */
+.mem-file{display:flex;align-items:center;gap:.6rem;padding:.6rem .75rem;background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:8px;margin-bottom:.4rem;cursor:pointer;transition:all .2s}
+.mem-file:hover{background:rgba(255,255,255,.03);border-color:var(--accent)}
+.mem-file-icon{font-size:1rem}
+.mem-file-name{font-size:.75rem;font-weight:600;flex:1}
+.mem-file-badge{font-size:.55rem;padding:.1rem .35rem;border-radius:3px;font-weight:700;font-family:var(--font-mono)}
+
+/* Cost Bar */
+.cost-bar{height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;margin-top:.35rem}
+.cost-fill{height:100%;border-radius:3px;transition:width .5s}
+
+/* Log */
+.log-list{max-height:200px;overflow-y:auto;font-family:var(--font-mono);font-size:.65rem;line-height:1.8}
+.log-entry{padding:.15rem .4rem;border-radius:3px;display:flex;gap:.5rem}
+.log-time{color:var(--text-secondary);flex-shrink:0}
+.log-msg{flex:1}
+
+/* Toast */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--bg-card);border:1px solid var(--green);border-radius:10px;padding:.75rem 1.25rem;transform:translateX(400px);transition:transform .3s;z-index:10000;font-size:.8rem;backdrop-filter:blur(20px)}
+.toast.show{transform:translateX(0)}
+
+/* QR Code */
+.qr-box{width:160px;height:160px;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:1rem auto}
+.qr-box canvas{border-radius:8px}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* J.A.R.V.I.S. Overlay */
+.jarvis-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:1.5rem;backdrop-filter:blur(8px)}
+.jarvis-overlay.open{display:flex}
+.jarvis-ring{width:120px;height:120px;border-radius:50%;border:3px solid var(--cyan);display:flex;align-items:center;justify-content:center;animation:jarvisGlow 2s infinite;position:relative}
+.jarvis-ring::before{content:"";position:absolute;inset:-8px;border-radius:50%;border:1px solid rgba(0,229,255,.2);animation:jarvisSpin 6s linear infinite}
+@keyframes jarvisGlow{0%,100%{box-shadow:0 0 20px rgba(0,229,255,.3)}50%{box-shadow:0 0 40px rgba(0,229,255,.6)}}
+@keyframes jarvisSpin{to{transform:rotate(360deg)}}
+.jarvis-text{font-size:1rem;color:var(--cyan);text-align:center;max-width:400px;font-weight:600}
+    </style>
+    <script src="../../shared/dkz-updater.js"></script>
+</head>
+<body data-dkz-module="agent-control-panel" data-dkz-appid="DKZ-MOD-AGE" data-dkz-version="v0.01" data-dkz-title="Agent Control Panel — ™" data-dkz-icon="📦" data-dkz-separable="false">
+<div class="app">
+    <!-- Header -->
+    <header class="hdr">
+        <div class="hdr-left">
+            <a href="../../hub/index.html" style="color:#808080;text-decoration:none;font-size:1.1rem">&#8592;</a>
+            <div class="hdr-logo">🎛️ <span>AGENT CONTROL PANEL</span></div>
+        </div>
+        <div class="hdr-status"><div class="dot"></div> ECOSYSTEM ONLINE</div>
+        <div class="hdr-right">
+            <button class="btn btn-ghost" onclick="toggleJarvis()" title="J.A.R.V.I.S.">🤖 J.A.R.V.I.S.</button>
+            <button class="btn btn-ghost" onclick="speakTTS('Willkommen im Agent Control Panel. Alle Systeme sind online.')" title="TTS Vorlesen">🔊</button>
+            <button class="btn btn-accent" onclick="saveAllSettings()">💾 Speichern</button>
+        </div>
+    </header>
+
+    <!-- Tabs -->
+    <nav class="tabs" id="tabNav">
+        <button class="tab active" data-tab="dashboard">📊 Dashboard</button>
+        <button class="tab" data-tab="agents">🤖 Agenten</button>
+        <button class="tab" data-tab="mcp">🔌 MCP Store</button>
+        <button class="tab" data-tab="voice">🎤 Voice</button>
+        <button class="tab" data-tab="profiles">👤 Profile</button>
+        <button class="tab" data-tab="github">🐙 GitHub</button>
+        <button class="tab" data-tab="stats">📈 Kosten</button>
+    </nav>
+
+    <div class="content" id="mainContent">
+        <!-- ═══ TAB 1: DASHBOARD ═══ -->
+        <div class="tab-panel active" id="panel-dashboard">
+            <div class="grid-4" style="margin-bottom:1.25rem">
+                <div class="stat-card"><div class="stat-val" style="color:var(--green)">7</div><div class="stat-lbl">Agenten Aktiv</div></div>
+                <div class="stat-card"><div class="stat-val" style="color:var(--cyan)">4</div><div class="stat-lbl">MCP Verbunden</div></div>
+                <div class="stat-card"><div class="stat-val" style="color:var(--yellow)">82</div><div class="stat-lbl">Module</div></div>
+                <div class="stat-card"><div class="stat-val" style="color:var(--accent)">225</div><div class="stat-lbl">Artefakte</div></div>
+            </div>
+            <div class="grid-2">
+                <div class="panel">
+                    <div class="panel-title"><span class="icon">📡</span> Ecosystem Status</div>
+                    <div id="ecosystemStatus"></div>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><span class="icon">📋</span> Aktivitäts-Log</div>
+                    <div class="log-list" id="activityLog"></div>
+                </div>
+            </div>
+            <div class="panel" style="margin-top:1rem">
+                <div class="panel-title"><span class="icon">🧠</span> Memory Manager</div>
+                <div class="grid-3" id="memoryFiles"></div>
+            </div>
+        </div>
+
+        <!-- ═══ TAB 2: AGENTEN ═══ -->
+        <div class="tab-panel" id="panel-agents">
+            <div class="grid-2" style="margin-bottom:1rem">
+                <div class="panel">
+                    <div class="panel-title"><span class="icon">💬</span> Chat-Assistent</div>
+                    <div class="field"><div class="field-lbl">Modell</div>
+                        <select class="field-select" id="chatModel">
+                            <option>grok-4.1-fast</option><option>grok-4.1-fast-reasoning</option>
+                            <option>gemini-fast</option><option selected>gemini-2.0-flash</option>
+                        </select>
+                    </div>
+                    <div class="field"><div class="field-lbl">API Key</div><input type="password" class="field-input" id="chatApiKey" placeholder="sk-..."></div>
+                    <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">🔊 Sprachchat</div><div class="toggle-desc">Browser TTS aktivieren</div></div><div class="toggle" id="tglVoice" onclick="toggleSwitch(this)"></div></div>
+                    <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">🔇 Hintergrund filtern</div><div class="toggle-desc">Noise Gate für Mikrofon</div></div><div class="toggle on" id="tglNoise" onclick="toggleSwitch(this)"></div></div>
+                    <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">⏸️ Denkzeit</div><div class="toggle-desc">Wartet bis du fertig sprichst</div></div><div class="toggle on" id="tglWait" onclick="toggleSwitch(this)"></div></div>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><span class="icon">⚡</span> Agentic Workflow</div>
+                    <div class="field"><div class="field-lbl">Hauptmodell</div>
+                        <select class="field-select" id="agenticModel">
+                            <option>claude-3-opus</option><option selected>claude-sonnet</option>
+                            <option>gpt-codex</option><option>nvidia-kimi</option>
+                            <option>gemini-pro</option><option>deepseek-coder</option>
+                            <option>grok-4.1-fast-reasoning</option><option>mistral-large</option>
+                        </select>
+                    </div>
+                    <div class="field"><div class="field-lbl">API Key</div><input type="password" class="field-input" id="agenticApiKey" placeholder="sk-..."></div>
+                    <div class="field"><div class="field-lbl">Freie Modell-Eingabe</div><input class="field-input" id="customModel" placeholder="huggingface/openrouter/custom..."></div>
+                    <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">🔌 MCP Protokoll</div><div class="toggle-desc">Model Context Protocol aktivieren</div></div><div class="toggle on" id="tglMCP" onclick="toggleSwitch(this)"></div></div>
+                    <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">🤖 GitHub Copilot</div><div class="toggle-desc">3. parallele API</div></div><div class="toggle" id="tglCopilot" onclick="toggleSwitch(this)"></div></div>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-title"><span class="icon">🏢</span> ONTHERUN™ (DkZ-MCP)</div>
+                <div class="grid-2">
+                    <div class="field"><div class="field-lbl">Server URL</div><input class="field-input" id="mcpUrl" value="http://localhost:3777"></div>
+                    <div class="field"><div class="field-lbl">API Key (kein Modell nötig)</div><input type="password" class="field-input" id="mcpApiKey" placeholder="dkz-mcp-..."></div>
+                </div>
+                <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">🔄 Auto-Token Refresh</div><div class="toggle-desc">Alle 24h Token erneuern (Google Login)</div></div><div class="toggle on" id="tglAutoToken" onclick="toggleSwitch(this)"></div></div>
+            </div>
+            <div class="panel" style="margin-top:1rem">
+                <div class="panel-title"><span class="icon">📊</span> Context Management</div>
+                <div class="field"><div class="field-lbl">Max. Context-Füllung: <span id="ctxVal">75</span>%</div>
+                    <input type="range" min="10" max="100" value="75" class="field-input" style="padding:0" id="ctxSlider" oninput="document.getElementById('ctxVal').textContent=this.value">
+                </div>
+                <div class="field"><div class="field-lbl">Bei Limit erreicht</div>
+                    <select class="field-select"><option>Memory löschen & .md neu lesen</option><option>Neues Projekt starten</option><option>Komprimieren & weitermachen</option></select>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ TAB 3: MCP STORE ═══ -->
+        <div class="tab-panel" id="panel-mcp">
+            <div class="grid-3" id="mcpStoreGrid"></div>
+        </div>
+
+        <!-- ═══ TAB 4: VOICE ═══ -->
+        <div class="tab-panel" id="panel-voice">
+            <div class="grid-2">
+                <div class="panel">
+                    <div class="panel-title"><span class="icon">🎤</span> Wispe Voice Agent</div>
+                    <div class="wave-container" id="waveform"></div>
+                    <div style="text-align:center;margin-bottom:1rem">
+                        <button class="btn btn-accent" id="micBtn" onclick="toggleMic()" style="width:64px;height:64px;border-radius:50%;font-size:1.5rem;padding:0">🎤</button>
+                    </div>
+                    <div class="grid-4" style="gap:.5rem">
+                        <button class="btn btn-ghost" onclick="setVoiceMode('notizen')">📝 Notizen</button>
+                        <button class="btn btn-ghost" onclick="setVoiceMode('ideen')">💡 Ideen</button>
+                        <button class="btn btn-ghost" onclick="setVoiceMode('meeting')">👥 Meeting</button>
+                        <button class="btn btn-ghost" onclick="setVoiceMode('archiv')">📁 Archiv</button>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><span class="icon">📱</span> Mobile Brainstorm Sync</div>
+                    <div class="qr-box" id="qrCode"><div style="color:#000;font-size:.7rem;text-align:center">QR Code<br>zum Scannen</div></div>
+                    <p style="font-size:.7rem;color:var(--text-secondary);text-align:center;margin-top:.5rem">Handy/Tablet scannen → Dauersende-Mic für Brainstorm</p>
+                    <div style="margin-top:1rem">
+                        <div class="panel-title"><span class="icon">📋</span> Wispe-Regeln</div>
+                        <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">Desktop: 30 Tage aktiv</div><div class="toggle-desc">Danach → Archiv → Cloud-Archiv</div></div><div class="toggle on" onclick="toggleSwitch(this)"></div></div>
+                        <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">Mobile: 7 Tage intern</div><div class="toggle-desc">Danach → Link + Vorschau 30 Tage</div></div><div class="toggle on" onclick="toggleSwitch(this)"></div></div>
+                        <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">Auto-Klassifizierung</div><div class="toggle-desc">Nanobot erkennt Typ automatisch</div></div><div class="toggle on" onclick="toggleSwitch(this)"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ TAB 5: PROFILE ═══ -->
+        <div class="tab-panel" id="panel-profiles">
+            <div class="grid-2">
+                <div class="panel">
+                    <div class="panel-title"><span class="icon">👤</span> Ecosystem Profile</div>
+                    <div id="profileList"></div>
+                    <div style="margin-top:.75rem;display:flex;gap:.5rem">
+                        <input class="field-input" id="newProfileName" placeholder="Neues Profil..." style="flex:1">
+                        <button class="btn btn-accent" onclick="addProfile()">+ Erstellen</button>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><span class="icon">🔐</span> Login & Auth</div>
+                    <button class="btn btn-ghost" onclick="loginGoogle()" style="width:100%;justify-content:center;margin-bottom:.5rem">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="16" alt="G"> Google Login
+                    </button>
+                    <button class="btn btn-ghost" onclick="loginGitHub()" style="width:100%;justify-content:center">
+                        🐙 GitHub Login
+                    </button>
+                    <div style="margin-top:1rem">
+                        <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">AppScript Verknüpfung</div><div class="toggle-desc">Bidirektional, Token alle 24h aktualisiert</div></div><div class="toggle" id="tglAppScript" onclick="toggleSwitch(this)"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ TAB 6: GITHUB ═══ -->
+        <div class="tab-panel" id="panel-github">
+            <div class="grid-2">
+                <div class="panel">
+                    <div class="panel-title"><span class="icon">📂</span> Repository Manager</div>
+                    <div class="field"><div class="field-lbl">Repo klonen</div><input class="field-input" id="cloneUrl" placeholder="https://github.com/user/repo.git"></div>
+                    <div class="field"><div class="field-lbl">Installationsort</div><input class="field-input" id="installPath" value="C:\DEVKiTZ\01_PROJECTS\"></div>
+                    <div style="display:flex;gap:.5rem">
+                        <button class="btn btn-accent" onclick="cloneRepo()">📥 Klonen</button>
+                        <button class="btn btn-green" onclick="publishRepo()">📤 Veröffentlichen</button>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><span class="icon">🖥️</span> github.dev Workspace</div>
+                    <div style="background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:10px;height:280px;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-size:.75rem">
+                        <div style="text-align:center">
+                            <div style="font-size:2rem;margin-bottom:.5rem">🖥️</div>
+                            <div>github.dev Integration</div>
+                            <div style="font-size:.6rem;color:var(--text-secondary);margin-top:.3rem">Copilot verbunden ✓</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ TAB 7: KOSTEN ═══ -->
+        <div class="tab-panel" id="panel-stats">
+            <div class="grid-4" style="margin-bottom:1rem">
+                <div class="stat-card"><div class="stat-val" style="color:var(--green)">$2.47</div><div class="stat-lbl">Heute</div></div>
+                <div class="stat-card"><div class="stat-val" style="color:var(--yellow)">$18.30</div><div class="stat-lbl">Diese Woche</div></div>
+                <div class="stat-card"><div class="stat-val" style="color:var(--accent)">$67.12</div><div class="stat-lbl">Dieser Monat</div></div>
+                <div class="stat-card"><div class="stat-val" style="color:var(--blue)">1,847</div><div class="stat-lbl">Anfragen</div></div>
+            </div>
+            <div class="grid-2">
+                <div class="panel">
+                    <div class="panel-title"><span class="icon">💰</span> Kosten pro Modell</div>
+                    <div id="costBreakdown"></div>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><span class="icon">⏱️</span> Rate Limits & Timer</div>
+                    <div id="rateLimits"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"><span id="toastMsg"></span></div>
+
+<!-- J.A.R.V.I.S. Overlay -->
+<div class="jarvis-overlay" id="jarvisOverlay">
+    <div class="jarvis-ring"><span style="font-size:2.5rem">🤖</span></div>
+    <div class="jarvis-text" id="jarvisText">Guten Tag. Ich bin J.A.R.V.I.S. — Ihr persönlicher Assistent. Kann ich Ihnen bei der Konfiguration des Agenten-Netzwerks helfen?</div>
+    <div style="display:flex;gap:.75rem">
+        <button class="btn btn-accent" onclick="jarvisAccept()">Ja, hilf mir</button>
+        <button class="btn btn-ghost" onclick="toggleJarvis()">Später</button>
+    </div>
+</div>
+
+<script>
+// ═══ DkZ Agent Control Panel — Vanilla JS ═══
+// XSS Safety
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+// ═══ Tab Navigation ═══
+document.querySelectorAll('.tab').forEach(t=>{
+    t.addEventListener('click',()=>{
+        document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));
+        t.classList.add('active');
+        const p=document.getElementById('panel-'+t.dataset.tab);
+        if(p)p.classList.add('active');
+    });
+});
+
+// ═══ Toggle Switch ═══
+function toggleSwitch(el){el.classList.toggle('on');}
+
+// ═══ Toast ═══
+function toast(msg){
+    const t=document.getElementById('toast');
+    document.getElementById('toastMsg').textContent=msg;
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ═══ TTS (Browser) ═══
+function speakTTS(text){
+    if(!('speechSynthesis' in window))return toast('TTS nicht verfügbar');
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='de-DE';u.rate=.95;u.pitch=1.1;
+    const voices=speechSynthesis.getVoices();
+    const de=voices.find(v=>v.lang.startsWith('de'));
+    if(de)u.voice=de;
+    speechSynthesis.speak(u);
+}
+
+// ═══ J.A.R.V.I.S. ═══
+function toggleJarvis(){
+    const o=document.getElementById('jarvisOverlay');
+    o.classList.toggle('open');
+    if(o.classList.contains('open')){
+        speakTTS('Guten Tag. Ich bin JARVIS. Kann ich Ihnen bei der Konfiguration des Agenten-Netzwerks helfen?');
+    }
+}
+function jarvisAccept(){
+    document.getElementById('jarvisText').textContent='Sehr gut. Ich analysiere Ihr Ökosystem und optimiere die Einstellungen...';
+    speakTTS('Sehr gut. Ich analysiere Ihr Ökosystem und optimiere die Einstellungen.');
+    setTimeout(()=>toggleJarvis(),4000);
+}
+
+// ═══ Ecosystem Status ═══
+function renderEcosystem(){
+    const items=[
+        {name:'ONTHERUN™ MCP',status:'online',color:'var(--green)'},
+        {name:'GitHub Copilot',status:'standby',color:'var(--yellow)'},
+        {name:'DuckDB Analytics',status:'online',color:'var(--green)'},
+        {name:'Supabase',status:'offline',color:'var(--red)'},
+        {name:'James™ Guardian',status:'online',color:'var(--green)'},
+        {name:'Ralph-Loop™',status:'online',color:'var(--green)'},
+        {name:'WissenHub™',status:'online',color:'var(--green)'},
+    ];
+    document.getElementById('ecosystemStatus').innerHTML=items.map(i=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:.45rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
+            <span style="font-size:.8rem;font-weight:600">${esc(i.name)}</span>
+            <span style="font-size:.6rem;font-weight:700;font-family:var(--font-mono);color:${i.color}">${esc(i.status).toUpperCase()}</span>
+        </div>`).join('');
+}
+
+// ═══ Activity Log ═══
+function renderLog(){
+    const logs=[
+        {time:'20:31',msg:'Agent Control Panel gestartet',type:'green'},
+        {time:'20:30',msg:'James™ Guardian: Alle Systeme OK',type:'green'},
+        {time:'20:28',msg:'Ralph-Loop™: Task MOD-083 abgeschlossen',type:'blue'},
+        {time:'20:25',msg:'MCP: ONTHERUN connected (34 Tools)',type:'cyan'},
+        {time:'20:20',msg:'WissenHub: 13 neue Einträge indiziert',type:'yellow'},
+        {time:'20:15',msg:'Git: feat(agent-control) committed',type:'green'},
+    ];
+    document.getElementById('activityLog').innerHTML=logs.map(l=>`
+        <div class="log-entry"><span class="log-time">${esc(l.time)}</span><span class="log-msg" style="color:var(--${l.type})">${esc(l.msg)}</span></div>`).join('');
+}
+
+// ═══ Memory Manager ═══
+function renderMemory(){
+    const files=[
+        {icon:'📝',name:'claude.md',badge:'aktiv',color:'var(--green)'},
+        {icon:'📝',name:'gemini.md',badge:'aktiv',color:'var(--green)'},
+        {icon:'📝',name:'agent.md',badge:'aktiv',color:'var(--green)'},
+        {icon:'📝',name:'copilot.md',badge:'aktiv',color:'var(--green)'},
+        {icon:'📁',name:'playbook/',badge:'Soon',color:'var(--yellow)'},
+        {icon:'📁',name:'openclaw/',badge:'Soon',color:'var(--yellow)'},
+    ];
+    document.getElementById('memoryFiles').innerHTML=files.map(f=>`
+        <div class="mem-file" onclick="toast('${esc(f.name)} wird geöffnet...')">
+            <span class="mem-file-icon">${f.icon}</span>
+            <span class="mem-file-name">${esc(f.name)}</span>
+            <span class="mem-file-badge" style="background:${f.color}22;color:${f.color}">${esc(f.badge)}</span>
+        </div>`).join('');
+}
+
+// ═══ MCP Store ═══
+function renderMCPStore(){
+    const mcps=[
+        {icon:'🏃',name:'ONTHERUN™',desc:'DkZ MCP Server — 34+ Tools, Express.js',connected:true},
+        {icon:'🐙',name:'GitHub Copilot',desc:'Code-Completion, parallele API',connected:false},
+        {icon:'🗄️',name:'Supabase',desc:'PostgreSQL, Auth, Realtime',connected:false},
+        {icon:'🦆',name:'DuckDB',desc:'Analytics, Chat-Logs, Sitzungen',connected:true},
+        {icon:'🧊',name:'Apache Iceberg',desc:'DataLakeHouse, immutable',connected:true},
+        {icon:'☁️',name:'Google Drive',desc:'Unsichtbarer persistenter Speicher',connected:false},
+        {icon:'🤖',name:'OpenManus',desc:'Agent Framework, Docker',connected:false},
+        {icon:'🔗',name:'HuggingFace',desc:'Open-Source Modelle',connected:false},
+        {icon:'🌐',name:'OpenRouter',desc:'Multi-Provider Gateway',connected:false},
+    ];
+    document.getElementById('mcpStoreGrid').innerHTML=mcps.map(m=>`
+        <div class="mcp-card">
+            <div class="mcp-icon">${m.icon}</div>
+            <div class="mcp-name">${esc(m.name)}</div>
+            <div class="mcp-desc">${esc(m.desc)}</div>
+            <button class="mcp-connect ${m.connected?'connected':''}" onclick="this.classList.toggle('connected');this.textContent=this.classList.contains('connected')?'✓ Verbunden':'Verbinden';toast('${esc(m.name)} '+(this.classList?.contains?.('connected')?'verbunden':'getrennt'))">
+                ${m.connected?'✓ Verbunden':'Verbinden'}
+            </button>
+        </div>`).join('');
+}
+
+// ═══ Waveform ═══
+function renderWaveform(){
+    const c=document.getElementById('waveform');
+    let bars='';
+    for(let i=0;i<32;i++){
+        const h=8+Math.random()*40;
+        bars+=`<div class="wave-bar" style="height:${h}px;opacity:.4"></div>`;
+    }
+    c.innerHTML=bars;
+}
+
+// ═══ Mic Toggle ═══
+let micActive=false;
+function toggleMic(){
+    micActive=!micActive;
+    const btn=document.getElementById('micBtn');
+    btn.style.background=micActive?'var(--green)':'';
+    btn.style.color=micActive?'#000':'';
+    if(micActive){
+        toast('🎤 Mikrofon aktiv — sprich jetzt...');
+        animateWave();
+    }else{
+        toast('🎤 Mikrofon gestoppt');
+    }
+}
+function animateWave(){
+    if(!micActive)return;
+    document.querySelectorAll('.wave-bar').forEach(b=>{
+        b.style.height=(8+Math.random()*60)+'px';
+        b.style.opacity=(.3+Math.random()*.7).toFixed(2);
+    });
+    requestAnimationFrame(()=>setTimeout(animateWave,100));
+}
+
+// ═══ Voice Mode ═══
+function setVoiceMode(mode){
+    const labels={notizen:'📝 Notizen',ideen:'💡 Ideen',meeting:'👥 Meeting',archiv:'📁 Archiv'};
+    toast('Modus: '+labels[mode]);
+    speakTTS('Modus gewechselt zu '+mode);
+}
+
+// ═══ Profiles ═══
+let profiles=JSON.parse(localStorage.getItem('dkz-profiles')||'[{"name":"Standard","active":true},{"name":"Coding Agent","active":false},{"name":"Research Mode","active":false}]');
+function renderProfiles(){
+    document.getElementById('profileList').innerHTML=profiles.map((p,i)=>`
+        <div class="mem-file" onclick="activateProfile(${i})">
+            <span class="mem-file-icon">${p.active?'🟢':'⚪'}</span>
+            <span class="mem-file-name">${esc(p.name)}</span>
+            <span class="mem-file-badge" style="background:${p.active?'rgba(0,255,136,.15)':'rgba(255,255,255,.05)'};color:${p.active?'var(--green)':'var(--text-secondary)'}">${p.active?'AKTIV':'—'}</span>
+        </div>`).join('');
+}
+function activateProfile(idx){
+    profiles.forEach((p,i)=>p.active=i===idx);
+    localStorage.setItem('dkz-profiles',JSON.stringify(profiles));
+    renderProfiles();
+    toast('Profil: '+profiles[idx].name+' aktiviert');
+}
+function addProfile(){
+    const n=document.getElementById('newProfileName').value.trim();
+    if(!n)return;
+    profiles.push({name:n,active:false});
+    localStorage.setItem('dkz-profiles',JSON.stringify(profiles));
+    renderProfiles();
+    document.getElementById('newProfileName').value='';
+    toast('Profil erstellt: '+n);
+}
+
+// ═══ Cost Breakdown ═══
+function renderCosts(){
+    const costs=[
+        {name:'Claude 3 Opus',cost:28.40,pct:42,color:'var(--accent)'},
+        {name:'Gemini Pro',cost:15.20,pct:23,color:'var(--blue)'},
+        {name:'GPT-4.1',cost:12.80,pct:19,color:'var(--green)'},
+        {name:'DeepSeek',cost:6.50,pct:10,color:'var(--purple)'},
+        {name:'Mistral',cost:4.22,pct:6,color:'var(--yellow)'},
+    ];
+    document.getElementById('costBreakdown').innerHTML=costs.map(c=>`
+        <div style="margin-bottom:.75rem">
+            <div style="display:flex;justify-content:space-between;font-size:.75rem">
+                <span style="font-weight:600">${esc(c.name)}</span>
+                <span style="font-family:var(--font-mono);color:${c.color}">$${c.cost.toFixed(2)}</span>
+            </div>
+            <div class="cost-bar"><div class="cost-fill" style="width:${c.pct}%;background:${c.color}"></div></div>
+        </div>`).join('');
+}
+
+// ═══ Rate Limits ═══
+function renderRateLimits(){
+    const limits=[
+        {name:'Bild-Generation',used:67,max:100,interval:'4h',color:'var(--yellow)'},
+        {name:'API Calls (Gesamt)',used:842,max:2000,interval:'24h',color:'var(--green)'},
+        {name:'Token Budget',used:1200000,max:5000000,interval:'Monat',color:'var(--blue)'},
+    ];
+    document.getElementById('rateLimits').innerHTML=limits.map(l=>`
+        <div style="margin-bottom:.85rem">
+            <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.2rem">
+                <span style="font-weight:600">${esc(l.name)}</span>
+                <span style="font-family:var(--font-mono);font-size:.65rem;color:var(--text-secondary)">${l.used.toLocaleString()}/${l.max.toLocaleString()} (${l.interval})</span>
+            </div>
+            <div class="cost-bar"><div class="cost-fill" style="width:${(l.used/l.max*100).toFixed(0)}%;background:${l.color}"></div></div>
+            <div class="toggle-row" style="padding:.3rem 0;border:none">
+                <div class="toggle-info"><div class="toggle-name" style="font-size:.65rem">Auto-Resume Trigger</div></div>
+                <div class="toggle on" onclick="toggleSwitch(this)"></div>
+            </div>
+        </div>`).join('');
+}
+
+// ═══ GitHub Actions ═══
+function cloneRepo(){toast('📥 Klone Repository...');speakTTS('Repository wird geklont.');}
+function publishRepo(){toast('📤 Veröffentliche...');speakTTS('Projekt wird veröffentlicht.');}
+function loginGoogle(){toast('🔐 Google Login...');speakTTS('Google Login wird gestartet.');}
+function loginGitHub(){toast('🐙 GitHub Login...');speakTTS('GitHub Login wird gestartet.');}
+
+// ═══ Save All ═══
+function saveAllSettings(){
+    const settings={
+        chatModel:document.getElementById('chatModel')?.value,
+        agenticModel:document.getElementById('agenticModel')?.value,
+        customModel:document.getElementById('customModel')?.value,
+        mcpUrl:document.getElementById('mcpUrl')?.value,
+        ctxLimit:document.getElementById('ctxSlider')?.value,
+        profiles:profiles
+    };
+    localStorage.setItem('dkz-acp-settings',JSON.stringify(settings));
+    toast('💾 Einstellungen gespeichert');
+}
+
+// ═══ Load Settings ═══
+function loadSettings(){
+    try{
+        const s=JSON.parse(localStorage.getItem('dkz-acp-settings'));
+        if(!s)return;
+        if(s.chatModel)document.getElementById('chatModel').value=s.chatModel;
+        if(s.agenticModel)document.getElementById('agenticModel').value=s.agenticModel;
+        if(s.customModel)document.getElementById('customModel').value=s.customModel;
+        if(s.mcpUrl)document.getElementById('mcpUrl').value=s.mcpUrl;
+        if(s.ctxLimit){document.getElementById('ctxSlider').value=s.ctxLimit;document.getElementById('ctxVal').textContent=s.ctxLimit;}
+        if(s.profiles){profiles=s.profiles;}
+    }catch(e){}
+}
+
+// ═══ Init ═══
+document.addEventListener('DOMContentLoaded',()=>{
+    loadSettings();
+    renderEcosystem();
+    renderLog();
+    renderMemory();
+    renderMCPStore();
+    renderWaveform();
+    renderProfiles();
+    renderCosts();
+    renderRateLimits();
+});
+</script>
+
+<!-- Shared Scripts (portable: optional) -->
+<script>
+(function(){
+    const base='../../shared/';
+    const scripts=['dkz-headbar.js','dkz-navbar.js','dkz-debug.js','dkz-guide.js','dkz-crosslinks.js','dkz-copilot.js','dkz-console.js'];
+    scripts.forEach(s=>{
+        const el=document.createElement('script');
+        el.src=base+s;
+        el.onerror=()=>{};
+        document.body.appendChild(el);
+    });
+})();
+</script>
+</body>
+</html>

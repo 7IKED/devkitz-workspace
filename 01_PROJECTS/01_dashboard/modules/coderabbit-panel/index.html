@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v2.0.0_01">
+    <meta name="dkz-module" content="coderabbit-panel">
+    <title>🐰 CodeRabbit + Live-Check — DkZ™</title>
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --accent:#fa1e4e; --bg:#060608; --bg2:#0e0e12; --bg3:#1a1a20; --text:#e8e8ec; --muted:#8a8a9a; --border:rgba(255,255,255,.06); --green:#00ff88; --yellow:#ffb800; --red:#ff3b5c; --blue:#6366f1; --font:'Inter',sans-serif; --mono:'JetBrains Mono',monospace; }
+        * { margin:0;padding:0;box-sizing:border-box; }
+        body { font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh; }
+        .bg-mesh { position:fixed;inset:0;z-index:-1;overflow:hidden; }
+        .bg-mesh .blob { position:absolute;border-radius:50%;filter:blur(120px);opacity:.12; }
+        .bg-mesh .blob-1 { width:600px;height:600px;background:#f97316;top:-200px;right:-100px; }
+        .bg-mesh .blob-2 { width:500px;height:500px;background:#8b5cf6;bottom:-200px;left:-100px; }
+        .header { background:rgba(14,14,18,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100; }
+        .header h1 { font-size:18px;font-weight:800; }
+        .header h1 span { color:var(--accent); }
+        .back-btn { color:var(--muted);text-decoration:none;font-size:20px; }
+        .back-btn:hover { color:var(--accent); }
+        .tabs { display:flex;gap:4px;margin-left:auto; }
+        .tab { padding:8px 14px;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;font-family:var(--font); }
+        .tab:hover { border-color:rgba(250,30,78,.3);color:var(--text); }
+        .tab.active { background:rgba(250,30,78,.1);border-color:var(--accent);color:var(--accent); }
+        .content { max-width:1000px;margin:0 auto;padding:24px; }
+        .section { background:rgba(18,18,24,.85);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px); }
+        .section-title { font-size:14px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px; }
+        .section-desc { font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.6; }
+        .score-display { text-align:center;padding:30px; }
+        .score-val { font-size:4rem;font-weight:900;line-height:1;transition:color .5s; }
+        .score-label { font-size:12px;color:var(--muted);margin-top:8px; }
+        .score-sub { font-size:10px;color:var(--muted);margin-top:4px; }
+        .stat-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px; }
+        .stat-card { background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;transition:all .3s; }
+        .stat-num { font-size:1.8rem;font-weight:900;transition:color .5s; }
+        .stat-label { font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:4px; }
+        .cat-bar { display:flex;align-items:center;gap:8px;margin-bottom:6px; }
+        .cat-name { font-size:10px;font-weight:700;width:64px;flex-shrink:0; }
+        .cat-track { flex:1;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden; }
+        .cat-fill { height:100%;border-radius:3px;transition:width .8s ease; }
+        .cat-pct { font-size:9px;color:var(--muted);width:32px;text-align:right; }
+        .issue-item { padding:12px;border-bottom:1px solid rgba(255,255,255,.03);transition:background .2s; }
+        .issue-item:hover { background:rgba(250,30,78,.03); }
+        .issue-header { display:flex;align-items:center;gap:8px;margin-bottom:4px; }
+        .issue-id { font-size:10px;font-weight:800;font-family:var(--mono);color:var(--accent);background:rgba(250,30,78,.1);padding:2px 6px;border-radius:4px; }
+        .issue-name { font-size:11px;font-weight:700; }
+        .issue-hint { font-size:10px;color:var(--muted);line-height:1.5; }
+        .issue-fix { font-size:9px;color:#55ACEE;margin-top:6px;padding:6px 8px;background:rgba(85,172,238,.06);border-radius:6px;line-height:1.4; }
+        .badge { padding:2px 8px;border-radius:4px;font-size:9px;font-weight:600;display:inline-block; }
+        .badge-pass { background:rgba(0,255,136,.1);color:var(--green); }
+        .badge-warn { background:rgba(255,184,0,.1);color:var(--yellow); }
+        .badge-fail { background:rgba(255,59,92,.1);color:var(--red); }
+        .btn-issue { margin-top:14px;padding:10px 16px;background:rgba(250,30,78,.1);border:1px solid rgba(250,30,78,.25);border-radius:8px;color:var(--accent);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .2s;width:100%; }
+        .btn-issue:hover { background:rgba(250,30,78,.2);border-color:var(--accent); }
+        .btn-issue:disabled { opacity:.4;cursor:not-allowed; }
+        .copilot-cmd { display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all .2s; }
+        .copilot-cmd:hover { border-color:rgba(250,30,78,.3);background:rgba(250,30,78,.03); }
+        .copilot-cmd-name { font-size:12px;font-weight:700;font-family:var(--mono);color:var(--accent); }
+        .copilot-cmd-desc { font-size:10px;color:var(--muted);margin-left:auto; }
+        .review-item { padding:14px;border-bottom:1px solid rgba(255,255,255,.03);display:flex;align-items:flex-start;gap:12px; }
+        .review-icon { font-size:1.3rem;padding-top:2px; }
+        .review-title { font-size:12px;font-weight:700;margin-bottom:3px; }
+        .review-desc { font-size:10px;color:var(--muted);line-height:1.5; }
+        .panel { display:none; }
+        .panel.active { display:block; }
+        .toast { position:fixed;bottom:24px;right:24px;padding:12px 20px;background:rgba(0,255,136,.12);border:1px solid var(--green);border-radius:10px;color:var(--green);font-size:12px;font-weight:600;z-index:10000;opacity:0;transition:opacity .3s;pointer-events:none; }
+        .toast.show { opacity:1; }
+        .loading-pulse { animation:pulse 1.5s ease-in-out infinite; }
+        @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+        @media(max-width:768px) { .content{padding:14px;} .stat-grid{grid-template-columns:repeat(2,1fr);} }
+    </style>
+</head>
+<body>
+    <div class="bg-mesh"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
+    <header class="header">
+        <a href="../../hub/index.html" class="back-btn">←</a>
+        <h1>🐰 Code<span>Rabbit</span> Live</h1>
+        <div class="tabs">
+            <button class="tab active" onclick="showPanel('reviews',this)">🔍 Live-Check</button>
+            <button class="tab" onclick="showPanel('openspec',this)">📜 OpenSpec</button>
+            <button class="tab" onclick="showPanel('copilot',this)">🤖 Copilot</button>
+            <button class="tab" onclick="showPanel('rules',this)">📏 Rules</button>
+        </div>
+    </header>
+    <div class="content">
+        <!-- LIVE-CHECK TAB -->
+        <div class="panel active" id="panel-reviews">
+            <div class="section">
+                <div class="score-display">
+                    <div class="score-val loading-pulse" id="live-score">...</div>
+                    <div class="score-label">Live Ecosystem Code Quality Score</div>
+                    <div class="score-sub" id="live-score-sub">Scanne aktuelle Seite...</div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">📊 Kategorie-Analyse</div>
+                <div id="category-bars">
+                    <div style="text-align:center;padding:20px;color:var(--muted);font-size:11px" class="loading-pulse">Analysiere...</div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">📊 Review Statistiken</div>
+                <div class="stat-grid" id="stat-grid">
+                    <div class="stat-card"><div class="stat-num loading-pulse" id="stat-pass">—</div><div class="stat-label">Bestanden</div></div>
+                    <div class="stat-card"><div class="stat-num loading-pulse" id="stat-warn">—</div><div class="stat-label">Warnungen</div></div>
+                    <div class="stat-card"><div class="stat-num loading-pulse" id="stat-fail">—</div><div class="stat-label">Fehler</div></div>
+                    <div class="stat-card"><div class="stat-num loading-pulse" id="stat-total">—</div><div class="stat-label">Regeln geprüft</div></div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title" id="issues-title">📋 Issues</div>
+                <div id="issues-list">
+                    <div style="text-align:center;padding:20px;color:var(--muted);font-size:11px" class="loading-pulse">Scanne...</div>
+                </div>
+                <button class="btn-issue" id="btn-auto-issue" onclick="generateAutoIssue()" disabled>
+                    🐰 Auto-Issue für GitHub generieren
+                </button>
+            </div>
+        </div>
+        <!-- OPENSPEC TAB -->
+        <div class="panel" id="panel-openspec">
+            <div class="section">
+                <div class="section-title">📜 OpenSpec API-Dokumentation</div>
+                <div class="section-desc">Auto-generierte API-Docs im OpenAPI 3.1 Format für ONTHERUN™ MCP Server.</div>
+                <div style="padding:20px;text-align:center;color:var(--muted)">
+                    <div style="font-size:3rem;margin-bottom:10px">📜</div>
+                    <div>Verbinde ONTHERUN™ MCP Server um API-Docs zu generieren.</div>
+                    <div style="font-size:10px;margin-top:6px">POST /api/v1/openspec/generate</div>
+                </div>
+            </div>
+        </div>
+        <!-- COPILOT TAB -->
+        <div class="panel" id="panel-copilot">
+            <div class="section">
+                <div class="section-title">🤖 GitHub Copilot Befehle</div>
+                <div class="section-desc">Copilot-Aktionen über die Console oder direkt hier ausführen.</div>
+                <div class="copilot-cmd"><span class="copilot-cmd-name">/copilot suggest</span><span class="copilot-cmd-desc">Code-Vorschlag für aktuelle Datei</span></div>
+                <div class="copilot-cmd"><span class="copilot-cmd-name">/copilot explain</span><span class="copilot-cmd-desc">Code erklären</span></div>
+                <div class="copilot-cmd"><span class="copilot-cmd-name">/copilot fix</span><span class="copilot-cmd-desc">Bug-Fix vorschlagen</span></div>
+                <div class="copilot-cmd"><span class="copilot-cmd-name">/copilot test</span><span class="copilot-cmd-desc">Test generieren</span></div>
+                <div class="copilot-cmd"><span class="copilot-cmd-name">/copilot docs</span><span class="copilot-cmd-desc">Dokumentation generieren</span></div>
+                <div class="copilot-cmd"><span class="copilot-cmd-name">/nanobot</span><span class="copilot-cmd-desc">Quick-Chat (Flash/Nano)</span></div>
+                <div class="copilot-cmd"><span class="copilot-cmd-name">/picoclaw</span><span class="copilot-cmd-desc">Wissenssuche (FAISS)</span></div>
+                <div class="copilot-cmd"><span class="copilot-cmd-name">/syntex</span><span class="copilot-cmd-desc">Kombiniert (NanoBot + PicoClaw)</span></div>
+            </div>
+        </div>
+        <!-- RULES TAB -->
+        <div class="panel" id="panel-rules">
+            <div class="section">
+                <div class="section-title">📏 DkZ™ Review-Regeln</div>
+                <div id="rules-list"></div>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // === XSS-Schutz ===
+        function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg; t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        function showPanel(name, btn) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('panel-' + name).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        // === Kategorie-Farben (aus DkzJames) ===
+        const CAT_COLORS = {
+            quality: '#00ff88', security: '#55ACEE', design: '#ec4899',
+            prompt: '#FFB800', structure: '#6366f1', logic: '#f97316'
+        };
+        const CAT_NAMES = {
+            quality: 'Qualität', security: 'Sicherheit', design: 'Design',
+            prompt: 'Prompt', structure: 'Struktur', logic: 'Logik'
+        };
+
+        // Gespeichertes Ergebnis
+        let _lastResult = null;
+        let _lastEco = null;
+
+        // === Live-Scan ===
+        function runLiveScan() {
+            if (typeof DkzJames === 'undefined') {
+                document.getElementById('live-score').textContent = '?';
+                document.getElementById('live-score').classList.remove('loading-pulse');
+                document.getElementById('live-score-sub').textContent = 'DkzJames nicht geladen — dkz-james.js fehlt';
+                return;
+            }
+
+            const content = document.documentElement.outerHTML;
+            const result = DkzJames.evaluate(content, 'html');
+            const eco = DkzJames.ecosystemScore(content);
+            _lastResult = result;
+            _lastEco = eco;
+
+            // Score
+            const scoreEl = document.getElementById('live-score');
+            scoreEl.textContent = eco.grade;
+            scoreEl.style.color = eco.color;
+            scoreEl.classList.remove('loading-pulse');
+
+            document.getElementById('live-score-sub').textContent =
+                'Score: ' + eco.finalScore + '/100 · Base: ' + eco.baseScore + ' + Bonus: ' + eco.bonusScore + ' · ' + result.issues.length + ' Issues';
+
+            // Stats
+            const totalRules = result.totalRules;
+            const failCount = result.issues.length;
+            const warnCount = result.issues.filter(i => i.rule.weight <= 5).length;
+            const passCount = totalRules - failCount;
+
+            setStatNum('stat-pass', passCount, 'var(--green)');
+            setStatNum('stat-warn', warnCount, 'var(--yellow)');
+            setStatNum('stat-fail', failCount - warnCount, 'var(--red)');
+            setStatNum('stat-total', totalRules, 'var(--blue)');
+
+            // Kategorien
+            renderCategoryBars(result.categories);
+
+            // Issues
+            renderIssues(result.issues);
+
+            // Auto-Issue Button
+            const issueBtn = document.getElementById('btn-auto-issue');
+            if (result.issues.length > 0) {
+                issueBtn.disabled = false;
+                issueBtn.textContent = '🐰 Auto-Issue für GitHub generieren (' + result.issues.length + ' Issues)';
+            } else {
+                issueBtn.disabled = true;
+                issueBtn.textContent = '✅ Keine Issues — Alles OK!';
+            }
+
+            // Rules Tab
+            renderRules();
+        }
+
+        function setStatNum(id, val, color) {
+            const el = document.getElementById(id);
+            el.textContent = val;
+            el.style.color = color;
+            el.classList.remove('loading-pulse');
+        }
+
+        function renderCategoryBars(categories) {
+            const container = document.getElementById('category-bars');
+            let html = '';
+            for (const [cat, data] of Object.entries(categories)) {
+                const pct = data.total > 0 ? Math.round((data.pass / data.total) * 100) : 100;
+                const color = CAT_COLORS[cat] || '#8a8a9a';
+                const name = CAT_NAMES[cat] || cat;
+                html += '<div class="cat-bar">' +
+                    '<span class="cat-name" style="color:' + color + '">' + esc(name) + '</span>' +
+                    '<div class="cat-track"><div class="cat-fill" style="width:' + pct + '%;background:' + color + '"></div></div>' +
+                    '<span class="cat-pct">' + pct + '%</span>' +
+                    '</div>';
+            }
+            container.innerHTML = html || '<div style="color:var(--muted);font-size:10px">Keine Kategorien</div>';
+        }
+
+        function renderIssues(issues) {
+            const container = document.getElementById('issues-list');
+            const title = document.getElementById('issues-title');
+            title.textContent = '📋 Issues (' + issues.length + ')';
+
+            if (issues.length === 0) {
+                container.innerHTML = '<div style="text-align:center;padding:24px"><div style="font-size:2rem;margin-bottom:8px">✅</div><div style="color:var(--green);font-size:13px;font-weight:700">Alle Checks bestanden!</div><div style="color:var(--muted);font-size:10px;margin-top:4px">Keine CodeRabbit Issues gefunden</div></div>';
+                return;
+            }
+
+            let html = '';
+            issues.forEach(issue => {
+                const severity = issue.rule.weight >= 8 ? 'fail' : issue.rule.weight >= 5 ? 'warn' : 'pass';
+                html += '<div class="issue-item">' +
+                    '<div class="issue-header">' +
+                    '<span class="issue-id">' + esc(issue.rule.id) + '</span>' +
+                    '<span class="issue-name">' + esc(issue.rule.name) + '</span>' +
+                    '<span class="badge badge-' + severity + '" style="margin-left:auto">' + (severity === 'fail' ? 'ERROR' : severity === 'warn' ? 'WARN' : 'INFO') + '</span>' +
+                    '</div>' +
+                    '<div class="issue-hint">' + esc(issue.rule.hint) + '</div>';
+                if (issue.rule.fix) {
+                    html += '<div class="issue-fix">💡 Fix: ' + esc(issue.rule.fix) + '</div>';
+                }
+                html += '</div>';
+            });
+            container.innerHTML = html;
+        }
+
+        function renderRules() {
+            if (typeof DkzJames === 'undefined') return;
+            const container = document.getElementById('rules-list');
+            let html = '';
+            DkzJames.RULES.forEach((rule, idx) => {
+                const cat = CAT_NAMES[rule.cat] || rule.cat;
+                const color = CAT_COLORS[rule.cat] || '#8a8a9a';
+                html += '<div class="review-item">' +
+                    '<div class="review-icon" style="font-size:11px;font-weight:800;color:' + color + '">' + (idx + 1) + '.</div>' +
+                    '<div><div class="review-title">' + esc(rule.id) + ' — ' + esc(rule.name) + '</div>' +
+                    '<div class="review-desc">' + esc(rule.hint) + '</div>' +
+                    '<span class="badge" style="background:rgba(255,255,255,.04);color:' + color + ';margin-top:4px">' + esc(cat) + ' · W' + rule.weight + '</span>' +
+                    '</div></div>';
+            });
+            container.innerHTML = html;
+        }
+
+        // === Auto-Issue Generator ===
+        function generateAutoIssue() {
+            if (!_lastResult || _lastResult.issues.length === 0) return;
+
+            const moduleName = 'coderabbit-panel';
+            const issues = _lastResult.issues;
+            const score = _lastEco ? _lastEco.finalScore : _lastResult.score;
+
+            let issueBody = '## 🐰 CodeRabbit Auto-Review\n\n';
+            issueBody += '**Modul:** `' + moduleName + '`\n';
+            issueBody += '**Score:** ' + score + '/100\n';
+            issueBody += '**Issues:** ' + issues.length + '\n';
+            issueBody += '**Datum:** ' + new Date().toISOString().split('T')[0] + '\n\n';
+            issueBody += '---\n\n';
+            issueBody += '### Issues\n\n';
+
+            issues.forEach((issue, idx) => {
+                const sev = issue.rule.weight >= 8 ? '🔴' : issue.rule.weight >= 5 ? '🟡' : '🟢';
+                issueBody += (idx + 1) + '. ' + sev + ' **' + issue.rule.id + '** — ' + issue.rule.name + '\n';
+                issueBody += '   > ' + issue.rule.hint + '\n';
+                if (issue.rule.fix) {
+                    issueBody += '   💡 Fix: ' + issue.rule.fix + '\n';
+                }
+                issueBody += '\n';
+            });
+
+            issueBody += '---\n\n';
+            issueBody += '*Auto-generiert von CodeRabbit + JAMEZ™ v' + (typeof DkzJames !== 'undefined' ? DkzJames.version : '?') + '*\n';
+
+            navigator.clipboard.writeText(issueBody).then(() => {
+                showToast('📋 Issue-Text in Zwischenablage kopiert!');
+            }).catch(() => {
+                // Fallback
+                const ta = document.createElement('textarea');
+                ta.value = issueBody; document.body.appendChild(ta);
+                ta.select(); document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast('📋 Issue-Text kopiert (Fallback)');
+            });
+        }
+
+        // === Init ===
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(runLiveScan, 300);
+        });
+    </script>
+    <script src="../../shared/dkz-james.js" onerror="console.warn('[Portable] dkz-james.js')"></script>
+    <script>['dkz-headbar.js','dkz-console.js','dkz-tts.js'].forEach(s=>{const el=document.createElement('script');el.src='../../shared/'+s;el.onerror=()=>console.warn('[Portable] '+s);document.body.appendChild(el);});</script>
+</body>
+</html>

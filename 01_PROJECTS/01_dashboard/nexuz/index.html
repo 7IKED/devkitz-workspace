@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ NEXUZ² — Backend/Frontend Command Center</title>
+    <meta name="description"
+        content="NEXUZ² Zentrales Nervensystem des DkZ-Ökosystems — Multi-Backend, Multi-Frontend, MCP Browser Integration">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        :root {
+            --bg: #0e0e10;
+            --bg2: #121215;
+            --card: #16161a;
+            --card2: #1e1e24;
+            --border: #1a1a2a;
+            --border2: #252538;
+            --text: #e8e8f0;
+            --muted: #5e5e78;
+            --accent: #fa1e4e;
+            --cyan: #fa1e4e;
+            --purple: #a855f7;
+            --green: #00ff88;
+            --red: #ff4466;
+            --yellow: #ffb800;
+            --blue: #55acee;
+            --orange: #ff8c42;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(15, 15, 24, .75);
+            --blur: blur(24px);
+            --radius: 16px;
+        }
+
+        html,
+        body {
+            min-height: 100vh;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text)
+        }
+
+        body {
+            background: radial-gradient(ellipse at 20% 0%, rgba(250, 30, 78, .04) 0%, transparent 50%), radial-gradient(ellipse at 80% 100%, rgba(168, 85, 247, .03) 0%, transparent 50%), var(--bg)
+        }
+
+        /* HEADER */
+        .header {
+            padding: 28px 36px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
+
+        .header-brand h1 {
+            font-size: 24px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent), var(--purple), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .header-brand .badge {
+            font-size: 9px;
+            font-family: var(--mono);
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: rgba(250, 30, 78, .12);
+            color: var(--accent);
+            font-weight: 700;
+            letter-spacing: 1px
+        }
+
+        .header-right {
+            margin-left: auto;
+            display: flex;
+            gap: 10px;
+            align-items: center
+        }
+
+        .hstat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-family: var(--mono);
+            color: var(--muted);
+            padding: 6px 12px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px
+        }
+
+        .hstat .v {
+            color: var(--text);
+            font-weight: 700
+        }
+
+        .pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: p 2s infinite
+        }
+
+        @keyframes p {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1)
+            }
+
+            50% {
+                opacity: .3;
+                transform: scale(.7)
+            }
+        }
+
+        .btn-nav {
+            padding: 8px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all .2s;
+            text-decoration: none
+        }
+
+        .btn-nav:hover {
+            color: var(--cyan);
+            border-color: var(--cyan)
+        }
+
+        /* CONTENT */
+        .content {
+            padding: 28px 36px;
+            max-width: 1400px;
+            margin: 0 auto
+        }
+
+        /* TOPOLOGY VISUAL */
+        .topo {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden
+        }
+
+        .topo::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--purple), var(--cyan))
+        }
+
+        .topo h2 {
+            font-size: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--muted);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .topo h2 span {
+            font-size: 18px
+        }
+
+        .topo-row {
+            display: flex;
+            gap: 16px;
+            align-items: stretch;
+            margin-bottom: 16px
+        }
+
+        .topo-row:last-child {
+            margin-bottom: 0
+        }
+
+        /* BACKEND CARD */
+        .be-card {
+            flex: 1;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            transition: all .3s;
+            position: relative;
+            overflow: hidden;
+            cursor: default
+        }
+
+        .be-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            opacity: .5
+        }
+
+        .be-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--border2);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .3)
+        }
+
+        .be-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px
+        }
+
+        .be-icon {
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            flex-shrink: 0
+        }
+
+        .be-name {
+            font-size: 13px;
+            font-weight: 700
+        }
+
+        .be-type {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px
+        }
+
+        .be-role {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.5;
+            margin-bottom: 10px
+        }
+
+        .be-stack {
+            font-size: 10px;
+            font-family: var(--mono);
+            color: var(--cyan);
+            margin-bottom: 8px
+        }
+
+        .be-caps {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-bottom: 8px
+        }
+
+        .be-cap {
+            font-size: 8px;
+            font-family: var(--mono);
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, .04);
+            color: var(--muted);
+            border: 1px solid var(--border)
+        }
+
+        .be-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 10px;
+            font-family: var(--mono)
+        }
+
+        .be-status .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%
+        }
+
+        .s-active .dot {
+            background: var(--green);
+            box-shadow: 0 0 6px var(--green)
+        }
+
+        .s-active {
+            color: var(--green)
+        }
+
+        .s-dev .dot {
+            background: var(--yellow);
+            box-shadow: 0 0 6px var(--yellow)
+        }
+
+        .s-dev {
+            color: var(--yellow)
+        }
+
+        .s-planned .dot {
+            background: var(--blue);
+            box-shadow: 0 0 6px var(--blue)
+        }
+
+        .s-planned {
+            color: var(--blue)
+        }
+
+        /* NEXUZ CORE (CENTER) */
+        .core-visual {
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 24px
+        }
+
+        .core-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 28px;
+            background: linear-gradient(135deg, rgba(250, 30, 78, .1), rgba(168, 85, 247, .1));
+            border: 1px solid rgba(250, 30, 78, .25);
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 1px
+        }
+
+        .core-badge .glow {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 16px var(--accent);
+            animation: p 1.5s infinite
+        }
+
+        /* FRONTEND MATRIX */
+        .fe-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px
+        }
+
+        .fe-card {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            transition: all .3s;
+            cursor: default
+        }
+
+        .fe-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent);
+            box-shadow: 0 4px 16px rgba(250, 30, 78, .08)
+        }
+
+        .fe-icon {
+            font-size: 28px;
+            margin-bottom: 8px
+        }
+
+        .fe-name {
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 3px
+        }
+
+        .fe-tech {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--muted)
+        }
+
+        .fe-badges {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            margin-top: 8px
+        }
+
+        .fe-badge {
+            font-size: 8px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: var(--mono);
+            font-weight: 700
+        }
+
+        .badge-app {
+            background: rgba(0, 255, 136, .1);
+            color: var(--green)
+        }
+
+        .badge-landing {
+            background: rgba(250, 30, 78, .1);
+            color: var(--accent)
+        }
+
+        /* MCP SECTION */
+        .mcp-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px
+        }
+
+        .mcp-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            transition: all .3s
+        }
+
+        .mcp-card:hover {
+            border-color: var(--purple)
+        }
+
+        .mcp-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px
+        }
+
+        .mcp-head h3 {
+            font-size: 14px;
+            font-weight: 700
+        }
+
+        .mcp-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px
+        }
+
+        .mcp-feat {
+            font-size: 10px;
+            font-family: var(--mono);
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(168, 85, 247, .1);
+            color: var(--purple);
+            border: 1px solid rgba(168, 85, 247, .2)
+        }
+
+        /* SECTION HEADERS */
+        .sec {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            color: var(--muted);
+            margin: 0 0 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .sec .ln {
+            flex: 1;
+            height: 1px;
+            background: var(--border)
+        }
+
+        .sec .ct {
+            font-size: 10px;
+            font-family: var(--mono);
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: rgba(250, 30, 78, .1);
+            color: var(--accent)
+        }
+
+        /* AGENT SECTION */
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px
+        }
+
+        .agent-card {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all .3s
+        }
+
+        .agent-card:hover {
+            border-color: var(--purple);
+            transform: translateY(-2px)
+        }
+
+        .agent-icon {
+            font-size: 22px
+        }
+
+        .agent-name {
+            font-size: 12px;
+            font-weight: 700
+        }
+
+        .agent-role {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono)
+        }
+
+        @media(max-width:768px) {
+            .header {
+                padding: 16px;
+                flex-wrap: wrap
+            }
+
+            .content {
+                padding: 16px
+            }
+
+            .topo-row {
+                flex-direction: column
+            }
+
+            .fe-grid {
+                grid-template-columns: repeat(2, 1fr)
+            }
+
+            .mcp-row {
+                grid-template-columns: 1fr
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <div class="header-brand">
+            <a href="../hub/index.html" class="btn-nav">← Hub</a>
+            <h1>⚡ NEXUZ²</h1>
+            <span class="badge">COMMAND CENTER v2.01.1_01</span>
+        </div>
+        <div class="header-right">
+            <a href="workflow-board.html" class="btn-nav">📋 Workflow Board</a>
+            <a href="monitoring.html" class="btn-nav">📊 Monitoring</a>
+            <div class="hstat">
+                <div class="pulse"></div> Core <span class="v">ONLINE</span>
+            </div>
+            <div class="hstat">Backends <span class="v" id="beCount">6</span></div>
+            <div class="hstat">Frontends <span class="v" id="feCount">7</span></div>
+            <div class="hstat">Agents <span class="v">3</span></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  DASHY VPS PERFORMANCE HEADER              -->
+    <!-- ═══════════════════════════════════════════ -->
+    <style>
+        .dashy-perf{padding:8px 36px;background:linear-gradient(180deg,rgba(14,14,16,.9),rgba(14,14,16,.3));border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:stretch;flex-wrap:nowrap;overflow-x:auto}
+        .dashy-gauge{flex:1;min-width:120px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 10px;display:flex;align-items:center;gap:8px;position:relative;overflow:hidden;transition:border-color .3s}
+        .dashy-gauge:hover{border-color:rgba(250,30,78,.25)}
+        .dashy-gauge::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--gauge-color,var(--green));opacity:.5;transition:opacity .3s}
+        .dashy-gauge:hover::before{opacity:1}
+        .dashy-arc-wrap{width:40px;height:40px;flex-shrink:0;position:relative}
+        .dashy-arc-wrap svg{width:40px;height:40px;transform:rotate(-90deg)}
+        .dashy-arc-bg{fill:none;stroke:rgba(26,26,42,.6);stroke-width:4.5}
+        .dashy-arc-fill{fill:none;stroke-width:4.5;stroke-linecap:round;transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1),stroke .5s}
+        .dashy-arc-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;font-family:var(--mono);color:var(--text)}
+        .dashy-info{flex:1;min-width:0}
+        .dashy-label{font-size:8px;font-family:var(--mono);font-weight:700;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:2px}
+        .dashy-detail{font-size:9px;font-family:var(--mono);color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .dashy-bar-wrap{height:3px;background:rgba(26,26,42,.6);border-radius:2px;overflow:hidden;margin-top:3px}
+        .dashy-bar-fill{height:100%;border-radius:2px;transition:width 1.2s cubic-bezier(.4,0,.2,1);width:0}
+        .dashy-trend{font-size:7px;font-family:var(--mono);display:inline-flex;align-items:center;gap:2px;padding:1px 4px;border-radius:3px;margin-left:4px}
+        .dashy-trend.up{color:#ff3b5c;background:rgba(255,59,92,.08)}
+        .dashy-trend.down{color:#00ff88;background:rgba(0,255,136,.08)}
+        .dashy-trend.stable{color:#ffb800;background:rgba(255,184,0,.08)}
+        @keyframes dashyPulse{0%,100%{box-shadow:0 0 0 0 rgba(250,30,78,.08)}50%{box-shadow:0 0 16px 2px rgba(250,30,78,.06)}}
+        .dashy-gauge.crit{animation:dashyPulse 1.5s infinite;border-color:rgba(255,59,92,.3)}
+        @media(max-width:900px){.dashy-perf{flex-wrap:wrap}.dashy-gauge{min-width:45%}}
+        @media(max-width:600px){.dashy-gauge{min-width:100%}}
+    </style>
+
+    <div class="dashy-perf" id="dashyPerf">
+        <!-- Gauges werden per JS generiert -->
+    </div>
+
+    <script>
+    (function(){
+        const CIRC = 2 * Math.PI * 21; // r=21 fuer SVG circle
+
+        // Simulierte VPS Live-Daten (in Produktion: API-Call an ONTHERUN/VPS)
+        const metrics = [
+            { id:'cpu',  label:'CPU',     value:23, max:100, unit:'%',  detail:'4 Cores · 3.2 GHz',  trend:'stable' },
+            { id:'ram',  label:'RAM',     value:62, max:100, unit:'%',  detail:'5.0 / 8.0 GB used',  trend:'up' },
+            { id:'disk', label:'DISK',    value:44, max:100, unit:'%',  detail:'35.2 / 80 GB NVMe',  trend:'up' },
+            { id:'net',  label:'NETWORK', value:12, max:100, unit:'MB/s', detail:'↑ 3.2 · ↓ 8.8 MB/s', trend:'down' },
+            { id:'load', label:'LOAD',    value:1.2, max:4,  unit:'',  detail:'1m: 1.2 · 5m: 0.9',   trend:'stable' },
+            { id:'io',   label:'DISK I/O',value:18, max:100, unit:'%',  detail:'R: 45 · W: 22 IOPS', trend:'down' }
+        ];
+
+        function gaugeColor(pct) {
+            if (pct < 50) return '#00ff88';
+            if (pct < 75) return '#ffb800';
+            return '#ff3b5c';
+        }
+
+        function trendIcon(t) {
+            if (t === 'up')   return '<span class="dashy-trend up">▲ +2%</span>';
+            if (t === 'down') return '<span class="dashy-trend down">▼ -1%</span>';
+            return '<span class="dashy-trend stable">● stabil</span>';
+        }
+
+        const container = document.getElementById('dashyPerf');
+        container.innerHTML = metrics.map(m => {
+            const pct = m.max === 100 ? m.value : (m.value / m.max * 100);
+            const color = gaugeColor(pct);
+            const offset = CIRC - (CIRC * pct / 100);
+            const displayVal = m.max === 100 ? m.value + m.unit : m.value;
+            const critClass = pct >= 80 ? ' crit' : '';
+
+            return `<div class="dashy-gauge${critClass}" style="--gauge-color:${color}" data-metric="${m.id}">
+                <div class="dashy-arc-wrap">
+                    <svg viewBox="0 0 48 48">
+                        <circle class="dashy-arc-bg" cx="24" cy="24" r="21"/>
+                        <circle class="dashy-arc-fill" cx="24" cy="24" r="21"
+                            stroke="${color}"
+                            stroke-dasharray="${CIRC}"
+                            stroke-dashoffset="${CIRC}"
+                            data-target="${offset}"/>
+                    </svg>
+                    <div class="dashy-arc-val">${displayVal}</div>
+                </div>
+                <div class="dashy-info">
+                    <div class="dashy-label">${m.label}${trendIcon(m.trend)}</div>
+                    <div class="dashy-bar-wrap">
+                        <div class="dashy-bar-fill" style="background:${color}" data-width="${pct}%"></div>
+                    </div>
+                    <div class="dashy-detail">${m.detail}</div>
+                </div>
+            </div>`;
+        }).join('');
+
+        // Animate on load
+        setTimeout(() => {
+            container.querySelectorAll('.dashy-arc-fill').forEach(el => {
+                el.style.strokeDashoffset = el.dataset.target;
+            });
+            container.querySelectorAll('.dashy-bar-fill').forEach(el => {
+                el.style.width = el.dataset.width;
+            });
+        }, 100);
+
+        // Simulate live updates every 4s
+        setInterval(() => {
+            metrics.forEach(m => {
+                const delta = (Math.random() - 0.48) * (m.max === 100 ? 4 : 0.3);
+                m.value = Math.max(0.1, Math.min(m.max, +(m.value + delta).toFixed(1)));
+                const pct = m.max === 100 ? m.value : (m.value / m.max * 100);
+                const color = gaugeColor(pct);
+                const offset = CIRC - (CIRC * pct / 100);
+                const gauge = container.querySelector(`[data-metric="${m.id}"]`);
+                if (!gauge) return;
+
+                gauge.style.setProperty('--gauge-color', color);
+                gauge.classList.toggle('crit', pct >= 80);
+
+                const arc = gauge.querySelector('.dashy-arc-fill');
+                arc.setAttribute('stroke', color);
+                arc.style.strokeDashoffset = offset;
+
+                const val = gauge.querySelector('.dashy-arc-val');
+                val.textContent = m.max === 100 ? Math.round(m.value) + m.unit : m.value;
+
+                const bar = gauge.querySelector('.dashy-bar-fill');
+                bar.style.width = pct + '%';
+                bar.style.background = color;
+            });
+        }, 4000);
+    })();
+    </script>
+
+    <div class="content">
+
+        <!-- CORE CENTER -->
+        <div class="core-visual">
+            <div class="core-badge">
+                <div class="glow"></div> NEXUZ² CORE — MESSAGE ROUTER ACTIVE <div class="glow"></div>
+            </div>
+        </div>
+
+        <!-- BACKENDS -->
+        <div class="sec">🖥️ Backends <span class="ct">6</span><span class="ln"></span></div>
+        <div class="topo">
+            <h2><span>🔌</span> Backend Topologie</h2>
+            <div class="topo-row" id="backendRow1"></div>
+            <div class="topo-row" id="backendRow2"></div>
+        </div>
+
+        <!-- FRONTENDS -->
+        <div class="sec">📱 Frontend Matrix <span class="ct">7</span><span class="ln"></span></div>
+        <div class="fe-grid" id="feGrid"></div>
+
+        <!-- MCP -->
+        <div class="sec">🔗 MCP Browser Integration <span class="ct">2</span><span class="ln"></span></div>
+        <div class="mcp-row">
+            <div class="mcp-card">
+                <div class="mcp-head"><span style="font-size:24px">🌐</span>
+                    <h3>Chrome MCP Extension</h3>
+                </div>
+                <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Manifest V3 · Sidepanel + Context Menu
+                    + Popup</div>
+                <div class="mcp-features">
+                    <span class="mcp-feat">Sidepanel</span>
+                    <span class="mcp-feat">Context Menu</span>
+                    <span class="mcp-feat">Popup</span>
+                    <span class="mcp-feat">Native Messaging</span>
+                    <span class="mcp-feat">WebSocket</span>
+                </div>
+            </div>
+            <div class="mcp-card">
+                <div class="mcp-head"><span style="font-size:24px">🎯</span>
+                    <h3>Vivaldi MCP Extension</h3>
+                </div>
+                <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Manifest V3 · Web Panel + Tastenkürzel
+                    Integration</div>
+                <div class="mcp-features">
+                    <span class="mcp-feat">Web Panel</span>
+                    <span class="mcp-feat">Sidepanel</span>
+                    <span class="mcp-feat">Context Menu</span>
+                    <span class="mcp-feat">Shortcuts</span>
+                    <span class="mcp-feat">Tab Integration</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- AGENTS -->
+        <div class="sec">🐙 Agent Network <span class="ct">3</span><span class="ln"></span></div>
+        <div class="agent-grid">
+            <div class="agent-card">
+                <span class="agent-icon">🐙</span>
+                <div>
+                    <div class="agent-name">PicoClaw</div>
+                    <div class="agent-role">Micro-Agent · Task Executor</div>
+                </div>
+            </div>
+            <div class="agent-card">
+                <span class="agent-icon">🤖</span>
+                <div>
+                    <div class="agent-name">NanoBot</div>
+                    <div class="agent-role">Nano-Agent · Quick Tasks</div>
+                </div>
+            </div>
+            <div class="agent-card">
+                <span class="agent-icon">🦀</span>
+                <div>
+                    <div class="agent-name">TinyClaw</div>
+                    <div class="agent-role">Tiny-Agent · Background Ops</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        const BACKENDS = [
+            { id: "vps-kvm8", name: "KVM8 VPS", type: "PRIMARY", icon: "🖥️", color: "#fa1e4e", role: "API Gateway + Application Server", stack: "Node.js / Fastify", caps: ["api", "auth", "sessions", "db"], status: "planned" },
+            { id: "llm-dedicated", name: "Linux Dedicated (LLM)", type: "COMPUTE", icon: "🧠", color: "#a855f7", role: "LLM Inference Server — lokale Modelle", stack: "vLLM / llama.cpp", caps: ["inference", "rag", "embedding", "chat"], status: "active" },
+            { id: "gas-drive", name: "Google Apps Script + Drive", type: "BRIDGE", icon: "📊", color: "#22C55E", role: "Google-Ökosystem-Brücke", stack: "Google Apps Script (GAS)", caps: ["drive", "sheets", "docs", "blogger"], status: "planned" },
+            { id: "apache", name: "Apache Server", type: "HOSTING", icon: "🌐", color: "#EF4444", role: "Static Hosting + PHP APIs", stack: "Apache2 + PHP", caps: ["hosting", "routing", "domains", "php-api"], status: "active" },
+            { id: "cf-worker", name: "Cloudflare Worker", type: "EDGE", icon: "⚡", color: "#F59E0B", role: "Edge Computing + CDN + API Proxy", stack: "Cloudflare Workers (Wrangler)", caps: ["cache", "proxy", "cors", "geo-routing"], status: "planned" },
+            { id: "nextcloud-agent", name: "Nextcloud + PicoClaw", type: "AGENT", icon: "🐙", color: "#fa1e4e", role: "Self-Hosted Collaboration + Agent Backend", stack: "Nextcloud + PicoClaw", caps: ["filesync", "agent-dispatch", "automation"], status: "dev" }
+        ];
+
+        const FRONTENDS = [
+            { name: "Web (PWA)", icon: "🌐", tech: "HTML/CSS/JS + SW" },
+            { name: "Android", icon: "🤖", tech: "TWA" },
+            { name: "iOS", icon: "🍎", tech: "PWA" },
+            { name: "macOS", icon: "🖥️", tech: "Tauri" },
+            { name: "Windows 10", icon: "🪟", tech: "Tauri" },
+            { name: "Windows 11", icon: "🪟", tech: "Tauri + Widget" },
+            { name: "Linux", icon: "🐧", tech: "Tauri .AppImage" }
+        ];
+
+        function hexBg(hex, a) { const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16); return `rgba(${r},${g},${b},${a})` }
+
+        function renderBackend(b) {
+            const sc = b.status === 'active' ? 's-active' : b.status === 'dev' ? 's-dev' : 's-planned';
+            const st = b.status === 'active' ? 'AKTIV' : b.status === 'dev' ? 'DEV' : 'GEPLANT';
+            return `<div class="be-card" style="--c:${b.color}">
+        <div style="position:absolute;bottom:0;left:0;right:0;height:2px;background:${b.color};opacity:.4"></div>
+        <div class="be-head"><div class="be-icon" style="background:${hexBg(b.color, .1)}">${b.icon}</div><div><div class="be-name">${b.name}</div><div class="be-type">${b.type}</div></div></div>
+        <div class="be-role">${b.role}</div>
+        <div class="be-stack">${b.stack}</div>
+        <div class="be-caps">${b.caps.map(c => `<span class="be-cap">${c}</span>`).join('')}</div>
+        <div class="be-status ${sc}"><div class="dot"></div>${st}</div>
+    </div>`;
+        }
+
+        function renderFrontend(f) {
+            return `<div class="fe-card"><div class="fe-icon">${f.icon}</div><div class="fe-name">${f.name}</div><div class="fe-tech">${f.tech}</div><div class="fe-badges"><span class="fe-badge badge-app">APP</span><span class="fe-badge badge-landing">LANDING</span></div></div>`;
+        }
+
+        document.getElementById('backendRow1').innerHTML = BACKENDS.slice(0, 3).map(renderBackend).join('');
+        document.getElementById('backendRow2').innerHTML = BACKENDS.slice(3, 6).map(renderBackend).join('');
+        document.getElementById('feGrid').innerHTML = FRONTENDS.map(renderFrontend).join('');
+    </script>
+    <script src="shared/sidebar.js"></script>
+    <script src="shared/auth.js"></script>
+    <script src="shared/versioning.js"></script>
+    <script src="shared/nanobot.js"></script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

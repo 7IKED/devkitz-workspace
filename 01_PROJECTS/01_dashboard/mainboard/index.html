@@ -1,0 +1,1408 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 DkZ Mainboard™ – HELP YOUR SELF™ Dashboard</title>
+    <meta name="description"
+        content="DkZ Mainboard Self-Healing Universal Landing Page – BMAD, Ralph Loop, JAMEZ™, Status Control Lamps">
+    <link rel="stylesheet" href="../shared/dkz-theme.css">
+    <link rel="manifest" href="../shared/manifest.json">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        :root {
+            --bg: #0e0e10;
+            --bg2: #121215;
+            --card: #16161a;
+            --card2: #1a1a24;
+            --border: #1e1e2e;
+            --border2: #2a2a3a;
+            --text: #e8e8f0;
+            --muted: #6e6e8a;
+            --cyan: #fa1e4e;
+            --purple: #a855f7;
+            --green: #00ff88;
+            --red: #ff4466;
+            --yellow: #ffb800;
+            --blue: #55acee;
+            --orange: #ff8c42;
+            --glow-cyan: rgba(250, 30, 78, .15);
+            --glow-purple: rgba(168, 85, 247, .15);
+            --glow-green: rgba(0, 255, 136, .12);
+            --glow-red: rgba(255, 68, 102, .12);
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(18, 18, 26, .7);
+            --blur: blur(20px);
+            --sidebar-w: 260px;
+            --radius: 14px;
+        }
+
+        html,
+        body {
+            height: 100%;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+            margin: 0;
+            padding: 0
+        }
+
+        a {
+            color: var(--cyan);
+            text-decoration: none
+        }
+
+        /* LAYOUT */
+        .app {
+            display: flex;
+            flex-direction: row;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden
+        }
+
+        .sidebar {
+            width: var(--sidebar-w);
+            min-width: var(--sidebar-w);
+            height: 100vh;
+            background: var(--card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+            transition: transform .3s
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .sidebar-header h1 {
+            font-size: 18px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -.5px
+        }
+
+        .sidebar-header .sub {
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 4px;
+            font-family: var(--mono);
+            letter-spacing: 1px
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px
+        }
+
+        .sidebar-nav::-webkit-scrollbar {
+            width: 4px
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 4px
+        }
+
+        .nav-section {
+            margin-bottom: 16px
+        }
+
+        .nav-section-title {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--muted);
+            padding: 0 8px 6px;
+            font-weight: 700
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all .2s;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--muted)
+        }
+
+        .nav-item:hover {
+            background: var(--glow-cyan);
+            color: var(--text)
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, var(--glow-cyan), var(--glow-purple));
+            color: var(--cyan);
+            font-weight: 600
+        }
+
+        .nav-item .icon {
+            font-size: 16px;
+            width: 24px;
+            text-align: center
+        }
+
+        .nav-item .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-left: auto;
+            flex-shrink: 0;
+            transition: all .3s
+        }
+
+        .dot-green {
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green);
+            animation: pulse 2s infinite
+        }
+
+        .dot-yellow {
+            background: var(--yellow);
+            box-shadow: 0 0 8px var(--yellow);
+            animation: pulse 2.5s infinite
+        }
+
+        .dot-red {
+            background: var(--red);
+            box-shadow: 0 0 12px var(--red);
+            animation: pulse 1s infinite
+        }
+
+        .dot-blue {
+            background: var(--blue);
+            box-shadow: 0 0 8px var(--blue)
+        }
+
+        /* STATUS LAMP SYSTEM */
+        .lamp {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 9px;
+            font-family: var(--mono);
+            padding: 2px 6px;
+            border-radius: 4px
+        }
+        .lamp-ok { background: var(--glow-green); color: var(--green) }
+        .lamp-warn { background: rgba(255,184,0,.1); color: var(--yellow) }
+        .lamp-err { background: var(--glow-red); color: var(--red) }
+        .lamp-dot {
+            width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0
+        }
+        .lamp-dot.ok { background: var(--green); box-shadow: 0 0 6px var(--green) }
+        .lamp-dot.warn { background: var(--yellow); box-shadow: 0 0 6px var(--yellow) }
+        .lamp-dot.err { background: var(--red); box-shadow: 0 0 6px var(--red); animation: pulse 1s infinite }
+
+        /* SUB-CATEGORIES */
+        .sub-cats {
+            margin: 6px 0 0 20px;
+            display: none;
+            flex-direction: column;
+            gap: 3px
+        }
+        .sub-cats.open { display: flex }
+        .sub-cat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            color: var(--muted);
+            padding: 3px 8px;
+            border-radius: 4px;
+            border-left: 2px solid var(--border)
+        }
+        .sub-cat .lamp-dot { width: 5px; height: 5px }
+        .sub-cat-name { flex: 1 }
+        .sub-cat-status { font-size: 9px; font-family: var(--mono) }
+
+        .sidebar-footer {
+            padding: 14px;
+            border-top: 1px solid var(--border)
+        }
+
+        .btn-create {
+            width: 100%;
+            padding: 10px;
+            border: 1px dashed var(--cyan);
+            border-radius: 10px;
+            background: transparent;
+            color: var(--cyan);
+            font-family: var(--font);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px
+        }
+
+        .btn-create:hover {
+            background: var(--glow-cyan);
+            box-shadow: 0 0 20px var(--glow-cyan)
+        }
+
+        /* MAIN */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg2);
+            min-height: 56px
+        }
+
+        .btn-back {
+            display: none;
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .btn-back:hover {
+            color: var(--cyan);
+            border-color: var(--cyan)
+        }
+
+        .btn-back.visible {
+            display: flex;
+            align-items: center;
+            gap: 4px
+        }
+
+        .topbar-title {
+            font-size: 15px;
+            font-weight: 700;
+            flex: 1
+        }
+
+        .topbar-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-family: var(--mono);
+            color: var(--muted)
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: pulse 2s infinite
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1)
+            }
+
+            50% {
+                opacity: .4;
+                transform: scale(.8)
+            }
+        }
+
+        .docker-badge {
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 9px;
+            font-weight: 700;
+            background: var(--glow-cyan);
+            color: var(--cyan);
+            border: 1px solid rgba(250, 30, 78, .2)
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            background: var(--bg)
+        }
+
+        .content::-webkit-scrollbar {
+            width: 6px
+        }
+
+        .content::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 6px
+        }
+
+        /* TILES */
+        .tile-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px
+        }
+
+        .tile {
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            cursor: pointer;
+            transition: all .3s;
+            position: relative;
+            overflow: hidden
+        }
+
+        .tile::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+            opacity: 0;
+            transition: opacity .3s
+        }
+
+        .tile:hover {
+            transform: translateY(-4px);
+            border-color: var(--border2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .4)
+        }
+
+        .tile:hover::before {
+            opacity: 1
+        }
+
+        .tile-icon {
+            font-size: 28px;
+            margin-bottom: 12px
+        }
+
+        .tile-name {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 4px
+        }
+
+        .tile-desc {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.5;
+            margin-bottom: 12px
+        }
+
+        .tile-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between
+        }
+
+        .tile-tag {
+            font-size: 9px;
+            font-family: var(--mono);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            letter-spacing: .5px
+        }
+
+        .tag-py {
+            background: rgba(55, 118, 171, .15);
+            color: #3776ab
+        }
+
+        .tag-docker {
+            background: var(--glow-cyan);
+            color: var(--cyan)
+        }
+
+        .tag-react {
+            background: rgba(97, 218, 251, .12);
+            color: #61dafb
+        }
+
+        .tag-rust {
+            background: rgba(222, 165, 132, .12);
+            color: #dea584
+        }
+
+        .tag-go {
+            background: rgba(0, 173, 216, .12);
+            color: #00add8
+        }
+
+        .tag-html {
+            background: rgba(227, 79, 38, .12);
+            color: #e34f26
+        }
+
+        .tag-css {
+            background: rgba(38, 77, 228, .12);
+            color: #264de4
+        }
+
+        .tag-js {
+            background: rgba(240, 219, 79, .12);
+            color: #f0db4f
+        }
+
+        .tag-php {
+            background: rgba(119, 123, 179, .12);
+            color: #777bb3
+        }
+
+        .tag-ps {
+            background: rgba(1, 36, 86, .2);
+            color: #5391fe
+        }
+
+        .tag-tw {
+            background: rgba(56, 189, 248, .12);
+            color: #38bdf8
+        }
+
+        .tag-supa {
+            background: rgba(62, 207, 142, .12);
+            color: #3ecf8e
+        }
+
+        .tag-ai {
+            background: var(--glow-purple);
+            color: var(--purple)
+        }
+
+        .tag-heal {
+            background: var(--glow-green);
+            color: var(--green)
+        }
+
+        .tile-status {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            font-family: var(--mono);
+            color: var(--muted)
+        }
+
+        .tile-status .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%
+        }
+
+        /* HEALING SECTION */
+        .section-title {
+            font-size: 13px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--muted);
+            margin: 28px 0 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .section-title .line {
+            flex: 1;
+            height: 1px;
+            background: var(--border)
+        }
+
+        /* SELF-HEAL PANEL */
+        .heal-panel {
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            transition: height .3s
+        }
+
+        .heal-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 24px;
+            cursor: pointer;
+            user-select: none
+        }
+
+        .heal-header h3 {
+            font-size: 12px;
+            font-weight: 700;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .heal-header .count {
+            font-size: 10px;
+            font-family: var(--mono);
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: var(--glow-green);
+            color: var(--green)
+        }
+
+        .heal-toggle {
+            font-size: 16px;
+            color: var(--muted);
+            transition: transform .3s
+        }
+
+        .heal-toggle.open {
+            transform: rotate(180deg)
+        }
+
+        .heal-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .4s ease
+        }
+
+        .heal-body.open {
+            max-height: 260px
+        }
+
+        .heal-content {
+            padding: 0 24px 14px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 14px
+        }
+
+        .heal-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px
+        }
+
+        .heal-card h4 {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--muted);
+            margin-bottom: 10px
+        }
+
+        .heal-agents {
+            display: flex;
+            flex-direction: column;
+            gap: 6px
+        }
+
+        .heal-agent {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px
+        }
+
+        .heal-agent .name {
+            flex: 1;
+            font-weight: 500
+        }
+
+        .heal-agent .status {
+            font-size: 9px;
+            font-family: var(--mono);
+            padding: 2px 6px;
+            border-radius: 4px
+        }
+
+        .status-active {
+            background: var(--glow-green);
+            color: var(--green)
+        }
+
+        .status-standby {
+            background: rgba(255, 184, 0, .1);
+            color: var(--yellow)
+        }
+
+        .status-learning {
+            background: var(--glow-purple);
+            color: var(--purple)
+        }
+
+        .heal-log {
+            max-height: 140px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px
+        }
+
+        .heal-log::-webkit-scrollbar {
+            width: 3px
+        }
+
+        .heal-log::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 3px
+        }
+
+        .log-entry {
+            font-size: 10px;
+            font-family: var(--mono);
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: var(--card2);
+            display: flex;
+            gap: 8px
+        }
+
+        .log-entry .time {
+            color: var(--muted);
+            min-width: 52px
+        }
+
+        .log-entry .msg {
+            flex: 1
+        }
+
+        .log-entry.heal {
+            color: var(--green)
+        }
+
+        .log-entry.warn {
+            color: var(--yellow)
+        }
+
+        .log-entry.err {
+            color: var(--red)
+        }
+
+        .log-entry.learn {
+            color: var(--purple)
+        }
+
+        .heal-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 10px
+        }
+
+        .heal-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px
+        }
+
+        .heal-stat .label {
+            color: var(--muted)
+        }
+
+        .heal-stat .val {
+            font-family: var(--mono);
+            font-weight: 700
+        }
+
+        /* DETAIL VIEW */
+        .detail-view {
+            display: none;
+            animation: fadeIn .3s
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .detail-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 20px
+        }
+
+        .detail-header .icon {
+            font-size: 36px
+        }
+
+        .detail-header h2 {
+            font-size: 22px;
+            font-weight: 800
+        }
+
+        .detail-header .tag {
+            font-size: 10px
+        }
+
+        .detail-body {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            min-height: 300px;
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.8
+        }
+
+        .detail-body code {
+            font-family: var(--mono);
+            background: var(--bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: var(--cyan)
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .6);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center
+        }
+
+        .modal-overlay.open {
+            display: flex
+        }
+
+        .modal {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            width: 420px;
+            max-width: 90vw
+        }
+
+        .modal h2 {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .modal label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            margin-bottom: 4px;
+            margin-top: 12px
+        }
+
+        .modal input,
+        .modal select {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 13px;
+            outline: none;
+            transition: border-color .2s
+        }
+
+        .modal input:focus,
+        .modal select:focus {
+            border-color: var(--cyan)
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-family: var(--font);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            color: #fff
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 4px 20px var(--glow-cyan)
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted)
+        }
+
+        .btn-ghost:hover {
+            border-color: var(--text);
+            color: var(--text)
+        }
+
+        /* MOBILE */
+        @media(max-width:768px) {
+            .sidebar {
+                position: fixed;
+                transform: translateX(-100%)
+            }
+
+            .sidebar.open {
+                transform: translateX(0)
+            }
+
+            .tile-grid {
+                grid-template-columns: 1fr 1fr
+            }
+
+            .heal-content {
+                grid-template-columns: 1fr
+            }
+
+            .btn-menu {
+                display: block !important
+            }
+        }
+
+        .btn-menu {
+            display: none;
+            padding: 6px 10px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--muted);
+            font-size: 16px;
+            cursor: pointer
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
+    <div class="app">
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1>🧠 DkZ Mainboard™</h1>
+                <div class="sub">HELP YOUR SELF™ COCKPIT v1.0</div>
+            </div>
+            <nav class="sidebar-nav" id="sidebarNav"></nav>
+            <div class="sidebar-footer">
+                <button class="btn-create" onclick="openModal()">✨ Neues Tool erstellen</button>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="main">
+            <div class="topbar">
+                <button class="btn-menu"
+                    onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+                <button class="btn-back" id="btnBack" onclick="showHome()">← Zurück</button>
+                <div class="topbar-title" id="topTitle">Dashboard</div>
+                <div class="topbar-status">
+                    <div class="pulse-dot"></div>
+                    <span id="sysStatus">ALL SYSTEMS NOMINAL</span>
+                    <div class="docker-badge">🐳 DOCKER</div>
+                </div>
+            </div>
+
+            <!-- QUICK NAV BAR -->
+            <div id="quickNav" style="
+                display:flex;align-items:center;gap:6px;padding:8px 20px;
+                background:rgba(14,14,22,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+                border-bottom:1px solid rgba(250,30,78,.08);overflow-x:auto;flex-wrap:nowrap;
+            ">
+                <span style="font-size:7px;letter-spacing:2px;color:rgba(161,161,170,.35);text-transform:uppercase;white-space:nowrap;margin-right:4px">&#128218; Wissen</span>
+                <a href="../modules/wissen-hub/index.html" style="display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:5px;font-size:9px;font-weight:600;background:rgba(255,255,255,.03);border:1px solid rgba(51,51,56,.5);color:#a1a1aa;text-decoration:none;white-space:nowrap;transition:all .2s" onmouseover="this.style.borderColor='rgba(85,172,238,.4)';this.style.color='#f6f6f7'" onmouseout="this.style.borderColor='';this.style.color='#a1a1aa'">&#128218; Knowledge Hub</a>
+                <a href="../modules/iceberg/index.html" style="display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:5px;font-size:9px;font-weight:600;background:rgba(255,255,255,.03);border:1px solid rgba(51,51,56,.5);color:#a1a1aa;text-decoration:none;white-space:nowrap;transition:all .2s" onmouseover="this.style.borderColor='rgba(85,172,238,.4)';this.style.color='#f6f6f7'" onmouseout="this.style.borderColor='';this.style.color='#a1a1aa'">&#129529; ICEberg</a>
+                <a href="../modules/ki-lernplattform/index.html" style="display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:5px;font-size:9px;font-weight:600;background:rgba(255,255,255,.03);border:1px solid rgba(51,51,56,.5);color:#a1a1aa;text-decoration:none;white-space:nowrap;transition:all .2s" onmouseover="this.style.borderColor='rgba(85,172,238,.4)';this.style.color='#f6f6f7'" onmouseout="this.style.borderColor='';this.style.color='#a1a1aa'">&#127891; Lernplattform</a>
+
+                <span style="width:1px;height:16px;background:rgba(51,51,56,.4);flex-shrink:0"></span>
+                <span style="font-size:7px;letter-spacing:2px;color:rgba(161,161,170,.35);text-transform:uppercase;white-space:nowrap;margin-right:4px">&#9999;&#65039; Prompts</span>
+                <a href="../modules/prompt-viewer/index.html" style="display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:5px;font-size:9px;font-weight:600;background:rgba(255,255,255,.03);border:1px solid rgba(51,51,56,.5);color:#a1a1aa;text-decoration:none;white-space:nowrap;transition:all .2s" onmouseover="this.style.borderColor='rgba(236,72,153,.4)';this.style.color='#f6f6f7'" onmouseout="this.style.borderColor='';this.style.color='#a1a1aa'">&#128214; Prompt Archiv</a>
+                <a href="../modules/prompter/index.html" style="display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:5px;font-size:9px;font-weight:600;background:rgba(255,255,255,.03);border:1px solid rgba(51,51,56,.5);color:#a1a1aa;text-decoration:none;white-space:nowrap;transition:all .2s" onmouseover="this.style.borderColor='rgba(236,72,153,.4)';this.style.color='#f6f6f7'" onmouseout="this.style.borderColor='';this.style.color='#a1a1aa'">&#9999;&#65039; Prompter</a>
+                <a href="../modules/prompt-generator/index.html" style="display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:5px;font-size:9px;font-weight:600;background:rgba(255,255,255,.03);border:1px solid rgba(51,51,56,.5);color:#a1a1aa;text-decoration:none;white-space:nowrap;transition:all .2s" onmouseover="this.style.borderColor='rgba(236,72,153,.4)';this.style.color='#f6f6f7'" onmouseout="this.style.borderColor='';this.style.color='#a1a1aa'">&#9881; Generator</a>
+                <a href="../modules/loop-dashboard/index.html" style="display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:5px;font-size:9px;font-weight:600;background:rgba(255,255,255,.03);border:1px solid rgba(51,51,56,.5);color:#a1a1aa;text-decoration:none;white-space:nowrap;transition:all .2s" onmouseover="this.style.borderColor='rgba(236,72,153,.4)';this.style.color='#f6f6f7'" onmouseout="this.style.borderColor='';this.style.color='#a1a1aa'">&#128260; Loops</a>
+
+                <span style="width:1px;height:16px;background:rgba(51,51,56,.4);flex-shrink:0"></span>
+                <span style="font-size:7px;letter-spacing:2px;color:rgba(161,161,170,.35);text-transform:uppercase;white-space:nowrap;margin-right:4px">&#128295; Builder</span>
+                <a href="../modules/agent-builder/index.html" style="display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:5px;font-size:9px;font-weight:600;background:rgba(255,255,255,.03);border:1px solid rgba(51,51,56,.5);color:#a1a1aa;text-decoration:none;white-space:nowrap;transition:all .2s" onmouseover="this.style.borderColor='rgba(250,30,78,.4)';this.style.color='#f6f6f7'" onmouseout="this.style.borderColor='';this.style.color='#a1a1aa'">&#129302; Agent</a>
+                <a href="../modules/workflow-builder/index.html" style="display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:5px;font-size:9px;font-weight:600;background:rgba(255,255,255,.03);border:1px solid rgba(51,51,56,.5);color:#a1a1aa;text-decoration:none;white-space:nowrap;transition:all .2s" onmouseover="this.style.borderColor='rgba(250,30,78,.4)';this.style.color='#f6f6f7'" onmouseout="this.style.borderColor='';this.style.color='#a1a1aa'">&#128256; Workflow</a>
+                <a href="../modules/skill-builder/index.html" style="display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:5px;font-size:9px;font-weight:600;background:rgba(255,255,255,.03);border:1px solid rgba(51,51,56,.5);color:#a1a1aa;text-decoration:none;white-space:nowrap;transition:all .2s" onmouseover="this.style.borderColor='rgba(250,30,78,.4)';this.style.color='#f6f6f7'" onmouseout="this.style.borderColor='';this.style.color='#a1a1aa'">&#127919; Skill</a>
+                <a href="../modules/action-builder/index.html" style="display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:5px;font-size:9px;font-weight:600;background:rgba(255,255,255,.03);border:1px solid rgba(51,51,56,.5);color:#a1a1aa;text-decoration:none;white-space:nowrap;transition:all .2s" onmouseover="this.style.borderColor='rgba(250,30,78,.4)';this.style.color='#f6f6f7'" onmouseout="this.style.borderColor='';this.style.color='#a1a1aa'">&#129513; Action</a>
+                <a href="../modules/tenor-builder/index.html" style="display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:5px;font-size:9px;font-weight:600;background:rgba(255,255,255,.03);border:1px solid rgba(51,51,56,.5);color:#a1a1aa;text-decoration:none;white-space:nowrap;transition:all .2s" onmouseover="this.style.borderColor='rgba(250,30,78,.4)';this.style.color='#f6f6f7'" onmouseout="this.style.borderColor='';this.style.color='#a1a1aa'">&#127928; TEN0R</a>
+                <a href="../modules/black8-builder/index.html" style="display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:5px;font-size:9px;font-weight:600;background:rgba(255,255,255,.03);border:1px solid rgba(51,51,56,.5);color:#a1a1aa;text-decoration:none;white-space:nowrap;transition:all .2s" onmouseover="this.style.borderColor='rgba(250,30,78,.4)';this.style.color='#f6f6f7'" onmouseout="this.style.borderColor='';this.style.color='#a1a1aa'">&#9889; BLACK8</a>
+
+                <span style="width:1px;height:16px;background:rgba(51,51,56,.4);flex-shrink:0"></span>
+                <span style="font-size:7px;letter-spacing:2px;color:rgba(161,161,170,.35);text-transform:uppercase;white-space:nowrap;margin-right:4px">&#128736; Tools</span>
+                <a href="../modules/ai_chat/index.html" style="display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:5px;font-size:9px;font-weight:600;background:rgba(255,255,255,.03);border:1px solid rgba(51,51,56,.5);color:#a1a1aa;text-decoration:none;white-space:nowrap;transition:all .2s" onmouseover="this.style.borderColor='rgba(0,255,136,.4)';this.style.color='#f6f6f7'" onmouseout="this.style.borderColor='';this.style.color='#a1a1aa'">&#129302; AI Chat</a>
+                <a href="../modules/image-forge/index.html" style="display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:5px;font-size:9px;font-weight:600;background:rgba(255,255,255,.03);border:1px solid rgba(51,51,56,.5);color:#a1a1aa;text-decoration:none;white-space:nowrap;transition:all .2s" onmouseover="this.style.borderColor='rgba(0,255,136,.4)';this.style.color='#f6f6f7'" onmouseout="this.style.borderColor='';this.style.color='#a1a1aa'">&#128444; Image Forge</a>
+                <a href="../modules/llm-cost-board/index.html" style="display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:5px;font-size:9px;font-weight:600;background:rgba(255,255,255,.03);border:1px solid rgba(51,51,56,.5);color:#a1a1aa;text-decoration:none;white-space:nowrap;transition:all .2s" onmouseover="this.style.borderColor='rgba(0,255,136,.4)';this.style.color='#f6f6f7'" onmouseout="this.style.borderColor='';this.style.color='#a1a1aa'">&#128176; Kosten</a>
+                <a href="../hub/index.html" style="display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:5px;font-size:9px;font-weight:600;background:rgba(255,255,255,.03);border:1px solid rgba(51,51,56,.5);color:#a1a1aa;text-decoration:none;white-space:nowrap;transition:all .2s" onmouseover="this.style.borderColor='rgba(0,255,136,.4)';this.style.color='#f6f6f7'" onmouseout="this.style.borderColor='';this.style.color='#a1a1aa'">&#128640; Hub (alle 81)</a>
+            </div>
+
+            <div class="content" id="content">
+                <!-- HOME VIEW -->
+                <div id="homeView">
+                    <div class="section-title">🛡️ HELP YOUR SELF™ Agenten <span class="line"></span></div>
+                    <div class="tile-grid" id="healGrid"></div>
+                    <div class="section-title">⚡ Technologie-Stack <span class="line"></span></div>
+                    <div class="tile-grid" id="techGrid"></div>
+                    <div class="section-title">🔧 DkZ Module <span class="line"></span></div>
+                    <div class="tile-grid" id="moduleGrid"></div>
+                    <div class="section-title">🎯 Morpheus Guards – KI-Fehler verhindern <span class="line"></span>
+                    </div>
+                    <div class="tile-grid" id="morpheusGrid"></div>
+                    <div class="section-title">👤 Eigene Tools <span class="line"></span></div>
+                    <div class="tile-grid" id="userGrid"></div>
+                </div>
+                <!-- DETAIL VIEW -->
+                <div class="detail-view" id="detailView">
+                    <div class="detail-header" id="detailHeader"></div>
+                    <div class="detail-body" id="detailBody"></div>
+                </div>
+            </div>
+
+            <!-- SELF-HEAL PANEL -->
+            <div class="heal-panel">
+                <div class="heal-header" onclick="toggleHeal()">
+                    <h3>💚 HELP YOUR SELF™ Monitor <span class="count" id="healCount">0 patterns</span></h3>
+                    <span class="heal-toggle" id="healToggle">▲</span>
+                </div>
+                <div class="heal-body" id="healBody">
+                    <div class="heal-content">
+                        <div class="heal-card">
+                            <h4>🤖 Agenten Status</h4>
+                            <div class="heal-agents" id="agentStatus"></div>
+                        </div>
+                        <div class="heal-card">
+                            <h4>📋 Live Healing Log</h4>
+                            <div class="heal-log" id="healLog"></div>
+                        </div>
+                        <div class="heal-card">
+                            <h4>📊 System Metriken</h4>
+                            <div class="heal-stats" id="healStats"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal">
+            <h2>✨ Neues Tool</h2>
+            <label>Name</label>
+            <input id="mName" placeholder="z.B. Mein Analyzer">
+            <label>Icon (Emoji)</label>
+            <input id="mIcon" placeholder="z.B. 🔍" maxlength="4">
+            <label>Kategorie</label>
+            <select id="mCat">
+                <option>Tool</option>
+                <option>Dashboard</option>
+                <option>API</option>
+                <option>Automation</option>
+            </select>
+            <label>Technologie</label>
+            <select id="mTech">
+                <option value="js">JavaScript</option>
+                <option value="py">Python</option>
+                <option value="react">React</option>
+                <option value="rust">Rust</option>
+                <option value="go">Go</option>
+                <option value="php">PHP</option>
+                <option value="ps">PowerShell</option>
+                <option value="html">HTML</option>
+            </select>
+            <label>Beschreibung</label>
+            <input id="mDesc" placeholder="Kurzbeschreibung...">
+            <div class="modal-actions">
+                <button class="btn btn-ghost" onclick="closeModal()">Abbrechen</button>
+                <button class="btn btn-primary" onclick="createTool()">Erstellen</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        // === DATA ===
+        const HEAL_AGENTS = [
+            { id: 'bmad', name: 'BMAD Method™', icon: '📐', desc: 'Agile AI-Driven Development Framework – orchestriert KI-Agenten-Kollaboration mit versionierten Artefakten & PRD-Contracts', tag: 'tag-ai', tagLabel: 'BMAD', status: 'active',
+              subCats: [{name:'Workflow Engine',status:'ok'},{name:'Artefakt-Validator',status:'ok'},{name:'Persona Router',status:'ok'}] },
+            { id: 'ralph', name: 'Ralph Loop™', icon: '♻️', desc: 'Autonomous Endurance Engine – iterative Kontextfenster-Resets mit atomaren Git-Commits pro Feature', tag: 'tag-heal', tagLabel: 'LOOP', status: 'active',
+              subCats: [{name:'Context Reset',status:'ok'},{name:'Git Commit Engine',status:'ok'},{name:'PRD Loader',status:'ok'}] },
+            { id: 'jamez', name: 'JAMEZ™', icon: '🎩', desc: 'Multi-Persona AI Assistant – kontextbewusster Prompt-Router mit Style-Adaption, Memory & Mistral OCR', tag: 'tag-ai', tagLabel: 'JAMEZ', status: 'active',
+              subCats: [{name:'Prompt Router',status:'ok'},{name:'Style Adaption',status:'ok'},{name:'Memory System',status:'ok'},{name:'Mistral OCR 0.8',status:'warn'}] },
+            { id: 'copilot', name: 'GitHub Copilot', icon: '🤖', desc: 'AI Pair Programming – Code-Completion, Chat, PR-Reviews mit Self-Healing Code Suggestions', tag: 'tag-heal', tagLabel: 'COPILOT', status: 'standby',
+              subCats: [{name:'Code Completion',status:'ok'},{name:'Chat Assist',status:'ok'},{name:'PR Reviewer',status:'warn'}] },
+            { id: 'docker', name: 'Docker Engine', icon: '🐳', desc: 'Container Orchestrierung – Self-Healing via Restart-Policies, Health-Checks & Auto-Recovery', tag: 'tag-docker', tagLabel: 'DOCKER', status: 'active',
+              subCats: [{name:'Container Runtime',status:'ok'},{name:'Health-Checks',status:'ok'},{name:'Restart Policies',status:'ok'},{name:'Volume Manager',status:'ok'}] },
+            { id: 'openspec', name: 'OpenSpec', icon: '📋', desc: 'Open Specification Framework – standardisierte API-Specs mit Auto-Validation & Contract-Testing', tag: 'tag-heal', tagLabel: 'SPEC', status: 'active',
+              subCats: [{name:'API Validator',status:'ok'},{name:'Contract Tests',status:'ok'}] },
+            { id: 'coderabbit', name: 'CodeRabbit', icon: '🐇', desc: 'AI Code Review – automatische PR-Analyse, Bug-Detection & Self-Healing Code Suggestions', tag: 'tag-ai', tagLabel: 'RABBIT', status: 'active',
+              subCats: [{name:'PR Analyzer',status:'ok'},{name:'Bug Detector',status:'ok'},{name:'Fix Suggestions',status:'ok'}] },
+            { id: 'speckit', name: 'Spec-Kit', icon: '🧰', desc: 'Specification Toolkit – Template-basierte Spec-Generierung mit Compliance-Checks', tag: 'tag-heal', tagLabel: 'KIT', status: 'standby',
+              subCats: [{name:'Template Engine',status:'warn'},{name:'Compliance Check',status:'err'}] },
+            { id: 'picoclaw', name: 'PicoClaw', icon: '🦀', desc: 'Ultra-Lightweight Edge Agent – <10MB RAM, <1s Startup, Go/Rust-Binary für IoT & Edge-Devices', tag: 'tag-rust', tagLabel: 'PICO', status: 'active',
+              subCats: [{name:'Edge Runtime',status:'ok'},{name:'Heartbeat',status:'ok'}] },
+        ];
+        const TECH_STACK = [
+            { id: 'python', name: 'Python', icon: '🐍', desc: 'Core Runtime für KI-Agenten, BMAD-Workflows, Ralph Loop Skripte & Data Processing', tag: 'tag-py', tagLabel: 'PY' },
+            { id: 'react', name: 'React', icon: '⚛️', desc: 'Micro-Frontend Framework für modulare Dashboard-Panels mit Zustand State Management', tag: 'tag-react', tagLabel: 'REACT' },
+            { id: 'tailwind', name: 'Tailwind CSS', icon: '💨', desc: 'Utility-First CSS Framework für konsistentes Design-System & Rapid Prototyping', tag: 'tag-tw', tagLabel: 'TW' },
+            { id: 'supabase', name: 'Supabase', icon: '⚡', desc: 'Open-Source Firebase Alternative – Auth, Realtime DB, Edge Functions & Storage', tag: 'tag-supa', tagLabel: 'SUPA' },
+            { id: 'vanilla', name: 'Vanilla JS', icon: '🍦', desc: 'Pure JavaScript ohne Framework – leichtgewichtig, performant, universell einsetzbar', tag: 'tag-js', tagLabel: 'JS' },
+            { id: 'rust', name: 'Rust', icon: '🦀', desc: 'Systems Programming – PicoClaw Edge-Agent, WASM Module, High-Performance CLI Tools', tag: 'tag-rust', tagLabel: 'RUST' },
+            { id: 'go', name: 'Go', icon: '🐹', desc: 'PicoClaw Runtime, Cloud-Native Microservices, SSH-basierte Cloudwork Distribution', tag: 'tag-go', tagLabel: 'GO' },
+            { id: 'powershell', name: 'PowerShell', icon: '📟', desc: 'Windows Automation, System-Monitoring, Drive Organizer Scripts & Registry-Management', tag: 'tag-ps', tagLabel: 'PS' },
+            { id: 'css', name: 'CSS / SCSS', icon: '🎨', desc: 'Enterprise Dark Theme, Glassmorphism, CSS Variables, Responsive Grid Layouts', tag: 'tag-css', tagLabel: 'CSS' },
+            { id: 'php', name: 'PHP', icon: '🐘', desc: 'Nextcloud Hub Integration, WordPress Plugins, Legacy API Bridges & Server-Side Rendering', tag: 'tag-php', tagLabel: 'PHP' },
+            { id: 'html', name: 'HTML5', icon: '📄', desc: 'Semantic Markup, Web Components, SEO-optimierte Strukturen & Accessibility (a11y)', tag: 'tag-html', tagLabel: 'HTML' },
+        ];
+        const MORPHEUS_GUARDS = [
+            { id: 'uc1_rag', name: 'RAG Engine', icon: '🔍', desc: 'Retrieval-Augmented Generation – KI-Antworten mit verifizierten Quellen anreichern, Halluzinationen -96%', tag: 'tag-py', tagLabel: 'RAG', status: 'standby',
+              subCats: [{name:'Vector Search',status:'warn'},{name:'Source Verifier',status:'standby'},{name:'Embedding Engine',status:'ok'}] },
+            { id: 'uc2_data', name: 'Data Quality', icon: '📊', desc: 'Datenqualitäts-Prüfung – Bias-Erkennung, Vollständigkeits-Check, Q-Score für jeden Datensatz', tag: 'tag-py', tagLabel: 'DATA', status: 'standby',
+              subCats: [{name:'Bias Scanner',status:'standby'},{name:'Completeness Check',status:'warn'},{name:'Q-Score Engine',status:'standby'}] },
+            { id: 'uc3_hitl', name: 'HITL Monitor', icon: '👁️', desc: 'Human-in-the-Loop – selektive menschliche Review bei niedrigem Confidence Score', tag: 'tag-heal', tagLabel: 'HITL', status: 'standby',
+              subCats: [{name:'Review Queue',status:'warn'},{name:'Confidence Gate',status:'ok'}] },
+            { id: 'uc4_cot', name: 'CoT Guards', icon: '🧠', desc: 'Chain-of-Thought Prompt Guards – Schritt-für-Schritt-Denken, Quellen-Pflicht, "Ich weiß nicht"-Regel', tag: 'tag-ai', tagLabel: 'COT', status: 'active',
+              subCats: [{name:'Step Enforcer',status:'ok'},{name:'Source Validator',status:'ok'},{name:'Uncertainty Gate',status:'ok'}] },
+            { id: 'uc5_conf', name: 'Confidence Score', icon: '📈', desc: 'Uncertainty Scoring – 🟢🟡🔴⛔ Bewertung jeder KI-Antwort mit Auto-Threshold', tag: 'tag-py', tagLabel: 'CONF', status: 'standby',
+              subCats: [{name:'Score Calculator',status:'warn'},{name:'Threshold Engine',status:'standby'}] },
+            { id: 'uc6_route', name: 'Model Router', icon: '🔀', desc: 'Smart Model Selection – Fallback Chain: Gemini → GPT → Claude → Mistral → Local LLM', tag: 'tag-ai', tagLabel: 'ROUTE', status: 'active',
+              subCats: [{name:'Gemini API',status:'ok'},{name:'GPT API',status:'ok'},{name:'Claude API',status:'ok'},{name:'Mistral API',status:'warn'},{name:'Local LLM',status:'standby'}] },
+            { id: 'uc7_eval', name: 'Eval Loop', icon: '🧪', desc: 'Continuous Evaluation – automatische Qualitätstests alle 30min, Degradation Detection', tag: 'tag-py', tagLabel: 'EVAL', status: 'standby',
+              subCats: [{name:'Test Runner',status:'standby'},{name:'Degradation Detector',status:'standby'}] },
+        ];
+        const DKZ_MODULES = [
+            { id: 'drive', name: 'Drive Organizer', icon: '🧹', desc: 'Google Drive Automatisierung – Jeff Su 5x99 Methode mit Phase-basierter Ordnerstruktur', tag: 'tag-js', tagLabel: 'JS', status: 'active',
+              subCats: [{name:'Ordner-Engine',status:'ok'},{name:'Archiv-System',status:'ok'}] },
+            { id: 'seo', name: 'SEO Dashboard', icon: '📊', desc: 'SEO Analyzer, Google AdSense, Business Profile, Maps Integration & DNS Chain-Builder', tag: 'tag-html', tagLabel: 'HTML', status: 'active',
+              subCats: [{name:'PageSpeed Check',status:'ok'},{name:'Keyword Analyzer',status:'ok'},{name:'DNS Chain',status:'warn'}] },
+            { id: 'prompt', name: 'Prompt Builder', icon: '📝', desc: 'Prompt Engineering Hub mit Template-Datenbank, Variablen-System & Export-Funktionen', tag: 'tag-js', tagLabel: 'JS', status: 'active',
+              subCats: [{name:'Template DB',status:'ok'},{name:'Variable Engine',status:'ok'}] },
+            { id: 'n8n', name: 'n8n Viewer', icon: '🔄', desc: 'Workflow Automation Viewer – 500+ Integrationen als MCP-Tools für KI-Agenten', tag: 'tag-js', tagLabel: 'N8N', status: 'active',
+              subCats: [{name:'Workflow Parser',status:'ok'},{name:'MCP Connector',status:'warn'}] },
+            { id: 'data', name: 'Data Lakehouse', icon: '🏗️', desc: 'Apache Iceberg + DuckDB-Wasm Analytics mit Chaos Monkey Stress-Testing', tag: 'tag-py', tagLabel: 'PY', status: 'active',
+              subCats: [{name:'DuckDB Engine',status:'ok'},{name:'Iceberg Tables',status:'ok'},{name:'Chaos Monkey',status:'warn'}] },
+            { id: 'chat', name: 'AI Chat', icon: '💬', desc: 'Multi-Model KI Chat – GPT, Gemini, Claude, DeepSeek, Mistral via OpenRouter', tag: 'tag-ai', tagLabel: 'AI', status: 'active',
+              subCats: [{name:'Chat Engine',status:'ok'},{name:'OpenRouter API',status:'ok'},{name:'Model Selector',status:'ok'}] },
+        ];
+
+        // === STATE ===
+        let userTools = JSON.parse(localStorage.getItem('dkz_user_tools') || '[]');
+        let patterns = parseInt(localStorage.getItem('dkz_patterns') || '0');
+        let currentView = 'home';
+
+        // === RENDER ===
+        function renderSidebar() {
+            const nav = document.getElementById('sidebarNav');
+            const sections = [
+                { title: 'HELP YOUR SELF\u2122', items: HEAL_AGENTS },
+                { title: 'Morpheus Guards', items: MORPHEUS_GUARDS.slice(0, 4) },
+                { title: 'Tech Stack', items: TECH_STACK.slice(0, 6) },
+                { title: 'Module', items: DKZ_MODULES },
+                { title: 'Eigene Tools', items: userTools }
+            ];
+            nav.innerHTML = sections.map(s => `
+    <div class="nav-section">
+      <div class="nav-section-title">${s.title}</div>
+      ${s.items.map(i => {
+        const worst = getWorstStatus(i);
+        const dotCls = worst === 'err' ? 'red' : worst === 'warn' ? 'yellow' : i.status === 'active' ? 'green' : i.status === 'standby' ? 'yellow' : 'green';
+        const hasSubs = i.subCats && i.subCats.length > 0;
+        return `
+        <div class="nav-item${currentView === i.id ? ' active' : ''}" onclick="showDetail('${i.id}')">
+          <span class="icon">${i.icon}</span>
+          <span>${i.name}</span>
+          <span class="dot dot-${dotCls}"></span>
+          ${hasSubs ? '<span style="font-size:8px;color:var(--muted);cursor:pointer" onclick="event.stopPropagation();toggleSubCat(this)">▼</span>' : ''}
+        </div>
+        ${hasSubs ? '<div class="sub-cats" id="sub-'+i.id+'">' + i.subCats.map(sc => `<div class="sub-cat"><span class="lamp-dot ${sc.status}"></span><span class="sub-cat-name">${sc.name}</span><span class="sub-cat-status">${sc.status === 'ok' ? '🟢' : sc.status === 'warn' ? '🟡' : '🔴'}</span></div>`).join('') + '</div>' : ''}
+        `; }).join('')}
+    </div>
+  `).join('');
+        }
+
+        function getWorstStatus(item) {
+            if (!item.subCats) return 'ok';
+            if (item.subCats.some(s => s.status === 'err')) return 'err';
+            if (item.subCats.some(s => s.status === 'warn')) return 'warn';
+            return 'ok';
+        }
+
+        function toggleSubCat(el) {
+            const navItem = el.closest('.nav-item');
+            const subCat = navItem.nextElementSibling;
+            if (subCat && subCat.classList.contains('sub-cats')) {
+                subCat.classList.toggle('open');
+                el.textContent = subCat.classList.contains('open') ? '▲' : '▼';
+            }
+        }
+
+        function renderTile(item) {
+            const worst = getWorstStatus(item);
+            const lampCls = worst === 'err' ? 'lamp-err' : worst === 'warn' ? 'lamp-warn' : 'lamp-ok';
+            const lampDot = worst === 'err' ? 'err' : worst === 'warn' ? 'warn' : 'ok';
+            const lampText = worst === 'err' ? 'FEHLER' : worst === 'warn' ? 'WARNUNG' : item.status === 'active' ? 'AKTIV' : 'STANDBY';
+            const subHtml = (item.subCats && item.subCats.length > 0) ? `<div style="margin-top:8px;display:flex;gap:3px;flex-wrap:wrap">${item.subCats.map(sc => `<span class="lamp ${sc.status === 'ok' ? 'lamp-ok' : sc.status === 'warn' ? 'lamp-warn' : 'lamp-err'}"><span class="lamp-dot ${sc.status}"></span>${sc.name}</span>`).join('')}</div>` : '';
+            return `<div class="tile" onclick="showDetail('${item.id}')" id="tile-${item.id}">
+    <div class="tile-icon">${item.icon}</div>
+    <div class="tile-name">${item.name}</div>
+    <div class="tile-desc">${item.desc}</div>
+    ${subHtml}
+    <div class="tile-footer">
+      <span class="tile-tag ${item.tag}">${item.tagLabel}</span>
+      <span class="lamp ${lampCls}"><span class="lamp-dot ${lampDot}"></span>${lampText}</span>
+    </div>
+  </div>`;
+        }
+
+        function renderHome() {
+            document.getElementById('healGrid').innerHTML = HEAL_AGENTS.map(renderTile).join('');
+            document.getElementById('morpheusGrid').innerHTML = MORPHEUS_GUARDS.map(renderTile).join('');
+            document.getElementById('techGrid').innerHTML = TECH_STACK.map(renderTile).join('');
+            document.getElementById('moduleGrid').innerHTML = DKZ_MODULES.map(renderTile).join('');
+            document.getElementById('userGrid').innerHTML = userTools.length
+                ? userTools.map(renderTile).join('')
+                : '<div style="color:var(--muted);font-size:12px;padding:20px;grid-column:1/-1">Noch keine eigenen Tools erstellt. Klicke auf "✨ Neues Tool erstellen".</div>';
+        }
+
+        function showDetail(id) {
+            const all = [...HEAL_AGENTS, ...MORPHEUS_GUARDS, ...TECH_STACK, ...DKZ_MODULES, ...userTools];
+            const item = all.find(i => i.id === id);
+            if (!item) return;
+            currentView = id;
+            document.getElementById('homeView').style.display = 'none';
+            document.getElementById('detailView').style.display = 'block';
+            document.getElementById('btnBack').classList.add('visible');
+            document.getElementById('topTitle').textContent = item.name;
+            document.getElementById('detailHeader').innerHTML = `
+    <span class="icon">${item.icon}</span>
+    <div><h2>${item.name}</h2></div>
+    <span class="tile-tag ${item.tag}" style="font-size:11px;padding:4px 12px">${item.tagLabel}</span>`;
+            const info = getDetailInfo(item);
+            document.getElementById('detailBody').innerHTML = info;
+            renderSidebar();
+            document.getElementById('sidebar').classList.remove('open');
+        }
+
+        function getDetailInfo(item) {
+            const map = {
+                bmad: `<h3>BMAD Method™ – Self-Healing Agent</h3><p>Das BMAD-Framework (Breakthrough Method for Agile AI-Driven Development) transformiert KI von reaktiven Chatbots zu disziplinierten Teilnehmern im agilen Produktlebenszyklus.</p><br><p><strong>Self-Healing Rolle:</strong></p><ul style="margin:8px 0 0 20px"><li>Generiert strukturierte Planungsartefakte als <code>Agent-as-Code</code> Markdown-Dateien</li><li>Orchestriert spezialisierte Personas: PM, Architect, Developer, UX, Scrum Master</li><li>YAML-basierte Workflows mit strikten Abhängigkeiten</li><li>Versionierte Artefakte in Git als <code>Single Source of Truth</code></li></ul><br><p><strong>Docker Integration:</strong> Läuft als Python-Container mit <code>docker-compose.yml</code> Orchestrierung</p>`,
+                ralph: `<h3>Ralph Loop™ – Autonome Ausdauer-Engine</h3><p>Löst das "Dumb Zone"-Problem: Agenten verlieren nach langer Arbeit den Kontext. Ralph isoliert jede Iteration mit frischem Kontextfenster.</p><br><p><strong>Self-Healing Mechanismus:</strong></p><ul style="margin:8px 0 0 20px"><li>Liest Status aus <code>progress.txt</code> + <code>prd.json</code></li><li>Analysiert Git-Verlauf für aktuellen Code-Stand</li><li>Atomare Commits pro Feature für granulare Rollbacks</li><li>Unbegrenzte Ausdauer ohne menschliches Babysitting</li></ul><br><p><strong>Python-Basis:</strong> Implementiert als Bash/Python-Schleife mit Docker Health-Checks</p>`,
+                jamez: `<h3>JAMEZ™ – Multi-Persona AI Assistant</h3><p>Kontextbewusster Prompt-Router mit dynamischer Persönlichkeits-Adaption, persistentem Memory und Mistral OCR 0.8 für Objekt-Erkennung.</p><br><p><strong>Self-Healing Features:</strong></p><ul style="margin:8px 0 0 20px"><li>Automatische Prompt-Korrektur bei Halluzinations-Erkennung</li><li>Style-Adaption basierend auf Kontext & User-Präferenzen</li><li>Fallback-Kette: GPT → Gemini → Mistral → Local LLM</li><li>Mistral OCR 0.8 für Dokument- und Objekt-Analyse</li><li>Eigene Datenbank-Integration für persistentes Wissen</li></ul>`,
+                copilot: `<h3>GitHub Copilot – AI Pair Programming</h3><p>Code-Completion, Chat-basierte Problemlösung, und automatische PR-Reviews mit Self-Healing Code Suggestions.</p><br><p><strong>Self-Healing Integration:</strong></p><ul style="margin:8px 0 0 20px"><li>Erkennt fehlerhafte Patterns und schlägt Fixes vor</li><li>Automatische Test-Generierung für Regressions-Schutz</li><li>Integration mit BMAD für code-gesteuerte Agenten-Definition</li></ul>`,
+                docker: `<h3>Docker Engine – Container Orchestrierung</h3><p>Self-Healing über Restart-Policies, Health-Checks und automatische Container-Recovery.</p><br><p><strong>Health-Check Konfiguration:</strong></p><pre style="background:var(--bg);padding:12px;border-radius:8px;margin:8px 0;font-size:11px;color:var(--cyan)">healthcheck:
+  test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 40s
+restart: unless-stopped</pre>`,
+            };
+            return map[item.id] || `<h3>${item.name}</h3><p>${item.desc}</p><br><p>Dieses Modul ist Teil des DkZ Ökosystems und wird über das deklarative Verwaltungssystem konfiguriert. Technologie: <code>${item.tagLabel}</code></p><br><p><strong>Docker Status:</strong> 🟢 Container healthy</p><p><strong>HELP YOUR SELF™:</strong> Überwacht via Health-Monitor mit 30s Intervall</p>`;
+        }
+
+        function showHome() {
+            currentView = 'home';
+            document.getElementById('homeView').style.display = 'block';
+            document.getElementById('detailView').style.display = 'none';
+            document.getElementById('btnBack').classList.remove('visible');
+            document.getElementById('topTitle').textContent = 'Dashboard';
+            renderSidebar();
+        }
+
+        // === MODAL ===
+        function openModal() { document.getElementById('modal').classList.add('open') }
+        function closeModal() { document.getElementById('modal').classList.remove('open') }
+        function createTool() {
+            const name = document.getElementById('mName').value.trim();
+            const icon = document.getElementById('mIcon').value.trim() || '🔧';
+            const cat = document.getElementById('mCat').value;
+            const tech = document.getElementById('mTech').value;
+            const desc = document.getElementById('mDesc').value.trim() || `${cat} – ${name}`;
+            if (!name) return;
+            const tagMap = { js: 'tag-js', py: 'tag-py', react: 'tag-react', rust: 'tag-rust', go: 'tag-go', php: 'tag-php', ps: 'tag-ps', html: 'tag-html' };
+            const tool = { id: 'user_' + Date.now(), name, icon, desc, tag: tagMap[tech] || 'tag-js', tagLabel: tech.toUpperCase(), status: 'active' };
+            userTools.push(tool);
+            localStorage.setItem('dkz_user_tools', JSON.stringify(userTools));
+            closeModal();
+            renderHome();
+            renderSidebar();
+            addLog('heal', `✨ Neues Tool registriert: ${name}`);
+        }
+
+        // === SELF-HEALING MONITOR ===
+        function toggleHeal() {
+            document.getElementById('healBody').classList.toggle('open');
+            document.getElementById('healToggle').classList.toggle('open');
+        }
+
+        function renderAgentStatus() {
+            const el = document.getElementById('agentStatus');
+            el.innerHTML = HEAL_AGENTS.map(a => `
+    <div class="heal-agent">
+      <span>${a.icon}</span>
+      <span class="name">${a.name}</span>
+      <span class="status status-${a.status}">${a.status.toUpperCase()}</span>
+    </div>
+  `).join('');
+        }
+
+        function renderHealStats() {
+            const uptime = Math.floor((Date.now() - startTime) / 1000);
+            const h = Math.floor(uptime / 3600), m = Math.floor((uptime % 3600) / 60), s = uptime % 60;
+            document.getElementById('healStats').innerHTML = `
+    <div class="heal-stat"><span class="label">Uptime</span><span class="val">${h}h ${m}m ${s}s</span></div>
+    <div class="heal-stat"><span class="label">Patterns Learned</span><span class="val" style="color:var(--purple)">${patterns}</span></div>
+    <div class="heal-stat"><span class="label">Health Checks</span><span class="val" style="color:var(--green)">${healthChecks}</span></div>
+    <div class="heal-stat"><span class="label">Auto-Recoveries</span><span class="val" style="color:var(--cyan)">${recoveries}</span></div>
+    <div class="heal-stat"><span class="label">Docker Containers</span><span class="val" style="color:var(--cyan)">5 / 5</span></div>
+  `;
+            document.getElementById('healCount').textContent = `${patterns} patterns learned`;
+        }
+
+        let healthChecks = 0, recoveries = 0;
+        const startTime = Date.now();
+
+        function addLog(type, msg) {
+            const log = document.getElementById('healLog');
+            const now = new Date();
+            const time = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `<span class="time">${time}</span><span class="msg">${msg}</span>`;
+            log.prepend(entry);
+            if (log.children.length > 50) log.lastChild.remove();
+        }
+
+        function simulateHealing() {
+            const events = [
+                { type: 'heal', msg: '✅ Health-Check: Alle Module NOMINAL' },
+                { type: 'heal', msg: '♻️ Ralph Loop: Iteration #' + (Math.floor(Math.random() * 999)) + ' abgeschlossen' },
+                { type: 'learn', msg: '🧠 Self-Learning: Neues Pattern erkannt & gespeichert' },
+                { type: 'heal', msg: '🐳 Docker: Container health-check PASSED' },
+                { type: 'warn', msg: '⚠️ Latenz erhöht bei API-Gateway – Auto-Retry aktiv' },
+                { type: 'heal', msg: '📐 BMAD: Artefakt-Validierung bestanden' },
+                { type: 'heal', msg: '🎩 JAMEZ™: Prompt-Qualität OK (Score: 0.' + (85 + Math.floor(Math.random() * 14)) + ')' },
+                { type: 'heal', msg: '🤖 Copilot Suggestion: Code-Fix für Edge-Case angewendet' },
+                { type: 'heal', msg: '📋 OpenSpec: API-Contract validated – 0 violations' },
+                { type: 'heal', msg: '🐇 CodeRabbit: PR #' + (100 + Math.floor(Math.random() * 900)) + ' reviewed – ' + Math.floor(Math.random() * 5) + ' suggestions' },
+                { type: 'learn', msg: '🧰 Spec-Kit: Compliance-Template aktualisiert' },
+                { type: 'heal', msg: '🦀 PicoClaw: Edge-Agent heartbeat OK (' + (2 + Math.floor(Math.random() * 8)) + 'ms latency)' },
+                { type: 'err', msg: '❌ Temporärer Timeout bei Modul ' + ['SEO', 'Chat', 'n8n', 'Data'][Math.floor(Math.random() * 4)] },
+                { type: 'heal', msg: '🔄 Auto-Recovery: Modul neugestartet in ' + (100 + Math.floor(Math.random() * 400)) + 'ms' },
+            ];
+            const e = events[Math.floor(Math.random() * events.length)];
+            addLog(e.type, e.msg);
+            healthChecks++;
+            if (e.type === 'learn') { patterns++; localStorage.setItem('dkz_patterns', patterns.toString()) }
+            if (e.msg.includes('Recovery')) { recoveries++ }
+            renderHealStats();
+        }
+
+        // === INIT ===
+        function init() {
+            renderSidebar();
+            renderHome();
+            renderAgentStatus();
+            renderHealStats();
+            addLog('heal', '🚀 DkZ Mainboard™ HELP YOUR SELF™ System gestartet');
+            addLog('heal', '🐳 Docker-Verbindung hergestellt – 5 Container aktiv');
+            addLog('heal', '📐 BMAD Method initialisiert');
+            addLog('heal', '♻️ Ralph Loop bereit – PRD geladen');
+            addLog('heal', '🎩 JAMEZ™ online — Mistral OCR 0.8 bereit');
+            addLog('heal', '📋 OpenSpec API-Validation aktiv');
+            addLog('heal', '🐇 CodeRabbit PR-Review Engine bereit');
+            addLog('heal', '🧰 Spec-Kit: Compliance-Templates geladen');
+            addLog('heal', '🦀 PicoClaw Edge-Agent connected');
+            // Open heal panel by default
+            document.getElementById('healBody').classList.add('open');
+            document.getElementById('healToggle').classList.add('open');
+            // Periodic healing
+            setInterval(simulateHealing, 8000);
+            setInterval(renderHealStats, 1000);
+        }
+        init();
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    <script src="../shared/dkz-debug.js"></script>
+    <script src="../shared/dkz-guide.js"></script>
+    <script src="../shared/dkz-copilot.js"></script>
+    <script src="../shared/dkz-shortcuts.js"></script>
+    <script src="../shared/dkz-export.js"></script>
+    <script src="../shared/dkz-crosslinks.js"></script>
+    <script src="../shared/dkz-a11y.js"></script>
+    <script src="../shared/dkz-test.js"></script>
+    <script src="../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../shared/sw.js").catch(()=>{});</script>
+    <script src="../shared/dkz-navbar.js"></script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

@@ -1,0 +1,765 @@
+<!-- @DKZ:RULES → Lies REGELWERK.md + ORDNER.ini bevor du hier arbeitest! -->
+<!-- @DKZ:DOCS  → features.json (MOD-TTS) | BLAUPAUSE.md -->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔊 Audio Synth — DkZâ„¢ v2.01.0_01</title>
+    <meta name="description" content="DkZ Text-to-Speech — Fish Audio, Web Speech, Gemma Fließtext, Mistral OCR">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css" onerror="this.remove()">
+    <link rel="manifest" href="../../shared/manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#060608;--bg2:#0e0e12;--card:#141418;--card2:#1c1c22;--card3:#242430;--border:#2a2a36;--border2:#3a3a48;--text:#f0f0f4;--muted:#8888a0;--dim:#55556a;--accent:#ec4899;--accent2:#f472b6;--accent-rgb:236,72,153;--cyan:#06b6d4;--cyan-rgb:6,182,212;--green:#00ff88;--purple:#818cf8;--yellow:#FFB800;--red:#fa1e4e;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+        ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:rgba(236,72,153,.2);border-radius:6px}::-webkit-scrollbar-thumb:hover{background:rgba(236,72,153,.4)}
+
+        /* BG ART */
+        .bg-art{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+        .bg-orb{position:absolute;border-radius:50%;filter:blur(140px);animation:orbFloat 25s ease-in-out infinite}
+        .bg-orb.a{width:600px;height:600px;background:rgba(236,72,153,.06);top:-15%;left:20%;animation-delay:0s}
+        .bg-orb.b{width:400px;height:400px;background:rgba(6,182,212,.05);bottom:5%;right:5%;animation-delay:-10s}
+        .bg-orb.c{width:300px;height:300px;background:rgba(129,140,248,.04);top:40%;right:30%;animation-delay:-18s}
+        @keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(40px,-50px) scale(1.08)}66%{transform:translate(-30px,30px) scale(.95)}}
+        .bg-grid{position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.012) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.012) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+
+        .app{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column}
+
+        /* HEADER */
+        .header{padding:14px 28px;border-bottom:1px solid var(--border);background:rgba(10,10,14,.85);backdrop-filter:blur(24px);display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100}
+        .back-btn{padding:7px 14px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.02);color:var(--muted);font-size:11px;cursor:pointer;transition:all .3s;text-decoration:none;font-family:var(--font)}
+        .back-btn:hover{color:var(--text);border-color:var(--accent);background:rgba(236,72,153,.04)}
+        .header h1{font-size:22px;font-weight:900;letter-spacing:1px}
+        .h1-gradient{background:linear-gradient(135deg,var(--accent),var(--cyan),var(--purple));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:hg 6s ease infinite}
+        @keyframes hg{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+        .header-sub{font-size:9px;color:var(--dim);font-family:var(--mono);letter-spacing:2px;text-transform:uppercase}
+        .hdr-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+        .hdr-btn{padding:7px 14px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.02);color:var(--muted);font-family:var(--font);font-size:11px;cursor:pointer;transition:all .3s;font-weight:600}
+        .hdr-btn:hover{color:var(--text);border-color:var(--accent);background:rgba(236,72,153,.04)}
+        .ver{font-size:9px;color:var(--dim);font-family:var(--mono)}
+
+        /* ENGINE SELECTOR */
+        .engine-bar{display:flex;gap:4px;padding:10px 28px;background:rgba(10,10,14,.6);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+        .engine-tab{padding:8px 18px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--muted);font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer;transition:all .3s;display:flex;align-items:center;gap:6px}
+        .engine-tab:hover{color:var(--text);background:rgba(255,255,255,.03)}
+        .engine-tab.active{background:rgba(var(--accent-rgb),.08);border-color:rgba(var(--accent-rgb),.25);color:var(--accent);box-shadow:0 0 20px rgba(var(--accent-rgb),.08)}
+        .engine-tab .dot{width:6px;height:6px;border-radius:50%;background:var(--dim)}
+        .engine-tab.active .dot{background:var(--green);box-shadow:0 0 8px var(--green)}
+
+        /* MAIN CONTENT */
+        .main{flex:1;display:grid;grid-template-columns:1fr 360px;gap:20px;padding:24px 28px;max-width:1400px;margin:0 auto;width:100%}
+        @media(max-width:960px){.main{grid-template-columns:1fr;gap:16px}}
+
+        /* CARDS */
+        .card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:all .3s}
+        .card:hover{border-color:rgba(var(--accent-rgb),.2)}
+        .card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px}
+        .card-header .icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+        .card-header .icon.pink{background:rgba(var(--accent-rgb),.1);color:var(--accent)}
+        .card-header .icon.cyan{background:rgba(var(--cyan-rgb),.1);color:var(--cyan)}
+        .card-header .icon.purple{background:rgba(129,140,248,.1);color:var(--purple)}
+        .card-body{padding:20px}
+
+        /* TEXTAREA */
+        .text-area{width:100%;min-height:200px;padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:var(--font);font-size:13px;line-height:1.8;resize:vertical;outline:none;transition:border-color .3s}
+        .text-area:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.06)}
+        .text-area::placeholder{color:var(--dim)}
+
+        /* CONTROLS */
+        .ctrl-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+        .ctrl-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px}
+        .ctrl-label{font-size:9px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.8px}
+        .ctrl-select,.ctrl-input{padding:8px 12px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font);font-size:11px;outline:none;transition:all .2s;width:100%}
+        .ctrl-select:focus,.ctrl-input:focus{border-color:var(--accent)}
+        .ctrl-range{-webkit-appearance:none;width:100%;height:4px;border-radius:4px;background:var(--border);outline:none}
+        .ctrl-range::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 0 8px rgba(var(--accent-rgb),.4)}
+        .range-val{font-size:10px;color:var(--accent);font-family:var(--mono);font-weight:700;text-align:right}
+
+        /* BUTTONS */
+        .btn{padding:10px 20px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.02);color:var(--text);font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer;transition:all .3s;display:inline-flex;align-items:center;gap:7px}
+        .btn:hover{border-color:var(--accent);transform:translateY(-1px)}
+        .btn-play{background:linear-gradient(135deg,var(--accent),#d91680);border:none;color:#fff;font-size:13px;font-weight:900;padding:14px 32px;border-radius:14px;box-shadow:0 4px 24px rgba(var(--accent-rgb),.3),0 0 60px rgba(var(--accent-rgb),.08);letter-spacing:1px;text-transform:uppercase}
+        .btn-play:hover{transform:scale(1.03);box-shadow:0 6px 32px rgba(var(--accent-rgb),.4),0 0 80px rgba(var(--accent-rgb),.12)}
+        .btn-play:disabled{opacity:.4;cursor:not-allowed;transform:none}
+        .btn-play.speaking{animation:pulse-glow 1.5s ease infinite}
+        @keyframes pulse-glow{0%,100%{box-shadow:0 4px 24px rgba(var(--accent-rgb),.3)}50%{box-shadow:0 4px 40px rgba(var(--accent-rgb),.6),0 0 60px rgba(var(--accent-rgb),.2)}}
+        .btn-stop{background:linear-gradient(135deg,var(--red),#cc1540);border:none;color:#fff}
+        .btn-sm{padding:6px 12px;font-size:10px;border-radius:8px}
+        .btn-cyan{background:rgba(var(--cyan-rgb),.08);border-color:rgba(var(--cyan-rgb),.2);color:var(--cyan)}
+        .btn-purple{background:rgba(129,140,248,.08);border-color:rgba(129,140,248,.2);color:var(--purple)}
+        .btn-green{background:rgba(0,255,136,.06);border-color:rgba(0,255,136,.15);color:var(--green)}
+
+        /* WAVEFORM */
+        .wave-container{height:64px;display:flex;align-items:flex-end;justify-content:center;gap:2px;padding:12px;background:var(--bg);border-radius:12px;border:1px solid var(--border);margin-bottom:16px;overflow:hidden}
+        .wave-bar{width:3px;background:var(--accent);border-radius:2px;transition:height .15s ease;min-height:3px}
+        .wave-bar.active{animation:waveAnim 1s ease-in-out infinite}
+        @keyframes waveAnim{0%,100%{height:8px;opacity:.4}50%{height:100%;opacity:1}}
+
+        /* STATUS */
+        .status-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:9px;font-weight:700;font-family:var(--mono)}
+        .status-pill.ready{background:rgba(0,255,136,.06);color:var(--green);border:1px solid rgba(0,255,136,.15)}
+        .status-pill.speaking{background:rgba(var(--accent-rgb),.08);color:var(--accent);border:1px solid rgba(var(--accent-rgb),.2);animation:pulse-glow 2s infinite}
+        .status-pill.error{background:rgba(255,60,90,.06);color:var(--red);border:1px solid rgba(255,60,90,.15)}
+        .status-pill.loading{background:rgba(var(--cyan-rgb),.06);color:var(--cyan);border:1px solid rgba(var(--cyan-rgb),.15)}
+
+        /* SIDEBAR */
+        .sidebar{display:flex;flex-direction:column;gap:16px}
+
+        /* HISTORY */
+        .hist-item{padding:10px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .2s;margin-bottom:6px}
+        .hist-item:hover{border-color:rgba(var(--accent-rgb),.3);background:rgba(var(--accent-rgb),.03)}
+        .hist-text{font-size:10px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.5}
+        .hist-meta{font-size:8px;color:var(--dim);font-family:var(--mono);margin-top:4px;display:flex;gap:8px}
+
+        /* OCR DROPZONE */
+        .ocr-zone{border:2px dashed var(--border);border-radius:14px;padding:30px;text-align:center;cursor:pointer;transition:all .3s;background:rgba(var(--cyan-rgb),.01)}
+        .ocr-zone:hover,.ocr-zone.dragover{border-color:var(--cyan);background:rgba(var(--cyan-rgb),.04)}
+        .ocr-zone .icon-big{font-size:2.5rem;margin-bottom:8px;opacity:.5}
+        .ocr-zone p{font-size:11px;color:var(--muted)}
+        .ocr-zone small{font-size:9px;color:var(--dim)}
+        .ocr-preview{max-width:100%;max-height:120px;border-radius:8px;margin-top:10px;border:1px solid var(--border)}
+
+        /* TOAST */
+        .toast{position:fixed;bottom:24px;right:24px;padding:12px 22px;background:var(--green);color:#000;font-size:12px;font-weight:700;border-radius:12px;z-index:300;opacity:0;transform:translateY(20px);transition:all .4s cubic-bezier(.4,0,.2,1);pointer-events:none;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+        .toast.show{opacity:1;transform:translateY(0)}
+
+        /* FLIESSTEXT PREVIEW */
+        .fliess-preview{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:12px;color:var(--muted);line-height:1.8;max-height:150px;overflow-y:auto;margin-top:10px;font-style:italic}
+
+        /* ANIMATIONS */
+        @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+        .fade-up{animation:fadeUp .4s ease both}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .spin{animation:spin 1s linear infinite}
+
+        /* API LINK */
+        .api-link{font-size:9px;color:var(--cyan);text-decoration:none;font-weight:600;transition:color .2s}
+        .api-link:hover{color:var(--accent);text-decoration:underline}
+
+        @media(max-width:768px){.main{padding:16px}.card-body{padding:14px}}
+    </style>
+<script>try{var us=document.createElement('script');us.src='../../shared/dkz-updater.js';us.onerror=function(){};document.head.appendChild(us)}catch(e){}</script>
+</head>
+<body data-dkz-module="text_to_speech" data-dkz-appid="DKZ-MOD-TEX" data-dkz-version="v0.01" data-dkz-title="🔊 Audio Synth —" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-art"><div class="bg-orb a"></div><div class="bg-orb b"></div><div class="bg-orb c"></div></div>
+    <div class="bg-grid"></div>
+    <div class="app">
+        <!-- HEADER -->
+        <div class="header">
+            <a href="../../hub/index.html" class="back-btn">← Hub</a>
+            <div>
+                <h1 class="h1-gradient">🔊 Audio Synth</h1>
+                <div class="header-sub">Text-to-Speech · Fish Audio · Gemma · Mistral OCR</div>
+            </div>
+            <div class="hdr-right">
+                <span class="status-pill ready" id="status-pill">● Bereit</span>
+                <span class="ver">v2.01.0_01</span>
+            </div>
+        </div>
+
+        <!-- ENGINE TABS -->
+        <div class="engine-bar">
+            <button class="engine-tab active" onclick="setEngine('browser')" data-engine="browser"><span class="dot"></span>🌐 Browser TTS</button>
+            <button class="engine-tab" onclick="setEngine('fish')" data-engine="fish"><span class="dot"></span>🐟 Fish Audio</button>
+            <button class="engine-tab" onclick="setEngine('gemma')" data-engine="gemma"><span class="dot"></span>🧠 Gemma Fließtext</button>
+            <button class="engine-tab" onclick="setEngine('ocr')" data-engine="ocr"><span class="dot"></span>📸 Mistral OCR</button>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main">
+            <!-- LEFT: INPUT + CONTROLS -->
+            <div style="display:flex;flex-direction:column;gap:16px">
+
+                <!-- TEXT INPUT -->
+                <div class="card fade-up" id="input-card">
+                    <div class="card-header"><div class="icon pink">✍️</div>Text eingeben</div>
+                    <div class="card-body">
+                        <textarea class="text-area" id="tts-text" placeholder="Text eingeben den du vorlesen lassen willst...&#10;&#10;Tipp: Tab 'Gemma Fließtext' wandelt Stichworte in fließenden Text um.&#10;Tab 'Mistral OCR' liest Text aus Bildern."></textarea>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+                            <span style="font-size:9px;color:var(--dim);font-family:var(--mono)" id="char-count">0 Zeichen</span>
+                            <div style="display:flex;gap:6px">
+                                <button class="btn btn-sm" onclick="document.getElementById('tts-text').value='';updateCharCount()">🗑️ Leeren</button>
+                                <button class="btn btn-sm" onclick="pasteClipboard()">📋 Einfügen</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GEMMA FLIESSTEXT PANEL -->
+                <div class="card fade-up" id="gemma-panel" style="display:none">
+                    <div class="card-header"><div class="icon purple">🧠</div>Gemma Fließtext-Konverter <span class="status-pill loading" style="margin-left:auto;font-size:8px">vLLM Local</span></div>
+                    <div class="card-body">
+                        <p style="font-size:11px;color:var(--muted);margin-bottom:10px">Stichworte, Notizen oder Rohdaten → natürlich klingender Fließtext via Gemma (vLLM Local).</p>
+                        <textarea class="text-area" id="gemma-input" placeholder="Stichworte, Notizen, Tabellen, Code-Kommentare...&#10;&#10;Gemma macht daraus schönen Fließtext zum Vorlesen." style="min-height:100px"></textarea>
+                        <div class="ctrl-row">
+                            <div class="ctrl-group" style="max-width:160px">
+                                <span class="ctrl-label">Stil</span>
+                                <select class="ctrl-select" id="gemma-style">
+                                    <option value="neutral">Neutral / Sachlich</option>
+                                    <option value="podcast">Podcast / Gesprächston</option>
+                                    <option value="academic">Akademisch</option>
+                                    <option value="simple">Einfache Sprache</option>
+                                    <option value="storytelling">Storytelling</option>
+                                </select>
+                            </div>
+                            <div class="ctrl-group" style="max-width:130px">
+                                <span class="ctrl-label">Modell</span>
+                                <select class="ctrl-select" id="gemma-model">
+                                    <option value="gemma2">Gemma 2</option>
+                                    <option value="gemma2:9b">Gemma 2 9B</option>
+                                    <option value="llama3.2">Llama 3.2</option>
+                                    <option value="mistral">Mistral</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-purple" onclick="runGemmaFliess()" id="gemma-btn" style="margin-top:auto">🧠 In Fließtext umwandeln</button>
+                        </div>
+                        <div class="fliess-preview" id="gemma-output" style="display:none"></div>
+                        <div class="ctrl-row" id="gemma-actions" style="display:none">
+                            <button class="btn btn-sm btn-green" onclick="useGemmaText()">✅ Zum Vorlesen übernehmen</button>
+                            <button class="btn btn-sm" onclick="copyToClip(document.getElementById('gemma-output').textContent)">📋 Kopieren</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OCR PANEL -->
+                <div class="card fade-up" id="ocr-panel" style="display:none">
+                    <div class="card-header"><div class="icon cyan">📸</div>Mistral OCR 0.8 <span class="status-pill loading" style="margin-left:auto;font-size:8px">Lokal · vLLM</span></div>
+                    <div class="card-body">
+                        <p style="font-size:11px;color:var(--muted);margin-bottom:10px">Bild hochladen → Text erkennen → Vorlesen. Unterstützt Notizen, Screenshots, Whiteboard-Fotos.</p>
+                        <div class="ocr-zone" id="ocr-dropzone" onclick="document.getElementById('ocr-file').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleOcrDrop(event)">
+                            <div class="icon-big">📸</div>
+                            <p>Bild hierher ziehen oder klicken</p>
+                            <small>PNG, JPG, WebP · max 10MB</small>
+                            <img id="ocr-preview-img" class="ocr-preview" style="display:none">
+                        </div>
+                        <input type="file" id="ocr-file" accept="image/*" style="display:none" onchange="handleOcrFile(this.files[0])">
+                        <div class="ctrl-row">
+                            <div class="ctrl-group" style="max-width:200px">
+                                <span class="ctrl-label">Mistral Modell</span>
+                                <select class="ctrl-select" id="ocr-model">
+                                    <option value="llava">LLaVA (vLLM)</option>
+                                    <option value="bakllava">BakLLaVA (vLLM)</option>
+                                    <option value="mistral-api">Mistral OCR API</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-cyan" onclick="runOcr()" id="ocr-btn" style="margin-top:auto">📸 Text erkennen</button>
+                        </div>
+                        <div class="fliess-preview" id="ocr-output" style="display:none"></div>
+                        <div class="ctrl-row" id="ocr-actions" style="display:none">
+                            <button class="btn btn-sm btn-green" onclick="useOcrText()">✅ Zum Vorlesen übernehmen</button>
+                            <button class="btn btn-sm btn-purple" onclick="ocrToGemma()">🧠 Erst als Fließtext</button>
+                            <button class="btn btn-sm" onclick="copyToClip(document.getElementById('ocr-output').textContent)">📋 Kopieren</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- WAVEFORM + PLAY -->
+                <div class="card fade-up">
+                    <div class="card-header"><div class="icon pink">🎵</div>Player<span style="margin-left:auto;font-size:9px;color:var(--dim);font-family:var(--mono)" id="engine-label">Browser Web Speech</span></div>
+                    <div class="card-body">
+                        <div class="wave-container" id="waveform"></div>
+                        <div style="display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap">
+                            <button class="btn-play" id="play-btn" onclick="speak()">▶ Vorlesen</button>
+                            <button class="btn btn-stop" id="stop-btn" onclick="stopSpeaking()" style="display:none">⏹ Stop</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: SIDEBAR -->
+            <div class="sidebar">
+                <!-- VOICE CONTROLS -->
+                <div class="card fade-up" style="animation-delay:.1s">
+                    <div class="card-header"><div class="icon pink">🎤</div>Stimme & Einstellungen</div>
+                    <div class="card-body">
+                        <div class="ctrl-group" style="margin-bottom:12px" id="voice-section">
+                            <span class="ctrl-label">Stimme</span>
+                            <select class="ctrl-select" id="voice-select"><option>Wird geladen...</option></select>
+                        </div>
+                        <div class="ctrl-group" style="margin-bottom:12px">
+                            <div style="display:flex;justify-content:space-between"><span class="ctrl-label">Geschwindigkeit</span><span class="range-val" id="rate-val">1.0x</span></div>
+                            <input type="range" class="ctrl-range" id="rate" min="0.3" max="3" step="0.1" value="1" oninput="document.getElementById('rate-val').textContent=this.value+'x'">
+                        </div>
+                        <div class="ctrl-group" style="margin-bottom:12px">
+                            <div style="display:flex;justify-content:space-between"><span class="ctrl-label">Tonhöhe</span><span class="range-val" id="pitch-val">1.0</span></div>
+                            <input type="range" class="ctrl-range" id="pitch" min="0.1" max="2" step="0.1" value="1" oninput="document.getElementById('pitch-val').textContent=this.value">
+                        </div>
+                        <div class="ctrl-group">
+                            <div style="display:flex;justify-content:space-between"><span class="ctrl-label">Lautstärke</span><span class="range-val" id="vol-val">100%</span></div>
+                            <input type="range" class="ctrl-range" id="volume" min="0" max="1" step="0.05" value="1" oninput="document.getElementById('vol-val').textContent=Math.round(this.value*100)+'%'">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FISH AUDIO SETTINGS -->
+                <div class="card fade-up" id="fish-settings" style="animation-delay:.15s;display:none">
+                    <div class="card-header"><div class="icon cyan">🐟</div>Fish Audio API</div>
+                    <div class="card-body">
+                        <div class="ctrl-group" style="margin-bottom:10px">
+                            <span class="ctrl-label">API Key <a href="https://fish.audio/api" target="_blank" class="api-link">🔗 Holen</a></span>
+                            <input type="password" class="ctrl-input" id="fish-key" placeholder="sk-..." oninput="saveFishKey()">
+                        </div>
+                        <div class="ctrl-group" style="margin-bottom:10px">
+                            <span class="ctrl-label">Voice Model ID</span>
+                            <input class="ctrl-input" id="fish-voice" placeholder="Model ID (optional)" value="">
+                        </div>
+                        <div class="ctrl-group">
+                            <span class="ctrl-label">Format</span>
+                            <select class="ctrl-select" id="fish-format">
+                                <option value="mp3">MP3</option>
+                                <option value="wav">WAV</option>
+                                <option value="opus">OPUS</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HISTORY -->
+                <div class="card fade-up" style="animation-delay:.2s">
+                    <div class="card-header"><div class="icon purple">📜</div>Verlauf <span style="margin-left:auto;font-size:9px;color:var(--dim)" id="hist-count">0</span></div>
+                    <div class="card-body" style="max-height:240px;overflow-y:auto;padding:12px">
+                        <div id="history-list"><div style="text-align:center;padding:20px;color:var(--dim);font-size:11px">Noch keine Einträge</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+    /* ═══════════════════════════════════════════════
+       DkZ Audio Synth v2 — Vanilla JS
+       Engines: Web Speech, Fish Audio, Gemma, OCR
+       ═══════════════════════════════════════════════ */
+    const VERSION = 'v2.01.0_01';
+    let currentEngine = 'browser';
+    let isSpeaking = false;
+    let fishAudioEl = null;
+    let waveAnimId = null;
+    const VLLM_URL = 'http://srv1298466.hstgr.cloud:8080';
+
+    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
+    function updateCharCount() { const t = document.getElementById('tts-text'); document.getElementById('char-count').textContent = (t.value||'').length + ' Zeichen'; }
+    document.getElementById('tts-text').addEventListener('input', updateCharCount);
+
+    // ═══ ENGINE SWITCHING ═══
+    function setEngine(eng) {
+        currentEngine = eng;
+        document.querySelectorAll('.engine-tab').forEach(t => t.classList.toggle('active', t.dataset.engine === eng));
+        document.getElementById('gemma-panel').style.display = eng === 'gemma' ? '' : 'none';
+        document.getElementById('ocr-panel').style.display = eng === 'ocr' ? '' : 'none';
+        document.getElementById('fish-settings').style.display = eng === 'fish' ? '' : 'none';
+        document.getElementById('voice-section').style.display = (eng === 'fish') ? 'none' : '';
+        const labels = { browser: 'Browser Web Speech', fish: 'Fish Audio API', gemma: 'Gemma + Browser TTS', ocr: 'Mistral OCR + TTS' };
+        document.getElementById('engine-label').textContent = labels[eng] || eng;
+    }
+
+    // ═══ WEB SPEECH API ═══
+    const synth = window.speechSynthesis;
+    let voices = [];
+
+    function loadVoices() {
+        voices = synth.getVoices();
+        const sel = document.getElementById('voice-select');
+        if (voices.length === 0) { sel.innerHTML = '<option>Keine Stimmen verfügbar</option>'; return; }
+        // Sort: German first, then by name
+        voices.sort((a, b) => {
+            if (a.lang.startsWith('de') && !b.lang.startsWith('de')) return -1;
+            if (!a.lang.startsWith('de') && b.lang.startsWith('de')) return 1;
+            return a.name.localeCompare(b.name);
+        });
+        sel.innerHTML = voices.map((v, i) => {
+            const flag = v.lang.startsWith('de') ? '🇩🇪' : v.lang.startsWith('en') ? '🇬🇧' : '🌐';
+            return `<option value="${i}">${flag} ${v.name} (${v.lang})</option>`;
+        }).join('');
+    }
+    synth.onvoiceschanged = loadVoices;
+    loadVoices();
+
+    // ═══ WAVEFORM ═══
+    function initWaveform() {
+        const c = document.getElementById('waveform');
+        c.innerHTML = '';
+        for (let i = 0; i < 48; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'wave-bar';
+            bar.style.height = '3px';
+            bar.style.animationDelay = (i * 0.04) + 's';
+            c.appendChild(bar);
+        }
+    }
+    initWaveform();
+
+    function animateWave(active) {
+        const bars = document.querySelectorAll('.wave-bar');
+        bars.forEach(b => {
+            if (active) {
+                b.classList.add('active');
+            } else {
+                b.classList.remove('active');
+                b.style.height = '3px';
+            }
+        });
+    }
+
+    // ═══ SPEAK ═══
+    function speak() {
+        const text = document.getElementById('tts-text').value.trim();
+        if (!text) { toast('⚠️ Bitte Text eingeben'); return; }
+
+        if (currentEngine === 'fish') { speakFish(text); return; }
+
+        speakBrowser(text);
+    }
+
+    // ═══ BROWSER TTS (Fallback-fähig) ═══
+    function speakBrowser(text) {
+        synth.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        const vi = parseInt(document.getElementById('voice-select').value);
+        if (voices[vi]) utter.voice = voices[vi];
+        utter.rate = parseFloat(document.getElementById('rate').value);
+        utter.pitch = parseFloat(document.getElementById('pitch').value);
+        utter.volume = parseFloat(document.getElementById('volume').value);
+
+        utter.onstart = () => {
+            isSpeaking = true;
+            updateUI('speaking');
+            animateWave(true);
+        };
+        utter.onend = () => {
+            isSpeaking = false;
+            updateUI('ready');
+            animateWave(false);
+            addHistory(text, 'Browser TTS');
+        };
+        utter.onerror = (e) => {
+            isSpeaking = false;
+            updateUI('error');
+            animateWave(false);
+            toast('❌ Fehler: ' + e.error);
+        };
+
+        synth.speak(utter);
+    }
+
+    function stopSpeaking() {
+        synth.cancel();
+        if (fishAudioEl) { fishAudioEl.pause(); fishAudioEl = null; }
+        isSpeaking = false;
+        updateUI('ready');
+        animateWave(false);
+    }
+
+    // ═══ FISH AUDIO API (3s Timeout → Browser TTS Fallback) ═══
+    async function speakFish(text) {
+        const key = document.getElementById('fish-key').value.trim();
+        if (!key) {
+            toast('ℹ️ Kein Fish Audio Key — Browser TTS aktiv');
+            speakBrowser(text);
+            return;
+        }
+
+        updateUI('loading');
+        const voiceId = document.getElementById('fish-voice').value.trim();
+        const format = document.getElementById('fish-format').value;
+
+        // 3-Sekunden-Timeout: Wenn Fish Audio zu langsam → Browser TTS
+        const controller = new AbortController();
+        let fallbackTriggered = false;
+        const timeout = setTimeout(() => {
+            fallbackTriggered = true;
+            controller.abort();
+            toast('⏳ Fish Audio zu langsam (>3s) — wechsle zu Browser TTS');
+            speakBrowser(text);
+        }, 3000);
+
+        try {
+            const body = { text, format };
+            if (voiceId) body.reference_id = voiceId;
+
+            const res = await fetch('https://api.fish.audio/v1/tts', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+                signal: controller.signal
+            });
+            clearTimeout(timeout);
+
+            if (!res.ok) throw new Error('HTTP ' + res.status + ' — ' + (await res.text()));
+
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            fishAudioEl = new Audio(url);
+            fishAudioEl.volume = parseFloat(document.getElementById('volume').value);
+
+            fishAudioEl.onplay = () => { isSpeaking = true; updateUI('speaking'); animateWave(true); };
+            fishAudioEl.onended = () => { isSpeaking = false; updateUI('ready'); animateWave(false); addHistory(text, 'Fish Audio'); URL.revokeObjectURL(url); };
+            fishAudioEl.onerror = () => { updateUI('error'); animateWave(false); toast('❌ Audio-Wiedergabe fehlgeschlagen'); };
+
+            fishAudioEl.play();
+        } catch (e) {
+            clearTimeout(timeout);
+            if (e.name === 'AbortError' && fallbackTriggered) return; // Timeout bereits behandelt
+            toast('❌ Fish Audio Fehler — Fallback auf Browser TTS');
+            speakBrowser(text);
+        }
+    }
+
+    function saveFishKey() { localStorage.setItem('dkz-fish-key', document.getElementById('fish-key').value); }
+    function loadFishKey() { const k = localStorage.getItem('dkz-fish-key'); if (k) document.getElementById('fish-key').value = k; }
+
+    // ═══ GEMMA FLIESSTEXT ═══
+    async function runGemmaFliess() {
+        const input = document.getElementById('gemma-input').value.trim();
+        if (!input) { toast('⚠️ Text / Stichworte eingeben'); return; }
+
+        const style = document.getElementById('gemma-style').value;
+        const model = document.getElementById('gemma-model').value;
+        const btn = document.getElementById('gemma-btn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Gemma denkt...';
+        updateUI('loading');
+
+        const stylePrompts = {
+            neutral: 'Schreibe einen sachlichen, gut lesbaren Fließtext.',
+            podcast: 'Schreibe einen lebendigen Text im Podcast-Gesprächston, als würdest du einem Freund erzählen.',
+            academic: 'Schreibe einen akademisch-formellen Text mit präziser Sprache.',
+            simple: 'Schreibe in einfacher Sprache, kurze Sätze, leicht verständlich für jeden.',
+            storytelling: 'Schreibe als fesselnde Geschichte mit bildhafter Sprache.'
+        };
+
+        const prompt = `${stylePrompts[style] || stylePrompts.neutral}
+
+Verwandle die folgenden Notizen/Stichworte in einen natürlich klingenden, zusammenhängenden Fließtext der sich perfekt zum Vorlesen eignet. Behalte alle wichtigen Informationen bei. Antworte NUR mit dem fertigen Text, keine Erklärungen:
+
+${input}`;
+
+        try {
+            const res = await fetch(VLLM_URL + '/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: 'gemma4-e4b', messages: [{ role: 'user', content: prompt }], max_tokens: 2000, stream: false })
+            });
+            if (!res.ok) throw new Error('vLLM nicht erreichbar (HTTP ' + res.status + ')');
+            const data = await res.json();
+            const text = data.choices?.[0]?.message?.content || '(Keine Antwort)';
+
+            document.getElementById('gemma-output').textContent = text;
+            document.getElementById('gemma-output').style.display = '';
+            document.getElementById('gemma-actions').style.display = '';
+            updateUI('ready');
+            toast('🧠 Fließtext generiert!');
+        } catch (e) {
+            updateUI('error');
+            toast('❌ ' + e.message + ' — Ist vLLM gestartet?');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '🧠 In Fließtext umwandeln';
+        }
+    }
+
+    function useGemmaText() {
+        const text = document.getElementById('gemma-output').textContent;
+        document.getElementById('tts-text').value = text;
+        updateCharCount();
+        setEngine('browser');
+        toast('✅ Text übernommen — jetzt vorlesen!');
+    }
+
+    // ═══ MISTRAL OCR ═══
+    let ocrImageData = null;
+
+    function handleOcrDrop(e) {
+        e.preventDefault();
+        e.currentTarget.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file) handleOcrFile(file);
+    }
+
+    function handleOcrFile(file) {
+        if (!file || !file.type.startsWith('image/')) { toast('⚠️ Nur Bilddateien'); return; }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            ocrImageData = e.target.result;
+            const img = document.getElementById('ocr-preview-img');
+            img.src = ocrImageData;
+            img.style.display = '';
+            toast('📸 Bild geladen');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async function runOcr() {
+        if (!ocrImageData) { toast('⚠️ Zuerst ein Bild hochladen'); return; }
+
+        const model = document.getElementById('ocr-model').value;
+        const btn = document.getElementById('ocr-btn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Erkennung...';
+        updateUI('loading');
+
+        const base64 = ocrImageData.split(',')[1];
+
+        try {
+            if (model === 'mistral-api') {
+                // Mistral API OCR
+                const key = localStorage.getItem('dkz-copilot-key-mistral') || '';
+                if (!key) throw new Error('Mistral API Key in Copilot Settings setzen');
+                const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: 'mistral-small-latest',
+                        messages: [{ role: 'user', content: [
+                            { type: 'text', text: 'Lies den gesamten Text in diesem Bild und gib ihn exakt wieder. Nur den erkannten Text, keine Erklärungen.' },
+                            { type: 'image_url', image_url: { url: ocrImageData } }
+                        ]}]
+                    })
+                });
+                if (!res.ok) throw new Error('Mistral API HTTP ' + res.status);
+                const data = await res.json();
+                showOcrResult(data.choices?.[0]?.message?.content || '(Kein Text erkannt)');
+            } else {
+                // vLLM Vision (LLaVA / BakLLaVA)
+                const res = await fetch(VLLM_URL + '/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: model,
+                        messages: [{ role: 'user', content: 'Lies den gesamten Text in diesem Bild und gib ihn exakt wieder. Antworte nur mit dem erkannten Text.' }],
+                        max_tokens: 2000
+                    })
+                });
+                if (!res.ok) throw new Error('vLLM nicht erreichbar');
+                const data = await res.json();
+                showOcrResult(data.choices?.[0]?.message?.content || '(Kein Text erkannt)');
+            }
+        } catch (e) {
+            updateUI('error');
+            toast('❌ OCR: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '📸 Text erkennen';
+        }
+    }
+
+    function showOcrResult(text) {
+        document.getElementById('ocr-output').textContent = text;
+        document.getElementById('ocr-output').style.display = '';
+        document.getElementById('ocr-actions').style.display = '';
+        updateUI('ready');
+        toast('📸 Text erkannt!');
+    }
+
+    function useOcrText() {
+        document.getElementById('tts-text').value = document.getElementById('ocr-output').textContent;
+        updateCharCount();
+        setEngine('browser');
+        toast('✅ Text übernommen');
+    }
+
+    function ocrToGemma() {
+        document.getElementById('gemma-input').value = document.getElementById('ocr-output').textContent;
+        setEngine('gemma');
+        toast('🧠 Text in Gemma übernommen — jetzt Fließtext generieren!');
+    }
+
+    // ═══ UI STATE ═══
+    function updateUI(state) {
+        const pill = document.getElementById('status-pill');
+        const playBtn = document.getElementById('play-btn');
+        const stopBtn = document.getElementById('stop-btn');
+
+        pill.className = 'status-pill ' + state;
+        const labels = { ready: '● Bereit', speaking: '🔊 Spricht...', error: '⚠ Fehler', loading: '⏳ Laden...' };
+        pill.textContent = labels[state] || state;
+
+        playBtn.style.display = state === 'speaking' ? 'none' : '';
+        stopBtn.style.display = state === 'speaking' ? '' : 'none';
+        playBtn.classList.toggle('speaking', state === 'speaking');
+    }
+
+    // ═══ HISTORY ═══
+    function addHistory(text, engine) {
+        let hist = [];
+        try { hist = JSON.parse(localStorage.getItem('dkz-tts-history') || '[]'); } catch {}
+        hist.unshift({ text: text.substring(0, 200), engine, time: new Date().toISOString() });
+        if (hist.length > 30) hist = hist.slice(0, 30);
+        localStorage.setItem('dkz-tts-history', JSON.stringify(hist));
+        renderHistory();
+    }
+
+    function renderHistory() {
+        let hist = [];
+        try { hist = JSON.parse(localStorage.getItem('dkz-tts-history') || '[]'); } catch {}
+        document.getElementById('hist-count').textContent = hist.length;
+        if (hist.length === 0) {
+            document.getElementById('history-list').innerHTML = '<div style="text-align:center;padding:20px;color:var(--dim);font-size:11px">Noch keine Einträge</div>';
+            return;
+        }
+        document.getElementById('history-list').innerHTML = hist.map(h => `
+            <div class="hist-item" onclick="loadHistory('${esc(h.text.replace(/'/g,"\\'"))}')">
+                <div class="hist-text">${esc(h.text)}</div>
+                <div class="hist-meta"><span>${h.engine}</span><span>${new Date(h.time).toLocaleString('de-DE')}</span></div>
+            </div>`).join('');
+    }
+
+    function loadHistory(text) {
+        document.getElementById('tts-text').value = text;
+        updateCharCount();
+        toast('📜 Text geladen');
+    }
+
+    // ═══ UTILITY ═══
+    async function pasteClipboard() {
+        try {
+            const text = await navigator.clipboard.readText();
+            document.getElementById('tts-text').value = text;
+            updateCharCount();
+            toast('📋 Eingefügt');
+        } catch { toast('❌ Clipboard nicht verfügbar'); }
+    }
+
+    function copyToClip(text) {
+        navigator.clipboard.writeText(text).then(() => toast('📋 Kopiert!'));
+    }
+
+    // ═══ INIT ═══
+    loadFishKey();
+    renderHistory();
+    updateCharCount();
+    </script>
+
+    <!-- Shared Scripts — Portable: lädt optional, Modul läuft auch ohne -->
+    <script>
+    (function(){
+        var base = '../../shared/';
+        var scripts = ['dkz-eventbus','dkz-console','dkz-health','dkz-shortcuts','dkz-auth','dkz-james','dkz-memory','dkz-compaction','dkz-iceberg','dkz-prompt-score','dkz-builder-bridge','dkz-debug','dkz-analyser','dkz-guide','dkz-copilot','dkz-export','dkz-crosslinks','dkz-a11y','dkz-test','dkz-puter'];
+        function loadNext(i){
+            if(i>=scripts.length){
+                var nb=document.createElement('script');nb.src=base+'dkz-navbar.js';nb.onerror=function(){};document.body.appendChild(nb);
+                return;
+            }
+            var s=document.createElement('script');s.src=base+scripts[i]+'.js';
+            s.onload=s.onerror=function(){loadNext(i+1)};
+            document.body.appendChild(s);
+        }
+        loadNext(0);
+        if('serviceWorker' in navigator)navigator.serviceWorker.register(base+'sw.js').catch(function(){});
+    })();
+    </script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#141418;border:1px solid #2a2a36;border-radius:18px;padding:2rem;max-width:520px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.3rem;font-weight:900">🔊 Audio Synth</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:8px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#8888a0;line-height:1.9">Premium Text-to-Speech mit 4 Engines:<br><b style='color:#ec4899'>🌐 Browser TTS</b> — Offline, 10+ Stimmen<br><b style='color:#06b6d4'>🐟 Fish Audio</b> — KI-Stimmen, Voice Cloning<br><b style='color:#818cf8'>🧠 Gemma</b> — Stichworte → Fließtext (Ollama)<br><b style='color:#FFB800'>📸 Mistral OCR</b> — Bilder → Text → Sprache</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#141418;border:1px solid #2a2a36;border-radius:18px;padding:2rem;max-width:440px;text-align:center"><div style="font-size:1.3rem;font-weight:900;margin-bottom:.75rem">🔊 Audio Synth v2</div><p style="font-size:.875rem;color:#8888a0;line-height:1.9;margin-bottom:1rem">4 TTS-Engines: Browser Speech, Fish Audio, Gemma Fließtext, Mistral OCR.<br>Texte vorlesen, Bilder erkennen, Stichworte in Fließtext umwandeln.</p><button style="width:100%;padding:.75rem;border:none;border-radius:10px;background:linear-gradient(135deg,#ec4899,#d91680);color:#fff;font-weight:800;cursor:pointer;font-family:inherit;font-size:.9rem;letter-spacing:.5px" onclick="closeOnboarding()">Los geht's! 🎵</button><div style="font-size:.7rem;color:#55556a;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-text_to_speech-onboarded','1')}if(!localStorage.getItem('dkz-text_to_speech-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a36;border-radius:8px;background:rgba(255,255,255,.03);color:#f6f6f7;font-size:1.1rem;cursor:pointer;transition:all .3s';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+<!-- — DEVKiTZ 2026 — All Rights Reserved -->
+</html>

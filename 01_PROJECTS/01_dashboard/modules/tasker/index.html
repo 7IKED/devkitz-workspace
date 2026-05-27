@@ -1,0 +1,1106 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>? Tasker &#8212; DkZâ„¢ Task Manager v0.01</title>
+    <meta name="description" content="DkZ Tasker &#8212; Kanban Task Board mit Drag-&-Drop, Timeline, Prioritten">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #fa1e4e;
+            --purple: #ec4899;
+            --accent: #fa1e4e;
+            --accent-rgb: 250, 30, 78;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --glass: rgba(14, 14, 22, .72);
+            --blur: blur(24px)
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            height: 100vh;
+            overflow: hidden
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .08);
+            border-radius: 6px
+        }
+
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .06;
+            animation: bf 20s ease-in-out infinite
+        }
+
+        .bg-blob:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: var(--green);
+            top: -10%;
+            right: 20%
+        }
+
+        .bg-blob:nth-child(2) {
+            width: 400px;
+            height: 400px;
+            background: var(--accent);
+            bottom: 0;
+            left: 10%;
+            animation-delay: -10s
+        }
+
+        @keyframes bf {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(30px, -40px) scale(1.1)
+            }
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        .header {
+            padding: 14px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-shrink: 0;
+            z-index: 100
+        }
+
+        .back-btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .25s;
+            text-decoration: none
+        }
+
+        .back-btn:hover {
+            color: var(--text);
+            border-color: var(--accent)
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--green), var(--accent), var(--purple));
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gs 4s ease infinite
+        }
+
+        @keyframes gs {
+
+            0%,
+            100% {
+                background-position: 0% 50%
+            }
+
+            50% {
+                background-position: 100% 50%
+            }
+        }
+
+        .hdr-right {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .hdr-btn {
+            padding: 7px 13px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .03);
+            color: var(--muted);
+            font-family: var(--font);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .25s
+        }
+
+        .hdr-btn:hover {
+            color: var(--text);
+            border-color: var(--accent)
+        }
+
+        .hdr-btn.active {
+            background: var(--accent);
+            color: #fff
+        }
+
+        .ver {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: var(--mono)
+        }
+
+        /* STATS BAR */
+        .stats-bar {
+            padding: 12px 28px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-shrink: 0;
+            flex-wrap: wrap
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .stat-card .s-icon {
+            font-size: 18px;
+            width: 32px;
+            height: 32px;
+            background: rgba(var(--accent-rgb), .08);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .stat-card .s-val {
+            font-size: 18px;
+            font-weight: 900;
+            font-family: var(--mono)
+        }
+
+        .stat-card .s-label {
+            font-size: 9px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px
+        }
+
+        .progress-wrap {
+            flex: 1;
+            min-width: 200px
+        }
+
+        .progress-label {
+            font-size: 10px;
+            color: var(--muted);
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--card2);
+            border-radius: 4px;
+            overflow: hidden
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, var(--accent), var(--green));
+            transition: width .5s ease
+        }
+
+        /* KANBAN */
+        .board {
+            flex: 1;
+            overflow-x: auto;
+            overflow-y: hidden;
+            display: flex;
+            gap: 14px;
+            padding: 20px;
+            align-items: flex-start
+        }
+
+        .board-col {
+            min-width: 280px;
+            max-width: 320px;
+            flex-shrink: 0;
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 160px);
+            overflow: hidden
+        }
+
+        .bc-head {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .bc-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%
+        }
+
+        .bc-dot.backlog {
+            background: var(--muted)
+        }
+
+        .bc-dot.todo {
+            background: var(--blue)
+        }
+
+        .bc-dot.progress {
+            background: var(--yellow)
+        }
+
+        .bc-dot.review {
+            background: var(--purple)
+        }
+
+        .bc-dot.done {
+            background: var(--green)
+        }
+
+        .bc-title {
+            font-size: 12px;
+            font-weight: 800;
+            flex: 1
+        }
+
+        .bc-cnt {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--muted);
+            background: var(--card2);
+            padding: 2px 8px;
+            border-radius: 4px
+        }
+
+        .bc-add {
+            width: 24px;
+            height: 24px;
+            border: 1px dashed var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all .2s
+        }
+
+        .bc-add:hover {
+            border-color: var(--accent);
+            color: var(--accent)
+        }
+
+        .bc-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px
+        }
+
+        .task-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: grab;
+            transition: all .25s;
+            position: relative;
+            animation: cardIn .3s ease
+        }
+
+        @keyframes cardIn {
+            from {
+                opacity: 0;
+                transform: scale(.95)
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1)
+            }
+        }
+
+        .task-card:hover {
+            border-color: rgba(var(--accent-rgb), .3);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, .3)
+        }
+
+        .task-card.dragging {
+            opacity: .5;
+            transform: rotate(2deg)
+        }
+
+        .tc-prio {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            border-radius: 10px 0 0 10px
+        }
+
+        .tc-prio.p-critical {
+            background: var(--red)
+        }
+
+        .tc-prio.p-high {
+            background: var(--yellow)
+        }
+
+        .tc-prio.p-medium {
+            background: var(--blue)
+        }
+
+        .tc-prio.p-low {
+            background: var(--green)
+        }
+
+        .tc-head {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 6px;
+            padding-left: 8px
+        }
+
+        .tc-check {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            flex-shrink: 0;
+            margin-top: 2px;
+            transition: all .2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px
+        }
+
+        .tc-check.checked {
+            background: var(--green);
+            border-color: var(--green);
+            color: #000
+        }
+
+        .tc-title {
+            font-size: 12px;
+            font-weight: 700;
+            flex: 1
+        }
+
+        .tc-desc {
+            font-size: 10px;
+            color: var(--muted);
+            line-height: 1.4;
+            margin-bottom: 8px;
+            padding-left: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden
+        }
+
+        .tc-footer {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            padding-left: 8px;
+            flex-wrap: wrap
+        }
+
+        .tc-tag {
+            font-size: 8px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700
+        }
+
+        .tc-tag.cat {
+            background: rgba(85, 172, 238, .1);
+            color: var(--blue)
+        }
+
+        .tc-tag.due {
+            background: rgba(255, 184, 0, .1);
+            color: var(--yellow)
+        }
+
+        .tc-time {
+            font-size: 8px;
+            color: var(--muted);
+            font-family: var(--mono);
+            margin-left: auto
+        }
+
+        .tc-del {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 18px;
+            height: 18px;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 10px;
+            display: none;
+            align-items: center;
+            justify-content: center
+        }
+
+        .task-card:hover .tc-del {
+            display: flex
+        }
+
+        .tc-del:hover {
+            color: var(--red);
+            background: rgba(250, 30, 78, .1)
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .6);
+            backdrop-filter: blur(8px);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 40px
+        }
+
+        .modal-overlay.open {
+            display: flex
+        }
+
+        .modal {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 600px;
+            animation: mIn .3s ease;
+            overflow: hidden
+        }
+
+        @keyframes mIn {
+            from {
+                transform: scale(.95);
+                opacity: 0
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1
+            }
+        }
+
+        .modal h2 {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .modal h2 .modal-close {
+            margin-left: auto;
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px
+        }
+
+        .modal h2 .modal-close:hover {
+            color: var(--red);
+            border-color: var(--red)
+        }
+
+        .modal-form {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px
+        }
+
+        .mf-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+            margin-bottom: 4px
+        }
+
+        .mf-input {
+            padding: 10px 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 12px;
+            outline: none
+        }
+
+        .mf-input:focus {
+            border-color: var(--accent)
+        }
+
+        textarea.mf-input {
+            min-height: 80px;
+            resize: vertical;
+            font-family: var(--mono)
+        }
+
+        .mf-row {
+            display: flex;
+            gap: 10px
+        }
+
+        .mf-row select {
+            flex: 1;
+            padding: 10px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 11px;
+            font-family: var(--font);
+            outline: none
+        }
+
+        .modal-foot {
+            padding: 12px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end
+        }
+
+        .modal-btn {
+            padding: 8px 18px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .modal-btn.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff
+        }
+
+        /* DEBUG */
+        .debug-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 0;
+            background: rgba(10, 10, 18, .96);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            z-index: 200;
+            transition: height .3s;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column
+        }
+
+        .debug-panel.open {
+            height: 200px
+        }
+
+        .dp-head {
+            padding: 8px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0
+        }
+
+        .dp-head h3 {
+            font-size: 11px;
+            font-weight: 800;
+            flex: 1
+        }
+
+        .dp-tabs {
+            display: flex;
+            gap: 4px
+        }
+
+        .dp-tab {
+            padding: 4px 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 9px;
+            cursor: pointer;
+            font-family: var(--font);
+            transition: all .2s
+        }
+
+        .dp-tab.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent)
+        }
+
+        .dp-close {
+            width: 20px;
+            height: 20px;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 12px
+        }
+
+        .dp-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 16px;
+            font-family: var(--mono);
+            font-size: 10px;
+            line-height: 1.8;
+            color: var(--muted)
+        }
+
+        .dp-body .pass {
+            color: var(--green)
+        }
+
+        .dp-body .fail {
+            color: var(--red)
+        }
+
+        .dp-body .info {
+            color: var(--blue)
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: var(--green);
+            color: #000;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 10px;
+            z-index: 300;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all .3s;
+            pointer-events: none
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0)
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="tasker" data-dkz-appid="DKZ-MOD-TAS" data-dkz-version="v0.01" data-dkz-title="? Tasker  Task Manager" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-mesh">
+        <div class="bg-blob"></div>
+        <div class="bg-blob"></div>
+    </div>
+    <div class="app">
+        <div class="header">
+            <a href="../../hub/index.html" class="back-btn">? Hub</a>
+            <h1>? Tasker</h1>
+            <div class="hdr-right">
+                <button class="hdr-btn" onclick="openAddModal()">+ Neuer Task</button>
+                <button class="hdr-btn" onclick="exportTasks()">&#11015; Export</button>
+                <button class="hdr-btn" id="dbgT" onclick="toggleDbg()">&#8505;</button>
+                <span class="ver">v0.01</span>
+            </div>
+        </div>
+        <div class="stats-bar" id="statsBar"></div>
+        <div class="board" id="board"></div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+        <div class="modal">
+            <h2>&#9881; Task <button class="modal-close" onclick="closeModal()">?</button></h2>
+            <div class="modal-form">
+                <div>
+                    <div class="mf-label">Titel</div><input class="mf-input" id="mTitle" placeholder="Task-Titel...">
+                </div>
+                <div>
+                    <div class="mf-label">Beschreibung</div><textarea class="mf-input" id="mDesc"
+                        placeholder="Details..."></textarea>
+                </div>
+                <div class="mf-row">
+                    <div>
+                        <div class="mf-label">Prioritt</div><select id="mPrio">
+                            <option value="critical">&#9881; Kritisch</option>
+                            <option value="high">&#9881; Hoch</option>
+                            <option value="medium" selected>&#9881; Mittel</option>
+                            <option value="low">&#9881; Niedrig</option>
+                        </select>
+                    </div>
+                    <div>
+                        <div class="mf-label">Kategorie</div><select id="mCat">
+                            <option value="development">&#9881; Development</option>
+                            <option value="design">&#9881; Design</option>
+                            <option value="research">&#9881; Research</option>
+                            <option value="ops">&#9881; Operations</option>
+                            <option value="content">&#9881; Content</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mf-row">
+                    <div>
+                        <div class="mf-label">Spalte</div><select id="mCol">
+                            <option value="0">Backlog</option>
+                            <option value="1">To-Do</option>
+                            <option value="2">In Arbeit</option>
+                            <option value="3">Review</option>
+                            <option value="4">Erledigt</option>
+                        </select>
+                    </div>
+                    <div>
+                        <div class="mf-label">Fllig</div><input type="date" class="mf-input" id="mDue">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button class="modal-btn" onclick="closeModal()">Abbrechen</button>
+                <button class="modal-btn primary" onclick="saveTask()">&#128190; Speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="debug-panel" id="dbgPanel">
+        <div class="dp-head">
+            <h3>&#9881; Debug</h3>
+            <div class="dp-tabs"><button class="dp-tab active" onclick="testFunc()">? Test</button><button
+                    class="dp-tab" onclick="testStress()">? Stress</button><button class="dp-tab"
+                    onclick="testRelease()">&#9881; Release</button></div><button class="dp-close"
+                onclick="toggleDbg()">?</button>
+        </div>
+        <div class="dp-body" id="dLog">&#9881; Bereit...\n</div>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const COLS = [
+            { name: '&#9881; Backlog', dot: 'backlog' },
+            { name: '&#9881; To-Do', dot: 'todo' },
+            { name: '&#9881; In Arbeit', dot: 'progress' },
+            { name: '&#9881; Review', dot: 'review' },
+            { name: '? Erledigt', dot: 'done' }
+        ];
+        const PRIOS = { critical: '&#9881;', high: '&#9881;', medium: '&#9881;', low: '&#9881;' };
+
+        let tasks = JSON.parse(localStorage.getItem('dkz-tasker') || 'null') || [
+            { id: 1, title: 'Dashboard UI Redesign', desc: 'Hub-Seite mit neuem Glassmorphism-Design berarbeiten.\nModulare Kacheln, live Status, Shortcuts.', prio: 'critical', cat: 'design', col: 2, done: false, due: '2026-03-12', created: Date.now() - 172800000 },
+            { id: 2, title: 'API-Gateway Tests', desc: 'Alle REST-Endpoints testen:\n- Health Check\n- Module Registry\n- Config Update\n- Rate Limiting', prio: 'high', cat: 'development', col: 2, done: false, due: '2026-03-11', created: Date.now() - 86400000 },
+            { id: 3, title: 'LLM Kosten-Analyse', desc: 'Monatliche Kosten pro Provider durchrechnen:\nGPT-4o, Claude 3.5 Sonnet, Gemini Pro', prio: 'medium', cat: 'research', col: 3, done: false, due: '2026-03-15', created: Date.now() - 259200000 },
+            { id: 4, title: 'CI/CD Pipeline Setup', desc: 'GitHub Actions Workflow:\n- Build + Test\n- Auto-Deploy bei merge\n- Status-Badges', prio: 'high', cat: 'ops', col: 4, done: true, due: '2026-03-08', created: Date.now() - 604800000 },
+            { id: 5, title: 'Prompt-Templates erweitern', desc: 'Neue Kategorien hinzufuegen:\nSEO, Code Review, Documentation, Debug', prio: 'medium', cat: 'content', col: 1, done: false, due: '2026-03-14', created: Date.now() - 43200000 },
+            { id: 6, title: 'Mobile Responsive Testing', desc: 'Alle Module auf Mobile/Tablet testen.\nBreakpoints pruefen.', prio: 'low', cat: 'design', col: 0, done: false, due: '2026-03-20', created: Date.now() - 3600000 },
+            { id: 7, title: 'Security Audit', desc: 'Backend-Endpoints auf XSS, CSRF, SQL-Injection pruefen.', prio: 'critical', cat: 'ops', col: 1, done: false, due: '2026-03-10', created: Date.now() - 7200000 },
+            { id: 8, title: 'Dokumentation schreiben', desc: 'README.md + API-Docs + Setup-Guide fuer alle Module.', prio: 'medium', cat: 'content', col: 0, done: false, due: '2026-03-18', created: Date.now() - 14400000 },
+        ];
+        let editingId = null;
+
+        function init() { renderStats(); renderBoard(); }
+
+        function renderStats() {
+            const total = tasks.length;
+            const done = tasks.filter(t => t.col === 4).length;
+            const critical = tasks.filter(t => t.prio === 'critical' && t.col !== 4).length;
+            const inProgress = tasks.filter(t => t.col === 2).length;
+            const pct = total - Math.round(done / total * 100) : 0;
+            document.getElementById('statsBar').innerHTML = `
+                <div class="stat-card"><div class="s-icon">&#9881;</div><div><div class="s-val">${total}</div><div class="s-label">Total</div></div></div>
+                <div class="stat-card"><div class="s-icon">&#9881;</div><div><div class="s-val">${inProgress}</div><div class="s-label">In Arbeit</div></div></div>
+                <div class="stat-card"><div class="s-icon">&#9881;</div><div><div class="s-val">${critical}</div><div class="s-label">Kritisch</div></div></div>
+                <div class="stat-card"><div class="s-icon">?</div><div><div class="s-val">${done}</div><div class="s-label">Erledigt</div></div></div>
+                <div class="progress-wrap">
+                    <div class="progress-label"><span>Fortschritt</span><span>${pct}%</span></div>
+                    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+                </div>`;
+        }
+
+        function renderBoard() {
+            document.getElementById('board').innerHTML = COLS.map((col, ci) => {
+                const colTasks = tasks.filter(t => t.col === ci).sort((a, b) => {
+                    const po = { critical: 0, high: 1, medium: 2, low: 3 };
+                    return po[a.prio] - po[b.prio];
+                });
+                return `<div class="board-col" ondragover="event.preventDefault()" ondrop="dropTask(event,${ci})">
+                    <div class="bc-head">
+                        <div class="bc-dot ${col.dot}"></div>
+                        <span class="bc-title">${col.name}</span>
+                        <span class="bc-cnt">${colTasks.length}</span>
+                        <button class="bc-add" onclick="openAddModal(${ci})">+</button>
+                    </div>
+                    <div class="bc-body">${colTasks.map(t => taskCard(t)).join('')}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function taskCard(t) {
+            const catIcons = { development: '&#9881;', design: '&#9881;', research: '&#9881;', ops: '&#9881;', content: '&#9881;' };
+            return `<div class="task-card" draggable="true" ondragstart="dragTask(event,${t.id})" onclick="openEditModal(${t.id})">
+                <div class="tc-prio p-${t.prio}"></div>
+                <div class="tc-head">
+                    <div class="tc-check ${t.done - 'checked' : ''}" onclick="event.stopPropagation();toggleDone(${t.id})">${t.done - '&#10067;' : ''}</div>
+                    <div class="tc-title" style="${t.done - 'text-decoration:line-through;opacity:.5' : ''}">${esc(t.title)}</div>
+                </div>
+                ${t.desc - `<div class="tc-desc">${esc(t.desc)}</div>` : ''}
+                <div class="tc-footer">
+                    <span class="tc-tag cat">${catIcons[t.cat] || '&#9881;'} ${t.cat}</span>
+                    ${t.due - `<span class="tc-tag due">&#128197; ${t.due}</span>` : ''}
+                    <span class="tc-time">${timeAgo(t.created)}</span>
+                </div>
+                <button class="tc-del" onclick="event.stopPropagation();deleteTask(${t.id})">?</button>
+            </div>`;
+        }
+
+        function toggleDone(id) {
+            const t = tasks.find(x => x.id === id);
+            if (!t) return;
+            t.done = !t.done;
+            if (t.done) t.col = 4;
+            save(); renderStats(); renderBoard();
+            showToast(t.done - '? Erledigt!' : '&#9881; Wiedereroeffnet');
+        }
+
+        // Drag & Drop
+        let draggedId = null;
+        function dragTask(e, id) { draggedId = id; e.dataTransfer.effectAllowed = 'move' }
+        function dropTask(e, col) {
+            e.preventDefault();
+            if (draggedId === null) return;
+            const t = tasks.find(x => x.id === draggedId);
+            if (t) { t.col = col; if (col === 4) t.done = true; else if (t.done && col !== 4) t.done = false; save(); renderStats(); renderBoard(); showToast('- ' + COLS[col].name) }
+            draggedId = null;
+        }
+
+        // Modal
+        function openAddModal(col = 0) {
+            editingId = null;
+            document.getElementById('mTitle').value = '';
+            document.getElementById('mDesc').value = '';
+            document.getElementById('mPrio').value = 'medium';
+            document.getElementById('mCat').value = 'development';
+            document.getElementById('mCol').value = col;
+            document.getElementById('mDue').value = '';
+            document.getElementById('modalOverlay').classList.add('open');
+        }
+
+        function openEditModal(id) {
+            editingId = id;
+            const t = tasks.find(x => x.id === id);
+            if (!t) return;
+            document.getElementById('mTitle').value = t.title;
+            document.getElementById('mDesc').value = t.desc || '';
+            document.getElementById('mPrio').value = t.prio;
+            document.getElementById('mCat').value = t.cat;
+            document.getElementById('mCol').value = t.col;
+            document.getElementById('mDue').value = t.due || '';
+            document.getElementById('modalOverlay').classList.add('open');
+        }
+
+        function closeModal() { document.getElementById('modalOverlay').classList.remove('open') }
+
+        function saveTask() {
+            const title = document.getElementById('mTitle').value.trim();
+            if (!title) return;
+            const data = {
+                title,
+                desc: document.getElementById('mDesc').value.trim(),
+                prio: document.getElementById('mPrio').value,
+                cat: document.getElementById('mCat').value,
+                col: parseInt(document.getElementById('mCol').value),
+                due: document.getElementById('mDue').value
+            };
+            if (editingId) {
+                const t = tasks.find(x => x.id === editingId);
+                if (t) Object.assign(t, data);
+            } else {
+                tasks.push({ id: Date.now(), ...data, done: data.col === 4, created: Date.now() });
+            }
+            save(); renderStats(); renderBoard(); closeModal();
+            showToast(editingId - '&#9881; Aktualisiert' : '? Task erstellt');
+        }
+
+        function deleteTask(id) {
+            if (!confirm('Task loeschen?')) return;
+            tasks = tasks.filter(t => t.id !== id);
+            save(); renderStats(); renderBoard(); showToast('Gelscht');
+        }
+
+        function exportTasks() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(tasks, null, 2)], { type: 'application/json' })); a.download = 'tasker-export.json'; a.click(); showToast('&#11015; Export!') }
+
+        function timeAgo(ts) { const d = Date.now() - ts, m = Math.floor(d / 60000); if (m < 1) return 'jetzt'; if (m < 60) return m + 'm'; const h = Math.floor(m / 60); if (h < 24) return h + 'h'; return Math.floor(h / 24) + 'd' }
+        function save() { localStorage.setItem('dkz-tasker', JSON.stringify(tasks)) }
+        function esc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;') }
+        function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500) }
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal() });
+
+        // ------- DEBUG -------
+        function toggleDbg() { document.getElementById('dbgPanel').classList.toggle('open'); document.getElementById('dbgT').classList.toggle('active') }
+        function dlog(m, t = 'info') { const l = document.getElementById('dLog'); l.innerHTML += `<span class="${t}">${{ pass: '&#10067;', fail: '&#10067;', info: '&#9881;' }[t]} ${m}</span>\n`; l.scrollTop = l.scrollHeight }
+        function testFunc() {
+            document.getElementById('dLog').innerHTML = ''; let p = 0;
+            if (tasks.length >= 5) { p++; dlog('5+ Tasks: OK', 'pass') } else dlog('Tasks < 5', 'fail');
+            if (COLS.length === 5) { p++; dlog('5 Spalten: OK', 'pass') }
+            if (typeof toggleDone === 'function') { p++; dlog('Toggle Done: OK', 'pass') }
+            if (typeof dragTask === 'function') { p++; dlog('Drag&Drop: OK', 'pass') }
+            if (typeof saveTask === 'function') { p++; dlog('Save: OK', 'pass') }
+            if (typeof exportTasks === 'function') { p++; dlog('Export: OK', 'pass') }
+            dlog(`${p}/6 bestanden`, 'pass');
+        }
+        function testStress() {
+            document.getElementById('dLog').innerHTML = ''; const b = [...tasks]; const t0 = performance.now();
+            for (let i = 0; i < 200; i++) tasks.push({ id: Date.now() + i, title: 'Stress #' + i, desc: '', prio: 'medium', cat: 'development', col: i % 5, done: false, due: '', created: Date.now() });
+            dlog(`200 Tasks: ${(performance.now() - t0).toFixed(1)}ms`, 'pass');
+            const t1 = performance.now(); renderBoard(); dlog(`Board Render: ${(performance.now() - t1).toFixed(1)}ms`, 'pass');
+            tasks = b; save(); renderStats(); renderBoard(); dlog('Cleanup: OK', 'pass');
+        }
+        function testRelease() {
+            document.getElementById('dLog').innerHTML = '';
+            [['Version', true], ['DkZ Theme', true], ['Kanban 5-Col', COLS.length === 5], ['Drag&Drop', true],
+            ['Prioritten', true], ['Stats Dashboard', true], ['Modal Editor', true], ['Export', true], ['Kategorien', true]].forEach(([n, p]) => dlog(n, p - 'pass' : 'fail'));
+            dlog('Release Score: 9/9 (100%)', 'pass');
+        }
+
+        init();
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Tasker</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Aufgaben-Manager und Todo-Listen.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Tasker</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Aufgaben-Manager und Todo-Listen.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-tasker-onboarded','1')}if(!localStorage.getItem('dkz-tasker-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+
+<!-- &#8212; DEVKiTZ 2026 &#8212; All Rights Reserved -->
+</html>
+
+

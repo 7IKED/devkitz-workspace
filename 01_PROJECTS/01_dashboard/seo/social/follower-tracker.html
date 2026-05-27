@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="shared/seo-shared.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="grid grid-2">
+        <div class="card card-full">
+            <h3>👥 Follower & Subscriber Tracker</h3>
+            <p style="font-size:11px;color:var(--muted);margin-bottom:12px">Verfolge deine Follower-Listen,
+                identifiziere Superfans, finde heraus woher sie kommen.</p>
+            <div class="input-row">
+                <input type="text" id="usernameInput" placeholder="Haupt-Username">
+                <select id="platformSelect">
+                    <option value="all">Alle Plattformen</option>
+                    <option value="youtube">▶️ YouTube</option>
+                    <option value="instagram">📸 Instagram</option>
+                    <option value="tiktok">🎵 TikTok</option>
+                    <option value="twitch">🟣 Twitch</option>
+                </select>
+                <button class="btn btn-green" onclick="trackFollowers()">📊 Tracker starten</button>
+            </div>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>Follower-Daten werden analysiert...
+            </div>
+        </div>
+
+        <div class="card" id="overviewCard" style="display:none">
+            <h3>📊 Follower Übersicht</h3>
+            <div id="overviewData"></div>
+        </div>
+        <div class="card" id="growthCard" style="display:none">
+            <h3>📈 Wachstum</h3>
+            <div id="growthData"></div>
+        </div>
+        <div class="card" id="superfansCard" style="display:none">
+            <h3>⭐ Superfans (Top Engager)</h3>
+            <div id="superfansData"></div>
+        </div>
+        <div class="card" id="geoCard" style="display:none">
+            <h3>🌍 Herkunft</h3>
+            <div id="geoData"></div>
+        </div>
+        <div class="card card-full" id="listCard" style="display:none">
+            <h3>📋 Follower-Liste <span
+                    style="font-size:10px;color:var(--muted);font-weight:400;margin-left:auto">Simulierte Daten</span>
+            </h3>
+            <div class="filter-bar"><button class="filter-chip active"
+                    onclick="filterList('all',this)">Alle</button><button class="filter-chip"
+                    onclick="filterList('active',this)">Aktiv</button><button class="filter-chip"
+                    onclick="filterList('new',this)">Neu</button><button class="filter-chip"
+                    onclick="filterList('superfan',this)">⭐ Superfans</button><button class="filter-chip"
+                    onclick="filterList('inactive',this)">Inaktiv</button></div>
+            <div id="listData"></div>
+            <div class="export-bar"><button class="btn btn-sm btn-outline" onclick="exportFollowers('csv')">📋
+                    CSV</button><button class="btn btn-sm btn-outline" onclick="exportFollowers('json')">📦
+                    JSON</button></div>
+        </div>
+    </div>
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        const NAMES = ['MaxGamer', 'LisaVibes', 'TechNerd42', 'CoolDude', 'StreamQueen', 'ProPlayer', 'ChillGuy', 'HappyAnna', 'DarkKnight', 'StarChild', 'ByteMe', 'PixelArt', 'NeonLights', 'CyberPunk', 'RetroWave', 'SynthBoy', 'CloudNine', 'FireFox', 'IceQueen', 'SunRise'];
+        const COUNTRIES = [{ f: '🇩🇪', n: 'Deutschland', w: .35 }, { f: '🇦🇹', n: 'Österreich', w: .12 }, { f: '🇨🇭', n: 'Schweiz', w: .10 }, { f: '🇺🇸', n: 'USA', w: .15 }, { f: '🇬🇧', n: 'UK', w: .08 }, { f: '🇫🇷', n: 'Frankreich', w: .06 }, { f: '🇳🇱', n: 'Niederlande', w: .05 }, { f: '🇯🇵', n: 'Japan', w: .04 }, { f: '🇧🇷', n: 'Brasilien', w: .03 }, { f: '🇰🇷', n: 'Südkorea', w: .02 }];
+        let followers = [];
+
+        async function trackFollowers() {
+            const username = document.getElementById('usernameInput').value.trim() || 'demo';
+            document.getElementById('loading').classList.add('show');
+            ['overviewCard', 'growthCard', 'superfansCard', 'geoCard', 'listCard'].forEach(id => document.getElementById(id).style.display = 'none');
+            await new Promise(r => setTimeout(r, 1800)); document.getElementById('loading').classList.remove('show');
+
+            const totalFollowers = Math.floor(Math.random() * 100000 + 500);
+            const newFollowers = Math.floor(totalFollowers * 0.05);
+            const lostFollowers = Math.floor(totalFollowers * 0.01);
+            const activeFollowers = Math.floor(totalFollowers * 0.3);
+
+            // Generate follower list
+            followers = Array.from({ length: 50 }, (_, i) => {
+                const country = COUNTRIES[Math.floor(Math.random() * COUNTRIES.length)];
+                const isSuperfan = Math.random() > .8;
+                const isNew = Math.random() > .85;
+                const isInactive = !isSuperfan && Math.random() > .7;
+                return { name: NAMES[i % NAMES.length] + (i > 19 ? Math.floor(Math.random() * 999) : ''), country, interactions: Math.floor(Math.random() * (isSuperfan ? 200 : 50) + 1), lastSeen: isInactive ? '30+ Tage' : isNew ? 'Heute' : 'Vor ' + Math.floor(Math.random() * 7 + 1) + ' Tagen', isSuperfan, isNew, isInactive, followDate: new Date(Date.now() - Math.floor(Math.random() * 365) * 24 * 3600 * 1000).toLocaleDateString('de-DE'), platform: ['▶️', '📸', '🎵', '🟣', '✖️'][Math.floor(Math.random() * 5)] };
+            });
+
+            // OVERVIEW
+            document.getElementById('overviewCard').style.display = '';
+            document.getElementById('overviewData').innerHTML = `<div class="stats"><div class="stat"><div class="stat-num" style="color:var(--blue)">${fmt(totalFollowers)}</div><div class="stat-label">Gesamt</div></div><div class="stat"><div class="stat-num" style="color:var(--green)">+${fmt(newFollowers)}</div><div class="stat-label">Neu (30d)</div></div><div class="stat"><div class="stat-num" style="color:var(--red)">-${fmt(lostFollowers)}</div><div class="stat-label">Verloren (30d)</div></div><div class="stat"><div class="stat-num" style="color:var(--cyan)">${fmt(activeFollowers)}</div><div class="stat-label">Aktiv</div></div></div>`;
+
+            // GROWTH
+            document.getElementById('growthCard').style.display = '';
+            const months = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun'];
+            document.getElementById('growthData').innerHTML = '<div class="chart-area"><div class="chart-bar-container">' + months.map((m, i) => { const h = Math.floor(30 + i * 20 + Math.random() * 20); return `<div class="chart-bar" style="height:${h}px;background:var(--green)"><div class="chart-bar-label">${m}</div></div>` }).join('') + '</div></div>';
+
+            // SUPERFANS
+            document.getElementById('superfansCard').style.display = '';
+            const superfans = followers.filter(f => f.isSuperfan).sort((a, b) => b.interactions - a.interactions).slice(0, 10);
+            document.getElementById('superfansData').innerHTML = superfans.map((f, i) => `<div class="metric-row"><span style="font-weight:800;color:var(--yellow);width:24px">#${i + 1}</span><span style="font-size:14px">${f.country.f}</span><span class="metric-name">@${f.name}</span><span class="badge badge-purple">${f.interactions} Interaktionen</span><span style="font-size:10px;color:var(--muted)">${f.platform}</span></div>`).join('');
+
+            // GEO
+            document.getElementById('geoCard').style.display = '';
+            document.getElementById('geoData').innerHTML = COUNTRIES.map(c => `<div class="metric-row"><span style="font-size:18px">${c.f}</span><span class="metric-name">${c.n}</span><div style="flex:1;margin:0 12px"><div class="progress"><div class="progress-fill progress-blue" style="width:${c.w * 100}%"></div></div></div><span style="font-size:11px;color:var(--muted)">${(c.w * 100).toFixed(0)}%</span></div>`).join('');
+
+            // LIST
+            document.getElementById('listCard').style.display = '';
+            renderList('all');
+        }
+
+        function renderList(filter) {
+            let list = followers;
+            if (filter === 'active') list = followers.filter(f => !f.isInactive);
+            if (filter === 'new') list = followers.filter(f => f.isNew);
+            if (filter === 'superfan') list = followers.filter(f => f.isSuperfan);
+            if (filter === 'inactive') list = followers.filter(f => f.isInactive);
+            document.getElementById('listData').innerHTML = `<table class="data-table"><thead><tr><th></th><th>Name</th><th>Herkunft</th><th>Plattform</th><th>Interaktionen</th><th>Zuletzt gesehen</th><th>Folgt seit</th><th>Status</th></tr></thead><tbody>${list.map(f => `<tr><td>${f.isSuperfan ? '⭐' : f.isNew ? '🆕' : f.isInactive ? '💤' : '👤'}</td><td style="font-weight:600">@${f.name}</td><td>${f.country.f} ${f.country.n}</td><td>${f.platform}</td><td style="font-family:var(--mono);color:var(--cyan)">${f.interactions}</td><td style="color:${f.isInactive ? 'var(--red)' : 'var(--green)'}">${f.lastSeen}</td><td style="font-size:10px;color:var(--muted)">${f.followDate}</td><td><span class="badge ${f.isSuperfan ? 'badge-purple' : f.isNew ? 'badge-green' : f.isInactive ? 'badge-red' : 'badge-blue'}">${f.isSuperfan ? 'Superfan' : f.isNew ? 'Neu' : f.isInactive ? 'Inaktiv' : 'Aktiv'}</span></td></tr>`).join('')}</tbody></table>`;
+        }
+
+        function filterList(f, btn) { document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active')); btn.classList.add('active'); renderList(f) }
+
+        function exportFollowers(format) {
+            if (format === 'json') { const b = new Blob([JSON.stringify(followers, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'followers-export.json'; a.click() }
+            else { let csv = 'Name,Country,Platform,Interactions,LastSeen,FollowDate,Status\n'; followers.forEach(f => csv += `${f.name},${f.country.n},${f.platform},${f.interactions},${f.lastSeen},${f.followDate},${f.isSuperfan ? 'Superfan' : f.isNew ? 'Neu' : f.isInactive ? 'Inaktiv' : 'Aktiv'}\n`); const b = new Blob([csv], { type: 'text/csv' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'followers-export.csv'; a.click() }
+        }
+
+        function fmt(n) { if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M'; if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K'; return n.toString() }
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

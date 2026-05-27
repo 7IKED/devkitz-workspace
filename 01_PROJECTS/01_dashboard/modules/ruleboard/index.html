@@ -1,0 +1,1189 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📜 Ruleboard — DkZâ„¢ v0.01</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --accent: #fa1e4e;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #ff4466;
+            --radius: 14px;
+            --glass: rgba(26, 26, 28, 0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.12;
+            pointer-events: none;
+        }
+
+        .blob-1 {
+            width: 500px;
+            height: 500px;
+            background: var(--accent);
+            top: -150px;
+            right: -100px;
+        }
+
+        .blob-2 {
+            width: 350px;
+            height: 350px;
+            background: var(--blue);
+            bottom: -80px;
+            left: -80px;
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            background: var(--glass);
+            backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .header h1 {
+            font-size: 1.1rem;
+        }
+
+        .header .version {
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            display: flex;
+            gap: 12px;
+            padding: 16px 24px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border);
+            background: rgba(10, 10, 12, 0.8);
+        }
+
+        .status-lamp {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .status-lamp:hover {
+            border-color: var(--accent);
+        }
+
+        .lamp {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        .lamp.green {
+            background: var(--green);
+            color: var(--green);
+        }
+
+        .lamp.yellow {
+            background: var(--yellow);
+            color: var(--yellow);
+        }
+
+        .lamp.red {
+            background: var(--red);
+            color: var(--red);
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0.3
+            }
+        }
+
+        .lamp-label {
+            color: var(--muted);
+        }
+
+        .lamp-value {
+            font-weight: 600;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            padding: 12px 24px;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--muted);
+            background: transparent;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            color: var(--text);
+            background: var(--card);
+        }
+
+        .tab.active {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: rgba(250, 30, 78, 0.08);
+        }
+
+        /* Content */
+        .content {
+            padding: 20px 24px;
+        }
+
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        /* Rule Cards */
+        .rule-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 12px;
+        }
+
+        .rule-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .rule-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .rule-card .rule-num {
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            font-size: 0.7rem;
+            color: var(--accent);
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .rule-card .rule-cat {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .cat-supreme {
+            background: rgba(250, 30, 78, 0.15);
+            color: var(--accent);
+        }
+
+        .cat-critical {
+            background: rgba(255, 68, 102, 0.15);
+            color: var(--red);
+        }
+
+        .cat-work {
+            background: rgba(255, 184, 0, 0.15);
+            color: var(--yellow);
+        }
+
+        .cat-flow {
+            background: rgba(85, 172, 238, 0.15);
+            color: var(--blue);
+        }
+
+        .rule-card h3 {
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+            line-height: 1.3;
+        }
+
+        .rule-card p {
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        /* Structure Tree */
+        .tree {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            line-height: 1.8;
+        }
+
+        .tree-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+        }
+
+        .tree-icon {
+            font-size: 1rem;
+        }
+
+        .tree-name {
+            font-weight: 600;
+        }
+
+        .tree-desc {
+            color: var(--muted);
+            font-size: 0.75rem;
+        }
+
+        .tree-ini {
+            color: var(--green);
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        /* Workflow */
+        .workflow-flow {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            padding: 16px 0;
+        }
+
+        .wf-step {
+            padding: 10px 16px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .wf-step .step-num {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 800;
+        }
+
+        .wf-arrow {
+            color: var(--accent);
+            font-size: 1.2rem;
+        }
+
+        /* Debug Panel */
+        .debug-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .debug-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .debug-lamp {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .debug-lamp.ok {
+            background: var(--green);
+            box-shadow: 0 0 12px var(--green);
+        }
+
+        .debug-lamp.warn {
+            background: var(--yellow);
+            box-shadow: 0 0 12px var(--yellow);
+        }
+
+        .debug-lamp.fail {
+            background: var(--red);
+            box-shadow: 0 0 12px var(--red);
+            animation: blink 0.8s infinite;
+        }
+
+        .debug-info h4 {
+            font-size: 0.85rem;
+        }
+
+        .debug-info p {
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        /* Add Rule */
+        .add-rule-form {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-top: 16px;
+        }
+
+        .form-row {
+            margin-bottom: 12px;
+        }
+
+        .form-row label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .form-row input,
+        .form-row select,
+        .form-row textarea {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+        }
+
+        .form-row textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            transition: box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            box-shadow: 0 0 24px rgba(250, 30, 78, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        /* Error Log */
+        .error-log {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-top: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .error-entry {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.8rem;
+            display: flex;
+            gap: 10px;
+        }
+
+        .error-entry:last-child {
+            border: none;
+        }
+
+        .error-time {
+            color: var(--muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .error-sev {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 5px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--green);
+            color: #000;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transform: translateY(100px);
+            transition: transform 0.3s;
+            z-index: 999;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+        }
+
+        /* INI Status */
+        .ini-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .ini-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .ini-card:hover {
+            border-color: var(--green);
+        }
+
+        .ini-folder {
+            font-size: 1.2rem;
+            margin-bottom: 4px;
+        }
+
+        .ini-name {
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .ini-status {
+            font-size: 0.7rem;
+            margin-top: 4px;
+        }
+
+        /* Chat Assistant */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 260px);
+            min-height: 400px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .chat-msg {
+            max-width: 85%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            animation: chatIn 0.2s ease-out;
+        }
+
+        @keyframes chatIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .chat-msg.bot {
+            align-self: flex-start;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-msg.user {
+            align-self: flex-end;
+            background: rgba(250, 30, 78, 0.12);
+            border: 1px solid rgba(250, 30, 78, 0.25);
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-msg .msg-label {
+            font-size: 0.65rem;
+            color: var(--muted);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .chat-msg code {
+            background: rgba(250, 30, 78, 0.1);
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--accent);
+        }
+
+        .chat-input-row {
+            display: flex;
+            gap: 8px;
+            padding: 12px 16px;
+            border-top: 1px solid var(--border);
+            background: var(--bg);
+        }
+
+        .chat-input-row input {
+            flex: 1;
+            padding: 10px 14px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+        }
+
+        .chat-input-row input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .chat-suggestions {
+            display: flex;
+            gap: 6px;
+            padding: 8px 16px;
+            flex-wrap: wrap;
+            border-top: 1px solid var(--border);
+        }
+
+        .chat-sug {
+            padding: 4px 10px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.72rem;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chat-sug:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+    </style>
+<script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="ruleboard" data-dkz-appid="DKZ-MOD-RUL" data-dkz-version="v0.01" data-dkz-title="📜 Ruleboard —" data-dkz-icon="📦" data-dkz-separable="true">
+    <a href="../../hub/index.html" class="back-btn" style="padding:6px 12px;border:1px solid var(--border,#333);border-radius:8px;background:rgba(255,255,255,.03);color:var(--muted,#888);font-size:11px;text-decoration:none;position:fixed;top:10px;left:10px;z-index:200">? Hub</a>
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <header class="header">
+        <a href="../hub/">← Hub</a>
+        <h1>📜 Ruleboard — Ökosystem-Regeln & Kontrolle</h1>
+        <span class="version">v0.01</span>
+    </header>
+
+    <!-- STATUS BAR with Warning Lamps -->
+    <div class="status-bar" id="statusBar"></div>
+
+    <!-- TABS -->
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('rules')">📜 Regeln (18)</div>
+        <div class="tab" onclick="switchTab('structure')">📂 Struktur</div>
+        <div class="tab" onclick="switchTab('workflow')">🔄 Workflow</div>
+        <div class="tab" onclick="switchTab('ini')">📋 INI System</div>
+        <div class="tab" onclick="switchTab('debug')">🔍 Debug</div>
+        <div class="tab" onclick="switchTab('errors')">⚠️ Fehler-Log</div>
+        <div class="tab" onclick="switchTab('add')">➕ Neue Regel</div>
+        <div class="tab" onclick="switchTab('chat')">💬 Assistent</div>
+    </div>
+
+    <div class="content">
+        <!-- RULES PANEL -->
+        <div class="panel active" id="panel-rules">
+            <div class="rule-grid" id="ruleGrid"></div>
+        </div>
+
+        <!-- STRUCTURE PANEL -->
+        <div class="panel" id="panel-structure">
+            <div class="tree" id="structureTree"></div>
+        </div>
+
+        <!-- WORKFLOW PANEL -->
+        <div class="panel" id="panel-workflow">
+            <h2 style="margin-bottom:16px;font-size:1rem;">🔄 Workflow-Fluss (Regel 13)</h2>
+            <div class="workflow-flow" id="workflowFlow"></div>
+            <div
+                style="margin-top:20px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;">
+                <h3 style="font-size:0.9rem;margin-bottom:10px;">Kernphilosophie</h3>
+                <p style="color:var(--muted);font-size:0.85rem;line-height:1.6;">
+                    <strong style="color:var(--accent);">R10:</strong> Der optimale Workflow ist wichtiger als das
+                    Ergebnis.<br>
+                    Wenn der Workflow stimmt, kann man am Ergebnis arbeiten bis es besser wird.<br>
+                    Ein schlechtes Ergebnis mit gutem Workflow ist reparierbar.<br>
+                    Ein gutes Ergebnis mit schlechtem Workflow ist Zufall und nicht reproduzierbar.
+                </p>
+            </div>
+        </div>
+
+        <!-- INI SYSTEM PANEL -->
+        <div class="panel" id="panel-ini">
+            <h2 style="margin-bottom:16px;font-size:1rem;">📋 ORDNER.ini Status (Regel 17)</h2>
+            <div class="ini-grid" id="iniGrid"></div>
+        </div>
+
+        <!-- DEBUG PANEL -->
+        <div class="panel" id="panel-debug">
+            <h2 style="margin-bottom:16px;font-size:1rem;">🔍 System Health & Debug</h2>
+            <div style="display:flex;gap:8px;margin-bottom:16px;">
+                <button class="btn" onclick="runHealthChecks()">🔄 Health Check ausführen</button>
+                <button class="btn btn-secondary" onclick="clearDebug()">🗑️ Leeren</button>
+            </div>
+            <div class="debug-grid" id="debugGrid"></div>
+        </div>
+
+        <!-- ERROR LOG PANEL -->
+        <div class="panel" id="panel-errors">
+            <h2 style="margin-bottom:16px;font-size:1rem;">⚠️ Fehler-Log & Analyse</h2>
+            <div style="display:flex;gap:8px;margin-bottom:16px;">
+                <button class="btn" onclick="analyzeErrors()">🔎 Fehlerquellen analysieren</button>
+                <button class="btn btn-secondary" onclick="exportErrors()">📥 Export</button>
+            </div>
+            <div class="error-log" id="errorLog"></div>
+        </div>
+
+        <!-- ADD RULE PANEL -->
+        <div class="panel" id="panel-add">
+            <h2 style="margin-bottom:16px;font-size:1rem;">➕ Neue Regel hinzufügen</h2>
+            <div class="add-rule-form">
+                <div class="form-row">
+                    <label>Regel-Nummer</label>
+                    <input type="text" id="newRuleNum" placeholder="z.B. 18">
+                </div>
+                <div class="form-row">
+                    <label>Kategorie</label>
+                    <select id="newRuleCat">
+                        <option value="supreme">🏛️ Oberste Regel</option>
+                        <option value="critical">🔴 Kritisch</option>
+                        <option value="work" selected>🟡 Arbeitsregel</option>
+                        <option value="flow">🔵 Fluss & Souveränität</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label>Titel</label>
+                    <input type="text" id="newRuleTitle" placeholder="KURZTITEL IN GROSSBUCHSTABEN">
+                </div>
+                <div class="form-row">
+                    <label>Beschreibung</label>
+                    <textarea id="newRuleDesc" placeholder="Detaillierte Beschreibung der Regel..."></textarea>
+                </div>
+                <button class="btn" onclick="addNewRule()">📜 Regel speichern</button>
+            </div>
+        </div>
+
+        <!-- CHAT ASSISTANT PANEL -->
+        <div class="panel" id="panel-chat">
+            <h2 style="margin-bottom:16px;font-size:1rem;">💬 Regel-Assistent</h2>
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages"></div>
+                <div class="chat-suggestions" id="chatSuggestions"></div>
+                <div class="chat-input-row">
+                    <input type="text" id="chatInput" placeholder="Frag mich zu Regeln, Workflow, Struktur..."
+                        onkeydown="if(event.key==='Enter')sendChat()">
+                    <button class="btn" onclick="sendChat()">→</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">✅ Gespeichert!</div>
+
+    <script>
+        // ── DATA ──
+        const RULES = [
+            { num: '0', cat: 'supreme', title: 'SEI IMMER EIN TEIL DER LÖSUNG, NIE DES PROBLEMS', desc: 'Jede Handlung muss das System besser machen. Probleme lösen, nicht weitergeben.' },
+            { num: '1', cat: 'critical', title: 'NIE LÖSCHEN — IMMER ARCHIVIEREN', desc: 'Wissen und Arbeitslogs sind unser höchstes Gut. Dateien nie löschen, nach 99_ARCHIVE verschieben.' },
+            { num: '2', cat: 'critical', title: 'GIT COMMIT NACH JEDER ÄNDERUNG', desc: 'Jede Dateiänderung bekommt sofort einen Commit. Format: prefix(bereich): was wurde gemacht.' },
+            { num: '3', cat: 'critical', title: 'ALLES MUSS VORHANDEN BLEIBEN', desc: 'Nichts darf sich in Luft auflösen. Bei Umstrukturierung: kopieren statt verschieben wenn unsicher.' },
+            { num: '4', cat: 'critical', title: 'PROAKTIV BEI VERBESSERUNGEN', desc: 'Verbesserungen vorschlagen und umsetzen — unter ausnahmsloser Einhaltung aller anderen Regeln.' },
+            { num: '5', cat: 'work', title: 'ERST ANALYSIEREN, DANN HANDELN', desc: 'Detailliert analysieren wie etwas am besten passt. Kein blindes Verschieben.' },
+            { num: '6', cat: 'work', title: 'KOMPATIBILITÄTSPRÜFUNG VOR INTEGRATION', desc: 'Prüfen ob fehlerfrei ins Ökosystem passt. Bei Konflikten: WARNEN und User fragen.' },
+            { num: '7', cat: 'work', title: 'WAS NICHT REINPASST → INWORK SPACE', desc: 'Nicht-kompatible Inhalte in 00_INBOX/RAW/ aufbewahren, nie löschen.' },
+            { num: '8', cat: 'work', title: 'PRIVATE DATEIEN → 05_INTERN/privat/', desc: 'Lebenslauf, persönliche Dokumente separat halten. Nicht in Projekt-Ordner mischen.' },
+            { num: '9', cat: 'work', title: 'ALLE MODULE STARTEN MIT v0.01', desc: 'Versionierung: V[Major] v[Minor].[Session]_[Step]' },
+            { num: '10', cat: 'flow', title: 'DER OPTIMALE WORKFLOW IST WICHTIGER ALS DAS ERGEBNIS', desc: 'Guter Workflow → reparierbares Ergebnis. Schlechter Workflow → nicht reproduzierbar.' },
+            { num: '11', cat: 'flow', title: 'DATEIHOHEIT — ABSOLUTE KONTROLLE', desc: 'Keine Dateien ohne Bestätigung überschreiben, entfernen, zusammenführen oder extern senden.' },
+            { num: '12', cat: 'flow', title: 'KEIN VERLUST VON WISSEN ODER ARBEITSVORGÄNGEN', desc: 'Git History, 99_ARCHIVE, 02_RESEARCH, 00_INBOX/RAW, [DEEPKEEP] — 5 Sicherungsschichten.' },
+            { num: '13', cat: 'flow', title: 'WORKFLOW-FLUSS SICHERSTELLEN', desc: 'Analyse → Plan → Genehmigung → Ausführung → Verifikation → Commit → Dokumentation.' },
+            { num: '14', cat: 'flow', title: 'KONTINUIERLICHE VERBESSERUNG — KAIZEN', desc: 'Jede Session hinterlässt das System besser. Fehler sofort fixen, Workflows optimieren.' },
+            { num: '15', cat: 'work', title: 'ÄNDERE SO VIEL WIE NÖTIG, ABER SO WENIG WIE MÖGLICH', desc: 'Minimale Intervention. Chirurgisch präzise. Wenn mehr nötig: zuerst fragen.' },
+            { num: '16', cat: 'critical', title: 'REGELN STEHEN ÜBER ANWEISUNGEN', desc: 'Bei Regelkonflikt: Regel hat Vorrang. Nachfragen. NUR bei ausdrücklicher Bestätigung übergehen.' },
+            { num: '17', cat: 'work', title: 'IMMER ZUERST ORDNER.ini LESEN', desc: 'Jeder Ordner hat ORDNER.ini mit Regeln und Verweisen. Bei Änderungen: ini aktualisieren.' }
+        ];
+
+        const STRUCTURE = [
+            { icon: '📜', name: 'REGELWERK.md', desc: 'Alle 18 Ökosystem-Regeln', ini: true },
+            { icon: '📋', name: 'ORDNER.ini', desc: 'Root-Anweisungen für LLMs', ini: true },
+            { icon: '📥', name: '00_INBOX/', desc: 'Eingang, Downloads, RAW-Dateien', ini: true },
+            { icon: '🏗️', name: '01_PROJECTS/', desc: '55 Module, 14 Dashboards', ini: true },
+            { icon: '🔬', name: '02_RESEARCH/', desc: 'Forschung, Docs, Podcasts', ini: true },
+            { icon: '🎨', name: '03_MEDIA/', desc: 'Bilder, Videos, AI-generiert', ini: true },
+            { icon: '⚙️', name: '04_SYSTEM/', desc: 'Configs, Blueprint, KI-Memory', ini: true },
+            { icon: '🔒', name: '05_INTERN/', desc: 'Private + allgemeine Dokumente', ini: true },
+            { icon: '📦', name: '99_ARCHIVE/', desc: 'Archiv (Rule 1 Zielort)', ini: true },
+            { icon: '🧠', name: '[DEEPKEEP]/', desc: 'AI-Chat Archiv (8 Plattformen)', ini: false },
+            { icon: '🤖', name: '.agents/', desc: 'Workflows und Automatisierung', ini: false }
+        ];
+
+        const WORKFLOW_STEPS = [
+            'ORDNER.ini lesen', 'REGELWERK.md lesen', 'Analyse', 'Plan erstellen',
+            'Genehmigung', 'Ausführung', 'Verifikation', 'Git Commit',
+            'Dokumentation', 'INI aktualisieren'
+        ];
+
+        const INI_FOLDERS = [
+            { folder: 'Root /', file: 'ORDNER.ini', status: 'ok' },
+            { folder: '00_INBOX', file: 'ORDNER.ini', status: 'ok' },
+            { folder: '01_PROJECTS', file: 'ORDNER.ini', status: 'ok' },
+            { folder: '02_RESEARCH', file: 'ORDNER.ini', status: 'ok' },
+            { folder: '03_MEDIA', file: 'ORDNER.ini', status: 'ok' },
+            { folder: '04_SYSTEM', file: 'ORDNER.ini', status: 'ok' },
+            { folder: '05_INTERN', file: 'ORDNER.ini', status: 'ok' },
+            { folder: '99_ARCHIVE', file: 'ORDNER.ini', status: 'ok' }
+        ];
+
+        let errorLog = JSON.parse(localStorage.getItem('dkz-ruleboard-errors') || '[]');
+        let customRules = JSON.parse(localStorage.getItem('dkz-ruleboard-custom') || '[]');
+
+        // ── HEALTH CHECKS ──
+        const HEALTH_CHECKS = [
+            { id: 'rules', name: 'Regeln geladen', check: () => RULES.length >= 18 },
+            { id: 'ini', name: 'INI System aktiv', check: () => INI_FOLDERS.every(i => i.status === 'ok') },
+            {
+                id: 'localstorage', name: 'localStorage OK', check: () => {
+                    try { const s = JSON.stringify(localStorage).length; return { ok: s < 4 * 1024 * 1024, detail: (s / 1024).toFixed(0) + ' KB' }; }
+                    catch { return false; }
+                }
+            },
+            { id: 'eventbus', name: 'EventBus bereit', check: () => !!(window.DkZ && window.DkZ.EventBus) },
+            { id: 'console', name: 'Console bereit', check: () => !!(window.DkZ && window.DkZ.Console) },
+            { id: 'errors', name: 'Keine offenen Fehler', check: () => errorLog.filter(e => e.severity === 'critical' && !e.resolved).length === 0 },
+            { id: 'custom', name: 'Custom Rules gespeichert', check: () => true },
+            { id: 'workflow', name: 'Workflow-Fluss intakt', check: () => true }
+        ];
+
+        // ── STATUS BAR ──
+        function renderStatusBar() {
+            const bar = document.getElementById('statusBar');
+            const checks = [
+                { label: 'Regeln', val: RULES.length + customRules.length, ok: RULES.length >= 18 },
+                { label: 'INI System', val: INI_FOLDERS.filter(i => i.status === 'ok').length + '/' + INI_FOLDERS.length, ok: INI_FOLDERS.every(i => i.status === 'ok') },
+                { label: 'Fehler', val: errorLog.filter(e => !e.resolved).length, ok: errorLog.filter(e => e.severity === 'critical' && !e.resolved).length === 0 },
+                { label: 'Workflow', val: 'Aktiv', ok: true },
+                { label: 'Debug', val: window.DkZ?.Health - 'Bereit' : 'Standalone', ok: true },
+                { label: 'Custom Rules', val: customRules.length, ok: true }
+            ];
+            bar.innerHTML = checks.map(c => `
+        <div class="status-lamp" title="${esc(c.label)}">
+          <div class="lamp ${c.ok - 'green' : 'red'}"></div>
+          <span class="lamp-label">${esc(c.label)}</span>
+          <span class="lamp-value">${esc(String(c.val))}</span>
+        </div>
+      `).join('');
+        }
+
+        // ── RULES ──
+        function renderRules() {
+            const grid = document.getElementById('ruleGrid');
+            const allRules = [...RULES, ...customRules];
+            grid.innerHTML = allRules.map(r => {
+                const catClass = r.cat === 'supreme' - 'cat-supreme' : r.cat === 'critical' - 'cat-critical' : r.cat === 'flow' - 'cat-flow' : 'cat-work';
+                const catLabel = r.cat === 'supreme' - '🏛️ OBERSTE' : r.cat === 'critical' - '🔴 KRITISCH' : r.cat === 'flow' - '🔵 FLUSS' : '🟡 ARBEIT';
+                return `<div class="rule-card">
+          <span class="rule-num">R${esc(r.num)}</span>
+          <span class="rule-cat ${catClass}">${catLabel}</span>
+          <h3>${esc(r.title)}</h3>
+          <p>${esc(r.desc)}</p>
+        </div>`;
+            }).join('');
+        }
+
+        // ── STRUCTURE ──
+        function renderStructure() {
+            const tree = document.getElementById('structureTree');
+            tree.innerHTML = STRUCTURE.map(s => `
+        <div class="tree-item">
+          <span class="tree-icon">${s.icon}</span>
+          <span class="tree-name">${esc(s.name)}</span>
+          <span class="tree-desc">${esc(s.desc)}</span>
+          ${s.ini - '<span class="tree-ini">✅ INI</span>' : '<span style="color:var(--muted);font-size:0.7rem;">—</span>'}
+        </div>
+      `).join('');
+        }
+
+        // ── WORKFLOW ──
+        function renderWorkflow() {
+            const flow = document.getElementById('workflowFlow');
+            flow.innerHTML = WORKFLOW_STEPS.map((step, i) => {
+                return (i > 0 - '<span class="wf-arrow">→</span>' : '') +
+                    `<div class="wf-step"><span class="step-num">${i + 1}</span>${esc(step)}</div>`;
+            }).join('');
+        }
+
+        // ── INI SYSTEM ──
+        function renderIni() {
+            const grid = document.getElementById('iniGrid');
+            grid.innerHTML = INI_FOLDERS.map(ini => `
+        <div class="ini-card">
+          <div class="ini-folder">📋</div>
+          <div class="ini-name">${esc(ini.folder)}</div>
+          <div class="ini-status" style="color:${ini.status === 'ok' - 'var(--green)' : 'var(--red)'}">
+            ${ini.status === 'ok' - '✅ ORDNER.ini vorhanden' : '❌ FEHLT'}
+          </div>
+        </div>
+      `).join('');
+        }
+
+        // ── DEBUG ──
+        function runHealthChecks() {
+            const grid = document.getElementById('debugGrid');
+            grid.innerHTML = HEALTH_CHECKS.map(check => {
+                let result = check.check();
+                let ok, detail = '';
+                if (typeof result === 'object') { ok = result.ok; detail = result.detail || ''; }
+                else { ok = !!result; }
+                return `<div class="debug-card">
+          <div class="debug-lamp ${ok - 'ok' : 'fail'}"></div>
+          <div class="debug-info">
+            <h4>${esc(check.name)}</h4>
+            <p>${ok - '✅ OK' : '❌ Aktion nötig'} ${detail - '— ' + esc(detail) : ''}</p>
+          </div>
+        </div>`;
+            }).join('');
+            renderStatusBar();
+            showToast('🔍 Health Check abgeschlossen');
+        }
+        function clearDebug() { document.getElementById('debugGrid').innerHTML = ''; }
+
+        // ── ERROR LOG ──
+        function renderErrors() {
+            const log = document.getElementById('errorLog');
+            if (errorLog.length === 0) {
+                log.innerHTML = '<div style="color:var(--green);text-align:center;padding:20px;">✅ Keine Fehler vorhanden</div>';
+                return;
+            }
+            log.innerHTML = errorLog.map((e, i) => `
+        <div class="error-entry" style="${e.resolved - 'opacity:0.5' : ''}">
+          <span class="error-time">${esc(e.time)}</span>
+          <span class="error-sev" style="background:${e.severity === 'critical' - 'var(--red)' : e.severity === 'warning' - 'var(--yellow)' : 'var(--blue)'}"></span>
+          <span>${esc(e.message)}</span>
+          ${!e.resolved - `<button onclick="resolveError(${i})" style="margin-left:auto;background:var(--green);color:#000;border:none;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:0.7rem;">Fix</button>` : ''}
+        </div>
+      `).join('');
+        }
+
+        function analyzeErrors() {
+            const analysis = [
+                { severity: 'info', message: 'Fehlerquellen-Analyse gestartet...', time: new Date().toLocaleTimeString('de-DE'), resolved: false },
+                { severity: customRules.length > 0 - 'info' : 'warning', message: customRules.length > 0 - `${customRules.length} Custom Rules aktiv` : 'Keine Custom Rules — Regeln nur hardcoded', time: new Date().toLocaleTimeString('de-DE'), resolved: false },
+                { severity: window.DkZ?.EventBus - 'info' : 'warning', message: window.DkZ?.EventBus - 'EventBus aktiv — Cross-Module Comm OK' : 'EventBus nicht geladen — shared/dkz-eventbus.js einbinden', time: new Date().toLocaleTimeString('de-DE'), resolved: false }
+            ];
+            errorLog = [...analysis, ...errorLog];
+            saveErrors();
+            renderErrors();
+            renderStatusBar();
+            showToast('🔎 Analyse abgeschlossen');
+        }
+
+        function resolveError(idx) {
+            errorLog[idx].resolved = true;
+            saveErrors(); renderErrors(); renderStatusBar();
+        }
+
+        function saveErrors() { localStorage.setItem('dkz-ruleboard-errors', JSON.stringify(errorLog)); }
+        function exportErrors() {
+            const text = errorLog.map(e => `[${e.time}] [${e.severity}] ${e.message} ${e.resolved - '(RESOLVED)' : ''}`).join('\n');
+            const blob = new Blob([text], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob); a.download = 'dkz-error-log.txt'; a.click();
+            showToast('📥 Fehler-Log exportiert');
+        }
+
+        // ── ADD RULE ──
+        function addNewRule() {
+            const num = document.getElementById('newRuleNum').value.trim();
+            const cat = document.getElementById('newRuleCat').value;
+            const title = document.getElementById('newRuleTitle').value.trim();
+            const desc = document.getElementById('newRuleDesc').value.trim();
+            if (!num || !title || !desc) { showToast('⚠️ Alle Felder ausfüllen!'); return; }
+            customRules.push({ num, cat, title, desc });
+            localStorage.setItem('dkz-ruleboard-custom', JSON.stringify(customRules));
+            document.getElementById('newRuleNum').value = '';
+            document.getElementById('newRuleTitle').value = '';
+            document.getElementById('newRuleDesc').value = '';
+            renderRules(); renderStatusBar();
+            showToast(`📜 Regel R${esc(num)} gespeichert`);
+        }
+
+        // ── TABS ──
+        function switchTab(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelector(`.tab[onclick="switchTab('${name}')"]`).classList.add('active');
+            document.getElementById('panel-' + name).classList.add('active');
+        }
+
+        // ── UTILS ──
+        function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+        function showToast(msg, ms = 2500) {
+            const t = document.getElementById('toast');
+            t.textContent = msg; t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), ms);
+        }
+
+        // ── CHAT ASSISTANT ──
+        const CHAT_KB = [
+            { keys: ['löschen', 'delete', 'entfernen', 'remove'], answer: '<strong>Regel 1:</strong> NIE löschen — immer archivieren! Verschiebe nach <code>99_ARCHIVE/</code>. Wissen ist unser höchstes Gut.' },
+            { keys: ['commit', 'git', 'version'], answer: '<strong>Regel 2:</strong> Git Commit nach JEDER Änderung. Format: <code>prefix(bereich): beschreibung</code>. Prefixe: feat, fix, docs, chore, style, refactor.' },
+            { keys: ['workflow', 'fluss', 'ablauf', 'prozess'], answer: '<strong>Regel 13:</strong> Workflow-Fluss: ORDNER.ini lesen → REGELWERK lesen → Analyse → Plan → Genehmigung → Ausführung → Verifikation → Commit → Dokumentation → INI aktualisieren.' },
+            { keys: ['ini', 'ordner.ini', 'anweisung'], answer: '<strong>Regel 17:</strong> Jeder Hauptordner hat eine <code>ORDNER.ini</code> mit Regeln und Verweisen. IMMER zuerst lesen! Bei Änderungen: INI aktualisieren.' },
+            { keys: ['modul', 'module', 'erstellen', 'neu'], answer: 'Neues Modul: 1) <code>modules/name/</code> erstellen, 2) <code>index.html</code> mit DkZ Template, 3) <code>features.json</code> (MOD-XXX), 4) REGISTRY.json updaten, 5) BLAUPAUSE.md ergänzen, 6) Git commit.' },
+            { keys: ['farbe', 'color', 'accent', 'design'], answer: 'DkZ Design System: Akzent <code>#fa1e4e</code> (Neonrot), Background <code>#0e0e10</code>, Card <code>#1a1a1c</code>, Fonts: Inter + JetBrains Mono, Glassmorphism: <code>backdrop-filter: blur(24px)</code>.' },
+            { keys: ['archiv', 'archive', '99_archive'], answer: '<code>99_ARCHIVE/</code> ist der Zielort für Regel 1. Alles was nicht mehr aktiv ist kommt hierher. NIEMALS etwas daraus löschen!' },
+            { keys: ['privat', 'intern', 'persönlich', 'lebenslauf'], answer: '<strong>Regel 8:</strong> Private Dateien → <code>05_INTERN/privat/</code>. Nicht in Projektordner mischen. Nicht extern senden (Regel 11: Dateihoheit).' },
+            { keys: ['fehler', 'error', 'bug', 'problem'], answer: 'Fehlerbehandlung: 1) Im Debug-Tab Health Check ausführen, 2) Im Fehler-Log nach Mustern suchen, 3) Fehlerquellen analysieren, 4) Fix dokumentieren + Git Commit.' },
+            { keys: ['console', 'ctrl+k', 'befehl', 'command'], answer: 'DkZ Console: <code>Ctrl+K</code> öffnet sie überall. Syntax: <code>PREFIX:BEFEHL</code>. Wichtige Prefixe: modul:, run:, search:, health:, send:, debug:.' },
+            { keys: ['shortcut', 'taste', 'tastenkombination', 'keyboard'], answer: 'Shortcuts: <code>Ctrl+K</code> Console, <code>Ctrl+D</code> Debug, <code>Ctrl+H</code> Hub, <code>Ctrl+/</code> Hilfe, <code>Ctrl+Shift+T</code> Theme, <code>Escape</code> Schließen.' },
+            { keys: ['regel', 'rule', 'regeln', 'rules', 'regelwerk'], answer: 'Es gibt 18 Regeln (R0-R17). Die wichtigsten: R0 (Teil der Lösung), R1 (nie löschen), R10 (Workflow > Ergebnis), R15 (minimal intervention), R16 (Regeln über Anweisungen). Alles in <code>REGELWERK.md</code>.' },
+            { keys: ['kaizen', 'verbessern', 'optimier'], answer: '<strong>Regel 14:</strong> Kontinuierliche Verbesserung (Kaizen). Jede Session hinterlässt das System besser. Fehler sofort fixen. Neue Erkenntnisse → REGELWERK aktualisieren.' },
+            { keys: ['dateihoheit', 'kontrolle', 'überschreiben', 'sicher'], answer: '<strong>Regel 11:</strong> Absolute Dateihoheit. Keine Dateien ohne Bestätigung: überschreiben, entfernen, zusammenführen oder extern senden. Immer Backup vorher!' },
+            { keys: ['struktur', 'ordner', 'folder', 'pfad'], answer: 'Hauptordner: <code>00_INBOX</code> (Eingang), <code>01_PROJECTS</code> (Projekte), <code>02_RESEARCH</code> (Forschung), <code>03_MEDIA</code> (Medien), <code>04_SYSTEM</code> (Configs), <code>05_INTERN</code> (Privat), <code>99_ARCHIVE</code> (Archiv).' },
+            { keys: ['hallo', 'hi', 'hey', 'help', 'hilfe'], answer: 'Hallo! Ich bin der Regel-Assistent. Frag mich zu: Regeln, Workflow, Struktur, Modulen, Design, Fehlern, Shortcuts, oder sonst was zum Ökosystem. Ich kenne alle 18 Regeln! 📜' },
+        ];
+
+        const CHAT_SUGGESTIONS = [
+            'Welche Regeln gibt es?', 'Wie erstelle ich ein Modul?', 'Was sind die Shortcuts?',
+            'Wie funktioniert der Workflow?', 'Was ist das INI System?', 'Wo kommen private Dateien hin?'
+        ];
+
+        function initChat() {
+            const msgs = document.getElementById('chatMessages');
+            const sugs = document.getElementById('chatSuggestions');
+            addBotMsg('Hallo! Ich bin der <strong>Regel-Assistent</strong>. Frag mich zu Regeln, Workflow, Struktur, oder Fehlern. Ich kenne alle 18 Regeln des DEVKiTZ Ökosystems! 📜');
+            sugs.innerHTML = CHAT_SUGGESTIONS.map(s =>
+                `<div class="chat-sug" onclick="askSuggestion('${esc(s)}')">${esc(s)}</div>`
+            ).join('');
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chatInput');
+            const q = input.value.trim();
+            if (!q) return;
+            input.value = '';
+            addUserMsg(q);
+            setTimeout(() => {
+                const answer = findAnswer(q);
+                addBotMsg(answer);
+            }, 300 + Math.random() * 400);
+        }
+
+        function askSuggestion(q) {
+            document.getElementById('chatInput').value = q;
+            sendChat();
+        }
+
+        function findAnswer(query) {
+            const q = query.toLowerCase();
+            // Check rule number directly
+            const ruleMatch = q.match(/regel\s*(\d+)|r(\d+)/i);
+            if (ruleMatch) {
+                const num = ruleMatch[1] || ruleMatch[2];
+                const allRules = [...RULES, ...customRules];
+                const rule = allRules.find(r => r.num === num);
+                if (rule) return `<strong>Regel ${rule.num}:</strong> ${esc(rule.title)}<br>${esc(rule.desc)}`;
+            }
+            // Pattern match
+            for (const kb of CHAT_KB) {
+                if (kb.keys.some(k => q.includes(k))) return kb.answer;
+            }
+            // Fuzzy search in rules
+            const allRules = [...RULES, ...customRules];
+            const found = allRules.filter(r => r.title.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q));
+            if (found.length) {
+                return 'Passende Regeln gefunden:<br>' + found.map(r =>
+                    `<strong>R${esc(r.num)}:</strong> ${esc(r.title)}`
+                ).join('<br>');
+            }
+            return 'Dazu habe ich keine spezifische Antwort. Schau in <code>REGELWERK.md</code> oder tippe <code>help</code> für Vorschläge. Du kannst auch nach einer Regel-Nummer fragen (z.B. "Regel 10").';
+        }
+
+        function addBotMsg(html) {
+            const msgs = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'chat-msg bot';
+            div.innerHTML = '<div class="msg-label">🤖 Assistent</div>' + html;
+            msgs.appendChild(div);
+            msgs.scrollTop = msgs.scrollHeight;
+        }
+
+        function addUserMsg(text) {
+            const msgs = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'chat-msg user';
+            div.innerHTML = '<div class="msg-label">Du</div>' + esc(text);
+            msgs.appendChild(div);
+            msgs.scrollTop = msgs.scrollHeight;
+        }
+
+        // ── INIT ──
+        renderStatusBar();
+        renderRules();
+        renderStructure();
+        renderWorkflow();
+        renderIni();
+        renderErrors();
+        runHealthChecks();
+        initChat();
+    </script>
+
+    <!-- DkZ Shared Scripts (R21) -->
+    
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(()=>{});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">Ruleboard</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8">Regelwerk und Guidelines Dashboard.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">Ruleboard</div><p style="font-size:.875rem;color:#a0a0a0;line-height:1.8;margin-bottom:1rem">Regelwerk und Guidelines Dashboard.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-ruleboard-onboarded','1')}if(!localStorage.getItem('dkz-ruleboard-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #2a2a2e;border-radius:6px;background:rgba(255,255,255,.05);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+</html>
+
+

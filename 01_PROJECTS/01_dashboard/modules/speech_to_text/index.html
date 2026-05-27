@@ -1,0 +1,849 @@
+﻿<!-- @DKZ:RULES → Lies REGELWERK.md + ORDNER.ini bevor du hier arbeitest! -->
+<!-- @DKZ:DOCS  → features.json (MOD-STT) | BLAUPAUSE.md | BLAUPAUSE_VOICEFORGE.md -->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎙️ VoiceForge™ — DkZâ„¢ v2.02.0_01</title>
+    <meta name="description" content="VoiceForge™ Speech-to-Text — Audacity-Style Stereo, Füllwort-Filter, Snippet-Manager, Meeting-Modus, Whisper API">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css" onerror="this.remove()">
+    <link rel="manifest" href="../../shared/manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#040406;--bg2:#0a0a0e;--card:#101014;--card2:#181820;--card3:#222230;--border:#1e1e2a;--border2:#2e2e3e;--text:#f0f0f4;--muted:#8888a0;--dim:#44445a;--accent:#fa1e4e;--accent-rgb:250,30,78;--cyan:#06b6d4;--cyan-rgb:6,182,212;--green:#00ff88;--green-rgb:0,255,136;--purple:#818cf8;--yellow:#FFB800;--red:#ff3b5c;--blue:#55ACEE;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+        --sp1:#fa1e4e;--sp2:#06b6d4;--sp3:#00ff88;--sp4:#FFB800;--sp5:#818cf8;--sp6:#f472b6;--sp7:#34d399;--sp8:#fbbf24;
+        --ch-l:#06b6d4;--ch-r:#fa1e4e}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+        ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(250,30,78,.15);border-radius:6px}
+
+        /* BG */
+        .bg-art{position:fixed;inset:0;z-index:0;pointer-events:none}
+        .bg-orb{position:absolute;border-radius:50%;filter:blur(160px);animation:orbF 30s ease-in-out infinite}
+        .bg-orb.a{width:500px;height:500px;background:rgba(250,30,78,.04);top:-10%;right:10%}
+        .bg-orb.b{width:400px;height:400px;background:rgba(6,182,212,.03);bottom:5%;left:5%;animation-delay:-12s}
+        @keyframes orbF{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-40px)}}
+
+        .app{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column}
+
+        /* HEADER */
+        .header{padding:12px 24px;border-bottom:1px solid var(--border);background:rgba(8,8,12,.9);backdrop-filter:blur(20px);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+        .back-btn{padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--muted);font-size:10px;cursor:pointer;transition:all .3s;text-decoration:none;font-family:var(--font)}
+        .back-btn:hover{color:var(--text);border-color:var(--accent)}
+        .h1{font-size:20px;font-weight:900;background:linear-gradient(135deg,var(--cyan),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .h-sub{font-size:8px;color:var(--dim);font-family:var(--mono);letter-spacing:2px;text-transform:uppercase}
+        .hdr-r{margin-left:auto;display:flex;gap:8px;align-items:center}
+        .pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;font-size:8px;font-weight:700;font-family:var(--mono);border:1px solid}
+        .pill.off{background:rgba(255,60,90,.04);color:var(--red);border-color:rgba(255,60,90,.15)}
+        .pill.on{background:rgba(0,255,136,.04);color:var(--green);border-color:rgba(0,255,136,.15);animation:glow 2s infinite}
+        .pill.proc{background:rgba(var(--cyan-rgb),.04);color:var(--cyan);border-color:rgba(var(--cyan-rgb),.15)}
+        @keyframes glow{0%,100%{box-shadow:none}50%{box-shadow:0 0 12px rgba(0,255,136,.15)}}
+
+        /* LAYOUT */
+        .layout{flex:1;display:grid;grid-template-columns:1fr 380px;grid-template-rows:auto 1fr;gap:0;overflow:hidden}
+        @media(max-width:1000px){.layout{grid-template-columns:1fr;grid-template-rows:auto auto 1fr}}
+
+        /* WAVEFORM PANEL — AUDACITY STYLE */
+        .wave-panel{grid-column:1/-1;background:var(--bg2);border-bottom:1px solid var(--border);padding:0;position:relative;height:180px}
+        .wave-header{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:6px 16px;z-index:2;background:rgba(10,10,14,.7);backdrop-filter:blur(8px)}
+        .wave-header span{font-size:8px;font-weight:700;color:var(--dim);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase}
+        .ch-label{position:absolute;left:8px;font-size:9px;font-weight:900;font-family:var(--mono);z-index:2;letter-spacing:2px}
+        .ch-label.l{top:32px;color:var(--ch-l)}
+        .ch-label.r{top:108px;color:var(--ch-r)}
+        .wave-divider{position:absolute;top:50%;left:0;right:0;height:1px;background:var(--border);z-index:1}
+        canvas#waveCanvas{width:100%;height:100%;display:block}
+
+        /* TIMELINE */
+        .timeline{grid-column:1/-1;height:24px;background:var(--card);border-bottom:1px solid var(--border);position:relative;overflow:hidden}
+        canvas#timelineCanvas{width:100%;height:100%;display:block}
+
+        /* MIC CENTER + SOUND GRID */
+        .mic-area{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;position:relative}
+        .sound-grid{position:relative;width:220px;height:220px;margin:0 auto}
+        .grid-cells{position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);gap:2px;border-radius:50%;overflow:hidden}
+        .g-cell{background:rgba(255,255,255,.01);border-radius:2px;transition:background .1s}
+        .mic-btn{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80px;height:80px;border-radius:50%;border:3px solid var(--border2);background:radial-gradient(circle,var(--card2),var(--bg));cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:28px;z-index:3;transition:all .3s;box-shadow:0 0 30px rgba(0,0,0,.5)}
+        .mic-btn:hover{border-color:var(--accent);box-shadow:0 0 40px rgba(var(--accent-rgb),.15)}
+        .mic-btn.recording{border-color:var(--green);animation:mic-pulse 1.5s ease infinite;box-shadow:0 0 50px rgba(0,255,136,.2)}
+        @keyframes mic-pulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.06)}}
+        .mic-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border-radius:50%;border:1px solid;pointer-events:none;opacity:0}
+        .mic-ring.r1{width:120px;height:120px;border-color:rgba(var(--accent-rgb),.1)}
+        .mic-ring.r2{width:160px;height:160px;border-color:rgba(var(--cyan-rgb),.06)}
+        .mic-ring.r3{width:200px;height:200px;border-color:rgba(129,140,248,.04)}
+        .recording .mic-ring{opacity:1;animation:ring-expand 2s ease-out infinite}
+        .mic-ring.r2{animation-delay:.4s}
+        .mic-ring.r3{animation-delay:.8s}
+        @keyframes ring-expand{0%{transform:translate(-50%,-50%) scale(.8);opacity:.6}100%{transform:translate(-50%,-50%) scale(1.3);opacity:0}}
+
+        .mic-label{font-size:10px;font-weight:700;color:var(--muted);margin-top:16px;text-align:center;font-family:var(--mono);letter-spacing:1px}
+        .mic-status{font-size:9px;color:var(--dim);margin-top:4px;text-align:center}
+
+        /* CHAT TRANSCRIPT */
+        .chat-panel{display:flex;flex-direction:column;border-left:1px solid var(--border);overflow:hidden}
+        @media(max-width:1000px){.chat-panel{border-left:none;border-top:1px solid var(--border)}}
+        .chat-header{padding:10px 16px;border-bottom:1px solid var(--border);background:rgba(10,10,14,.6);display:flex;align-items:center;gap:8px;justify-content:space-between;flex-shrink:0}
+        .chat-header span{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+        .chat-body{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px}
+        .chat-msg{padding:8px 12px;border-radius:10px;font-size:11px;line-height:1.7;position:relative;animation:msgIn .3s ease;max-width:95%;border-left:3px solid}
+        @keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .chat-msg .msg-speaker{font-size:8px;font-weight:800;font-family:var(--mono);letter-spacing:1px;margin-bottom:2px;text-transform:uppercase}
+        .chat-msg .msg-time{font-size:7px;color:var(--dim);font-family:var(--mono);position:absolute;top:6px;right:10px}
+        .chat-msg .msg-text{color:var(--text);word-break:break-word}
+
+        /* Speaker colors */
+        .sp-0{background:rgba(250,30,78,.04);border-color:var(--sp1)}.sp-0 .msg-speaker{color:var(--sp1)}
+        .sp-1{background:rgba(6,182,212,.04);border-color:var(--sp2)}.sp-1 .msg-speaker{color:var(--sp2)}
+        .sp-2{background:rgba(0,255,136,.04);border-color:var(--sp3)}.sp-2 .msg-speaker{color:var(--sp3)}
+        .sp-3{background:rgba(255,184,0,.04);border-color:var(--sp4)}.sp-3 .msg-speaker{color:var(--sp4)}
+        .sp-4{background:rgba(129,140,248,.04);border-color:var(--sp5)}.sp-4 .msg-speaker{color:var(--sp5)}
+        .sp-llm{background:rgba(250,30,78,.06);border-color:var(--accent);border-width:3px}.sp-llm .msg-speaker{color:var(--accent)}
+
+        /* CONTROLS BAR */
+        .ctrl-bar{grid-column:1/-1;padding:8px 16px;border-top:1px solid var(--border);background:rgba(10,10,14,.8);backdrop-filter:blur(12px);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+        .ctrl-btn{padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--muted);font-family:var(--font);font-size:10px;font-weight:700;cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:5px}
+        .ctrl-btn:hover{color:var(--text);border-color:var(--accent)}
+        .ctrl-btn.rec{background:rgba(0,255,136,.06);border-color:rgba(0,255,136,.2);color:var(--green)}
+        .ctrl-btn.rec.active{background:rgba(255,60,90,.08);border-color:var(--red);color:var(--red)}
+        .ctrl-btn.primary{background:rgba(var(--accent-rgb),.06);border-color:rgba(var(--accent-rgb),.2);color:var(--accent)}
+        .ctrl-select{padding:5px 10px;background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--font);font-size:10px;outline:none}
+        .ctrl-spacer{flex:1}
+        .ctrl-label{font-size:8px;color:var(--dim);font-family:var(--mono);letter-spacing:.5px}
+        .speaker-dots{display:flex;gap:4px;align-items:center}
+        .sp-dot{width:8px;height:8px;border-radius:50%;border:1px solid rgba(255,255,255,.1)}
+
+        /* TOAST */
+        .toast{position:fixed;bottom:20px;right:20px;padding:10px 20px;background:var(--green);color:#000;font-size:11px;font-weight:700;border-radius:10px;z-index:300;opacity:0;transform:translateY(20px);transition:all .4s;pointer-events:none}
+        .toast.show{opacity:1;transform:translateY(0)}
+
+        /* LEVEL METERS */
+        .level-meters{display:flex;gap:6px;align-items:center;margin-left:auto}
+        .lm{display:flex;flex-direction:column;align-items:center;gap:2px}
+        .lm-label{font-size:7px;font-weight:800;font-family:var(--mono);letter-spacing:1px}
+        .lm-bar{width:10px;height:40px;background:var(--card);border-radius:3px;overflow:hidden;position:relative;border:1px solid var(--border)}
+        .lm-fill{position:absolute;bottom:0;left:0;right:0;border-radius:2px;transition:height .05s}
+        .lm-l .lm-fill{background:linear-gradient(to top,var(--ch-l),rgba(6,182,212,.3))}
+        .lm-r .lm-fill{background:linear-gradient(to top,var(--ch-r),rgba(250,30,78,.3))}
+        .lm-l .lm-label{color:var(--ch-l)}
+        .lm-r .lm-label{color:var(--ch-r)}
+
+        /* SNIPPET PANEL */
+        .snippet-panel{position:fixed;right:16px;bottom:80px;width:320px;background:var(--card);border:1px solid var(--border);border-radius:14px;z-index:200;overflow:hidden;max-height:350px;display:none;box-shadow:0 12px 40px rgba(0,0,0,.5);backdrop-filter:blur(20px)}
+        .snippet-panel.open{display:block;animation:slideUp .3s ease}
+        @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        .snippet-header{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:rgba(10,10,14,.6)}
+        .snippet-header span{font-size:9px;font-weight:800;color:var(--muted);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase}
+        .snippet-list{overflow-y:auto;max-height:280px;padding:6px}
+        .snippet-item{padding:8px 10px;border-radius:8px;font-size:10px;color:var(--text);cursor:pointer;transition:all .2s;border:1px solid transparent;margin-bottom:3px;line-height:1.6}
+        .snippet-item:hover{background:rgba(var(--accent-rgb),.06);border-color:rgba(var(--accent-rgb),.15)}
+        .snippet-item .s-time{font-size:7px;color:var(--dim);font-family:var(--mono)}
+        .snippet-copied{background:rgba(0,255,136,.06)!important;border-color:rgba(0,255,136,.2)!important}
+
+        /* MEETING MODE BADGE */
+        .meeting-badge{background:rgba(255,184,0,.06);border:1px solid rgba(255,184,0,.2);color:var(--yellow);padding:2px 8px;border-radius:5px;font-size:7px;font-weight:800;font-family:var(--mono);letter-spacing:1px;animation:glow 2s infinite}
+
+        /* FILTER BADGE */
+        .filter-on{background:rgba(0,255,136,.06);border-color:rgba(0,255,136,.2);color:var(--green)}
+
+        /* ENGINE SELECT */
+        .engine-toggle{display:flex;gap:3px;background:var(--card2);border-radius:6px;padding:2px;border:1px solid var(--border)}
+        .eng-btn{padding:3px 8px;border:none;background:transparent;color:var(--dim);font-size:8px;font-weight:700;font-family:var(--mono);border-radius:4px;cursor:pointer;transition:all .2s}
+        .eng-btn.active{background:rgba(var(--accent-rgb),.1);color:var(--accent)}
+    </style>
+<script>try{var us=document.createElement('script');us.src='../../shared/dkz-updater.js';us.onerror=function(){};document.head.appendChild(us)}catch(e){}</script>
+</head>
+<body data-dkz-module="speech_to_text" data-dkz-appid="DKZ-MOD-SPE" data-dkz-version="v0.01" data-dkz-title="🎙️ VoiceForge™ —" data-dkz-icon="📦" data-dkz-separable="true">
+    <div class="bg-art"><div class="bg-orb a"></div><div class="bg-orb b"></div></div>
+    <div class="app">
+        <!-- HEADER -->
+        <div class="header">
+            <a href="../../hub/index.html" class="back-btn">← Hub</a>
+            <div>
+                <div class="h1">🎙️ VoiceForge™</div>
+                <div class="h-sub">Audacity · Füllwort-Filter · Snippets · Meeting</div>
+            </div>
+            <div class="hdr-r">
+                <div class="level-meters">
+                    <div class="lm lm-l"><div class="lm-bar"><div class="lm-fill" id="lm-l" style="height:0"></div></div><div class="lm-label">L</div></div>
+                    <div class="lm lm-r"><div class="lm-bar"><div class="lm-fill" id="lm-r" style="height:0"></div></div><div class="lm-label">R</div></div>
+                </div>
+                <span class="pill off" id="status-pill">● Bereit</span>
+                <span style="font-size:8px;color:var(--dim);font-family:var(--mono)">v2.01.0_01</span>
+            </div>
+        </div>
+
+        <!-- LAYOUT -->
+        <div class="layout">
+            <!-- WAVEFORM — AUDACITY STYLE -->
+            <div class="wave-panel">
+                <div class="wave-header">
+                    <span>Stereo Waveform · L/R</span>
+                    <span id="wave-info">44.1 kHz · Stereo · 0:00</span>
+                </div>
+                <div class="ch-label l">L</div>
+                <div class="ch-label r">R</div>
+                <div class="wave-divider"></div>
+                <canvas id="waveCanvas"></canvas>
+            </div>
+
+            <!-- MIC + SOUND GRID -->
+            <div class="mic-area">
+                <div class="sound-grid" id="sound-grid">
+                    <div class="grid-cells" id="grid-cells"></div>
+                    <div class="mic-ring r1"></div>
+                    <div class="mic-ring r2"></div>
+                    <div class="mic-ring r3"></div>
+                    <button class="mic-btn" id="mic-btn" onclick="toggleRecording()">🎤</button>
+                </div>
+                <div class="mic-label" id="mic-label">Tippen zum Starten</div>
+                <div class="mic-status" id="mic-status">VoiceForge™ · Web Speech API</div>
+
+                <!-- SPEAKER LEGEND -->
+                <div style="margin-top:20px;width:100%;max-width:300px">
+                    <div style="font-size:8px;font-weight:700;color:var(--dim);font-family:var(--mono);margin-bottom:6px;letter-spacing:1px">SPEAKER FARBEN</div>
+                    <div class="speaker-dots" id="speaker-legend"></div>
+                </div>
+            </div>
+
+            <!-- CHAT TRANSCRIPT -->
+            <div class="chat-panel">
+                <div class="chat-header">
+                    <span>💬 Transkript</span>
+                    <div style="display:flex;gap:4px">
+                        <button class="ctrl-btn" onclick="exportMarkdown()" style="padding:3px 8px;font-size:8px" title="Markdown Export">📝 .md</button>
+                        <button class="ctrl-btn" onclick="exportTranscript()" style="padding:3px 8px;font-size:8px" title="Text Export">📥</button>
+                        <button class="ctrl-btn" onclick="clearChat()" style="padding:3px 8px;font-size:8px">🗑️</button>
+                    </div>
+                </div>
+                <div class="chat-body" id="chat-body">
+                    <div style="text-align:center;padding:40px 20px;color:var(--dim);font-size:11px">
+                        <div style="font-size:2rem;margin-bottom:8px;opacity:.3">🎤</div>
+                        Sprechen zum Starten...<br>
+                        <span style="font-size:9px;font-family:var(--mono)">Jeder Sprecher bekommt eine eigene Farbe</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTROLS BAR -->
+            <div class="ctrl-bar">
+                <button class="ctrl-btn rec" id="rec-btn" onclick="toggleRecording()">⏺ Aufnahme</button>
+                <button class="ctrl-btn" onclick="addSpeaker()">👤+</button>
+                <div class="engine-toggle" title="STT Engine">
+                    <button class="eng-btn active" id="eng-web" onclick="setEngine('web')">🌐 Web</button>
+                    <button class="eng-btn" id="eng-whisper" onclick="setEngine('whisper')">🤫 Whisper</button>
+                </div>
+                <select class="ctrl-select" id="lang-select">
+                    <option value="de-DE">🇩🇪 DE</option>
+                    <option value="en-US">🇺🇸 EN</option>
+                    <option value="en-GB">🇬🇧 UK</option>
+                    <option value="fr-FR">🇫🇷 FR</option>
+                    <option value="es-ES">🇪🇸 ES</option>
+                    <option value="tr-TR">🇹🇷 TR</option>
+                </select>
+                <button class="ctrl-btn" id="filter-btn" onclick="toggleFilter()" title="Füllwort-Filter">🧹 Filter</button>
+                <button class="ctrl-btn" id="meeting-btn" onclick="toggleMeeting()" title="Meeting-Modus">📋 Meeting</button>
+                <span id="meeting-badge" class="meeting-badge" style="display:none">● REC</span>
+                <div class="ctrl-spacer"></div>
+                <div class="ctrl-label" id="duration-label">0:00</div>
+                <div class="ctrl-label" id="filler-count" title="Füllwörter entfernt" style="color:var(--yellow)"></div>
+                <button class="ctrl-btn" onclick="toggleSnippets()" title="Snippet-Manager">✂️ Snippets</button>
+                <button class="ctrl-btn" onclick="copyTranscript()">📋</button>
+                <button class="ctrl-btn primary" onclick="toggleStereoMode()">🔊 <span id="stereo-label">Stereo</span></button>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <!-- SNIPPET PANEL -->
+    <div class="snippet-panel" id="snippet-panel">
+        <div class="snippet-header">
+            <span>✂️ Snippets (letzte 10)</span>
+            <button class="ctrl-btn" onclick="copyAllSnippets()" style="padding:2px 6px;font-size:7px">📋 Alle</button>
+        </div>
+        <div class="snippet-list" id="snippet-list"></div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+    /* ═══════════════════════════════════════════════
+       DkZ Voice Engine v2 — Audacity-Style
+       Speech-to-Text via Web Speech API (kein LLM)
+       Stereo Visualizer · Speaker Colors · Sound Grid
+       ═══════════════════════════════════════════════ */
+    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
+
+    // ═══ STATE ═══
+    let isRecording = false;
+    let audioCtx = null;
+    let analyserL = null, analyserR = null;
+    let splitter = null;
+    let micStream = null;
+    let recognition = null;
+    let animId = null;
+    let startTime = 0;
+    let durationTimer = null;
+    let stereoMode = true;
+    let filterEnabled = false;
+    let meetingMode = false;
+    let meetingStart = null;
+    let sttEngine = 'web'; // 'web' | 'whisper'
+    let fillerCount = 0;
+    let whisperEndpoint = 'http://localhost:8765/transcribe'; // faster-whisper API
+
+    // Füllwort-Filter — VoiceForge™
+    const FILLERS_DE = /\b(ähm|äh|ehm|eh|genau|also|halt|quasi|sozusagen|sag ich mal|sage ich mal|irgendwie|na ja|naja|okay also|ja also|mhm|hmm)\b/gi;
+    const FILLERS_EN = /\b(um|uh|like|you know|i mean|basically|actually|literally|sort of|kind of)\b/gi;
+
+    const SPEAKER_COLORS = ['#fa1e4e','#06b6d4','#00ff88','#FFB800','#818cf8','#f472b6','#34d399','#fbbf24'];
+    const SPEAKER_NAMES = ['Sprecher A','Sprecher B','Sprecher C','Sprecher D','Sprecher E','Sprecher F','Sprecher G','Sprecher H'];
+    let currentSpeaker = 0;
+    let speakerCount = 1;
+    let messages = [];
+    let snippets = [];
+
+    // ═══ INIT GRID CELLS ═══
+    function initGrid() {
+        const gc = document.getElementById('grid-cells');
+        gc.innerHTML = '';
+        for (let i = 0; i < 64; i++) {
+            const c = document.createElement('div');
+            c.className = 'g-cell';
+            gc.appendChild(c);
+        }
+    }
+    initGrid();
+
+    // ═══ INIT SPEAKER LEGEND ═══
+    function updateLegend() {
+        const el = document.getElementById('speaker-legend');
+        let html = '';
+        for (let i = 0; i < speakerCount; i++) {
+            html += `<div class="sp-dot" style="background:${SPEAKER_COLORS[i]};cursor:pointer;${currentSpeaker===i?'box-shadow:0 0 8px '+SPEAKER_COLORS[i]+';transform:scale(1.3)':''}" onclick="selectSpeaker(${i})" title="${SPEAKER_NAMES[i]}"></div>`;
+        }
+        html += `<span style="font-size:8px;color:var(--dim);margin-left:4px;font-family:var(--mono)">${SPEAKER_NAMES[currentSpeaker]}</span>`;
+        el.innerHTML = html;
+    }
+    updateLegend();
+
+    function selectSpeaker(i) { currentSpeaker = i; updateLegend(); toast('🎤 ' + SPEAKER_NAMES[i]); }
+    function addSpeaker() { if (speakerCount < 8) speakerCount++; updateLegend(); toast('👤 ' + speakerCount + ' Speaker'); }
+
+    // ═══ WAVEFORM CANVAS (AUDACITY STYLE) ═══
+    const waveCanvas = document.getElementById('waveCanvas');
+    const wCtx = waveCanvas.getContext('2d');
+
+    function resizeCanvas() {
+        const p = waveCanvas.parentElement;
+        waveCanvas.width = p.clientWidth * window.devicePixelRatio;
+        waveCanvas.height = p.clientHeight * window.devicePixelRatio;
+        wCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Draw waveform data from L/R analysers
+    let waveHistory = { l: [], r: [] };
+    const MAX_HIST = 2000;
+
+    function drawWaveform() {
+        const w = waveCanvas.width / window.devicePixelRatio;
+        const h = waveCanvas.height / window.devicePixelRatio;
+        const half = h / 2;
+
+        wCtx.clearRect(0, 0, w, h);
+
+        // BG grid lines
+        wCtx.strokeStyle = 'rgba(255,255,255,.02)';
+        wCtx.lineWidth = 1;
+        for (let y = 0; y < h; y += 20) { wCtx.beginPath(); wCtx.moveTo(0, y); wCtx.lineTo(w, y); wCtx.stroke(); }
+        for (let x = 0; x < w; x += 40) { wCtx.beginPath(); wCtx.moveTo(x, 0); wCtx.lineTo(x, h); wCtx.stroke(); }
+
+        // Center line
+        wCtx.strokeStyle = 'rgba(255,255,255,.05)';
+        wCtx.beginPath(); wCtx.moveTo(0, half); wCtx.lineTo(w, half); wCtx.stroke();
+
+        if (analyserL && analyserR) {
+            const bufLen = analyserL.fftSize;
+            const dataL = new Float32Array(bufLen);
+            const dataR = new Float32Array(bufLen);
+            analyserL.getFloatTimeDomainData(dataL);
+            analyserR.getFloatTimeDomainData(dataR);
+
+            // Push to history
+            const avgL = dataL.reduce((s, v) => s + Math.abs(v), 0) / bufLen;
+            const avgR = dataR.reduce((s, v) => s + Math.abs(v), 0) / bufLen;
+            waveHistory.l.push(avgL);
+            waveHistory.r.push(avgR);
+            if (waveHistory.l.length > MAX_HIST) waveHistory.l.shift();
+            if (waveHistory.r.length > MAX_HIST) waveHistory.r.shift();
+
+            // Draw L channel (top half)
+            drawChannel(dataL, 0, half, 'rgba(6,182,212,', true);
+            // Draw R channel (bottom half)
+            drawChannel(dataR, half, half, 'rgba(250,30,78,', false);
+
+            // Level meters
+            document.getElementById('lm-l').style.height = Math.min(avgL * 300, 100) + '%';
+            document.getElementById('lm-r').style.height = Math.min(avgR * 300, 100) + '%';
+
+            // Sound grid
+            updateSoundGrid(dataL, dataR);
+        } else {
+            // Draw static idle waveform history
+            drawIdleWave(waveHistory.l, 0, half, 'rgba(6,182,212,.15)');
+            drawIdleWave(waveHistory.r, half, half, 'rgba(250,30,78,.15)');
+        }
+
+        animId = requestAnimationFrame(drawWaveform);
+    }
+
+    function drawChannel(data, yOff, height, colorBase, isTop) {
+        const w = waveCanvas.width / window.devicePixelRatio;
+        const mid = yOff + height / 2;
+        const amp = height / 2 * 0.8;
+        const step = Math.ceil(data.length / w);
+
+        // Fill
+        wCtx.beginPath();
+        wCtx.moveTo(0, mid);
+        for (let x = 0; x < w; x++) {
+            const idx = Math.floor(x * data.length / w);
+            const v = data[idx] || 0;
+            wCtx.lineTo(x, mid + v * amp);
+        }
+        wCtx.lineTo(w, mid);
+        wCtx.closePath();
+        const grad = wCtx.createLinearGradient(0, yOff, 0, yOff + height);
+        grad.addColorStop(0, colorBase + '0.02)');
+        grad.addColorStop(0.5, colorBase + '0.12)');
+        grad.addColorStop(1, colorBase + '0.02)');
+        wCtx.fillStyle = grad;
+        wCtx.fill();
+
+        // Line
+        wCtx.beginPath();
+        wCtx.moveTo(0, mid);
+        for (let x = 0; x < w; x++) {
+            const idx = Math.floor(x * data.length / w);
+            const v = data[idx] || 0;
+            wCtx.lineTo(x, mid + v * amp);
+        }
+        wCtx.strokeStyle = colorBase + '0.7)';
+        wCtx.lineWidth = 1.5;
+        wCtx.stroke();
+    }
+
+    function drawIdleWave(hist, yOff, height, color) {
+        if (hist.length < 2) return;
+        const w = waveCanvas.width / window.devicePixelRatio;
+        const mid = yOff + height / 2;
+        const amp = height / 2 * 0.8;
+        wCtx.beginPath();
+        for (let i = 0; i < hist.length; i++) {
+            const x = (i / hist.length) * w;
+            const v = hist[i] * (Math.random() > .5 ? 1 : -1);
+            wCtx.lineTo(x, mid + v * amp * 8);
+        }
+        wCtx.strokeStyle = color;
+        wCtx.lineWidth = 1;
+        wCtx.stroke();
+    }
+
+    // ═══ SOUND GRID VISUALIZATION ═══
+    function updateSoundGrid(dataL, dataR) {
+        const cells = document.querySelectorAll('.g-cell');
+        const binSize = Math.floor(dataL.length / 32);
+
+        for (let i = 0; i < 64; i++) {
+            const col = i % 8;
+            const row = Math.floor(i / 8);
+            // Left side uses L channel, right side uses R channel
+            const isLeft = col < 4;
+            const data = isLeft ? dataL : dataR;
+            const baseColor = isLeft ? 'var(--ch-l)' : 'var(--ch-r)';
+            const idx = Math.floor((i / 64) * data.length);
+            const val = Math.abs(data[idx] || 0);
+            const intensity = Math.min(val * 5, 1);
+
+            if (intensity > 0.02) {
+                const r = isLeft ? 6 : 250;
+                const g = isLeft ? 182 : 30;
+                const b = isLeft ? 212 : 78;
+                cells[i].style.background = `rgba(${r},${g},${b},${intensity * 0.6})`;
+            } else {
+                cells[i].style.background = 'rgba(255,255,255,.01)';
+            }
+        }
+    }
+
+    // ═══ RECORDING ═══
+    async function toggleRecording() {
+        if (isRecording) {
+            stopRecording();
+        } else {
+            await startRecording();
+        }
+    }
+
+    async function startRecording() {
+        try {
+            micStream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 2, echoCancellation: false, noiseSuppression: false } });
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const source = audioCtx.createMediaStreamSource(micStream);
+
+            // Stereo splitter
+            splitter = audioCtx.createChannelSplitter(2);
+            analyserL = audioCtx.createAnalyser();
+            analyserR = audioCtx.createAnalyser();
+            analyserL.fftSize = 2048;
+            analyserR.fftSize = 2048;
+            analyserL.smoothingTimeConstant = 0.3;
+            analyserR.smoothingTimeConstant = 0.3;
+
+            source.connect(splitter);
+            splitter.connect(analyserL, 0);
+            // Try stereo, fall back to mono if only 1 channel
+            try { splitter.connect(analyserR, 1); } catch { splitter.connect(analyserR, 0); }
+
+            isRecording = true;
+            startTime = Date.now();
+            updateRecUI(true);
+            startSpeechRecognition();
+
+            // Start duration timer
+            durationTimer = setInterval(() => {
+                const s = Math.floor((Date.now() - startTime) / 1000);
+                const m = Math.floor(s / 60);
+                const ss = (s % 60).toString().padStart(2, '0');
+                document.getElementById('duration-label').textContent = m + ':' + ss;
+                document.getElementById('wave-info').textContent = `${audioCtx.sampleRate} Hz · ${stereoMode ? 'Stereo' : 'Mono'} · ${m}:${ss}`;
+            }, 1000);
+
+            toast('🔴 Aufnahme gestartet');
+        } catch (e) {
+            toast('❌ Mikrofon-Zugriff verweigert');
+        }
+    }
+
+    function stopRecording() {
+        isRecording = false;
+        if (recognition) { try { recognition.stop(); } catch {} }
+        if (micStream) micStream.getTracks().forEach(t => t.stop());
+        if (audioCtx) audioCtx.close();
+        analyserL = null; analyserR = null;
+        clearInterval(durationTimer);
+        updateRecUI(false);
+        toast('⏹ Aufnahme gestoppt');
+    }
+
+    function updateRecUI(active) {
+        const pill = document.getElementById('status-pill');
+        const micBtn = document.getElementById('mic-btn');
+        const recBtn = document.getElementById('rec-btn');
+        const label = document.getElementById('mic-label');
+        const grid = document.getElementById('sound-grid');
+
+        pill.className = active ? 'pill on' : 'pill off';
+        pill.textContent = active ? '● Aufnahme' : '● Bereit';
+        micBtn.classList.toggle('recording', active);
+        recBtn.classList.toggle('active', active);
+        recBtn.textContent = active ? '⏹ Stop' : '⏺ Aufnahme';
+        label.textContent = active ? 'Aufnahme läuft...' : 'Tippen zum Starten';
+        if (active) grid.classList.add('recording'); else grid.classList.remove('recording');
+    }
+
+    // ═══ SPEECH RECOGNITION (Web Speech API — kein LLM!) ═══
+    function startSpeechRecognition() {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) { toast('❌ Web Speech API nicht unterstützt'); return; }
+
+        recognition = new SR();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = document.getElementById('lang-select').value;
+
+        let interimMsg = null;
+
+        recognition.onresult = (e) => {
+            let finalText = '';
+            let interimText = '';
+
+            for (let i = e.resultIndex; i < e.results.length; i++) {
+                if (e.results[i].isFinal) {
+                    finalText += e.results[i][0].transcript;
+                } else {
+                    interimText += e.results[i][0].transcript;
+                }
+            }
+
+            if (finalText) {
+                let cleaned = finalText.trim();
+                if (filterEnabled) cleaned = applyFillerFilter(cleaned);
+                if (cleaned.length > 0) addChatMsg(cleaned, currentSpeaker);
+                interimMsg = null;
+            }
+
+            if (interimText) {
+                showInterim(interimText, currentSpeaker);
+            }
+        };
+
+        recognition.onerror = (e) => {
+            if (e.error === 'no-speech') return;
+            if (e.error === 'aborted') return;
+            toast('⚠️ Erkennung: ' + e.error);
+        };
+
+        recognition.onend = () => {
+            if (isRecording) {
+                // Auto-restart for continuous recording
+                try { recognition.start(); } catch {}
+            }
+        };
+
+        recognition.start();
+    }
+
+    // ═══ CHAT MESSAGES ═══
+    function addChatMsg(text, speaker) {
+        const time = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        messages.push({ text, speaker, time, type: 'final' });
+
+        // Snippet-Manager: keep last 10
+        snippets.push({ text, speaker, time });
+        if (snippets.length > 10) snippets.shift();
+        updateSnippetPanel();
+
+        // Remove interim
+        const interim = document.getElementById('interim-msg');
+        if (interim) interim.remove();
+
+        const body = document.getElementById('chat-body');
+        if (messages.length === 1) body.innerHTML = '';
+
+        const div = document.createElement('div');
+        div.className = 'chat-msg sp-' + speaker;
+        div.innerHTML = `<div class="msg-speaker">${esc(SPEAKER_NAMES[speaker])}</div><div class="msg-time">${time}</div><div class="msg-text">${esc(text)}</div>`;
+        body.appendChild(div);
+        body.scrollTop = body.scrollHeight;
+
+        saveTranscript();
+    }
+
+    function showInterim(text, speaker) {
+        let el = document.getElementById('interim-msg');
+        const body = document.getElementById('chat-body');
+        if (!el) {
+            if (messages.length === 0) body.innerHTML = '';
+            el = document.createElement('div');
+            el.id = 'interim-msg';
+            el.className = 'chat-msg sp-' + speaker;
+            el.style.opacity = '0.5';
+            body.appendChild(el);
+        }
+        el.innerHTML = `<div class="msg-speaker">${esc(SPEAKER_NAMES[speaker])} ···</div><div class="msg-text" style="font-style:italic">${esc(text)}</div>`;
+        body.scrollTop = body.scrollHeight;
+    }
+
+    // ═══ FÜLLWORT-FILTER — VoiceForge™ ═══
+    function applyFillerFilter(text) {
+        const lang = document.getElementById('lang-select').value;
+        const pattern = lang.startsWith('de') ? FILLERS_DE : FILLERS_EN;
+        const before = text;
+        let cleaned = text.replace(pattern, '').replace(/\s{2,}/g, ' ').trim();
+        // Count removed fillers
+        const diff = (before.match(pattern) || []).length;
+        if (diff > 0) {
+            fillerCount += diff;
+            document.getElementById('filler-count').textContent = '🧹 ' + fillerCount;
+        }
+        return cleaned;
+    }
+
+    function toggleFilter() {
+        filterEnabled = !filterEnabled;
+        const btn = document.getElementById('filter-btn');
+        btn.classList.toggle('filter-on', filterEnabled);
+        btn.textContent = filterEnabled ? '🧹 Filter ●' : '🧹 Filter';
+        toast(filterEnabled ? '🧹 Füllwort-Filter AN' : '🧹 Filter AUS');
+    }
+
+    // ═══ MEETING MODUS ═══
+    function toggleMeeting() {
+        meetingMode = !meetingMode;
+        const btn = document.getElementById('meeting-btn');
+        const badge = document.getElementById('meeting-badge');
+        if (meetingMode) {
+            meetingStart = new Date();
+            btn.classList.add('filter-on');
+            btn.textContent = '📋 Meeting ●';
+            badge.style.display = 'inline';
+            toast('📋 Meeting-Modus AN — Export als .md');
+        } else {
+            btn.classList.remove('filter-on');
+            btn.textContent = '📋 Meeting';
+            badge.style.display = 'none';
+            // Auto-export on end
+            if (messages.length > 0) exportMarkdown();
+            toast('📋 Meeting beendet');
+        }
+    }
+
+    // ═══ ENGINE TOGGLE ═══
+    function setEngine(eng) {
+        sttEngine = eng;
+        document.getElementById('eng-web').classList.toggle('active', eng === 'web');
+        document.getElementById('eng-whisper').classList.toggle('active', eng === 'whisper');
+        document.getElementById('mic-status').textContent = eng === 'web' ? 'VoiceForge™ · Web Speech API' : 'VoiceForge™ · faster-whisper (lokal)';
+        toast(eng === 'web' ? '🌐 Web Speech API' : '🤫 faster-whisper (localhost:8765)');
+    }
+
+    // ═══ SNIPPET MANAGER ═══
+    function toggleSnippets() {
+        const panel = document.getElementById('snippet-panel');
+        panel.classList.toggle('open');
+    }
+
+    function updateSnippetPanel() {
+        const list = document.getElementById('snippet-list');
+        list.innerHTML = snippets.map((s, i) =>
+            `<div class="snippet-item" onclick="copySnippet(${i})" title="Klick = Kopieren">`+
+            `<div class="s-time">${s.time} · ${esc(SPEAKER_NAMES[s.speaker])}</div>`+
+            `<div>${esc(s.text)}</div></div>`
+        ).join('');
+    }
+
+    function copySnippet(i) {
+        const s = snippets[i];
+        navigator.clipboard.writeText(s.text).then(() => {
+            const items = document.querySelectorAll('.snippet-item');
+            if (items[i]) { items[i].classList.add('snippet-copied'); setTimeout(() => items[i].classList.remove('snippet-copied'), 1000); }
+            toast('📋 Snippet kopiert');
+        });
+    }
+
+    function copyAllSnippets() {
+        const text = snippets.map(s => s.text).join(' ');
+        navigator.clipboard.writeText(text).then(() => toast('📋 Alle Snippets kopiert'));
+    }
+
+    // ═══ UTILS ═══
+    function clearChat() {
+        messages = []; snippets = []; fillerCount = 0;
+        document.getElementById('filler-count').textContent = '';
+        document.getElementById('chat-body').innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--dim);font-size:11px"><div style="font-size:2rem;margin-bottom:8px;opacity:.3">🎙️</div>VoiceForge™ bereit...<br><span style="font-size:9px;font-family:var(--mono)">Sprechen · Füllwörter filtern · Snippets kopieren</span></div>';
+        updateSnippetPanel();
+        localStorage.removeItem('dkz-stt-transcript');
+        toast('🗑️ Transkript gelöscht');
+    }
+
+    function copyTranscript() {
+        const text = messages.map(m => `[${m.time}] ${SPEAKER_NAMES[m.speaker]}: ${m.text}`).join('\n');
+        navigator.clipboard.writeText(text).then(() => toast('📋 Kopiert!'));
+    }
+
+    function exportTranscript() {
+        const text = messages.map(m => `[${m.time}] ${SPEAKER_NAMES[m.speaker]}: ${m.text}`).join('\n');
+        const blob = new Blob([text], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'dkz-transkript-' + new Date().toISOString().slice(0, 10) + '.txt';
+        a.click();
+        toast('📥 Text exportiert');
+    }
+
+    function exportMarkdown() {
+        const now = new Date();
+        const dateStr = now.toISOString().slice(0, 10);
+        const timeStr = now.toTimeString().slice(0, 5).replace(':', '-');
+        let md = `# ${meetingMode ? 'Meeting' : 'Transkript'} — ${dateStr} ${timeStr}\n\n`;
+        md += `> VoiceForge™ · ${sttEngine === 'web' ? 'Web Speech API' : 'faster-whisper'}\n`;
+        md += `> Dauer: ${document.getElementById('duration-label').textContent}\n`;
+        if (fillerCount > 0) md += `> Füllwörter entfernt: ${fillerCount}\n`;
+        md += `\n---\n\n`;
+
+        // Group by speaker for fließenden Text
+        let lastSpeaker = -1;
+        messages.forEach(m => {
+            if (m.speaker !== lastSpeaker) {
+                md += `\n### ${SPEAKER_NAMES[m.speaker]}\n\n`;
+                lastSpeaker = m.speaker;
+            }
+            md += `${m.text} `;
+        });
+
+        md += `\n\n---\n\n*Erstellt: ${dateStr} ${now.toTimeString().slice(0, 8)} · VoiceForge™ v2.02*\n`;
+
+        const blob = new Blob([md], { type: 'text/markdown' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = (meetingMode ? 'Meeting_' : 'Transkript_') + dateStr + '_' + timeStr + '.md';
+        a.click();
+        toast('📝 Markdown exportiert');
+    }
+
+    function saveTranscript() {
+        localStorage.setItem('dkz-stt-transcript', JSON.stringify(messages));
+    }
+
+    function loadTranscript() {
+        try {
+            const saved = JSON.parse(localStorage.getItem('dkz-stt-transcript') || '[]');
+            if (saved.length) {
+                messages = saved;
+                const body = document.getElementById('chat-body');
+                body.innerHTML = '';
+                messages.forEach(m => {
+                    const div = document.createElement('div');
+                    div.className = 'chat-msg sp-' + m.speaker;
+                    div.innerHTML = `<div class="msg-speaker">${esc(SPEAKER_NAMES[m.speaker])}</div><div class="msg-time">${m.time}</div><div class="msg-text">${esc(m.text)}</div>`;
+                    body.appendChild(div);
+                });
+                // Rebuild snippets from last 10
+                snippets = messages.slice(-10).map(m => ({ text: m.text, speaker: m.speaker, time: m.time }));
+                updateSnippetPanel();
+            }
+        } catch {}
+    }
+
+    function toggleStereoMode() {
+        stereoMode = !stereoMode;
+        document.getElementById('stereo-label').textContent = stereoMode ? 'Stereo' : 'Mono';
+        toast(stereoMode ? '🔊 Stereo' : '🔈 Mono');
+    }
+
+    // ═══ INIT ═══
+    loadTranscript();
+    drawWaveform();
+    </script>
+
+    <!-- Shared Scripts — Portable: lädt optional, Modul läuft auch ohne -->
+    <script>
+    (function(){
+        var base = '../../shared/';
+        var scripts = ['dkz-eventbus','dkz-console','dkz-health','dkz-shortcuts','dkz-auth','dkz-james','dkz-memory','dkz-compaction','dkz-iceberg','dkz-prompt-score','dkz-builder-bridge','dkz-debug','dkz-analyser','dkz-guide','dkz-copilot','dkz-export','dkz-crosslinks','dkz-a11y','dkz-test','dkz-puter'];
+        function loadNext(i){
+            if(i>=scripts.length){
+                // Navbar zuletzt
+                var nb=document.createElement('script');nb.src=base+'dkz-navbar.js';nb.onerror=function(){};document.body.appendChild(nb);
+                return;
+            }
+            var s=document.createElement('script');s.src=base+scripts[i]+'.js';
+            s.onload=s.onerror=function(){loadNext(i+1)};
+            document.body.appendChild(s);
+        }
+        loadNext(0);
+        if('serviceWorker' in navigator)navigator.serviceWorker.register(base+'sw.js').catch(function(){});
+    })();
+    </script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#101014;border:1px solid #1e1e2a;border-radius:18px;padding:2rem;max-width:520px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.3rem;font-weight:900">🎤 Voice Engine</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:8px;color:#f6f6f7;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#8888a0;line-height:1.9">Audacity-Style Speech-to-Text:<br><b style='color:#06b6d4'>L</b> / <b style='color:#fa1e4e'>R</b> Stereo Waveform · Sound Grid<br>🎤 Speaker-Farben · Chat-Transkript<br>Web Speech API · Kein LLM nötig</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#101014;border:1px solid #1e1e2a;border-radius:18px;padding:2rem;max-width:440px;text-align:center"><div style="font-size:1.3rem;font-weight:900;margin-bottom:.75rem">🎤 Voice Engine v2</div><p style="font-size:.875rem;color:#8888a0;line-height:1.9;margin-bottom:1rem">Audacity-Style Stereo Visualizer mit Speaker-Farben.<br>Sprache → Text ohne LLM. Jeder Sprecher hat eine eigene Farbe.</p><button style="width:100%;padding:.75rem;border:none;border-radius:10px;background:linear-gradient(135deg,#06b6d4,#fa1e4e);color:#fff;font-weight:800;cursor:pointer;font-family:inherit;font-size:.9rem" onclick="closeOnboarding()">Verstanden! 🎤</button><div style="font-size:.7rem;color:#44445a;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-speech_to_text-onboarded','1')}if(!localStorage.getItem('dkz-speech_to_text-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.header-actions')||document.querySelector('header > div:last-child')||document.querySelector('.header > div:last-child')||document.querySelector('header')||document.querySelector('.header')||document.querySelector('[class*=header]');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:.5rem;border:1px solid #1e1e2a;border-radius:8px;background:rgba(255,255,255,.03);color:#f6f6f7;font-size:1.1rem;cursor:pointer';b.onclick=function(){showModuleInfo()};c.insertBefore(b,c.firstChild)}},500);</script>    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+<!-- — DEVKiTZ 2026 — All Rights Reserved -->
+</html>

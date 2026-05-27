@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hermes 3D — Agent Ecosystem | DEVKiTZ&#8482;</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ═══ DkZ Design System ═══ */
+        :root {
+            --accent: #fa1e4e;
+            --bg: #060608;
+            --bg-surface: #0a0a0e;
+            --green: #00ff88;
+            --yellow: #ffb800;
+            --red: #ff3b5c;
+            --text: #f0f0f2;
+            --text-muted: #a1a1aa;
+            --text-dim: #52525b;
+            --glass-bg: rgba(10, 10, 18, 0.75);
+            --glass-border: rgba(250, 30, 78, 0.12);
+            --font-ui: 'Inter', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-ui);
+        }
+
+        /* ═══ Header Bar ═══ */
+        .dkz-headbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 16px;
+            background: rgba(6, 6, 8, 0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--glass-border);
+            z-index: 100;
+            font-family: var(--font-ui);
+        }
+        .dkz-hb-hamburger-slot {
+            flex-shrink: 0;
+        }
+        .dkz-headbar .hb-logo {
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: var(--accent);
+            text-shadow: 0 0 20px rgba(250, 30, 78, 0.3);
+        }
+        .dkz-headbar .hb-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+        .dkz-headbar .hb-separator {
+            width: 1px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.06);
+        }
+        .dkz-headbar .hb-status {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 10px;
+            font-family: var(--font-code);
+            color: var(--text-dim);
+        }
+        .hb-status .status-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ═══ 3D Canvas ═══ */
+        #hermes-canvas {
+            position: fixed;
+            top: 48px; left: 0;
+            width: 100%;
+            height: calc(100% - 48px);
+            display: block;
+            cursor: grab;
+        }
+        #hermes-canvas:active { cursor: grabbing; }
+
+        /* ═══ Agent Info Side Panel ═══ */
+        .agent-panel {
+            position: fixed;
+            top: 48px;
+            right: -380px;
+            width: 360px;
+            height: calc(100% - 48px);
+            background: var(--glass-bg);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border-left: 1px solid var(--glass-border);
+            z-index: 90;
+            transition: right 0.45s cubic-bezier(0.4, 0, 0.15, 1);
+            overflow-y: auto;
+            padding: 0;
+            font-family: var(--font-ui);
+        }
+        .agent-panel.open { right: 0; }
+
+        .agent-panel .ap-close {
+            position: absolute;
+            top: 12px; right: 12px;
+            width: 28px; height: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+            color: var(--text-dim);
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .agent-panel .ap-close:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(250, 30, 78, 0.08);
+        }
+
+        .ap-header {
+            padding: 24px 24px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .ap-agent-color {
+            width: 40px; height: 40px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 0 24px rgba(var(--agent-rgb), 0.3);
+        }
+        .ap-agent-name {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .ap-agent-role {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+        .ap-agent-id {
+            font-size: 9px;
+            font-family: var(--font-code);
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            margin-top: 6px;
+        }
+
+        .ap-section {
+            padding: 16px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .ap-section-title {
+            font-size: 8px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+        }
+
+        .ap-stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+        }
+        .ap-stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .ap-stat-value {
+            font-size: 11px;
+            font-family: var(--font-code);
+            font-weight: 600;
+        }
+        .ap-stat-value.green { color: var(--green); }
+        .ap-stat-value.yellow { color: var(--yellow); }
+        .ap-stat-value.accent { color: var(--accent); }
+
+        .ap-tag {
+            display: inline-block;
+            padding: 3px 8px;
+            font-size: 9px;
+            font-family: var(--font-code);
+            letter-spacing: 0.5px;
+            border-radius: 4px;
+            margin: 2px 4px 2px 0;
+        }
+        .ap-tag.active {
+            background: rgba(0, 255, 136, 0.08);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            color: var(--green);
+        }
+        .ap-tag.loop {
+            background: rgba(250, 30, 78, 0.08);
+            border: 1px solid rgba(250, 30, 78, 0.2);
+            color: var(--accent);
+        }
+
+        .ap-description {
+            font-size: 11px;
+            line-height: 1.6;
+            color: var(--text-muted);
+        }
+
+        /* ═══ Controls Overlay ═══ */
+        .controls-hint {
+            position: fixed;
+            bottom: 16px; left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            padding: 8px 16px;
+            background: rgba(10, 10, 18, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 10px;
+            font-size: 10px;
+            font-family: var(--font-code);
+            color: var(--text-dim);
+            z-index: 80;
+            pointer-events: none;
+            opacity: 0.6;
+            transition: opacity 0.3s;
+        }
+        .controls-hint kbd {
+            padding: 1px 5px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 3px;
+            font-size: 9px;
+            color: var(--text-muted);
+        }
+
+        /* ═══ Legend ═══ */
+        .legend {
+            position: fixed;
+            bottom: 16px; right: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 12px 14px;
+            background: rgba(10, 10, 18, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 10px;
+            font-size: 9px;
+            font-family: var(--font-code);
+            color: var(--text-dim);
+            z-index: 80;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* ═══ Responsive ═══ */
+        @media (max-width: 640px) {
+            .agent-panel { width: 100%; right: -100%; }
+            .legend { display: none; }
+            .controls-hint { font-size: 8px; gap: 6px; padding: 6px 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Bar -->
+    <header class="dkz-headbar">
+        <div class="dkz-hb-hamburger-slot"></div>
+        <a href="../../hub/index.html" style="color:var(--accent,#fa1e4e);text-decoration:none;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;border:1px solid rgba(250,30,78,0.2);background:rgba(250,30,78,0.05);transition:all 0.2s" onmouseenter="this.style.background='rgba(250,30,78,0.15)'" onmouseleave="this.style.background='rgba(250,30,78,0.05)'">← Hub</a>
+        <span class="hb-logo">HERMES 3D</span>
+        <span class="hb-separator"></span>
+        <span class="hb-title">Agent Ecosystem</span>
+        <div class="hb-status">
+            <span class="status-dot"></span>
+            <span id="agent-count">7 Agents</span>
+        </div>
+    </header>
+
+    <!-- Three.js Canvas -->
+    <canvas id="hermes-canvas"></canvas>
+
+    <!-- Agent Info Side Panel -->
+    <aside class="agent-panel" id="agentPanel">
+        <button class="ap-close" id="panelClose">&times;</button>
+        <div id="panelContent">
+            <!-- Dynamisch befuellt -->
+        </div>
+    </aside>
+
+    <!-- Controls Hint -->
+    <div class="controls-hint">
+        <span><kbd>LMB</kbd> Drehen</span>
+        <span><kbd>RMB</kbd> Verschieben</span>
+        <span><kbd>Scroll</kbd> Zoom</span>
+        <span><kbd>Klick</kbd> Agent inspizieren</span>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend" id="legend"></div>
+
+    <!-- Three.js via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <!-- DkZ Shared Navbar -->
+    <script src="../../shared/dkz-navbar.js"></script>
+
+    <script>
+    (function() {
+        'use strict';
+
+        // ═══ XSS SCHUTZ ═══
+        function esc(str) {
+            const div = document.createElement('div');
+            div.appendChild(document.createTextNode(String(str)));
+            return div.innerHTML;
+        }
+
+        // ═══ AGENT DATA ═══
+        const AGENTS = [
+            {
+                id: 1,
+                name: 'James\u2122',
+                role: 'Guardian',
+                color: 0xfa1e4e,
+                hex: '#fa1e4e',
+                description: 'Ueberwacht alle Agenten, coded NICHT. Steuert den Context-Flow im Ralph-Loop und injiziert nur relevante Artefakte.',
+                status: 'Aktiv',
+                phase: 'LESEN + VERIFY',
+                tags: ['guardian', 'context-flow', 'ralph-loop'],
+                file: 'dkz-james.js',
+                central: true
+            },
+            {
+                id: 2,
+                name: 'DkZ PM\u2122',
+                role: 'Product Manager',
+                color: 0x3b82f6,
+                hex: '#3b82f6',
+                description: 'Erstellt spec.md, User Stories und PRDs. Definiert Anforderungen und Akzeptanzkriterien fuer den Ralph-Loop.',
+                status: 'Aktiv',
+                phase: 'LESEN',
+                tags: ['spec', 'user-stories', 'prd'],
+                file: 'agent-pm.md',
+                central: false
+            },
+            {
+                id: 3,
+                name: 'DkZ Architekt\u2122',
+                role: 'Architekt',
+                color: 0x8b5cf6,
+                hex: '#8b5cf6',
+                description: 'Erstellt plan.md und definiert den Tech-Stack. Verantwortlich fuer Architekturentscheidungen und ADRs.',
+                status: 'Aktiv',
+                phase: 'SPAWN',
+                tags: ['plan', 'tech-stack', 'adr'],
+                file: 'agent-architect.md',
+                central: false
+            },
+            {
+                id: 4,
+                name: 'DkZ Developer\u2122',
+                role: 'Developer',
+                color: 0x00ff88,
+                hex: '#00ff88',
+                description: 'Ralph-Loop Executor — schreibt den Code. Implementiert Features nach Plan und Spec im frischen Kontext.',
+                status: 'Aktiv',
+                phase: 'EXECUTE',
+                tags: ['code', 'implementation', 'ralph-loop'],
+                file: 'agent-developer.md',
+                central: false
+            },
+            {
+                id: 5,
+                name: 'DkZ Reviewer\u2122',
+                role: 'CodeRabbit Reviewer',
+                color: 0xf59e0b,
+                hex: '#f59e0b',
+                description: 'CodeRabbit-Integration — prueft Code-Qualitaet, findet Bugs und stellt sicher dass DkZ-Regeln eingehalten werden.',
+                status: 'Aktiv',
+                phase: 'VERIFY',
+                tags: ['review', 'coderabbit', 'qualitaet'],
+                file: 'agent-reviewer.md',
+                central: false
+            },
+            {
+                id: 6,
+                name: 'DkZ Tester\u2122',
+                role: 'TestStrasse v3',
+                color: 0x06b6d4,
+                hex: '#06b6d4',
+                description: 'Tests und Validierung — TestStrasse v3. Prueft Features, Accessibility, Performance und Kompatibilitaet.',
+                status: 'Aktiv',
+                phase: 'VERIFY',
+                tags: ['tests', 'teststrasse', 'validierung'],
+                file: 'agent-tester.md',
+                central: false
+            },
+            {
+                id: 7,
+                name: 'DkZ Dokumentar\u2122',
+                role: 'Dokumentation',
+                color: 0xec4899,
+                hex: '#ec4899',
+                description: 'README, Wiki, Learnings — dokumentiert alles. Pflegt REGELWERK, BLAUPAUSE und Wiki Hub.',
+                status: 'Aktiv',
+                phase: 'COMMIT',
+                tags: ['readme', 'wiki', 'learnings'],
+                file: 'agent-dokumentar.md',
+                central: false
+            }
+        ];
+
+        // Ralph-Loop Phasen-Verbindungen (zeigen den Flow)
+        const RALPH_CONNECTIONS = [
+            [0, 1], // James → PM (LESEN)
+            [1, 2], // PM → Architekt
+            [2, 3], // Architekt → Developer (SPAWN → EXECUTE)
+            [3, 4], // Developer → Reviewer (EXECUTE → VERIFY)
+            [3, 5], // Developer → Tester (EXECUTE → VERIFY)
+            [4, 0], // Reviewer → James (VERIFY → Loop)
+            [5, 0], // Tester → James (VERIFY → Loop)
+            [0, 6], // James → Dokumentar (COMMIT)
+        ];
+
+        // ═══ LEGEND ═══
+        const legendEl = document.getElementById('legend');
+        legendEl.innerHTML = AGENTS.map(a =>
+            `<div class="legend-item">
+                <div class="legend-dot" style="background:${esc(a.hex)};box-shadow:0 0 6px ${esc(a.hex)}60"></div>
+                <span>${esc(a.name)}</span>
+            </div>`
+        ).join('');
+
+        // ═══ THREE.JS SETUP ═══
+        const canvas = document.getElementById('hermes-canvas');
+        const renderer = new THREE.WebGLRenderer({
+            canvas: canvas,
+            antialias: true,
+            alpha: false
+        });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight - 48);
+        renderer.setClearColor(0x060608, 1);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / (window.innerHeight - 48), 0.1, 1000);
+        camera.position.set(0, 8, 18);
+
+        // OrbitControls
+        const controls = new THREE.OrbitControls(camera, canvas);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.minDistance = 6;
+        controls.maxDistance = 50;
+        controls.maxPolarAngle = Math.PI * 0.85;
+        controls.target.set(0, 0, 0);
+
+        // ═══ LIGHTING ═══
+        const ambientLight = new THREE.AmbientLight(0x222233, 0.5);
+        scene.add(ambientLight);
+
+        const pointLight1 = new THREE.PointLight(0xfa1e4e, 0.8, 60);
+        pointLight1.position.set(5, 10, 5);
+        scene.add(pointLight1);
+
+        const pointLight2 = new THREE.PointLight(0x3b82f6, 0.5, 60);
+        pointLight2.position.set(-8, 6, -4);
+        scene.add(pointLight2);
+
+        const pointLight3 = new THREE.PointLight(0x00ff88, 0.3, 40);
+        pointLight3.position.set(0, -5, 8);
+        scene.add(pointLight3);
+
+        // ═══ STARFIELD ═══
+        function createStarfield() {
+            const starsGeometry = new THREE.BufferGeometry();
+            const starCount = 2000;
+            const positions = new Float32Array(starCount * 3);
+            const colors = new Float32Array(starCount * 3);
+            const sizes = new Float32Array(starCount);
+
+            for (let i = 0; i < starCount; i++) {
+                const i3 = i * 3;
+                const radius = 30 + Math.random() * 170;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+
+                positions[i3] = radius * Math.sin(phi) * Math.cos(theta);
+                positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                positions[i3 + 2] = radius * Math.cos(phi);
+
+                const brightness = 0.3 + Math.random() * 0.7;
+                colors[i3] = brightness;
+                colors[i3 + 1] = brightness;
+                colors[i3 + 2] = brightness * (0.8 + Math.random() * 0.2);
+
+                sizes[i] = 0.5 + Math.random() * 1.5;
+            }
+
+            starsGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            starsGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            starsGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+            const starsMaterial = new THREE.PointsMaterial({
+                size: 0.15,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8,
+                sizeAttenuation: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            return new THREE.Points(starsGeometry, starsMaterial);
+        }
+        const starfield = createStarfield();
+        scene.add(starfield);
+
+        // ═══ GLOW TEXTURE ═══
+        function createGlowTexture(color) {
+            const size = 128;
+            const cvs = document.createElement('canvas');
+            cvs.width = size;
+            cvs.height = size;
+            const ctx = cvs.getContext('2d');
+
+            const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+            gradient.addColorStop(0, color + 'cc');
+            gradient.addColorStop(0.15, color + '88');
+            gradient.addColorStop(0.4, color + '33');
+            gradient.addColorStop(0.7, color + '0d');
+            gradient.addColorStop(1, color + '00');
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+
+            const texture = new THREE.CanvasTexture(cvs);
+            return texture;
+        }
+
+        // ═══ AGENT NODES ═══
+        const agentMeshes = [];
+        const agentGroups = [];
+        const orbitRadius = 7;
+
+        AGENTS.forEach((agent, index) => {
+            const group = new THREE.Group();
+
+            // Kugel-Geometrie
+            const geometry = new THREE.SphereGeometry(agent.central ? 1.0 : 0.7, 32, 32);
+            const material = new THREE.MeshPhongMaterial({
+                color: agent.color,
+                emissive: agent.color,
+                emissiveIntensity: 0.35,
+                shininess: 80,
+                specular: 0xffffff,
+                transparent: true,
+                opacity: 0.95
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.userData = { agentIndex: index };
+            group.add(mesh);
+
+            // Glow Sprite
+            const glowTexture = createGlowTexture(agent.hex);
+            const glowMaterial = new THREE.SpriteMaterial({
+                map: glowTexture,
+                blending: THREE.AdditiveBlending,
+                transparent: true,
+                opacity: 0.6,
+                depthWrite: false
+            });
+            const glowSprite = new THREE.Sprite(glowMaterial);
+            glowSprite.scale.set(agent.central ? 5 : 3.5, agent.central ? 5 : 3.5, 1);
+            group.add(glowSprite);
+
+            // Position
+            if (agent.central) {
+                group.position.set(0, 0, 0);
+            } else {
+                const angle = ((index - 1) / 6) * Math.PI * 2;
+                group.position.set(
+                    Math.cos(angle) * orbitRadius,
+                    (Math.random() - 0.5) * 2,
+                    Math.sin(angle) * orbitRadius
+                );
+            }
+
+            scene.add(group);
+            agentMeshes.push(mesh);
+            agentGroups.push(group);
+        });
+
+        // ═══ CONNECTIONS (Ralph-Loop) ═══
+        const connectionLines = [];
+        const connectionMaterial = new THREE.LineBasicMaterial({
+            color: 0xfa1e4e,
+            transparent: true,
+            opacity: 0.15,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        RALPH_CONNECTIONS.forEach(([fromIdx, toIdx]) => {
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(6);
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const line = new THREE.Line(geometry, connectionMaterial.clone());
+            line.userData = { fromIdx, toIdx };
+            scene.add(line);
+            connectionLines.push(line);
+        });
+
+        function updateConnections() {
+            connectionLines.forEach(line => {
+                const fromPos = agentGroups[line.userData.fromIdx].position;
+                const toPos = agentGroups[line.userData.toIdx].position;
+                const posAttr = line.geometry.attributes.position;
+
+                posAttr.array[0] = fromPos.x;
+                posAttr.array[1] = fromPos.y;
+                posAttr.array[2] = fromPos.z;
+                posAttr.array[3] = toPos.x;
+                posAttr.array[4] = toPos.y;
+                posAttr.array[5] = toPos.z;
+                posAttr.needsUpdate = true;
+            });
+        }
+
+        // ═══ ORBIT RING (fuer visuelle Referenz) ═══
+        const ringGeometry = new THREE.RingGeometry(orbitRadius - 0.02, orbitRadius + 0.02, 128);
+        const ringMaterial = new THREE.MeshBasicMaterial({
+            color: 0xfa1e4e,
+            transparent: true,
+            opacity: 0.06,
+            side: THREE.DoubleSide,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+        const orbitRing = new THREE.Mesh(ringGeometry, ringMaterial);
+        orbitRing.rotation.x = -Math.PI / 2;
+        scene.add(orbitRing);
+
+        // ═══ RAYCASTER (Klick-Erkennung) ═══
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let selectedAgent = null;
+
+        canvas.addEventListener('click', onCanvasClick, false);
+
+        function onCanvasClick(event) {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(agentMeshes);
+
+            if (intersects.length > 0) {
+                const agentIdx = intersects[0].object.userData.agentIndex;
+                showAgentPanel(agentIdx);
+            }
+        }
+
+        // ═══ AGENT PANEL ═══
+        const panel = document.getElementById('agentPanel');
+        const panelContent = document.getElementById('panelContent');
+        const panelClose = document.getElementById('panelClose');
+
+        panelClose.addEventListener('click', () => {
+            panel.classList.remove('open');
+            selectedAgent = null;
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && panel.classList.contains('open')) {
+                panel.classList.remove('open');
+                selectedAgent = null;
+            }
+        });
+
+        function showAgentPanel(index) {
+            const agent = AGENTS[index];
+            selectedAgent = index;
+
+            const tagsHtml = agent.tags.map(t =>
+                `<span class="ap-tag loop">${esc(t)}</span>`
+            ).join('');
+
+            panelContent.innerHTML = `
+                <div class="ap-header">
+                    <div class="ap-agent-color" style="background:${esc(agent.hex)};box-shadow:0 0 24px ${esc(agent.hex)}50"></div>
+                    <div class="ap-agent-name" style="color:${esc(agent.hex)}">${esc(agent.name)}</div>
+                    <div class="ap-agent-role">${esc(agent.role)}</div>
+                    <div class="ap-agent-id">BMAD-${esc(String(agent.id).padStart(3, '0'))} &middot; ${esc(agent.file)}</div>
+                </div>
+                <div class="ap-section">
+                    <div class="ap-section-title">Status</div>
+                    <div class="ap-stat-row">
+                        <span class="ap-stat-label">Status</span>
+                        <span class="ap-stat-value green">${esc(agent.status)}</span>
+                    </div>
+                    <div class="ap-stat-row">
+                        <span class="ap-stat-label">Ralph-Phase</span>
+                        <span class="ap-stat-value accent">${esc(agent.phase)}</span>
+                    </div>
+                    <div class="ap-stat-row">
+                        <span class="ap-stat-label">Typ</span>
+                        <span class="ap-stat-value">${agent.central ? 'ZENTRAL' : 'SATELLIT'}</span>
+                    </div>
+                </div>
+                <div class="ap-section">
+                    <div class="ap-section-title">Beschreibung</div>
+                    <div class="ap-description">${esc(agent.description)}</div>
+                </div>
+                <div class="ap-section">
+                    <div class="ap-section-title">Tags</div>
+                    <div>${tagsHtml}</div>
+                </div>
+                <div class="ap-section">
+                    <div class="ap-section-title">Ralph-Loop Position</div>
+                    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">
+                        ${['LESEN','SPAWN','EXECUTE','VERIFY','COMMIT','LOOP'].map(p =>
+                            `<span class="ap-tag ${agent.phase.includes(p) ? 'active' : ''}" style="${agent.phase.includes(p) ? '' : 'opacity:0.3'}">${esc(p)}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+
+            panel.classList.add('open');
+        }
+
+        // ═══ ANIMATION LOOP ═══
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsed = clock.getElapsedTime();
+
+            // Orbit-Agenten langsam kreisen
+            AGENTS.forEach((agent, index) => {
+                if (agent.central) {
+                    // James leicht pulsieren (Y-Achse)
+                    agentGroups[index].position.y = Math.sin(elapsed * 0.5) * 0.3;
+                } else {
+                    const baseAngle = ((index - 1) / 6) * Math.PI * 2;
+                    const angle = baseAngle + elapsed * 0.1;
+                    const yOffset = Math.sin(elapsed * 0.3 + index) * 0.8;
+
+                    agentGroups[index].position.set(
+                        Math.cos(angle) * orbitRadius,
+                        yOffset,
+                        Math.sin(angle) * orbitRadius
+                    );
+                }
+
+                // Pulsierender Glow
+                const glow = agentGroups[index].children[1];
+                if (glow) {
+                    const pulse = 0.45 + Math.sin(elapsed * 1.5 + index * 0.9) * 0.15;
+                    glow.material.opacity = pulse;
+                    const baseScale = agent.central ? 5 : 3.5;
+                    const scaleVar = baseScale + Math.sin(elapsed * 2 + index) * 0.3;
+                    glow.scale.set(scaleVar, scaleVar, 1);
+                }
+
+                // Leichte Rotation der Kugel
+                agentGroups[index].children[0].rotation.y = elapsed * 0.3 + index;
+            });
+
+            // Connections updaten
+            updateConnections();
+
+            // Connection-Linien pulsieren
+            connectionLines.forEach((line, i) => {
+                const pulse = 0.08 + Math.sin(elapsed * 2 + i * 0.5) * 0.07;
+                line.material.opacity = pulse;
+            });
+
+            // Starfield langsam rotieren
+            starfield.rotation.y = elapsed * 0.005;
+            starfield.rotation.x = Math.sin(elapsed * 0.003) * 0.02;
+
+            // Orbit-Ring pulsieren
+            orbitRing.material.opacity = 0.04 + Math.sin(elapsed * 0.8) * 0.02;
+
+            // Lichter subtil bewegen
+            pointLight1.position.x = 5 + Math.sin(elapsed * 0.3) * 3;
+            pointLight1.position.z = 5 + Math.cos(elapsed * 0.3) * 3;
+            pointLight2.position.z = -4 + Math.sin(elapsed * 0.2) * 4;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // ═══ RESIZE HANDLER ═══
+        function onResize() {
+            const w = window.innerWidth;
+            const h = window.innerHeight - 48;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+        }
+        window.addEventListener('resize', onResize);
+
+        // ═══ START ═══
+        animate();
+
+        // ═══ LOCALSTORAGE PERSISTENCE ═══
+        const STORAGE_KEY = 'dkz-hermes3d-state';
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    lastVisit: new Date().toISOString(),
+                    selectedAgent: selectedAgent
+                }));
+            } catch (e) { /* silent */ }
+        }
+        window.addEventListener('beforeunload', saveState);
+
+    })();
+    </script>
+    <script src="../../shared/dkz-debug.js"></script>
+</body>
+</html>

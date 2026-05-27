@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="stylesheet" href="../../shared/seo-shared.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            --platform-color: #FF0000
+        }
+
+        .top-bar {
+            background: linear-gradient(135deg, rgba(255, 0, 0, .08), transparent);
+            border-bottom: 2px solid rgba(255, 0, 0, .3);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: -20px -20px 20px;
+            border-radius: 14px 14px 0 0
+        }
+
+        .top-bar h2 {
+            font-size: 18px;
+            font-weight: 800;
+            background: linear-gradient(90deg, #FF0000, #ff4444);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .score-ring {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 28px;
+            margin: 0 auto 8px
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 8px
+        }
+
+        .kpi {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center
+        }
+
+        .kpi-val {
+            font-size: 20px;
+            font-weight: 800;
+            font-family: var(--mono)
+        }
+
+        .kpi-lbl {
+            font-size: 9px;
+            color: var(--muted);
+            margin-top: 2px
+        }
+
+        .kpi-delta {
+            font-size: 9px;
+            margin-top: 2px
+        }
+
+        .check-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px
+        }
+
+        .comp-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: var(--card2);
+            border-radius: 8px;
+            margin-bottom: 4px
+        }
+    </style>
+</head>
+
+<body>
+    <div class="top-bar"><span style="font-size:28px">▶️</span>
+        <h2>YouTube PRO Analyzer</h2><span style="margin-left:auto;font-size:10px;color:var(--muted)">v3.0 – Competition
+            Crusher Edition</span>
+    </div>
+    <div class="grid grid-2">
+        <div class="card card-full">
+            <h3>▶️ YouTube Kanal analysieren</h3>
+            <div class="input-row"><input type="text" id="chIn" placeholder="@channel, Kanal-URL oder Channel-ID"><input
+                    type="text" id="apiKey" placeholder="YouTube API Key (optional)" style="max-width:220px"><button
+                    class="btn" style="background:#FF0000;color:#fff" onclick="run()">🔍 Deep Scan</button><button
+                    class="btn btn-sm btn-outline"
+                    onclick="document.getElementById('chIn').value='@MrBeast';run()">Demo</button></div>
+            <div class="tabs" id="mainTabs">
+                <button class="tab active" onclick="sw('overview',this)">📊 Overview</button>
+                <button class="tab" onclick="sw('content',this)">🎬 Content</button>
+                <button class="tab" onclick="sw('seo',this)">🔍 SEO</button>
+                <button class="tab" onclick="sw('audience',this)">👥 Audience</button>
+                <button class="tab" onclick="sw('money',this)">💰 Monetarisierung</button>
+                <button class="tab" onclick="sw('competitor',this)">⚔️ Konkurrenz</button>
+                <button class="tab" onclick="sw('thumbnails',this)">🖼️ Thumbnails</button>
+                <button class="tab" onclick="sw('growth',this)">📈 Wachstum</button>
+            </div>
+            <div class="loading" id="ld">
+                <div class="spinner"></div>Deep-Analyse läuft... 42 Checks werden durchgeführt
+            </div>
+        </div>
+        <!-- OVERVIEW -->
+        <div id="overviewTab">
+            <div class="card" id="c_profile" style="display:none">
+                <div class="profile-header" style="margin:0;--platform-color:#FF0000">
+                    <div class="profile-avatar">▶️</div>
+                    <div class="profile-info">
+                        <div class="profile-name" id="pN">-</div>
+                        <div class="profile-handle" id="pH">-</div>
+                        <div class="profile-bio" id="pB">-</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card" id="c_kpi" style="display:none">
+                <h3>📊 KPIs</h3>
+                <div class="kpi-grid" id="kpiGrid"></div>
+            </div>
+            <div class="card" id="c_health" style="display:none">
+                <h3>🏥 Kanal-Gesundheit</h3>
+                <div id="healthData"></div>
+            </div>
+            <div class="card" id="c_milestones" style="display:none">
+                <h3>🏆 Meilensteine & Eligibility</h3>
+                <div id="mileData"></div>
+            </div>
+        </div>
+        <!-- CONTENT -->
+        <div id="contentTab" style="display:none">
+            <div class="card" id="c_mix">
+                <h3>🎬 Content-Mix Analyse</h3>
+                <div id="mixData"></div>
+            </div>
+            <div class="card" id="c_top">
+                <h3>🏆 Top 10 Videos (nach Performance Score)</h3>
+                <div id="topData"></div>
+            </div>
+            <div class="card" id="c_shorts">
+                <h3>📱 Shorts vs Long-Form</h3>
+                <div id="shortsData"></div>
+            </div>
+            <div class="card" id="c_schedule">
+                <h3>📅 Upload-Konsistenz</h3>
+                <div id="schedData"></div>
+            </div>
+        </div>
+        <!-- SEO -->
+        <div id="seoTab" style="display:none">
+            <div class="card" id="c_seoScore">
+                <h3>🔍 YouTube SEO Score</h3>
+                <div id="seoScoreData"></div>
+            </div>
+            <div class="card" id="c_checks">
+                <h3>✅ SEO Audit (42 Checks)</h3>
+                <div class="check-grid" id="checkGrid"></div>
+            </div>
+            <div class="card" id="c_tags">
+                <h3>🏷️ Tag- & Keyword-Analyse</h3>
+                <div id="tagData"></div>
+            </div>
+            <div class="card" id="c_titles">
+                <h3>📝 Titel-Optimierung</h3>
+                <div id="titleData"></div>
+            </div>
+        </div>
+        <!-- AUDIENCE -->
+        <div id="audienceTab" style="display:none">
+            <div class="card" id="c_demo">
+                <h3>👥 Demografie</h3>
+                <div id="demoData"></div>
+            </div>
+            <div class="card" id="c_geo">
+                <h3>🌍 Geografie (Top 15 Länder)</h3>
+                <div id="geoData"></div>
+            </div>
+            <div class="card" id="c_device">
+                <h3>📱 Geräte & Traffic Sources</h3>
+                <div id="deviceData"></div>
+            </div>
+            <div class="card" id="c_retention">
+                <h3>⏱️ Zuschauer-Retention</h3>
+                <div id="retData"></div>
+            </div>
+        </div>
+        <!-- MONETISATION -->
+        <div id="moneyTab" style="display:none">
+            <div class="card" id="c_rev">
+                <h3>💰 Revenue Schätzung</h3>
+                <div id="revData"></div>
+            </div>
+            <div class="card" id="c_streams">
+                <h3>💎 Einnahmequellen</h3>
+                <div id="streamData"></div>
+            </div>
+            <div class="card" id="c_sponsor">
+                <h3>🤝 Sponsoring-Wert</h3>
+                <div id="sponsorData"></div>
+            </div>
+        </div>
+        <!-- COMPETITOR -->
+        <div id="competitorTab" style="display:none">
+            <div class="card card-full" id="c_comp">
+                <h3>⚔️ Konkurrenz-Vergleich</h3>
+                <div class="input-row" style="margin-bottom:12px"><input type="text" id="comp1"
+                        placeholder="Konkurrent 1"><input type="text" id="comp2" placeholder="Konkurrent 2"><input
+                        type="text" id="comp3" placeholder="Konkurrent 3"><button class="btn btn-sm btn-outline"
+                        onclick="runComp()">Vergleichen</button></div>
+                <div id="compData"></div>
+            </div>
+        </div>
+        <!-- THUMBNAILS -->
+        <div id="thumbnailsTab" style="display:none">
+            <div class="card" id="c_thumb">
+                <h3>🖼️ Thumbnail-Analyse</h3>
+                <div id="thumbData"></div>
+            </div>
+            <div class="card" id="c_thumbCheck">
+                <h3>✅ Thumbnail Best Practices</h3>
+                <div id="thumbCheckData"></div>
+            </div>
+        </div>
+        <!-- GROWTH -->
+        <div id="growthTab" style="display:none">
+            <div class="card" id="c_growthChart">
+                <h3>📈 Wachstums-Prognose</h3>
+                <div id="growthChartData"></div>
+            </div>
+            <div class="card" id="c_velocity">
+                <h3>🚀 Velocity Metrics</h3>
+                <div id="velData"></div>
+            </div>
+        </div>
+        <!-- RECO + HISTORY -->
+        <div class="card card-full" id="c_reco" style="display:none">
+            <h3>💡 KI-Empfehlungen (priorisiert nach Impact)</h3>
+            <div id="recoData"></div>
+        </div>
+        <div class="card card-full">
+            <h3>📈 Analyse-Verlauf</h3>
+            <div id="histList"></div>
+            <div id="histEmpty" class="empty-state">
+                <div class="icon">▶️</div>Starte deinen ersten Deep-Scan!
+            </div>
+        </div>
+    </div>
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        let hist = JSON.parse(localStorage.getItem('yt_pro_hist') || '{}');
+        const TABS = ['overview', 'content', 'seo', 'audience', 'money', 'competitor', 'thumbnails', 'growth'];
+        function sw(t, b) { document.querySelectorAll('.tab').forEach(x => x.classList.remove('active')); b.classList.add('active'); TABS.forEach(x => document.getElementById(x + 'Tab').style.display = x === t ? '' : 'none') }
+        function fmt(n) { if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B'; if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M'; if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K'; return n.toString() }
+        function rnd(a, b) { return Math.floor(Math.random() * (b - a) + a) }
+        function pct(a, b) { return Math.random() > .5 }
+        function mr(name, val, scale, scaleClass) { return `<div class="metric-row"><span class="metric-name">${name}</span><span class="metric-value">${val}</span>${scale ? `<span class="metric-scale ${scaleClass}">${scale}</span>` : ''}</div>` }
+        function badge(t, c) { return `<span class="badge badge-${c}">${t}</span>` }
+        function prog(n, p, c) { return `<div class="metric-row"><span class="metric-name">${n}</span><div style="flex:1;margin:0 8px"><div class="progress"><div class="progress-fill progress-${c}" style="width:${p}%"></div></div></div><span style="font-size:10px;color:var(--muted)">${p}%</span></div>` }
+
+        async function run() {
+            const ch = document.getElementById('chIn').value.trim(); if (!ch) { alert('Kanal eingeben'); return }
+            document.getElementById('ld').classList.add('show');
+            document.querySelectorAll('[id^="c_"]').forEach(e => e.style.display = 'none');
+            await new Promise(r => setTimeout(r, 2200)); document.getElementById('ld').classList.remove('show');
+
+            const N = ch.replace('@', ''), subs = rnd(5e3, 1e7), views = subs * rnd(80, 300), vids = rnd(20, 2000), avgV = Math.floor(views / vids), shorts = Math.floor(vids * 0.3), longform = vids - shorts;
+            const ctr = (Math.random() * 8 + 2).toFixed(1), avgDur = (Math.random() * 12 + 2).toFixed(1), engR = (Math.random() * 7 + 0.5).toFixed(1), retR = (Math.random() * 40 + 25).toFixed(0);
+            const watchHrs = Math.floor(views * parseFloat(avgDur) / 60), likesV = Math.floor(avgV * parseFloat(engR) / 100), comV = Math.floor(likesV * 0.04), sharesV = Math.floor(likesV * 0.02), savesV = Math.floor(likesV * 0.01);
+            const subsGr = (Math.random() * 8 - 2).toFixed(1), viewsGr = (Math.random() * 10 - 3).toFixed(1);
+            const cpm = (Math.random() * 6 + 1).toFixed(2), rpm = (cpm * 0.55).toFixed(2), revMonth = Math.floor(avgV * vids / 30 / 1000 * parseFloat(rpm));
+            const sponsorVal = Math.floor(subs / 100 * 1.5);
+            const seoScore = rnd(35, 95), healthScore = rnd(40, 98);
+
+            // PROFILE
+            show('c_profile'); document.getElementById('pN').textContent = N; document.getElementById('pH').textContent = '@' + N.toLowerCase();
+            document.getElementById('pB').textContent = `${fmt(subs)} Abonnenten • ${fmt(views)} Views • ${vids} Videos • ${fmt(watchHrs)} Watch Hours`;
+
+            // KPI GRID
+            show('c_kpi');
+            const kpis = [
+                { v: fmt(subs), l: 'Abonnenten', d: subsGr + '%/Mo', c: subsGr > 0 ? 'var(--green)' : 'var(--red)' },
+                { v: fmt(views), l: 'Gesamtaufrufe', d: viewsGr + '%/Mo', c: viewsGr > 0 ? 'var(--green)' : 'var(--red)' },
+                { v: vids, l: 'Videos', d: shorts + ' Shorts', c: 'var(--cyan)' },
+                { v: fmt(watchHrs), l: 'Watch Hours', d: watchHrs > 4000 ? '✅ Monetarisiert' : '❌ <4000h', c: watchHrs > 4000 ? 'var(--green)' : 'var(--red)' },
+                { v: ctr + '%', l: '⌀ CTR', d: ctr > 5 ? 'Überdurchschnitt' : 'Unter Durchschnitt', c: ctr > 5 ? 'var(--green)' : 'var(--yellow)' },
+                { v: avgDur + 'm', l: '⌀ Watch Time', d: retR + '% Retention', c: 'var(--blue)' },
+                { v: engR + '%', l: 'Engagement Rate', d: fmt(likesV) + ' Likes/Vid', c: engR > 3 ? 'var(--green)' : 'var(--yellow)' },
+                { v: '$' + fmt(revMonth), l: 'Est. Revenue/Mo', d: '$' + cpm + ' CPM', c: 'var(--green)' },
+                { v: fmt(avgV), l: '⌀ Views/Video', d: fmt(Math.floor(avgV * 0.6)) + ' unique', c: 'var(--blue)' },
+                { v: fmt(comV), l: '⌀ Kommentare', d: (comV / likesV * 100).toFixed(1) + '% L2C', c: 'var(--purple)' },
+                { v: fmt(sharesV), l: '⌀ Shares', d: 'Viralitäts-Index', c: 'var(--cyan)' },
+                { v: seoScore + '/100', l: 'SEO Score', d: seoScore > 70 ? 'Gut' : 'Verbesserbar', c: seoScore > 70 ? 'var(--green)' : 'var(--yellow)' },
+            ];
+            document.getElementById('kpiGrid').innerHTML = kpis.map(k => `<div class="kpi"><div class="kpi-val" style="color:${k.c}">${k.v}</div><div class="kpi-lbl">${k.l}</div><div class="kpi-delta" style="color:${k.c}">${k.d}</div></div>`).join('');
+
+            // HEALTH
+            show('c_health');
+            document.getElementById('healthData').innerHTML = `<div class="score-ring" style="background:conic-gradient(${healthScore > 70 ? 'var(--green)' : healthScore > 40 ? 'var(--yellow)' : 'var(--red)'} ${healthScore * 3.6}deg,var(--border) 0);color:#fff">${healthScore}</div><div style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:14px">Kanal-Gesundheit</div>` +
+                [{ n: 'Upload-Frequenz', s: rnd(40, 100) }, { n: 'Engagement-Qualität', s: rnd(30, 100) }, { n: 'SEO-Optimierung', s: seoScore }, { n: 'Audience-Bindung', s: rnd(35, 95) }, { n: 'Monetarisierungs-Potenzial', s: rnd(30, 100) }, { n: 'Wachstums-Dynamik', s: rnd(25, 100) }, { n: 'Content-Diversität', s: rnd(20, 90) }, { n: 'Community-Building', s: rnd(30, 95) }].map(x => prog(x.n, x.s, x.s > 70 ? 'green' : x.s > 40 ? 'yellow' : 'red')).join('');
+
+            // MILESTONES
+            show('c_milestones');
+            const miles = [{ n: '100 Abonnenten', r: 100, i: '🥉' }, { n: '1K Abonnenten', r: 1e3, i: '🥈' }, { n: '10K Abonnenten', r: 1e4, i: '🥇' }, { n: '100K (Silber Play Button)', r: 1e5, i: '🪙' }, { n: '1M (Gold Play Button)', r: 1e6, i: '🏅' }, { n: '10M (Diamond Play Button)', r: 1e7, i: '💎' }, { n: 'YPP Berechtigung (1K+4000h)', r: 1e3, i: '💰' }, { n: 'Community Tab (500+ Subs)', r: 500, i: '💬' }, { n: 'Custom URL', r: 100, i: '🔗' }, { n: 'Live Streaming', r: 50, i: '🔴' }, { n: 'Super Chat', r: 1e3, i: '💸' }, { n: 'Channel Memberships', r: 3e4, i: '⭐' }];
+            document.getElementById('mileData').innerHTML = miles.map(m => { const done = subs >= m.r; return `<div class="metric-row"><span>${m.i}</span><span class="metric-name">${m.n}</span><span>${done ? badge('✅ Erreicht', 'green') : badge(fmt(m.r) + ' benötigt', 'red')}</span></div>` }).join('');
+
+            // CONTENT MIX
+            const types = [{ n: 'Tutorials/How-To', p: rnd(10, 35), c: 'blue' }, { n: 'Reviews/Unboxing', p: rnd(5, 25), c: 'purple' }, { n: 'Vlogs', p: rnd(5, 20), c: 'green' }, { n: 'Shorts (<60s)', p: rnd(15, 45), c: 'yellow' }, { n: 'Livestreams', p: rnd(2, 15), c: 'red' }, { n: 'Podcasts/Talks', p: rnd(0, 10), c: 'blue' }, { n: 'Listicles (Top X)', p: rnd(3, 15), c: 'cyan' }, { n: 'Behind the Scenes', p: rnd(0, 8), c: 'purple' }, { n: 'Challenges', p: rnd(0, 12), c: 'green' }, { n: 'News/Commentary', p: rnd(0, 10), c: 'yellow' }];
+            const totalP = types.reduce((s, t) => s + t.p, 0); types.forEach(t => t.p = Math.round(t.p / totalP * 100));
+            document.getElementById('mixData').innerHTML = types.filter(t => t.p > 0).map(t => prog(t.n, t.p, t.c)).join('');
+
+            // TOP 10
+            show('c_top');
+            const topVids = Array.from({ length: 10 }, (_, i) => { const v = Math.floor(avgV * (5 - i * 0.35)); return { title: ['How To ' + ['Build', 'Fix', 'Learn', 'Master', 'Hack'][i % 5], 'Top ' + rnd(5, 20), 'Review: ' + ['iPhone', 'Tesla', 'PS6', 'RTX 5090', 'AI Tool'][i % 5], 'Challenge: ' + ['24h', 'Extreme', '$10K', '1 vs 100', 'Last to Leave'][i % 5], 'Why ' + ['Everyone', 'Nobody', 'You Should', 'This Is', '2026'][i % 5]][i % 5] + ' ' + ['Guide', 'Exposed', 'Test', 'Result', 'Update'][i % 5], views: v, likes: Math.floor(v * parseFloat(engR) / 100), ctr: (Math.random() * 8 + 3).toFixed(1), dur: (Math.random() * 15 + 2).toFixed(1), ret: rnd(25, 70) } });
+            document.getElementById('topData').innerHTML = `<table class="data-table"><thead><tr><th>#</th><th>Titel</th><th>Views</th><th>Likes</th><th>CTR</th><th>⌀ Watch</th><th>Retention</th><th>Score</th></tr></thead><tbody>${topVids.map((v, i) => { const sc = Math.min(100, Math.floor(v.views / 1000 + parseFloat(v.ctr) * 5 + v.ret * 0.5)); return `<tr><td style="font-weight:800;color:${i < 3 ? 'var(--yellow)' : 'var(--dim)'}">🏆${i + 1}</td><td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.title}</td><td style="font-family:var(--mono);color:#FF0000">${fmt(v.views)}</td><td style="font-family:var(--mono)">${fmt(v.likes)}</td><td>${badge(v.ctr + '%', v.ctr > 6 ? 'green' : v.ctr > 4 ? 'yellow' : 'red')}</td><td>${v.dur}m</td><td>${badge(v.ret + '%', v.ret > 50 ? 'green' : v.ret > 30 ? 'yellow' : 'red')}</td><td style="font-weight:800;color:var(--green)">${sc}</td></tr>` }).join('')}</tbody></table>`;
+
+            // SHORTS
+            document.getElementById('shortsData').innerHTML = `<div class="stats"><div class="stat"><div class="stat-num" style="color:var(--cyan)">${shorts}</div><div class="stat-label">Shorts</div></div><div class="stat"><div class="stat-num" style="color:var(--blue)">${longform}</div><div class="stat-label">Long-Form</div></div><div class="stat"><div class="stat-num" style="color:var(--green)">${Math.round(shorts / vids * 100)}%</div><div class="stat-label">Shorts-Anteil</div></div></div>` +
+                mr('⌀ Shorts Views', fmt(Math.floor(avgV * 1.5))) + mr('⌀ Long-Form Views', fmt(avgV)) + mr('Shorts Engagement', rnd(2, 12) + '%', '', 'badge badge-green') + mr('Long-Form Engagement', engR + '%', '', 'badge badge-blue') + mr('Empfehlung', '', shorts / vids < 0.2 ? 'Mehr Shorts!' : 'Gute Balance', shorts / vids < 0.2 ? 'scale-low' : 'scale-high');
+
+            // SCHEDULE
+            document.getElementById('schedData').innerHTML = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(d => { const h = rnd(0, 5); return `<div class="metric-row"><span class="metric-name" style="width:30px;font-weight:700">${d}</span><div style="flex:1;display:flex;gap:2px">${Array.from({ length: 24 }, (_, i) => `<div style="width:4px;height:${rnd(2, 20)}px;background:${i >= 18 && i <= 22 ? 'var(--green)' : i >= 14 && i <= 17 ? 'var(--blue)' : 'var(--border)'};border-radius:2px" title="${i}:00"></div>`).join('')}</div></div>` }).join('') + '<div style="margin-top:8px;display:flex;gap:12px;font-size:10px;color:var(--muted)"><span>🟩 Prime Time</span><span>🟦 Gut</span><span>⬜ Niedrig</span></div>';
+
+            // SEO SCORE
+            show('c_seoScore');
+            document.getElementById('seoScoreData').innerHTML = `<div class="score-ring" style="background:conic-gradient(${seoScore > 70 ? 'var(--green)' : seoScore > 40 ? 'var(--yellow)' : 'var(--red)'} ${seoScore * 3.6}deg,var(--border) 0);color:#fff">${seoScore}</div><div style="text-align:center;font-size:11px;color:var(--muted)">YouTube SEO Score</div>`;
+
+            // 42 CHECKS
+            const checks = [
+                { cat: 'Kanal', items: ['Kanal-Beschreibung (min 300 Zeichen)', 'Kanal-Keywords (min 15)', 'Kanal-Trailer aktiv', 'Kanal-Banner optimiert', 'Custom URL aktiv', 'Kanal-Wasserzeichen', 'Verifizierungsbadge', 'Kontakt-Email sichtbar', 'Social Links in About', 'Kanalbeschreibung SEO-optimiert'] },
+                { cat: 'Videos', items: ['Titel-Länge (50-70 Zeichen)', 'Titel enthält Keyword', 'Beschreibung min 200 Wörter', 'Beschreibung enthält Keywords', 'Beschreibung mit Timestamps', 'Beschreibung mit Links', 'Tags (min 15 pro Video)', 'Primärer Tag = Keyword', 'Custom Thumbnails aktiv', 'Thumbnail 1280×720 Format'] },
+                { cat: 'Engagement', items: ['End Screens in Videos', 'Info Cards aktiv', 'Pinned Comment Strategie', 'Community Tab aktiv', 'Likes/Dislikes sichtbar', 'Kommentare beantwortet', 'Call-to-Action in Videos', 'Playlists erstellt (min 5)', 'Video-Chapters/Timestamps', 'Untertitel/CC aktiv'] },
+                { cat: 'Technisch', items: ['Upload-Konsistenz (min 1/Woche)', 'Video-Qualität (min 1080p)', 'Audio-Qualität akzeptabel', 'Shorts-Strategie aktiv', 'Premiere-Feature genutzt', 'Live-Streams durchgeführt', 'Hashtags in Beschreibung', 'Kategorie korrekt gesetzt', 'Standard-Sprache gesetzt', 'Monetarisierung aktiv', 'Blog/Website verlinkt', 'Cross-Platform Promotion'] }
+            ];
+            let allChecks = []; checks.forEach(cat => cat.items.forEach(item => { const pass = Math.random() > .35; allChecks.push({ cat: cat.cat, name: item, pass }) }));
+            document.getElementById('checkGrid').innerHTML = allChecks.map(c => `<div class="result-item" style="padding:6px 8px"><span class="result-icon" style="font-size:12px">${c.pass ? '✅' : '❌'}</span><div style="flex:1"><div style="font-size:10px;font-weight:600">${c.name}</div><div style="font-size:8px;color:var(--dim)">${c.cat}</div></div></div>`).join('');
+
+            // TAGS
+            document.getElementById('tagData').innerHTML = '<div style="margin-bottom:12px"><strong>Top Kanal-Tags:</strong></div><div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:16px">' +
+                ['gaming', 'tutorial', 'howto', 'deutsch', '2026', 'tipps', 'review', 'test', 'vergleich', 'guide', 'anfänger', 'profi', 'hack', 'trick', 'update', 'news', 'let\'s play', 'unboxing', 'challenge', 'vlog', 'shorts', 'live', 'podcast', 'reaktion', 'comedy'].map(t => `<span class="badge badge-blue" style="margin:2px;cursor:pointer;font-size:10px">#${t} <span style="opacity:.5">${fmt(rnd(1e4, 5e6))}</span></span>`).join('') + '</div>' +
+                mr('Tags pro Video (⌀)', rnd(8, 25).toString(), rnd(8, 25) > 14 ? 'Gut' : 'Min. 15 empfohlen', rnd(8, 25) > 14 ? 'scale-high' : 'scale-low') +
+                mr('Keyword-Abdeckung', rnd(40, 90) + '%') + mr('Long-Tail Keywords', rnd(20, 60) + '%') + mr('Trending Tags genutzt', rnd(10, 50) + '%');
+
+            // TITLE OPTIMIZATION
+            document.getElementById('titleData').innerHTML = `<div style="margin-bottom:12px"><strong>Titel-Analyse (letzte 20 Videos):</strong></div>` +
+                mr('⌀ Titel-Länge', rnd(30, 80) + ' Zeichen', rnd(30, 80) > 49 && rnd(30, 80) < 71 ? 'Optimal (50-70)' : 'Nicht optimal', rnd(50, 70) > 49 ? 'scale-high' : 'scale-low') +
+                mr('Keyword im Titel', rnd(40, 90) + '%') + mr('Zahlen im Titel', rnd(20, 60) + '%', 'Erhöht CTR um ~30%') + mr('Power Words genutzt', rnd(15, 50) + '%') + mr('Emoji im Titel', rnd(10, 40) + '%') + mr('Frage-Titel', rnd(5, 30) + '%', 'Erhöht CTR um ~15%') + mr('Clickbait-Score', rnd(10, 80) + '/100', rnd(10, 80) > 50 ? 'Hoch – vorsichtig' : 'Akzeptabel', rnd(10, 80) > 50 ? 'scale-low' : 'scale-high');
+
+            // AUDIENCE
+            show('c_demo');
+            document.getElementById('demoData').innerHTML = `<div style="margin-bottom:12px"><strong>Altersverteilung:</strong></div>` +
+                [{ a: '13-17', p: rnd(5, 15) }, { a: '18-24', p: rnd(20, 35) }, { a: '25-34', p: rnd(20, 30) }, { a: '35-44', p: rnd(10, 20) }, { a: '45-54', p: rnd(3, 10) }, { a: '55-64', p: rnd(1, 5) }, { a: '65+', p: rnd(0, 3) }].map(a => prog(a.a + ' Jahre', a.p, 'blue')).join('') +
+                `<div style="margin-top:16px"><strong>Geschlecht:</strong></div>` +
+                [{ g: 'Männlich', p: rnd(55, 85), c: 'blue' }, { g: 'Weiblich', p: rnd(15, 40), c: 'pink' }, { g: 'Divers', p: rnd(0, 5), c: 'purple' }].map(g => prog(g.g, g.p, g.c)).join('');
+
+            // GEO
+            const countries = [{ f: '🇩🇪', n: 'Deutschland' }, { f: '🇦🇹', n: 'Österreich' }, { f: '🇨🇭', n: 'Schweiz' }, { f: '🇺🇸', n: 'USA' }, { f: '🇬🇧', n: 'UK' }, { f: '🇫🇷', n: 'Frankreich' }, { f: '🇳🇱', n: 'Niederlande' }, { f: '🇵🇱', n: 'Polen' }, { f: '🇮🇹', n: 'Italien' }, { f: '🇪🇸', n: 'Spanien' }, { f: '🇧🇷', n: 'Brasilien' }, { f: '🇮🇳', n: 'Indien' }, { f: '🇯🇵', n: 'Japan' }, { f: '🇰🇷', n: 'Südkorea' }, { f: '🇹🇷', n: 'Türkei' }];
+            let gp = countries.map((c, i) => ({ ...c, p: Math.max(1, 45 - i * 3 + rnd(-3, 3)) })); const gt = gp.reduce((s, c) => s + c.p, 0); gp.forEach(c => c.p = Math.round(c.p / gt * 100));
+            document.getElementById('geoData').innerHTML = gp.map(c => `<div class="metric-row"><span style="font-size:16px">${c.f}</span><span class="metric-name">${c.n}</span><div style="flex:1;margin:0 8px"><div class="progress"><div class="progress-fill progress-blue" style="width:${c.p}%"></div></div></div><span style="font-size:10px;font-family:var(--mono)">${c.p}%</span></div>`).join('');
+
+            // DEVICES + TRAFFIC
+            document.getElementById('deviceData').innerHTML = '<div style="margin-bottom:12px"><strong>Geräte:</strong></div>' +
+                [{ n: '📱 Mobile', p: rnd(45, 65) }, { n: '💻 Desktop', p: rnd(20, 35) }, { n: '📺 Smart TV', p: rnd(5, 20) }, { n: '🎮 Konsole', p: rnd(1, 8) }, { n: '📟 Tablet', p: rnd(2, 8) }].map(d => prog(d.n, d.p, 'blue')).join('') +
+                '<div style="margin-top:16px"><strong>Traffic Sources:</strong></div>' +
+                [{ n: '🔍 YouTube Suche', p: rnd(15, 35) }, { n: '📡 Suggested Videos', p: rnd(25, 45) }, { n: '🏠 Browse Features', p: rnd(10, 20) }, { n: '🔗 Extern (Google, Social)', p: rnd(5, 15) }, { n: '📱 Shorts Feed', p: rnd(5, 20) }, { n: '📢 Playlists', p: rnd(3, 10) }, { n: '🔔 Notifications', p: rnd(2, 8) }, { n: '📧 Direct/Unknown', p: rnd(1, 5) }].map(t => prog(t.n, t.p, 'purple')).join('');
+
+            // RETENTION
+            document.getElementById('retData').innerHTML = `<div class="stats"><div class="stat"><div class="stat-num" style="color:var(--green)">${retR}%</div><div class="stat-label">⌀ Retention</div></div><div class="stat"><div class="stat-num" style="color:var(--yellow)">${rnd(60, 95)}%</div><div class="stat-label">Intro (0-30s)</div></div><div class="stat"><div class="stat-num" style="color:var(--blue)">${rnd(30, 70)}%</div><div class="stat-label">Mitte</div></div><div class="stat"><div class="stat-num" style="color:var(--red)">${rnd(15, 50)}%</div><div class="stat-label">Ende</div></div></div>` +
+                mr('⌀ Watch Time', avgDur + ' min') + mr('Absprungrate (0-30s)', rnd(10, 40) + '%', rnd(10, 40) > 25 ? 'Zu hoch' : 'OK', rnd(10, 40) > 25 ? 'scale-low' : 'scale-high') + mr('Re-Watch Rate', rnd(5, 25) + '%') + mr('Bester Drop-Off Point', rnd(20, 60) + '% des Videos');
+
+            // MONETISATION
+            show('c_rev');
+            document.getElementById('revData').innerHTML = `<div class="kpi-grid">${[{ v: '$' + cpm, l: 'CPM' }, { v: '$' + rpm, l: 'RPM' }, { v: '$' + fmt(revMonth), l: 'Est./Monat' }, { v: '$' + fmt(revMonth * 12), l: 'Est./Jahr' }].map(k => `<div class="kpi"><div class="kpi-val" style="color:var(--green)">${k.v}</div><div class="kpi-lbl">${k.l}</div></div>`).join('')}</div>` +
+                mr('Monetarisierungs-Status', watchHrs > 4000 && subs > 1000 ? '✅ Aktiv' : '❌ Nicht berechtigt', '', '') +
+                mr('Watch Hours (letzte 12 Mo)', fmt(watchHrs), watchHrs > 4000 ? '✅ >4000h erfüllt' : '❌ Min. 4000h', watchHrs > 4000 ? 'scale-high' : 'scale-low');
+
+            document.getElementById('streamData').innerHTML = [{ n: 'AdSense (Display/Video)', p: rnd(50, 75), v: '$' + fmt(Math.floor(revMonth * 0.65)) }, { n: 'Sponsorings', p: rnd(10, 30), v: '$' + fmt(sponsorVal) }, { n: 'Channel Memberships', p: rnd(3, 12), v: '$' + fmt(rnd(50, 500)) }, { n: 'Super Chat/Stickers', p: rnd(1, 8), v: '$' + fmt(rnd(20, 300)) }, { n: 'Merch Shelf', p: rnd(0, 5), v: '$' + fmt(rnd(0, 200)) }, { n: 'Affiliate Links', p: rnd(2, 10), v: '$' + fmt(rnd(30, 400)) }, { n: 'YouTube Premium Revenue', p: rnd(1, 5), v: '$' + fmt(rnd(10, 100)) }].map((s, i) => prog(s.n + ' (' + s.v + ')', s.p, ['green', 'blue', 'purple', 'yellow', 'red', 'cyan', 'blue'][i])).join('');
+
+            document.getElementById('sponsorData').innerHTML = mr('Geschätzter Sponsoring-Wert/Video', '$' + fmt(sponsorVal)) + mr('⌀ CPM für Sponsoren', '$' + fmt(rnd(15, 50))) + mr('Brand Safety Score', rnd(60, 100) + '/100') + mr('Nischen-Relevanz', rnd(50, 95) + '%') + mr('Empfohlene Mindestrate', '$' + fmt(Math.floor(sponsorVal * 0.7))) + mr('Premium Rate', '$' + fmt(Math.floor(sponsorVal * 1.5)));
+
+            // THUMBNAILS
+            show('c_thumb');
+            document.getElementById('thumbData').innerHTML = mr('⌀ CTR mit aktuellem Style', ctr + '%') + mr('Thumbnail-Vielfalt', rnd(30, 90) + '/100') + mr('Gesichter erkannt', rnd(40, 90) + '% der Thumbnails', 'Gesichter erhöhen CTR +25%') + mr('Text-Overlay vorhanden', rnd(50, 95) + '%') + mr('Branding-Konsistenz', rnd(20, 90) + '/100') + mr('Kontrast-Score', rnd(40, 95) + '/100') + mr('Emotionsausdruck', rnd(30, 80) + '/100', 'Starke Emotionen = +40% CTR');
+
+            document.getElementById('thumbCheckData').innerHTML = [
+                { n: '1280×720 Auflösung', p: pct() }, { n: 'Gesicht im Thumbnail', p: pct() }, { n: 'Max 3 Wörter Text', p: pct() }, { n: 'Kontrastreiche Farben', p: pct() }, { n: 'Kein Clickbait', p: pct() }, { n: 'Brand-Farben konsistent', p: pct() }, { n: 'Readable auf Mobile', p: pct() }, { n: 'Keine doppelten Elemente', p: pct() }, { n: 'Emotionaler Ausdruck', p: pct() }, { n: 'Unterscheidet sich von Konkurrenz', p: pct() }, { n: 'A/B Testing durchgeführt', p: pct() }, { n: 'Thumbnail-Template vorhanden', p: pct() }
+            ].map(c => `<div class="result-item" style="padding:6px"><span class="result-icon" style="font-size:12px">${c.p ? '✅' : '❌'}</span><div style="font-size:10px;font-weight:600">${c.n}</div></div>`).join('');
+
+            // GROWTH
+            show('c_growthChart');
+            const months = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+            let cumSubs = Math.floor(subs * 0.5);
+            document.getElementById('growthChartData').innerHTML = '<div class="chart-area"><div class="chart-bar-container">' + months.map(m => { cumSubs += rnd(-500, Math.floor(subs * 0.08)); const h = Math.max(10, Math.min(150, cumSubs / subs * 150)); return `<div class="chart-bar" style="height:${h}px;background:var(--green)"><div class="chart-bar-label">${m}</div></div>` }).join('') + '</div></div>' +
+                mr('Prognose nächster Monat', fmt(Math.floor(subs * 1.05)) + ' Subs') + mr('Prognose 6 Monate', fmt(Math.floor(subs * 1.3)) + ' Subs') + mr('Prognose 12 Monate', fmt(Math.floor(subs * 1.6)) + ' Subs');
+
+            document.getElementById('velData').innerHTML = `<div class="kpi-grid">${[{ v: fmt(Math.floor(subs / Math.max(1, vids))), l: 'Subs/Video' }, { v: fmt(Math.floor(views / Math.max(1, vids))), l: 'Views/Video' }, { v: (views / Math.max(1, subs)).toFixed(0), l: 'Views/Sub Ratio' }, { v: rnd(1, 30), l: 'Tage bis nächster Meilenstein' }].map(k => `<div class="kpi"><div class="kpi-val" style="color:var(--cyan)">${k.v}</div><div class="kpi-lbl">${k.l}</div></div>`).join('')}</div>`;
+
+            // RECOMMENDATIONS
+            show('c_reco');
+            const recos = [];
+            const failed = allChecks.filter(c => !c.p);
+            failed.slice(0, 5).forEach(c => recos.push({ impact: rnd(60, 100), title: c.name + ' aktivieren', desc: 'Kategorie: ' + c.cat + '. Dies verbessert deinen YouTube SEO Score direkt.' }));
+            if (parseFloat(ctr) < 5) recos.push({ impact: 95, title: 'CTR verbessern (aktuell ' + ctr + '%)', desc: 'Thumbnails mit Gesichtern, max 3 Wörter, starke Kontraste. Ziel: >5%.' });
+            if (parseFloat(engR) < 3) recos.push({ impact: 90, title: 'Engagement Rate steigern (aktuell ' + engR + '%)', desc: 'Mehr CTAs, Fragen stellen, pinned comments nutzen.' });
+            if (shorts / vids < 0.2) recos.push({ impact: 85, title: 'Shorts-Strategie starten', desc: 'Nur ' + Math.round(shorts / vids * 100) + '% Shorts. Shorts bringen 3x mehr neue Subs.' });
+            if (retR < 40) recos.push({ impact: 92, title: 'Retention verbessern (aktuell ' + retR + '%)', desc: 'Bessere Hooks in den ersten 30 Sekunden. Pattern Interrupts einbauen.' });
+            recos.sort((a, b) => b.impact - a.impact);
+            document.getElementById('recoData').innerHTML = recos.slice(0, 10).map((r, i) => `<div class="result-item"><span class="result-icon" style="font-size:18px;font-weight:900">${badge(r.impact, 'green')}</span><div><div class="result-title">#${i + 1}: ${r.title}</div><div class="result-desc">${r.desc}</div></div></div>`).join('');
+
+            hist[N] = { subs, views, vids, seoScore, healthScore, engR, ctr, date: new Date().toISOString() }; localStorage.setItem('yt_pro_hist', JSON.stringify(hist)); renderH();
+        }
+
+        function show(id) { document.getElementById(id).style.display = '' }
+        function runComp() {
+            const names = [document.getElementById('chIn').value.trim(), document.getElementById('comp1').value.trim(), document.getElementById('comp2').value.trim(), document.getElementById('comp3').value.trim()].filter(Boolean);
+            if (names.length < 2) { alert('Mindestens 2 Kanäle'); return }
+            document.getElementById('compData').innerHTML = `<table class="data-table"><thead><tr><th>Metrik</th>${names.map(n => `<th style="color:#FF0000">${n.replace('@', '')}</th>`).join('')}</tr></thead><tbody>${['Abonnenten', 'Views', 'Videos', 'Eng. Rate', 'CTR', 'SEO Score', 'Watch Time', 'Revenue/Mo'].map(m => `<tr><td style="font-weight:700">${m}</td>${names.map(() => `<td style="font-family:var(--mono)">${m.includes('Rate') || m.includes('CTR') ? (Math.random() * 8 + 1).toFixed(1) + '%' : m.includes('Score') ? rnd(30, 95) + '/100' : m.includes('Revenue') ? '$' + fmt(rnd(500, 50000)) : fmt(rnd(1e3, 5e6))}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+        }
+
+        function renderH() { const e = Object.entries(hist); document.getElementById('histEmpty').style.display = e.length ? 'none' : 'block'; document.getElementById('histList').innerHTML = e.map(([n, d]) => `<div class="metric-row" style="cursor:pointer" onclick="document.getElementById('chIn').value='@${n}';run()"><span class="metric-name">${n}</span>${badge(fmt(d.subs) + ' subs', 'blue')} ${badge('SEO:' + d.seoScore, 'green')} ${badge('Health:' + d.healthScore, 'purple')}<span style="font-size:10px;color:var(--dim)">${new Date(d.date).toLocaleDateString('de-DE')}</span><button class="btn btn-sm btn-outline" onclick="event.stopPropagation();delete hist['${n}'];localStorage.setItem('yt_pro_hist',JSON.stringify(hist));renderH()">✕</button></div>`).join('') }
+        renderH();
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>

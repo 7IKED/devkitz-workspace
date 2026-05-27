@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="shared/seo-shared.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="grid grid-2">
+        <div class="card card-full">
+            <h3>📐 Metrics Engine – Alle Werte, Skalen & Relevanz</h3>
+            <p style="font-size:11px;color:var(--muted);margin-bottom:12px">Referenz-Tool für alle
+                Social-Media-Metriken. Definiere Skalen, Relevanz und erstelle Custom Metric Sets.</p>
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('reference',this)">📋 Referenz</button>
+                <button class="tab" onclick="switchTab('persona',this)">🎭 Persona Gewichtung</button>
+                <button class="tab" onclick="switchTab('custom',this)">⚙️ Custom Set</button>
+                <button class="tab" onclick="switchTab('export',this)">💾 Export</button>
+            </div>
+            <div class="input-row">
+                <input type="search" id="searchInput" placeholder="Metrik suchen..." oninput="filterMetrics()">
+                <select id="categoryFilter" onchange="filterMetrics()">
+                    <option value="all">Alle Kategorien</option>
+                    <option value="reach">📡 Reichweite</option>
+                    <option value="engagement">❤️ Engagement</option>
+                    <option value="growth">📈 Wachstum</option>
+                    <option value="content">🎬 Content</option>
+                    <option value="audience">👥 Audience</option>
+                    <option value="monetisation">💰 Monetarisierung</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- REFERENCE TAB -->
+        <div id="referenceTab">
+            <div class="card card-full">
+                <h3>📋 Alle Metriken (Skala & Relevanz)</h3>
+                <div id="metricsTable"></div>
+            </div>
+        </div>
+
+        <!-- PERSONA TAB -->
+        <div id="personaTab" style="display:none">
+            <div class="card card-full">
+                <h3>🎭 Persona-spezifische Metrik-Gewichtung</h3>
+                <div class="persona-grid" style="margin-bottom:16px" id="personaSelector">
+                    <div class="persona-card active" onclick="selectPersona('streamer',this)">
+                        <div class="persona-icon">🎮</div>
+                        <div class="persona-name">Streamer</div>
+                    </div>
+                    <div class="persona-card" onclick="selectPersona('influencer',this)">
+                        <div class="persona-icon">⭐</div>
+                        <div class="persona-name">Influencer</div>
+                    </div>
+                    <div class="persona-card" onclick="selectPersona('gamer',this)">
+                        <div class="persona-icon">🕹️</div>
+                        <div class="persona-name">Gamer</div>
+                    </div>
+                    <div class="persona-card" onclick="selectPersona('bpromi',this)">
+                        <div class="persona-icon">🌟</div>
+                        <div class="persona-name">B-Promi</div>
+                    </div>
+                    <div class="persona-card" onclick="selectPersona('business',this)">
+                        <div class="persona-icon">💼</div>
+                        <div class="persona-name">Business</div>
+                    </div>
+                </div>
+                <div id="personaWeights"></div>
+            </div>
+        </div>
+
+        <!-- CUSTOM TAB -->
+        <div id="customTab" style="display:none">
+            <div class="card card-full">
+                <h3>⚙️ Custom Metric Set</h3>
+                <p style="font-size:11px;color:var(--muted);margin-bottom:12px">Wähle die Metriken aus, die für dich
+                    relevant sind. Gespeichert wird in localStorage.</p>
+                <div id="customPicker"></div>
+                <button class="btn btn-green btn-block" style="margin-top:12px" onclick="saveCustomSet()">💾 Set
+                    speichern</button>
+            </div>
+        </div>
+
+        <!-- EXPORT TAB -->
+        <div id="exportTab" style="display:none">
+            <div class="card card-full">
+                <h3>💾 Metriken exportieren</h3>
+                <div class="stats" style="margin-bottom:16px">
+                    <div class="stat">
+                        <div class="stat-num" style="color:var(--blue)" id="totalMetrics">0</div>
+                        <div class="stat-label">Alle Metriken</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-num" style="color:var(--green)" id="selectedMetrics">0</div>
+                        <div class="stat-label">Ausgewählt</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-num" style="color:var(--purple)">6</div>
+                        <div class="stat-label">Kategorien</div>
+                    </div>
+                </div>
+                <div class="export-bar">
+                    <button class="btn btn-outline" onclick="exportMetrics('json')">📦 JSON Export</button>
+                    <button class="btn btn-outline" onclick="exportMetrics('csv')">📋 CSV Export</button>
+                    <button class="btn btn-outline" onclick="exportMetrics('md')">📝 Markdown Export</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        const ALL_METRICS = [
+            // REACH
+            { name: 'Follower/Subscriber', cat: 'reach', scale: '0 – ∞', relevance: 95, desc: 'Gesamtzahl der Abonnenten', platforms: 'Alle', unit: 'Absolut' },
+            { name: 'Impressions', cat: 'reach', scale: '0 – ∞', relevance: 90, desc: 'Wie oft Inhalte angezeigt wurden', platforms: 'IG, TT, X, FB, LI', unit: 'Absolut' },
+            { name: 'Reichweite (Reach)', cat: 'reach', scale: '0 – ∞', relevance: 88, desc: 'Einzigartige Nutzer die Content sahen', platforms: 'IG, FB, TT, LI', unit: 'Absolut' },
+            { name: 'Profile Views', cat: 'reach', scale: '0 – ∞', relevance: 70, desc: 'Profil-Besucher pro Zeitraum', platforms: 'Alle', unit: 'Absolut' },
+            { name: 'Story Views', cat: 'reach', scale: '0 – ∞', relevance: 65, desc: 'Aufrufe von Stories', platforms: 'IG, FB, SC', unit: 'Absolut' },
+            { name: 'Video Views', cat: 'reach', scale: '0 – ∞', relevance: 85, desc: 'Video-Aufrufe gesamt', platforms: 'YT, TT, IG, FB', unit: 'Absolut' },
+
+            // ENGAGEMENT
+            { name: 'Engagement Rate', cat: 'engagement', scale: '0-100%', relevance: 98, desc: '(Likes+Comments+Shares)/Follower × 100', platforms: 'Alle', unit: 'Prozent' },
+            { name: 'Likes', cat: 'engagement', scale: '0 – ∞', relevance: 80, desc: 'Likes/Hearts pro Post', platforms: 'Alle', unit: 'Absolut' },
+            { name: 'Kommentare', cat: 'engagement', scale: '0 – ∞', relevance: 85, desc: 'Kommentare pro Post', platforms: 'Alle', unit: 'Absolut' },
+            { name: 'Shares/Retweets', cat: 'engagement', scale: '0 – ∞', relevance: 88, desc: 'Geteilte Inhalte', platforms: 'Alle', unit: 'Absolut' },
+            { name: 'Saves/Bookmarks', cat: 'engagement', scale: '0 – ∞', relevance: 82, desc: 'Gespeicherte Inhalte', platforms: 'IG, TT, X', unit: 'Absolut' },
+            { name: 'Click-Through Rate (CTR)', cat: 'engagement', scale: '0-100%', relevance: 90, desc: 'Klicks / Impressions × 100', platforms: 'YT, FB, LI', unit: 'Prozent' },
+            { name: 'Reply Rate', cat: 'engagement', scale: '0-100%', relevance: 75, desc: 'Antwortrate auf Nachrichten', platforms: 'X, LI, FB', unit: 'Prozent' },
+            { name: 'Watch-Through Rate', cat: 'engagement', scale: '0-100%', relevance: 92, desc: '% der Zuschauer die Video komplett sahen', platforms: 'YT, TT, IG', unit: 'Prozent' },
+            { name: 'Sentiment Score', cat: 'engagement', scale: '-1 bis +1', relevance: 70, desc: 'Stimmung der Kommentare (-1 negativ, +1 positiv)', platforms: 'Alle', unit: 'Score' },
+
+            // GROWTH
+            { name: 'Follower-Wachstum/Monat', cat: 'growth', scale: '-100% – ∞', relevance: 92, desc: 'Prozentuale Änderung der Follower', platforms: 'Alle', unit: 'Prozent' },
+            { name: 'Neue Follower/Tag', cat: 'growth', scale: '0 – ∞', relevance: 80, desc: 'Täglicher Follower-Zuwachs', platforms: 'Alle', unit: 'Absolut' },
+            { name: 'Unfollow Rate', cat: 'growth', scale: '0-100%', relevance: 75, desc: 'Anteil der Unfollower', platforms: 'Alle', unit: 'Prozent' },
+            { name: 'Viralitäts-Score', cat: 'growth', scale: '0 – ∞', relevance: 85, desc: 'Shares/Impressions-Verhältnis', platforms: 'TT, X, IG', unit: 'Score' },
+            { name: 'FYP/Explore Rate', cat: 'growth', scale: '0-100%', relevance: 88, desc: '% der Impressions von Algorithmus', platforms: 'TT, IG', unit: 'Prozent' },
+
+            // CONTENT
+            { name: 'Post-Frequenz', cat: 'content', scale: '0 – ∞/Woche', relevance: 78, desc: 'Posts pro Woche/Monat', platforms: 'Alle', unit: 'Posts/Woche' },
+            { name: 'Content-Mix Ratio', cat: 'content', scale: '0-100%', relevance: 72, desc: 'Verteilung der Content-Typen', platforms: 'Alle', unit: 'Verteilung' },
+            { name: 'Hashtag Performance', cat: 'content', scale: '0-100%', relevance: 68, desc: 'Reichweite über Hashtags', platforms: 'IG, TT, X', unit: 'Prozent' },
+            { name: '⌀ Video-Länge', cat: 'content', scale: '0 – ∞ min', relevance: 65, desc: 'Durchschnittliche Videolänge', platforms: 'YT, TT, TW', unit: 'Minuten' },
+            { name: 'Upload-Konsistenz', cat: 'content', scale: '0-100%', relevance: 82, desc: 'Regelmäßigkeit der Posts', platforms: 'Alle', unit: 'Prozent' },
+
+            // AUDIENCE
+            { name: 'Altersverteilung', cat: 'audience', scale: 'Verteilung', relevance: 80, desc: 'Altersgruppen der Follower', platforms: 'IG, YT, FB, TT', unit: 'Verteilung' },
+            { name: 'Geschlechterverteilung', cat: 'audience', scale: 'm/w/d %', relevance: 75, desc: 'Gender-Split der Audience', platforms: 'IG, YT, FB', unit: 'Verteilung' },
+            { name: 'Top Länder', cat: 'audience', scale: 'Verteilung', relevance: 78, desc: 'Geografische Herkunft', platforms: 'Alle', unit: 'Verteilung' },
+            { name: 'Aktive Stunden', cat: 'audience', scale: '0-24h', relevance: 85, desc: 'Wann Audience online ist', platforms: 'IG, TT, FB', unit: 'Stunden' },
+            { name: 'Audience Overlap', cat: 'audience', scale: '0-100%', relevance: 65, desc: 'Gemeinsame Follower auf mehreren Plattformen', platforms: 'Cross-Plattform', unit: 'Prozent' },
+
+            // MONETISATION
+            { name: 'CPM (Cost per Mille)', cat: 'monetisation', scale: '$0 – $50+', relevance: 88, desc: 'Einnahmen pro 1000 Views', platforms: 'YT, FB', unit: 'Dollar' },
+            { name: 'RPM (Revenue per Mille)', cat: 'monetisation', scale: '$0 – $30+', relevance: 85, desc: 'Netto-Einnahmen pro 1000 Views', platforms: 'YT', unit: 'Dollar' },
+            { name: 'Sponsoring-Wert', cat: 'monetisation', scale: '$0 – ∞', relevance: 80, desc: 'Geschätzter Wert eines Sponsored Posts', platforms: 'IG, YT, TT', unit: 'Dollar' },
+            { name: 'Affiliate Conversion', cat: 'monetisation', scale: '0-100%', relevance: 72, desc: 'Klick-zu-Kauf Rate', platforms: 'Alle', unit: 'Prozent' },
+            { name: 'Sub/Member Revenue', cat: 'monetisation', scale: '$0 – ∞/Monat', relevance: 82, desc: 'Einnahmen durch Subscriptions', platforms: 'YT, TW, KI', unit: 'Dollar/Monat' },
+        ];
+
+        const PERSONA_WEIGHTS = {
+            streamer: { reach: 3, engagement: 5, growth: 4, content: 3, audience: 3, monetisation: 4 },
+            influencer: { reach: 5, engagement: 5, growth: 4, content: 4, audience: 5, monetisation: 3 },
+            gamer: { reach: 3, engagement: 4, growth: 4, content: 5, audience: 2, monetisation: 3 },
+            bpromi: { reach: 5, engagement: 3, growth: 3, content: 2, audience: 5, monetisation: 4 },
+            business: { reach: 4, engagement: 3, growth: 3, content: 3, audience: 4, monetisation: 5 },
+        };
+
+        let customSet = JSON.parse(localStorage.getItem('metrics_custom_set') || '[]');
+        let activePersona = 'streamer';
+
+        function switchTab(tab, btn) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); btn.classList.add('active');['reference', 'persona', 'custom', 'export'].forEach(t => document.getElementById(t + 'Tab').style.display = t === tab ? '' : 'none') }
+        function selectPersona(p, el) { activePersona = p; document.querySelectorAll('.persona-card').forEach(c => c.classList.remove('active')); el.classList.add('active'); renderPersonaWeights() }
+
+        function renderMetrics() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const cat = document.getElementById('categoryFilter').value;
+            const filtered = ALL_METRICS.filter(m => (cat === 'all' || m.cat === cat) && (!search || m.name.toLowerCase().includes(search) || m.desc.toLowerCase().includes(search)));
+            const catIcons = { reach: '📡', engagement: '❤️', growth: '📈', content: '🎬', audience: '👥', monetisation: '💰' };
+            const catColors = { reach: 'blue', engagement: 'red', growth: 'green', content: 'purple', audience: 'cyan', monetisation: 'yellow' };
+            document.getElementById('metricsTable').innerHTML = `<table class="data-table"><thead><tr><th>Metrik</th><th>Kategorie</th><th>Skala</th><th>Relevanz</th><th>Plattformen</th><th>Einheit</th></tr></thead><tbody>${filtered.map(m => `<tr><td><div style="font-weight:700;font-size:12px">${m.name}</div><div style="font-size:10px;color:var(--muted)">${m.desc}</div></td><td><span class="badge badge-${catColors[m.cat]}">${catIcons[m.cat]} ${m.cat}</span></td><td style="font-family:var(--mono);font-size:10px;color:var(--cyan)">${m.scale}</td><td><div style="display:flex;align-items:center;gap:6px"><div class="progress" style="width:60px;height:6px"><div class="progress-fill ${m.relevance >= 80 ? 'progress-green' : m.relevance >= 50 ? 'progress-yellow' : 'progress-red'}" style="width:${m.relevance}%"></div></div><span style="font-weight:700;font-size:11px">${m.relevance}</span></div></td><td style="font-size:10px;color:var(--muted)">${m.platforms}</td><td style="font-size:10px">${m.unit}</td></tr>`).join('')}</tbody></table>`;
+            document.getElementById('totalMetrics').textContent = ALL_METRICS.length;
+            document.getElementById('selectedMetrics').textContent = customSet.length;
+        }
+
+        function filterMetrics() { renderMetrics() }
+
+        function renderPersonaWeights() {
+            const w = PERSONA_WEIGHTS[activePersona];
+            const cats = ['reach', 'engagement', 'growth', 'content', 'audience', 'monetisation'];
+            const catNames = { reach: 'Reichweite', engagement: 'Engagement', growth: 'Wachstum', content: 'Content', audience: 'Audience', monetisation: 'Monetarisierung' };
+            const catIcons = { reach: '📡', engagement: '❤️', growth: '📈', content: '🎬', audience: '👥', monetisation: '💰' };
+            document.getElementById('personaWeights').innerHTML = cats.map(c => `<div class="metric-row"><span style="font-size:18px">${catIcons[c]}</span><span class="metric-name">${catNames[c]}</span><div style="display:flex;gap:3px;align-items:center">${Array.from({ length: 5 }, (_, i) => `<div style="width:20px;height:20px;border-radius:4px;background:${i < w[c] ? 'var(--purple)' : 'var(--border)'};transition:all .3s"></div>`).join('')}</div><span class="metric-value">${w[c]}/5</span></div>`).join('') +
+                `<div style="margin-top:16px;padding:14px;background:var(--card2);border-radius:10px;border:1px solid var(--border)">
+        <div class="label">Top Metriken für ${activePersona}</div>
+        ${ALL_METRICS.filter(m => w[m.cat] >= 4).sort((a, b) => b.relevance - a.relevance).slice(0, 8).map(m => `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:11px"><span class="badge badge-purple">${m.relevance}</span><span>${m.name}</span></div>`).join('')}
+    </div>`;
+        }
+
+        function renderCustomPicker() {
+            document.getElementById('customPicker').innerHTML = ALL_METRICS.map(m => {
+                const sel = customSet.includes(m.name);
+                return `<div style="display:flex;align-items:center;gap:8px;padding:6px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s${sel ? ';background:rgba(168,85,247,.06)' : ''}" onclick="toggleMetric('${m.name}',this)"><input type="checkbox" ${sel ? 'checked' : ''} style="accent-color:var(--purple)"><span style="font-weight:600;font-size:12px;flex:1">${m.name}</span><span class="badge badge-${m.relevance >= 80 ? 'green' : m.relevance >= 50 ? 'yellow' : 'red'}" style="font-size:9px">${m.relevance}</span></div>`;
+            }).join('');
+        }
+
+        function toggleMetric(name, el) {
+            if (customSet.includes(name)) customSet = customSet.filter(n => n !== name);
+            else customSet.push(name);
+            el.style.background = customSet.includes(name) ? 'rgba(168,85,247,.06)' : '';
+            el.querySelector('input').checked = customSet.includes(name);
+            document.getElementById('selectedMetrics').textContent = customSet.length;
+        }
+
+        function saveCustomSet() { localStorage.setItem('metrics_custom_set', JSON.stringify(customSet)); alert('Custom Metric Set gespeichert! (' + customSet.length + ' Metriken)') }
+
+        function exportMetrics(format) {
+            const data = customSet.length ? ALL_METRICS.filter(m => customSet.includes(m.name)) : ALL_METRICS;
+            if (format === 'json') { const b = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'metrics-engine.json'; a.click() }
+            else if (format === 'csv') { let csv = 'Name,Category,Scale,Relevance,Platforms,Unit,Description\n'; data.forEach(m => csv += `"${m.name}","${m.cat}","${m.scale}",${m.relevance},"${m.platforms}","${m.unit}","${m.desc}"\n`); const b = new Blob([csv], { type: 'text/csv' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'metrics-engine.csv'; a.click() }
+            else { let md = '# Social Media Metrics Reference\n\n'; const cats = [...new Set(data.map(m => m.cat))]; cats.forEach(c => { md += '## ' + c.charAt(0).toUpperCase() + c.slice(1) + '\n\n| Metrik | Relevanz | Skala | Plattformen |\n|---|---|---|---|\n'; data.filter(m => m.cat === c).forEach(m => { md += '| ' + m.name + ' | ' + m.relevance + '/100 | ' + m.scale + ' | ' + m.platforms + ' |\n' }); md += '\n' }); const b = new Blob([md], { type: 'text/markdown' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'metrics-engine.md'; a.click() }
+        }
+
+        renderMetrics(); renderPersonaWeights(); renderCustomPicker();
+    </script>
+</body>
+
+
+<!-- © DEVKiTZ™ 2026 — All Rights Reserved -->
+</html>
