@@ -303,6 +303,40 @@
             }));
         } catch (e) { /* IE fallback — ignore */ }
 
+        /* Watchdog Integration — Alerts bei Problemen */
+        if (window.DkzWatchdog && issueCount > 0) {
+            for (var w = 0; w < results.length; w++) {
+                var chk = results[w];
+                if (!chk.ok) {
+                    var sev = chk.critical ? 'error' : 'warn';
+                    window.DkzWatchdog.alert(
+                        sev,
+                        chk.name + (chk.fix ? ' — ' + chk.fix : ''),
+                        'autohealth',
+                        { checkId: chk.id, category: chk.category }
+                    );
+                }
+            }
+        }
+
+        /* EventLog Integration — Health-Check protokollieren */
+        if (window.DkzEventLog && typeof window.DkzEventLog.log === 'function') {
+            window.DkzEventLog.log({
+                type: 'system',
+                source: 'autohealth',
+                action: 'health-check',
+                severity: status === 'red' ? 'error' : status === 'yellow' ? 'warn' : 'info',
+                metadata: {
+                    score: score,
+                    passed: passed,
+                    failed: failed,
+                    warnings: warnings,
+                    status: status
+                },
+                tags: ['autohealth', 'health-check', status]
+            });
+        }
+
         return _lastReport;
     }
 
