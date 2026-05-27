@@ -48,9 +48,10 @@
         /**
          * Log an event
          * @param {Object} opts
-         * @param {string} opts.type - creation|action|error|system|output|command
+         * @param {string} opts.type - creation|action|error|system|output|command|alert
          * @param {string} opts.source - module name or 'cmd'
          * @param {string} opts.action - what happened
+         * @param {string} opts.severity - info|warn|error|critical (optional)
          * @param {Object} opts.metadata - arbitrary metadata
          * @param {string[]} opts.tags - filter tags
          * @param {string} opts.parentId - parent event ID for chaining
@@ -60,6 +61,7 @@
             const entry = {
                 id: opts.id || this.generateId(),
                 type: opts.type || 'action',
+                severity: opts.severity || null,
                 source: opts.source || this._detectModule(),
                 action: opts.action || 'unknown',
                 metadata: {
@@ -82,6 +84,14 @@
             }
 
             this.save();
+
+            // EventBus Bridge — jedes Event an Subscriber verteilen
+            if (window.DkZ && window.DkZ.EventBus) {
+                try {
+                    window.DkZ.EventBus.emit('eventlog:new', entry, 'eventlog');
+                } catch (e) { /* EventBus nicht bereit */ }
+            }
+
             return entry;
         },
 
@@ -125,6 +135,27 @@
         },
 
         /**
+         * Log an alert event (with severity routing)
+         * @param {string} severity - info|warn|error|critical
+         * @param {string} source - module or system name
+         * @param {string} message - alert message
+         * @param {Object} metadata - extra data
+         */
+        logAlert(severity, source, message, metadata = {}) {
+            return this.log({
+                type: 'alert',
+                severity: severity,
+                source: source,
+                action: message,
+                metadata: {
+                    severity: severity,
+                    ...metadata
+                },
+                tags: ['alert', severity, source]
+            });
+        },
+
+        /**
          * Log a command (OS command line)
          */
         logCommand(command, output, exitCode, metadata = {}) {
@@ -157,6 +188,13 @@
                 },
                 tags: ['docs', 'r20']
             });
+        },
+
+        /**
+         * Find events by severity
+         */
+        findBySeverity(severity) {
+            return this.entries.filter(e => e.severity === severity);
         },
 
         // =====================
