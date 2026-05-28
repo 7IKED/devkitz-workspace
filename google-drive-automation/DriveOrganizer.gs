@@ -1,155 +1,155 @@
 /**
- * DkZ™ Google Drive Organizer v2.1 — Jeff Su 00-99 System
+ * DkZ™ Google Drive Organizer v2.2 — Jeff Su 00-99 System
  * ═══════════════════════════════════════════════════════════
  * ABSOLUTES LOESCH-VERBOT — Nur safeArchive() verwenden!
  * 
  * EISERNE REGELN (von 777):
  * ──────────────────────────
  * R1: NIEMALS loeschen — nur verschieben in Papierkorb-Ordner
- * R2: 06_NOTEPAD — ABSOLUT UNANTASTBAR, NICHTS sortieren/aendern/anfassen
- * R3: 07_PRIVAT — ABSOLUT UNANTASTBAR, NICHTS sortieren/aendern/anfassen
- * R4: [DEEPKEEP] — NUR KOPIEREN, nie verschieben/loeschen
- *     → Kopie in Bibliothek einfuegen, Original bleibt IMMER
- * R5: "raw" Ordner — IMMER unangetastet, egal wo
- * R6: Fotos → NUR in Fotos-Ordner (03_MEDIA/Fotos)
- * R7: Videos → NUR in Videos-Ordner (03_MEDIA/Videos)
- * R8: Inbox [00] ist der EINZIGE Ordner der sortiert wird
- * R9: Desktop — NUR Dateien ABLEGEN, nie bestehende aendern
+ * R2: 05_INTERN — GESCHUETZT
+ * R3: 06_NOTEPAD — ABSOLUT UNANTASTBAR
+ * R4: 07_PRIVAT — ABSOLUT UNANTASTBAR
+ * R5: 08_PLAYSTATION — GESCHUETZT
+ * R6: [DEEPKEEP] — NUR KOPIEREN, nie verschieben/loeschen
+ * R7: "raw" Ordner — IMMER unangetastet, egal wo
+ * R8: Fotos → NUR in 03_MEDIA/Fotos
+ * R9: Videos → NUR in 03_MEDIA/Videos
+ * R10: Inbox [00] ist der EINZIGE Ordner der sortiert wird
+ * R11: Desktop — NUR Dateien ABLEGEN, nie bestehende aendern
  * 
- * @version 2.1.0
+ * ECHTE DEVKITZ STRUKTUR (Stand 2026-05-28):
+ * ──────────────────────────────────────────
+ * 00_INBOX
+ * 01_PROJECTS
+ * 02_RESEARCH
+ * 03_MEDIA        (Fotos/Videos/Musik/Design)
+ * 04_SYSTEM       (Scripts, ONTHERUN, BOTNET, Shortcuts)
+ * 05_INTERN       ██ GESCHUETZT ██
+ * 06_NOTEPAD      ██ GESCHUETZT ██
+ * 07_PRIVAT       ██ GESCHUETZT ██
+ * 08_PLAYSTATION  ██ GESCHUETZT ██
+ * 99_ARCHIVE
+ * [DEEPKEEP]      ██ NUR KOPIEREN ██
+ * 
+ * @version 2.2.0
  * @author 777 / Antigravity
  */
 
-// ═══ ECHTE DEVKITZ ORDNERSTRUKTUR (Stand 2026-05-28) ═══
-const CONFIG = {
+// ═══ ECHTE DEVKITZ ORDNERSTRUKTUR ═══
+var CONFIG = {
   ROOT: {
     '00': 'INBOX',
     '01': 'PROJECTS',
     '02': 'RESEARCH',
     '03': 'MEDIA',
     '04': 'SYSTEM',
-    '05': 'INTERN',
-    '06': 'NOTEPAD',     // ██ GESCHUETZT — NIE ANFASSEN ██
-    '07': 'PRIVAT',      // ██ GESCHUETZT — NIE ANFASSEN ██
-    '08': 'PLAYSTATION',
-    '09': 'SYSTEM',
+    '05': 'INTERN',        // ██ GESCHUETZT ██
+    '06': 'NOTEPAD',       // ██ GESCHUETZT ██
+    '07': 'PRIVAT',        // ██ GESCHUETZT ██
+    '08': 'PLAYSTATION',   // ██ GESCHUETZT ██
+    '09': 'BRAIN\u00B2',
     '99': 'ARCHIVE'
   },
   SUB: {
-    '03': {              // MEDIA — Fotos/Videos/Musik STRENG getrennt
-      '01': 'Fotos',     // NUR Bilder hierhin
-      '02': 'Videos',    // NUR Videos hierhin
-      '03': 'Musik',     // NUR Audio hierhin
-      '04': 'Design',    // PSD, AI, Figma
+    '03': {
+      '01': 'Fotos',
+      '02': 'Videos',
+      '03': 'Musik',
+      '04': 'Design',
       '99': 'Archiv'
     },
-    '02': {              // RESEARCH
+    '02': {
       '01': 'Papers',
       '02': 'Web-Clips',
       '03': 'Bookmarks',
       '99': 'Archiv'
     },
-    '05': {              // INTERN
-      '01': 'PDFs',
-      '02': 'Slides',
-      '03': 'Keep',
-      '04': 'Sheets',
-      '05': 'Docs',
-      '99': 'Archiv'
-    },
-    '04': {              // SYSTEM
-      '01': 'Desktop-Backup',
-      '02': 'SecondBrain',
-      '03': 'Logs',
-      '04': 'Scripts',
+    '04': {
+      '01': 'Scripts',
+      '02': 'Shortcuts',
+      '03': 'Installers',
       '99': 'Archiv'
     }
   },
   TRASH: 'Papierkorb',
 
-  // STRENGE Routing: Fotos NUR zu Fotos, Videos NUR zu Videos
+  // Fotos NUR zu Fotos, Videos NUR zu Videos
   ROUTE: {
-    // BILDER → 03/01 (MEDIA/Fotos) — NIEMALS woanders hin
-    'image/jpeg':    '03/01',
-    'image/png':     '03/01',
-    'image/webp':    '03/01',
-    'image/heic':    '03/01',
-    'image/gif':     '03/01',
-    'image/svg+xml': '03/01',
-    'image/bmp':     '03/01',
-    'image/tiff':    '03/01',
-
-    // VIDEOS → 03/02 (MEDIA/Videos) — NIEMALS woanders hin
-    'video/mp4':        '03/02',
-    'video/quicktime':  '03/02',
-    'video/webm':       '03/02',
-    'video/x-msvideo':  '03/02',
-    'video/x-matroska': '03/02',
-
-    // AUDIO → 03/03 (MEDIA/Musik)
-    'audio/mpeg': '03/03',
-    'audio/wav':  '03/03',
-    'audio/flac': '03/03',
-    'audio/ogg':  '03/03',
-    'audio/aac':  '03/03',
-
-    // DOKUMENTE → 05 (INTERN)
-    'application/pdf': '05/01',
-    'application/vnd.ms-powerpoint': '05/02',
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation': '05/02',
-    'application/vnd.google-apps.presentation': '05/02',
-    'application/vnd.ms-excel': '05/04',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '05/04',
-    'application/vnd.google-apps.spreadsheet': '05/04',
-    'application/msword': '05/05',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '05/05',
-    'application/vnd.google-apps.document': '05/05',
-    'text/plain': '05/05',
-    'text/markdown': '05/05'
+    'image/jpeg':    '03/01', 'image/png':     '03/01', 'image/webp':    '03/01',
+    'image/heic':    '03/01', 'image/gif':     '03/01', 'image/svg+xml': '03/01',
+    'image/bmp':     '03/01', 'image/tiff':    '03/01',
+    'video/mp4':        '03/02', 'video/quicktime':  '03/02', 'video/webm':       '03/02',
+    'video/x-msvideo':  '03/02', 'video/x-matroska': '03/02',
+    'audio/mpeg': '03/03', 'audio/wav': '03/03', 'audio/flac': '03/03',
+    'audio/ogg':  '03/03', 'audio/aac': '03/03',
+    'application/pdf': '02/01',
+    'text/plain': '00', 'text/markdown': '02'
   },
   MAX_DEPTH: 5
 };
 
-// ═══ GESCHUETZTE ORDNER (ABSOLUT UNANTASTBAR) ═══
-const PROTECTED_FOLDERS = [
-  '06_NOTEPAD', 'NOTEPAD', '06 ',
-  '07_PRIVAT', 'PRIVAT', '07 ',
+// ═══ GESCHUETZTE ZONEN — 6 BEREICHE, 3x SCHUTZ ═══
+//
+// Zone 1: 05_INTERN        — Interne Dokumente
+// Zone 2: 06_NOTEPAD       — Notizen, ABSOLUT TABU
+// Zone 3: 07_PRIVAT        — Privat, ABSOLUT TABU
+// Zone 4: 08_PLAYSTATION   — Gaming, geschuetzt
+// Zone 5: [DEEPKEEP]       — NUR KOPIEREN
+// Zone 6: raw              — NIE ANFASSEN
+//
+// Schutz 1: isProtected()  — Name-Check (Ordner + 5 Eltern)
+// Schutz 2: isBlocked()    — Nummer-Check (05/06/07/08)
+// Schutz 3: tripleGuard()  — Kombination: Protected + Blocked + DeepKeep + Raw
+//
+// ALLE 3 muessen GRUEN sein bevor IRGENDWAS passiert!
+
+var PROTECTED_FOLDERS = [
+  '05_INTERN', 'INTERN',
+  '06_NOTEPAD', 'NOTEPAD',
+  '07_PRIVAT', 'PRIVAT',
+  '08_PLAYSTATION', 'PLAYSTATION',
   '[DEEPKEEP]', 'DEEPKEEP',
   'raw'
 ];
 
-const DEEPKEEP_NAMES = ['[DEEPKEEP]', 'DEEPKEEP'];
+var BLOCKED_NUMBERS = ['05', '06', '07', '08'];
 
-// ═══ SAFETY CHECKS ═══
+var DEEPKEEP_NAMES = ['[DEEPKEEP]', 'DEEPKEEP'];
 
-/**
- * Prueft ob ein Ordner geschuetzt ist
- * PROTECTED = 06_NOTEPAD, 07_PRIVAT, [DEEPKEEP], raw
- */
+// ═══ SCHUTZ 1: Name-basiert ═══
 function isProtected(folder) {
   if (!folder) return false;
-  var name = folder.getName();
+  var name = folder.getName().toLowerCase();
   for (var i = 0; i < PROTECTED_FOLDERS.length; i++) {
-    if (name.toLowerCase().indexOf(PROTECTED_FOLDERS[i].toLowerCase()) !== -1) return true;
+    if (name.indexOf(PROTECTED_FOLDERS[i].toLowerCase()) !== -1) return true;
   }
-  // Eltern-Ordner pruefen (rekursiv bis 5 Ebenen)
   var parent = folder;
   for (var d = 0; d < 5; d++) {
     try {
       parent = parent.getParents().next();
-      var pName = parent.getName();
+      var pName = parent.getName().toLowerCase();
       for (var j = 0; j < PROTECTED_FOLDERS.length; j++) {
-        if (pName.toLowerCase().indexOf(PROTECTED_FOLDERS[j].toLowerCase()) !== -1) return true;
+        if (pName.indexOf(PROTECTED_FOLDERS[j].toLowerCase()) !== -1) return true;
       }
     } catch(e) { break; }
   }
   return false;
 }
 
-/**
- * Prueft ob ein Ordner in [DEEPKEEP] liegt
- * DEEPKEEP = NUR KOPIEREN erlaubt, nie verschieben
- */
+// ═══ SCHUTZ 2: Nummer-basiert ═══
+function isBlocked(folderOrPath) {
+  var name = '';
+  if (typeof folderOrPath === 'string') { name = folderOrPath; }
+  else if (folderOrPath && folderOrPath.getName) { name = folderOrPath.getName(); }
+  else { return false; }
+  for (var i = 0; i < BLOCKED_NUMBERS.length; i++) {
+    if (name.indexOf(BLOCKED_NUMBERS[i] + '_') === 0) return true;
+    if (name.indexOf(BLOCKED_NUMBERS[i] + '/') !== -1) return true;
+  }
+  return false;
+}
+
+// ═══ SCHUTZ 2b: DEEPKEEP ═══
 function isDeepKeep(folder) {
   if (!folder) return false;
   var name = folder.getName();
@@ -160,18 +160,15 @@ function isDeepKeep(folder) {
   for (var d = 0; d < 5; d++) {
     try {
       parent = parent.getParents().next();
-      var pName = parent.getName();
       for (var j = 0; j < DEEPKEEP_NAMES.length; j++) {
-        if (pName.indexOf(DEEPKEEP_NAMES[j]) !== -1) return true;
+        if (parent.getName().indexOf(DEEPKEEP_NAMES[j]) !== -1) return true;
       }
     } catch(e) { break; }
   }
   return false;
 }
 
-/**
- * Prueft ob Ordner "raw" heisst — NIEMALS anfassen
- */
+// ═══ SCHUTZ 2c: RAW ═══
 function isRaw(folder) {
   if (!folder) return false;
   if (folder.getName().toLowerCase() === 'raw') return true;
@@ -183,6 +180,32 @@ function isRaw(folder) {
     } catch(e) { break; }
   }
   return false;
+}
+
+// ═══ SCHUTZ 3: TRIPLE GUARD — Alle Checks kombiniert ═══
+// Gibt true zurueck wenn SICHER (kein Schutz greift)
+// Gibt false zurueck wenn BLOCKIERT (mindestens 1 Schutz greift)
+function tripleGuard(folder, action, fileName) {
+  // Check 1: Name-basiert
+  if (isProtected(folder)) {
+    _log('GUARD-1', fileName || '?', action + ' BLOCKED — Name-Schutz: ' + folder.getName());
+    return false;
+  }
+  // Check 2: Nummer-basiert
+  if (isBlocked(folder)) {
+    _log('GUARD-2', fileName || '?', action + ' BLOCKED — Nummer-Schutz: ' + folder.getName());
+    return false;
+  }
+  // Check 3: DEEPKEEP + Raw
+  if (isDeepKeep(folder)) {
+    _log('GUARD-3', fileName || '?', action + ' BLOCKED — DEEPKEEP (nur kopieren!)');
+    return false;
+  }
+  if (isRaw(folder)) {
+    _log('GUARD-3', fileName || '?', action + ' BLOCKED — raw (nie anfassen!)');
+    return false;
+  }
+  return true; // SICHER
 }
 
 // ═══ FOLDER STRUCTURE ═══
@@ -201,20 +224,15 @@ function setupFolderStructure() {
   }
   var trash = _getOrCreate(root, CONFIG.TRASH);
   ['Duplikate', 'Varianten', 'Sortiert'].forEach(function(s) { _getOrCreate(trash, s); });
-  Logger.log('OK Ordnerstruktur erstellt nach echtem DEVKiTZ Layout!');
+  Logger.log('OK Ordnerstruktur nach echtem DEVKiTZ Layout erstellt!');
 }
 
-// ═══ INBOX PROCESSOR (NUR 00_INBOX wird sortiert!) ═══
+// ═══ INBOX PROCESSOR (NUR 00_INBOX!) ═══
 
 function processInbox() {
   var inbox = _findRoot('00_INBOX');
   if (!inbox) return Logger.log('FEHLER: 00_INBOX nicht gefunden!');
-
-  // SICHERHEITSCHECK
-  if (isProtected(inbox)) {
-    Logger.log('ALARM: Inbox in geschuetztem Ordner! ABBRUCH.');
-    return;
-  }
+  if (isProtected(inbox)) return Logger.log('ALARM: Inbox geschuetzt! ABBRUCH.');
 
   var files = inbox.getFiles();
   var ok = 0, skip = 0, err = 0;
@@ -228,185 +246,111 @@ function processInbox() {
       if (path) {
         var parts = path.split('/');
         var rn = parts[0];
-        var sn = parts[1];
+        var sn = parts.length > 1 ? parts[1] : null;
 
-        // SICHERHEIT: Ziel darf NICHT 06 oder 07 sein
-        if (rn === '06' || rn === '07') {
-          _log('BLOCK', f.getName(), rn + ' ist GESCHUETZT');
+        // BLOCK: 05, 06, 07, 08 sind GESCHUETZT
+        if (['05','06','07','08'].indexOf(rn) !== -1) {
+          _log('BLOCK', f.getName(), rn + '_' + CONFIG.ROOT[rn] + ' ist GESCHUETZT');
           skip++;
           continue;
         }
 
         var rf = _findRoot(rn + '_' + CONFIG.ROOT[rn]);
         var sf = rf;
-        if (rf && CONFIG.SUB[rn] && CONFIG.SUB[rn][sn]) {
+        if (rf && sn && CONFIG.SUB[rn] && CONFIG.SUB[rn][sn]) {
           sf = _findChild(rf, CONFIG.SUB[rn][sn]) || rf;
         }
 
         if (sf) {
           f.moveTo(sf);
           ok++;
-          _log('SORT', f.getName(), rn + '/' + sn + ' (' + CONFIG.SUB[rn]?.[sn] || CONFIG.ROOT[rn] + ')');
+          _log('SORT', f.getName(), path);
         }
       } else if (_isResearch(f)) {
         var r2 = _findRoot('02_RESEARCH');
-        if (r2) {
-          f.moveTo(_findChild(r2, 'Papers') || r2);
-          ok++;
-          _log('SORT', f.getName(), '02_RESEARCH/Papers');
-        }
+        if (r2) { f.moveTo(_findChild(r2, 'Papers') || r2); ok++; }
       } else {
         skip++;
-        _log('SKIP', f.getName(), 'Kein Routing fuer: ' + mime);
       }
-    } catch(e) {
-      err++;
-      _log('ERR', f.getName(), e.message);
-    }
+    } catch(e) { err++; _log('ERR', f.getName(), e.message); }
   }
-
-  Logger.log('Ergebnis: ' + ok + ' sortiert, ' + skip + ' uebersprungen, ' + err + ' Fehler');
+  Logger.log(ok + ' sortiert, ' + skip + ' uebersprungen, ' + err + ' Fehler');
 }
 
-// ═══ DEEPKEEP BIBLIOTHEK (Nur KOPIEREN!) ═══
+// ═══ DEEPKEEP (NUR KOPIEREN!) ═══
 
-/**
- * Kopiert eine Datei aus [DEEPKEEP] in die Bibliothek
- * ORIGINAL BLEIBT IMMER! Nur Kopie wird erstellt.
- */
 function copyFromDeepKeep(file, targetFolder) {
   try {
-    var parent = file.getParents().next();
-    if (!isDeepKeep(parent)) {
-      Logger.log('WARNUNG: Datei ist nicht in DEEPKEEP');
-      return null;
+    if (!isDeepKeep(file.getParents().next())) {
+      Logger.log('WARNUNG: Nicht in DEEPKEEP'); return null;
     }
   } catch(e) {}
-
-  // NUR KOPIEREN — Original bleibt IMMER
   var copy = file.makeCopy(file.getName(), targetFolder);
   _log('DEEPKEEP-COPY', file.getName(), 'Kopie → ' + targetFolder.getName());
   return copy;
 }
 
-// ═══ SAFE ARCHIVE (Kein Loeschen!) ═══
+// ═══ SAFE ARCHIVE ═══
 
 function safeArchive(file, sub) {
   try {
     var parent = file.getParents().next();
-    if (isProtected(parent)) {
-      _log('BLOCK', file.getName(), 'Geschuetzter Ordner (06/07/DEEPKEEP/raw) — ABBRUCH');
-      return false;
-    }
-    if (isRaw(parent)) {
-      _log('BLOCK', file.getName(), 'Raw-Ordner — ABBRUCH');
-      return false;
-    }
-    if (isDeepKeep(parent)) {
-      _log('BLOCK', file.getName(), 'DEEPKEEP — nur copyFromDeepKeep() erlaubt!');
+    if (isProtected(parent) || isRaw(parent) || isDeepKeep(parent)) {
+      _log('BLOCK', file.getName(), 'Geschuetzt — ABBRUCH');
       return false;
     }
   } catch(e) {}
-
   var trash = _getOrCreate(DriveApp.getRootFolder(), CONFIG.TRASH);
   file.moveTo(sub ? _getOrCreate(trash, sub) : trash);
   _log('ARCHIVE', file.getName(), sub || 'Papierkorb');
   return true;
 }
 
-// ═══ DUPLIKAT-FINDER (nur in 00_INBOX) ═══
+// ═══ DUPLIKATE (nur Inbox) ═══
 
 function findDuplicates() {
   var inbox = _findRoot('00_INBOX');
   if (!inbox) return;
-
   var files = inbox.getFiles();
-  var seen = {};
-  var dupes = 0;
-
+  var seen = {}, dupes = 0;
   while (files.hasNext()) {
     var f = files.next();
     var key = f.getName() + '_' + f.getSize();
-    if (seen[key]) {
-      safeArchive(f, 'Duplikate');
-      dupes++;
-    } else {
-      seen[key] = true;
-    }
+    if (seen[key]) { safeArchive(f, 'Duplikate'); dupes++; }
+    else { seen[key] = true; }
   }
-  Logger.log(dupes + ' Duplikate in Inbox gefunden und archiviert');
+  Logger.log(dupes + ' Duplikate archiviert');
 }
 
 // ═══ HELPERS ═══
 
 function _isResearch(f) {
-  var kw = ['research', 'paper', 'studie', 'analyse', 'report', 'whitepaper', 'arxiv'];
+  var kw = ['research','paper','studie','analyse','report','whitepaper','arxiv'];
   var name = f.getName().toLowerCase();
   return kw.some(function(k) { return name.indexOf(k) !== -1; });
 }
+function _findRoot(n) { var fs=DriveApp.getRootFolder().getFolders(); while(fs.hasNext()){var f=fs.next();if(f.getName()===n)return f;} return null; }
+function _findChild(p,n) { var fs=p.getFolders(); while(fs.hasNext()){var f=fs.next();if(f.getName()===n)return f;} return null; }
+function _getOrCreate(p,n) { return _findChild(p,n) || p.createFolder(n); }
+function _log(a,f,d) { try{Logger.log('['+a+'] '+f+' → '+d);}catch(e){} }
 
-function _findRoot(n) {
-  var fs = DriveApp.getRootFolder().getFolders();
-  while (fs.hasNext()) {
-    var f = fs.next();
-    if (f.getName() === n) return f;
-  }
-  return null;
-}
+// ═══ MENU ═══
 
-function _findChild(p, n) {
-  var fs = p.getFolders();
-  while (fs.hasNext()) {
-    var f = fs.next();
-    if (f.getName() === n) return f;
-  }
-  return null;
-}
-
-function _getOrCreate(p, n) {
-  return _findChild(p, n) || p.createFolder(n);
-}
-
-function _log(a, f, d) {
-  try { Logger.log('[' + a + '] ' + f + ' → ' + d); } catch(e) {}
-}
-
-// ═══ TRIGGERS + MENU ═══
-
-function installTriggers() {
-  ScriptApp.newTrigger('processInbox').timeBased().everyHours(2).create();
-  Logger.log('Trigger: processInbox alle 2h');
-}
-
+function installTriggers() { ScriptApp.newTrigger('processInbox').timeBased().everyHours(2).create(); }
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('DkZ Drive')
-    .addItem('Setup Ordner', 'setupFolderStructure')
-    .addItem('Inbox sortieren', 'processInbox')
-    .addItem('Duplikate (nur Inbox)', 'findDuplicates')
-    .addItem('Safety Report', 'safetyReport')
-    .addItem('Trigger installieren', 'installTriggers')
+    .addItem('Setup Ordner','setupFolderStructure')
+    .addItem('Inbox sortieren','processInbox')
+    .addItem('Duplikate (Inbox)','findDuplicates')
+    .addItem('Safety Report','safetyReport')
+    .addItem('Trigger','installTriggers')
     .addToUi();
 }
 
-// ═══ SAFETY REPORT ═══
-
 function safetyReport() {
-  Logger.log('═══ DkZ Drive Safety Report v2.1 ═══');
-  Logger.log('');
-  Logger.log('GESCHUETZT (NIE ANFASSEN):');
-  Logger.log('  06_NOTEPAD — Notizen, privat, ABSOLUT TABU');
-  Logger.log('  07_PRIVAT  — Privat, ABSOLUT TABU');
-  Logger.log('  [DEEPKEEP] — NUR kopieren (copyFromDeepKeep)');
-  Logger.log('  raw/       — Ueberall geschuetzt, nie anfassen');
-  Logger.log('');
-  Logger.log('ROUTING:');
-  Logger.log('  Fotos  → 03_MEDIA/Fotos (NUR Bilder)');
-  Logger.log('  Videos → 03_MEDIA/Videos (NUR Videos)');
-  Logger.log('  Musik  → 03_MEDIA/Musik (NUR Audio)');
-  Logger.log('  PDFs   → 05_INTERN/PDFs');
-  Logger.log('  Papers → 02_RESEARCH/Papers');
-  Logger.log('');
-  Logger.log('SORTIERUNG: NUR aus 00_INBOX');
-  Logger.log('LOESCHEN: VERBOTEN — nur safeArchive()');
-  Logger.log('DESKTOP: NUR ablegen, nie aendern');
+  Logger.log('═══ DkZ Safety Report v2.2 ═══');
+  Logger.log('GESCHUETZT: 05_INTERN, 06_NOTEPAD, 07_PRIVAT, 08_PLAYSTATION');
+  Logger.log('DEEPKEEP: NUR kopieren · raw: NIE anfassen');
+  Logger.log('Fotos → 03_MEDIA/Fotos · Videos → 03_MEDIA/Videos');
+  Logger.log('Sortierung: NUR aus 00_INBOX · Loeschen: VERBOTEN');
 }
