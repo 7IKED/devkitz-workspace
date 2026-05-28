@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-module" content="design-gallery">
+    <title>&#127912; Design Gallery&#8482; — DkZ&#8482; UI Patterns</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <style>
+        :root{--bg:#060608;--card:#1a1a1c;--card2:#222226;--border:#2a2a2e;--text:#f6f6f7;--muted:#808080;--accent:#fa1e4e;--green:#00ff88;--blue:#55ACEE;--yellow:#FFB800;--purple:#a855f7;--glass:rgba(26,26,28,.85)}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+        body::before{content:"";position:fixed;top:-200px;left:-200px;width:500px;height:500px;background:radial-gradient(circle,rgba(168,85,247,.06),transparent 70%);pointer-events:none;z-index:0}
+        header{position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);background:var(--glass);border-bottom:1px solid var(--border);padding:0 2rem;height:60px;display:flex;align-items:center;gap:1rem}
+        .back{color:var(--muted);text-decoration:none;font-size:1.1rem}
+        .logo{font-size:1.1rem;font-weight:900;background:linear-gradient(135deg,var(--green),var(--blue));background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .ver{font-size:.6rem;color:var(--muted);padding:.15rem .4rem;border:1px solid var(--border);border-radius:4px;font-family:'JetBrains Mono',monospace}
+        .hdr-r{margin-left:auto;display:flex;gap:.5rem;align-items:center}
+        .filters{display:flex;gap:.4rem;padding:.75rem 2rem;background:var(--card);border-bottom:1px solid var(--border);flex-wrap:wrap;align-items:center}
+        .fbtn{padding:.35rem .8rem;border:1px solid var(--border);border-radius:16px;background:rgba(255,255,255,.02);color:var(--muted);font-size:.7rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s}
+        .fbtn:hover{border-color:var(--accent);color:var(--text)}
+        .fbtn.active{background:var(--blue);border-color:var(--blue);color:#fff}
+        .search{padding:.35rem .8rem;border:1px solid var(--border);border-radius:16px;background:var(--card2);color:var(--text);font-family:inherit;font-size:.7rem;outline:none;width:180px;margin-left:auto}
+        .search:focus{border-color:var(--blue)}
+
+        /* Tokens Section */
+        .tokens{padding:1rem 2rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:.5rem;border-bottom:1px solid var(--border);background:rgba(0,0,0,.3);position:relative;z-index:1}
+        .token{text-align:center;padding:.5rem;border-radius:8px;border:1px solid var(--border);background:var(--card);cursor:pointer;transition:all .2s}
+        .token:hover{border-color:var(--blue);transform:scale(1.05)}
+        .token-color{width:100%;height:28px;border-radius:5px;margin-bottom:.3rem}
+        .token-name{font-size:.55rem;font-weight:700;color:var(--muted);font-family:'JetBrains Mono',monospace}
+        .token-val{font-size:.5rem;color:var(--muted)}
+
+        /* Grid */
+        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.25rem;padding:1.5rem 2rem;position:relative;z-index:1}
+        .dcard{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:all .35s;cursor:pointer}
+        .dcard:hover{border-color:var(--blue);transform:translateY(-4px);box-shadow:0 10px 30px rgba(85,172,238,.12)}
+        .dcard-preview{height:120px;padding:.75rem;display:flex;align-items:center;justify-content:center;background:var(--card2);position:relative;overflow:hidden}
+        .dcard-info{padding:1rem}
+        .dcard-name{font-size:.85rem;font-weight:800;margin-bottom:.2rem}
+        .dcard-desc{font-size:.68rem;color:var(--muted);line-height:1.5;margin-bottom:.4rem}
+        .dcard-cat{font-size:.55rem;padding:.15rem .4rem;border-radius:8px;font-weight:700;font-family:'JetBrains Mono',monospace;display:inline-block}
+        .cat-component{background:rgba(0,255,136,.1);color:var(--green)}
+        .cat-layout{background:rgba(85,172,238,.1);color:var(--blue)}
+        .cat-pattern{background:rgba(255,184,0,.1);color:var(--yellow)}
+        .cat-effect{background:rgba(168,85,247,.1);color:var(--purple)}
+        .cat-typography{background:rgba(250,30,78,.1);color:var(--accent)}
+        .dcard-actions{display:flex;gap:.4rem;margin-top:.5rem}
+        .dact{padding:.25rem .6rem;border:1px solid var(--border);border-radius:6px;font-size:.6rem;color:var(--muted);cursor:pointer;background:none;font-family:inherit;transition:all .2s}
+        .dact:hover{border-color:var(--blue);color:var(--text)}
+
+        /* Live Preview Components */
+        .prev-btn{padding:.35rem .7rem;border:none;border-radius:6px;font-size:.6rem;font-weight:700;cursor:pointer;font-family:inherit}
+        .prev-badge{padding:.2rem .5rem;border-radius:10px;font-size:.55rem;font-weight:700}
+        .prev-input{padding:.3rem .5rem;border:1px solid var(--border);border-radius:6px;background:rgba(0,0,0,.3);color:var(--text);font-size:.6rem;font-family:inherit;width:120px}
+        .prev-progress{height:6px;border-radius:3px;background:var(--border);overflow:hidden;width:140px}
+        .prev-progress-bar{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--blue))}
+
+        .modal{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.85);backdrop-filter:blur(10px);align-items:center;justify-content:center}
+        .modal.show{display:flex}
+        .modal-box{background:var(--card);border:1px solid var(--border);border-radius:16px;width:90%;max-width:600px;padding:1.5rem;max-height:80vh;overflow-y:auto;position:relative}
+        .modal-close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer}
+        .modal-title{font-size:1.1rem;font-weight:900;margin-bottom:.5rem}
+        .modal-desc{font-size:.8rem;color:var(--muted);margin-bottom:1rem;line-height:1.5}
+        .modal-code{background:rgba(0,0,0,.5);border:1px solid var(--border);border-radius:8px;padding:.75rem;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--green);cursor:pointer;white-space:pre-wrap;max-height:200px;overflow-y:auto}
+        .modal-code:hover{border-color:var(--green)}
+        .toast{position:fixed;bottom:2rem;right:2rem;background:var(--green);color:#000;padding:.6rem 1.2rem;border-radius:8px;font-size:.8rem;font-weight:700;transform:translateY(80px);transition:transform .3s;z-index:300}
+        .toast.show{transform:translateY(0)}
+        ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+        @media(max-width:768px){.grid{grid-template-columns:1fr}.tokens{grid-template-columns:repeat(auto-fill,minmax(80px,1fr))}}
+    </style>
+</head>
+<body data-dkz-module="design-gallery" data-dkz-appid="DKZ-DSG-002" data-dkz-version="v0.01" data-dkz-title="Design Gallery" data-dkz-icon="&#127912;" data-dkz-separable="true">
+    <header>
+        <a href="../../hub/index.html" class="back">&#8592;</a>
+        <span class="logo">&#127912; Design Gallery&#8482;</span>
+        <span class="ver">v0.01</span>
+        <div class="hdr-r"><span style="font-size:.65rem;color:var(--muted)" id="dcount">15 Patterns</span></div>
+    </header>
+    <div class="tokens" id="tokenGrid"></div>
+    <div class="filters">
+        <button class="fbtn active" onclick="dFilter('all',this)">Alle</button>
+        <button class="fbtn" onclick="dFilter('component',this)">Components</button>
+        <button class="fbtn" onclick="dFilter('layout',this)">Layouts</button>
+        <button class="fbtn" onclick="dFilter('pattern',this)">Patterns</button>
+        <button class="fbtn" onclick="dFilter('effect',this)">Effects</button>
+        <button class="fbtn" onclick="dFilter('typography',this)">Typography</button>
+        <input class="search" id="dsearch" placeholder="&#128269; Suche..." oninput="dRender()">
+    </div>
+    <div class="grid" id="dgrid"></div>
+
+    <div class="modal" id="dmodal" onclick="if(event.target===this)dCloseModal()">
+        <div class="modal-box">
+            <button class="modal-close" onclick="dCloseModal()">&#10005;</button>
+            <div class="modal-title" id="dm-title"></div>
+            <div class="modal-desc" id="dm-desc"></div>
+            <div style="font-size:.7rem;font-weight:700;color:var(--blue);margin-bottom:.5rem">CSS Code (klick zum Kopieren):</div>
+            <div class="modal-code" id="dm-css" onclick="dCopy(this.textContent)"></div>
+            <div style="font-size:.7rem;font-weight:700;color:var(--accent);margin:.75rem 0 .5rem">HTML Snippet:</div>
+            <div class="modal-code" id="dm-html" onclick="dCopy(this.textContent)" style="color:var(--accent)"></div>
+        </div>
+    </div>
+    <div class="toast" id="dtoast"></div>
+
+    <script>
+    function esc(s){var d=document.createElement('div');d.appendChild(document.createTextNode(s));return d.innerHTML}
+    var TOKENS=[
+        {name:'--bg',val:'#060608',color:'#060608'},{name:'--card',val:'#1a1a1c',color:'#1a1a1c'},
+        {name:'--card2',val:'#222226',color:'#222226'},{name:'--border',val:'#2a2a2e',color:'#2a2a2e'},
+        {name:'--text',val:'#f6f6f7',color:'#f6f6f7'},{name:'--muted',val:'#808080',color:'#808080'},
+        {name:'--accent',val:'#fa1e4e',color:'#fa1e4e'},{name:'--green',val:'#00ff88',color:'#00ff88'},
+        {name:'--blue',val:'#55ACEE',color:'#55ACEE'},{name:'--yellow',val:'#FFB800',color:'#FFB800'},
+        {name:'--purple',val:'#a855f7',color:'#a855f7'}
+    ];
+    var PATTERNS=[
+        {id:1,name:'Glass Card',cat:'component',desc:'Glassmorphism Card mit Blur und Transparenz',
+         preview:'<div style="backdrop-filter:blur(10px);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:.75rem;width:140px"><div style="font-size:.6rem;font-weight:800">Glass Card</div><div style="font-size:.5rem;color:#808080;margin-top:.2rem">Content hier</div></div>',
+         css:'.glass-card{\n  backdrop-filter:blur(20px);\n  background:rgba(255,255,255,.06);\n  border:1px solid rgba(255,255,255,.1);\n  border-radius:14px;\n  padding:1.25rem;\n}',
+         html:'<div class="glass-card">\n  <h3>Titel</h3>\n  <p>Inhalt</p>\n</div>'},
+        {id:2,name:'Neon Button',cat:'component',desc:'Gradient Button mit Glow-Schatten',
+         preview:'<button class="prev-btn" style="background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;box-shadow:0 4px 15px rgba(250,30,78,.3)">Click me</button>',
+         css:'.btn-neon{\n  background:linear-gradient(135deg,var(--accent),#ec4899);\n  color:#fff;\n  border:none;\n  padding:.6rem 1.2rem;\n  border-radius:8px;\n  box-shadow:0 4px 15px rgba(250,30,78,.3);\n  font-weight:700;\n  cursor:pointer;\n  transition:all .2s;\n}\n.btn-neon:hover{\n  transform:translateY(-2px);\n  box-shadow:0 8px 25px rgba(250,30,78,.4);\n}',
+         html:'<button class="btn-neon">Action</button>'},
+        {id:3,name:'Status Badge',cat:'component',desc:'Farbiger Status-Indikator mit Label',
+         preview:'<div style="display:flex;gap:.4rem;flex-wrap:wrap"><span class="prev-badge" style="background:rgba(0,255,136,.1);color:#00ff88">&#9679; Online</span><span class="prev-badge" style="background:rgba(255,184,0,.1);color:#FFB800">&#9679; Warning</span><span class="prev-badge" style="background:rgba(250,30,78,.1);color:#fa1e4e">&#9679; Error</span></div>',
+         css:'.badge{\n  display:inline-flex;\n  align-items:center;\n  gap:.3rem;\n  padding:.2rem .6rem;\n  border-radius:12px;\n  font-size:.7rem;\n  font-weight:700;\n}\n.badge-ok{background:rgba(0,255,136,.1);color:var(--green)}\n.badge-warn{background:rgba(255,184,0,.1);color:var(--yellow)}\n.badge-err{background:rgba(250,30,78,.1);color:var(--accent)}',
+         html:'<span class="badge badge-ok">&#9679; Online</span>'},
+        {id:4,name:'Search Input',cat:'component',desc:'Suchfeld mit Icon und Focus-Animation',
+         preview:'<input class="prev-input" placeholder="&#128269; Suche..." style="transition:all .2s">',
+         css:'.search-input{\n  padding:.6rem 1rem .6rem 2.2rem;\n  border:1px solid var(--border);\n  border-radius:10px;\n  background:rgba(0,0,0,.4);\n  color:var(--text);\n  font-size:.85rem;\n  transition:border-color .2s;\n}\n.search-input:focus{\n  outline:none;\n  border-color:var(--accent);\n  box-shadow:0 0 0 3px rgba(250,30,78,.1);\n}',
+         html:'<input class="search-input" placeholder="Suche...">'},
+        {id:5,name:'Sidebar Nav',cat:'layout',desc:'Vertikale Navigation mit Icons und Active-State',
+         preview:'<div style="display:flex;flex-direction:column;gap:2px;width:100px"><div style="padding:.3rem .5rem;background:rgba(250,30,78,.1);border-radius:6px;font-size:.55rem;font-weight:700;color:#fa1e4e">&#127968; Home</div><div style="padding:.3rem .5rem;font-size:.55rem;color:#808080">&#128202; Stats</div><div style="padding:.3rem .5rem;font-size:.55rem;color:#808080">&#9881; Settings</div></div>',
+         css:'.sidebar-nav{\n  display:flex;\n  flex-direction:column;\n  gap:2px;\n}\n.nav-item{\n  padding:.6rem .8rem;\n  border-radius:8px;\n  font-size:.8rem;\n  color:var(--muted);\n  cursor:pointer;\n  transition:all .2s;\n}\n.nav-item:hover{background:rgba(255,255,255,.05);color:var(--text)}\n.nav-item.active{background:rgba(250,30,78,.1);color:var(--accent)}',
+         html:'<nav class="sidebar-nav">\n  <a class="nav-item active">Home</a>\n  <a class="nav-item">Stats</a>\n</nav>'},
+        {id:6,name:'Data Grid',cat:'layout',desc:'Tabelle mit alternierenden Zeilen und Hover',
+         preview:'<div style="font-size:.5rem;width:100%"><div style="display:flex;padding:.2rem .3rem;font-weight:800;color:#55ACEE;border-bottom:1px solid #2a2a2e"><span style="flex:1">Name</span><span style="width:40px">Status</span></div><div style="display:flex;padding:.2rem .3rem;color:#808080"><span style="flex:1">Module A</span><span style="width:40px;color:#00ff88">OK</span></div><div style="display:flex;padding:.2rem .3rem;background:rgba(255,255,255,.02);color:#808080"><span style="flex:1">Module B</span><span style="width:40px;color:#FFB800">Warn</span></div></div>',
+         css:'.data-grid{width:100%;border-collapse:collapse}\n.data-grid th{text-align:left;padding:.5rem;border-bottom:1px solid var(--border);color:var(--blue);font-size:.75rem}\n.data-grid td{padding:.5rem;border-bottom:1px solid rgba(255,255,255,.03);font-size:.8rem;color:var(--muted)}\n.data-grid tr:hover td{color:var(--text);background:rgba(85,172,238,.03)}',
+         html:'<table class="data-grid">\n  <thead><tr><th>Name</th><th>Status</th></tr></thead>\n  <tbody><tr><td>Item</td><td>OK</td></tr></tbody>\n</table>'},
+        {id:7,name:'Hero Section',cat:'layout',desc:'Full-Width Gradient Hero mit CTA',
+         preview:'<div style="background:linear-gradient(135deg,rgba(250,30,78,.15),rgba(85,172,238,.1));border-radius:8px;padding:.75rem;text-align:center"><div style="font-size:.7rem;font-weight:900">DEVKiTZ&#8482;</div><div style="font-size:.45rem;color:#808080;margin:.2rem 0">Das KI-Entwickler-Oekosystem</div><button class="prev-btn" style="background:#fa1e4e;color:#fff;font-size:.45rem;padding:.2rem .4rem;border-radius:4px">Start</button></div>',
+         css:'.hero{\n  background:linear-gradient(135deg,rgba(250,30,78,.12),rgba(85,172,238,.08));\n  padding:4rem 2rem;\n  text-align:center;\n  border-radius:16px;\n}\n.hero h1{font-size:2.5rem;font-weight:900}\n.hero p{color:var(--muted);margin:1rem 0}',
+         html:'<section class="hero">\n  <h1>Titel</h1>\n  <p>Beschreibung</p>\n  <button class="btn-neon">Los geht\'s</button>\n</section>'},
+        {id:8,name:'Toast Notification',cat:'component',desc:'Slide-In Benachrichtigung',
+         preview:'<div style="background:#00ff88;color:#000;padding:.3rem .6rem;border-radius:6px;font-size:.55rem;font-weight:700;display:inline-block">&#9989; Gespeichert!</div>',
+         css:'.toast{\n  position:fixed;\n  bottom:2rem;\n  right:2rem;\n  background:var(--green);\n  color:#000;\n  padding:.6rem 1.2rem;\n  border-radius:8px;\n  font-weight:700;\n  transform:translateY(80px);\n  transition:transform .3s;\n  z-index:300;\n}\n.toast.show{transform:translateY(0)}',
+         html:'<div class="toast" id="toast">Nachricht</div>'},
+        {id:9,name:'Progress Bar',cat:'component',desc:'Gradient Fortschrittsbalken mit Animation',
+         preview:'<div class="prev-progress"><div class="prev-progress-bar" style="width:72%"></div></div>',
+         css:'.progress{height:8px;background:var(--border);border-radius:4px;overflow:hidden}\n.progress-bar{\n  height:100%;\n  background:linear-gradient(90deg,var(--accent),var(--blue));\n  border-radius:4px;\n  transition:width .6s ease;\n}',
+         html:'<div class="progress">\n  <div class="progress-bar" style="width:72%"></div>\n</div>'},
+        {id:10,name:'Modal Dialog',cat:'pattern',desc:'Overlay + zentrierter Dialog',
+         preview:'<div style="background:rgba(0,0,0,.4);border-radius:8px;padding:.5rem;display:flex;align-items:center;justify-content:center"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:8px;padding:.4rem;width:100px;text-align:center"><div style="font-size:.5rem;font-weight:800">Modal</div><div style="font-size:.4rem;color:#808080">Content</div></div></div>',
+         css:'.modal-overlay{\n  position:fixed;\n  inset:0;\n  background:rgba(0,0,0,.7);\n  display:flex;\n  align-items:center;\n  justify-content:center;\n  z-index:200;\n}\n.modal-content{\n  background:var(--card);\n  border:1px solid var(--border);\n  border-radius:16px;\n  padding:2rem;\n  max-width:500px;\n  width:90%;\n}',
+         html:'<div class="modal-overlay">\n  <div class="modal-content">\n    <h2>Titel</h2>\n    <p>Inhalt</p>\n  </div>\n</div>'},
+        {id:11,name:'Tab Navigation',cat:'pattern',desc:'Underline Tabs mit Active-Indicator',
+         preview:'<div style="display:flex;gap:.3rem;border-bottom:1px solid #2a2a2e;padding-bottom:.2rem"><span style="font-size:.5rem;font-weight:700;color:#fa1e4e;border-bottom:2px solid #fa1e4e;padding-bottom:.2rem">Tab 1</span><span style="font-size:.5rem;color:#808080;padding-bottom:.2rem">Tab 2</span><span style="font-size:.5rem;color:#808080;padding-bottom:.2rem">Tab 3</span></div>',
+         css:'.tabs{display:flex;gap:.5rem;border-bottom:1px solid var(--border)}\n.tab{padding:.5rem .8rem;font-size:.8rem;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}\n.tab:hover{color:var(--text)}\n.tab.active{color:var(--accent);border-bottom-color:var(--accent)}',
+         html:'<div class="tabs">\n  <button class="tab active">Tab 1</button>\n  <button class="tab">Tab 2</button>\n</div>'},
+        {id:12,name:'Dropdown Menu',cat:'pattern',desc:'Expandierendes Dropdown mit Animation',
+         preview:'<div style="width:100px"><div style="padding:.25rem .4rem;background:rgba(255,255,255,.05);border:1px solid #2a2a2e;border-radius:6px;font-size:.5rem;display:flex;justify-content:space-between"><span>Option</span><span>&#9660;</span></div></div>',
+         css:'.dropdown{position:relative}\n.dropdown-menu{\n  position:absolute;\n  top:100%;\n  left:0;\n  min-width:180px;\n  background:var(--card);\n  border:1px solid var(--border);\n  border-radius:10px;\n  padding:.4rem;\n  opacity:0;\n  transform:translateY(-8px);\n  transition:all .2s;\n  pointer-events:none;\n}\n.dropdown.open .dropdown-menu{opacity:1;transform:translateY(4px);pointer-events:all}',
+         html:'<div class="dropdown">\n  <button class="dropdown-trigger">Menu</button>\n  <div class="dropdown-menu">\n    <a>Option 1</a>\n    <a>Option 2</a>\n  </div>\n</div>'},
+        {id:13,name:'Card Grid',cat:'layout',desc:'Responsive Auto-Fill Grid fuer Cards',
+         preview:'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px"><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:4px;height:30px"></div><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:4px;height:30px"></div><div style="background:#1a1a1c;border:1px solid #2a2a2e;border-radius:4px;height:30px"></div></div>',
+         css:'.card-grid{\n  display:grid;\n  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));\n  gap:1.25rem;\n  padding:1.5rem;\n}',
+         html:'<div class="card-grid">\n  <div class="card">Card 1</div>\n  <div class="card">Card 2</div>\n  <div class="card">Card 3</div>\n</div>'},
+        {id:14,name:'Stats Counter',cat:'effect',desc:'Animierte Zahl mit Label',
+         preview:'<div style="text-align:center"><div style="font-size:1.2rem;font-weight:900;color:#00ff88">132</div><div style="font-size:.45rem;color:#808080;text-transform:uppercase">Module</div></div>',
+         css:'.stat{text-align:center}\n.stat-num{\n  font-size:2.5rem;\n  font-weight:900;\n  background:linear-gradient(135deg,var(--green),var(--blue));\n  background-clip:text;\n  -webkit-background-clip:text;\n  -webkit-text-fill-color:transparent;\n}\n.stat-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}',
+         html:'<div class="stat">\n  <div class="stat-num">132</div>\n  <div class="stat-label">Module</div>\n</div>'},
+        {id:15,name:'Timeline',cat:'effect',desc:'Vertikale Timeline mit Events',
+         preview:'<div style="border-left:2px solid #2a2a2e;padding-left:.5rem;margin-left:.4rem"><div style="position:relative;margin-bottom:.3rem"><div style="position:absolute;left:-.7rem;top:.1rem;width:8px;height:8px;border-radius:50%;background:#fa1e4e"></div><div style="font-size:.5rem;font-weight:700">Event 1</div><div style="font-size:.4rem;color:#808080">10:00</div></div><div style="position:relative"><div style="position:absolute;left:-.7rem;top:.1rem;width:8px;height:8px;border-radius:50%;background:#55ACEE"></div><div style="font-size:.5rem;font-weight:700">Event 2</div><div style="font-size:.4rem;color:#808080">11:30</div></div></div>',
+         css:'.timeline{border-left:2px solid var(--border);padding-left:1.5rem;margin-left:1rem}\n.timeline-item{position:relative;margin-bottom:1.5rem}\n.timeline-item::before{\n  content:"";\n  position:absolute;\n  left:-1.85rem;\n  top:.3rem;\n  width:10px;\n  height:10px;\n  border-radius:50%;\n  background:var(--accent);\n}\n.timeline-title{font-weight:800;font-size:.85rem}\n.timeline-time{font-size:.7rem;color:var(--muted)}',
+         html:'<div class="timeline">\n  <div class="timeline-item">\n    <div class="timeline-title">Event</div>\n    <div class="timeline-time">10:00</div>\n  </div>\n</div>'}
+    ];
+
+    var dCurFilter='all';
+    function dFilter(f,btn){dCurFilter=f;document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active')});btn.classList.add('active');dRender()}
+
+    function renderTokens(){
+        var h='';
+        TOKENS.forEach(function(t){
+            h+='<div class="token" onclick="dCopy(\''+t.name+': '+t.val+'\')" title="'+t.name+'">';
+            h+='<div class="token-color" style="background:'+t.color+'"></div>';
+            h+='<div class="token-name">'+t.name+'</div>';
+            h+='<div class="token-val">'+t.val+'</div>';
+            h+='</div>';
+        });
+        document.getElementById('tokenGrid').innerHTML=h;
+    }
+
+    function dRender(){
+        var q=(document.getElementById('dsearch').value||'').toLowerCase();
+        var items=PATTERNS.filter(function(p){
+            if(dCurFilter!=='all'&&p.cat!==dCurFilter)return false;
+            if(q&&p.name.toLowerCase().indexOf(q)<0&&p.desc.toLowerCase().indexOf(q)<0)return false;
+            return true;
+        });
+        document.getElementById('dcount').textContent=items.length+' Patterns';
+        var h='';
+        items.forEach(function(p){
+            h+='<div class="dcard" onclick="dOpenModal('+p.id+')">';
+            h+='<div class="dcard-preview">'+p.preview+'</div>';
+            h+='<div class="dcard-info">';
+            h+='<div class="dcard-name">'+esc(p.name)+'</div>';
+            h+='<div class="dcard-desc">'+esc(p.desc)+'</div>';
+            h+='<span class="dcard-cat cat-'+p.cat+'">'+esc(p.cat)+'</span>';
+            h+='<div class="dcard-actions">';
+            h+='<button class="dact" onclick="event.stopPropagation();dCopy(PATTERNS['+(p.id-1)+'].css)">&#128203; CSS</button>';
+            h+='<button class="dact" onclick="event.stopPropagation();dCopy(PATTERNS['+(p.id-1)+'].html)">&#128196; HTML</button>';
+            h+='</div></div></div>';
+        });
+        document.getElementById('dgrid').innerHTML=h;
+    }
+
+    function dOpenModal(id){
+        var p=PATTERNS.find(function(x){return x.id===id});if(!p)return;
+        document.getElementById('dm-title').textContent=p.name;
+        document.getElementById('dm-desc').textContent=p.desc;
+        document.getElementById('dm-css').textContent=p.css;
+        document.getElementById('dm-html').textContent=p.html;
+        document.getElementById('dmodal').classList.add('show');
+    }
+    function dCloseModal(){document.getElementById('dmodal').classList.remove('show')}
+    function dCopy(text){navigator.clipboard.writeText(text).then(function(){dToast('&#128203; Kopiert!')}).catch(function(){})}
+    function dToast(m){var t=document.getElementById('dtoast');t.innerHTML=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
+
+    document.addEventListener('keydown',function(e){if(e.key==='Escape')dCloseModal()});
+    renderTokens();
+    dRender();
+    </script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+</html>

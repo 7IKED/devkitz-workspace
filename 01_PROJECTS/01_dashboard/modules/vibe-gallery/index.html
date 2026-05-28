@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-module" content="vibe-gallery">
+    <title>&#127912; Vibe Gallery&#8482; — DkZ&#8482; Design Vibes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <style>
+        :root{--bg:#060608;--card:#1a1a1c;--card2:#222226;--border:#2a2a2e;--text:#f6f6f7;--muted:#808080;--accent:#fa1e4e;--green:#00ff88;--blue:#55ACEE;--yellow:#FFB800;--purple:#a855f7;--glass:rgba(26,26,28,.85)}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+        body::before{content:"";position:fixed;top:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(250,30,78,.08),transparent 70%);pointer-events:none;z-index:0}
+        header{position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);background:var(--glass);border-bottom:1px solid var(--border);padding:0 2rem;height:60px;display:flex;align-items:center;gap:1rem}
+        .back{color:var(--muted);text-decoration:none;font-size:1.1rem}
+        .logo{font-size:1.1rem;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--purple));background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .ver{font-size:.6rem;color:var(--muted);padding:.15rem .4rem;border:1px solid var(--border);border-radius:4px;font-family:'JetBrains Mono',monospace}
+        .hdr-r{margin-left:auto;display:flex;gap:.5rem}
+        .filters{display:flex;gap:.4rem;padding:.75rem 2rem;background:var(--card);border-bottom:1px solid var(--border);flex-wrap:wrap;align-items:center}
+        .fbtn{padding:.35rem .8rem;border:1px solid var(--border);border-radius:16px;background:rgba(255,255,255,.02);color:var(--muted);font-size:.7rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s}
+        .fbtn:hover{border-color:var(--accent);color:var(--text)}
+        .fbtn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+        .search{padding:.35rem .8rem;border:1px solid var(--border);border-radius:16px;background:var(--card2);color:var(--text);font-family:inherit;font-size:.7rem;outline:none;width:180px;margin-left:auto}
+        .search:focus{border-color:var(--accent)}
+        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.25rem;padding:1.5rem 2rem;position:relative;z-index:1}
+        .vcard{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:all .35s cubic-bezier(.4,0,.2,1);cursor:pointer}
+        .vcard:hover{border-color:var(--accent);transform:translateY(-6px);box-shadow:0 12px 40px rgba(250,30,78,.15)}
+        .vcard-preview{height:160px;position:relative;overflow:hidden}
+        .vcard-info{padding:1rem}
+        .vcard-name{font-size:.9rem;font-weight:800;margin-bottom:.25rem}
+        .vcard-desc{font-size:.7rem;color:var(--muted);line-height:1.5;margin-bottom:.5rem}
+        .vcard-meta{display:flex;justify-content:space-between;align-items:center}
+        .vcard-dots{display:flex;gap:4px}
+        .vcard-dot{width:14px;height:14px;border-radius:50%;border:1px solid rgba(255,255,255,.1)}
+        .vcard-cat{font-size:.6rem;padding:.15rem .5rem;border-radius:10px;font-weight:700;font-family:'JetBrains Mono',monospace;background:rgba(250,30,78,.1);color:var(--accent)}
+        .vcard-actions{display:flex;gap:.4rem;margin-top:.5rem}
+        .vact{padding:.25rem .6rem;border:1px solid var(--border);border-radius:6px;font-size:.65rem;color:var(--muted);cursor:pointer;background:none;font-family:inherit;transition:all .2s}
+        .vact:hover{border-color:var(--accent);color:var(--text)}
+        .lightbox{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.85);backdrop-filter:blur(10px);align-items:center;justify-content:center}
+        .lightbox.show{display:flex}
+        .lb-box{background:var(--card);border:1px solid var(--border);border-radius:16px;width:90%;max-width:600px;overflow:hidden}
+        .lb-preview{height:240px;position:relative}
+        .lb-info{padding:1.5rem}
+        .lb-title{font-size:1.2rem;font-weight:900;margin-bottom:.5rem}
+        .lb-desc{font-size:.8rem;color:var(--muted);line-height:1.6;margin-bottom:1rem}
+        .lb-css{background:rgba(0,0,0,.5);border:1px solid var(--border);border-radius:8px;padding:.75rem;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--green);cursor:pointer;white-space:pre-wrap;max-height:120px;overflow-y:auto}
+        .lb-css:hover{border-color:var(--green)}
+        .lb-close{position:absolute;top:1rem;right:1rem;background:rgba(0,0,0,.5);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer;z-index:10}
+        .toast{position:fixed;bottom:2rem;right:2rem;background:var(--green);color:#000;padding:.6rem 1.2rem;border-radius:8px;font-size:.8rem;font-weight:700;transform:translateY(80px);transition:transform .3s;z-index:300}
+        .toast.show{transform:translateY(0)}
+        ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+        @media(max-width:768px){.grid{grid-template-columns:1fr}.filters{gap:.3rem}}
+    </style>
+</head>
+<body data-dkz-module="vibe-gallery" data-dkz-appid="DKZ-VIB-001" data-dkz-version="v0.01" data-dkz-title="Vibe Gallery" data-dkz-icon="&#127912;" data-dkz-separable="true">
+    <header>
+        <a href="../../hub/index.html" class="back">&#8592;</a>
+        <span class="logo">&#127912; Vibe Gallery&#8482;</span>
+        <span class="ver">v0.01</span>
+        <div class="hdr-r">
+            <span style="font-size:.65rem;color:var(--muted)" id="vcount">12 Vibes</span>
+        </div>
+    </header>
+    <div class="filters">
+        <button class="fbtn active" onclick="vFilter('all',this)">Alle</button>
+        <button class="fbtn" onclick="vFilter('glass',this)">Glassmorphism</button>
+        <button class="fbtn" onclick="vFilter('neon',this)">Neon Cyber</button>
+        <button class="fbtn" onclick="vFilter('dark',this)">Dark Minimal</button>
+        <button class="fbtn" onclick="vFilter('gradient',this)">Gradient</button>
+        <button class="fbtn" onclick="vFilter('special',this)">Special</button>
+        <input class="search" id="vsearch" placeholder="&#128269; Suche..." oninput="vRender()">
+    </div>
+    <div class="grid" id="vgrid"></div>
+
+    <div class="lightbox" id="vlb" onclick="if(event.target===this)vCloseLb()">
+        <div class="lb-box">
+            <div class="lb-preview" id="vlb-preview">
+                <button class="lb-close" onclick="vCloseLb()">&#10005;</button>
+            </div>
+            <div class="lb-info">
+                <div class="lb-title" id="vlb-title"></div>
+                <div class="lb-desc" id="vlb-desc"></div>
+                <div class="lb-css" id="vlb-css" onclick="vCopyCSS(this.textContent)" title="Klick zum Kopieren"></div>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="vtoast"></div>
+
+    <script>
+    function esc(s){var d=document.createElement('div');d.appendChild(document.createTextNode(s));return d.innerHTML}
+    var VIBES=[
+        {id:1,name:'Glassmorphism Dark',cat:'glass',desc:'Blur + Transparenz auf dunklem Hintergrund. Der DkZ Signature-Look.',colors:['#060608','rgba(26,26,28,.85)','#fa1e4e','#55ACEE'],
+         preview:'background:linear-gradient(135deg,rgba(250,30,78,.15),rgba(85,172,238,.1));backdrop-filter:blur(20px)',
+         css:':root{--bg:#060608;--card:rgba(26,26,28,.85);--accent:#fa1e4e}\n.card{backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:14px}'},
+        {id:2,name:'Neon Crimson',cat:'neon',desc:'Leuchtend rote Akzente mit Neon-Glow Effekten. Agressiv und energiegeladen.',colors:['#060608','#1a1a1c','#fa1e4e','#ff6b8a'],
+         preview:'background:linear-gradient(180deg,#060608 0%,#1a0008 100%);box-shadow:inset 0 0 80px rgba(250,30,78,.15)',
+         css:':root{--accent:#fa1e4e;--glow:0 0 20px rgba(250,30,78,.4)}\n.neon{text-shadow:var(--glow);box-shadow:var(--glow)}'},
+        {id:3,name:'Cyber Matrix',cat:'neon',desc:'Gruen auf Schwarz, Terminal-Aesthetic. Hacker-Vibes mit Monospace Font.',colors:['#000000','#0a0a0a','#00ff00','#003300'],
+         preview:'background:#000;background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,0,.03) 2px,rgba(0,255,0,.03) 4px)',
+         css:':root{--bg:#000;--text:#00ff00;--accent:#00ff00;--font:monospace}\nbody{font-family:monospace;text-shadow:0 0 8px rgba(0,255,0,.5)}'},
+        {id:4,name:'Ocean Depth',cat:'gradient',desc:'Tiefe Blau-Toene mit Wellen-Gradienten. Ruhig und professionell.',colors:['#0a0a2e','#141450','#55ACEE','#00ff88'],
+         preview:'background:linear-gradient(180deg,#0a0a2e,#141450,#0a2a4e)',
+         css:':root{--bg:#0a0a2e;--card:#141450;--accent:#55ACEE;--green:#00ff88}\n.wave{background:linear-gradient(180deg,transparent,rgba(85,172,238,.1))}'},
+        {id:5,name:'Solar Flare',cat:'gradient',desc:'Gold und Amber Gradienten. Warme Toene fuer Premium-Interfaces.',colors:['#0a0800','#1a1400','#FFB800','#ff8c00'],
+         preview:'background:linear-gradient(135deg,#0a0800,#1a1400);box-shadow:inset 0 -40px 80px rgba(255,184,0,.08)',
+         css:':root{--bg:#0a0800;--card:#1a1400;--accent:#FFB800;--text:#fff5e0}\n.gold{background:linear-gradient(135deg,#FFB800,#ff8c00)}'},
+        {id:6,name:'Purple Haze',cat:'gradient',desc:'Violette Gradienten mit aetherischem Schimmer. Mystisch und kreativ.',colors:['#0a0014','#1a0028','#a855f7','#ec4899'],
+         preview:'background:linear-gradient(135deg,#0a0014,#1a0028,#0a0020)',
+         css:':root{--bg:#0a0014;--card:#1a0028;--accent:#a855f7;--pink:#ec4899}\n.haze{background:linear-gradient(135deg,#a855f7,#ec4899)}'},
+        {id:7,name:'Minimal Mono',cat:'dark',desc:'Reines Schwarz-Weiss. Keine Farben, maximale Klarheit.',colors:['#000000','#111111','#ffffff','#666666'],
+         preview:'background:#000;border:1px solid #222',
+         css:':root{--bg:#000;--card:#111;--text:#fff;--muted:#666;--accent:#fff;--border:#222}\n.mono{color:#fff;border:1px solid #333}'},
+        {id:8,name:'Gradient Mesh',cat:'gradient',desc:'Multi-Color Gradient-Backgrounds. Lebendig und modern.',colors:['#fa1e4e','#a855f7','#00ff88','#55ACEE'],
+         preview:'background:linear-gradient(135deg,rgba(250,30,78,.2),rgba(168,85,247,.2),rgba(0,255,136,.15),rgba(85,172,238,.2))',
+         css:'.mesh{background:linear-gradient(135deg,rgba(250,30,78,.15),rgba(168,85,247,.15),rgba(0,255,136,.1),rgba(85,172,238,.15))}\n.mesh-animated{animation:meshShift 8s ease infinite}'},
+        {id:9,name:'Frosted Glass',cat:'glass',desc:'Starker Blur mit leichter Transparenz. Eleganter Apple-Style.',colors:['#1a1a2e','rgba(255,255,255,.08)','#ffffff','#cccccc'],
+         preview:'background:rgba(255,255,255,.05);backdrop-filter:blur(40px)',
+         css:'.frost{backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:16px}'},
+        {id:10,name:'Dark Carbon',cat:'dark',desc:'Carbon-Fiber Textur. Technisch und robust.',colors:['#0e0e0e','#1a1a1a','#333333','#fa1e4e'],
+         preview:'background:#0e0e0e;background-image:repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(255,255,255,.02) 2px,rgba(255,255,255,.02) 4px)',
+         css:'.carbon{background:#0e0e0e;background-image:repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(255,255,255,.015) 2px,rgba(255,255,255,.015) 4px)}'},
+        {id:11,name:'Holographic',cat:'special',desc:'Regenbogen-Schimmer mit irisierenden Reflexen. Auffaellig und einzigartig.',colors:['#ff0080','#7928ca','#00ff88','#55ACEE'],
+         preview:'background:linear-gradient(135deg,#ff0080,#7928ca,#0070f3,#00ff88,#FFB800,#fa1e4e);background-size:400% 400%;animation:holoShift 4s ease infinite',
+         css:'.holo{background:linear-gradient(135deg,#ff0080,#7928ca,#0070f3,#00ff88,#FFB800,#fa1e4e);background-size:400% 400%;animation:holoShift 4s ease infinite}\n@keyframes holoShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}'},
+        {id:12,name:'Brutalist',cat:'special',desc:'Roh, unpoliert, hoher Kontrast. Anti-Design mit maximaler Wirkung.',colors:['#ffffff','#000000','#ff0000','#0000ff'],
+         preview:'background:#fff;border:4px solid #000',
+         css:'.brutal{background:#fff;color:#000;border:4px solid #000;font-weight:900;text-transform:uppercase;box-shadow:8px 8px 0 #000}'}
+    ];
+
+    var vCurFilter='all';
+    function vFilter(f,btn){vCurFilter=f;document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active')});btn.classList.add('active');vRender()}
+
+    function vRender(){
+        var q=(document.getElementById('vsearch').value||'').toLowerCase();
+        var items=VIBES.filter(function(v){
+            if(vCurFilter!=='all'&&v.cat!==vCurFilter)return false;
+            if(q&&v.name.toLowerCase().indexOf(q)<0&&v.desc.toLowerCase().indexOf(q)<0)return false;
+            return true;
+        });
+        document.getElementById('vcount').textContent=items.length+' Vibes';
+        var h='';
+        items.forEach(function(v,i){
+            h+='<div class="vcard" onclick="vOpenLb('+v.id+')">';
+            h+='<div class="vcard-preview" style="'+v.preview+'"></div>';
+            h+='<div class="vcard-info">';
+            h+='<div class="vcard-name">'+esc(v.name)+'</div>';
+            h+='<div class="vcard-desc">'+esc(v.desc)+'</div>';
+            h+='<div class="vcard-meta">';
+            h+='<div class="vcard-dots">';
+            v.colors.forEach(function(c){h+='<div class="vcard-dot" style="background:'+c+'"></div>'});
+            h+='</div>';
+            h+='<span class="vcard-cat">'+esc(v.cat)+'</span>';
+            h+='</div>';
+            h+='<div class="vcard-actions">';
+            h+='<button class="vact" onclick="event.stopPropagation();vCopyCSS(VIBES['+(v.id-1)+'].css)">&#128203; CSS</button>';
+            h+='<button class="vact" onclick="event.stopPropagation();vOpenLb('+v.id+')">&#128065; Preview</button>';
+            h+='</div></div></div>';
+        });
+        document.getElementById('vgrid').innerHTML=h;
+    }
+
+    function vOpenLb(id){
+        var v=VIBES.find(function(x){return x.id===id});if(!v)return;
+        document.getElementById('vlb-preview').style.cssText=v.preview;
+        document.getElementById('vlb-title').textContent=v.name;
+        document.getElementById('vlb-desc').textContent=v.desc;
+        document.getElementById('vlb-css').textContent=v.css;
+        document.getElementById('vlb').classList.add('show');
+    }
+    function vCloseLb(){document.getElementById('vlb').classList.remove('show')}
+    function vCopyCSS(css){navigator.clipboard.writeText(css).then(function(){vToast('&#128203; CSS kopiert!')}).catch(function(){})}
+    function vToast(m){var t=document.getElementById('vtoast');t.innerHTML=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
+
+    document.addEventListener('keydown',function(e){if(e.key==='Escape')vCloseLb()});
+    vRender();
+    </script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+</html>
