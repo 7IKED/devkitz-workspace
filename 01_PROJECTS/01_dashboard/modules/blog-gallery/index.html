@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-module" content="blog-gallery">
+    <title>&#128240; Blog Gallery&#8482; — DkZ&#8482; Content Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <style>
+        :root{--bg:#060608;--card:#1a1a1c;--card2:#222226;--border:#2a2a2e;--text:#f6f6f7;--muted:#808080;--accent:#fa1e4e;--green:#00ff88;--blue:#55ACEE;--yellow:#FFB800;--purple:#a855f7;--glass:rgba(26,26,28,.85)}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+        body::before{content:"";position:fixed;bottom:-200px;right:-200px;width:500px;height:500px;background:radial-gradient(circle,rgba(0,255,136,.06),transparent 70%);pointer-events:none;z-index:0}
+        header{position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);background:var(--glass);border-bottom:1px solid var(--border);padding:0 2rem;height:60px;display:flex;align-items:center;gap:1rem}
+        .back{color:var(--muted);text-decoration:none;font-size:1.1rem}
+        .logo{font-size:1.1rem;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--yellow));background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .ver{font-size:.6rem;color:var(--muted);padding:.15rem .4rem;border:1px solid var(--border);border-radius:4px;font-family:'JetBrains Mono',monospace}
+        .hdr-r{margin-left:auto;display:flex;gap:.5rem;align-items:center}
+        .filters{display:flex;gap:.4rem;padding:.75rem 2rem;background:var(--card);border-bottom:1px solid var(--border);flex-wrap:wrap;align-items:center}
+        .fbtn{padding:.35rem .8rem;border:1px solid var(--border);border-radius:16px;background:rgba(255,255,255,.02);color:var(--muted);font-size:.7rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s}
+        .fbtn:hover{border-color:var(--accent);color:var(--text)}
+        .fbtn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+        .search{padding:.35rem .8rem;border:1px solid var(--border);border-radius:16px;background:var(--card2);color:var(--text);font-family:inherit;font-size:.7rem;outline:none;width:180px;margin-left:auto}
+        .search:focus{border-color:var(--accent)}
+
+        /* Stats Bar */
+        .stats-bar{display:flex;gap:1.5rem;padding:.6rem 2rem;background:rgba(0,0,0,.3);border-bottom:1px solid var(--border);position:relative;z-index:1}
+        .stat{text-align:center}
+        .stat-num{font-size:1rem;font-weight:900;color:var(--green)}
+        .stat-label{font-size:.55rem;color:var(--muted);text-transform:uppercase}
+
+        /* Grid */
+        .main{display:grid;grid-template-columns:1fr 280px;height:calc(100vh - 152px);position:relative;z-index:1}
+        .content{overflow-y:auto;padding:1.5rem 2rem}
+        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.25rem}
+        .bcard{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:all .35s;cursor:pointer}
+        .bcard:hover{border-color:var(--accent);transform:translateY(-4px);box-shadow:0 10px 30px rgba(250,30,78,.12)}
+        .bcard-header{height:100px;position:relative;display:flex;align-items:flex-end;padding:.75rem}
+        .bcard-cat-badge{position:absolute;top:.5rem;right:.5rem;padding:.15rem .5rem;border-radius:8px;font-size:.55rem;font-weight:700;font-family:'JetBrains Mono',monospace}
+        .cat-tech{background:rgba(85,172,238,.15);color:var(--blue)}
+        .bcard-header.cat-tech{background:linear-gradient(135deg,rgba(85,172,238,.15),rgba(85,172,238,.05))}
+        .cat-tutorial{background:rgba(0,255,136,.15);color:var(--green)}
+        .bcard-header.cat-tutorial{background:linear-gradient(135deg,rgba(0,255,136,.15),rgba(0,255,136,.05))}
+        .cat-research{background:rgba(255,184,0,.15);color:var(--yellow)}
+        .bcard-header.cat-research{background:linear-gradient(135deg,rgba(255,184,0,.15),rgba(255,184,0,.05))}
+        .cat-news{background:rgba(250,30,78,.15);color:var(--accent)}
+        .bcard-header.cat-news{background:linear-gradient(135deg,rgba(250,30,78,.15),rgba(250,30,78,.05))}
+        .cat-design{background:rgba(168,85,247,.15);color:var(--purple)}
+        .bcard-header.cat-design{background:linear-gradient(135deg,rgba(168,85,247,.15),rgba(168,85,247,.05))}
+        .bcard-avatar{width:28px;height:28px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:.8rem;border:2px solid var(--border)}
+        .bcard-info{padding:1rem}
+        .bcard-title{font-size:.85rem;font-weight:800;margin-bottom:.3rem;line-height:1.3}
+        .bcard-excerpt{font-size:.68rem;color:var(--muted);line-height:1.5;margin-bottom:.5rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+        .bcard-meta{display:flex;gap:.75rem;font-size:.55rem;color:var(--muted)}
+        .bcard-actions{display:flex;gap:.4rem;margin-top:.5rem}
+        .bact{padding:.25rem .6rem;border:1px solid var(--border);border-radius:6px;font-size:.6rem;color:var(--muted);cursor:pointer;background:none;font-family:inherit;transition:all .2s}
+        .bact:hover{border-color:var(--accent);color:var(--text)}
+
+        /* Sidebar */
+        .sidebar{background:var(--card);border-left:1px solid var(--border);overflow-y:auto;padding:1rem}
+        .sb-title{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.75rem}
+        .blog-net{margin-bottom:1.5rem}
+        .blog-item{display:flex;align-items:center;gap:.5rem;padding:.4rem .5rem;border-radius:8px;margin-bottom:.3rem;cursor:pointer;transition:all .2s}
+        .blog-item:hover{background:rgba(255,255,255,.05)}
+        .blog-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+        .blog-name{font-size:.7rem;font-weight:700}
+        .blog-url{font-size:.55rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
+        .calendar{margin-bottom:1.5rem}
+        .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:.55rem}
+        .cal-head{color:var(--muted);font-weight:700;padding:.2rem}
+        .cal-day{padding:.2rem;border-radius:4px;color:var(--muted);cursor:pointer;transition:all .2s}
+        .cal-day:hover{background:rgba(255,255,255,.05)}
+        .cal-day.has-post{background:rgba(250,30,78,.1);color:var(--accent);font-weight:700}
+        .cal-day.today{background:var(--accent);color:#fff;font-weight:700}
+
+        .toast{position:fixed;bottom:2rem;right:2rem;background:var(--green);color:#000;padding:.6rem 1.2rem;border-radius:8px;font-size:.8rem;font-weight:700;transform:translateY(80px);transition:transform .3s;z-index:300}
+        .toast.show{transform:translateY(0)}
+        ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+        @media(max-width:900px){.main{grid-template-columns:1fr}.sidebar{display:none}.grid{grid-template-columns:1fr}}
+    </style>
+</head>
+<body data-dkz-module="blog-gallery" data-dkz-appid="DKZ-BLG-002" data-dkz-version="v0.01" data-dkz-title="Blog Gallery" data-dkz-icon="&#128240;" data-dkz-separable="true">
+    <header>
+        <a href="../../hub/index.html" class="back">&#8592;</a>
+        <span class="logo">&#128240; Blog Gallery&#8482;</span>
+        <span class="ver">v0.01</span>
+        <div class="hdr-r"><span style="font-size:.65rem;color:var(--muted)" id="bcount">12 Posts</span></div>
+    </header>
+    <div class="stats-bar">
+        <div class="stat"><div class="stat-num" id="bs-total">12</div><div class="stat-label">Posts</div></div>
+        <div class="stat"><div class="stat-num" id="bs-cats">5</div><div class="stat-label">Kategorien</div></div>
+        <div class="stat"><div class="stat-num" id="bs-authors">3</div><div class="stat-label">Autoren</div></div>
+        <div class="stat"><div class="stat-num" id="bs-blogs">5</div><div class="stat-label">Blogs</div></div>
+    </div>
+    <div class="filters">
+        <button class="fbtn active" onclick="bFilter('all',this)">Alle</button>
+        <button class="fbtn" onclick="bFilter('tech',this)">&#128187; Tech</button>
+        <button class="fbtn" onclick="bFilter('tutorial',this)">&#128218; Tutorial</button>
+        <button class="fbtn" onclick="bFilter('research',this)">&#128300; Research</button>
+        <button class="fbtn" onclick="bFilter('news',this)">&#128240; News</button>
+        <button class="fbtn" onclick="bFilter('design',this)">&#127912; Design</button>
+        <input class="search" id="bsearch" placeholder="&#128269; Suche..." oninput="bRender()">
+    </div>
+    <div class="main">
+        <div class="content"><div class="grid" id="bgrid"></div></div>
+        <div class="sidebar">
+            <div class="blog-net">
+                <div class="sb-title">&#127760; Blog Netzwerk</div>
+                <div id="blogNetList"></div>
+            </div>
+            <div class="calendar">
+                <div class="sb-title">&#128197; Content Kalender</div>
+                <div class="cal-grid" id="calGrid"></div>
+            </div>
+            <div>
+                <div class="sb-title">&#127793; Kategorien</div>
+                <div id="catList"></div>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="btoast"></div>
+
+    <script>
+    function esc(s){var d=document.createElement('div');d.appendChild(document.createTextNode(s));return d.innerHTML}
+    var POSTS=[
+        {id:1,title:'DEVKiTZ Dashboard Guide',cat:'tech',excerpt:'Kompletter Guide fuer alle 132+ Module des DkZ Dashboards — von Installation bis Konfiguration.',date:'2026-05-28',time:'12 Min',author:'777',avatar:'&#128104;&#8205;&#128187;'},
+        {id:2,title:'BMAD Framework Erklaert',cat:'research',excerpt:'Die 7-Agenten-Methodik: Blueprint, Mapping, Analyse, Design — wie KI-Teams autonom arbeiten.',date:'2026-05-27',time:'18 Min',author:'James',avatar:'&#129302;'},
+        {id:3,title:'n8n Automation 101',cat:'tutorial',excerpt:'Workflow-Templates effektiv nutzen: Von Trigger bis Output in 5 Schritten.',date:'2026-05-26',time:'8 Min',author:'777',avatar:'&#128104;&#8205;&#128187;'},
+        {id:4,title:'CSS Dark Mode Patterns',cat:'design',excerpt:'Glassmorphism, Neon-Glow und Carbon-Texturen — Premium UI Techniken fuer dunkle Themes.',date:'2026-05-25',time:'10 Min',author:'Developer',avatar:'&#128187;'},
+        {id:5,title:'Docker auf VPS',cat:'tech',excerpt:'Container Deployment auf Hostinger KVM: Compose, Volumes, Health Checks und Auto-Restart.',date:'2026-05-24',time:'15 Min',author:'777',avatar:'&#128104;&#8205;&#128187;'},
+        {id:6,title:'AI Agent Orchestrierung',cat:'research',excerpt:'Multi-Agent Systeme mit Ralph Loop: Frischer Kontext, kein Drift, autonome Ausfuehrung.',date:'2026-05-23',time:'20 Min',author:'James',avatar:'&#129302;'},
+        {id:7,title:'JavaScript Performance',cat:'tutorial',excerpt:'Vanilla JS Optimierung: Event Delegation, DOM Batching, requestAnimationFrame.',date:'2026-05-22',time:'14 Min',author:'Developer',avatar:'&#128187;'},
+        {id:8,title:'DkZ Design System v2',cat:'design',excerpt:'CSS Custom Properties, Glassmorphism Cards, Typography Scale — das vollstaendige Designsystem.',date:'2026-05-21',time:'16 Min',author:'777',avatar:'&#128104;&#8205;&#128187;'},
+        {id:9,title:'Server Monitoring',cat:'tech',excerpt:'Automatisierte Health Checks: CPU, RAM, Disk, Services — alles im Blick mit einem Script.',date:'2026-05-20',time:'9 Min',author:'Developer',avatar:'&#128187;'},
+        {id:10,title:'NotebookLM Integration',cat:'tutorial',excerpt:'Content Pipeline Setup: Von Quellen zu 12 Content-Typen in einem Batch-Durchlauf.',date:'2026-05-19',time:'11 Min',author:'777',avatar:'&#128104;&#8205;&#128187;'},
+        {id:11,title:'Elder-Care IoT',cat:'research',excerpt:'WiFi CSI Technologie fuer Sturzerkennung: Channel State Information ohne Kamera.',date:'2026-05-18',time:'22 Min',author:'James',avatar:'&#129302;'},
+        {id:12,title:'GitHub Projects Kanban',cat:'news',excerpt:'Projekt-Management mit GitHub: 12 Boards, 70+ Items, Timeline-Automatisierung.',date:'2026-05-17',time:'7 Min',author:'777',avatar:'&#128104;&#8205;&#128187;'}
+    ];
+    var BLOGS=[
+        {name:'DEVKiTZ Blog',url:'devkitz.blogspot.com',color:'var(--accent)'},
+        {name:'AI Research',url:'ai-research.devkitz.de',color:'var(--blue)'},
+        {name:'Tech Notes',url:'tech.devkitz.de',color:'var(--green)'},
+        {name:'Design Lab',url:'design.devkitz.de',color:'var(--purple)'},
+        {name:'News Feed',url:'news.devkitz.de',color:'var(--yellow)'}
+    ];
+
+    var bCurFilter='all';
+    function bFilter(f,btn){bCurFilter=f;document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active')});btn.classList.add('active');bRender()}
+
+    function bRender(){
+        var q=(document.getElementById('bsearch').value||'').toLowerCase();
+        var items=POSTS.filter(function(p){
+            if(bCurFilter!=='all'&&p.cat!==bCurFilter)return false;
+            if(q&&p.title.toLowerCase().indexOf(q)<0&&p.excerpt.toLowerCase().indexOf(q)<0)return false;
+            return true;
+        });
+        document.getElementById('bcount').textContent=items.length+' Posts';
+        var h='';
+        items.forEach(function(p){
+            h+='<div class="bcard">';
+            h+='<div class="bcard-header cat-'+p.cat+'">';
+            h+='<span class="bcard-cat-badge cat-'+p.cat+'">'+esc(p.cat)+'</span>';
+            h+='<div class="bcard-avatar">'+p.avatar+'</div>';
+            h+='</div>';
+            h+='<div class="bcard-info">';
+            h+='<div class="bcard-title">'+esc(p.title)+'</div>';
+            h+='<div class="bcard-excerpt">'+esc(p.excerpt)+'</div>';
+            h+='<div class="bcard-meta">';
+            h+='<span>&#128197; '+p.date+'</span>';
+            h+='<span>&#9201; '+p.time+'</span>';
+            h+='<span>&#128100; '+esc(p.author)+'</span>';
+            h+='</div>';
+            h+='<div class="bcard-actions">';
+            h+='<button class="bact" onclick="event.stopPropagation();bToast(\'&#128214; Post geoeffnet\')">&#128214; Lesen</button>';
+            h+='<button class="bact" onclick="event.stopPropagation();bToast(\'&#9998; Editor geoeffnet\')">&#9998; Edit</button>';
+            h+='<button class="bact" onclick="event.stopPropagation();bShare(\''+esc(p.title)+'\')">&#128279; Share</button>';
+            h+='</div></div></div>';
+        });
+        document.getElementById('bgrid').innerHTML=h;
+    }
+
+    function renderBlogNet(){
+        var h='';
+        BLOGS.forEach(function(b){
+            h+='<div class="blog-item">';
+            h+='<div class="blog-dot" style="background:'+b.color+'"></div>';
+            h+='<div><div class="blog-name">'+esc(b.name)+'</div><div class="blog-url">'+esc(b.url)+'</div></div>';
+            h+='</div>';
+        });
+        document.getElementById('blogNetList').innerHTML=h;
+    }
+
+    function renderCalendar(){
+        var now=new Date();var year=now.getFullYear();var month=now.getMonth();
+        var first=new Date(year,month,1).getDay()||7;
+        var days=new Date(year,month+1,0).getDate();
+        var today=now.getDate();
+        var postDays={};POSTS.forEach(function(p){var d=parseInt(p.date.split('-')[2]);postDays[d]=true});
+        var heads=['Mo','Di','Mi','Do','Fr','Sa','So'];
+        var h='';heads.forEach(function(d){h+='<div class="cal-head">'+d+'</div>'});
+        for(var i=1;i<first;i++)h+='<div class="cal-day"></div>';
+        for(var d=1;d<=days;d++){
+            var cls='cal-day';
+            if(d===today)cls+=' today';
+            else if(postDays[d])cls+=' has-post';
+            h+='<div class="'+cls+'">'+d+'</div>';
+        }
+        document.getElementById('calGrid').innerHTML=h;
+    }
+
+    function renderCats(){
+        var cats={};POSTS.forEach(function(p){cats[p.cat]=(cats[p.cat]||0)+1});
+        var h='';
+        Object.keys(cats).forEach(function(c){
+            h+='<div class="blog-item" onclick="bFilter(\''+c+'\',document.querySelector(\'.fbtn[onclick*='+c+']\'))">';
+            h+='<span class="bcard-cat-badge cat-'+c+'">'+c+'</span>';
+            h+='<span style="font-size:.65rem;color:var(--muted);margin-left:auto">'+cats[c]+'</span>';
+            h+='</div>';
+        });
+        document.getElementById('catList').innerHTML=h;
+    }
+
+    function bShare(title){navigator.clipboard.writeText('https://devkitz.blogspot.com/'+title.toLowerCase().replace(/\s+/g,'-')).then(function(){bToast('&#128279; Link kopiert!')}).catch(function(){})}
+    function bToast(m){var t=document.getElementById('btoast');t.innerHTML=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
+
+    bRender();renderBlogNet();renderCalendar();renderCats();
+    </script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+</html>
