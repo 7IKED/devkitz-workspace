@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 — Seite nicht gefunden | DEVKiTZ™</title>
+    <meta name="description" content="Diese Seite existiert nicht. Aber dieser Stormtrooper laeuft weiter.">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--bg:#060608;--green:#00ff88;--red:#fa1e4e;--blue:#55ACEE;--yellow:#FFB800;--dim:#1a1a2e}
+        body{background:var(--bg);color:var(--green);font-family:'JetBrains Mono',monospace;overflow:hidden;height:100vh;width:100vw;cursor:crosshair}
+        
+        /* MATRIX RAIN */
+        #matrix{position:fixed;inset:0;z-index:0;opacity:.12}
+
+        /* SCANLINES */
+        .scanlines{position:fixed;inset:0;z-index:5;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,136,.015) 2px,rgba(0,255,136,.015) 4px)}
+
+        /* CRT EFFECT */
+        .crt{position:fixed;inset:0;z-index:6;pointer-events:none;background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.4) 100%)}
+
+        /* CONTENT */
+        .terminal{position:relative;z-index:10;height:100vh;display:flex;flex-direction:column;padding:1.5rem 2rem}
+
+        /* TOP BAR */
+        .topbar{display:flex;justify-content:space-between;align-items:center;padding-bottom:.8rem;border-bottom:1px solid rgba(0,255,136,.15);margin-bottom:1rem;flex-shrink:0}
+        .topbar-left{font-size:.6rem;color:rgba(0,255,136,.5)}
+        .topbar-right{font-size:.6rem;color:var(--red)}
+        .blink{animation:blink 1s infinite}
+        @keyframes blink{0%,50%{opacity:1}51%,100%{opacity:0}}
+
+        /* ERROR DISPLAY */
+        .error-block{text-align:center;padding:1rem 0;flex-shrink:0}
+        .e404{font-size:clamp(4rem,12vw,9rem);font-weight:800;color:var(--red);text-shadow:0 0 40px rgba(250,30,78,.3),0 0 80px rgba(250,30,78,.1);line-height:1;font-family:'Inter',sans-serif;letter-spacing:-.05em}
+        .e-sub{font-size:clamp(.7rem,1.5vw,1rem);color:rgba(0,255,136,.6);margin-top:.5rem}
+
+        /* GAME AREA */
+        .game-wrap{flex:1;position:relative;overflow:hidden;border:1px solid rgba(0,255,136,.08);border-radius:4px;margin:1rem 0;min-height:200px}
+        #game{width:100%;height:100%;display:block}
+
+        /* BOTTOM */
+        .bottom{display:flex;justify-content:space-between;align-items:center;padding-top:.8rem;border-top:1px solid rgba(0,255,136,.15);flex-shrink:0;flex-wrap:wrap;gap:.5rem}
+        .cmd-line{display:flex;align-items:center;gap:.3rem;font-size:.7rem}
+        .prompt{color:var(--red)}
+        .cmd-input{background:none;border:none;color:var(--green);font-family:inherit;font-size:.7rem;outline:none;width:200px}
+        .links{display:flex;gap:.8rem}
+        .links a{color:rgba(0,255,136,.4);text-decoration:none;font-size:.6rem;transition:color .2s;border:1px solid rgba(0,255,136,.1);padding:.2rem .5rem;border-radius:3px}
+        .links a:hover{color:var(--green);border-color:var(--green)}
+        .score{font-size:.6rem;color:var(--yellow)}
+
+        /* ASCII ART OVERLAY */
+        .ascii-hint{position:absolute;bottom:.5rem;right:.5rem;font-size:.5rem;color:rgba(0,255,136,.2);z-index:11}
+    </style>
+</head>
+<body>
+    <canvas id="matrix"></canvas>
+    <div class="scanlines"></div>
+    <div class="crt"></div>
+
+    <div class="terminal">
+        <div class="topbar">
+            <div class="topbar-left">DEVKiTZ™ TERMINAL v4.04 — SESSION <span id="sessionId">0x4E6F</span></div>
+            <div class="topbar-right"><span class="blink">⬤</span> ERROR — SECTOR NOT FOUND</div>
+        </div>
+
+        <div class="error-block">
+            <div class="e404">404</div>
+            <div class="e-sub">» Diese Seite existiert in keiner Galaxie «</div>
+        </div>
+
+        <div class="game-wrap">
+            <canvas id="game"></canvas>
+            <div class="ascii-hint">SPACE = Jump · ↑ = Jump · Klick = Jump</div>
+        </div>
+
+        <div class="bottom">
+            <div class="cmd-line">
+                <span class="prompt">dkz@404 ~$</span>
+                <input class="cmd-input" id="cmdInput" placeholder="help eingeben..." autofocus>
+            </div>
+            <div class="score">SCORE: <span id="scoreDisplay">0</span> | HI: <span id="hiScore">0</span></div>
+            <div class="links">
+                <a href="/hub/">🏠 Hub</a>
+                <a href="https://github.com/D-VKITZ" target="_blank">📡 GitHub</a>
+                <a href="/modules/nlm-demo/">🎨 Showcase</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ============ MATRIX RAIN ============
+    (function(){
+        var c = document.getElementById('matrix');
+        var ctx = c.getContext('2d');
+        function resize(){c.width=window.innerWidth;c.height=window.innerHeight}
+        resize();
+        window.addEventListener('resize',resize);
+        var chars = 'DEVKiTZ™404ドクトル01アベ'.split('');
+        var drops = [];
+        var cols = Math.floor(c.width/14);
+        for(var i=0;i<cols;i++) drops[i]=Math.random()*c.height/-14;
+        function draw(){
+            ctx.fillStyle='rgba(6,6,8,.08)';
+            ctx.fillRect(0,0,c.width,c.height);
+            ctx.fillStyle='#00ff88';
+            ctx.font='12px JetBrains Mono';
+            for(var i=0;i<drops.length;i++){
+                var t=chars[Math.floor(Math.random()*chars.length)];
+                ctx.fillText(t,i*14,drops[i]*14);
+                if(drops[i]*14>c.height&&Math.random()>.975) drops[i]=0;
+                drops[i]++;
+            }
+        }
+        setInterval(draw,45);
+    })();
+
+    // ============ STAR WARS RUNNER GAME ============
+    (function(){
+        var canvas = document.getElementById('game');
+        var ctx = canvas.getContext('2d');
+        var W, H, ground;
+        
+        function resize(){
+            var r = canvas.parentElement.getBoundingClientRect();
+            W = canvas.width = r.width;
+            H = canvas.height = r.height;
+            ground = H - 40;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        // Game state
+        var score = 0;
+        var hiScore = parseInt(localStorage.getItem('dkz404hi')||'0');
+        var speed = 3;
+        var gameOver = false;
+        var frame = 0;
+
+        document.getElementById('hiScore').textContent = hiScore;
+
+        // Stormtrooper (ASCII sprite)
+        var trooper = {
+            x: 80,
+            y: ground,
+            w: 30,
+            h: 40,
+            vy: 0,
+            jumping: false,
+            frame: 0,
+            // ASCII frames for running animation
+            sprites: [
+                // Frame 1 - right leg forward
+                [
+                    '  ┌─┐ ',
+                    '  │°│ ',
+                    ' ┌┴─┴┐',
+                    ' │ T │',
+                    ' └┬─┬┘',
+                    '  │ └─',
+                    '  └─  ',
+                ],
+                // Frame 2 - left leg forward
+                [
+                    '  ┌─┐ ',
+                    '  │°│ ',
+                    ' ┌┴─┴┐',
+                    ' │ T │',
+                    ' └┬─┬┘',
+                    ' ─┘ │ ',
+                    '    └─',
+                ],
+                // Frame 3 - mid stride
+                [
+                    '  ┌─┐ ',
+                    '  │°│ ',
+                    ' ┌┴─┴┐',
+                    ' │ T │',
+                    ' └┬─┬┘',
+                    '  │ │ ',
+                    '  └─└─',
+                ]
+            ]
+        };
+
+        // Obstacles (TIE Fighters, Death Star debris, laser walls)
+        var obstacles = [];
+        var stars = [];
+        var particles = [];
+        var buildings = [];
+
+        // Generate stars
+        for(var i=0;i<60;i++){
+            stars.push({x:Math.random()*2000,y:Math.random()*(ground-60),s:Math.random()*2+.5,b:Math.random()});
+        }
+
+        // Generate buildings (city backdrop)
+        for(var i=0;i<15;i++){
+            buildings.push({x:i*160+Math.random()*80,w:40+Math.random()*60,h:40+Math.random()*120,shade:Math.random()*.3});
+        }
+
+        function spawnObstacle(){
+            var types = ['tie','laser','droid','crate'];
+            var type = types[Math.floor(Math.random()*types.length)];
+            var h = type==='laser' ? 25+Math.random()*20 : 20+Math.random()*15;
+            var w = type==='tie' ? 35 : type==='laser' ? 8 : 20;
+            var flying = type==='tie' && Math.random()>.5;
+            obstacles.push({
+                x: W + 50,
+                y: flying ? ground - 50 - Math.random()*40 : ground,
+                w: w,
+                h: h,
+                type: type,
+                passed: false
+            });
+        }
+
+        function jump(){
+            if(!trooper.jumping && !gameOver){
+                trooper.vy = -10;
+                trooper.jumping = true;
+            }
+            if(gameOver) restart();
+        }
+
+        function restart(){
+            if(score > hiScore){
+                hiScore = score;
+                localStorage.setItem('dkz404hi', hiScore);
+                document.getElementById('hiScore').textContent = hiScore;
+            }
+            score = 0;
+            speed = 3;
+            gameOver = false;
+            obstacles = [];
+            particles = [];
+            trooper.y = ground;
+            trooper.vy = 0;
+            trooper.jumping = false;
+        }
+
+        // Input
+        document.addEventListener('keydown', function(e){
+            if(e.code==='Space'||e.code==='ArrowUp'){e.preventDefault();jump()}
+        });
+        canvas.addEventListener('click', jump);
+        canvas.addEventListener('touchstart', function(e){e.preventDefault();jump()});
+
+        // Command input
+        document.getElementById('cmdInput').addEventListener('keydown', function(e){
+            if(e.key==='Enter'){
+                var cmd = this.value.trim().toLowerCase();
+                if(cmd==='help') alert('Commands: help, hub, github, score, restart, cls');
+                else if(cmd==='hub') window.location='/hub/';
+                else if(cmd==='github') window.open('https://github.com/D-VKITZ','_blank');
+                else if(cmd==='score') alert('Score: '+score+' | Hi: '+hiScore);
+                else if(cmd==='restart') restart();
+                else if(cmd==='cls') location.reload();
+                else alert('Unknown: '+cmd+' — try "help"');
+                this.value='';
+            }
+        });
+
+        function drawText(text, x, y, color, size){
+            ctx.fillStyle = color || '#00ff88';
+            ctx.font = (size||8)+'px JetBrains Mono';
+            ctx.fillText(text, x, y);
+        }
+
+        function gameLoop(){
+            ctx.clearRect(0,0,W,H);
+            frame++;
+
+            // Stars
+            ctx.globalAlpha = .3;
+            for(var i=0;i<stars.length;i++){
+                var s = stars[i];
+                s.x -= speed * .3 * s.s;
+                if(s.x < -5) s.x = W + 10;
+                var twinkle = .3 + Math.sin(frame*.03+s.b*10)*.3;
+                ctx.fillStyle = '#00ff88';
+                ctx.globalAlpha = twinkle;
+                ctx.fillRect(s.x, s.y, s.s, s.s);
+            }
+            ctx.globalAlpha = 1;
+
+            // Buildings (parallax)
+            for(var i=0;i<buildings.length;i++){
+                var b = buildings[i];
+                b.x -= speed * .5;
+                if(b.x < -b.w) b.x = W + Math.random()*200;
+                ctx.fillStyle = 'rgba(0,255,136,'+(0.03+b.shade*0.04)+')';
+                ctx.fillRect(b.x, ground-b.h, b.w, b.h);
+                // Windows
+                for(var wy=ground-b.h+5;wy<ground-5;wy+=12){
+                    for(var wx=b.x+4;wx<b.x+b.w-4;wx+=10){
+                        if(Math.random()>.6){
+                            ctx.fillStyle = 'rgba(0,255,136,'+(0.05+Math.random()*0.1)+')';
+                            ctx.fillRect(wx,wy,4,6);
+                        }
+                    }
+                }
+            }
+
+            // Ground line
+            ctx.strokeStyle = 'rgba(0,255,136,.3)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, ground);
+            ctx.lineTo(W, ground);
+            ctx.stroke();
+
+            // Ground dashes
+            ctx.strokeStyle = 'rgba(0,255,136,.1)';
+            for(var gx = (frame*speed)%20*-1; gx < W; gx += 20){
+                ctx.beginPath();
+                ctx.moveTo(gx, ground+5);
+                ctx.lineTo(gx+10, ground+5);
+                ctx.stroke();
+            }
+
+            if(!gameOver){
+                // Physics
+                trooper.vy += .55;
+                trooper.y += trooper.vy;
+                if(trooper.y >= ground){
+                    trooper.y = ground;
+                    trooper.vy = 0;
+                    trooper.jumping = false;
+                }
+
+                // Spawn obstacles
+                if(frame % Math.max(40, 80-Math.floor(score/5)) === 0) spawnObstacle();
+
+                // Update obstacles
+                for(var i=obstacles.length-1;i>=0;i--){
+                    var o = obstacles[i];
+                    o.x -= speed;
+                    if(o.x < -50){obstacles.splice(i,1);continue}
+
+                    // Collision
+                    var tx = trooper.x, ty = trooper.y - trooper.h;
+                    if(tx+trooper.w > o.x+4 && tx < o.x+o.w-4 && ty+trooper.h > o.y-o.h && ty < o.y){
+                        gameOver = true;
+                        // Explosion particles
+                        for(var p=0;p<20;p++){
+                            particles.push({
+                                x:trooper.x+15, y:trooper.y-20,
+                                vx:(Math.random()-.5)*6, vy:(Math.random()-.5)*6,
+                                life:30+Math.random()*20,
+                                color: Math.random()>.5 ? '#fa1e4e' : '#FFB800'
+                            });
+                        }
+                    }
+
+                    // Score
+                    if(!o.passed && o.x + o.w < trooper.x){
+                        o.passed = true;
+                        score++;
+                        document.getElementById('scoreDisplay').textContent = score;
+                    }
+
+                    // Draw obstacle
+                    if(o.type==='tie'){
+                        ctx.fillStyle = 'rgba(250,30,78,.8)';
+                        // TIE wings
+                        ctx.fillRect(o.x, o.y-o.h, 3, o.h);
+                        ctx.fillRect(o.x+o.w-3, o.y-o.h, 3, o.h);
+                        // TIE body
+                        ctx.fillRect(o.x+8, o.y-o.h+5, o.w-16, o.h-10);
+                        // TIE window
+                        ctx.fillStyle = '#fa1e4e';
+                        ctx.beginPath();
+                        ctx.arc(o.x+o.w/2, o.y-o.h/2, 4, 0, Math.PI*2);
+                        ctx.fill();
+                    } else if(o.type==='laser'){
+                        ctx.fillStyle = 'rgba(250,30,78,.6)';
+                        ctx.fillRect(o.x, o.y-o.h, o.w, o.h);
+                        ctx.fillStyle = '#fa1e4e';
+                        ctx.fillRect(o.x+2, o.y-o.h, o.w-4, o.h);
+                        // Glow
+                        ctx.shadowColor = '#fa1e4e';
+                        ctx.shadowBlur = 10;
+                        ctx.fillRect(o.x+2, o.y-o.h, o.w-4, 2);
+                        ctx.shadowBlur = 0;
+                    } else if(o.type==='droid'){
+                        ctx.fillStyle = 'rgba(255,184,0,.7)';
+                        ctx.fillRect(o.x+2, o.y-o.h, o.w-4, o.h-5);
+                        ctx.beginPath();
+                        ctx.arc(o.x+o.w/2, o.y-o.h, o.w/2-2, Math.PI, 0);
+                        ctx.fill();
+                        ctx.fillStyle = '#FFB800';
+                        ctx.fillRect(o.x+6, o.y-o.h+4, 3, 3);
+                    } else {
+                        ctx.fillStyle = 'rgba(0,255,136,.3)';
+                        ctx.fillRect(o.x, o.y-o.h, o.w, o.h);
+                        ctx.strokeStyle = 'rgba(0,255,136,.5)';
+                        ctx.strokeRect(o.x, o.y-o.h, o.w, o.h);
+                    }
+                }
+
+                // Speed increase
+                speed = 3 + score * 0.15;
+            }
+
+            // Draw trooper (ASCII)
+            var spriteIdx = trooper.jumping ? 2 : Math.floor(frame/8) % 2;
+            var sprite = trooper.sprites[spriteIdx];
+            ctx.fillStyle = '#00ff88';
+            ctx.font = '8px JetBrains Mono';
+            for(var l=0;l<sprite.length;l++){
+                ctx.fillText(sprite[l], trooper.x, trooper.y - (sprite.length-l)*9);
+            }
+
+            // Lightsaber trail when jumping
+            if(trooper.jumping){
+                ctx.strokeStyle = 'rgba(85,172,238,.4)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(trooper.x+30, trooper.y-35);
+                ctx.lineTo(trooper.x+50, trooper.y-55);
+                ctx.stroke();
+                ctx.strokeStyle = 'rgba(85,172,238,.8)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(trooper.x+30, trooper.y-35);
+                ctx.lineTo(trooper.x+50, trooper.y-55);
+                ctx.stroke();
+            }
+
+            // Particles
+            for(var i=particles.length-1;i>=0;i--){
+                var p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += .2;
+                p.life--;
+                if(p.life <= 0){particles.splice(i,1);continue}
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life/50;
+                ctx.fillRect(p.x, p.y, 3, 3);
+                ctx.globalAlpha = 1;
+            }
+
+            // Game Over
+            if(gameOver){
+                ctx.fillStyle = 'rgba(6,6,8,.5)';
+                ctx.fillRect(0,0,W,H);
+                ctx.fillStyle = '#fa1e4e';
+                ctx.font = 'bold 28px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText('GAME OVER', W/2, H/2-15);
+                ctx.fillStyle = '#00ff88';
+                ctx.font = '12px JetBrains Mono';
+                ctx.fillText('Score: '+score+'  |  Klick oder Space zum Neustart', W/2, H/2+15);
+                ctx.textAlign = 'left';
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    })();
+
+    // Session ID
+    document.getElementById('sessionId').textContent = '0x'+Math.floor(Math.random()*65535).toString(16).toUpperCase();
+    </script>
+</body>
+</html>
