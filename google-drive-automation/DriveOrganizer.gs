@@ -47,7 +47,7 @@ var CONFIG = {
     '06': 'NOTEPAD',       // ██ GESCHUETZT ██
     '07': 'PRIVAT',        // ██ GESCHUETZT ██
     '08': 'PLAYSTATION',   // ██ GESCHUETZT ██
-    '09': 'BRAIN\u00B2',
+    '09': 'BRAIN\u00B2',       // ██ GESCHUETZT (raw!) ██
     '99': 'ARCHIVE'
   },
   SUB: {
@@ -111,11 +111,12 @@ var PROTECTED_FOLDERS = [
   '06_NOTEPAD', 'NOTEPAD',
   '07_PRIVAT', 'PRIVAT',
   '08_PLAYSTATION', 'PLAYSTATION',
+  '09_BRAIN', 'BRAIN', 'SecondBrain',
   '[DEEPKEEP]', 'DEEPKEEP',
   'raw'
 ];
 
-var BLOCKED_NUMBERS = ['05', '06', '07', '08'];
+var BLOCKED_NUMBERS = ['05', '06', '07', '08', '09'];
 
 var DEEPKEEP_NAMES = ['[DEEPKEEP]', 'DEEPKEEP'];
 
