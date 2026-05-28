@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DkZ™ Pattern Hub — Templates, Skills & Feedback</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#060608;--card:#111116;--card2:#1a1a22;--border:#1e1e2a;--text:#f0f0f4;--muted:#6a6a7a;--accent:#fa1e4e;--green:#00ff88;--blue:#55ACEE;--yellow:#FFB800;--purple:#a855f7;--radius:14px}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+        .mono{font-family:'JetBrains Mono',monospace}
+
+        /* HEADER */
+        .header{background:rgba(17,17,22,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:.8rem 1.5rem;display:flex;align-items:center;gap:1rem;position:sticky;top:0;z-index:50}
+        .back{color:var(--muted);text-decoration:none;font-size:.75rem;padding:.3rem .5rem;border-radius:6px;border:1px solid var(--border);transition:all .2s}
+        .back:hover{border-color:var(--accent);color:var(--accent)}
+        .header h1{font-size:1rem;font-weight:800;flex:1}
+        .header h1 span{color:var(--accent)}
+        .header-stats{display:flex;gap:1rem}
+        .hstat{font-size:.55rem;text-align:center}
+        .hstat-num{font-size:1rem;font-weight:900;color:var(--accent)}
+
+        /* TABS */
+        .tabs{display:flex;gap:.3rem;padding:.6rem 1.5rem;border-bottom:1px solid var(--border);background:rgba(17,17,22,.5);overflow-x:auto}
+        .tab{padding:.4rem .8rem;border-radius:8px;font-size:.7rem;font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s;border:1px solid transparent;white-space:nowrap}
+        .tab:hover{color:var(--text);background:rgba(250,30,78,.05)}
+        .tab.active{background:rgba(250,30,78,.1);color:var(--accent);border-color:rgba(250,30,78,.2)}
+        .tab-count{font-size:.5rem;background:rgba(250,30,78,.15);color:var(--accent);padding:.1rem .3rem;border-radius:4px;margin-left:.3rem}
+
+        /* SEARCH + FILTER */
+        .toolbar{padding:.8rem 1.5rem;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+        .search{flex:1;min-width:200px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.45rem .8rem;color:var(--text);font-size:.75rem;font-family:inherit;outline:none;transition:border-color .2s}
+        .search:focus{border-color:var(--accent)}
+        .filter-btn{padding:.35rem .6rem;border-radius:6px;font-size:.6rem;font-weight:700;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit}
+        .filter-btn:hover,.filter-btn.on{border-color:var(--green);color:var(--green);background:rgba(0,255,136,.05)}
+
+        /* MAIN GRID */
+        .main{padding:1rem 1.5rem}
+        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1rem}
+
+        /* PATTERN CARD */
+        .pcard{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all .3s;position:relative}
+        .pcard:hover{border-color:rgba(250,30,78,.25);transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.3)}
+        .pcard-header{padding:1rem 1.2rem .6rem;display:flex;align-items:flex-start;gap:.8rem}
+        .pcard-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+        .pcard-icon.red{background:rgba(250,30,78,.1)}
+        .pcard-icon.green{background:rgba(0,255,136,.1)}
+        .pcard-icon.blue{background:rgba(85,172,238,.1)}
+        .pcard-icon.yellow{background:rgba(255,184,0,.1)}
+        .pcard-icon.purple{background:rgba(168,85,247,.1)}
+        .pcard-info{flex:1;min-width:0}
+        .pcard-title{font-size:.85rem;font-weight:800;margin-bottom:.15rem}
+        .pcard-cat{font-size:.55rem;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em}
+        .pcard-uses{font-size:.5rem;color:var(--yellow);font-weight:700;position:absolute;top:.8rem;right:.8rem;background:rgba(255,184,0,.08);padding:.15rem .4rem;border-radius:4px}
+        .pcard-body{padding:0 1.2rem .8rem}
+        .pcard-desc{font-size:.7rem;color:var(--muted);line-height:1.6;margin-bottom:.6rem}
+        .pcard-tags{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.6rem}
+        .ptag{font-size:.5rem;padding:.12rem .35rem;border-radius:4px;font-weight:700;font-family:'JetBrains Mono',monospace}
+        .ptag-red{background:rgba(250,30,78,.08);color:var(--accent)}
+        .ptag-green{background:rgba(0,255,136,.08);color:var(--green)}
+        .ptag-blue{background:rgba(85,172,238,.08);color:var(--blue)}
+        .ptag-purple{background:rgba(168,85,247,.08);color:var(--purple)}
+
+        /* PREVIEW */
+        .pcard-preview{background:var(--bg);border-top:1px solid var(--border);padding:.6rem .8rem;font-family:'JetBrains Mono',monospace;font-size:.55rem;color:rgba(0,255,136,.6);max-height:80px;overflow:hidden;position:relative;line-height:1.6}
+        .pcard-preview::after{content:'';position:absolute;bottom:0;left:0;right:0;height:30px;background:linear-gradient(transparent,var(--bg))}
+
+        /* ACTIONS */
+        .pcard-actions{padding:.6rem 1.2rem;border-top:1px solid var(--border);display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+        .act-btn{padding:.3rem .6rem;border-radius:6px;font-size:.55rem;font-weight:700;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit;display:inline-flex;align-items:center;gap:.2rem}
+        .act-btn:hover{border-color:var(--accent);color:var(--accent)}
+        .act-btn.primary{background:rgba(250,30,78,.1);border-color:rgba(250,30,78,.2);color:var(--accent)}
+        .act-btn.green{border-color:rgba(0,255,136,.2);color:var(--green)}
+        .act-btn.green:hover{background:rgba(0,255,136,.05)}
+        .act-spacer{flex:1}
+
+        /* FEEDBACK BUTTON + PANEL */
+        .fb-btn{padding:.3rem .5rem;border-radius:6px;font-size:.55rem;font-weight:700;border:1px solid rgba(85,172,238,.2);background:rgba(85,172,238,.05);color:var(--blue);cursor:pointer;transition:all .2s;font-family:inherit;display:inline-flex;align-items:center;gap:.2rem}
+        .fb-btn:hover{background:rgba(85,172,238,.12);border-color:var(--blue)}
+        .fb-panel{display:none;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:.8rem;margin:.5rem 1.2rem .8rem}
+        .fb-panel.open{display:block}
+        .fb-textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:.5rem;color:var(--text);font-size:.65rem;font-family:inherit;resize:vertical;min-height:50px;outline:none}
+        .fb-textarea:focus{border-color:var(--blue)}
+        .fb-row{display:flex;gap:.3rem;margin-top:.4rem;align-items:center}
+        .fb-rating{display:flex;gap:.15rem}
+        .fb-star{font-size:.9rem;cursor:pointer;opacity:.3;transition:opacity .2s}
+        .fb-star:hover,.fb-star.active{opacity:1}
+        .fb-submit{padding:.25rem .5rem;border-radius:5px;font-size:.55rem;font-weight:700;border:none;background:var(--blue);color:#fff;cursor:pointer;font-family:inherit;margin-left:auto}
+        .fb-count{font-size:.5rem;color:var(--muted);margin-left:.3rem}
+
+        /* RATING DISPLAY */
+        .rating-display{display:flex;align-items:center;gap:.2rem;font-size:.55rem}
+        .rating-stars{color:var(--yellow);font-size:.65rem}
+        .rating-num{color:var(--muted);font-family:'JetBrains Mono',monospace}
+
+        /* MODAL */
+        .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:100;align-items:center;justify-content:center}
+        .modal-overlay.open{display:flex}
+        .modal{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);max-width:700px;width:95%;max-height:85vh;overflow-y:auto;padding:1.5rem}
+        .modal h2{font-size:1.1rem;font-weight:800;margin-bottom:.3rem}
+        .modal-close{position:absolute;top:.8rem;right:.8rem;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer}
+        .code-block{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.8rem;font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--green);line-height:1.7;overflow-x:auto;white-space:pre;margin:.6rem 0}
+        .modal-section{margin:1rem 0}
+        .modal-section h3{font-size:.8rem;font-weight:700;margin-bottom:.4rem;color:var(--accent)}
+
+        /* TOAST */
+        .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(100px);background:var(--card);border:1px solid var(--green);border-radius:10px;padding:.5rem 1rem;font-size:.7rem;font-weight:700;color:var(--green);z-index:200;transition:transform .3s;display:flex;align-items:center;gap:.3rem}
+        .toast.show{transform:translateX(-50%) translateY(0)}
+
+        @media(max-width:768px){
+            .grid{grid-template-columns:1fr}
+            .header-stats{display:none}
+            .toolbar{flex-direction:column}
+        }
+    </style>
+</head>
+<body data-dkz-module="pattern-hub" data-dkz-appid="DKZ-PTH-001" data-dkz-version="v1.0">
+
+    <!-- HEADER -->
+    <div class="header">
+        <a href="../../hub/index.html" class="back">&#8592; Hub</a>
+        <h1>&#128209; Pattern <span>Hub</span>™</h1>
+        <div class="header-stats">
+            <div class="hstat"><div class="hstat-num" id="totalPatterns">0</div><div>Patterns</div></div>
+            <div class="hstat"><div class="hstat-num" id="totalFeedback">0</div><div>Feedback</div></div>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs" id="tabs">
+        <div class="tab active" data-cat="alle" onclick="filterCat('alle')">Alle</div>
+        <div class="tab" data-cat="module" onclick="filterCat('module')">&#128230; Module</div>
+        <div class="tab" data-cat="readme" onclick="filterCat('readme')">&#128196; READMEs</div>
+        <div class="tab" data-cat="gallery" onclick="filterCat('gallery')">&#127912; Galerien</div>
+        <div class="tab" data-cat="landing" onclick="filterCat('landing')">&#127760; Landing Pages</div>
+        <div class="tab" data-cat="error" onclick="filterCat('error')">&#128165; Error Pages</div>
+        <div class="tab" data-cat="script" onclick="filterCat('script')">&#128221; Scripts</div>
+        <div class="tab" data-cat="infografik" onclick="filterCat('infografik')">&#127912; Infografiken</div>
+        <div class="tab" data-cat="skill" onclick="filterCat('skill')">&#9889; Skills</div>
+        <div class="tab" data-cat="workflow" onclick="filterCat('workflow')">&#128260; Workflows</div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+        <input class="search" id="searchInput" placeholder="&#128269; Pattern suchen..." oninput="filterPatterns()">
+        <button class="filter-btn" id="filterUsed" onclick="toggleFilter('used')">&#128293; 2+ mal benutzt</button>
+        <button class="filter-btn" id="filterRated" onclick="toggleFilter('rated')">&#11088; Bewertet</button>
+        <button class="filter-btn" id="filterNew" onclick="toggleFilter('new')">&#10024; Neu</button>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="main">
+        <div class="grid" id="patternGrid"></div>
+    </div>
+
+    <!-- DETAIL MODAL -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal" id="modalContent"></div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast">&#10003;</div>
+
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+    <script>
+    // XSS Protection
+    function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+    // ========== PATTERN DATA ==========
+    var patterns = [
+        {
+            id: 'mod-dashboard',
+            icon: '&#128230;', iconClass: 'red',
+            title: 'Dashboard Modul',
+            cat: 'module',
+            uses: 132,
+            desc: 'Standard DkZ Dashboard Modul mit Header, Shared Scripts, features.json. Glassmorphism Dark Theme.',
+            tags: [['module','red'],['html','green'],['css','blue'],['dkz','purple']],
+            preview: '&lt;!DOCTYPE html&gt;\n&lt;html lang="de"&gt;\n&lt;head&gt;\n  &lt;title&gt;DkZ™ [NAME]&lt;/title&gt;\n  &lt;link href="../../shared/dkz-theme.css"&gt;\n&lt;/head&gt;\n&lt;body data-dkz-module="[name]"&gt;',
+            skill: 'mod-builder',
+            workflow: '/create-module',
+            files: ['index.html','features.json'],
+            rating: 4.8, reviews: 12
+        },
+        {
+            id: 'readme-bmad',
+            icon: '&#128196;', iconClass: 'green',
+            title: 'README BMAD-Style',
+            cat: 'readme',
+            uses: 5,
+            desc: 'GitHub README mit for-the-badge Badges, Mermaid Diagramme, Tabellen, Oekosystem-Links. Weiss/Rot Design.',
+            tags: [['readme','green'],['github','blue'],['badges','purple'],['mermaid','red']],
+            preview: '&lt;div align="center"&gt;\n\n# &#129302; [NAME]\n\n### [SUBTITLE]\n\n![Version](https://img.shields.io/badge/...)\n![Status](https://img.shields.io/badge/...)\n\n```mermaid\ngraph TB\n  ...',
+            skill: null,
+            workflow: null,
+            files: ['README.md'],
+            rating: 5.0, reviews: 3
+        },
+        {
+            id: 'gallery-module',
+            icon: '&#127912;', iconClass: 'purple',
+            title: 'Gallery Modul',
+            cat: 'gallery',
+            uses: 4,
+            desc: 'Visuelles Grid mit Lightbox, Filter-Tabs, Suche, Toast Notifications. Vibe/Design/Blog/n8n Gallery.',
+            tags: [['gallery','purple'],['lightbox','blue'],['filter','green'],['grid','red']],
+            preview: '&lt;div class="gallery-grid"&gt;\n  &lt;div class="gcard" data-cat="all"&gt;\n    &lt;div class="gcard-preview"&gt;...&lt;/div&gt;\n    &lt;div class="gcard-title"&gt;[NAME]&lt;/div&gt;\n    &lt;div class="gcard-tags"&gt;...&lt;/div&gt;\n  &lt;/div&gt;',
+            skill: 'mod-builder',
+            workflow: '/create-module',
+            files: ['index.html','features.json','catalog.js'],
+            rating: 4.5, reviews: 4
+        },
+        {
+            id: 'landing-page',
+            icon: '&#127760;', iconClass: 'blue',
+            title: 'Landing Page / Showcase',
+            cat: 'landing',
+            uses: 2,
+            desc: 'Fullscreen-Sektionen mit Hero, Feature Grid, Stats, Timeline, Mindmap. SEO + OG Tags. devkitz.eu Style.',
+            tags: [['landing','blue'],['seo','green'],['og-tags','purple'],['showcase','red']],
+            preview: '&lt;section class="hero"&gt;\n  &lt;div class="hero-bg"&gt;&lt;img src="..."&gt;&lt;/div&gt;\n  &lt;div class="container"&gt;\n    &lt;h1&gt;&lt;span class="gradient"&gt;...&lt;/span&gt;&lt;/h1&gt;\n    &lt;div class="hero-stats"&gt;...&lt;/div&gt;',
+            skill: 'frontpage-builder',
+            workflow: '/frontpage-create',
+            files: ['index.html','assets/'],
+            rating: 4.9, reviews: 2
+        },
+        {
+            id: 'error-404',
+            icon: '&#128165;', iconClass: 'red',
+            title: '404 Star Wars Runner',
+            cat: 'error',
+            uses: 2,
+            desc: 'ASCII Stormtrooper Runner Game mit Matrix Rain, CRT Scanlines, Terminal Commands. Score in localStorage.',
+            tags: [['404','red'],['game','yellow'],['ascii','green'],['terminal','blue']],
+            preview: '// Stormtrooper ASCII Sprites\nvar sprites = [\n  ["  ┌─┐ ","  │°│ "," ┌┴─┴┐"," │ T │"],\n  ["  ┌─┐ ","  │°│ "," ┌┴─┴┐"," │ T │"]\n];',
+            skill: null,
+            workflow: null,
+            files: ['404.html'],
+            rating: 5.0, reviews: 1
+        },
+        {
+            id: 'error-500',
+            icon: '&#9889;', iconClass: 'yellow',
+            title: '500/504 Circuit Board',
+            cat: 'error',
+            uses: 2,
+            desc: 'Server Error mit animiertem Circuit Board, Glitch-Effekt, ASCII Logo, Recovery Progress Bar.',
+            tags: [['500','red'],['circuit','yellow'],['glitch','purple'],['recovery','green']],
+            preview: '// Animated circuit nodes\nvar nodes = [];\nfor(var i=0; i&lt;40; i++)\n  nodes.push({\n    x: Math.random()*W,\n    y: Math.random()*H\n  });',
+            skill: null,
+            workflow: null,
+            files: ['500.html'],
+            rating: 4.7, reviews: 1
+        },
+        {
+            id: 'shared-script',
+            icon: '&#128221;', iconClass: 'green',
+            title: 'Shared Script (dkz-*.js)',
+            cat: 'script',
+            uses: 15,
+            desc: 'Wiederverwendbarer Shared Script fuer alle Module: Navbar, Console, Debug, Toast, Guide, James.',
+            tags: [['shared','green'],['script','blue'],['reusable','purple']],
+            preview: '// dkz-[name].js\n(function(){\n  "use strict";\n  var DKZ = window.DKZ || {};\n  DKZ.[Name] = {\n    init: function(config) { ... },\n    destroy: function() { ... }\n  };\n  window.DKZ = DKZ;\n})();',
+            skill: null,
+            workflow: null,
+            files: ['shared/dkz-[name].js'],
+            rating: 4.6, reviews: 5
+        },
+        {
+            id: 'infografik-8k',
+            icon: '&#127912;', iconClass: 'yellow',
+            title: '8K Infografik',
+            cat: 'infografik',
+            uses: 19,
+            desc: 'KI-generierte 8K Infografik im DkZ Farbschema. Ohne Wasserzeichen, photorealistisch, einzigartig.',
+            tags: [['8k','yellow'],['ai','red'],['unique','purple'],['no-watermark','green']],
+            preview: 'Prompt Template:\n"Photorealistic [THEMA], 8K quality,\ndark black background #060608,\n[ELEMENTE] glowing with neon\nred #fa1e4e and green #00ff88,\ncinematic quality, no text\nno watermarks"',
+            skill: null,
+            workflow: null,
+            files: ['assets/[name].png'],
+            rating: 4.8, reviews: 3
+        },
+        {
+            id: 'features-json',
+            icon: '&#128203;', iconClass: 'blue',
+            title: 'features.json',
+            cat: 'module',
+            uses: 132,
+            desc: 'Modul-Metadaten Registry. AppID, Version, Tags, Features Array, Status, Timestamps.',
+            tags: [['json','blue'],['registry','green'],['metadata','purple']],
+            preview: '{\n  "module": "[name]",\n  "name": "[Anzeigename]",\n  "appId": "DKZ-[XXX]-001",\n  "version": "v0.01",\n  "status": "active",\n  "tags": ["..."],\n  "features": ["..."]\n}',
+            skill: null,
+            workflow: '/feature-registry',
+            files: ['features.json'],
+            rating: 4.3, reviews: 2
+        },
+        {
+            id: 'walkthrough-html',
+            icon: '&#128214;', iconClass: 'purple',
+            title: 'Walkthrough HTML',
+            cat: 'workflow',
+            uses: 3,
+            desc: 'Session-Walkthrough mit Cards, Verifizierung, Open Questions, Next Steps Buttons, Smart/Full Mode.',
+            tags: [['walkthrough','purple'],['session','blue'],['qa','green'],['interactive','red']],
+            preview: '&lt;div class="mode-bar"&gt;\n  &lt;button class="mode-btn active"\n    onclick="setMode(\'smart\')"&gt;\n    &#127919; SMART\n  &lt;/button&gt;\n  &lt;button class="mode-btn"\n    onclick="setMode(\'full\')"&gt;\n    &#128203; FULL\n  &lt;/button&gt;\n&lt;/div&gt;',
+            skill: 'handoff',
+            workflow: '/next',
+            files: ['walkthrough.html','walkthrough.css'],
+            rating: 4.9, reviews: 5
+        },
+        {
+            id: 'skill-definition',
+            icon: '&#9889;', iconClass: 'red',
+            title: 'Skill Definition',
+            cat: 'skill',
+            uses: 42,
+            desc: 'SKILL.md mit YAML Frontmatter (name, description), Markdown Instructions, Scripts, Examples.',
+            tags: [['skill','red'],['yaml','green'],['agent','purple'],['automation','blue']],
+            preview: '---\nname: "[Name]"\ndescription: "[Beschreibung]"\n---\n\n# [Skill Name]\n\n## Trigger\n`/[command]`\n\n## Schritte\n1. ...\n2. ...',
+            skill: 'dkz-skillpack',
+            workflow: null,
+            files: ['.agents/skills/[name]/SKILL.md'],
+            rating: 4.7, reviews: 8
+        },
+        {
+            id: 'workflow-definition',
+            icon: '&#128260;', iconClass: 'blue',
+            title: 'Workflow Definition',
+            cat: 'workflow',
+            uses: 77,
+            desc: 'Workflow .md mit Slash-Command, Trigger, Phasen, Validierung. Im Workflows-Ordner.',
+            tags: [['workflow','blue'],['slash','red'],['automation','green']],
+            preview: '---\nslash: "/[command]"\ndescription: "[Beschreibung]"\n---\n\n# /[command]\n\n## Voraussetzungen\n- ...\n\n## Schritte\n1. ...',
+            skill: null,
+            workflow: null,
+            files: ['.agents/workflows/[name].md'],
+            rating: 4.5, reviews: 6
+        }
+    ];
+
+    // ========== FEEDBACK STORAGE ==========
+    var feedbackStore = JSON.parse(localStorage.getItem('dkz-pattern-feedback') || '{}');
+
+    function getFeedback(patternId){
+        return feedbackStore[patternId] || [];
+    }
+    function saveFeedback(patternId, text, rating){
+        if(!feedbackStore[patternId]) feedbackStore[patternId] = [];
+        feedbackStore[patternId].push({
+            text: text,
+            rating: rating,
+            date: new Date().toISOString(),
+            author: '777'
+        });
+        localStorage.setItem('dkz-pattern-feedback', JSON.stringify(feedbackStore));
+        updateFeedbackCount();
+    }
+
+    // ========== RENDER ==========
+    var currentCat = 'alle';
+    var currentFilter = null;
+
+    function renderPatterns(){
+        var grid = document.getElementById('patternGrid');
+        var query = document.getElementById('searchInput').value.toLowerCase();
+        var html = '';
+        var count = 0;
+
+        patterns.forEach(function(p){
+            // Category filter
+            if(currentCat !== 'alle' && p.cat !== currentCat) return;
+            // Search filter
+            if(query && p.title.toLowerCase().indexOf(query) === -1 && p.desc.toLowerCase().indexOf(query) === -1) return;
+            // Special filters
+            if(currentFilter === 'used' && p.uses < 2) return;
+            if(currentFilter === 'rated' && (!p.rating || p.rating < 1)) return;
+            if(currentFilter === 'new' && p.uses > 3) return;
+
+            var fb = getFeedback(p.id);
+            var fbCount = fb.length;
+            var stars = '';
+            for(var s=1;s<=5;s++) stars += s<=Math.round(p.rating) ? '&#9733;' : '&#9734;';
+
+            html += '<div class="pcard" data-id="'+esc(p.id)+'" data-cat="'+esc(p.cat)+'">';
+            html += '<div class="pcard-header">';
+            html += '<div class="pcard-icon '+esc(p.iconClass)+'">'+p.icon+'</div>';
+            html += '<div class="pcard-info"><div class="pcard-title">'+esc(p.title)+'</div>';
+            html += '<div class="pcard-cat">'+esc(p.cat)+' · '+p.files.length+' Dateien</div></div>';
+            html += '<div class="pcard-uses">'+p.uses+'x benutzt</div>';
+            html += '</div>';
+            html += '<div class="pcard-body">';
+            html += '<div class="pcard-desc">'+esc(p.desc)+'</div>';
+            html += '<div class="pcard-tags">';
+            p.tags.forEach(function(t){html += '<span class="ptag ptag-'+t[1]+'">'+esc(t[0])+'</span>'});
+            html += '</div>';
+            if(p.rating){
+                html += '<div class="rating-display"><span class="rating-stars">'+stars+'</span>';
+                html += '<span class="rating-num">'+p.rating+' ('+p.reviews+')</span></div>';
+            }
+            html += '</div>';
+            html += '<div class="pcard-preview">'+p.preview+'</div>';
+            html += '<div class="pcard-actions">';
+            html += '<button class="act-btn primary" onclick="openDetail(\''+esc(p.id)+'\')">&#128065; Details</button>';
+            html += '<button class="act-btn" onclick="copyTemplate(\''+esc(p.id)+'\')">&#128203; Copy</button>';
+            if(p.skill) html += '<button class="act-btn green" onclick="toast(\'Skill: '+esc(p.skill)+'\')">&#9889; '+esc(p.skill)+'</button>';
+            if(p.workflow) html += '<button class="act-btn green" onclick="toast(\'Workflow: '+esc(p.workflow)+'\')">&#128260; '+esc(p.workflow)+'</button>';
+            html += '<span class="act-spacer"></span>';
+            html += '<button class="fb-btn" onclick="toggleFeedback(\''+esc(p.id)+'\',this)">&#128172; Feedback';
+            if(fbCount>0) html += '<span class="fb-count">('+fbCount+')</span>';
+            html += '</button>';
+            html += '</div>';
+            // Feedback panel
+            html += '<div class="fb-panel" id="fb-'+esc(p.id)+'">';
+            // Existing feedback
+            if(fbCount>0){
+                fb.forEach(function(f){
+                    html += '<div style="font-size:.6rem;color:var(--muted);margin-bottom:.4rem;padding-bottom:.4rem;border-bottom:1px solid var(--border)">';
+                    html += '<span style="color:var(--yellow)">'+('&#9733;').repeat(f.rating)+'</span> ';
+                    html += esc(f.text)+' <span style="color:var(--muted);font-size:.5rem">— '+f.date.slice(0,10)+'</span></div>';
+                });
+            }
+            html += '<textarea class="fb-textarea" id="fbt-'+esc(p.id)+'" placeholder="Dein Feedback zu diesem Pattern..."></textarea>';
+            html += '<div class="fb-row">';
+            html += '<div class="fb-rating" id="fbr-'+esc(p.id)+'">';
+            for(var r=1;r<=5;r++) html += '<span class="fb-star" data-r="'+r+'" onclick="setRating(\''+esc(p.id)+'\','+r+',this)">&#9733;</span>';
+            html += '</div>';
+            html += '<button class="fb-submit" onclick="submitFeedback(\''+esc(p.id)+'\')">Senden</button>';
+            html += '</div></div>';
+            html += '</div>';
+            count++;
+        });
+
+        grid.innerHTML = html;
+        document.getElementById('totalPatterns').textContent = count;
+    }
+
+    function filterCat(cat){
+        currentCat = cat;
+        document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('active',t.dataset.cat===cat)});
+        renderPatterns();
+    }
+
+    function filterPatterns(){renderPatterns()}
+
+    function toggleFilter(f){
+        var btn = document.getElementById('filter'+f.charAt(0).toUpperCase()+f.slice(1));
+        if(currentFilter === f){currentFilter=null;btn.classList.remove('on')}
+        else{
+            document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('on')});
+            currentFilter=f;btn.classList.add('on');
+        }
+        renderPatterns();
+    }
+
+    // ========== FEEDBACK ==========
+    var currentRating = {};
+
+    function toggleFeedback(id, btn){
+        var panel = document.getElementById('fb-'+id);
+        panel.classList.toggle('open');
+    }
+
+    function setRating(id, r, el){
+        currentRating[id] = r;
+        var container = el.parentElement;
+        container.querySelectorAll('.fb-star').forEach(function(s){
+            s.classList.toggle('active', parseInt(s.dataset.r) <= r);
+        });
+    }
+
+    function submitFeedback(id){
+        var text = document.getElementById('fbt-'+id).value.trim();
+        var rating = currentRating[id] || 5;
+        if(!text){toast('Bitte Feedback-Text eingeben');return}
+        saveFeedback(id, text, rating);
+        toast('&#10003; Feedback gespeichert!');
+        renderPatterns();
+    }
+
+    function updateFeedbackCount(){
+        var total = 0;
+        Object.keys(feedbackStore).forEach(function(k){total += feedbackStore[k].length});
+        document.getElementById('totalFeedback').textContent = total;
+    }
+
+    // ========== DETAIL MODAL ==========
+    function openDetail(id){
+        var p = patterns.find(function(x){return x.id===id});
+        if(!p) return;
+        var html = '<div style="position:relative">';
+        html += '<button onclick="closeModal()" style="position:absolute;top:0;right:0;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer">&times;</button>';
+        html += '<h2>'+p.icon+' '+esc(p.title)+'</h2>';
+        html += '<div style="font-size:.65rem;color:var(--muted);margin-bottom:1rem">'+esc(p.cat)+' · '+p.uses+'x benutzt</div>';
+        html += '<div class="modal-section"><h3>Beschreibung</h3><p style="font-size:.75rem;color:var(--muted);line-height:1.7">'+esc(p.desc)+'</p></div>';
+        html += '<div class="modal-section"><h3>Template Code</h3><div class="code-block">'+p.preview+'</div></div>';
+        html += '<div class="modal-section"><h3>Dateien</h3>';
+        p.files.forEach(function(f){html += '<div style="font-size:.65rem;color:var(--green);font-family:JetBrains Mono;margin:.2rem 0">&#128196; '+esc(f)+'</div>'});
+        html += '</div>';
+        if(p.skill || p.workflow){
+            html += '<div class="modal-section"><h3>Verknuepfungen</h3>';
+            if(p.skill) html += '<div style="font-size:.7rem;margin:.2rem 0">&#9889; Skill: <span style="color:var(--green)">'+esc(p.skill)+'</span></div>';
+            if(p.workflow) html += '<div style="font-size:.7rem;margin:.2rem 0">&#128260; Workflow: <span style="color:var(--blue)">'+esc(p.workflow)+'</span></div>';
+            html += '</div>';
+        }
+        html += '</div>';
+        document.getElementById('modalContent').innerHTML = html;
+        document.getElementById('detailModal').classList.add('open');
+    }
+
+    function closeModal(){document.getElementById('detailModal').classList.remove('open')}
+    document.getElementById('detailModal').addEventListener('click',function(e){if(e.target===this)closeModal()});
+    document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal()});
+
+    // ========== UTILS ==========
+    function copyTemplate(id){
+        var p = patterns.find(function(x){return x.id===id});
+        if(!p) return;
+        var text = p.preview.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
+        navigator.clipboard.writeText(text).then(function(){toast('&#128203; Template kopiert!')});
+    }
+
+    function toast(msg){
+        var t = document.getElementById('toast');
+        t.innerHTML = msg;
+        t.classList.add('show');
+        setTimeout(function(){t.classList.remove('show')},2500);
+    }
+
+    // INIT
+    updateFeedbackCount();
+    renderPatterns();
+    </script>
+</body>
+</html>
