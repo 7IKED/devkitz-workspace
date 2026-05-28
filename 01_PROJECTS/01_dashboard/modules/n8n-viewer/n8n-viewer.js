@@ -570,5 +570,72 @@ function showDetail(idx){
 }
 function closeDetail(){document.getElementById('detailOverlay').classList.remove('show');}
 
+// ══════════════════════════════════════
+// GALLERY — n8n Infographic Boards
+// ══════════════════════════════════════
+var GAL_BOARDS=[
+    {id:1,img:'infographics/01_ai_agents.png',title:'AI Agents & LLM',desc:'GPT-4o, Claude Sonnet, Gemini, LangChain, Vector Stores — KI-gesteuerte Workflow-Automatisierung mit autonomen Agenten.',count:847,cat:'AI'},
+    {id:2,img:'infographics/02_trigger_engine.png',title:'Trigger Engine',desc:'Webhooks, Cron Schedules, Email/Chat/Form Trigger — 2.485 Trigger-basierte Workflows fuer Event-driven Automation.',count:2485,cat:'Trigger'},
+    {id:3,img:'infographics/03_data_pipeline.png',title:'Data Pipeline',desc:'ETL, Google Sheets, Notion, Airtable, Transform — 1.879 Data Processing Workflows fuer Daten-Migration und Transformation.',count:1879,cat:'Data'},
+    {id:4,img:'infographics/04_comm_hub.png',title:'Communication Hub',desc:'Telegram, WhatsApp, Slack, Discord, Email — 1.524 Messaging-Workflows fuer Multi-Channel Kommunikation.',count:1524,cat:'Comm'},
+    {id:5,img:'infographics/05_logic_engine.png',title:'Logic Engine',desc:'IF/Switch, Merge, Code (JS), Sub-Workflows — 2.479 Custom Logic Workflows fuer Business Rules und Routing.',count:2479,cat:'Logic'},
+    {id:6,img:'infographics/06_devops_cloud.png',title:'DevOps & Cloud',desc:'Docker, GitHub, SSH, CI/CD, Monitoring — 892 DevOps-Workflows fuer Infrastructure-as-Code und Deployment.',count:892,cat:'DevOps'},
+    {id:7,img:'infographics/07_ecosystem_overview.png',title:'Ecosystem Overview',desc:'Das komplette n8n Oekosystem: 3.815 Workflows, 11 Kategorien, 156 Node-Typen — die Gesamtuebersicht.',count:3815,cat:'Overview'},
+    {id:8,img:'infographics/08_database_storage.png',title:'Database & Storage',desc:'PostgreSQL, MongoDB, Redis, S3/Minio, Qdrant — 743 Datenbank-Workflows fuer Persistenz und Caching.',count:743,cat:'Database'}
+];
+var galCurrent=0;
+
+function renderGallery(){
+    var h='';
+    GAL_BOARDS.forEach(function(b,i){
+        h+='<div class="gal-card" onclick="openLightbox('+i+')" title="'+esc(b.title)+'">';
+        h+='<img class="gal-card-img" src="'+b.img+'" alt="'+esc(b.title)+'" loading="lazy">';
+        h+='<div class="gal-card-overlay"></div>';
+        h+='<div class="gal-card-num">'+(i+1)+'</div>';
+        h+='<div class="gal-card-info">';
+        h+='<div class="gal-card-title">'+esc(b.title)+'</div>';
+        h+='<div class="gal-card-meta">';
+        h+='<span class="gal-card-count">'+b.count.toLocaleString('de-DE')+' Workflows</span>';
+        h+='<span class="gal-card-cat">'+esc(b.cat)+'</span>';
+        h+='</div></div></div>';
+    });
+    var el=document.getElementById('galGrid');
+    if(el) el.innerHTML=h;
+}
+
+function openLightbox(idx){
+    galCurrent=idx;
+    var b=GAL_BOARDS[idx];if(!b)return;
+    document.getElementById('galLbImg').src=b.img;
+    document.getElementById('galLbImg').alt=b.title;
+    document.getElementById('galLbTitle').textContent=b.title;
+    document.getElementById('galLbDesc').textContent=b.desc;
+    var stats='<span class="gal-lb-stat">'+b.count.toLocaleString('de-DE')+' Workflows</span>';
+    stats+='<span class="gal-lb-stat">'+b.cat+'</span>';
+    stats+='<span class="gal-lb-stat">Board '+(idx+1)+'/'+GAL_BOARDS.length+'</span>';
+    document.getElementById('galLbStats').innerHTML=stats;
+    document.getElementById('galLightbox').classList.add('show');
+    log('[Gallery] '+b.title+' geoeffnet');
+}
+
+function closeLightbox(){document.getElementById('galLightbox').classList.remove('show');}
+
+function galNav(dir){
+    galCurrent=(galCurrent+dir+GAL_BOARDS.length)%GAL_BOARDS.length;
+    openLightbox(galCurrent);
+}
+
+// Keyboard for lightbox
+document.addEventListener('keydown',function(e){
+    if(!document.getElementById('galLightbox').classList.contains('show'))return;
+    if(e.key==='Escape')closeLightbox();
+    if(e.key==='ArrowLeft')galNav(-1);
+    if(e.key==='ArrowRight')galNav(1);
+});
+
 // ── INIT ──
-document.addEventListener('DOMContentLoaded',init);
+document.addEventListener('DOMContentLoaded',function(){
+    init();
+    renderGallery();
+});
+
