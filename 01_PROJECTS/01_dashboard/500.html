@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 — Server Error | DEVKiTZ™</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:#060608;color:#00ff88;font-family:'JetBrains Mono',monospace;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center}
+        canvas{position:fixed;inset:0;z-index:0}
+        .scanlines{position:fixed;inset:0;z-index:2;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,136,.012) 2px,rgba(0,255,136,.012) 4px)}
+        .container{position:relative;z-index:10;text-align:center;max-width:700px;padding:2rem}
+        .code{font-size:clamp(5rem,15vw,10rem);font-weight:900;font-family:'Inter',sans-serif;color:#fa1e4e;line-height:1;text-shadow:0 0 60px rgba(250,30,78,.25);letter-spacing:-.05em;position:relative}
+        .code::after{content:'504';position:absolute;inset:0;color:transparent;text-shadow:0 0 100px rgba(250,30,78,.15);animation:glitch 3s infinite}
+        @keyframes glitch{0%,90%,100%{transform:none;opacity:0}92%{transform:translate(-3px,2px);opacity:.7;color:#55ACEE}95%{transform:translate(3px,-1px);opacity:.5;color:#FFB800}97%{transform:translate(-1px,3px);opacity:.6;color:#fa1e4e}}
+        .title{font-size:1.1rem;color:#fa1e4e;margin:.8rem 0 .3rem;font-weight:800}
+        .desc{font-size:.75rem;color:rgba(0,255,136,.5);line-height:1.7;margin-bottom:2rem}
+        .server-block{background:rgba(26,26,28,.8);border:1px solid rgba(0,255,136,.1);border-radius:8px;padding:1.2rem;text-align:left;margin-bottom:1.5rem;font-size:.65rem;line-height:2}
+        .server-block .label{color:rgba(0,255,136,.3)}
+        .server-block .val{color:#00ff88}
+        .server-block .err{color:#fa1e4e}
+        .server-block .warn{color:#FFB800}
+        .progress-wrap{background:rgba(0,255,136,.05);border-radius:20px;height:6px;margin:1.5rem 0;overflow:hidden}
+        .progress-bar{height:100%;border-radius:20px;background:linear-gradient(90deg,#fa1e4e,#FFB800,#00ff88);width:0;animation:loading 8s ease-in-out infinite}
+        @keyframes loading{0%{width:0}50%{width:85%}70%{width:85%}100%{width:100%}}
+        .actions{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap}
+        .btn{padding:.5rem 1.2rem;border-radius:8px;text-decoration:none;font-size:.7rem;font-weight:700;font-family:inherit;transition:all .25s;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:.3rem}
+        .btn-red{background:rgba(250,30,78,.1);color:#fa1e4e;border:1px solid rgba(250,30,78,.2)}
+        .btn-red:hover{background:rgba(250,30,78,.2);transform:translateY(-2px)}
+        .btn-green{background:rgba(0,255,136,.1);color:#00ff88;border:1px solid rgba(0,255,136,.2)}
+        .btn-green:hover{background:rgba(0,255,136,.2);transform:translateY(-2px)}
+        .ascii-art{font-size:.4rem;line-height:1.2;color:rgba(250,30,78,.2);margin-bottom:1rem;white-space:pre}
+        .status-dots{display:flex;justify-content:center;gap:.4rem;margin:.8rem 0}
+        .dot{width:8px;height:8px;border-radius:50%;animation:dotPulse 2s infinite}
+        .dot:nth-child(1){background:#fa1e4e;animation-delay:0s}
+        .dot:nth-child(2){background:#FFB800;animation-delay:.3s}
+        .dot:nth-child(3){background:#00ff88;animation-delay:.6s}
+        @keyframes dotPulse{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+        .footer{font-size:.5rem;color:rgba(0,255,136,.2);margin-top:1.5rem}
+    </style>
+</head>
+<body>
+    <canvas id="bg"></canvas>
+    <div class="scanlines"></div>
+
+    <div class="container">
+        <div class="ascii-art">
+   ____  _______     ___  __ _ _____ ______  ___
+  |  _ \| ____\ \   / / |/ /(_)_   _|___  / |__ \
+  | | | |  _|  \ \ / /| ' / | | | |    / /     ) |
+  | |_| | |___  \ V / | . \ | | | |   / /_    / /
+  |____/|_____|  \_/  |_|\_\|_| |_|  /____| |___|
+        </div>
+
+        <div class="code">504</div>
+        <div class="title">Server Timeout</div>
+        <div class="desc">Der Server antwortet nicht rechtzeitig. Unsere Agenten arbeiten bereits an der Loesung.</div>
+
+        <div class="status-dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+
+        <div class="server-block">
+            <span class="label">STATUS  </span><span class="err">504 GATEWAY TIMEOUT</span><br>
+            <span class="label">SERVER  </span><span class="val">kvm8.devkitz.eu</span><br>
+            <span class="label">TIME    </span><span class="val" id="timestamp">2026-05-28T19:26:00Z</span><br>
+            <span class="label">AGENT   </span><span class="warn">James™ notified — investigating</span><br>
+            <span class="label">ACTION  </span><span class="val">Auto-recovery initiated...</span>
+        </div>
+
+        <div class="progress-wrap"><div class="progress-bar"></div></div>
+
+        <div class="actions">
+            <a href="javascript:location.reload()" class="btn btn-red">↻ Retry</a>
+            <a href="/hub/" class="btn btn-green">🏠 Hub</a>
+            <a href="https://github.com/D-VKITZ" target="_blank" class="btn btn-green">📡 GitHub</a>
+            <a href="/modules/nlm-demo/" class="btn btn-green">🎨 Showcase</a>
+        </div>
+
+        <div class="footer">DEVKiTZ™ by 777 · Health Chain prüft automatisch alle 30s</div>
+    </div>
+
+    <script>
+    // Animated circuit background
+    var c=document.getElementById('bg'),ctx=c.getContext('2d');
+    function resize(){c.width=innerWidth;c.height=innerHeight}
+    resize();addEventListener('resize',resize);
+    var nodes=[];
+    for(var i=0;i<40;i++) nodes.push({x:Math.random()*c.width,y:Math.random()*c.height,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3});
+    function draw(){
+        ctx.fillStyle='rgba(6,6,8,.1)';ctx.fillRect(0,0,c.width,c.height);
+        for(var i=0;i<nodes.length;i++){
+            var n=nodes[i];
+            n.x+=n.vx;n.y+=n.vy;
+            if(n.x<0||n.x>c.width)n.vx*=-1;
+            if(n.y<0||n.y>c.height)n.vy*=-1;
+            ctx.fillStyle='rgba(250,30,78,.15)';
+            ctx.beginPath();ctx.arc(n.x,n.y,2,0,Math.PI*2);ctx.fill();
+            for(var j=i+1;j<nodes.length;j++){
+                var m=nodes[j],dx=n.x-m.x,dy=n.y-m.y,d=Math.sqrt(dx*dx+dy*dy);
+                if(d<150){
+                    ctx.strokeStyle='rgba(250,30,78,'+(0.03*(1-d/150))+')';
+                    ctx.beginPath();ctx.moveTo(n.x,n.y);ctx.lineTo(m.x,m.y);ctx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(draw);
+    }
+    draw();
+    document.getElementById('timestamp').textContent = new Date().toISOString();
+    </script>
+</body>
+</html>
