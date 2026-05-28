@@ -64,11 +64,14 @@ var CONFIG = {
       '03': 'Bookmarks',
       '99': 'Archiv'
     },
-    '04': {
-      '01': 'Scripts',
-      '02': 'Shortcuts',
-      '03': 'Installers',
-      '99': 'Archiv'
+    '04': {              // SYSTEM (einziger System-Ordner!)
+      '01': 'installers',
+      '02': 'ONTHERUN',
+      '03': 'shortcuts',
+      '04': 'scripts',
+      '05': 'downloads',
+      '06': 'BOTNET',
+      '99': '99_archived'
     }
   },
   TRASH: 'Papierkorb',
