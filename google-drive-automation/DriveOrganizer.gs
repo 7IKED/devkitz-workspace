@@ -16,6 +16,16 @@
  * R9: Videos → NUR in 03_MEDIA/Videos
  * R10: Inbox [00] ist der EINZIGE Ordner der sortiert wird
  * R11: Desktop — NUR Dateien ABLEGEN, nie bestehende aendern
+ * R12: 04_SYSTEM — NUR verschieben, NIEMALS loeschen
+ * R13: Apps Script ALLEINE darf NUR Dateien REIN-verschieben (Dauer-Sortierung)
+ * R14: ERWEITERTE Aktionen (umbenennen, editieren, loeschen) NUR mit LLM_OVERRIDE
+ *      → Haupt-LLM (Antigravity/Claude) setzt Override-Token wenn noetig
+ *      → Ohne Token: NUR moveTo() erlaubt
+ * 
+ * BETRIEBSMODI:
+ * ─────────────
+ * AUTO         → Dauer-Sortierung, nur moveTo(), keine Aenderungen
+ * LLM_OVERRIDE → LLM hat explizit angewiesen, erweiterte Ops erlaubt
  * 
  * ECHTE DEVKITZ STRUKTUR (Stand 2026-05-28):
  * ──────────────────────────────────────────
@@ -34,6 +44,46 @@
  * @version 2.2.0
  * @author 777 / Antigravity
  */
+
+// ═══ BETRIEBSMODUS ═══
+// AUTO = Dauer-Sortierung (nur moveTo)
+// LLM  = Haupt-LLM hat erweiterte Ops freigegeben
+var MODE = {
+  AUTO: 'AUTO',
+  LLM: 'LLM_OVERRIDE'
+};
+
+function getMode() {
+  try {
+    var token = PropertiesService.getScriptProperties().getProperty('LLM_OVERRIDE');
+    if (token && token === 'ACTIVE') return MODE.LLM;
+  } catch(e) {}
+  return MODE.AUTO;
+}
+
+// LLM setzt diesen Override wenn noetig
+function enableLLMOverride() {
+  PropertiesService.getScriptProperties().setProperty('LLM_OVERRIDE', 'ACTIVE');
+  _log('MODE', 'LLM_OVERRIDE', 'AKTIVIERT — erweiterte Ops erlaubt');
+}
+
+// Nach LLM-Aktion wieder zuruecksetzen
+function disableLLMOverride() {
+  PropertiesService.getScriptProperties().deleteProperty('LLM_OVERRIDE');
+  _log('MODE', 'AUTO', 'Zurueck auf Dauer-Sortierung');
+}
+
+// Prueft ob eine Aktion erlaubt ist
+function isAllowed(action) {
+  var mode = getMode();
+  // AUTO: NUR moveTo/SORT erlaubt
+  if (mode === MODE.AUTO) {
+    var allowed = ['SORT', 'MOVE', 'MOVE_IN', 'DEEPKEEP-COPY', 'REPORT'];
+    return allowed.indexOf(action) !== -1;
+  }
+  // LLM: Alles erlaubt (ausser loeschen in geschuetzten Zonen)
+  return true;
+}
 
 // ═══ ECHTE DEVKITZ ORDNERSTRUKTUR ═══
 var CONFIG = {
@@ -97,14 +147,24 @@ var CONFIG = {
 // Zone 2: 06_NOTEPAD       — Notizen, ABSOLUT TABU
 // Zone 3: 07_PRIVAT        — Privat, ABSOLUT TABU
 // Zone 4: 08_PLAYSTATION   — Gaming, geschuetzt
-// Zone 5: [DEEPKEEP]       — NUR KOPIEREN
-// Zone 6: raw              — NIE ANFASSEN
+// Zone 5: 09_BRAIN²        — SecondBrain + raw
+// Zone 6: [DEEPKEEP]       — NUR KOPIEREN
+// Zone 7: raw              — NIE ANFASSEN
+// Zone 8: 04_SYSTEM        — NUR VERSCHIEBEN, nie loeschen
 //
 // Schutz 1: isProtected()  — Name-Check (Ordner + 5 Eltern)
-// Schutz 2: isBlocked()    — Nummer-Check (05/06/07/08)
+// Schutz 2: isBlocked()    — Nummer-Check (05/06/07/08/09)
 // Schutz 3: tripleGuard()  — Kombination: Protected + Blocked + DeepKeep + Raw
+// Schutz 4: isSystemFolder() — 04_SYSTEM: nur rein, nie loeschen
 //
-// ALLE 3 muessen GRUEN sein bevor IRGENDWAS passiert!
+// ALLE muessen GRUEN sein bevor IRGENDWAS passiert!
+//
+// GLOBAL: Apps Script darf NUR moveTo() — NIEMALS:
+//   - file.setName()      ← VERBOTEN
+//   - file.setContent()   ← VERBOTEN
+//   - file.setTrashed()   ← VERBOTEN
+//   - file.remove()       ← VERBOTEN
+//   - folder.removeFile() ← VERBOTEN
 
 var PROTECTED_FOLDERS = [
   '05_INTERN', 'INTERN',
@@ -186,9 +246,24 @@ function isRaw(folder) {
   return false;
 }
 
-// ═══ SCHUTZ 3: TRIPLE GUARD — Alle Checks kombiniert ═══
-// Gibt true zurueck wenn SICHER (kein Schutz greift)
-// Gibt false zurueck wenn BLOCKIERT (mindestens 1 Schutz greift)
+// ═══ SCHUTZ 3b: SYSTEM-ORDNER (nur rein, nie loeschen) ═══
+function isSystemFolder(folder) {
+  if (!folder) return false;
+  var name = folder.getName();
+  if (name === '04_SYSTEM' || name.indexOf('04_SYSTEM') === 0) return true;
+  var parent = folder;
+  for (var d = 0; d < 5; d++) {
+    try {
+      parent = parent.getParents().next();
+      if (parent.getName() === '04_SYSTEM') return true;
+    } catch(e) { break; }
+  }
+  return false;
+}
+
+// ═══ SCHUTZ 4: TRIPLE GUARD — Alle Checks kombiniert ═══
+// true = SICHER (kein Schutz greift)
+// false = BLOCKIERT
 function tripleGuard(folder, action, fileName) {
   // Check 1: Name-basiert
   if (isProtected(folder)) {
@@ -207,6 +282,11 @@ function tripleGuard(folder, action, fileName) {
   }
   if (isRaw(folder)) {
     _log('GUARD-3', fileName || '?', action + ' BLOCKED — raw (nie anfassen!)');
+    return false;
+  }
+  // Check 4: SYSTEM — nur rein, nie loeschen/raus
+  if (isSystemFolder(folder) && (action === 'DELETE' || action === 'ARCHIVE' || action === 'REMOVE')) {
+    _log('GUARD-4', fileName || '?', action + ' BLOCKED — 04_SYSTEM: nur rein-verschieben!');
     return false;
   }
   return true; // SICHER
@@ -301,6 +381,11 @@ function safeArchive(file, sub) {
     var parent = file.getParents().next();
     if (isProtected(parent) || isRaw(parent) || isDeepKeep(parent)) {
       _log('BLOCK', file.getName(), 'Geschuetzt — ABBRUCH');
+      return false;
+    }
+    // 04_SYSTEM: NIEMALS Dateien raus-archivieren
+    if (isSystemFolder(parent)) {
+      _log('BLOCK', file.getName(), '04_SYSTEM — nur rein, nie raus/loeschen!');
       return false;
     }
   } catch(e) {}
