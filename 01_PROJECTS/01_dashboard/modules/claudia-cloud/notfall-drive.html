@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v1.0.0_01">
+    <meta name="dkz-module" content="claudia-cloud">
+    <title>🚨 NOTFALL — Drive-Schutz · CL0UDiA™</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent:#fa1e4e; --bg:#060608; --bg2:#0e0e12; --bg3:#1a1a20;
+            --text:#e8e8ec; --muted:#71717a; --border:rgba(255,255,255,.06);
+            --green:#00ff88; --yellow:#ffb800; --red:#ff3b5c; --blue:#3b82f6;
+            --font:'Inter',sans-serif; --mono:'JetBrains Mono',monospace;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; }
+
+        /* Animated emergency background */
+        .emergency-bg { position:fixed; inset:0; z-index:-1; overflow:hidden; }
+        .emergency-bg::before { content:''; position:absolute; inset:-50%; background:conic-gradient(from 0deg, transparent 0%, rgba(255,59,92,.03) 25%, transparent 50%, rgba(250,30,78,.03) 75%, transparent 100%); animation:spin 20s linear infinite; }
+        .pulse-border { position:fixed; inset:0; border:2px solid rgba(255,59,92,.15); pointer-events:none; z-index:1000; animation:borderPulse 2s ease-in-out infinite; }
+
+        @keyframes spin { to { transform:rotate(360deg); } }
+        @keyframes borderPulse { 0%,100%{border-color:rgba(255,59,92,.1)} 50%{border-color:rgba(255,59,92,.3)} }
+        @keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 10%,30%,50%,70%,90%{transform:translateX(-2px)} 20%,40%,60%,80%{transform:translateX(2px)} }
+
+        .header { background:rgba(255,59,92,.08); backdrop-filter:blur(20px); border-bottom:2px solid rgba(255,59,92,.2); padding:16px 24px; display:flex; align-items:center; gap:14px; position:sticky; top:0; z-index:100; }
+        .header h1 { font-size:20px; font-weight:900; color:var(--red); }
+        .header .timestamp { margin-left:auto; font-family:var(--mono); font-size:11px; color:var(--muted); }
+        .back-btn { color:var(--muted); text-decoration:none; font-size:20px; transition:color .2s; }
+        .back-btn:hover { color:var(--accent); }
+
+        .content { max-width:800px; margin:0 auto; padding:24px; }
+
+        /* Alert Banner */
+        .alert-banner { background:linear-gradient(135deg, rgba(255,59,92,.12), rgba(250,30,78,.08)); border:1px solid rgba(255,59,92,.25); border-radius:16px; padding:20px; margin-bottom:24px; animation:fadeInUp .5s ease; text-align:center; }
+        .alert-banner .icon { font-size:3rem; animation:shake 1s ease infinite; display:block; margin-bottom:8px; }
+        .alert-banner h2 { font-size:18px; font-weight:900; color:var(--red); margin-bottom:6px; }
+        .alert-banner p { font-size:12px; color:var(--muted); line-height:1.6; }
+
+        /* Status Cards */
+        .status-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:24px; }
+        .status-card { padding:14px; border-radius:12px; border:1px solid var(--border); animation:fadeInUp .5s ease both; }
+        .status-card:nth-child(1) { animation-delay:.1s; }
+        .status-card:nth-child(2) { animation-delay:.2s; }
+        .status-card:nth-child(3) { animation-delay:.3s; }
+        .status-card:nth-child(4) { animation-delay:.4s; }
+        .status-ok { background:rgba(0,255,136,.04); border-color:rgba(0,255,136,.15); }
+        .status-danger { background:rgba(255,59,92,.04); border-color:rgba(255,59,92,.15); }
+        .status-label { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
+        .status-ok .status-label { color:var(--green); }
+        .status-danger .status-label { color:var(--red); }
+        .status-value { font-size:13px; font-weight:700; }
+
+        /* Steps */
+        .step { background:rgba(18,18,24,.85); border:1px solid var(--border); border-radius:16px; padding:20px; margin-bottom:16px; backdrop-filter:blur(12px); animation:fadeInUp .5s ease both; position:relative; overflow:hidden; transition:all .3s; }
+        .step:nth-child(1) { animation-delay:.2s; }
+        .step:nth-child(2) { animation-delay:.3s; }
+        .step:nth-child(3) { animation-delay:.4s; }
+        .step:nth-child(4) { animation-delay:.5s; }
+        .step::before { content:''; position:absolute; top:0; left:0; width:4px; height:100%; }
+        .step-critical::before { background:var(--red); }
+        .step-warning::before { background:var(--yellow); }
+        .step-info::before { background:var(--green); }
+        .step:hover { border-color:rgba(250,30,78,.2); transform:translateX(4px); }
+
+        .step-header { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+        .step-number { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:16px; flex-shrink:0; }
+        .step-critical .step-number { background:rgba(255,59,92,.15); color:var(--red); }
+        .step-warning .step-number { background:rgba(255,184,0,.15); color:var(--yellow); }
+        .step-info .step-number { background:rgba(0,255,136,.15); color:var(--green); }
+        .step-title { font-size:15px; font-weight:800; }
+        .step-urgency { margin-left:auto; font-size:9px; font-weight:700; padding:3px 8px; border-radius:20px; text-transform:uppercase; letter-spacing:1px; }
+        .urgency-now { background:rgba(255,59,92,.15); color:var(--red); }
+        .urgency-asap { background:rgba(255,184,0,.15); color:var(--yellow); }
+        .urgency-after { background:rgba(0,255,136,.15); color:var(--green); }
+
+        .step-body { padding-left:48px; }
+        .step-body p { font-size:12px; color:var(--muted); line-height:1.7; margin-bottom:10px; }
+
+        .link-btn { display:inline-flex; align-items:center; gap:8px; padding:10px 18px; background:linear-gradient(135deg, rgba(255,59,92,.12), rgba(250,30,78,.06)); border:1px solid rgba(255,59,92,.2); border-radius:10px; color:var(--text); text-decoration:none; font-size:12px; font-weight:700; font-family:var(--font); transition:all .2s; margin-bottom:8px; margin-right:6px; }
+        .link-btn:hover { background:rgba(255,59,92,.2); border-color:rgba(255,59,92,.4); transform:translateY(-1px); }
+        .link-btn-green { background:linear-gradient(135deg, rgba(0,255,136,.08), rgba(0,255,136,.03)); border-color:rgba(0,255,136,.2); }
+        .link-btn-green:hover { background:rgba(0,255,136,.15); border-color:rgba(0,255,136,.4); }
+
+        .checklist { list-style:none; margin-top:10px; }
+        .checklist li { font-size:12px; padding:6px 0; display:flex; align-items:flex-start; gap:8px; color:var(--muted); }
+        .checklist li::before { content:'☐'; font-size:14px; flex-shrink:0; }
+        .checklist li.done::before { content:'☑'; color:var(--green); }
+
+        .code-block { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-family:var(--mono); font-size:11px; color:var(--green); margin:8px 0; overflow-x:auto; }
+
+        /* Safe Zone */
+        .safe-zone { background:rgba(0,255,136,.04); border:1px solid rgba(0,255,136,.15); border-radius:16px; padding:20px; margin-top:24px; animation:fadeInUp .6s ease both; animation-delay:.6s; }
+        .safe-zone h3 { color:var(--green); font-size:14px; font-weight:800; margin-bottom:10px; }
+        .safe-zone p { font-size:11px; color:var(--muted); line-height:1.7; }
+        .safe-list { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:10px; }
+        .safe-item { font-size:11px; padding:6px 10px; background:rgba(0,255,136,.04); border-radius:6px; display:flex; align-items:center; gap:6px; }
+        .safe-item .dot { width:6px; height:6px; border-radius:50%; background:var(--green); }
+
+        /* Prevention */
+        .prevention { background:rgba(59,130,246,.04); border:1px solid rgba(59,130,246,.15); border-radius:16px; padding:20px; margin-top:16px; animation:fadeInUp .6s ease both; animation-delay:.7s; }
+        .prevention h3 { color:var(--blue); font-size:14px; font-weight:800; margin-bottom:10px; }
+        .prevention p { font-size:11px; color:var(--muted); line-height:1.7; margin-bottom:8px; }
+
+        .footer { text-align:center; padding:24px; color:var(--muted); font-size:10px; font-family:var(--mono); }
+
+        @media(max-width:640px) { .status-grid{grid-template-columns:1fr} .safe-list{grid-template-columns:1fr} .step-body{padding-left:12px} }
+    </style>
+</head>
+<body>
+    <div class="emergency-bg"></div>
+    <div class="pulse-border"></div>
+
+    <header class="header">
+        <a href="index.html" class="back-btn">←</a>
+        <h1>🚨 NOTFALL-PROTOKOLL</h1>
+        <div class="timestamp" id="clock"></div>
+    </header>
+
+    <div class="content">
+        <div class="alert-banner">
+            <span class="icon">🚨</span>
+            <h2>Apps Script löscht massenhaft Dateien in Google Drive!</h2>
+            <p>Ein rogue Apps Script läuft auf Google's Cloud-Servern und löscht Ordner aus „Meine Ablage".<br>
+            Das Script kann <strong>NICHT</strong> lokal gestoppt werden — nur über die Google-Weboberfläche.</p>
+        </div>
+
+        <div class="status-grid">
+            <div class="status-card status-ok">
+                <div class="status-label">💾 Lokal C:\DEVKiTZ</div>
+                <div class="status-value">✅ INTAKT — Alle Dateien sicher</div>
+            </div>
+            <div class="status-card status-danger">
+                <div class="status-label">☁️ Google Drive Cloud</div>
+                <div class="status-value">❌ UNTER ANGRIFF — Script löscht</div>
+            </div>
+            <div class="status-card status-ok">
+                <div class="status-label">🔄 Drive Sync</div>
+                <div class="status-value">✅ GESTOPPT — Autostart entfernt</div>
+            </div>
+            <div class="status-card status-danger">
+                <div class="status-label">🗑️ Drive Papierkorb</div>
+                <div class="status-value">⚠️ 30 Tage bis endgültige Löschung</div>
+            </div>
+        </div>
+
+        <!-- SCHRITT 1 -->
+        <div class="step step-critical">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <div class="step-title">Script-Ausführungen SOFORT stoppen</div>
+                <span class="step-urgency urgency-now">JETZT!</span>
+            </div>
+            <div class="step-body">
+                <p>Öffne die Apps Script Execution-Seite und breche JEDE laufende Ausführung ab:</p>
+                <a href="https://script.google.com/home/executions" target="_blank" class="link-btn">🔗 script.google.com/home/executions öffnen</a>
+                <ul class="checklist">
+                    <li>Bei JEDER laufenden Execution → „Abbrechen" klicken</li>
+                    <li>Warten bis Status = „Abgebrochen"</li>
+                    <li>Seite neu laden und prüfen ob neue Executions starten</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- SCHRITT 2 -->
+        <div class="step step-critical">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <div class="step-title">ALLE Trigger löschen</div>
+                <span class="step-urgency urgency-now">JETZT!</span>
+            </div>
+            <div class="step-body">
+                <p>Trigger starten das Script automatisch neu! Alle Trigger müssen gelöscht werden:</p>
+                <a href="https://script.google.com/home/projects" target="_blank" class="link-btn">🔗 script.google.com/home/projects öffnen</a>
+                <ul class="checklist">
+                    <li>Jedes Projekt öffnen → links „Trigger" (⏰) klicken</li>
+                    <li>JEDEN Trigger → 3-Punkte-Menü → „Trigger löschen"</li>
+                    <li>Besonders: Trigger mit „deleteFiles", „cleanup", „archive", „moveToTrash"</li>
+                    <li>Auch zeitbasierte Trigger (minütlich/stündlich) prüfen!</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- SCHRITT 3 -->
+        <div class="step step-warning">
+            <div class="step-header">
+                <div class="step-number">3</div>
+                <div class="step-title">Gelöschte Dateien wiederherstellen</div>
+                <span class="step-urgency urgency-asap">DRINGEND</span>
+            </div>
+            <div class="step-body">
+                <p>Alle gelöschten Dateien landen im Google Drive Papierkorb (30 Tage verfügbar):</p>
+                <a href="https://drive.google.com/drive/trash" target="_blank" class="link-btn link-btn-green">🗑️ Drive Papierkorb öffnen</a>
+                <ul class="checklist">
+                    <li>Im Papierkorb: Ctrl+A (alles auswählen)</li>
+                    <li>Rechtsklick → „Wiederherstellen"</li>
+                    <li>Prüfe ob alle Ordner wieder da sind: 00_INBOX, 01_PROJECTS, 02_RESEARCH, etc.</li>
+                    <li>Besonders: [ARCHIVE], 06_NOTEPAD, 07_PRIVAT prüfen</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- SCHRITT 4 -->
+        <div class="step step-info">
+            <div class="step-header">
+                <div class="step-number">4</div>
+                <div class="step-title">App-Berechtigungen prüfen & entziehen</div>
+                <span class="step-urgency urgency-after">DANACH</span>
+            </div>
+            <div class="step-body">
+                <p>Entferne Berechtigungen verdächtiger Apps die auf Drive zugreifen:</p>
+                <a href="https://myaccount.google.com/permissions" target="_blank" class="link-btn">🔐 Google Berechtigungen öffnen</a>
+                <a href="https://security.google.com/settings/security/activity" target="_blank" class="link-btn">📋 Sicherheitsaktivität prüfen</a>
+                <ul class="checklist">
+                    <li>Apps mit „Google Drive"-Zugriff prüfen</li>
+                    <li>Unbekannte oder verdächtige Apps → Zugriff entfernen</li>
+                    <li>Scripts die „Dateien löschen" können → entfernen</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Safe Zone -->
+        <div class="safe-zone">
+            <h3>✅ Was ist SICHER — Lokaler Bestand</h3>
+            <p>Google Drive Sync wurde gestoppt und aus dem Autostart entfernt. Lokale Dateien auf C:\DEVKiTZ\ sind NICHT betroffen. Das Script löscht nur in der Cloud.</p>
+            <div class="safe-list">
+                <div class="safe-item"><span class="dot"></span> 00_INBOX (5 Einträge)</div>
+                <div class="safe-item"><span class="dot"></span> 01_PROJECTS (28 Einträge)</div>
+                <div class="safe-item"><span class="dot"></span> 02_RESEARCH (16 Einträge)</div>
+                <div class="safe-item"><span class="dot"></span> 03_MEDIA (1 Eintrag)</div>
+                <div class="safe-item"><span class="dot"></span> 04_SYSTEM (12 Einträge)</div>
+                <div class="safe-item"><span class="dot"></span> 05_INTERN (2 Einträge)</div>
+                <div class="safe-item"><span class="dot"></span> 06_NOTEPAD (4 Einträge)</div>
+                <div class="safe-item"><span class="dot"></span> 07_PRIVAT (6 Einträge)</div>
+                <div class="safe-item"><span class="dot"></span> 99_ARCHIVE (12 Einträge)</div>
+                <div class="safe-item"><span class="dot"></span> Drive Cache (3.7 GB gesichert)</div>
+            </div>
+        </div>
+
+        <!-- Prevention -->
+        <div class="prevention">
+            <h3>🛡️ Prävention — Bevor Drive wieder aktiviert wird</h3>
+            <p>NIEMALS Google Drive Sync starten bevor diese Schritte erledigt sind:</p>
+            <ul class="checklist">
+                <li>Schritt 1-4 oben vollständig abgeschlossen</li>
+                <li>Alle Apps Script Trigger gelöscht</li>
+                <li>Dateien aus Drive-Papierkorb wiederhergestellt</li>
+                <li>Drive Desktop App: Einstellungen → „Nur Online ansehen" (kein Mirror-Sync!)</li>
+                <li>Backup von C:\DEVKiTZ\ auf externe Festplatte oder CL0UDiA™ Nextcloud</li>
+                <li>Google Drive Activity Log prüfen: drive.google.com/drive/activity</li>
+            </ul>
+            <div class="code-block">
+# Drive Autostart wiederherstellen (NUR wenn sicher!)
+# PowerShell als Admin:
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v GoogleDriveFS /d "\"C:\Program Files\Google\Drive File Stream\125.0.0.0\GoogleDriveFS.exe\" --startup_mode" /f
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        CL0UDiA™ Notfall-Protokoll · DEVKiTZ™ · Erstellt: <span id="created"></span> · v1.0
+    </div>
+
+    <script>
+    function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+    setInterval(()=>{document.getElementById('clock').textContent='🔴 LIVE '+new Date().toLocaleTimeString('de-DE');},1000);
+    document.getElementById('clock').textContent='🔴 LIVE '+new Date().toLocaleTimeString('de-DE');
+    document.getElementById('created').textContent=new Date().toLocaleDateString('de-DE')+' '+new Date().toLocaleTimeString('de-DE');
+
+    // Checklist interactivity
+    document.querySelectorAll('.checklist li').forEach(li=>{
+        li.style.cursor='pointer';
+        li.addEventListener('click',()=>{
+            li.classList.toggle('done');
+            localStorage.setItem('notfall-'+li.textContent.trim().substring(0,20), li.classList.contains('done'));
+        });
+        const saved=localStorage.getItem('notfall-'+li.textContent.trim().substring(0,20));
+        if(saved==='true') li.classList.add('done');
+    });
+    </script>
+    <script>['dkz-headbar.js','dkz-console.js'].forEach(s=>{const el=document.createElement('script');el.src='../../shared/'+s;el.onerror=()=>console.warn('[Portable] '+s);document.body.appendChild(el);});</script>
+</body>
+</html>
