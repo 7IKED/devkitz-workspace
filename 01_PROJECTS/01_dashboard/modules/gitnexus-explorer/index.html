@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dkz-version" content="v1.00.0_01">
+<title>🔗 GitNexus Explorer — DEVKiTZ</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--accent:#fa1e4e;--bg:#060608;--bg-card:rgba(18,18,24,0.92);--text-primary:#e8e8ec;--text-secondary:#8a8a9a;
+  --green:#00ff88;--yellow:#ffb800;--red:#ff3b5c;--blue:#3b82f6;--purple:#a855f7;--cyan:#06b6d4;--orange:#f97316;
+  --font-main:'Inter',sans-serif;--font-mono:'JetBrains Mono',monospace;--radius:12px;--glass:rgba(17,17,24,0.6);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text-primary);font-family:var(--font-main);overflow:hidden;height:100vh;}
+#app{display:grid;grid-template-columns:320px 1fr;grid-template-rows:52px 1fr;height:100vh;}
+
+#header{grid-column:1/-1;background:var(--glass);backdrop-filter:blur(24px);display:flex;align-items:center;
+  padding:0 16px;gap:12px;border-bottom:1px solid rgba(250,30,78,0.15);z-index:10;}
+.hub-btn{color:var(--accent);text-decoration:none;font-size:13px;font-weight:600;font-family:var(--font-main);
+  display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;
+  border:1px solid rgba(250,30,78,0.2);background:rgba(250,30,78,0.05);transition:all .2s;}
+.hub-btn:hover{background:rgba(250,30,78,0.15);}
+#header h1{font-size:15px;font-weight:600;color:var(--accent);}
+.stats{margin-left:auto;font-size:12px;color:var(--text-secondary);}
+.stats span{color:var(--green);font-weight:600;}
+
+#sidebar{background:var(--glass);backdrop-filter:blur(20px);border-right:1px solid rgba(255,255,255,.05);overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:12px;}
+.sb-section h2{font-size:13px;color:var(--accent);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.repo-input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;
+  padding:8px 10px;color:var(--text-primary);font-size:12px;font-family:var(--font-main);outline:none;}
+.repo-input:focus{border-color:var(--accent);}
+.analyze-btn{width:100%;padding:8px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:12px;
+  font-weight:600;cursor:pointer;font-family:var(--font-main);margin-top:6px;transition:opacity .2s;}
+.analyze-btn:hover{opacity:.85;}
+.file-tree{font-size:11px;font-family:var(--font-mono);}
+.tree-item{padding:4px 8px;cursor:pointer;border-radius:4px;transition:all .15s;display:flex;align-items:center;gap:6px;}
+.tree-item:hover{background:rgba(250,30,78,.08);}
+.tree-item.active{background:rgba(250,30,78,.12);color:var(--accent);}
+.tree-icon{font-size:12px;width:16px;text-align:center;}
+.tree-indent{display:inline-block;}
+.dep-list{font-size:11px;}
+.dep-item{padding:4px 8px;display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.03);}
+.dep-ver{color:var(--green);font-family:var(--font-mono);font-size:10px;}
+.mcp-status{display:flex;align-items:center;gap:6px;font-size:11px;padding:8px;background:rgba(0,0,0,.3);border-radius:8px;}
+.mcp-dot{width:8px;height:8px;border-radius:50%;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+#canvas-wrap{position:relative;overflow:hidden;background:var(--bg);}
+canvas#graph{display:block;width:100%;height:100%;cursor:grab;}
+canvas#graph.dragging{cursor:grabbing;}
+#detail-panel{position:absolute;top:10px;right:10px;width:280px;max-height:60%;background:var(--glass);
+  backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;
+  overflow-y:auto;display:none;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+#detail-panel h3{font-size:14px;font-weight:600;margin-bottom:6px;}
+#detail-panel .type-badge{font-size:9px;padding:2px 6px;border-radius:6px;font-weight:600;text-transform:uppercase;margin-bottom:8px;display:inline-block;}
+#detail-panel pre{font-size:10px;font-family:var(--font-mono);background:rgba(0,0,0,.4);border-radius:6px;padding:8px;overflow-x:auto;color:var(--text-secondary);line-height:1.5;max-height:200px;overflow-y:auto;}
+.rag-wrap{position:absolute;bottom:10px;left:10px;right:10px;display:flex;gap:8px;}
+.rag-input{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;
+  padding:8px 12px;color:var(--text-primary);font-size:12px;font-family:var(--font-main);outline:none;}
+.rag-input:focus{border-color:var(--accent);}
+.rag-btn{padding:8px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:600;
+  font-size:12px;cursor:pointer;font-family:var(--font-main);}
+.zoom-ctrl{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:4px;}
+.zoom-ctrl button{width:32px;height:32px;border-radius:8px;border:1px solid rgba(255,255,255,.1);
+  background:var(--bg-card);color:var(--text-primary);font-size:16px;cursor:pointer;}
+.zoom-ctrl button:hover{border-color:var(--accent);color:var(--accent);}
+.export-float{position:absolute;top:10px;right:300px;display:flex;gap:6px;}
+.export-float button{padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.1);
+  background:rgba(250,30,78,.1);color:var(--accent);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font-main);}
+.export-float button:hover{background:var(--accent);color:#fff;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <a class="hub-btn" href="../../hub/index.html">&#8592; Hub</a>
+    <h1>&#128279; GitNexus Explorer</h1>
+    <div class="stats">Nodes: <span id="nodeCount">0</span> | Edges: <span id="edgeCount">0</span> | MCP: <span id="mcpStatus">offline</span></div>
+  </div>
+
+  <div id="sidebar">
+    <div class="sb-section">
+      <h2>&#128193; Repository</h2>
+      <input class="repo-input" id="repoUrl" placeholder="github.com/user/repo" value="github.com/devkitz/dashboard">
+      <button class="analyze-btn" onclick="analyzeRepo()">&#9881; Analyze</button>
+    </div>
+
+    <div class="sb-section">
+      <h2>&#128194; File Tree</h2>
+      <div class="file-tree" id="fileTree"></div>
+    </div>
+
+    <div class="sb-section">
+      <h2>&#128230; Dependencies</h2>
+      <div class="dep-list" id="depList"></div>
+    </div>
+
+    <div class="sb-section">
+      <h2>&#128752; MCP Connection</h2>
+      <div class="mcp-status">
+        <div class="mcp-dot" id="mcpDot" style="background:var(--yellow)"></div>
+        <span>Model Context Protocol</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="canvas-wrap">
+    <canvas id="graph"></canvas>
+    <div class="zoom-ctrl">
+      <button onclick="zoomIn()">+</button>
+      <button onclick="zoomOut()">&#8722;</button>
+      <button onclick="resetView()">&#8962;</button>
+    </div>
+    <div class="export-float">
+      <button onclick="exportToGraphify()">&#9670; Export to Graphify</button>
+    </div>
+    <div id="detail-panel">
+      <h3 id="dpTitle"></h3>
+      <div class="type-badge" id="dpType"></div>
+      <pre id="dpCode"></pre>
+    </div>
+    <div class="rag-wrap">
+      <input class="rag-input" id="ragInput" placeholder="Ask about the codebase...">
+      <button class="rag-btn" onclick="ragQuery()">&#9889; Query</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+// === DEMO DATA: Simulated Repository ===
+const DEMO_NODES=[
+  {id:'f-main',title:'main.js',type:'file',color:'var(--orange)',level:1,code:'import {App} from "./app.js";\nimport {Router} from "./router.js";\n\nconst app = new App();\napp.init();\nRouter.start();'},
+  {id:'f-app',title:'app.js',type:'file',color:'var(--orange)',level:1,code:'export class App {\n  constructor() {\n    this.modules = [];\n    this.config = {};\n  }\n  init() {\n    this.loadConfig();\n    this.initModules();\n  }\n}'},
+  {id:'f-router',title:'router.js',type:'file',color:'var(--orange)',level:1,code:'export class Router {\n  static routes = new Map();\n  static start() {\n    window.addEventListener("hashchange", Router.handle);\n  }\n}'},
+  {id:'c-App',title:'class App',type:'class',color:'var(--blue)',level:2,code:'class App {\n  modules: Module[]\n  config: Config\n  init(): void\n  loadConfig(): void\n  initModules(): void\n}'},
+  {id:'c-Router',title:'class Router',type:'class',color:'var(--blue)',level:2,code:'class Router {\n  static routes: Map\n  static start(): void\n  static handle(e): void\n  static navigate(path): void\n}'},
+  {id:'c-Module',title:'class Module',type:'class',color:'var(--blue)',level:2,code:'class Module {\n  name: string\n  element: HTMLElement\n  render(): void\n  destroy(): void\n}'},
+  {id:'fn-init',title:'App.init()',type:'function',color:'var(--green)',level:3,code:'init() {\n  this.loadConfig();\n  this.initModules();\n  console.log("App initialized");\n}'},
+  {id:'fn-loadCfg',title:'App.loadConfig()',type:'function',color:'var(--green)',level:3,code:'loadConfig() {\n  this.config = JSON.parse(\n    localStorage.getItem("config")\n  ) || {};\n}'},
+  {id:'fn-initMod',title:'App.initModules()',type:'function',color:'var(--green)',level:3,code:'initModules() {\n  this.modules = [\n    new Dashboard(),\n    new Settings(),\n    new Analytics()\n  ];\n}'},
+  {id:'fn-start',title:'Router.start()',type:'function',color:'var(--green)',level:3,code:'static start() {\n  window.addEventListener(\n    "hashchange",\n    Router.handle\n  );\n  Router.handle();\n}'},
+  {id:'fn-handle',title:'Router.handle()',type:'function',color:'var(--green)',level:3,code:'static handle(e) {\n  const hash = location.hash;\n  const route = Router.routes.get(hash);\n  if (route) route();\n}'},
+  {id:'fn-render',title:'Module.render()',type:'function',color:'var(--green)',level:3,code:'render() {\n  this.element.innerHTML = \n    this.template();\n  this.bind();\n}'},
+  {id:'d-express',title:'express@4.19',type:'dependency',color:'var(--purple)',level:2,code:'// npm package\n// HTTP server framework\n// Used in: server.js'},
+  {id:'d-ws',title:'ws@8.16',type:'dependency',color:'var(--purple)',level:2,code:'// npm package\n// WebSocket client/server\n// Used in: realtime.js'},
+  {id:'f-server',title:'server.js',type:'file',color:'var(--orange)',level:1,code:'import express from "express";\nimport {WebSocketServer} from "ws";\n\nconst app = express();\nconst wss = new WebSocketServer({port:8080});'},
+  {id:'c-API',title:'class API',type:'class',color:'var(--blue)',level:2,code:'class API {\n  base: string\n  fetch(path): Promise\n  post(path, data): Promise\n}'},
+  {id:'fn-fetch',title:'API.fetch()',type:'function',color:'var(--green)',level:3,code:'async fetch(path) {\n  const r = await fetch(\n    this.base + path\n  );\n  return r.json();\n}'},
+  {id:'f-utils',title:'utils.js',type:'file',color:'var(--orange)',level:1,code:'export function debounce(fn, ms) {\n  let t;\n  return (...a) => {\n    clearTimeout(t);\n    t = setTimeout(() => fn(...a), ms);\n  };\n}'},
+  {id:'fn-debounce',title:'debounce()',type:'function',color:'var(--green)',level:3,code:'function debounce(fn, ms) {\n  let timer;\n  return (...args) => {\n    clearTimeout(timer);\n    timer = setTimeout(\n      () => fn(...args), ms\n    );\n  };\n}'},
+  {id:'f-config',title:'config.json',type:'file',color:'var(--cyan)',level:1,code:'{\n  "port": 3000,\n  "debug": true,\n  "modules": ["dashboard","settings"]\n}'},
+];
+
+const DEMO_EDGES=[
+  {source:'f-main',target:'f-app',type:'import'},{source:'f-main',target:'f-router',type:'import'},
+  {source:'f-app',target:'c-App',type:'defines'},{source:'f-router',target:'c-Router',type:'defines'},
+  {source:'c-App',target:'fn-init',type:'method'},{source:'c-App',target:'fn-loadCfg',type:'method'},
+  {source:'c-App',target:'fn-initMod',type:'method'},{source:'c-Router',target:'fn-start',type:'method'},
+  {source:'c-Router',target:'fn-handle',type:'method'},{source:'c-Module',target:'fn-render',type:'method'},
+  {source:'fn-init',target:'fn-loadCfg',type:'calls'},{source:'fn-init',target:'fn-initMod',type:'calls'},
+  {source:'fn-initMod',target:'c-Module',type:'instantiates'},{source:'f-server',target:'d-express',type:'dependency'},
+  {source:'f-server',target:'d-ws',type:'dependency'},{source:'f-server',target:'c-API',type:'defines'},
+  {source:'c-API',target:'fn-fetch',type:'method'},{source:'f-utils',target:'fn-debounce',type:'defines'},
+  {source:'fn-handle',target:'fn-render',type:'calls'},{source:'fn-loadCfg',target:'f-config',type:'reads'},
+  {source:'f-main',target:'f-server',type:'import'},{source:'c-App',target:'c-Module',type:'uses'},
+];
+
+const DEMO_FILES=[
+  {name:'src/',type:'dir',children:[
+    {name:'main.js',type:'file',nodeId:'f-main'},
+    {name:'app.js',type:'file',nodeId:'f-app'},
+    {name:'router.js',type:'file',nodeId:'f-router'},
+    {name:'server.js',type:'file',nodeId:'f-server'},
+    {name:'utils.js',type:'file',nodeId:'f-utils'},
+  ]},
+  {name:'config.json',type:'file',nodeId:'f-config'},
+  {name:'package.json',type:'file'},
+];
+
+const DEMO_DEPS=[
+  {name:'express',ver:'^4.19.2'},{name:'ws',ver:'^8.16.0'},{name:'dotenv',ver:'^16.4.1'},
+  {name:'cors',ver:'^2.8.5'},{name:'helmet',ver:'^7.1.0'},{name:'compression',ver:'^1.7.4'},
+];
+
+// === GRAPH ENGINE ===
+let canvas,ctx,nodes=[],edges=[];
+let camX=0,camY=0,camZoom=1;
+let selectedNode=null,hoveredNode=null;
+let dragNode=null,dragOffX=0,dragOffY=0;
+let isPanning=false,panStartX=0,panStartY=0;
+let simRunning=true,simAlpha=1;
+
+function initGraph(){
+  nodes=DEMO_NODES.map(n=>({...n,x:Math.random()*1200-600,y:Math.random()*800-400,vx:0,vy:0,
+    radius:n.level===1?16:n.level===2?11:7,visible:true}));
+  edges=[...DEMO_EDGES];
+  document.getElementById('nodeCount').textContent=nodes.length;
+  document.getElementById('edgeCount').textContent=edges.length;
+  startSim();
+}
+
+function startSim(){simAlpha=1;simRunning=true;tick();}
+function tick(){
+  if(!simRunning)return;
+  for(let i=0;i<3;i++)simStep();
+  simAlpha*=0.993;if(simAlpha<0.001){simRunning=false;simAlpha=0;}
+  draw();requestAnimationFrame(tick);
+}
+function simStep(){
+  const a=simAlpha,N=nodes.length;
+  for(let i=0;i<N;i++){if(!nodes[i].visible)continue;
+    for(let j=i+1;j<N;j++){if(!nodes[j].visible)continue;
+      let dx=nodes[j].x-nodes[i].x,dy=nodes[j].y-nodes[i].y,d2=dx*dx+dy*dy+1,f=250*a/d2;
+      nodes[i].vx-=dx*f;nodes[i].vy-=dy*f;nodes[j].vx+=dx*f;nodes[j].vy+=dy*f;
+  }}
+  const nm={};nodes.forEach(n=>nm[n.id]=n);
+  edges.forEach(e=>{const s=nm[e.source],t=nm[e.target];if(!s||!t)return;
+    let dx=t.x-s.x,dy=t.y-s.y,d=Math.sqrt(dx*dx+dy*dy)+1,f=(d-70)*0.005*a;
+    s.vx+=dx/d*f;s.vy+=dy/d*f;t.vx-=dx/d*f;t.vy-=dy/d*f;});
+  nodes.forEach(n=>{if(!n.visible)return;n.vx-=n.x*.001*a;n.vy-=n.y*.001*a;n.vx*=.85;n.vy*=.85;n.x+=n.vx;n.y+=n.vy;});
+}
+
+const TYPE_COLORS={file:'#f97316','class':'#3b82f6','function':'#00ff88',dependency:'#a855f7'};
+function draw(){
+  const W=canvas.width,H=canvas.height;ctx.clearRect(0,0,W,H);ctx.save();
+  ctx.translate(W/2+camX,H/2+camY);ctx.scale(camZoom,camZoom);
+  const nm={};nodes.forEach(n=>nm[n.id]=n);
+  const EDGE_COLORS={import:'rgba(249,115,22,0.3)',defines:'rgba(59,130,246,0.3)',method:'rgba(0,255,136,0.2)',
+    calls:'rgba(250,30,78,0.4)',dependency:'rgba(168,85,247,0.3)',instantiates:'rgba(255,184,0,0.3)',
+    uses:'rgba(6,182,212,0.2)',reads:'rgba(255,255,255,0.1)'};
+  ctx.lineWidth=.8/camZoom;
+  edges.forEach(e=>{const s=nm[e.source],t=nm[e.target];if(!s||!t)return;
+    ctx.strokeStyle=EDGE_COLORS[e.type]||'rgba(255,255,255,.08)';
+    ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(t.x,t.y);ctx.stroke();});
+  nodes.forEach(n=>{if(!n.visible)return;
+    const col=TYPE_COLORS[n.type]||'#6b7280';const isSel=selectedNode&&selectedNode.id===n.id;
+    const isHov=hoveredNode&&hoveredNode.id===n.id;
+    ctx.beginPath();ctx.arc(n.x,n.y,n.radius,0,Math.PI*2);
+    ctx.fillStyle=isSel?'#fff':col;ctx.globalAlpha=isHov?1:.85;ctx.fill();
+    if(isSel){ctx.strokeStyle='#fa1e4e';ctx.lineWidth=3/camZoom;ctx.stroke();}
+    ctx.globalAlpha=1;
+    if(camZoom>.4||n.level<=2){ctx.fillStyle=isSel?'#fff':'rgba(232,232,236,.7)';
+      ctx.font=Math.max(8,10/camZoom)+'px Inter';ctx.textAlign='center';
+      const label=n.title.length>25?n.title.substring(0,23)+'...':n.title;
+      ctx.fillText(label,n.x,n.y+n.radius+10/camZoom);}
+  });
+  ctx.restore();
+}
+
+function screenToWorld(sx,sy){const W=canvas.width,H=canvas.height;return{x:(sx-W/2-camX)/camZoom,y:(sy-H/2-camY)/camZoom};}
+function findNode(wx,wy){for(let i=nodes.length-1;i>=0;i--){const n=nodes[i];if(!n.visible)continue;
+  const dx=n.x-wx,dy=n.y-wy;if(dx*dx+dy*dy<(n.radius+4)*(n.radius+4))return n;}return null;}
+
+function selectNode(n){
+  selectedNode=n;const dp=document.getElementById('detail-panel');
+  if(!n){dp.style.display='none';return;}
+  dp.style.display='block';
+  document.getElementById('dpTitle').textContent=n.title;
+  const tb=document.getElementById('dpType');tb.textContent=n.type;
+  tb.style.background=TYPE_COLORS[n.type]||'#666';tb.style.color=n.type==='function'?'#000':'#fff';
+  document.getElementById('dpCode').textContent=n.code||'(no preview)';
+  if(!simRunning)draw();
+}
+
+function zoomIn(){camZoom=Math.min(camZoom*1.3,5);if(!simRunning)draw();}
+function zoomOut(){camZoom=Math.max(camZoom/1.3,.1);if(!simRunning)draw();}
+function resetView(){camX=0;camY=0;camZoom=1;if(!simRunning)draw();}
+
+function initEvents(){
+  canvas.addEventListener('mousedown',e=>{const r=canvas.getBoundingClientRect();
+    const w=screenToWorld(e.clientX-r.left,e.clientY-r.top);const n=findNode(w.x,w.y);
+    if(n){dragNode=n;dragOffX=n.x-w.x;dragOffY=n.y-w.y;selectNode(n);canvas.classList.add('dragging');}
+    else{isPanning=true;panStartX=e.clientX-camX;panStartY=e.clientY-camY;canvas.classList.add('dragging');}});
+  canvas.addEventListener('mousemove',e=>{const r=canvas.getBoundingClientRect();
+    const w=screenToWorld(e.clientX-r.left,e.clientY-r.top);
+    if(dragNode){dragNode.x=w.x+dragOffX;dragNode.y=w.y+dragOffY;if(!simRunning)draw();}
+    else if(isPanning){camX=e.clientX-panStartX;camY=e.clientY-panStartY;if(!simRunning)draw();}
+    else{const prev=hoveredNode;hoveredNode=findNode(w.x,w.y);if(prev!==hoveredNode&&!simRunning)draw();
+      canvas.style.cursor=hoveredNode?'pointer':'grab';}});
+  canvas.addEventListener('mouseup',()=>{dragNode=null;isPanning=false;canvas.classList.remove('dragging');});
+  canvas.addEventListener('wheel',e=>{e.preventDefault();camZoom=Math.max(.1,Math.min(5,camZoom*(e.deltaY<0?1.1:.9)));
+    if(!simRunning)draw();},{passive:false});
+  window.addEventListener('resize',resize);
+}
+function resize(){const w=document.getElementById('canvas-wrap');canvas.width=w.clientWidth;canvas.height=w.clientHeight;if(!simRunning)draw();}
+
+// === SIDEBAR RENDER ===
+function renderFileTree(){
+  const el=document.getElementById('fileTree');el.innerHTML='';
+  function renderLevel(items,depth){
+    items.forEach(f=>{
+      const div=document.createElement('div');div.className='tree-item';
+      const indent='<span class="tree-indent" style="width:'+depth*16+'px"></span>';
+      const icon=f.type==='dir'?'&#128193;':'&#128196;';
+      div.innerHTML=indent+'<span class="tree-icon">'+icon+'</span>'+esc(f.name);
+      if(f.nodeId){div.onclick=()=>{const n=nodes.find(x=>x.id===f.nodeId);if(n){selectNode(n);camX=-n.x*camZoom;camY=-n.y*camZoom;if(!simRunning)draw();}};}
+      el.appendChild(div);
+      if(f.children)renderLevel(f.children,depth+1);
+    });
+  }
+  renderLevel(DEMO_FILES,0);
+}
+
+function renderDeps(){
+  const el=document.getElementById('depList');el.innerHTML='';
+  DEMO_DEPS.forEach(d=>{
+    const div=document.createElement('div');div.className='dep-item';
+    div.innerHTML='<span>'+esc(d.name)+'</span><span class="dep-ver">'+esc(d.ver)+'</span>';
+    el.appendChild(div);
+  });
+}
+
+function analyzeRepo(){
+  const url=document.getElementById('repoUrl').value;
+  if(!url)return;
+  // Demo: Reset and re-simulate
+  nodes.forEach(n=>{n.x=Math.random()*1200-600;n.y=Math.random()*800-400;n.vx=0;n.vy=0;});
+  startSim();
+}
+
+function ragQuery(){
+  const input=document.getElementById('ragInput');const q=input.value.trim();if(!q)return;
+  input.value='';
+  // Search through nodes
+  const matches=nodes.filter(n=>n.title.toLowerCase().includes(q.toLowerCase())||
+    (n.code&&n.code.toLowerCase().includes(q.toLowerCase())));
+  if(matches.length>0){selectNode(matches[0]);camX=-matches[0].x*camZoom;camY=-matches[0].y*camZoom;if(!simRunning)draw();}
+}
+
+function exportToGraphify(){
+  const payload={source:'gitnexus-explorer',nodes:nodes.map(n=>({id:'gn-'+n.id,title:n.title,category:n.type,level:n.level,source:'gitnexus'})),
+    edges:edges.map(e=>({source:'gn-'+e.source,target:'gn-'+e.target,type:e.type}))};
+  localStorage.setItem('graphify_import_gitnexus',JSON.stringify(payload));
+  window.open('../graphify/index.html?import=gitnexus','_blank');
+}
+
+// === INIT ===
+document.addEventListener('DOMContentLoaded',()=>{
+  canvas=document.getElementById('graph');ctx=canvas.getContext('2d');resize();
+  initEvents();initGraph();renderFileTree();renderDeps();
+  document.getElementById('ragInput').addEventListener('keydown',e=>{if(e.key==='Enter')ragQuery();});
+});
+</script>
+<script src="../../shared/dkz-debug.js"></script>
+<script src="../../shared/dkz-guide.js"></script>
+<script src="../../shared/dkz-copilot.js"></script>
+<script src="../../shared/dkz-james.js"></script>
+<script src="../../shared/dkz-navbar.js"></script>
+<script src="../../shared/dkz-console.js"></script>
+<script src="../../shared/dkz-premium.js" defer></script>
+</body>
+</html>

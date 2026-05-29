@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dkz-version" content="v1.00.0_01">
+<title>🐟 MiroFish Simulator — DEVKiTZ</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--accent:#fa1e4e;--bg:#060608;--bg-card:rgba(18,18,24,0.92);--text-primary:#e8e8ec;--text-secondary:#8a8a9a;
+  --green:#00ff88;--yellow:#ffb800;--red:#ff3b5c;--blue:#3b82f6;--purple:#a855f7;--cyan:#06b6d4;
+  --font-main:'Inter',sans-serif;--font-mono:'JetBrains Mono',monospace;--glass:rgba(17,17,24,0.6);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text-primary);font-family:var(--font-main);overflow:hidden;height:100vh;}
+#bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+#app{position:relative;z-index:1;display:grid;grid-template-columns:1fr 260px;grid-template-rows:52px auto 1fr;height:100vh;}
+
+#header{grid-column:1/-1;background:var(--glass);backdrop-filter:blur(24px);display:flex;align-items:center;
+  padding:0 16px;gap:12px;border-bottom:1px solid rgba(250,30,78,0.15);z-index:10;}
+.hub-btn{color:var(--accent);text-decoration:none;font-size:13px;font-weight:600;font-family:var(--font-main);
+  display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;
+  border:1px solid rgba(250,30,78,0.2);background:rgba(250,30,78,0.05);transition:all .2s;}
+.hub-btn:hover{background:rgba(250,30,78,0.15);}
+#header h1{font-size:15px;font-weight:600;color:var(--accent);}
+.stats{margin-left:auto;font-size:12px;color:var(--text-secondary);}
+.stats span{color:var(--green);font-weight:600;}
+.export-btn-h{padding:4px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.1);
+  background:rgba(250,30,78,.1);color:var(--accent);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font-main);}
+.export-btn-h:hover{background:var(--accent);color:#fff;}
+
+/* Pipeline Stepper */
+#stepper{grid-column:1/-1;background:var(--glass);backdrop-filter:blur(16px);padding:12px 20px;
+  display:flex;align-items:center;gap:0;border-bottom:1px solid rgba(255,255,255,.05);}
+.step{flex:1;display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;cursor:pointer;
+  transition:all .2s;position:relative;}
+.step:hover{background:rgba(255,255,255,.04);}
+.step.active{background:rgba(250,30,78,.1);border:1px solid rgba(250,30,78,.3);}
+.step.done{opacity:.7;}
+.step-num{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;
+  justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.step.active .step-num{background:var(--accent);color:#fff;}
+.step.done .step-num{background:var(--green);color:#000;}
+.step-info{display:flex;flex-direction:column;}
+.step-title{font-size:11px;font-weight:600;}
+.step-desc{font-size:9px;color:var(--text-secondary);}
+.step-line{width:20px;height:2px;background:rgba(255,255,255,.1);flex-shrink:0;}
+.step-line.done{background:var(--green);}
+
+/* Main Area */
+#main{overflow-y:auto;padding:20px;}
+.panel{display:none;}
+.panel.active{display:block;}
+
+/* Step 1: Ontology */
+.drop-zone{border:2px dashed rgba(255,255,255,.1);border-radius:16px;padding:40px;text-align:center;
+  transition:all .3s;cursor:pointer;background:rgba(0,0,0,.2);}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:rgba(250,30,78,.05);}
+.drop-zone .icon{font-size:48px;margin-bottom:12px;}
+.seed-textarea{width:100%;min-height:200px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;padding:12px;color:var(--text-primary);font-size:12px;font-family:var(--font-mono);
+  outline:none;resize:vertical;margin-top:12px;}
+.seed-textarea:focus{border-color:var(--accent);}
+
+/* Step 2: Graph */
+.graph-mini{width:100%;height:400px;background:rgba(0,0,0,.3);border-radius:12px;position:relative;overflow:hidden;}
+.graph-mini canvas{width:100%;height:100%;}
+
+/* Step 3: Simulation */
+.agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;}
+.agent-card{background:var(--glass);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.06);
+  border-radius:12px;padding:12px;text-align:center;transition:all .3s;}
+.agent-card:hover{border-color:rgba(250,30,78,.3);transform:translateY(-2px);}
+.agent-avatar{width:40px;height:40px;border-radius:50%;margin:0 auto 6px;display:flex;align-items:center;
+  justify-content:center;font-size:18px;}
+.agent-name{font-size:10px;font-weight:600;margin-bottom:3px;}
+.agent-status{font-size:9px;color:var(--text-secondary);}
+.sim-counter{display:flex;gap:16px;margin-bottom:16px;justify-content:center;}
+.counter-box{background:var(--glass);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.06);
+  border-radius:12px;padding:16px 24px;text-align:center;}
+.counter-value{font-size:28px;font-weight:700;font-family:var(--font-mono);}
+.counter-label{font-size:9px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-top:4px;}
+
+/* Step 4: Reports */
+.report-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;}
+.report-card{background:var(--glass);backdrop-filter:blur(20px) saturate(1.4);border:1px solid rgba(255,255,255,.06);
+  border-radius:16px;padding:20px;box-shadow:0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.05);}
+.report-title{font-size:13px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.conf-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.06);margin-top:8px;overflow:hidden;}
+.conf-fill{height:100%;border-radius:3px;transition:width .5s;}
+.risk-badge{font-size:10px;padding:3px 8px;border-radius:6px;font-weight:600;}
+
+/* Step 5: Interact */
+.chat-wrap{max-width:600px;margin:0 auto;}
+.chat-messages{max-height:400px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;}
+.chat-msg{padding:8px 12px;border-radius:10px;font-size:12px;line-height:1.5;max-width:85%;}
+.chat-msg.agent{background:rgba(0,255,136,.08);color:#86efac;align-self:flex-start;border:1px solid rgba(0,255,136,.15);}
+.chat-msg.user{background:rgba(59,130,246,.1);color:#93c5fd;align-self:flex-end;border:1px solid rgba(59,130,246,.15);}
+.chat-input-wrap{display:flex;gap:8px;margin-top:12px;}
+.chat-input{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;
+  padding:10px 14px;color:var(--text-primary);font-size:13px;font-family:var(--font-main);outline:none;}
+.chat-input:focus{border-color:var(--accent);}
+.chat-send{padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:600;
+  font-size:13px;cursor:pointer;font-family:var(--font-main);}
+
+/* Sidebar Config */
+#config{background:var(--glass);backdrop-filter:blur(20px);border-left:1px solid rgba(255,255,255,.05);
+  overflow-y:auto;padding:12px;}
+#config h2{font-size:13px;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.cfg-group{margin-bottom:14px;}
+.cfg-label{font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.cfg-input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:6px;
+  padding:6px 8px;color:var(--text-primary);font-size:12px;font-family:var(--font-mono);outline:none;}
+.cfg-input:focus{border-color:var(--accent);}
+.cfg-range{width:100%;accent-color:var(--accent);margin-top:4px;}
+.cfg-value{font-size:11px;color:var(--green);font-family:var(--font-mono);text-align:right;}
+.run-btn{width:100%;padding:10px;border-radius:8px;border:none;background:var(--green);color:#000;font-size:13px;
+  font-weight:700;cursor:pointer;font-family:var(--font-main);margin-top:12px;transition:all .2s;}
+.run-btn:hover{opacity:.85;transform:translateY(-1px);}
+.run-btn.running{background:var(--yellow);animation:pulse 1s infinite;}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+<div id="app">
+  <div id="header">
+    <a class="hub-btn" href="../../hub/index.html">&#8592; Hub</a>
+    <h1>&#128031; MiroFish Simulator</h1>
+    <div class="stats">Agents: <span id="agentCount">0</span> | Interactions: <span id="interCount">0</span> | Step: <span id="stepLabel">1/5</span></div>
+    <button class="export-btn-h" onclick="exportToGraphify()">&#9670; Export to Graphify</button>
+  </div>
+
+  <div id="stepper"></div>
+
+  <div id="main">
+    <div class="panel active" id="panel-1"></div>
+    <div class="panel" id="panel-2"></div>
+    <div class="panel" id="panel-3"></div>
+    <div class="panel" id="panel-4"></div>
+    <div class="panel" id="panel-5"></div>
+  </div>
+
+  <div id="config">
+    <h2>&#9881; Configuration</h2>
+    <div class="cfg-group">
+      <div class="cfg-label">Agent Count</div>
+      <input class="cfg-range" type="range" min="10" max="5000" value="500" id="cfgAgents" oninput="document.getElementById('cfgAgentsVal').textContent=this.value">
+      <div class="cfg-value" id="cfgAgentsVal">500</div>
+    </div>
+    <div class="cfg-group">
+      <div class="cfg-label">Channels</div>
+      <input class="cfg-input" value="Twitter, Reddit, Forum" id="cfgChannels">
+    </div>
+    <div class="cfg-group">
+      <div class="cfg-label">Duration (ticks)</div>
+      <input class="cfg-range" type="range" min="100" max="10000" value="2000" id="cfgDuration" oninput="document.getElementById('cfgDurVal').textContent=this.value">
+      <div class="cfg-value" id="cfgDurVal">2000</div>
+    </div>
+    <div class="cfg-group">
+      <div class="cfg-label">Model</div>
+      <input class="cfg-input" value="GraphRAG + OASIS" readonly>
+    </div>
+    <div class="cfg-group">
+      <div class="cfg-label">Seed Topic</div>
+      <input class="cfg-input" id="cfgTopic" value="AI Regulation 2027">
+    </div>
+    <button class="run-btn" id="runBtn" onclick="runSimulation()">&#9654; Run Simulation</button>
+  </div>
+</div>
+
+<script>
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+// === PIPELINE STEPS ===
+const STEPS=[
+  {num:1,icon:'&#128196;',title:'Ontology',desc:'Upload seed material'},
+  {num:2,icon:'&#128279;',title:'Graph',desc:'Build knowledge graph'},
+  {num:3,icon:'&#129302;',title:'Simulate',desc:'Spawn agents'},
+  {num:4,icon:'&#128200;',title:'Reports',desc:'View predictions'},
+  {num:5,icon:'&#128300;',title:'Interact',desc:'Interview agents'},
+];
+let currentStep=1;
+
+function renderStepper(){
+  const el=document.getElementById('stepper');el.innerHTML='';
+  STEPS.forEach((s,i)=>{
+    if(i>0){const line=document.createElement('div');line.className='step-line'+(s.num<=currentStep?' done':'');el.appendChild(line);}
+    const div=document.createElement('div');div.className='step'+(s.num===currentStep?' active':'')+(s.num<currentStep?' done':'');
+    div.innerHTML='<div class="step-num">'+(s.num<currentStep?'&#10003;':s.icon)+'</div><div class="step-info"><div class="step-title">'+esc(s.title)+'</div><div class="step-desc">'+esc(s.desc)+'</div></div>';
+    div.onclick=()=>goToStep(s.num);
+    el.appendChild(div);
+  });
+}
+
+function goToStep(n){
+  currentStep=n;renderStepper();
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+n).classList.add('active');
+  document.getElementById('stepLabel').textContent=n+'/5';
+}
+
+// === STEP 1: ONTOLOGY ===
+function renderStep1(){
+  const el=document.getElementById('panel-1');
+  el.innerHTML='<div class="drop-zone" id="dropZone"><div class="icon">&#128196;</div><div style="font-size:14px;font-weight:600;margin-bottom:4px">Drop Seed Material</div><div style="font-size:11px;color:var(--text-secondary)">News articles, policy drafts, reports (TXT, PDF, MD)</div></div><textarea class="seed-textarea" id="seedText" placeholder="Or paste seed material here...\n\nExample: The European AI Act establishes comprehensive regulation for artificial intelligence systems across the EU. Companies deploying high-risk AI must comply by 2027...">The European AI Act establishes comprehensive regulation for artificial intelligence systems across the EU.\nCompanies deploying high-risk AI must comply by 2027.\nKey stakeholders: EU Commission, Big Tech (Google, Microsoft, Meta), Civil Rights Organizations, Academic Institutions.\nControversial topics: Open-source model exemptions, biometric surveillance, foundation model liability.\nPublic sentiment is divided: tech industry lobbies for lighter regulation while advocacy groups push for strict oversight.</textarea><button class="run-btn" style="max-width:200px;margin-top:12px" onclick="goToStep(2)">&#9654; Build Graph</button>';
+}
+
+// === STEP 2: GRAPH ===
+const GRAPH_ENTITIES=[
+  {id:'e-eu',label:'EU Commission',type:'actor',x:0,y:0},
+  {id:'e-tech',label:'Big Tech',type:'actor',x:100,y:-80},
+  {id:'e-civil',label:'Civil Rights Orgs',type:'actor',x:-120,y:-60},
+  {id:'e-acad',label:'Academic Institutions',type:'actor',x:-80,y:100},
+  {id:'e-aiact',label:'AI Act 2027',type:'policy',x:40,y:60},
+  {id:'e-opensource',label:'Open-Source Exemption',type:'topic',x:180,y:40},
+  {id:'e-bio',label:'Biometric Surveillance',type:'topic',x:-160,y:20},
+  {id:'e-liability',label:'Foundation Model Liability',type:'topic',x:100,y:140},
+  {id:'e-public',label:'Public Sentiment',type:'factor',x:-40,y:-140},
+  {id:'e-lobby',label:'Industry Lobbying',type:'factor',x:160,y:-40},
+];
+const GRAPH_EDGES=[
+  {s:'e-eu',t:'e-aiact'},{s:'e-tech',t:'e-opensource'},{s:'e-civil',t:'e-bio'},
+  {s:'e-aiact',t:'e-opensource'},{s:'e-aiact',t:'e-bio'},{s:'e-aiact',t:'e-liability'},
+  {s:'e-tech',t:'e-lobby'},{s:'e-lobby',t:'e-eu'},{s:'e-public',t:'e-civil'},
+  {s:'e-acad',t:'e-liability'},{s:'e-public',t:'e-eu'},{s:'e-tech',t:'e-liability'},
+];
+function renderStep2(){
+  const el=document.getElementById('panel-2');
+  el.innerHTML='<div style="margin-bottom:12px;font-size:14px;font-weight:600">&#128279; Knowledge Graph ('+GRAPH_ENTITIES.length+' entities, '+GRAPH_EDGES.length+' relations)</div><div class="graph-mini"><canvas id="graphCanvas"></canvas></div><button class="run-btn" style="max-width:200px;margin-top:12px" onclick="goToStep(3)">&#9654; Start Simulation</button>';
+  setTimeout(drawGraph,100);
+}
+function drawGraph(){
+  const c=document.getElementById('graphCanvas');if(!c)return;const ctx=c.getContext('2d');
+  const p=c.parentElement;c.width=p.clientWidth;c.height=p.clientHeight;
+  const cx=c.width/2,cy=c.height/2,sc=1.5;
+  const TYPE_COL={actor:'#3b82f6',policy:'#fa1e4e',topic:'#00ff88',factor:'#ffb800'};
+  ctx.clearRect(0,0,c.width,c.height);
+  GRAPH_EDGES.forEach(e=>{
+    const s=GRAPH_ENTITIES.find(x=>x.id===e.s),t=GRAPH_ENTITIES.find(x=>x.id===e.t);if(!s||!t)return;
+    ctx.beginPath();ctx.moveTo(cx+s.x*sc,cy+s.y*sc);ctx.lineTo(cx+t.x*sc,cy+t.y*sc);
+    ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=1;ctx.stroke();
+  });
+  GRAPH_ENTITIES.forEach(e=>{
+    const x=cx+e.x*sc,y=cy+e.y*sc,col=TYPE_COL[e.type]||'#666';
+    ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fillStyle=col;ctx.globalAlpha=.85;ctx.fill();ctx.globalAlpha=1;
+    ctx.fillStyle='rgba(232,232,236,.8)';ctx.font='10px Inter';ctx.textAlign='center';
+    ctx.fillText(e.label,x,y+22);
+  });
+}
+
+// === STEP 3: SIMULATION ===
+const AGENT_NAMES=['Alice','Bob','Carol','Dave','Eve','Frank','Grace','Henry','Ivy','Jake','Karen','Leo','Mia','Nick','Olivia','Paul'];
+const AGENT_ROLES=['Citizen','Journalist','Politician','Activist','Engineer','Researcher','Lobbyist','Student'];
+let simAgents=[];let simTick=0;let simInterval=null;
+
+function renderStep3(){
+  const el=document.getElementById('panel-3');
+  const count=parseInt(document.getElementById('cfgAgents').value)||500;
+  simAgents=Array.from({length:Math.min(count,16)},(_,i)=>({
+    id:'a-'+i,name:AGENT_NAMES[i%AGENT_NAMES.length],role:AGENT_ROLES[i%AGENT_ROLES.length],
+    color:['#3b82f6','#10b981','#f59e0b','#a855f7','#ec4899','#06b6d4','#ef4444','#84cc16'][i%8],
+    status:'idle',messages:0,sentiment:Math.random()*2-1
+  }));
+  document.getElementById('agentCount').textContent=count;
+  let html='<div class="sim-counter"><div class="counter-box"><div class="counter-value" style="color:var(--green)" id="simTicks">0</div><div class="counter-label">Ticks</div></div><div class="counter-box"><div class="counter-value" style="color:var(--blue)" id="simMsgs">0</div><div class="counter-label">Messages</div></div><div class="counter-box"><div class="counter-value" style="color:var(--yellow)" id="simConf">0%</div><div class="counter-label">Convergence</div></div></div>';
+  html+='<div class="agent-grid" id="agentGrid">';
+  simAgents.forEach(a=>{
+    html+='<div class="agent-card" id="agent-'+esc(a.id)+'"><div class="agent-avatar" style="background:'+a.color+'">'+esc(a.name.charAt(0))+'</div><div class="agent-name">'+esc(a.name)+'</div><div class="agent-status">'+esc(a.role)+'</div></div>';
+  });
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+function runSimulation(){
+  const btn=document.getElementById('runBtn');
+  if(simInterval){clearInterval(simInterval);simInterval=null;btn.textContent='\u25b6 Run Simulation';btn.classList.remove('running');return;}
+  if(currentStep<3)goToStep(3);
+  renderStep3();
+  btn.textContent='\u23f9 Stop';btn.classList.add('running');
+  simTick=0;let totalMsgs=0;
+  simInterval=setInterval(()=>{
+    simTick++;totalMsgs+=Math.floor(Math.random()*10+5);
+    const conv=Math.min(99,Math.floor(simTick/20));
+    document.getElementById('simTicks').textContent=simTick;
+    document.getElementById('simMsgs').textContent=totalMsgs;
+    document.getElementById('simConf').textContent=conv+'%';
+    document.getElementById('interCount').textContent=totalMsgs;
+    // Animate random agent
+    const idx=Math.floor(Math.random()*simAgents.length);
+    const card=document.getElementById('agent-'+simAgents[idx].id);
+    if(card){card.style.borderColor='rgba(250,30,78,.5)';card.querySelector('.agent-status').textContent='posting...';
+      setTimeout(()=>{if(card){card.style.borderColor='rgba(255,255,255,.06)';card.querySelector('.agent-status').textContent=simAgents[idx].role;}},300);}
+    if(simTick>=parseInt(document.getElementById('cfgDuration').value)/10){
+      clearInterval(simInterval);simInterval=null;btn.textContent='\u25b6 Run Simulation';btn.classList.remove('running');
+      goToStep(4);renderStep4();
+    }
+  },50);
+}
+
+// === STEP 4: REPORTS ===
+function renderStep4(){
+  const el=document.getElementById('panel-4');
+  const predictions=[
+    {title:'&#128680; Regulation Impact',pred:'High probability of delayed compliance (>68%)',conf:72,risk:'high',riskCol:'var(--red)'},
+    {title:'&#128176; Market Response',pred:'Tech stocks moderate correction (-3.2% avg)',conf:61,risk:'medium',riskCol:'var(--yellow)'},
+    {title:'&#127758; Public Opinion',pred:'Support for AI regulation increases to 73%',conf:85,risk:'low',riskCol:'var(--green)'},
+    {title:'&#128187; Open-Source Impact',pred:'Fork activity doubles, EU-specific models emerge',conf:54,risk:'medium',riskCol:'var(--yellow)'},
+    {title:'&#9878; Legal Challenges',pred:'12+ lawsuits filed within first year',conf:78,risk:'high',riskCol:'var(--red)'},
+    {title:'&#129302; Innovation Shift',pred:'R&D moves to compliant architectures',conf:66,risk:'medium',riskCol:'var(--yellow)'},
+  ];
+  let html='<div class="report-grid">';
+  predictions.forEach(p=>{
+    html+='<div class="report-card"><div class="report-title">'+p.title+'</div><div style="font-size:12px;line-height:1.5;margin-bottom:8px">'+esc(p.pred)+'</div><div style="display:flex;justify-content:space-between;align-items:center"><span class="risk-badge" style="background:'+p.riskCol+';color:#000">'+esc(p.risk)+' risk</span><span style="font-size:11px;color:var(--text-secondary)">Confidence: '+p.conf+'%</span></div><div class="conf-bar"><div class="conf-fill" style="width:'+p.conf+'%;background:'+p.riskCol+'"></div></div></div>';
+  });
+  html+='</div><button class="run-btn" style="max-width:200px;margin-top:16px" onclick="goToStep(5)">&#128300; Interview Agents</button>';
+  el.innerHTML=html;
+}
+
+// === STEP 5: INTERACT ===
+function renderStep5(){
+  const el=document.getElementById('panel-5');
+  const demoMsgs=[
+    {role:'agent',text:'Hello! I am the ReportAgent for this simulation. I analyzed '+document.getElementById('interCount').textContent+' interactions across 3 channels. Ask me anything about the predictions.'},
+  ];
+  let msgsHtml=demoMsgs.map(m=>'<div class="chat-msg '+m.role+'">'+esc(m.text)+'</div>').join('');
+  el.innerHTML='<div class="chat-wrap"><div style="font-size:14px;font-weight:600;margin-bottom:12px">&#128300; Agent Interview — ReportAgent</div><div class="chat-messages" id="chatMsgs">'+msgsHtml+'</div><div class="chat-input-wrap"><input class="chat-input" id="chatInput" placeholder="Ask about the simulation results..." onkeydown="if(event.key===\'Enter\')sendInterviewMsg()"><button class="chat-send" onclick="sendInterviewMsg()">Send</button></div></div>';
+}
+
+function sendInterviewMsg(){
+  const input=document.getElementById('chatInput');const msg=input.value.trim();if(!msg)return;input.value='';
+  const wrap=document.getElementById('chatMsgs');
+  wrap.innerHTML+='<div class="chat-msg user">'+esc(msg)+'</div>';
+  const responses=['Based on the simulation data, the most significant finding is the high convergence in public sentiment toward regulation support.','The agent cluster analysis shows 3 distinct opinion groups: pro-regulation (47%), balanced (31%), and anti-regulation (22%).','Risk assessment indicates the largest uncertainty is around open-source exemption policies, with confidence below 60%.','The simulation suggests that lobbying intensity decreases regulatory support by approximately 4-7 percentage points.','Cross-channel analysis reveals that Twitter agents spread information 3.2x faster than Forum agents, but with lower factual accuracy.'];
+  setTimeout(()=>{wrap.innerHTML+='<div class="chat-msg agent">'+esc(responses[Math.floor(Math.random()*responses.length)])+'</div>';wrap.scrollTop=wrap.scrollHeight;},600);
+  wrap.scrollTop=wrap.scrollHeight;
+}
+
+// === EXPORT ===
+function exportToGraphify(){
+  const nodes=GRAPH_ENTITIES.map(e=>({id:'mf-'+e.id,title:e.label,category:e.type,level:1,source:'mirofish'}));
+  simAgents.forEach(a=>nodes.push({id:'mf-'+a.id,title:a.name+' ('+a.role+')',category:'agent',level:2,source:'mirofish'}));
+  const edges=GRAPH_EDGES.map(e=>({source:'mf-'+e.s,target:'mf-'+e.t,type:'relation'}));
+  const payload={source:'mirofish-sim',nodes:nodes,edges:edges};
+  localStorage.setItem('graphify_import_mirofish',JSON.stringify(payload));
+  window.open('../graphify/index.html?import=mirofish','_blank');
+}
+
+// === FISH BACKGROUND ===
+function initBackground(){
+  const c=document.getElementById('bg-canvas');const ctx=c.getContext('2d');
+  c.width=window.innerWidth;c.height=window.innerHeight;
+  const fish=Array.from({length:40},()=>({
+    x:Math.random()*c.width,y:Math.random()*c.height,
+    vx:(Math.random()-.5)*1.5+.5,vy:(Math.random()-.5)*.8,
+    size:Math.random()*3+2,phase:Math.random()*Math.PI*2
+  }));
+  function animate(){
+    ctx.clearRect(0,0,c.width,c.height);const t=Date.now()*.001;
+    fish.forEach(f=>{
+      f.x+=f.vx;f.y+=f.vy+Math.sin(t*2+f.phase)*.3;
+      if(f.x>c.width+10)f.x=-10;if(f.x<-10)f.x=c.width+10;
+      if(f.y>c.height+10)f.y=-10;if(f.y<-10)f.y=c.height+10;
+      const alpha=.08+Math.sin(t+f.phase)*.04;
+      ctx.save();ctx.translate(f.x,f.y);ctx.rotate(Math.atan2(f.vy+Math.sin(t*2+f.phase)*.3,f.vx));
+      ctx.beginPath();ctx.moveTo(f.size*2,0);ctx.lineTo(-f.size,f.size);ctx.lineTo(-f.size*.5,0);ctx.lineTo(-f.size,-f.size);ctx.closePath();
+      ctx.fillStyle='rgba(0,255,136,'+alpha+')';ctx.fill();ctx.restore();
+    });
+    requestAnimationFrame(animate);
+  }
+  animate();
+  window.addEventListener('resize',()=>{c.width=window.innerWidth;c.height=window.innerHeight;});
+}
+
+// === INIT ===
+document.addEventListener('DOMContentLoaded',()=>{
+  initBackground();renderStepper();renderStep1();renderStep2();renderStep3();renderStep4();renderStep5();
+});
+</script>
+<script src="../../shared/dkz-debug.js"></script>
+<script src="../../shared/dkz-guide.js"></script>
+<script src="../../shared/dkz-copilot.js"></script>
+<script src="../../shared/dkz-james.js"></script>
+<script src="../../shared/dkz-navbar.js"></script>
+<script src="../../shared/dkz-console.js"></script>
+<script src="../../shared/dkz-premium.js" defer></script>
+</body>
+</html>

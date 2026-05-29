@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v1.00.0_01">
+    <meta name="dkz-module" content="openhumans-hub">
+    <meta name="description" content="DkZ OpenHumans Hub — Citizen Science Data Explorer for Genomics, Wearables, GPS and Glucose data streams.">
+    <title>DkZ™ OpenHumans Hub — Citizen Science Data Explorer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* ═══════════════════════════════════════════════════════════
+           DkZ Design System v2 — OpenHumans Hub
+           ═══════════════════════════════════════════════════════════ */
+        :root {
+            --bg: #060608;
+            --surface: #0d0d12;
+            --card: #12121a;
+            --border: #1a1a2e;
+            --text: #e2e2e8;
+            --text-dim: #8888a0;
+            --text-muted: #55556a;
+            --accent: #fa1e4e;
+            --green: #00ff88;
+            --yellow: #ffb800;
+            --red: #ff3b5c;
+            --blue: #4488ff;
+            --purple: #9966ff;
+            --cyan: #00d4ff;
+            --orange: #ff6b35;
+            --radius: 14px;
+            --radius-sm: 8px;
+            --sidebar-w: 300px;
+            --header-h: 72px;
+            --glass-bg: rgba(18, 18, 26, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.06);
+            --glow-accent: rgba(250, 30, 78, 0.25);
+            --glow-green: rgba(0, 255, 136, 0.2);
+            --glow-cyan: rgba(0, 212, 255, 0.2);
+            --glow-purple: rgba(153, 102, 255, 0.2);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* ═══ Canvas Background ═══ */
+        #dnaCanvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.35;
+        }
+
+        /* ═══ Header ═══ */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 0 32px;
+            height: var(--header-h);
+            background: linear-gradient(135deg, rgba(13,13,18,0.92) 0%, rgba(26,10,26,0.92) 100%);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .hub-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: rgba(250, 30, 78, 0.1);
+            border: 1px solid rgba(250, 30, 78, 0.25);
+            border-radius: var(--radius-sm);
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.25s ease;
+            letter-spacing: 0.5px;
+        }
+        .hub-btn:hover {
+            background: rgba(250, 30, 78, 0.2);
+            border-color: var(--accent);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px var(--glow-accent);
+        }
+
+        .header-title {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+        .header-title .accent { color: var(--accent); }
+
+        .header-badge {
+            background: var(--green);
+            color: #000;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 3px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .header-stats {
+            margin-left: auto;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--green);
+        }
+        .stat-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .api-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+        }
+        .api-status.online {
+            background: rgba(0, 255, 136, 0.08);
+            color: var(--green);
+            border-color: rgba(0, 255, 136, 0.2);
+        }
+        .api-status.offline {
+            background: rgba(255, 59, 92, 0.08);
+            color: var(--red);
+            border-color: rgba(255, 59, 92, 0.2);
+        }
+        .api-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+        .api-status.online .api-dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
+        .api-status.offline .api-dot { background: var(--red); box-shadow: 0 0 8px var(--red); animation: none; }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        /* ═══ Layout ═══ */
+        .layout {
+            display: flex;
+            min-height: calc(100vh - var(--header-h));
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ═══ Sidebar ═══ */
+        .sidebar {
+            width: var(--sidebar-w);
+            min-width: var(--sidebar-w);
+            background: rgba(13, 13, 18, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            padding: 24px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+            max-height: calc(100vh - var(--header-h));
+            position: sticky;
+            top: var(--header-h);
+        }
+
+        .sidebar-header {
+            padding: 0 20px 16px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 8px;
+        }
+        .sidebar-header h2 {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-dim);
+            margin-bottom: 12px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 0 20px;
+            margin-bottom: 16px;
+        }
+        .filter-chip {
+            padding: 5px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        .filter-chip:hover { border-color: var(--accent); color: var(--text); }
+        .filter-chip.active {
+            background: rgba(250, 30, 78, 0.15);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .project-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 12px;
+        }
+
+        .project-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            margin-bottom: 4px;
+        }
+        .project-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: var(--glass-border);
+        }
+        .project-item.active {
+            background: rgba(250, 30, 78, 0.08);
+            border-color: rgba(250, 30, 78, 0.2);
+        }
+        .project-icon {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .project-info { flex: 1; min-width: 0; }
+        .project-name {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .project-meta {
+            font-size: 11px;
+            color: var(--text-dim);
+            display: flex;
+            gap: 8px;
+            margin-top: 2px;
+        }
+        .project-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .sidebar-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+        }
+        .sidebar-footer .export-btn {
+            width: 100%;
+            padding: 10px 16px;
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.12), rgba(0, 212, 255, 0.08));
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: var(--radius-sm);
+            color: var(--green);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .sidebar-footer .export-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 212, 255, 0.15));
+            border-color: var(--green);
+            box-shadow: 0 4px 20px var(--glow-green);
+            transform: translateY(-1px);
+        }
+
+        /* ═══ Main Content ═══ */
+        .main-content {
+            flex: 1;
+            padding: 28px 32px;
+            overflow-y: auto;
+        }
+
+        .section-title {
+            font-size: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text-dim);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--border), transparent);
+        }
+
+        /* ═══ Data Stream Cards ═══ */
+        .stream-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stream-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            transform: translateY(24px);
+        }
+        .stream-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .stream-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            border-radius: var(--radius) var(--radius) 0 0;
+            transition: opacity 0.3s;
+        }
+        .stream-card:hover {
+            border-color: rgba(255, 255, 255, 0.1);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .stream-card.genomics::before { background: linear-gradient(90deg, var(--cyan), var(--purple)); }
+        .stream-card.genomics:hover { box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 30px var(--glow-cyan); }
+
+        .stream-card.wearables::before { background: linear-gradient(90deg, var(--accent), var(--orange)); }
+        .stream-card.wearables:hover { box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 30px var(--glow-accent); }
+
+        .stream-card.gps::before { background: linear-gradient(90deg, var(--green), var(--cyan)); }
+        .stream-card.gps:hover { box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 30px var(--glow-green); }
+
+        .stream-card.cgm::before { background: linear-gradient(90deg, var(--yellow), var(--orange)); }
+        .stream-card.cgm:hover { box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(255, 184, 0, 0.2); }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+        .card-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .card-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+        .card-icon.genomics { background: rgba(0, 212, 255, 0.1); }
+        .card-icon.wearables { background: rgba(250, 30, 78, 0.1); }
+        .card-icon.gps { background: rgba(0, 255, 136, 0.1); }
+        .card-icon.cgm { background: rgba(255, 184, 0, 0.1); }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: -0.2px;
+        }
+        .card-subtitle {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        .card-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .card-status.active {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--green);
+        }
+        .card-status.pending {
+            background: rgba(255, 184, 0, 0.1);
+            color: var(--yellow);
+        }
+        .card-status .dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .card-body {
+            margin-bottom: 16px;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .metric-row:last-child { border-bottom: none; }
+        .metric-label {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+        .metric-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .card-chart {
+            width: 100%;
+            height: 60px;
+            margin-top: 12px;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .mini-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 100%;
+            padding: 4px;
+        }
+        .mini-bar {
+            flex: 1;
+            border-radius: 3px 3px 0 0;
+            min-height: 4px;
+            transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .card-footer-text {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .card-tag {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+        }
+
+        /* ═══ Glucose Chart (SVG inline) ═══ */
+        .glucose-chart-container {
+            width: 100%;
+            height: 80px;
+            margin-top: 8px;
+            position: relative;
+        }
+        .glucose-chart-container svg {
+            width: 100%;
+            height: 100%;
+        }
+        .glucose-zone {
+            font-size: 9px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ═══ Connection Info ═══ */
+        .connection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .conn-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            padding: 20px;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .conn-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .conn-card:hover {
+            border-color: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .conn-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .conn-icon {
+            font-size: 20px;
+            width: 36px; height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .conn-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .conn-detail {
+            font-size: 12px;
+            color: var(--text-dim);
+            line-height: 1.7;
+        }
+        .conn-detail code {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: var(--cyan);
+        }
+
+        /* ═══ Export Modal ═══ */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+        .modal-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 640px;
+            max-height: 80vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        .modal-header h3 { font-size: 16px; font-weight: 700; }
+        .modal-close {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .modal-close:hover { background: rgba(255, 59, 92, 0.1); border-color: var(--red); color: var(--red); }
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .modal-body pre {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            line-height: 1.6;
+            color: var(--cyan);
+            overflow-x: auto;
+            white-space: pre;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+        .modal-btn {
+            padding: 8px 20px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--border);
+        }
+        .modal-btn.primary {
+            background: var(--green);
+            border-color: var(--green);
+            color: #000;
+        }
+        .modal-btn.primary:hover { box-shadow: 0 4px 16px var(--glow-green); }
+        .modal-btn.secondary {
+            background: transparent;
+            color: var(--text-dim);
+        }
+        .modal-btn.secondary:hover { border-color: var(--text-dim); color: var(--text); }
+
+        /* ═══ Scrollbar ═══ */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* ═══ Responsive ═══ */
+        @media (max-width: 1024px) {
+            .layout { flex-direction: column; }
+            .sidebar {
+                width: 100%;
+                min-width: 100%;
+                max-height: 320px;
+                position: relative;
+                top: 0;
+                border-right: none;
+                border-bottom: 1px solid var(--glass-border);
+            }
+            .main-content { padding: 20px 16px; }
+            .stream-grid { grid-template-columns: 1fr; }
+            .header { padding: 0 16px; gap: 10px; flex-wrap: wrap; height: auto; padding-top: 12px; padding-bottom: 12px; }
+            .header-stats { gap: 12px; }
+            .stat-item { flex-direction: row; gap: 6px; }
+        }
+
+        @media (max-width: 640px) {
+            .header-title { font-size: 16px; }
+            .header-stats { display: none; }
+            .filter-group { gap: 4px; }
+            .filter-chip { font-size: 10px; padding: 4px 8px; }
+            .connection-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ═══ Stagger Animation ═══ */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .stagger-1 { transition-delay: 0.05s; }
+        .stagger-2 { transition-delay: 0.12s; }
+        .stagger-3 { transition-delay: 0.2s; }
+        .stagger-4 { transition-delay: 0.28s; }
+        .stagger-5 { transition-delay: 0.36s; }
+        .stagger-6 { transition-delay: 0.44s; }
+    </style>
+</head>
+<body>
+
+<!-- ═══ DNA Helix Canvas ═══ -->
+<canvas id="dnaCanvas"></canvas>
+
+<!-- ═══ Header ═══ -->
+<header class="header">
+    <a href="../../hub/index.html" class="hub-btn">&#9664; HUB</a>
+    <h1 class="header-title">&#x1F9EC; <span class="accent">OpenHumans</span> Hub</h1>
+    <span class="header-badge">Citizen Science</span>
+    <div class="header-stats">
+        <div class="stat-item">
+            <span class="stat-value" id="statProjects">12</span>
+            <span class="stat-label">Projects</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value" id="statStreams">4</span>
+            <span class="stat-label">Streams</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value" id="statDataPoints">48.2K</span>
+            <span class="stat-label">Data Points</span>
+        </div>
+    </div>
+    <div class="api-status online" id="apiStatus">
+        <span class="api-dot"></span>
+        <span id="apiStatusText">API Online</span>
+    </div>
+</header>
+
+<!-- ═══ Layout ═══ -->
+<div class="layout">
+
+    <!-- ═══ Sidebar: Project List ═══ -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>&#128218; Projects</h2>
+        </div>
+        <div class="filter-group" id="filterGroup">
+            <span class="filter-chip active" data-cat="all">All</span>
+            <span class="filter-chip" data-cat="genomics">&#x1F9EC; Genomics</span>
+            <span class="filter-chip" data-cat="wearables">&#x2764;&#xFE0F; Wearables</span>
+            <span class="filter-chip" data-cat="location">&#x1F4CD; Location</span>
+            <span class="filter-chip" data-cat="health">&#x1F4CA; Health</span>
+            <span class="filter-chip" data-cat="research">&#x1F52C; Research</span>
+        </div>
+        <div class="project-list" id="projectList"></div>
+        <div class="sidebar-footer">
+            <button class="export-btn" id="exportBtn" title="Export data graph to Graphify JSON">
+                &#x1F4E4; Export to Graphify
+            </button>
+        </div>
+    </aside>
+
+    <!-- ═══ Main Content ═══ -->
+    <main class="main-content">
+
+        <!-- Data Stream Explorer -->
+        <div class="section-title">&#x1F4E1; Data Stream Explorer</div>
+        <div class="stream-grid" id="streamGrid">
+
+            <!-- Genomics Card -->
+            <div class="stream-card genomics stagger-1" data-stream="genomics">
+                <div class="card-header">
+                    <div class="card-header-left">
+                        <div class="card-icon genomics">&#x1F9EC;</div>
+                        <div>
+                            <div class="card-title">&#x1F52C; Genomics Data</div>
+                            <div class="card-subtitle">23andMe / AncestryDNA Import</div>
+                        </div>
+                    </div>
+                    <div class="card-status active"><span class="dot"></span> Synced</div>
+                </div>
+                <div class="card-body">
+                    <div class="metric-row">
+                        <span class="metric-label">SNP Variants</span>
+                        <span class="metric-value" style="color:var(--cyan)">638,412</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Genome Build</span>
+                        <span class="metric-value">GRCh37 / hg19</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Coverage</span>
+                        <span class="metric-value" style="color:var(--green)">98.7%</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Risk Markers</span>
+                        <span class="metric-value" style="color:var(--yellow)">14 flagged</span>
+                    </div>
+                </div>
+                <div class="card-chart">
+                    <div class="mini-bars" id="genomicsBars"></div>
+                </div>
+                <div class="card-footer">
+                    <span class="card-footer-text">Last sync: 2h ago</span>
+                    <span class="card-tag">VCF</span>
+                </div>
+            </div>
+
+            <!-- Wearables Card -->
+            <div class="stream-card wearables stagger-2" data-stream="wearables">
+                <div class="card-header">
+                    <div class="card-header-left">
+                        <div class="card-icon wearables">&#x2764;&#xFE0F;</div>
+                        <div>
+                            <div class="card-title">&#x2764;&#xFE0F; Wearables Stream</div>
+                            <div class="card-subtitle">Fitbit / Apple Health / Garmin</div>
+                        </div>
+                    </div>
+                    <div class="card-status active"><span class="dot"></span> Live</div>
+                </div>
+                <div class="card-body">
+                    <div class="metric-row">
+                        <span class="metric-label">Steps Today</span>
+                        <span class="metric-value" style="color:var(--green)">8,742</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Heart Rate</span>
+                        <span class="metric-value" style="color:var(--accent)">72 BPM</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">HRV (ms)</span>
+                        <span class="metric-value">48.3</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Sleep Score</span>
+                        <span class="metric-value" style="color:var(--cyan)">82 / 100</span>
+                    </div>
+                </div>
+                <div class="card-chart">
+                    <div class="mini-bars" id="wearableBars"></div>
+                </div>
+                <div class="card-footer">
+                    <span class="card-footer-text">Streaming: real-time</span>
+                    <span class="card-tag">JSON</span>
+                </div>
+            </div>
+
+            <!-- GPS Card -->
+            <div class="stream-card gps stagger-3" data-stream="gps">
+                <div class="card-header">
+                    <div class="card-header-left">
+                        <div class="card-icon gps">&#x1F5FA;&#xFE0F;</div>
+                        <div>
+                            <div class="card-title">&#x1F4CD; GPS Location</div>
+                            <div class="card-subtitle">Google Takeout / OpenPaths</div>
+                        </div>
+                    </div>
+                    <div class="card-status active"><span class="dot"></span> Active</div>
+                </div>
+                <div class="card-body">
+                    <div class="metric-row">
+                        <span class="metric-label">Track Points</span>
+                        <span class="metric-value" style="color:var(--green)">24,891</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Countries</span>
+                        <span class="metric-value">7</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Distance (km)</span>
+                        <span class="metric-value" style="color:var(--cyan)">12,340</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Last Position</span>
+                        <span class="metric-value" style="color:var(--text-dim);font-size:11px">52.52N 13.40E</span>
+                    </div>
+                </div>
+                <div class="card-chart">
+                    <div class="mini-bars" id="gpsBars"></div>
+                </div>
+                <div class="card-footer">
+                    <span class="card-footer-text">Updated: 15min ago</span>
+                    <span class="card-tag">GeoJSON</span>
+                </div>
+            </div>
+
+            <!-- CGM Card -->
+            <div class="stream-card cgm stagger-4" data-stream="cgm">
+                <div class="card-header">
+                    <div class="card-header-left">
+                        <div class="card-icon cgm">&#x1F4C8;</div>
+                        <div>
+                            <div class="card-title">&#x1F4C9; CGM Glucose</div>
+                            <div class="card-subtitle">Dexcom / FreeStyle Libre</div>
+                        </div>
+                    </div>
+                    <div class="card-status active"><span class="dot"></span> Live</div>
+                </div>
+                <div class="card-body">
+                    <div class="metric-row">
+                        <span class="metric-label">Current Level</span>
+                        <span class="metric-value" style="color:var(--green)">102 mg/dL</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Avg (7d)</span>
+                        <span class="metric-value">108 mg/dL</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Time in Range</span>
+                        <span class="metric-value" style="color:var(--green)">89%</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">HbA1c (est.)</span>
+                        <span class="metric-value" style="color:var(--cyan)">5.4%</span>
+                    </div>
+                </div>
+                <div class="glucose-chart-container" id="glucoseChart"></div>
+                <div class="card-footer">
+                    <span class="card-footer-text">5-min interval</span>
+                    <span class="card-tag">CSV</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- API Connections -->
+        <div class="section-title">&#x1F517; API Connections</div>
+        <div class="connection-grid" id="connGrid"></div>
+
+    </main>
+</div>
+
+<!-- ═══ Export Modal ═══ -->
+<div class="modal-overlay" id="exportModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>&#x1F4E4; Export to Graphify</h3>
+            <button class="modal-close" id="modalClose">&#x2715;</button>
+        </div>
+        <div class="modal-body">
+            <pre id="exportJson"></pre>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn secondary" id="modalCancel">Cancel</button>
+            <button class="modal-btn primary" id="modalCopy">&#x1F4CB; Copy JSON</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// DkZ OpenHumans Hub — Module Logic
+// ═══════════════════════════════════════════════════════════
+
+// ── XSS Protection ──
+function esc(s) {
+    if (s == null) return '';
+    var d = document.createElement('div');
+    d.textContent = String(s);
+    return d.innerHTML;
+}
+
+// ═══ Project Demo Data ═══
+var PROJECTS = [
+    { id: 'p1', name: 'Personal Genome Project', cat: 'genomics', icon: '\u{1F9EC}', members: 5842, status: 'active', color: 'var(--cyan)' },
+    { id: 'p2', name: 'Nightscout CGM Cloud', cat: 'health', icon: '\u{1F4C8}', members: 3210, status: 'active', color: 'var(--yellow)' },
+    { id: 'p3', name: 'Fitbit Data Ingest', cat: 'wearables', icon: '\u{2764}\u{FE0F}', members: 9134, status: 'active', color: 'var(--accent)' },
+    { id: 'p4', name: 'OpenPaths Location', cat: 'location', icon: '\u{1F4CD}', members: 1876, status: 'active', color: 'var(--green)' },
+    { id: 'p5', name: 'Apple Health Import', cat: 'wearables', icon: '\u{1F34F}', members: 7421, status: 'active', color: 'var(--green)' },
+    { id: 'p6', name: '23andMe Connector', cat: 'genomics', icon: '\u{1F52C}', members: 4102, status: 'active', color: 'var(--purple)' },
+    { id: 'p7', name: 'Garmin Health API', cat: 'wearables', icon: '\u{231A}', members: 2890, status: 'pending', color: 'var(--cyan)' },
+    { id: 'p8', name: 'Google Takeout GPS', cat: 'location', icon: '\u{1F30D}', members: 6517, status: 'active', color: 'var(--blue)' },
+    { id: 'p9', name: 'Dexcom CGM Bridge', cat: 'health', icon: '\u{1F489}', members: 1543, status: 'active', color: 'var(--orange)' },
+    { id: 'p10', name: 'AncestryDNA Upload', cat: 'genomics', icon: '\u{1F9EC}', members: 3890, status: 'active', color: 'var(--accent)' },
+    { id: 'p11', name: 'Citizen Microbiome', cat: 'research', icon: '\u{1F9EB}', members: 982, status: 'pending', color: 'var(--purple)' },
+    { id: 'p12', name: 'Sleep Research Lab', cat: 'research', icon: '\u{1F634}', members: 2145, status: 'active', color: 'var(--blue)' }
+];
+
+var CONNECTIONS = [
+    { icon: '\u{1F310}', name: 'OpenHumans API', detail: 'REST API v2 — OAuth2 authenticated', endpoint: 'https://www.openhumans.org/api/', status: 'connected' },
+    { icon: '\u{1F4D3}', name: 'JupyterHub', detail: 'Interactive notebook environment', endpoint: 'https://notebooks.openhumans.org/', status: 'connected' },
+    { icon: '\u{1F4E6}', name: 'Data Retrieval API', detail: 'Download personal data archives', endpoint: '/api/direct-sharing/project/exchange-member/', status: 'ready' },
+    { icon: '\u{1F50D}', name: 'Graphify Bridge', detail: 'Export nodes + edges for visualization', endpoint: 'local://graphify/import', status: 'ready' },
+    { icon: '\u{1F512}', name: 'OAuth2 Flow', detail: 'Secure token-based authorization', endpoint: 'https://www.openhumans.org/direct-sharing/', status: 'configured' },
+    { icon: '\u{1F4CA}', name: 'Data Commons', detail: 'Public research datasets', endpoint: 'https://www.openhumans.org/data-commons/', status: 'available' }
+];
+
+// ═══ Render Projects ═══
+var activeFilter = 'all';
+var activeProject = null;
+
+function renderProjects() {
+    var container = document.getElementById('projectList');
+    var filtered = activeFilter === 'all'
+        ? PROJECTS
+        : PROJECTS.filter(function(p) { return p.cat === activeFilter; });
+
+    container.innerHTML = filtered.map(function(p) {
+        return '<div class="project-item ' + (activeProject === p.id ? 'active' : '') + '" data-id="' + esc(p.id) + '" onclick="selectProject(\'' + esc(p.id) + '\')">'
+            + '<div class="project-icon" style="background:' + p.color + '20;">' + p.icon + '</div>'
+            + '<div class="project-info">'
+            + '<div class="project-name">' + esc(p.name) + '</div>'
+            + '<div class="project-meta"><span>' + esc(p.cat) + '</span><span>' + esc(p.status) + '</span></div>'
+            + '</div>'
+            + '<span class="project-count">' + esc(String(p.members)) + '</span>'
+            + '</div>';
+    }).join('');
+}
+
+function selectProject(id) {
+    activeProject = activeProject === id ? null : id;
+    renderProjects();
+}
+
+// ═══ Filter Chips ═══
+document.getElementById('filterGroup').addEventListener('click', function(e) {
+    var chip = e.target.closest('.filter-chip');
+    if (!chip) return;
+    document.querySelectorAll('.filter-chip').forEach(function(c) { c.classList.remove('active'); });
+    chip.classList.add('active');
+    activeFilter = chip.dataset.cat;
+    renderProjects();
+});
+
+// ═══ Render Connections ═══
+function renderConnections() {
+    var container = document.getElementById('connGrid');
+    container.innerHTML = CONNECTIONS.map(function(c, i) {
+        return '<div class="conn-card stagger-' + (i + 1) + '">'
+            + '<div class="conn-header">'
+            + '<div class="conn-icon">' + c.icon + '</div>'
+            + '<div class="conn-name">' + esc(c.name) + '</div>'
+            + '</div>'
+            + '<div class="conn-detail">'
+            + esc(c.detail) + '<br>'
+            + '<code>' + esc(c.endpoint) + '</code><br>'
+            + 'Status: <strong style="color:var(--green)">' + esc(c.status) + '</strong>'
+            + '</div>'
+            + '</div>';
+    }).join('');
+}
+
+// ═══ Mini Bar Charts ═══
+function renderMiniCharts() {
+    var charts = {
+        genomicsBars: { count: 20, color: 'var(--cyan)', variance: 0.6 },
+        wearableBars: { count: 24, color: 'var(--accent)', variance: 0.5 },
+        gpsBars: { count: 16, color: 'var(--green)', variance: 0.7 }
+    };
+
+    Object.keys(charts).forEach(function(id) {
+        var cfg = charts[id];
+        var container = document.getElementById(id);
+        if (!container) return;
+        var html = '';
+        for (var i = 0; i < cfg.count; i++) {
+            var h = 15 + Math.random() * 45 * (1 + cfg.variance * Math.sin(i * 0.4));
+            html += '<div class="mini-bar" style="height:' + esc(String(Math.round(h))) + '%;background:' + cfg.color + ';opacity:' + esc(String((0.4 + Math.random() * 0.6).toFixed(2))) + '"></div>';
+        }
+        container.innerHTML = html;
+    });
+}
+
+// ═══ Glucose SVG Chart ═══
+function renderGlucoseChart() {
+    var container = document.getElementById('glucoseChart');
+    if (!container) return;
+
+    var points = [];
+    var val = 100;
+    for (var i = 0; i < 48; i++) {
+        val += (Math.random() - 0.48) * 12;
+        val = Math.max(65, Math.min(180, val));
+        points.push(val);
+    }
+
+    var w = 400;
+    var h = 80;
+    var minV = 60;
+    var maxV = 200;
+
+    function toX(idx) { return (idx / (points.length - 1)) * w; }
+    function toY(v) { return h - ((v - minV) / (maxV - minV)) * h; }
+
+    var pathD = points.map(function(v, idx) {
+        return (idx === 0 ? 'M' : 'L') + toX(idx).toFixed(1) + ',' + toY(v).toFixed(1);
+    }).join(' ');
+    var areaD = pathD + ' L' + w + ',' + h + ' L0,' + h + ' Z';
+
+    var rangeTop = toY(140);
+    var rangeBot = toY(70);
+
+    container.innerHTML = '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none">'
+        + '<defs><linearGradient id="glucGrad" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0%" stop-color="var(--yellow)" stop-opacity="0.3"/>'
+        + '<stop offset="100%" stop-color="var(--yellow)" stop-opacity="0"/>'
+        + '</linearGradient></defs>'
+        + '<rect x="0" y="' + rangeTop + '" width="' + w + '" height="' + (rangeBot - rangeTop) + '" fill="rgba(0,255,136,0.04)" rx="2"/>'
+        + '<line x1="0" y1="' + toY(70) + '" x2="' + w + '" y2="' + toY(70) + '" stroke="var(--green)" stroke-width="0.5" stroke-dasharray="4,4" opacity="0.4"/>'
+        + '<line x1="0" y1="' + toY(140) + '" x2="' + w + '" y2="' + toY(140) + '" stroke="var(--yellow)" stroke-width="0.5" stroke-dasharray="4,4" opacity="0.4"/>'
+        + '<path d="' + areaD + '" fill="url(#glucGrad)"/>'
+        + '<path d="' + pathD + '" fill="none" stroke="var(--yellow)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
+        + '<text x="4" y="' + (toY(140) - 3) + '" class="glucose-zone" fill="var(--yellow)" opacity="0.6">140</text>'
+        + '<text x="4" y="' + (toY(70) + 10) + '" class="glucose-zone" fill="var(--green)" opacity="0.6">70</text>'
+        + '</svg>';
+}
+
+// ═══ Export to Graphify ═══
+function generateGraphifyJSON() {
+    var nodes = [
+        { id: 'oh-hub', label: 'OpenHumans Hub', type: 'platform', color: '#fa1e4e' },
+        { id: 'genomics', label: 'Genomics Data', type: 'data-stream', color: '#00d4ff' },
+        { id: 'wearables', label: 'Wearables Stream', type: 'data-stream', color: '#fa1e4e' },
+        { id: 'gps', label: 'GPS Location', type: 'data-stream', color: '#00ff88' },
+        { id: 'cgm', label: 'CGM Glucose', type: 'data-stream', color: '#ffb800' }
+    ];
+
+    PROJECTS.forEach(function(p) {
+        nodes.push({
+            id: p.id,
+            label: p.name,
+            type: 'project',
+            category: p.cat,
+            members: p.members,
+            color: p.color.replace('var(--', '').replace(')', '')
+        });
+    });
+
+    var edges = [
+        { source: 'oh-hub', target: 'genomics', label: 'provides' },
+        { source: 'oh-hub', target: 'wearables', label: 'provides' },
+        { source: 'oh-hub', target: 'gps', label: 'provides' },
+        { source: 'oh-hub', target: 'cgm', label: 'provides' }
+    ];
+
+    var streamMap = { genomics: 'genomics', wearables: 'wearables', location: 'gps', health: 'cgm', research: 'oh-hub' };
+    PROJECTS.forEach(function(p) {
+        edges.push({
+            source: streamMap[p.cat] || 'oh-hub',
+            target: p.id,
+            label: 'connects'
+        });
+    });
+
+    return {
+        nodes: nodes,
+        edges: edges,
+        meta: {
+            source: 'openhumans-hub',
+            version: 'v1.00.0_01',
+            exported: new Date().toISOString(),
+            totalProjects: PROJECTS.length,
+            totalStreams: 4
+        }
+    };
+}
+
+function openExportModal() {
+    var data = generateGraphifyJSON();
+    var json = JSON.stringify(data, null, 2);
+    document.getElementById('exportJson').textContent = json;
+    document.getElementById('exportModal').classList.add('show');
+}
+
+function closeExportModal() {
+    document.getElementById('exportModal').classList.remove('show');
+}
+
+function copyExportJSON() {
+    var text = document.getElementById('exportJson').textContent;
+    navigator.clipboard.writeText(text).then(function() {
+        var btn = document.getElementById('modalCopy');
+        btn.textContent = '\u2705 Copied!';
+        setTimeout(function() { btn.innerHTML = '&#x1F4CB; Copy JSON'; }, 2000);
+    }).catch(function() {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+    });
+}
+
+// ═══ Event Listeners ═══
+document.getElementById('exportBtn').addEventListener('click', openExportModal);
+document.getElementById('modalClose').addEventListener('click', closeExportModal);
+document.getElementById('modalCancel').addEventListener('click', closeExportModal);
+document.getElementById('modalCopy').addEventListener('click', copyExportJSON);
+document.getElementById('exportModal').addEventListener('click', function(e) {
+    if (e.target === this) closeExportModal();
+});
+
+// ═══ API Health Check ═══
+function checkAPIStatus() {
+    var statusEl = document.getElementById('apiStatus');
+    var textEl = document.getElementById('apiStatusText');
+    fetch('https://www.openhumans.org/api/', {
+        method: 'HEAD',
+        mode: 'no-cors'
+    }).then(function() {
+        statusEl.className = 'api-status online';
+        textEl.textContent = 'API Online';
+    }).catch(function() {
+        statusEl.className = 'api-status offline';
+        textEl.textContent = 'API Offline';
+    });
+}
+
+// ═══ Stagger FadeIn Observer ═══
+function initStaggerAnimations() {
+    var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.stream-card, .conn-card').forEach(function(el) {
+        observer.observe(el);
+    });
+}
+
+// ═══ DNA Helix Canvas ═══
+function initDNACanvas() {
+    var canvas = document.getElementById('dnaCanvas');
+    var ctx = canvas.getContext('2d');
+    var w, h, animFrame;
+
+    function resize() {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    var particles = [];
+    var PARTICLE_COUNT = 60;
+
+    for (var i = 0; i < PARTICLE_COUNT; i++) {
+        particles.push({
+            x: Math.random() * (w || 1920),
+            y: Math.random() * (h || 1080),
+            vx: (Math.random() - 0.5) * 0.3,
+            vy: (Math.random() - 0.5) * 0.3,
+            r: 1 + Math.random() * 1.5,
+            alpha: 0.2 + Math.random() * 0.4,
+            hue: Math.random() > 0.5 ? 0 : 170
+        });
+    }
+
+    var time = 0;
+
+    function drawHelix(t) {
+        var cx = w * 0.85;
+        var amplitude = 40;
+        var wavelength = 120;
+        var speed = 0.008;
+
+        ctx.lineWidth = 1;
+
+        for (var y = -20; y < h + 20; y += 8) {
+            var phase = y / wavelength + t * speed;
+            var x1 = cx + Math.sin(phase) * amplitude;
+            var x2 = cx + Math.sin(phase + Math.PI) * amplitude;
+            var depth1 = (Math.cos(phase) + 1) / 2;
+            var depth2 = (Math.cos(phase + Math.PI) + 1) / 2;
+
+            // Strand 1
+            ctx.beginPath();
+            ctx.arc(x1, y, 1.5, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 212, 255, ' + (depth1 * 0.35) + ')';
+            ctx.fill();
+
+            // Strand 2
+            ctx.beginPath();
+            ctx.arc(x2, y, 1.5, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(153, 102, 255, ' + (depth2 * 0.35) + ')';
+            ctx.fill();
+
+            // Base pair connectors
+            if (y % 24 < 8) {
+                ctx.beginPath();
+                ctx.moveTo(x1, y);
+                ctx.lineTo(x2, y);
+                ctx.strokeStyle = 'rgba(250, 30, 78, ' + (0.06 + Math.min(depth1, depth2) * 0.08) + ')';
+                ctx.stroke();
+            }
+        }
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, w, h);
+        time++;
+
+        // Draw particles
+        for (var pi = 0; pi < particles.length; pi++) {
+            var p = particles[pi];
+            p.x += p.vx;
+            p.y += p.vy;
+            if (p.x < 0) p.x = w;
+            if (p.x > w) p.x = 0;
+            if (p.y < 0) p.y = h;
+            if (p.y > h) p.y = 0;
+
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            var col = p.hue === 0 ? '250, 30, 78' : '0, 212, 255';
+            ctx.fillStyle = 'rgba(' + col + ', ' + p.alpha + ')';
+            ctx.fill();
+        }
+
+        // Connect nearby particles
+        for (var i = 0; i < particles.length; i++) {
+            for (var j = i + 1; j < particles.length; j++) {
+                var dx = particles[i].x - particles[j].x;
+                var dy = particles[i].y - particles[j].y;
+                var dist = dx * dx + dy * dy;
+                if (dist < 12000) {
+                    ctx.beginPath();
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.strokeStyle = 'rgba(255, 255, 255, ' + (0.03 * (1 - dist / 12000)) + ')';
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+                }
+            }
+        }
+
+        // Draw DNA helix
+        drawHelix(time);
+
+        animFrame = requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    // Pause when tab not visible
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            cancelAnimationFrame(animFrame);
+        } else {
+            animate();
+        }
+    });
+}
+
+// ═══ Initialize ═══
+document.addEventListener('DOMContentLoaded', function() {
+    renderProjects();
+    renderConnections();
+    renderMiniCharts();
+    renderGlucoseChart();
+    initStaggerAnimations();
+    initDNACanvas();
+    checkAPIStatus();
+
+    // Re-check API every 60s
+    setInterval(checkAPIStatus, 60000);
+});
+</script>
+
+<!-- ═══ Shared DkZ Scripts ═══ -->
+<script src="../../shared/dkz-debug.js" defer></script>
+<script src="../../shared/dkz-guide.js" defer></script>
+<script src="../../shared/dkz-copilot.js" defer></script>
+<script src="../../shared/dkz-james.js" defer></script>
+<script src="../../shared/dkz-navbar.js" defer></script>
+<script src="../../shared/dkz-console.js" defer></script>
+<script src="../../shared/dkz-premium.js" defer></script>
+</body>
+</html>
