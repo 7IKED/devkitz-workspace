@@ -3,45 +3,825 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🤖 Swarm Mission Control — DkZ v1.0 (Next.js)</title>
+  <meta name="dkz-version" content="v0.01.1_01">
+  <meta name="description" content="Swarm Mission Control — Agent-Schwarm Steuerungszentrale fuer DkZ Dashboard">
+  <title>Swarm Mission Control — DkZ&#8482;</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-      background: #000;
-    }
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-    #loader {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      color: #fa1e4e;
-      font-family: monospace;
-      font-size: 1.2rem;
-      z-index: 10;
-      pointer-events: none;
-    }
+/* ═══ CSS Variables ═══ */
+:root {
+  --bg: #060608;
+  --card: #1a1a1c;
+  --card2: #222226;
+  --border: #333338;
+  --text: #f6f6f7;
+  --muted: #a1a1aa;
+  --green: #00ff88;
+  --blue: #55ACEE;
+  --yellow: #FFB800;
+  --red: #fa1e4e;
+  --purple: #ec4899;
+  --accent: #fa1e4e;
+  --accent-rgb: 250, 30, 78;
+  --font: 'Inter', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --glass: rgba(14, 14, 22, .72);
+  --blur: blur(24px);
+  --z-modal: 11000;
+  --z-toast: 12000;
+  --z-overlay: 9000;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 6px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ═══ Background ═══ */
+.bg-mesh { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.bg-blob { position: absolute; border-radius: 50%; filter: blur(120px); opacity: .05; animation: blobFloat 22s ease-in-out infinite; }
+.bg-blob:nth-child(1) { width: 500px; height: 500px; background: var(--accent); top: -10%; left: 15%; }
+.bg-blob:nth-child(2) { width: 350px; height: 350px; background: var(--blue); bottom: 5%; right: 10%; animation-delay: -8s; }
+.bg-blob:nth-child(3) { width: 280px; height: 280px; background: var(--green); top: 40%; left: 55%; animation-delay: -15s; opacity: .03; }
+@keyframes blobFloat { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(30px,-40px) scale(1.1); } }
+
+/* ═══ Scanline overlay ═══ */
+.scanlines {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.03) 2px, rgba(0,0,0,.03) 4px);
+}
+
+/* ═══ App ═══ */
+.app { position: relative; z-index: 2; min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ═══ Header ═══ */
+.header {
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--glass);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  display: flex; align-items: center; gap: 12px;
+  position: sticky; top: 0; z-index: 100;
+}
+.back-btn {
+  padding: 6px 14px; border: 1px solid var(--border); border-radius: 10px;
+  background: rgba(255,255,255,.03); color: var(--muted); font-size: 11px;
+  text-decoration: none; font-family: var(--font); transition: all .2s;
+}
+.back-btn:hover { color: var(--text); border-color: var(--accent); }
+h1 {
+  font-size: 20px; font-weight: 900;
+  background: linear-gradient(135deg, var(--accent), var(--green));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.hdr-right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+.ver { font-size: 9px; color: var(--muted); font-family: var(--mono); }
+
+/* ═══ Radar ═══ */
+.radar-wrap {
+  position: relative; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+}
+.radar-ring {
+  position: absolute; border: 1px solid rgba(var(--accent-rgb), .3); border-radius: 50%;
+  animation: radarPulse 3s ease-out infinite;
+}
+.radar-ring:nth-child(1) { width: 12px; height: 12px; animation-delay: 0s; }
+.radar-ring:nth-child(2) { width: 22px; height: 22px; animation-delay: 1s; }
+.radar-ring:nth-child(3) { width: 32px; height: 32px; animation-delay: 2s; }
+.radar-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+  box-shadow: 0 0 8px var(--accent); z-index: 1;
+}
+@keyframes radarPulse {
+  0% { transform: scale(.6); opacity: 1; border-color: rgba(var(--accent-rgb),.5); }
+  100% { transform: scale(1.8); opacity: 0; border-color: rgba(var(--accent-rgb),0); }
+}
+
+/* ═══ Content ═══ */
+.content { padding: 20px 24px; flex: 1; display: flex; flex-direction: column; gap: 18px; }
+
+/* ═══ Stats Row ═══ */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.stat {
+  background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--border); border-radius: 14px; padding: 16px; text-align: center;
+  transition: all .3s; position: relative; overflow: hidden;
+}
+.stat:hover { transform: translateY(-2px); border-color: rgba(var(--accent-rgb),.25); }
+.stat .sv { font-size: 28px; font-weight: 800; font-family: var(--mono); }
+.stat .sl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.2px; margin-top: 4px; }
+.stat .si { font-size: 18px; margin-bottom: 4px; }
+
+/* ═══ Main Grid ═══ */
+.main-grid { display: grid; grid-template-columns: 1fr 340px; gap: 16px; flex: 1; min-height: 0; }
+
+/* ═══ Agent Grid ═══ */
+.agent-section-title {
+  font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase;
+  letter-spacing: 1.5px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+}
+.agent-section-title .count-badge {
+  font-size: 10px; background: var(--card2); padding: 2px 8px; border-radius: 6px;
+  font-family: var(--mono); color: var(--accent);
+}
+.agent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+
+.agent-card {
+  background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--border); border-radius: 14px; padding: 16px;
+  cursor: pointer; transition: all .3s; position: relative; overflow: hidden;
+  animation: cardFadeIn .5s ease both;
+}
+.agent-card:hover { transform: translateY(-3px); border-color: rgba(var(--accent-rgb),.3); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+.agent-card .ac-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.agent-card .ac-avatar {
+  width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center;
+  justify-content: center; font-size: 18px; background: var(--card2); border: 1px solid var(--border);
+}
+.agent-card .ac-info { flex: 1; }
+.agent-card .ac-name { font-size: 13px; font-weight: 700; }
+.agent-card .ac-role { font-size: 10px; color: var(--muted); }
+.agent-card .ac-status {
+  display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .8px;
+}
+.status-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.status-dot.online { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.status-dot.busy { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); animation: statusPulse 2s infinite; }
+.status-dot.error { background: var(--red); box-shadow: 0 0 8px var(--red); animation: statusPulse 1s infinite; }
+.status-dot.offline { background: var(--muted); }
+@keyframes statusPulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+
+.agent-card .ac-task {
+  font-size: 11px; color: var(--muted); margin-top: 8px; padding: 6px 8px;
+  background: var(--card2); border-radius: 6px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.agent-card .ac-bar-wrap { margin-top: 8px; }
+.agent-card .ac-bar-label { font-size: 9px; color: var(--muted); display: flex; justify-content: space-between; margin-bottom: 3px; }
+.agent-card .ac-bar {
+  height: 4px; background: var(--card2); border-radius: 2px; overflow: hidden;
+}
+.agent-card .ac-bar-fill {
+  height: 100%; border-radius: 2px; transition: width 1s ease;
+}
+.agent-card .ac-uptime {
+  font-size: 9px; color: var(--muted); font-family: var(--mono); margin-top: 6px; text-align: right;
+}
+
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.agent-card:nth-child(1) { animation-delay: .05s; }
+.agent-card:nth-child(2) { animation-delay: .1s; }
+.agent-card:nth-child(3) { animation-delay: .15s; }
+.agent-card:nth-child(4) { animation-delay: .2s; }
+.agent-card:nth-child(5) { animation-delay: .25s; }
+.agent-card:nth-child(6) { animation-delay: .3s; }
+
+/* ═══ Right Column ═══ */
+.right-col { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+
+/* ═══ Mission Builder ═══ */
+.mission-builder {
+  background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--border); border-radius: 14px; padding: 16px;
+}
+.mb-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 12px; color: var(--accent); }
+.mb-field { margin-bottom: 10px; }
+.mb-field label { display: block; font-size: 10px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .5px; }
+.mb-field input, .mb-field textarea {
+  width: 100%; padding: 8px 10px; background: var(--card2); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-family: var(--font); font-size: 12px; outline: none;
+  transition: border-color .2s;
+}
+.mb-field input:focus, .mb-field textarea:focus { border-color: var(--accent); }
+.mb-field textarea { min-height: 50px; resize: vertical; }
+.mb-agents { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.mb-agent-check {
+  display: flex; align-items: center; gap: 4px; padding: 4px 10px;
+  background: var(--card2); border: 1px solid var(--border); border-radius: 6px;
+  font-size: 10px; cursor: pointer; transition: all .2s;
+}
+.mb-agent-check:hover { border-color: var(--accent); }
+.mb-agent-check input { accent-color: var(--accent); }
+.mb-agent-check.checked { border-color: var(--green); background: rgba(0,255,136,.05); }
+.btn-mission {
+  width: 100%; padding: 10px; background: var(--accent); border: none; border-radius: 10px;
+  color: #fff; font-family: var(--font); font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: all .2s;
+}
+.btn-mission:hover { box-shadow: 0 4px 16px rgba(var(--accent-rgb),.35); transform: translateY(-1px); }
+
+/* ═══ Live Feed ═══ */
+.live-feed {
+  flex: 1; min-height: 0; background: var(--glass); backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur); border: 1px solid var(--border);
+  border-radius: 14px; display: flex; flex-direction: column; overflow: hidden;
+}
+.lf-header {
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px;
+  color: var(--accent); display: flex; align-items: center; gap: 8px;
+}
+.lf-header .live-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+  box-shadow: 0 0 6px var(--green); animation: statusPulse 2s infinite;
+}
+.lf-body { flex: 1; overflow-y: auto; padding: 8px 12px; }
+.feed-item {
+  display: flex; gap: 8px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.03);
+  font-size: 11px; animation: feedSlide .3s ease;
+}
+@keyframes feedSlide { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+.feed-time { color: var(--muted); font-family: var(--mono); font-size: 9px; white-space: nowrap; min-width: 55px; padding-top: 1px; }
+.feed-badge {
+  padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .5px; white-space: nowrap;
+}
+.feed-badge.success { background: rgba(0,255,136,.12); color: var(--green); }
+.feed-badge.error { background: rgba(250,30,78,.12); color: var(--red); }
+.feed-badge.info { background: rgba(85,172,238,.12); color: var(--blue); }
+.feed-badge.warn { background: rgba(255,184,0,.12); color: var(--yellow); }
+.feed-msg { color: var(--text); flex: 1; }
+
+/* ═══ Modal ═══ */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(8px);
+  z-index: var(--z-overlay); display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .3s;
+}
+.modal-overlay.show { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+  padding: 28px; max-width: 520px; width: 90%; max-height: 80vh; overflow-y: auto;
+  transform: scale(.95); transition: transform .3s;
+}
+.modal-overlay.show .modal { transform: scale(1); }
+.modal h2 {
+  font-size: 18px; font-weight: 800; margin-bottom: 14px;
+  background: linear-gradient(135deg, var(--accent), var(--green));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.modal p { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 10px; }
+.modal .feature-list { list-style: none; margin: 12px 0; }
+.modal .feature-list li { padding: 6px 0; font-size: 12px; color: var(--text); }
+.modal .feature-list li::before { content: '&#9656; '; color: var(--accent); font-weight: 700; }
+.modal .btn-close {
+  margin-top: 16px; padding: 10px 24px; background: var(--accent); border: none;
+  border-radius: 10px; color: #fff; font-weight: 700; font-family: var(--font);
+  cursor: pointer; font-size: 12px; transition: all .2s; width: 100%;
+}
+.modal .btn-close:hover { box-shadow: 0 4px 16px rgba(var(--accent-rgb),.35); }
+
+/* Agent Detail Modal */
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
+.detail-cell {
+  background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 10px;
+}
+.detail-cell .dc-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+.detail-cell .dc-value { font-size: 14px; font-weight: 700; font-family: var(--mono); margin-top: 2px; }
+.detail-actions { margin-top: 10px; display: flex; gap: 8px; }
+
+/* ═══ Toast ═══ */
+.toast {
+  position: fixed; bottom: 24px; right: 24px; padding: 12px 20px;
+  background: var(--green); color: #000; font-size: 12px; font-weight: 700;
+  border-radius: 10px; z-index: var(--z-toast); opacity: 0; transform: translateY(20px);
+  transition: all .3s; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* ═══ Animations ═══ */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn .4s ease; }
+
+/* ═══ Responsive ═══ */
+@media (max-width: 1024px) {
+  .main-grid { grid-template-columns: 1fr; }
+  .right-col { flex-direction: row; }
+  .mission-builder { flex: 1; }
+  .live-feed { flex: 1; max-height: 300px; }
+}
+@media (max-width: 768px) {
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .right-col { flex-direction: column; }
+  .header { padding: 10px 14px; flex-wrap: wrap; }
+  h1 { font-size: 16px; }
+  .content { padding: 14px; }
+  .agent-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .stats-row { grid-template-columns: 1fr; }
+  .detail-grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
   </style>
 </head>
 <body>
-  <div id="loader">Warte auf Next.js Engine (localhost:3000)...</div>
-  <iframe src="http://localhost:3000" id="next-frame" onload="document.getElementById('loader').style.display='none'"></iframe>
-  
-  <script src="../../shared/dkz-debug.js"></script>
-  <script>
-function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+  <div class="bg-mesh">
+    <div class="bg-blob"></div>
+    <div class="bg-blob"></div>
+    <div class="bg-blob"></div>
+  </div>
+  <div class="scanlines"></div>
 
-    if (window.DkzEventLog) {
-      DkzEventLog.logAccess('module_open', 'swarm-mission-control-next');
+  <div class="app">
+    <!-- Header -->
+    <header class="header fade-in">
+      <a href="../hub/index.html" class="back-btn" title="Zurueck zum Hub">&#8592; Hub</a>
+      <div class="radar-wrap" title="Swarm Radar — System aktiv">
+        <div class="radar-ring"></div>
+        <div class="radar-ring"></div>
+        <div class="radar-ring"></div>
+        <div class="radar-dot"></div>
+      </div>
+      <h1>Swarm Mission Control</h1>
+      <div class="hdr-right">
+        <button id="btnNewMission" class="back-btn" title="Neue Mission erstellen" style="color:var(--green);border-color:var(--green);">+ Mission</button>
+        <span class="ver">v0.01.1</span>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="content">
+      <!-- Stats -->
+      <div class="stats-row fade-in">
+        <div class="stat" title="Gesamtzahl aller Missionen">
+          <div class="si">&#128640;</div>
+          <div class="sv" id="statTotal">0</div>
+          <div class="sl">Missionen Gesamt</div>
+        </div>
+        <div class="stat" title="Aktuell laufende Missionen">
+          <div class="si">&#9889;</div>
+          <div class="sv" id="statActive" style="color:var(--green);">0</div>
+          <div class="sl">Aktiv</div>
+        </div>
+        <div class="stat" title="Erfolgreich abgeschlossene Missionen">
+          <div class="si">&#10004;</div>
+          <div class="sv" id="statDone" style="color:var(--blue);">0</div>
+          <div class="sl">Fertig</div>
+        </div>
+        <div class="stat" title="Missionen mit Fehlern">
+          <div class="si">&#9888;</div>
+          <div class="sv" id="statError" style="color:var(--red);">0</div>
+          <div class="sl">Fehler</div>
+        </div>
+      </div>
+
+      <!-- Main Grid -->
+      <div class="main-grid">
+        <!-- Left: Agent Grid -->
+        <div>
+          <div class="agent-section-title">
+            &#129302; Agenten <span class="count-badge" id="agentCount">0</span>
+          </div>
+          <div class="agent-grid" id="agentGrid"></div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="right-col">
+          <!-- Mission Builder -->
+          <div class="mission-builder" id="missionBuilder">
+            <div class="mb-title">&#128196; Mission erstellen</div>
+            <div class="mb-field">
+              <label for="missionName">Name</label>
+              <input type="text" id="missionName" placeholder="z.B. Sprint 42 Deployment" title="Name der Mission">
+            </div>
+            <div class="mb-field">
+              <label for="missionDesc">Beschreibung</label>
+              <textarea id="missionDesc" placeholder="Was soll erreicht werden?" title="Beschreibung der Mission"></textarea>
+            </div>
+            <div class="mb-field">
+              <label>Agenten zuweisen</label>
+              <div class="mb-agents" id="mbAgentList"></div>
+            </div>
+            <div class="mb-field">
+              <label for="missionDeadline">Deadline</label>
+              <input type="date" id="missionDeadline" title="Frist fuer die Mission">
+            </div>
+            <button class="btn-mission" id="btnCreateMission" title="Mission erstellen und starten">&#9654; Mission starten</button>
+          </div>
+
+          <!-- Live Feed -->
+          <div class="live-feed">
+            <div class="lf-header">
+              <span class="live-dot"></span>
+              Live Feed
+            </div>
+            <div class="lf-body" id="feedBody"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Onboarding Modal -->
+  <div class="modal-overlay" id="onboardingModal">
+    <div class="modal">
+      <h2>&#128752; Swarm Mission Control</h2>
+      <p>Die zentrale Steuerungskonsole fuer deinen Agent-Schwarm. Ueberwache alle Agenten in Echtzeit und starte koordinierte Missionen.</p>
+      <ul class="feature-list">
+        <li>6 BMAD-Agenten mit Live-Status</li>
+        <li>Mission Builder — Tasks koordiniert zuweisen</li>
+        <li>Live Activity Feed mit Events</li>
+        <li>Statistik-Dashboard mit Echtzeit-Metriken</li>
+        <li>Agent-Detail-Ansicht bei Klick</li>
+        <li>Alle Daten lokal gespeichert (localStorage)</li>
+      </ul>
+      <button class="btn-close" id="btnCloseOnboarding">Los geht's!</button>
+    </div>
+  </div>
+
+  <!-- Agent Detail Modal -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal" id="detailContent"></div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+/* ═══ XSS Protection ═══ */
+function esc(str) {
+  var d = document.createElement('div');
+  d.appendChild(document.createTextNode(String(str)));
+  return d.innerHTML;
+}
+
+/* ═══ Toast ═══ */
+function showToast(msg, dur) {
+  dur = dur || 2500;
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, dur);
+}
+
+/* ═══ Demo Agents ═══ */
+var DEFAULT_AGENTS = [
+  { id: 'james', name: 'James\u2122', role: 'Guardian', icon: '\uD83C\uDFAF', status: 'online', task: 'System ueberwachen', cpu: 12, ram: 34, uptime: 14400 },
+  { id: 'developer', name: 'Developer\u2122', role: 'Coder', icon: '\uD83D\uDC68\u200D\uD83D\uDCBB', status: 'busy', task: 'Module #47 implementieren', cpu: 78, ram: 62, uptime: 7200 },
+  { id: 'reviewer', name: 'Reviewer\u2122', role: 'QA', icon: '\uD83D\uDD0D', status: 'online', task: 'Code Review PR #123', cpu: 23, ram: 28, uptime: 10800 },
+  { id: 'tester', name: 'Tester\u2122', role: 'Testing', icon: '\uD83E\uDDEA', status: 'busy', task: 'TestStrasse v3 ausfuehren', cpu: 65, ram: 51, uptime: 5400 },
+  { id: 'dokumentar', name: 'Dokumentar\u2122', role: 'Docs', icon: '\uD83D\uDCDA', status: 'offline', task: 'Keine aktive Aufgabe', cpu: 0, ram: 8, uptime: 0 },
+  { id: 'architekt', name: 'Architekt\u2122', role: 'Planning', icon: '\uD83C\uDFD7\uFE0F', status: 'online', task: 'System-Architektur v3 planen', cpu: 31, ram: 40, uptime: 9000 }
+];
+
+function getAgents() {
+  try {
+    var stored = localStorage.getItem('dkz-smc-agents');
+    if (stored) return JSON.parse(stored);
+  } catch(e) { /* noop */ }
+  return JSON.parse(JSON.stringify(DEFAULT_AGENTS));
+}
+
+function saveAgents(agents) {
+  try { localStorage.setItem('dkz-smc-agents', JSON.stringify(agents)); }
+  catch(e) { /* quota */ }
+}
+
+/* ═══ Missions ═══ */
+function getMissions() {
+  try { return JSON.parse(localStorage.getItem('dkz-smc-missions') || '[]'); }
+  catch(e) { return []; }
+}
+
+function saveMissions(m) {
+  try { localStorage.setItem('dkz-smc-missions', JSON.stringify(m)); }
+  catch(e) { /* quota */ }
+}
+
+/* ═══ Feed ═══ */
+function getFeed() {
+  try { return JSON.parse(localStorage.getItem('dkz-smc-feed') || '[]'); }
+  catch(e) { return []; }
+}
+
+function saveFeed(f) {
+  if (f.length > 50) f = f.slice(0, 50);
+  try { localStorage.setItem('dkz-smc-feed', JSON.stringify(f)); }
+  catch(e) { /* quota */ }
+}
+
+function addFeedEvent(type, msg) {
+  var feed = getFeed();
+  feed.unshift({
+    time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    type: type,
+    msg: msg
+  });
+  saveFeed(feed);
+  renderFeed();
+}
+
+/* ═══ Render Agents ═══ */
+function renderAgents() {
+  var agents = getAgents();
+  var grid = document.getElementById('agentGrid');
+  var html = '';
+
+  for (var i = 0; i < agents.length; i++) {
+    var a = agents[i];
+    var statusColor = a.status === 'online' ? 'var(--green)' :
+                      a.status === 'busy' ? 'var(--yellow)' :
+                      a.status === 'error' ? 'var(--red)' : 'var(--muted)';
+    var cpuColor = a.cpu > 70 ? 'var(--red)' : a.cpu > 40 ? 'var(--yellow)' : 'var(--green)';
+    var uptimeStr = formatUptime(a.uptime);
+
+    html += '<div class="agent-card" data-agent="' + esc(a.id) + '" title="Klicken fuer Details zu ' + esc(a.name) + '">';
+    html += '<div class="ac-top">';
+    html += '<div class="ac-avatar">' + a.icon + '</div>';
+    html += '<div class="ac-info"><div class="ac-name">' + esc(a.name) + '</div>';
+    html += '<div class="ac-role">' + esc(a.role) + '</div></div>';
+    html += '<div class="ac-status"><span class="status-dot ' + esc(a.status) + '"></span>' + esc(a.status) + '</div>';
+    html += '</div>';
+    html += '<div class="ac-task">' + esc(a.task) + '</div>';
+    html += '<div class="ac-bar-wrap">';
+    html += '<div class="ac-bar-label"><span>CPU</span><span>' + a.cpu + '%</span></div>';
+    html += '<div class="ac-bar"><div class="ac-bar-fill" style="width:' + a.cpu + '%;background:' + cpuColor + ';"></div></div>';
+    html += '</div>';
+    html += '<div class="ac-uptime">Uptime: ' + esc(uptimeStr) + '</div>';
+    html += '</div>';
+  }
+
+  grid.innerHTML = html;
+  document.getElementById('agentCount').textContent = agents.length;
+
+  /* Click handlers */
+  var cards = grid.querySelectorAll('.agent-card');
+  for (var c = 0; c < cards.length; c++) {
+    cards[c].addEventListener('click', function() {
+      showAgentDetail(this.getAttribute('data-agent'));
+    });
+  }
+}
+
+function formatUptime(seconds) {
+  if (!seconds) return 'Offline';
+  var h = Math.floor(seconds / 3600);
+  var m = Math.floor((seconds % 3600) / 60);
+  return h + 'h ' + m + 'm';
+}
+
+/* ═══ Agent Detail Modal ═══ */
+function showAgentDetail(agentId) {
+  var agents = getAgents();
+  var agent = null;
+  for (var i = 0; i < agents.length; i++) {
+    if (agents[i].id === agentId) { agent = agents[i]; break; }
+  }
+  if (!agent) return;
+
+  var statusColor = agent.status === 'online' ? 'var(--green)' :
+                    agent.status === 'busy' ? 'var(--yellow)' :
+                    agent.status === 'error' ? 'var(--red)' : 'var(--muted)';
+
+  var html = '<h2>' + agent.icon + ' ' + esc(agent.name) + '</h2>';
+  html += '<p>Rolle: ' + esc(agent.role) + '</p>';
+  html += '<div class="detail-grid">';
+  html += '<div class="detail-cell"><div class="dc-label">Status</div><div class="dc-value" style="color:' + statusColor + ';">' + esc(agent.status) + '</div></div>';
+  html += '<div class="detail-cell"><div class="dc-label">Uptime</div><div class="dc-value">' + esc(formatUptime(agent.uptime)) + '</div></div>';
+  html += '<div class="detail-cell"><div class="dc-label">CPU</div><div class="dc-value">' + agent.cpu + '%</div></div>';
+  html += '<div class="detail-cell"><div class="dc-label">RAM</div><div class="dc-value">' + agent.ram + '%</div></div>';
+  html += '</div>';
+  html += '<div style="margin:10px 0;"><strong style="font-size:11px;color:var(--muted);">AKTUELLE AUFGABE</strong>';
+  html += '<div style="margin-top:4px;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;font-size:12px;">' + esc(agent.task) + '</div></div>';
+
+  /* Last actions */
+  html += '<div style="margin:10px 0;"><strong style="font-size:11px;color:var(--muted);">LETZTE AKTIONEN</strong><ul style="list-style:none;margin-top:6px;">';
+  var actions = ['Status-Check ausgefuehrt', 'Task aktualisiert', 'Health-Ping gesendet'];
+  for (var a = 0; a < actions.length; a++) {
+    html += '<li style="font-size:11px;padding:4px 0;color:var(--muted);">&#9656; ' + esc(actions[a]) + '</li>';
+  }
+  html += '</ul></div>';
+
+  html += '<button class="btn-close" id="btnCloseDetail">Schliessen</button>';
+
+  document.getElementById('detailContent').innerHTML = html;
+  document.getElementById('detailModal').classList.add('show');
+
+  document.getElementById('btnCloseDetail').addEventListener('click', function() {
+    document.getElementById('detailModal').classList.remove('show');
+  });
+}
+
+/* ═══ Render Stats ═══ */
+function renderStats() {
+  var missions = getMissions();
+  var total = missions.length;
+  var active = 0, done = 0, errors = 0;
+  for (var i = 0; i < missions.length; i++) {
+    if (missions[i].status === 'active') active++;
+    else if (missions[i].status === 'done') done++;
+    else if (missions[i].status === 'error') errors++;
+  }
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statActive').textContent = active;
+  document.getElementById('statDone').textContent = done;
+  document.getElementById('statError').textContent = errors;
+}
+
+/* ═══ Render Feed ═══ */
+function renderFeed() {
+  var feed = getFeed();
+  var body = document.getElementById('feedBody');
+  var html = '';
+
+  for (var i = 0; i < feed.length; i++) {
+    var f = feed[i];
+    var badgeClass = f.type === 'success' ? 'success' :
+                     f.type === 'error' ? 'error' :
+                     f.type === 'warn' ? 'warn' : 'info';
+    html += '<div class="feed-item">';
+    html += '<span class="feed-time">' + esc(f.time) + '</span>';
+    html += '<span class="feed-badge ' + badgeClass + '">' + esc(f.type) + '</span>';
+    html += '<span class="feed-msg">' + esc(f.msg) + '</span>';
+    html += '</div>';
+  }
+
+  if (feed.length === 0) {
+    html = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px;">Warte auf Events...</div>';
+  }
+
+  body.innerHTML = html;
+}
+
+/* ═══ Render Mission Builder Agent List ═══ */
+function renderMBAgents() {
+  var agents = getAgents();
+  var container = document.getElementById('mbAgentList');
+  var html = '';
+  for (var i = 0; i < agents.length; i++) {
+    html += '<label class="mb-agent-check" title="' + esc(agents[i].role) + '">';
+    html += '<input type="checkbox" value="' + esc(agents[i].id) + '"> ';
+    html += agents[i].icon + ' ' + esc(agents[i].name);
+    html += '</label>';
+  }
+  container.innerHTML = html;
+
+  /* Checked state styling */
+  var checks = container.querySelectorAll('.mb-agent-check input');
+  for (var c = 0; c < checks.length; c++) {
+    checks[c].addEventListener('change', function() {
+      if (this.checked) {
+        this.parentElement.classList.add('checked');
+      } else {
+        this.parentElement.classList.remove('checked');
+      }
+    });
+  }
+}
+
+/* ═══ Demo Feed Simulation ═══ */
+var DEMO_EVENTS = [
+  { type: 'success', msg: 'James: System-Health OK' },
+  { type: 'info', msg: 'Developer: Commit pushed (#a4f2e1)' },
+  { type: 'success', msg: 'Tester: TestStrasse v3 - 47/47 bestanden' },
+  { type: 'warn', msg: 'Dokumentar: README.md veraltet (>7 Tage)' },
+  { type: 'info', msg: 'Architekt: plan.md aktualisiert' },
+  { type: 'success', msg: 'Reviewer: PR #123 approved' },
+  { type: 'error', msg: 'Developer: Build failed (ESLint 2 Errors)' },
+  { type: 'info', msg: 'James: Ralph-Loop Phase 3 gestartet' },
+  { type: 'success', msg: 'Tester: Integration Tests bestanden' },
+  { type: 'warn', msg: 'James: Context Drift erkannt — Spawn empfohlen' }
+];
+var demoIdx = 0;
+
+function simulateFeedEvent() {
+  var evt = DEMO_EVENTS[demoIdx % DEMO_EVENTS.length];
+  addFeedEvent(evt.type, evt.msg);
+  demoIdx++;
+}
+
+/* ═══ Simulate Agent Updates ═══ */
+function simulateAgentUpdate() {
+  var agents = getAgents();
+  var idx = Math.floor(Math.random() * agents.length);
+  var a = agents[idx];
+
+  /* Random CPU fluctuation */
+  if (a.status !== 'offline') {
+    a.cpu = Math.max(0, Math.min(100, a.cpu + Math.floor(Math.random() * 21) - 10));
+    a.ram = Math.max(5, Math.min(95, a.ram + Math.floor(Math.random() * 11) - 5));
+    a.uptime += 5;
+  }
+
+  saveAgents(agents);
+  renderAgents();
+}
+
+/* ═══ Init ═══ */
+document.addEventListener('DOMContentLoaded', function() {
+  /* Init agents if first time */
+  if (!localStorage.getItem('dkz-smc-agents')) {
+    saveAgents(DEFAULT_AGENTS);
+  }
+
+  renderAgents();
+  renderStats();
+  renderFeed();
+  renderMBAgents();
+
+  /* Onboarding */
+  if (!localStorage.getItem('dkz-smc-onboarded')) {
+    document.getElementById('onboardingModal').classList.add('show');
+  }
+
+  document.getElementById('btnCloseOnboarding').addEventListener('click', function() {
+    document.getElementById('onboardingModal').classList.remove('show');
+    localStorage.setItem('dkz-smc-onboarded', '1');
+  });
+
+  /* Close detail modal on overlay click */
+  document.getElementById('detailModal').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('show');
+  });
+  document.getElementById('onboardingModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      this.classList.remove('show');
+      localStorage.setItem('dkz-smc-onboarded', '1');
     }
+  });
+
+  /* Mission Builder */
+  document.getElementById('btnCreateMission').addEventListener('click', function() {
+    var name = document.getElementById('missionName').value.trim();
+    if (!name) { showToast('Bitte Mission-Name eingeben'); return; }
+
+    var desc = document.getElementById('missionDesc').value.trim();
+    var deadline = document.getElementById('missionDeadline').value;
+    var checks = document.querySelectorAll('#mbAgentList input:checked');
+    var assignedAgents = [];
+    for (var c = 0; c < checks.length; c++) assignedAgents.push(checks[c].value);
+
+    if (assignedAgents.length === 0) { showToast('Mindestens einen Agenten zuweisen'); return; }
+
+    var missions = getMissions();
+    missions.push({
+      id: 'M-' + Date.now(),
+      name: name,
+      desc: desc,
+      agents: assignedAgents,
+      deadline: deadline,
+      status: 'active',
+      created: new Date().toISOString()
+    });
+    saveMissions(missions);
+    renderStats();
+    addFeedEvent('success', 'Neue Mission gestartet: ' + name);
+    showToast('Mission "' + name + '" gestartet!');
+
+    /* Reset form */
+    document.getElementById('missionName').value = '';
+    document.getElementById('missionDesc').value = '';
+    document.getElementById('missionDeadline').value = '';
+    var allChecks = document.querySelectorAll('#mbAgentList input');
+    for (var r = 0; r < allChecks.length; r++) {
+      allChecks[r].checked = false;
+      allChecks[r].parentElement.classList.remove('checked');
+    }
+  });
+
+  /* New Mission button scrolls to builder */
+  document.getElementById('btnNewMission').addEventListener('click', function() {
+    document.getElementById('missionName').focus();
+    document.getElementById('missionBuilder').scrollIntoView({ behavior: 'smooth' });
+  });
+
+  /* Demo feed simulation every 5 seconds */
+  setInterval(simulateFeedEvent, 5000);
+
+  /* Agent CPU/RAM update every 3 seconds */
+  setInterval(simulateAgentUpdate, 3000);
+
+  /* Initial demo event */
+  addFeedEvent('info', 'Swarm Mission Control gestartet');
+
+  /* Log access */
+  if (window.DkzEventLog) {
+    DkzEventLog.logAccess('module_open', 'swarm-mission-control');
+  }
+});
   </script>
-    <script src="../shared/dkz-autobug.js" defer></script>
+  <script src="../../shared/dkz-debug.js" defer></script>
+  <script src="../../shared/dkz-guide.js" defer></script>
+  <script src="../../shared/dkz-navbar.js" defer></script>
+  <script src="../../shared/dkz-autobug.js" defer></script>
 </body>
 </html>
