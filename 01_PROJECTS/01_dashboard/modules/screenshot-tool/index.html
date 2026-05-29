@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dkz-version" content="v1.00.0_01">
+<title>Screenshot Tool — DkZ Screen Capture</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#000000;--bg2:#070710;--surface:#0a0a14;--surface2:#10101a;
+  --glass:rgba(255,255,255,0.03);--glass2:rgba(255,255,255,0.06);
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);
+  --text:#e8e8f0;--text2:#8888a0;--text3:#555570;
+  --accent:#fa1e4e;--green:#00ff88;--yellow:#ffb800;--red:#ff3b5c;
+  --cyan:#06b6d4;--purple:#a855f7;
+  --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+}
+.high-contrast{--bg:#000;--text:#fff;--green:#00ff88;--border:rgba(0,255,136,0.3)}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;display:flex;flex-direction:column}
+
+.header{
+  background:linear-gradient(135deg,var(--bg2),var(--surface));
+  border-bottom:1px solid var(--border);padding:12px 20px;
+  display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;
+  backdrop-filter:blur(20px);
+}
+.hub-btn{background:var(--glass2);border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:6px 12px;text-decoration:none;font-size:12px;transition:all .2s}
+.hub-btn:hover{background:var(--accent);border-color:var(--accent)}
+.header h1{font-size:18px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header .controls{margin-left:auto;display:flex;gap:6px}
+.toggle-btn{background:var(--glass);border:1px solid var(--border);border-radius:6px;color:var(--text2);padding:4px 10px;font-size:11px;cursor:pointer;font-family:var(--font);transition:all .2s}
+.toggle-btn:hover{border-color:var(--green);color:var(--green)}
+.toggle-btn.active{background:var(--green);color:#000;border-color:var(--green)}
+
+.layout{display:flex;flex:1;overflow:hidden}
+
+/* TOOLBAR LEFT */
+.tool-sidebar{width:56px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:4px}
+.tool-btn{
+  width:40px;height:40px;background:var(--glass);border:1px solid var(--border);
+  border-radius:8px;color:var(--text2);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:16px;transition:all .2s;
+}
+.tool-btn:hover{border-color:var(--green);color:var(--green)}
+.tool-btn.active{background:rgba(0,255,136,0.1);border-color:var(--green);color:var(--green)}
+.tool-sep{width:30px;height:1px;background:var(--border);margin:4px 0}
+
+/* CANVAS AREA */
+.canvas-area{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--bg)}
+#drawCanvas{cursor:crosshair;border-radius:4px;max-width:100%;max-height:100%}
+.canvas-empty{
+  display:flex;flex-direction:column;align-items:center;gap:12px;color:var(--text3);
+}
+.capture-btn{
+  background:linear-gradient(135deg,var(--accent),var(--purple));
+  border:none;border-radius:12px;color:#fff;padding:14px 32px;
+  font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);
+  transition:all .3s;box-shadow:0 4px 20px rgba(250,30,78,0.3);
+}
+.capture-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(250,30,78,0.4)}
+
+/* COLOR PICKER */
+.color-bar{display:flex;gap:3px;padding:4px 0}
+.color-dot{
+  width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;
+  transition:all .2s;
+}
+.color-dot:hover,.color-dot.active{border-color:var(--text);transform:scale(1.2)}
+
+/* BOTTOM BAR */
+.bottom-bar{
+  background:var(--bg2);border-top:1px solid var(--border);padding:8px 16px;
+  display:flex;align-items:center;gap:8px;
+}
+.bottom-btn{
+  background:var(--glass);border:1px solid var(--border);border-radius:6px;
+  color:var(--text2);padding:6px 14px;font-size:11px;cursor:pointer;
+  font-family:var(--font);transition:all .2s;
+}
+.bottom-btn:hover{border-color:var(--green);color:var(--green)}
+.bottom-btn.primary{background:var(--green);color:#000;border-color:var(--green);font-weight:600}
+.bottom-info{margin-left:auto;font-size:11px;color:var(--text3);font-family:var(--mono)}
+
+/* GALLERY */
+.gallery-panel{
+  width:200px;background:var(--bg2);border-left:1px solid var(--border);
+  overflow-y:auto;padding:8px;
+}
+.gallery-title{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;padding:4px 4px 8px}
+.gallery-item{
+  border-radius:6px;overflow:hidden;margin-bottom:6px;border:1px solid var(--border);
+  cursor:pointer;transition:all .2s;position:relative;
+}
+.gallery-item:hover{border-color:var(--green)}
+.gallery-item img{width:100%;display:block}
+.gallery-item .gallery-time{position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,0.7);color:var(--text2);font-size:9px;padding:2px 5px;border-radius:3px;font-family:var(--mono)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .4s ease forwards}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+@media(max-width:700px){.tool-sidebar{width:44px}.gallery-panel{display:none}}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <a href="../../hub/index.html" class="hub-btn">&#9664; Hub</a>
+  <h1>&#128247; Screenshot Tool</h1>
+  <div class="controls">
+    <button class="toggle-btn" id="langBtn" onclick="toggleLang()">EN</button>
+    <button class="toggle-btn" id="contrastBtn" onclick="toggleContrast()">HC</button>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="tool-sidebar">
+    <div class="tool-btn active" onclick="setTool('pen')" title="Pen (P)" id="toolPen">&#9998;</div>
+    <div class="tool-btn" onclick="setTool('arrow')" title="Arrow (A)" id="toolArrow">&#8599;</div>
+    <div class="tool-btn" onclick="setTool('rect')" title="Rectangle (R)" id="toolRect">&#9634;</div>
+    <div class="tool-btn" onclick="setTool('text')" title="Text (T)" id="toolText">T</div>
+    <div class="tool-btn" onclick="setTool('highlight')" title="Highlight (H)" id="toolHighlight">&#9632;</div>
+    <div class="tool-sep"></div>
+    <div class="color-bar" style="flex-direction:column">
+      <div class="color-dot active" style="background:#ff3b5c" onclick="setColor('#ff3b5c')"></div>
+      <div class="color-dot" style="background:#00ff88" onclick="setColor('#00ff88')"></div>
+      <div class="color-dot" style="background:#ffb800" onclick="setColor('#ffb800')"></div>
+      <div class="color-dot" style="background:#06b6d4" onclick="setColor('#06b6d4')"></div>
+      <div class="color-dot" style="background:#ffffff" onclick="setColor('#ffffff')"></div>
+    </div>
+    <div class="tool-sep"></div>
+    <div class="tool-btn" onclick="undo()" title="Undo (Ctrl+Z)">&#8634;</div>
+    <div class="tool-btn" onclick="redo()" title="Redo (Ctrl+Y)">&#8635;</div>
+  </div>
+
+  <div class="canvas-area" id="canvasArea">
+    <div class="canvas-empty fade-up" id="emptyState">
+      <div style="font-size:48px;opacity:.3">&#128247;</div>
+      <div style="font-size:14px" id="emptyText">Capture your screen to start annotating</div>
+      <button class="capture-btn" onclick="captureScreen()" id="captureBtn">Capture Screen</button>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">or press <kbd style="background:var(--glass);padding:2px 6px;border-radius:3px;border:1px solid var(--border)">Ctrl+Shift+S</kbd></div>
+    </div>
+    <canvas id="drawCanvas" style="display:none"></canvas>
+  </div>
+
+  <div class="gallery-panel">
+    <div class="gallery-title" id="galleryTitle">Gallery</div>
+    <div id="galleryList"></div>
+  </div>
+</div>
+
+<div class="bottom-bar">
+  <button class="bottom-btn primary" onclick="captureScreen()" id="newCaptureBtn">New Capture</button>
+  <button class="bottom-btn" onclick="downloadPNG()" id="dlPNG">Download PNG</button>
+  <button class="bottom-btn" onclick="copyToClipboard()">Copy</button>
+  <button class="bottom-btn" onclick="clearCanvas()">Clear</button>
+  <span class="bottom-info" id="sizeInfo">No image</span>
+</div>
+
+<script>
+function esc(s){const d=document.createElement('div');d.textContent=String(s);return d.innerHTML}
+
+const i18n={
+  en:{capture:'Capture Screen',empty:'Capture your screen to start annotating',gallery:'Gallery',newCap:'New Capture',dlPng:'Download PNG',noImg:'No image'},
+  de:{capture:'Bildschirm aufnehmen',empty:'Bildschirm aufnehmen um zu starten',gallery:'Galerie',newCap:'Neue Aufnahme',dlPng:'PNG herunterladen',noImg:'Kein Bild'}
+};
+let lang='en';
+function t(k){return i18n[lang][k]||k}
+function toggleLang(){
+  lang=lang==='en'?'de':'en';
+  document.getElementById('langBtn').textContent=lang.toUpperCase();
+  document.getElementById('emptyText').textContent=t('empty');
+  document.getElementById('captureBtn').textContent=t('capture');
+  document.getElementById('galleryTitle').textContent=t('gallery');
+  document.getElementById('newCaptureBtn').textContent=t('newCap');
+  document.getElementById('dlPNG').textContent=t('dlPng');
+}
+function toggleContrast(){document.body.classList.toggle('high-contrast');document.getElementById('contrastBtn').classList.toggle('active')}
+
+const canvas=document.getElementById('drawCanvas');
+const ctx=canvas.getContext('2d');
+let currentTool='pen',currentColor='#ff3b5c',lineWidth=3;
+let drawing=false,startX=0,startY=0;
+let baseImage=null;
+let undoStack=[],redoStack=[];
+let gallery=JSON.parse(localStorage.getItem('dkz-screenshots')||'[]');
+
+function setTool(tool){
+  currentTool=tool;
+  document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
+  const el=document.getElementById('tool'+tool.charAt(0).toUpperCase()+tool.slice(1));
+  if(el)el.classList.add('active');
+}
+
+function setColor(c){
+  currentColor=c;
+  document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+async function captureScreen(){
+  try{
+    const stream=await navigator.mediaDevices.getDisplayMedia({video:{cursor:'always'},audio:false});
+    const video=document.createElement('video');
+    video.srcObject=stream;
+    await video.play();
+    
+    canvas.width=video.videoWidth;
+    canvas.height=video.videoHeight;
+    ctx.drawImage(video,0,0);
+    
+    stream.getTracks().forEach(t=>t.stop());
+    
+    baseImage=ctx.getImageData(0,0,canvas.width,canvas.height);
+    undoStack=[canvas.toDataURL()];redoStack=[];
+    
+    document.getElementById('emptyState').style.display='none';
+    canvas.style.display='block';
+    document.getElementById('sizeInfo').textContent=canvas.width+'x'+canvas.height;
+    
+    saveToGallery();
+  } catch(e){
+    // User cancelled
+  }
+}
+
+function saveState(){
+  undoStack.push(canvas.toDataURL());
+  if(undoStack.length>30)undoStack.shift();
+  redoStack=[];
+}
+
+function undo(){
+  if(undoStack.length<=1)return;
+  redoStack.push(undoStack.pop());
+  const img=new Image();
+  img.onload=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0)};
+  img.src=undoStack[undoStack.length-1];
+}
+
+function redo(){
+  if(!redoStack.length)return;
+  const state=redoStack.pop();
+  undoStack.push(state);
+  const img=new Image();
+  img.onload=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0)};
+  img.src=state;
+}
+
+canvas.addEventListener('mousedown',e=>{
+  drawing=true;
+  const rect=canvas.getBoundingClientRect();
+  const scaleX=canvas.width/rect.width;
+  const scaleY=canvas.height/rect.height;
+  startX=(e.clientX-rect.left)*scaleX;
+  startY=(e.clientY-rect.top)*scaleY;
+  
+  if(currentTool==='pen'||currentTool==='highlight'){
+    ctx.beginPath();
+    ctx.moveTo(startX,startY);
+    if(currentTool==='highlight'){
+      ctx.globalAlpha=0.3;ctx.lineWidth=20;
+    } else {
+      ctx.globalAlpha=1;ctx.lineWidth=lineWidth;
+    }
+    ctx.strokeStyle=currentColor;ctx.lineCap='round';ctx.lineJoin='round';
+  }
+});
+
+canvas.addEventListener('mousemove',e=>{
+  if(!drawing)return;
+  const rect=canvas.getBoundingClientRect();
+  const scaleX=canvas.width/rect.width;
+  const scaleY=canvas.height/rect.height;
+  const x=(e.clientX-rect.left)*scaleX;
+  const y=(e.clientY-rect.top)*scaleY;
+  
+  if(currentTool==='pen'||currentTool==='highlight'){
+    ctx.lineTo(x,y);ctx.stroke();
+  }
+});
+
+canvas.addEventListener('mouseup',e=>{
+  if(!drawing)return;drawing=false;
+  const rect=canvas.getBoundingClientRect();
+  const scaleX=canvas.width/rect.width;
+  const scaleY=canvas.height/rect.height;
+  const endX=(e.clientX-rect.left)*scaleX;
+  const endY=(e.clientY-rect.top)*scaleY;
+  
+  ctx.globalAlpha=1;
+  
+  if(currentTool==='rect'){
+    ctx.strokeStyle=currentColor;ctx.lineWidth=lineWidth;
+    ctx.strokeRect(startX,startY,endX-startX,endY-startY);
+  }
+  
+  if(currentTool==='arrow'){
+    ctx.strokeStyle=currentColor;ctx.lineWidth=lineWidth;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(startX,startY);ctx.lineTo(endX,endY);ctx.stroke();
+    const angle=Math.atan2(endY-startY,endX-startX);
+    const headLen=15;
+    ctx.beginPath();
+    ctx.moveTo(endX,endY);
+    ctx.lineTo(endX-headLen*Math.cos(angle-Math.PI/6),endY-headLen*Math.sin(angle-Math.PI/6));
+    ctx.moveTo(endX,endY);
+    ctx.lineTo(endX-headLen*Math.cos(angle+Math.PI/6),endY-headLen*Math.sin(angle+Math.PI/6));
+    ctx.stroke();
+  }
+  
+  if(currentTool==='text'){
+    const text=prompt('Enter text:');
+    if(text){
+      ctx.font='bold 18px Inter,sans-serif';ctx.fillStyle=currentColor;
+      ctx.fillText(text,startX,startY);
+    }
+  }
+  
+  saveState();
+});
+
+function downloadPNG(){
+  if(!canvas.width)return;
+  const a=document.createElement('a');
+  a.href=canvas.toDataURL('image/png');
+  a.download='dkz-screenshot-'+Date.now()+'.png';
+  a.click();
+}
+
+function copyToClipboard(){
+  if(!canvas.width)return;
+  canvas.toBlob(blob=>{
+    navigator.clipboard.write([new ClipboardItem({'image/png':blob})]).then(()=>{
+      showToast('Copied to clipboard!');
+    });
+  });
+}
+
+function clearCanvas(){
+  if(!baseImage)return;
+  ctx.putImageData(baseImage,0,0);
+  saveState();
+}
+
+function saveToGallery(){
+  const thumb=document.createElement('canvas');
+  thumb.width=180;thumb.height=Math.round(180*canvas.height/canvas.width);
+  thumb.getContext('2d').drawImage(canvas,0,0,thumb.width,thumb.height);
+  gallery.unshift({data:thumb.toDataURL('image/jpeg',0.6),time:new Date().toISOString()});
+  if(gallery.length>10)gallery.length=10;
+  try{localStorage.setItem('dkz-screenshots',JSON.stringify(gallery))}catch(e){}
+  renderGallery();
+}
+
+function renderGallery(){
+  const el=document.getElementById('galleryList');
+  el.innerHTML=gallery.map((g,i)=>
+    '<div class="gallery-item" onclick="loadGallery('+i+')"><img src="'+esc(g.data)+'" alt="Screenshot"><span class="gallery-time">'+esc(new Date(g.time).toLocaleTimeString())+'</span></div>'
+  ).join('');
+}
+
+function loadGallery(idx){
+  const img=new Image();
+  img.onload=()=>{
+    canvas.width=img.width;canvas.height=img.height;
+    ctx.drawImage(img,0,0);
+    baseImage=ctx.getImageData(0,0,canvas.width,canvas.height);
+    undoStack=[canvas.toDataURL()];redoStack=[];
+    document.getElementById('emptyState').style.display='none';
+    canvas.style.display='block';
+    document.getElementById('sizeInfo').textContent=canvas.width+'x'+canvas.height;
+  };
+  img.src=gallery[idx].data;
+}
+
+function showToast(msg){
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;bottom:60px;right:20px;background:var(--green);color:#000;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;z-index:999;animation:fadeUp .3s ease';
+  el.textContent=msg;document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1500);
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey&&e.shiftKey&&e.code==='KeyS'){e.preventDefault();captureScreen()}
+  if(e.ctrlKey&&e.code==='KeyZ'){e.preventDefault();undo()}
+  if(e.ctrlKey&&e.code==='KeyY'){e.preventDefault();redo()}
+  if(e.ctrlKey&&e.code==='KeyS'){e.preventDefault();downloadPNG()}
+  if(e.code==='KeyP')setTool('pen');
+  if(e.code==='KeyA')setTool('arrow');
+  if(e.code==='KeyR'&&!e.ctrlKey)setTool('rect');
+  if(e.code==='KeyT')setTool('text');
+  if(e.code==='KeyH')setTool('highlight');
+});
+
+renderGallery();
+</script>
+
+<script src="../../shared/dkz-debug.js" defer></script>
+<script src="../../shared/dkz-guide.js" defer></script>
+<script src="../../shared/dkz-copilot.js" defer></script>
+<script src="../../shared/dkz-james.js" defer></script>
+<script src="../../shared/dkz-navbar.js" defer></script>
+<script src="../../shared/dkz-console.js" defer></script>
+<script src="../../shared/dkz-premium.js" defer></script>
+</body>
+</html>
