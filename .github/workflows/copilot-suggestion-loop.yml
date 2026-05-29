@@ -24,6 +24,7 @@ jobs:
       - name: "🔍 Copilot Scan — Performance & Logic"
         id: scan
         run: |
+          set +e  # Erlaube non-zero exit codes
           SUGGESTIONS=""
           COUNT=0
 
@@ -38,50 +39,50 @@ jobs:
             # B03: Toast System missing
             if ! echo "$CONTENT" | grep -qi "toast\|showToast"; then
               SUGGESTIONS="${SUGGESTIONS}B03|${MODULE}|UX|Toast-Benachrichtigungen einbauen\n"
-              ((COUNT++))
+              COUNT=$((COUNT+1))
             fi
 
             # B04: Settings Panel missing
             if ! echo "$CONTENT" | grep -qi "settings\|⚙"; then
               SUGGESTIONS="${SUGGESTIONS}B04|${MODULE}|UX|Settings Panel einbauen\n"
-              ((COUNT++))
+              COUNT=$((COUNT+1))
             fi
 
             # B05: Large inline JS (>30KB)
             SCRIPT_SIZE=$(echo "$CONTENT" | sed -n '/<script>/,/<\/script>/p' | wc -c)
             if [ "$SCRIPT_SIZE" -gt 30000 ] 2>/dev/null; then
               SUGGESTIONS="${SUGGESTIONS}B05|${MODULE}|Performance|Inline JS >30KB — auslagern\n"
-              ((COUNT++))
+              COUNT=$((COUNT+1))
             fi
 
             # B08: No localStorage usage (not persisting state)
             if ! echo "$CONTENT" | grep -q "localStorage"; then
               SUGGESTIONS="${SUGGESTIONS}B08|${MODULE}|Logic|localStorage für Persistenz nutzen\n"
-              ((COUNT++))
+              COUNT=$((COUNT+1))
             fi
 
             # B09: No error handling
             if ! echo "$CONTENT" | grep -q "try\|catch"; then
               SUGGESTIONS="${SUGGESTIONS}B09|${MODULE}|Stability|Error Handling (try/catch) einbauen\n"
-              ((COUNT++))
+              COUNT=$((COUNT+1))
             fi
 
             # B10: No keyboard shortcuts
             if ! echo "$CONTENT" | grep -q "keydown\|keypress\|Ctrl"; then
               SUGGESTIONS="${SUGGESTIONS}B10|${MODULE}|UX|Keyboard Shortcuts einbauen\n"
-              ((COUNT++))
+              COUNT=$((COUNT+1))
             fi
 
             # Custom: Module too large (>50KB)
             if [ "$SIZE" -gt 50000 ] 2>/dev/null; then
               SUGGESTIONS="${SUGGESTIONS}SIZE|${MODULE}|Performance|Modul >50KB — Splitting empfohlen\n"
-              ((COUNT++))
+              COUNT=$((COUNT+1))
             fi
 
             # Custom: Missing EventLog integration
             if ! echo "$CONTENT" | grep -q "DkzEventLog\|dkz-eventlog"; then
               SUGGESTIONS="${SUGGESTIONS}ELOG|${MODULE}|System|EventLog Integration fehlt\n"
-              ((COUNT++))
+              COUNT=$((COUNT+1))
             fi
           done
 

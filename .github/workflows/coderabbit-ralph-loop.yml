@@ -38,6 +38,7 @@ jobs:
       - name: "🔍 CodeRabbit Scan — Design & Security"
         id: scan
         run: |
+          set +e  # Erlaube non-zero exit codes
           ISSUES=""
           PASS=0
           FAIL=0
@@ -51,51 +52,56 @@ jobs:
             CONTENT=$(cat "$INDEX")
 
             # A01: DkZ Accent #fa1e4e
-            if echo "$CONTENT" | grep -q "fa1e4e"; then ((PASS++)); else
+            if echo "$CONTENT" | grep -q "fa1e4e"; then PASS=$((PASS+1)); else
               ISSUES="${ISSUES}A01|${MODULE}|Design|Accent #fa1e4e fehlt\n"
-              ((FAIL++))
+              FAIL=$((FAIL+1))
             fi
 
             # A02: Font Inter
-            if echo "$CONTENT" | grep -qi "inter"; then ((PASS++)); else
+            if echo "$CONTENT" | grep -qi "inter"; then PASS=$((PASS+1)); else
               ISSUES="${ISSUES}A02|${MODULE}|Design|Font Inter fehlt\n"
-              ((FAIL++))
+              FAIL=$((FAIL+1))
             fi
 
             # A05: Responsive Viewport Meta
-            if echo "$CONTENT" | grep -q 'meta.*viewport'; then ((PASS++)); else
+            if echo "$CONTENT" | grep -q 'meta.*viewport'; then PASS=$((PASS+1)); else
               ISSUES="${ISSUES}A05|${MODULE}|Struktur|Viewport Meta fehlt\n"
-              ((FAIL++))
+              FAIL=$((FAIL+1))
             fi
 
             # A06: XSS esc() function
-            if echo "$CONTENT" | grep -q 'function esc\|esc('; then ((PASS++)); else
+            if echo "$CONTENT" | grep -q 'function esc\|esc('; then PASS=$((PASS+1)); else
               ISSUES="${ISSUES}A06|${MODULE}|Security|XSS esc() fehlt\n"
-              ((FAIL++))
+              FAIL=$((FAIL+1))
             fi
 
             # A08: Version Meta
-            if echo "$CONTENT" | grep -q 'dkz-version'; then ((PASS++)); else
+            if echo "$CONTENT" | grep -q 'dkz-version'; then PASS=$((PASS+1)); else
               ISSUES="${ISSUES}A08|${MODULE}|Struktur|Version Meta fehlt\n"
-              ((FAIL++))
+              FAIL=$((FAIL+1))
             fi
 
             # A09: Hub Button
-            if echo "$CONTENT" | grep -qi 'hub'; then ((PASS++)); else
+            if echo "$CONTENT" | grep -qi 'hub'; then PASS=$((PASS+1)); else
               ISSUES="${ISSUES}A09|${MODULE}|Struktur|Hub Button fehlt\n"
-              ((FAIL++))
+              FAIL=$((FAIL+1))
             fi
 
             # A12: Debug Script
-            if echo "$CONTENT" | grep -q 'dkz-debug'; then ((PASS++)); else
+            if echo "$CONTENT" | grep -q 'dkz-debug'; then PASS=$((PASS+1)); else
               ISSUES="${ISSUES}A12|${MODULE}|Regeln|Debug Script fehlt\n"
-              ((FAIL++))
+              FAIL=$((FAIL+1))
             fi
           done
 
           echo "pass=$PASS" >> $GITHUB_OUTPUT
           echo "fail=$FAIL" >> $GITHUB_OUTPUT
-          SCORE=$((PASS * 100 / (PASS + FAIL)))
+          TOTAL=$((PASS + FAIL))
+          if [ "$TOTAL" -gt 0 ]; then
+            SCORE=$((PASS * 100 / TOTAL))
+          else
+            SCORE=100
+          fi
           echo "score=$SCORE" >> $GITHUB_OUTPUT
           echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
 
