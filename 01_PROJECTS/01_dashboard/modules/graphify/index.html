@@ -820,6 +820,71 @@ selectNode = function(n){
   }
 };
 
+// === DEEP-LINKING: ?node=§12 oder ?node=id ===
+function handleDeepLink(){
+  const params = new URLSearchParams(window.location.search);
+  const nodeParam = params.get('node');
+  if(!nodeParam) return;
+  // Support §-Syntax: ?node=§12 oder ?node=id
+  let target = null;
+  if(nodeParam.startsWith('§') || nodeParam.startsWith('%C2%A7')){
+    const num = parseInt(nodeParam.replace(/[§%C2%A7]/g, ''));
+    target = nodes.find(n => n.paragraph_num === num);
+  }
+  if(!target) target = nodes.find(n => n.id === nodeParam);
+  if(!target) target = nodes.find(n => n.title.toLowerCase().includes(nodeParam.toLowerCase()));
+  if(target){
+    selectNode(target);
+    // Warte bis Simulation settled, dann zentrieren
+    setTimeout(() => { centerOn(target); camZoom = 1.5; if(!simRunning){draw();drawMinimap();} }, 500);
+  }
+}
+
+// === CROSS-MODUL API: window.graphifyOpenNode(id) ===
+window.graphifyOpenNode = function(nodeId){
+  if(!nodes || !nodes.length) return false;
+  let target = null;
+  if(typeof nodeId === 'number') target = nodes.find(n => n.paragraph_num === nodeId);
+  if(!target) target = nodes.find(n => n.id === nodeId);
+  if(!target) target = nodes.find(n => n.title.toLowerCase().includes(String(nodeId).toLowerCase()));
+  if(target){
+    selectNode(target);
+    centerOn(target);
+    camZoom = 1.5;
+    if(!simRunning){draw();drawMinimap();}
+    // Update URL ohne Reload
+    const url = new URL(window.location);
+    url.searchParams.set('node', target.id);
+    window.history.replaceState({}, '', url);
+    return true;
+  }
+  return false;
+};
+
+// === SEARCH HIGHLIGHT ===
+const _origDraw2 = draw;
+draw = function(){
+  _origDraw2();
+  if(!searchTerm) return;
+  const W=canvas.width, H=canvas.height;
+  ctx.save();
+  ctx.translate(W/2+camX, H/2+camY);
+  ctx.scale(camZoom, camZoom);
+  nodes.forEach(n => {
+    if(!n.visible) return;
+    if(n.title.toLowerCase().includes(searchTerm.toLowerCase())){
+      ctx.strokeStyle = '#ffb800';
+      ctx.lineWidth = 2.5/camZoom;
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.radius + 6, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  });
+  ctx.restore();
+};
+
 // === INIT ===
 window.addEventListener('DOMContentLoaded', () => {
   canvas = document.getElementById('graph');
@@ -831,6 +896,8 @@ window.addEventListener('DOMContentLoaded', () => {
   loadGraph();
   // NanoBots nach Graph-Load initialisieren
   setTimeout(() => { initNanoBots(); }, 100);
+  // Deep-Link pruefen nach kurzer Verzoegerung (Graph muss geladen sein)
+  setTimeout(() => { handleDeepLink(); }, 600);
 });
 </script>
 <script src="../../shared/dkz-debug.js"></script>
