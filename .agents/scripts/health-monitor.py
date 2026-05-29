@@ -88,17 +88,32 @@ def check_http(url, timeout=5):
 
 
 def check_local(path):
-    """Lokales Verzeichnis pruefen."""
+    """Lokales Verzeichnis pruefen (schneller Shallow-Scan)."""
     p = Path(path)
     if not p.exists():
         return {"status": "ROT", "message": "Nicht gefunden", "files": 0, "size": "0 B"}
 
     try:
-        file_count = sum(1 for _ in p.rglob('*') if _.is_file())
-        total_size = sum(f.stat().st_size for f in p.rglob('*') if f.is_file())
+        # Schneller Shallow-Scan (nur 1 Ebene tief)
+        file_count = 0
+        total_size = 0
+        for entry in os.scandir(str(p)):
+            if entry.is_file():
+                file_count += 1
+                try:
+                    total_size += entry.stat().st_size
+                except OSError:
+                    pass
+            elif entry.is_dir():
+                # Zaehle nur direkte Unterordner-Dateien (nicht rekursiv)
+                try:
+                    sub_count = sum(1 for e in os.scandir(entry.path) if e.is_file())
+                    file_count += sub_count
+                except (OSError, PermissionError):
+                    pass
         return {
             "status": "GRUEN",
-            "message": f"{file_count} Dateien, {_format_size(total_size)}",
+            "message": f"~{file_count} Dateien, {_format_size(total_size)}",
             "files": file_count,
             "size": _format_size(total_size)
         }
