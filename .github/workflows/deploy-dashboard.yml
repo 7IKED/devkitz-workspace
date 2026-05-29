@@ -9,9 +9,28 @@ on:
   workflow_dispatch:
 
 jobs:
+  check-secrets:
+    runs-on: ubuntu-latest
+    name: Check VPS Secrets
+    outputs:
+      has_secrets: ${{ steps.check.outputs.has_secrets }}
+    steps:
+      - name: Check if VPS secrets are configured
+        id: check
+        run: |
+          if [ -n "${{ secrets.VPS_HOST }}" ] && [ -n "${{ secrets.VPS_SSH_KEY }}" ]; then
+            echo "has_secrets=true" >> $GITHUB_OUTPUT
+            echo "VPS secrets found"
+          else
+            echo "has_secrets=false" >> $GITHUB_OUTPUT
+            echo "::notice::VPS secrets not configured. Skipping deploy. Set VPS_HOST, VPS_USER, VPS_SSH_KEY in repo Settings > Secrets."
+          fi
+
   deploy:
     runs-on: ubuntu-latest
     name: Deploy to KVM8
+    needs: check-secrets
+    if: needs.check-secrets.outputs.has_secrets == 'true'
 
     steps:
       - name: Checkout

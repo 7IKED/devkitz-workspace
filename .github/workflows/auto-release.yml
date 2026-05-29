@@ -1,86 +1,87 @@
-name: DkZ™ Monorepo Auto-Release
+name: DkZ Monorepo Auto-Release
 
 on:
-  # DEAKTIVIERT: Scripts (media-brander, deepkeep, sitemap-generator) existieren noch nicht
-  # Manuell triggern wenn alles bereit ist
+  # Nur manuell triggern — Scripts noch in Entwicklung
   workflow_dispatch:
-  # push:
-  #   branches: [ "main", "master", "feat/second-brain-v2-dashy-nexus" ]
 
 jobs:
-  deepkeep_and_deploy:
+  check-scripts:
     runs-on: ubuntu-latest
+    name: Validate Scripts
+    outputs:
+      scripts_ready: ${{ steps.check.outputs.scripts_ready }}
     steps:
-      - name: 📥 Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: ⚙️ Setup Environment (Node & ExifTool)
+      - name: Check if required scripts exist
+        id: check
         run: |
-          sudo apt-get update && sudo apt-get install -y libimage-exiftool-perl
-          npm install
+          MISSING=0
+          for script in ".agents/scripts/media-brander.js" ".agents/scripts/deepkeep.js" ".agents/scripts/sitemap-generator.js"; do
+            if [ ! -f "$script" ]; then
+              echo "::warning::Missing script: $script"
+              MISSING=1
+            fi
+          done
+          if [ $MISSING -eq 0 ]; then
+            echo "scripts_ready=true" >> $GITHUB_OUTPUT
+          else
+            echo "scripts_ready=false" >> $GITHUB_OUTPUT
+            echo "::notice::Some scripts are missing. Skipping release pipeline. Create the missing scripts first."
+          fi
 
-      - name: 📸 Run Media Brander (EXIF Injection)
-        run: |
-          node .agents/scripts/media-brander.js 01_PROJECTS/
+  release:
+    runs-on: ubuntu-latest
+    name: Build and Release
+    needs: check-scripts
+    if: needs.check-scripts.outputs.scripts_ready == 'true'
 
-      - name: 🛡️ Run DeepKeep Sanitizer (Scannt 96 Module)
-        run: |
-          node .agents/scripts/deepkeep.js 01_PROJECTS/
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: 🌐 Generate Global Sitemap Mesh
-        run: |
-          node .agents/scripts/sitemap-generator.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
 
-      - name: 🚀 Deploy to Hostinger VPS (Nginx) via rsync
+      - name: Install Dependencies
+        run: npm install --ignore-scripts 2>/dev/null || true
+
+      - name: Run Media Brander
+        run: node .agents/scripts/media-brander.js 01_PROJECTS/
+
+      - name: Run DeepKeep Sanitizer
+        run: node .agents/scripts/deepkeep.js 01_PROJECTS/
+
+      - name: Generate Sitemap
+        run: node .agents/scripts/sitemap-generator.js
+
+      - name: Deploy to VPS
+        if: ${{ secrets.VPS_HOST != '' }}
         env:
-          SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
-          HOST: ${{ secrets.HOSTINGER_HOST }}
-          USER: root
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          HOST: ${{ secrets.VPS_HOST }}
+          USER: ${{ secrets.VPS_USER }}
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H $HOST >> ~/.ssh/known_hosts
-          
-          # rsync uebertraegt intelligent nur die veraenderten Dateien der 96 Projekte!
-          echo "Starte rsync zu Hostinger VPS..."
-          rsync -avz --delete -e "ssh -i ~/.ssh/id_rsa" ./01_PROJECTS/ $USER@$HOST:/var/www/01_PROJECTS/
-          
-          echo "Deploy abgeschlossen! Alle Subdomains sind live."
+          ssh-keyscan -H $HOST >> ~/.ssh/known_hosts 2>/dev/null
+          rsync -avz --delete -e "ssh -i ~/.ssh/id_rsa" ./01_PROJECTS/ $USER@$HOST:/var/www/devkitz-dashboard/
 
-      - name: ☁️ Backup Media to Google Photos
-        env:
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
-        run: |
-          node .agents/scripts/google-photos-uploader.js
-
-      - name: 📝 Blogger Interceptor (Auto-Publish Plans & Blueprints)
-        env:
-          BLOGGER_BLOG_ID: ${{ secrets.BLOGGER_BLOG_ID }}
-          BLOGGER_API_KEY: ${{ secrets.BLOGGER_API_KEY }}
-        run: |
-          node .agents/scripts/blogger-push.js
-
-  drilling_doku:
-    needs: deepkeep_and_deploy
-    runs-on: ubuntu-latest
-    steps:
-      - name: 📥 Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: 📝 Drilling: Release Dokumentation festhalten
+      - name: Create Release Log
         run: |
           mkdir -p .agents/logs/releases
           echo "## Release: $(date +'%Y-%m-%d %H:%M')" > .agents/logs/releases/latest.md
-          echo "Automatisch generiert & gepusht durch DkZ Auto-Release Pipeline." >> .agents/logs/releases/latest.md
-          echo "DeepKeep Zensur: OK. Sync für 01_PROJECTS: OK." >> .agents/logs/releases/latest.md
+          echo "Auto-Release Pipeline - DkZ Monorepo" >> .agents/logs/releases/latest.md
+          echo "Modules: $(ls -d 01_PROJECTS/01_dashboard/modules/*/ 2>/dev/null | wc -l)" >> .agents/logs/releases/latest.md
 
-      - name: 🔄 Push Drilling back to GitHub
+      - name: Push Release Log
         run: |
           git config --global user.name 'DkZ Auto-Release Bot'
           git config --global user.email 'bot@devkitz.eu'
           git add .agents/logs/releases/latest.md
-          git commit -m "docs: 🤖 Drilling / Auto-Doku aktualisiert nach Monorepo Release" || echo "No changes to commit"
+          git commit -m "docs: Auto-Release Log aktualisiert" || echo "No changes"
           git push
