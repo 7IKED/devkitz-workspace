@@ -1,0 +1,78 @@
+name: Sync Module READMEs to D-VKITZ Repos
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '01_PROJECTS/01_dashboard/modules/**/README.md'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'  # Every Monday 6 AM
+
+jobs:
+  sync-readmes:
+    runs-on: ubuntu-latest
+    name: Sync READMEs
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sync Module READMEs
+        env:
+          GH_TOKEN: ${{ secrets.DVKITZ_TOKEN }}
+        run: |
+          echo "=== Syncing Module READMEs to D-VKITZ ==="
+          
+          declare -A MODULE_MAP
+          MODULE_MAP[openhumans-hub]="openhumans-hub"
+          MODULE_MAP[gitnexus-explorer]="gitnexus-explorer"
+          MODULE_MAP[mirofish-sim]="mirofish-sim"
+          MODULE_MAP[graphify]="graphify"
+          MODULE_MAP[n8n-viewer]="n8n-viewer"
+          MODULE_MAP[copilot-presentation]="copilot-dashboard"
+          MODULE_MAP[deepkeep]="deepkeep-tresor"
+          MODULE_MAP[devkitz-wiki]="devkitz-wiki"
+          MODULE_MAP[webhook-hub]="webhook-dashboard"
+          MODULE_MAP[designboard]="dkz-design-system"
+          
+          for LOCAL_DIR in "${!MODULE_MAP[@]}"; do
+            REMOTE_REPO="${MODULE_MAP[$LOCAL_DIR]}"
+            README_PATH="01_PROJECTS/01_dashboard/modules/${LOCAL_DIR}/README.md"
+            
+            if [ -f "$README_PATH" ]; then
+              echo ">>> Syncing $LOCAL_DIR -> D-VKITZ/$REMOTE_REPO"
+              CONTENT=$(base64 -w 0 "$README_PATH")
+              SHA=$(gh api "repos/D-VKITZ/$REMOTE_REPO/contents/README.md" --jq '.sha' 2>/dev/null || echo "")
+              
+              if [ -n "$SHA" ]; then
+                gh api -X PUT "repos/D-VKITZ/$REMOTE_REPO/contents/README.md" \
+                  -f message="docs: Auto-sync README from monorepo" \
+                  -f content="$CONTENT" \
+                  -f sha="$SHA" --silent
+              else
+                gh api -X PUT "repos/D-VKITZ/$REMOTE_REPO/contents/README.md" \
+                  -f message="docs: Auto-sync README from monorepo" \
+                  -f content="$CONTENT" --silent
+              fi
+              echo "    OK"
+            fi
+          done
+          
+          echo "=== Sync Complete ==="
+
+  update-features:
+    runs-on: ubuntu-latest
+    name: Update features.json
+    needs: sync-readmes
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Count modules and update
+        run: |
+          MODULE_COUNT=$(ls -d 01_PROJECTS/01_dashboard/modules/*/ 2>/dev/null | wc -l)
+          echo "Total modules: $MODULE_COUNT"
+          echo "{\"total_modules\": $MODULE_COUNT, \"synced\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > /tmp/sync-status.json
+          cat /tmp/sync-status.json
