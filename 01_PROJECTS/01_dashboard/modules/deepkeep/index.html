@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v1.00.0_01">
+    <meta name="dkz-module" content="deepkeep">
+    <title>DEEPKEEP™ Tresor — DkZ™</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <style>
+        :root {
+            --bg: #060608;
+            --surface: #0e0e10;
+            --card: #111116;
+            --card2: #16161b;
+            --border: rgba(255,255,255,0.04);
+            --border2: rgba(255,255,255,0.07);
+            --text: #f0f0f2;
+            --muted: #71717a;
+            --accent: #fa1e4e;
+            --green: #00ff88;
+            --yellow: #ffb800;
+            --red: #ff3b5c;
+            --blue: #3b82f6;
+            --purple: #a855f7;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --r: 14px;
+            --glow: 0 0 30px rgba(250,30,78,0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ═══ PARTICLE BACKGROUND ═══ */
+        #particles-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; pointer-events: none; opacity: 0.4;
+        }
+
+        /* ═══ AMBIENT GLOW ═══ */
+        body::before {
+            content: ''; position: fixed; top: -250px; right: -200px;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(250,30,78,0.06), transparent 70%);
+            pointer-events: none; z-index: 0;
+        }
+        body::after {
+            content: ''; position: fixed; bottom: -200px; left: -150px;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(0,255,136,0.04), transparent 70%);
+            pointer-events: none; z-index: 0;
+        }
+
+        /* ═══ HEADER ═══ */
+        header {
+            position: sticky; top: 0; z-index: 100;
+            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            background: rgba(6,6,8,0.82);
+            border-bottom: 1px solid var(--border2);
+            padding: 0 2rem; height: 64px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .back-btn {
+            color: var(--muted); text-decoration: none; font-size: 1.2rem;
+            transition: color .2s; display: flex; align-items: center;
+        }
+        .back-btn:hover { color: var(--accent); }
+        .logo { display: flex; align-items: center; gap: .6rem; }
+        .logo-icon { font-size: 1.5rem; filter: drop-shadow(0 0 8px rgba(250,30,78,0.4)); }
+        .logo-text { font-weight: 900; font-size: 1.15rem; letter-spacing: -.02em; }
+        .logo-text span { color: var(--accent); }
+        .logo-sub {
+            font-size: .55rem; font-weight: 700; font-family: var(--mono);
+            color: var(--muted); letter-spacing: .15em; text-transform: uppercase;
+            margin-top: 2px;
+        }
+        .header-right { display: flex; align-items: center; gap: 1rem; }
+        .version-badge {
+            font-size: .6rem; font-family: var(--mono); color: var(--muted);
+            padding: .2rem .5rem; border: 1px solid var(--border2); border-radius: 6px;
+        }
+        .clock {
+            font-family: var(--mono); font-size: .7rem; color: var(--muted);
+            font-weight: 600;
+        }
+        .tresor-status {
+            display: flex; align-items: center; gap: .4rem;
+            font-size: .65rem; font-weight: 700; font-family: var(--mono);
+        }
+        .status-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; box-shadow: 0 0 4px currentColor; }
+            50% { opacity: .5; box-shadow: 0 0 12px currentColor; }
+        }
+
+        /* ═══ MAIN ═══ */
+        main {
+            position: relative; z-index: 1;
+            max-width: 1440px; margin: 0 auto; padding: 1.5rem 2rem 4rem;
+        }
+
+        /* ═══ STATS BAR ═══ */
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: .75rem; margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: rgba(17,17,22,0.7);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border2);
+            border-radius: var(--r); padding: 1.2rem 1rem;
+            text-align: center; position: relative; overflow: hidden;
+            transition: all .3s cubic-bezier(.4,0,.2,1);
+        }
+        .stat-card::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(250,30,78,0.03), transparent);
+            opacity: 0; transition: opacity .3s;
+        }
+        .stat-card:hover { border-color: rgba(250,30,78,0.2); transform: translateY(-3px); box-shadow: var(--glow); }
+        .stat-card:hover::before { opacity: 1; }
+        .stat-icon { font-size: 1.4rem; margin-bottom: .4rem; display: block; }
+        .stat-val {
+            font-size: 1.8rem; font-weight: 900; letter-spacing: -.03em;
+            font-variant-numeric: tabular-nums;
+        }
+        .stat-lbl {
+            font-size: .6rem; color: var(--muted); margin-top: .25rem;
+            text-transform: uppercase; letter-spacing: .08em; font-weight: 700;
+        }
+
+        /* ═══ SECTION CARD ═══ */
+        .section {
+            background: rgba(17,17,22,0.6);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border2);
+            border-radius: var(--r); padding: 1.5rem;
+            margin-bottom: 1.25rem; position: relative; overflow: hidden;
+        }
+        .section::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(250,30,78,0.2), transparent);
+        }
+        .section-title {
+            font-size: .8rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: .06em; margin-bottom: 1rem;
+            display: flex; align-items: center; gap: .5rem;
+        }
+        .section-title .accent { color: var(--accent); }
+
+        /* ═══ FOLDER VIEWER ═══ */
+        .folder-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: .75rem;
+        }
+        .folder-card {
+            background: rgba(22,22,27,0.8);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border2);
+            border-radius: 12px; padding: 1rem;
+            cursor: pointer; transition: all .3s cubic-bezier(.4,0,.2,1);
+            position: relative; overflow: hidden;
+        }
+        .folder-card::after {
+            content: ''; position: absolute; inset: 0; border-radius: 12px;
+            background: radial-gradient(circle at 50% 0%, rgba(250,30,78,0.08), transparent 70%);
+            opacity: 0; transition: opacity .3s;
+        }
+        .folder-card:hover {
+            border-color: rgba(250,30,78,0.3); transform: translateY(-4px) scale(1.01);
+            box-shadow: 0 12px 30px rgba(250,30,78,0.1);
+        }
+        .folder-card:hover::after { opacity: 1; }
+        .folder-card.active { border-color: var(--accent); background: rgba(250,30,78,0.04); }
+        .folder-icon { font-size: 1.6rem; margin-bottom: .5rem; display: block; position: relative; z-index: 1; }
+        .folder-name {
+            font-size: .75rem; font-weight: 800; margin-bottom: .2rem;
+            position: relative; z-index: 1;
+        }
+        .folder-count {
+            font-size: .6rem; color: var(--muted); font-family: var(--mono);
+            position: relative; z-index: 1;
+        }
+
+        /* ═══ UPLOAD ZONE ═══ */
+        .upload-zone {
+            border: 2px dashed rgba(250,30,78,0.25);
+            border-radius: var(--r); padding: 2.5rem 1.5rem;
+            text-align: center; cursor: pointer;
+            transition: all .3s; background: rgba(250,30,78,0.02);
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--accent); background: rgba(250,30,78,0.06);
+            box-shadow: inset 0 0 40px rgba(250,30,78,0.05);
+        }
+        .upload-icon { font-size: 2.5rem; margin-bottom: .6rem; display: block; }
+        .upload-title { font-weight: 800; font-size: .95rem; margin-bottom: .3rem; }
+        .upload-sub { font-size: .7rem; color: var(--muted); }
+        .upload-preview {
+            display: none; margin-top: 1rem; text-align: left;
+        }
+        .preview-item {
+            background: var(--card2); border: 1px solid var(--border2);
+            border-radius: 10px; padding: .8rem 1rem; margin-bottom: .5rem;
+            display: flex; justify-content: space-between; align-items: center;
+            animation: slideUp .3s ease-out;
+        }
+        .preview-left { display: flex; align-items: center; gap: .6rem; }
+        .preview-icon { font-size: 1.2rem; }
+        .preview-name { font-size: .75rem; font-weight: 700; }
+        .preview-size { font-size: .6rem; color: var(--muted); font-family: var(--mono); }
+        .target-select {
+            background: var(--bg); border: 1px solid var(--border2);
+            border-radius: 8px; padding: .4rem .6rem; margin-top: .75rem;
+            color: var(--text); font-size: .75rem; font-family: var(--font);
+            width: 100%;
+        }
+        .target-select:focus { outline: none; border-color: var(--accent); }
+
+        /* ═══ SEARCH ═══ */
+        .search-row { display: flex; gap: .5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .search-input {
+            flex: 1; min-width: 200px;
+            background: rgba(0,0,0,0.4); border: 1px solid var(--border2);
+            border-radius: 10px; padding: .7rem 1rem .7rem 2.5rem;
+            color: var(--text); font-size: .8rem; font-family: var(--font);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%2371717a' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.442.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: 12px center;
+            transition: border-color .2s;
+        }
+        .search-input:focus { outline: none; border-color: var(--accent); }
+        .filter-select {
+            background: rgba(0,0,0,0.4); border: 1px solid var(--border2);
+            border-radius: 10px; padding: .55rem .8rem;
+            color: var(--text); font-size: .72rem; font-family: var(--font);
+            cursor: pointer;
+        }
+        .filter-select:focus { outline: none; border-color: var(--accent); }
+        .search-results { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+        .result-card {
+            background: var(--card2); border: 1px solid var(--border2);
+            border-radius: 10px; padding: .8rem; cursor: pointer;
+            transition: all .25s;
+        }
+        .result-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+        .result-name { font-size: .78rem; font-weight: 700; margin-bottom: .25rem; }
+        .result-path { font-size: .6rem; color: var(--muted); font-family: var(--mono); margin-bottom: .2rem; }
+        .result-meta { font-size: .55rem; color: var(--muted); display: flex; gap: .5rem; }
+
+        /* ═══ 7-TAGE RULE ═══ */
+        .rule-item {
+            background: rgba(255,184,0,0.04); border: 1px solid rgba(255,184,0,0.15);
+            border-radius: 10px; padding: .8rem 1rem; margin-bottom: .5rem;
+            display: flex; justify-content: space-between; align-items: center;
+            transition: all .2s;
+        }
+        .rule-item:hover { border-color: rgba(255,184,0,0.3); }
+        .rule-left { display: flex; align-items: center; gap: .6rem; }
+        .rule-icon { font-size: 1.1rem; }
+        .rule-info {}
+        .rule-name { font-size: .75rem; font-weight: 700; }
+        .rule-detail { font-size: .6rem; color: var(--muted); }
+        .rule-days {
+            font-size: .6rem; font-family: var(--mono); font-weight: 700;
+            color: var(--yellow); background: rgba(255,184,0,0.1);
+            padding: .2rem .5rem; border-radius: 6px;
+        }
+
+        /* ═══ CATALOG TABLE ═══ */
+        .catalog-controls {
+            display: flex; gap: .5rem; margin-bottom: 1rem; flex-wrap: wrap;
+            align-items: center;
+        }
+        .catalog-table-wrap { overflow-x: auto; }
+        .catalog-table {
+            width: 100%; border-collapse: collapse; font-size: .7rem;
+        }
+        .catalog-table th {
+            text-align: left; padding: .6rem .5rem;
+            border-bottom: 1px solid var(--border2);
+            color: var(--accent); font-weight: 700; font-size: .6rem;
+            text-transform: uppercase; letter-spacing: .06em;
+            cursor: pointer; user-select: none; white-space: nowrap;
+            transition: color .2s;
+        }
+        .catalog-table th:hover { color: var(--text); }
+        .catalog-table th .sort-arrow { margin-left: .3rem; opacity: .4; }
+        .catalog-table td {
+            padding: .5rem .5rem; border-bottom: 1px solid rgba(255,255,255,0.02);
+            color: var(--muted); white-space: nowrap;
+        }
+        .catalog-table tr:hover td { color: var(--text); background: rgba(250,30,78,0.02); }
+        .catalog-table .tag-cell {
+            display: flex; gap: .2rem; flex-wrap: wrap;
+        }
+        .mini-tag {
+            font-size: .5rem; padding: .1rem .3rem; border-radius: 3px;
+            background: rgba(250,30,78,0.08); color: var(--accent);
+            font-family: var(--mono); font-weight: 600;
+        }
+
+        /* ═══ ACTIVITY FEED ═══ */
+        .feed-item {
+            display: flex; gap: .8rem; padding: .6rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.02);
+            animation: slideUp .4s ease-out;
+        }
+        .feed-dot {
+            width: 10px; height: 10px; border-radius: 50%; margin-top: .25rem;
+            flex-shrink: 0;
+        }
+        .feed-dot.move { background: var(--green); box-shadow: 0 0 6px rgba(0,255,136,0.3); }
+        .feed-dot.tag { background: var(--blue); box-shadow: 0 0 6px rgba(59,130,246,0.3); }
+        .feed-dot.rename { background: var(--purple); box-shadow: 0 0 6px rgba(168,85,247,0.3); }
+        .feed-dot.upload { background: var(--accent); box-shadow: 0 0 6px rgba(250,30,78,0.3); }
+        .feed-dot.protect { background: var(--yellow); box-shadow: 0 0 6px rgba(255,184,0,0.3); }
+        .feed-text { font-size: .72rem; color: var(--muted); line-height: 1.5; }
+        .feed-text strong { color: var(--text); }
+        .feed-time { font-size: .55rem; color: var(--muted); font-family: var(--mono); margin-top: .15rem; }
+
+        /* ═══ BUTTONS ═══ */
+        .btn {
+            padding: .55rem 1rem; border: none; border-radius: 10px;
+            font-size: .72rem; font-weight: 700; cursor: pointer;
+            transition: all .25s; font-family: var(--font);
+            display: inline-flex; align-items: center; gap: .3rem;
+        }
+        .btn-accent {
+            background: linear-gradient(135deg, var(--accent), #ec4899);
+            color: #fff; box-shadow: 0 4px 15px rgba(250,30,78,0.2);
+        }
+        .btn-accent:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(250,30,78,0.3); }
+        .btn-ghost {
+            background: rgba(255,255,255,0.04); color: var(--muted);
+            border: 1px solid var(--border2);
+        }
+        .btn-ghost:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+        .btn-green {
+            background: linear-gradient(135deg, #00ff88, #00cc6a);
+            color: #000; font-weight: 800;
+        }
+        .btn-green:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,255,136,0.2); }
+        .btn-yellow {
+            background: linear-gradient(135deg, #ffb800, #ff8c00);
+            color: #000; font-weight: 800;
+        }
+        .btn-yellow:hover { transform: translateY(-2px); }
+        .btn-sm { padding: .35rem .65rem; font-size: .65rem; }
+
+        /* ═══ FOOTER ═══ */
+        footer {
+            text-align: center; padding: 1.5rem 2rem;
+            font-size: .6rem; color: var(--muted); font-family: var(--mono);
+            border-top: 1px solid var(--border);
+            position: relative; z-index: 1;
+        }
+        footer .accent-text { color: var(--accent); font-weight: 700; }
+
+        /* ═══ TWO-COL LAYOUT ═══ */
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+
+        /* ═══ ANIMATIONS ═══ */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .animate-in { animation: slideUp .4s ease-out; }
+
+        /* ═══ TOAST ═══ */
+        .toast {
+            position: fixed; bottom: 2rem; right: 2rem;
+            background: rgba(17,17,22,0.95); backdrop-filter: blur(20px);
+            border: 1px solid var(--green); border-radius: 10px;
+            padding: .75rem 1.25rem; transform: translateX(450px);
+            transition: transform .35s cubic-bezier(.4,0,.2,1);
+            z-index: 10000; font-size: .78rem; font-weight: 600;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+        }
+        .toast.show { transform: translateX(0); }
+
+        /* ═══ EMPTY STATE ═══ */
+        .empty-state {
+            text-align: center; padding: 2.5rem; color: var(--muted);
+        }
+        .empty-icon { font-size: 2.5rem; margin-bottom: .6rem; display: block; opacity: .5; }
+
+        /* ═══ SCROLLBAR ═══ */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+        /* ═══ RESPONSIVE ═══ */
+        @media (max-width: 1024px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .two-col { grid-template-columns: 1fr; }
+            .search-results { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            header { padding: 0 1rem; }
+            main { padding: 1rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .folder-grid { grid-template-columns: repeat(2, 1fr); }
+            .logo-sub { display: none; }
+        }
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .folder-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body data-dkz-module="deepkeep" data-dkz-appid="DKZ-DEEP-001" data-dkz-version="v1.00.0_01" data-dkz-title="DEEPKEEP Tresor" data-dkz-icon="🔒" data-dkz-separable="true">
+
+    <!-- PARTICLE CANVAS -->
+    <canvas id="particles-canvas"></canvas>
+
+    <!-- ═══ HEADER ═══ -->
+    <header>
+        <div class="header-left">
+            <a href="../../hub/index.html" class="back-btn" title="Zurueck zum Hub">&#8592;</a>
+            <div class="logo">
+                <span class="logo-icon">🔒</span>
+                <div>
+                    <div class="logo-text"><span>DEEPKEEP</span>&#8482; Tresor</div>
+                    <div class="logo-sub">WRITE-ONCE &middot; READ-MANY &middot; UNLOESCHBAR</div>
+                </div>
+            </div>
+            <span class="version-badge">v1.00.0_01</span>
+        </div>
+        <div class="header-right">
+            <div class="clock" id="dk-clock">--:--:--</div>
+            <div class="tresor-status" id="dk-status">
+                <span class="status-dot" id="dk-status-dot" style="background:var(--green);color:var(--green)"></span>
+                <span id="dk-status-text" style="color:var(--green)">VERSIEGELT</span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- ═══ 1. STATS BAR ═══ -->
+        <div class="stats-grid animate-in">
+            <div class="stat-card">
+                <span class="stat-icon">&#128194;</span>
+                <div class="stat-val" style="color:var(--accent)" id="st-total">0</div>
+                <div class="stat-lbl">Dateien Gesamt</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">&#128274;</span>
+                <div class="stat-val" style="color:var(--green)" id="st-protected">0</div>
+                <div class="stat-lbl">Geschuetzt</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">&#128338;</span>
+                <div class="stat-val" style="color:var(--blue);font-size:1rem" id="st-last">--</div>
+                <div class="stat-lbl">Letzte Aenderung</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">&#128190;</span>
+                <div class="stat-val" style="color:var(--purple)" id="st-size">0 KB</div>
+                <div class="stat-lbl">Tresor-Groesse</div>
+            </div>
+        </div>
+
+        <!-- ═══ 2. ORDNERSTRUKTUR VIEWER ═══ -->
+        <div class="section animate-in">
+            <div class="section-title">
+                &#128193; <span class="accent">DEEPKEEP</span> Ordnerstruktur
+            </div>
+            <div class="folder-grid" id="dk-folders"></div>
+        </div>
+
+        <div class="two-col">
+            <!-- ═══ 3. UPLOAD ZONE ═══ -->
+            <div class="section animate-in">
+                <div class="section-title">&#128228; <span class="accent">Upload</span> — In Tresor verschieben</div>
+                <div class="upload-zone" id="dk-dropzone">
+                    <span class="upload-icon">&#128229;</span>
+                    <div class="upload-title">Dateien hierher ziehen</div>
+                    <div class="upload-sub">Drag &amp; Drop &middot; Auto-Erkennung &middot; Write-Once</div>
+                </div>
+                <div class="upload-preview" id="dk-preview"></div>
+                <select class="target-select" id="dk-target" style="display:none">
+                    <option value="_INBOX">&#128229; _INBOX (Standard)</option>
+                    <option value="01_PROJECTS">&#128194; 01_PROJECTS</option>
+                    <option value="02_RESEARCH">&#128300; 02_RESEARCH</option>
+                    <option value="03_MEDIA/images">&#127912; 03_MEDIA/images</option>
+                    <option value="03_MEDIA/videos">&#127909; 03_MEDIA/videos</option>
+                    <option value="03_MEDIA/audio">&#127908; 03_MEDIA/audio</option>
+                    <option value="04_SYSTEM">&#9881; 04_SYSTEM</option>
+                    <option value="05_DESKTOP_KEEP">&#128187; 05_DESKTOP_KEEP</option>
+                    <option value="06_DOWNLOADS_KEEP">&#128229; 06_DOWNLOADS_KEEP</option>
+                    <option value="07_EMAIL_DRAFTS">&#9993; 07_EMAIL_DRAFTS</option>
+                    <option value="08_BLOGS">&#128221; 08_BLOGS</option>
+                    <option value="99_ARCHIVE">&#128230; 99_ARCHIVE</option>
+                </select>
+                <div style="margin-top:.75rem;display:none" id="dk-upload-actions">
+                    <button class="btn btn-accent" onclick="DK.commitToTresor()">&#128274; In Tresor verschieben</button>
+                    <button class="btn btn-ghost" onclick="DK.clearPreview()" style="margin-left:.5rem">Abbrechen</button>
+                </div>
+            </div>
+
+            <!-- ═══ 5. 7-TAGE-REGEL ═══ -->
+            <div class="section animate-in">
+                <div class="section-title">&#9888;&#65039; <span class="accent">7-Tage-Regel</span> — Ungeoeffnete Dateien</div>
+                <div id="dk-stale-list">
+                    <div class="empty-state">
+                        <span class="empty-icon">&#128064;</span>
+                        <div style="font-size:.75rem">Keine veralteten Dateien gefunden</div>
+                    </div>
+                </div>
+                <div style="margin-top:.75rem;text-align:right">
+                    <button class="btn btn-yellow btn-sm" onclick="DK.scanStaleFiles()">&#128269; Desktop/Downloads pruefen</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ 4. SUCHE ═══ -->
+        <div class="section animate-in">
+            <div class="section-title">&#128269; <span class="accent">Tresor</span>-Suche</div>
+            <div class="search-row">
+                <input type="text" class="search-input" id="dk-search" placeholder="Volltext-Suche im Tresor-Katalog..." oninput="DK.debounceSearch()">
+                <select class="filter-select" id="dk-filter-type" onchange="DK.doSearch()">
+                    <option value="">Alle Typen</option>
+                    <option value="pdf">PDF</option>
+                    <option value="image">Bilder</option>
+                    <option value="video">Videos</option>
+                    <option value="audio">Audio</option>
+                    <option value="document">Dokumente</option>
+                    <option value="code">Code</option>
+                    <option value="archive">Archive</option>
+                </select>
+                <select class="filter-select" id="dk-filter-folder" onchange="DK.doSearch()">
+                    <option value="">Alle Ordner</option>
+                </select>
+                <button class="btn btn-ghost btn-sm" onclick="DK.doSearch()">&#128269; Suchen</button>
+            </div>
+            <div class="search-results" id="dk-results"></div>
+        </div>
+
+        <!-- ═══ 6. KATALOG TABLE ═══ -->
+        <div class="section animate-in">
+            <div class="section-title">&#128203; <span class="accent">Katalog</span>-Sheet</div>
+            <div class="catalog-controls">
+                <button class="btn btn-ghost btn-sm" onclick="DK.exportCSV()">&#128196; CSV Export</button>
+                <button class="btn btn-ghost btn-sm" onclick="DK.exportJSON()">&#128196; JSON Export</button>
+                <span style="margin-left:auto;font-size:.6rem;color:var(--muted);font-family:var(--mono)" id="dk-catalog-count">0 Eintraege</span>
+            </div>
+            <div class="catalog-table-wrap">
+                <table class="catalog-table" id="dk-catalog-table">
+                    <thead>
+                        <tr>
+                            <th onclick="DK.sortBy('name')">Name <span class="sort-arrow">&#9650;</span></th>
+                            <th onclick="DK.sortBy('folder')">Pfad <span class="sort-arrow">&#9650;</span></th>
+                            <th onclick="DK.sortBy('type')">Typ <span class="sort-arrow">&#9650;</span></th>
+                            <th onclick="DK.sortBy('size')">Groesse <span class="sort-arrow">&#9650;</span></th>
+                            <th onclick="DK.sortBy('date')">Datum <span class="sort-arrow">&#9650;</span></th>
+                            <th>Tags</th>
+                            <th onclick="DK.sortBy('hash')">Hash <span class="sort-arrow">&#9650;</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="dk-catalog-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ═══ 7. ACTIVITY FEED ═══ -->
+        <div class="section animate-in">
+            <div class="section-title">&#128340; <span class="accent">Activity</span> Feed</div>
+            <div id="dk-feed">
+                <div class="empty-state">
+                    <span class="empty-icon">&#128340;</span>
+                    <div style="font-size:.75rem">Noch keine Aktivitaeten</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ═══ FOOTER ═══ -->
+    <footer>
+        <span class="accent-text">DEEPKEEP&#8482;</span> v1.00.0_01 &middot;
+        <span id="dk-footer-time">--</span> &middot;
+        Tresor-Status: <span class="accent-text" id="dk-footer-status">VERSIEGELT</span> &middot;
+        Write-Once &middot; Read-Many &middot; DkZ&#8482; D-System
+    </footer>
+
+    <!-- TOAST -->
+    <div class="toast" id="dk-toast"><span id="dk-toast-text"></span></div>
+
+    <!-- ═══ SHARED SCRIPTS ═══ -->
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+
+    <script>
+    // ════════════════════════════════════════════════
+    // DEEPKEEP™ Tresor — Write-Once, Read-Many
+    // @DKZ:TAG [MOD:deepkeep-tresor]
+    // ════════════════════════════════════════════════
+
+    var DK = (function() {
+        'use strict';
+
+        // ─── XSS PROTECTION (R15) ───
+        function esc(s) {
+            if (s === null || s === undefined) return '';
+            var d = document.createElement('div');
+            d.textContent = String(s);
+            return d.innerHTML;
+        }
+
+        // ─── CONSTANTS ───
+        var STORAGE_KEY = 'deepkeep-catalog';
+        var ACTIVITY_KEY = 'deepkeep-activity';
+        var STALE_KEY = 'deepkeep-stale';
+        var searchTimer = null;
+        var sortField = 'date';
+        var sortDir = -1;
+        var pendingFiles = [];
+
+        // ─── FOLDER STRUCTURE ───
+        var FOLDERS = [
+            { id: '01_PROJECTS',       icon: '&#128194;', name: '01_PROJECTS',       desc: 'Projektdateien' },
+            { id: '02_RESEARCH',       icon: '&#128300;', name: '02_RESEARCH',       desc: 'Forschung' },
+            { id: '03_MEDIA/images',   icon: '&#127912;', name: '03_MEDIA/images',   desc: 'Bilder' },
+            { id: '03_MEDIA/videos',   icon: '&#127909;', name: '03_MEDIA/videos',   desc: 'Videos' },
+            { id: '03_MEDIA/audio',    icon: '&#127908;', name: '03_MEDIA/audio',     desc: 'Audio' },
+            { id: '04_SYSTEM',         icon: '&#9881;',   name: '04_SYSTEM',         desc: 'System' },
+            { id: '05_DESKTOP_KEEP',   icon: '&#128187;', name: '05_DESKTOP_KEEP',   desc: 'Desktop Archiv' },
+            { id: '06_DOWNLOADS_KEEP', icon: '&#128229;', name: '06_DOWNLOADS_KEEP', desc: 'Downloads Archiv' },
+            { id: '07_EMAIL_DRAFTS',   icon: '&#9993;',   name: '07_EMAIL_DRAFTS',   desc: 'E-Mail Entwuerfe' },
+            { id: '08_BLOGS',          icon: '&#128221;', name: '08_BLOGS',          desc: 'Blog-Posts' },
+            { id: '99_ARCHIVE',        icon: '&#128230;', name: '99_ARCHIVE',        desc: 'Langzeit-Archiv' },
+            { id: '_INBOX',            icon: '&#128229;', name: '_INBOX',            desc: 'Eingang' }
+        ];
+
+        // ─── FILE TYPE MAP ───
+        var TYPE_MAP = {
+            // Documents
+            'pdf': { icon: '&#128196;', type: 'pdf', label: 'PDF' },
+            'doc': { icon: '&#128196;', type: 'document', label: 'Word' },
+            'docx': { icon: '&#128196;', type: 'document', label: 'Word' },
+            'txt': { icon: '&#128196;', type: 'document', label: 'Text' },
+            'md': { icon: '&#128221;', type: 'document', label: 'Markdown' },
+            'rtf': { icon: '&#128196;', type: 'document', label: 'RTF' },
+            // Images
+            'jpg': { icon: '&#127912;', type: 'image', label: 'JPEG' },
+            'jpeg': { icon: '&#127912;', type: 'image', label: 'JPEG' },
+            'png': { icon: '&#127912;', type: 'image', label: 'PNG' },
+            'gif': { icon: '&#127912;', type: 'image', label: 'GIF' },
+            'svg': { icon: '&#127912;', type: 'image', label: 'SVG' },
+            'webp': { icon: '&#127912;', type: 'image', label: 'WebP' },
+            // Videos
+            'mp4': { icon: '&#127909;', type: 'video', label: 'MP4' },
+            'mkv': { icon: '&#127909;', type: 'video', label: 'MKV' },
+            'avi': { icon: '&#127909;', type: 'video', label: 'AVI' },
+            'mov': { icon: '&#127909;', type: 'video', label: 'MOV' },
+            'webm': { icon: '&#127909;', type: 'video', label: 'WebM' },
+            // Audio
+            'mp3': { icon: '&#127925;', type: 'audio', label: 'MP3' },
+            'wav': { icon: '&#127925;', type: 'audio', label: 'WAV' },
+            'ogg': { icon: '&#127925;', type: 'audio', label: 'OGG' },
+            'flac': { icon: '&#127925;', type: 'audio', label: 'FLAC' },
+            // Code
+            'js': { icon: '&#128187;', type: 'code', label: 'JavaScript' },
+            'ts': { icon: '&#128187;', type: 'code', label: 'TypeScript' },
+            'py': { icon: '&#128013;', type: 'code', label: 'Python' },
+            'html': { icon: '&#127760;', type: 'code', label: 'HTML' },
+            'css': { icon: '&#127912;', type: 'code', label: 'CSS' },
+            'json': { icon: '&#128203;', type: 'code', label: 'JSON' },
+            'yml': { icon: '&#128203;', type: 'code', label: 'YAML' },
+            'yaml': { icon: '&#128203;', type: 'code', label: 'YAML' },
+            // Archives
+            'zip': { icon: '&#128230;', type: 'archive', label: 'ZIP' },
+            'rar': { icon: '&#128230;', type: 'archive', label: 'RAR' },
+            '7z': { icon: '&#128230;', type: 'archive', label: '7z' },
+            'tar': { icon: '&#128230;', type: 'archive', label: 'TAR' },
+            'gz': { icon: '&#128230;', type: 'archive', label: 'GZ' }
+        };
+
+        // ─── CATALOG ───
+        function getCatalog() {
+            try {
+                var data = localStorage.getItem(STORAGE_KEY);
+                return data ? JSON.parse(data) : [];
+            } catch(e) { return []; }
+        }
+
+        function saveCatalog(catalog) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(catalog));
+        }
+
+        function getActivity() {
+            try {
+                var data = localStorage.getItem(ACTIVITY_KEY);
+                return data ? JSON.parse(data) : [];
+            } catch(e) { return []; }
+        }
+
+        function saveActivity(acts) {
+            localStorage.setItem(ACTIVITY_KEY, JSON.stringify(acts));
+        }
+
+        function addActivity(action, detail) {
+            var acts = getActivity();
+            acts.unshift({
+                action: action,
+                detail: detail,
+                time: new Date().toISOString()
+            });
+            if (acts.length > 50) acts = acts.slice(0, 50);
+            saveActivity(acts);
+        }
+
+        // ─── HASH (simple) ───
+        function simpleHash(str) {
+            var hash = 0;
+            for (var i = 0; i < str.length; i++) {
+                var c = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + c;
+                hash |= 0;
+            }
+            return Math.abs(hash).toString(16).padStart(8, '0').toUpperCase();
+        }
+
+        // ─── FILE TYPE DETECT ───
+        function detectFileType(filename) {
+            var ext = (filename.split('.').pop() || '').toLowerCase();
+            return TYPE_MAP[ext] || { icon: '&#128196;', type: 'other', label: ext.toUpperCase() || 'Datei' };
+        }
+
+        // ─── FORMAT SIZE ───
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+        }
+
+        // ─── ANIMATED COUNTER ───
+        function animateCounter(el, target) {
+            var current = parseInt(el.textContent) || 0;
+            if (current === target) return;
+            var duration = 600;
+            var start = performance.now();
+            function step(ts) {
+                var progress = Math.min((ts - start) / duration, 1);
+                var eased = 1 - Math.pow(1 - progress, 3);
+                el.textContent = Math.round(current + (target - current) * eased);
+                if (progress < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        // ─── CLOCK ───
+        function updateClock() {
+            var now = new Date();
+            var t = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('dk-clock').textContent = t;
+            document.getElementById('dk-footer-time').textContent =
+                now.toLocaleDateString('de-DE') + ' ' + t;
+        }
+
+        // ─── TOAST ───
+        function toast(msg) {
+            var el = document.getElementById('dk-toast');
+            document.getElementById('dk-toast-text').textContent = msg;
+            el.classList.add('show');
+            setTimeout(function() { el.classList.remove('show'); }, 3000);
+        }
+
+        // ─── SEED DATA ───
+        function seedIfEmpty() {
+            var catalog = getCatalog();
+            if (catalog.length > 0) return;
+
+            var now = new Date().toISOString();
+            var seed = [
+                { name: 'REGELWERK.md', folder: '04_SYSTEM', size: 15420, date: '2026-03-15T10:00:00Z', tags: ['system','rules'], hash: 'A1B2C3D4' },
+                { name: 'CLAUDE.md', folder: '04_SYSTEM', size: 8730, date: '2026-03-15T10:00:00Z', tags: ['system','ai'], hash: 'E5F6A7B8' },
+                { name: 'BLAUPAUSE.md', folder: '01_PROJECTS', size: 22150, date: '2026-04-02T14:30:00Z', tags: ['architektur','dashboard'], hash: 'C9D0E1F2' },
+                { name: 'research-quantum-2026.pdf', folder: '02_RESEARCH', size: 3450000, date: '2026-04-10T09:15:00Z', tags: ['research','quantum'], hash: '12345678' },
+                { name: 'dashboard-screenshot.png', folder: '03_MEDIA/images', size: 850000, date: '2026-04-15T16:20:00Z', tags: ['media','screenshot'], hash: 'AABB1122' },
+                { name: 'podcast-deepdive.mp3', folder: '03_MEDIA/audio', size: 45000000, date: '2026-05-01T08:00:00Z', tags: ['media','podcast'], hash: 'CCDD3344' },
+                { name: 'devkitz-intro.mp4', folder: '03_MEDIA/videos', size: 125000000, date: '2026-05-10T12:00:00Z', tags: ['media','video'], hash: 'EEFF5566' },
+                { name: 'backup-2026-05-20.zip', folder: '99_ARCHIVE', size: 780000000, date: '2026-05-20T03:00:00Z', tags: ['backup','archive'], hash: '77889900' },
+                { name: 'newsletter-draft.md', folder: '07_EMAIL_DRAFTS', size: 4200, date: '2026-05-25T11:30:00Z', tags: ['email','draft'], hash: 'AACCEE11' },
+                { name: 'blog-post-ai-2026.md', folder: '08_BLOGS', size: 6800, date: '2026-05-27T15:45:00Z', tags: ['blog','ai'], hash: 'BBDDFF22' },
+                { name: 'desktop-notizen.txt', folder: '05_DESKTOP_KEEP', size: 1250, date: '2026-05-28T09:10:00Z', tags: ['desktop','notizen'], hash: '33445566' },
+                { name: 'installer-v3.exe', folder: '06_DOWNLOADS_KEEP', size: 95000000, date: '2026-05-28T14:00:00Z', tags: ['download','installer'], hash: '77889AAA' }
+            ];
+
+            seed.forEach(function(s) {
+                s.protected = true;
+                s.addedAt = now;
+            });
+
+            saveCatalog(seed);
+            addActivity('seed', 'Tresor mit ' + seed.length + ' Seed-Dateien initialisiert');
+            addActivity('protect', 'Alle Seed-Dateien als geschuetzt markiert');
+        }
+
+        // ─── RENDER STATS ───
+        function renderStats() {
+            var catalog = getCatalog();
+            var total = catalog.length;
+            var protectedCount = catalog.filter(function(f) { return f.protected; }).length;
+            var totalSize = catalog.reduce(function(sum, f) { return sum + (f.size || 0); }, 0);
+            var lastDate = catalog.length > 0
+                ? catalog.reduce(function(latest, f) { return f.date > latest ? f.date : latest; }, '')
+                : '--';
+
+            animateCounter(document.getElementById('st-total'), total);
+            animateCounter(document.getElementById('st-protected'), protectedCount);
+            document.getElementById('st-last').textContent = lastDate !== '--'
+                ? new Date(lastDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
+                : '--';
+            document.getElementById('st-size').textContent = formatSize(totalSize);
+
+            document.getElementById('dk-catalog-count').textContent = total + ' Eintraege';
+        }
+
+        // ─── RENDER FOLDERS ───
+        function renderFolders() {
+            var catalog = getCatalog();
+            var counts = {};
+            FOLDERS.forEach(function(f) { counts[f.id] = 0; });
+            catalog.forEach(function(item) {
+                if (counts[item.folder] !== undefined) counts[item.folder]++;
+            });
+
+            var html = '';
+            FOLDERS.forEach(function(f) {
+                html += '<div class="folder-card" onclick="DK.filterByFolder(\'' + esc(f.id) + '\')" title="' + esc(f.desc) + '">' +
+                    '<span class="folder-icon">' + f.icon + '</span>' +
+                    '<div class="folder-name">' + esc(f.name.split('/').pop()) + '</div>' +
+                    '<div class="folder-count">' + counts[f.id] + ' Dateien</div>' +
+                '</div>';
+            });
+            document.getElementById('dk-folders').innerHTML = html;
+
+            // Populate folder filter
+            var sel = document.getElementById('dk-filter-folder');
+            var existing = sel.options.length;
+            if (existing <= 1) {
+                FOLDERS.forEach(function(f) {
+                    var opt = document.createElement('option');
+                    opt.value = f.id;
+                    opt.textContent = f.name;
+                    sel.appendChild(opt);
+                });
+            }
+        }
+
+        // ─── RENDER CATALOG TABLE ───
+        function renderCatalogTable() {
+            var catalog = getCatalog().slice();
+
+            // Sort
+            catalog.sort(function(a, b) {
+                var aVal = a[sortField] || '';
+                var bVal = b[sortField] || '';
+                if (sortField === 'size') {
+                    return sortDir * ((a.size || 0) - (b.size || 0));
+                }
+                if (sortField === 'date') {
+                    return sortDir * (new Date(aVal) - new Date(bVal));
+                }
+                return sortDir * String(aVal).localeCompare(String(bVal));
+            });
+
+            var tbody = document.getElementById('dk-catalog-body');
+            if (catalog.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">Tresor ist leer</td></tr>';
+                return;
+            }
+
+            var html = '';
+            catalog.forEach(function(f) {
+                var ft = detectFileType(f.name);
+                var tags = (f.tags || []).map(function(t) {
+                    return '<span class="mini-tag">' + esc(t) + '</span>';
+                }).join('');
+                html += '<tr>' +
+                    '<td style="color:var(--text);font-weight:600">' + ft.icon + ' ' + esc(f.name) + '</td>' +
+                    '<td style="font-family:var(--mono);font-size:.6rem">' + esc(f.folder) + '</td>' +
+                    '<td>' + esc(ft.label) + '</td>' +
+                    '<td style="font-family:var(--mono)">' + formatSize(f.size || 0) + '</td>' +
+                    '<td style="font-family:var(--mono)">' + (f.date ? new Date(f.date).toLocaleDateString('de-DE') : '--') + '</td>' +
+                    '<td><div class="tag-cell">' + tags + '</div></td>' +
+                    '<td style="font-family:var(--mono);font-size:.55rem;color:var(--muted)">' + esc(f.hash || '--') + '</td>' +
+                '</tr>';
+            });
+            tbody.innerHTML = html;
+        }
+
+        // ─── RENDER ACTIVITY FEED ───
+        function renderFeed() {
+            var acts = getActivity();
+            var el = document.getElementById('dk-feed');
+            if (acts.length === 0) {
+                el.innerHTML = '<div class="empty-state"><span class="empty-icon">&#128340;</span><div style="font-size:.75rem">Noch keine Aktivitaeten</div></div>';
+                return;
+            }
+
+            var actionTypes = {
+                'move': 'move', 'upload': 'upload', 'tag': 'tag',
+                'rename': 'rename', 'protect': 'protect', 'seed': 'upload',
+                'export': 'tag', 'search': 'rename'
+            };
+
+            var html = '';
+            acts.slice(0, 20).forEach(function(a) {
+                var dotClass = actionTypes[a.action] || 'move';
+                var timeStr = a.time ? new Date(a.time).toLocaleString('de-DE') : '--';
+                html += '<div class="feed-item">' +
+                    '<div class="feed-dot ' + dotClass + '"></div>' +
+                    '<div>' +
+                        '<div class="feed-text"><strong>' + esc(a.action) + '</strong> — ' + esc(a.detail) + '</div>' +
+                        '<div class="feed-time">' + esc(timeStr) + '</div>' +
+                    '</div>' +
+                '</div>';
+            });
+            el.innerHTML = html;
+        }
+
+        // ─── SEARCH ───
+        function debounceSearch() {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(doSearch, 250);
+        }
+
+        function doSearch() {
+            var q = (document.getElementById('dk-search').value || '').toLowerCase().trim();
+            var typeFilter = document.getElementById('dk-filter-type').value;
+            var folderFilter = document.getElementById('dk-filter-folder').value;
+            var catalog = getCatalog();
+            var el = document.getElementById('dk-results');
+
+            if (!q && !typeFilter && !folderFilter) {
+                el.innerHTML = '';
+                return;
+            }
+
+            var results = catalog.filter(function(f) {
+                var matchQ = !q || f.name.toLowerCase().indexOf(q) !== -1
+                    || (f.tags || []).join(' ').toLowerCase().indexOf(q) !== -1
+                    || (f.folder || '').toLowerCase().indexOf(q) !== -1;
+                var ft = detectFileType(f.name);
+                var matchType = !typeFilter || ft.type === typeFilter;
+                var matchFolder = !folderFilter || f.folder === folderFilter;
+                return matchQ && matchType && matchFolder;
+            });
+
+            if (results.length === 0) {
+                el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:1.5rem;color:var(--muted);font-size:.75rem">Keine Ergebnisse fuer &quot;' + esc(q) + '&quot;</div>';
+                return;
+            }
+
+            var html = '';
+            results.forEach(function(f) {
+                var ft = detectFileType(f.name);
+                html += '<div class="result-card">' +
+                    '<div class="result-name">' + ft.icon + ' ' + esc(f.name) + '</div>' +
+                    '<div class="result-path">[DEEPKEEP]/' + esc(f.folder) + '/</div>' +
+                    '<div class="result-meta">' +
+                        '<span>' + formatSize(f.size || 0) + '</span>' +
+                        '<span>' + (f.date ? new Date(f.date).toLocaleDateString('de-DE') : '--') + '</span>' +
+                        '<span>' + esc(ft.label) + '</span>' +
+                    '</div>' +
+                '</div>';
+            });
+            el.innerHTML = html;
+
+            addActivity('search', 'Suche: "' + q + '" — ' + results.length + ' Ergebnisse');
+        }
+
+        // ─── DRAG & DROP ───
+        function initDragDrop() {
+            var zone = document.getElementById('dk-dropzone');
+
+            zone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                zone.classList.add('dragover');
+            });
+            zone.addEventListener('dragleave', function() {
+                zone.classList.remove('dragover');
+            });
+            zone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+            zone.addEventListener('click', function() {
+                var input = document.createElement('input');
+                input.type = 'file';
+                input.multiple = true;
+                input.onchange = function() { handleFiles(input.files); };
+                input.click();
+            });
+        }
+
+        function handleFiles(files) {
+            if (!files || files.length === 0) return;
+            pendingFiles = [];
+            var previewEl = document.getElementById('dk-preview');
+            var html = '';
+
+            for (var i = 0; i < files.length; i++) {
+                var f = files[i];
+                var ft = detectFileType(f.name);
+                pendingFiles.push({
+                    name: f.name,
+                    size: f.size,
+                    type: ft.type,
+                    label: ft.label
+                });
+                html += '<div class="preview-item">' +
+                    '<div class="preview-left">' +
+                        '<span class="preview-icon">' + ft.icon + '</span>' +
+                        '<div>' +
+                            '<div class="preview-name">' + esc(f.name) + '</div>' +
+                            '<div class="preview-size">' + formatSize(f.size) + ' &middot; ' + esc(ft.label) + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<span style="font-size:.55rem;color:var(--green);font-family:var(--mono)">BEREIT</span>' +
+                '</div>';
+            }
+
+            previewEl.innerHTML = html;
+            previewEl.style.display = 'block';
+            document.getElementById('dk-target').style.display = 'block';
+            document.getElementById('dk-upload-actions').style.display = 'block';
+        }
+
+        function commitToTresor() {
+            if (pendingFiles.length === 0) return;
+
+            var folder = document.getElementById('dk-target').value;
+            var catalog = getCatalog();
+            var now = new Date().toISOString();
+
+            pendingFiles.forEach(function(f) {
+                catalog.push({
+                    name: f.name,
+                    folder: folder,
+                    size: f.size,
+                    date: now,
+                    tags: ['upload', f.type],
+                    hash: simpleHash(f.name + f.size + now),
+                    protected: true,
+                    addedAt: now
+                });
+                addActivity('upload', f.name + ' → [DEEPKEEP]/' + folder + '/');
+            });
+
+            saveCatalog(catalog);
+            addActivity('protect', pendingFiles.length + ' Datei(en) als geschuetzt markiert');
+            toast(pendingFiles.length + ' Datei(en) in Tresor verschoben');
+
+            clearPreview();
+            renderAll();
+        }
+
+        function clearPreview() {
+            pendingFiles = [];
+            document.getElementById('dk-preview').style.display = 'none';
+            document.getElementById('dk-preview').innerHTML = '';
+            document.getElementById('dk-target').style.display = 'none';
+            document.getElementById('dk-upload-actions').style.display = 'none';
+        }
+
+        // ─── SORT ───
+        function sortByField(field) {
+            if (sortField === field) {
+                sortDir = sortDir * -1;
+            } else {
+                sortField = field;
+                sortDir = 1;
+            }
+            renderCatalogTable();
+        }
+
+        // ─── FOLDER FILTER ───
+        function filterByFolder(folderId) {
+            document.getElementById('dk-filter-folder').value = folderId;
+            document.getElementById('dk-search').value = '';
+            doSearch();
+
+            // Highlight active folder
+            var cards = document.querySelectorAll('.folder-card');
+            cards.forEach(function(c) { c.classList.remove('active'); });
+            // Find the matching card
+            var idx = FOLDERS.findIndex(function(f) { return f.id === folderId; });
+            if (idx >= 0 && cards[idx]) cards[idx].classList.add('active');
+
+            // Scroll to search
+            document.getElementById('dk-search').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // ─── 7-TAGE-REGEL (simulated) ───
+        function scanStaleFiles() {
+            var now = new Date();
+            var stale = [
+                { name: 'Unbenannt-3.psd', location: 'Desktop', days: 12, size: 45000000 },
+                { name: 'screenshot_2026-05-15.png', location: 'Desktop', days: 14, size: 2400000 },
+                { name: 'installer-old.exe', location: 'Downloads', days: 22, size: 87000000 },
+                { name: 'report-final-v2-FINAL.docx', location: 'Desktop', days: 8, size: 340000 },
+                { name: 'zoom-recording.mp4', location: 'Downloads', days: 19, size: 350000000 },
+                { name: 'temp-notes.txt', location: 'Desktop', days: 9, size: 1200 }
+            ];
+
+            var el = document.getElementById('dk-stale-list');
+            var html = '';
+            stale.forEach(function(f) {
+                var ft = detectFileType(f.name);
+                html += '<div class="rule-item">' +
+                    '<div class="rule-left">' +
+                        '<span class="rule-icon">' + ft.icon + '</span>' +
+                        '<div class="rule-info">' +
+                            '<div class="rule-name">' + esc(f.name) + '</div>' +
+                            '<div class="rule-detail">' + esc(f.location) + ' &middot; ' + formatSize(f.size) + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div style="display:flex;align-items:center;gap:.5rem">' +
+                        '<span class="rule-days">' + f.days + ' Tage</span>' +
+                        '<button class="btn btn-accent btn-sm" onclick="DK.moveStaleFile(\'' + esc(f.name) + '\', \'' + esc(f.location) + '\', ' + f.size + ')">&#128274; Move</button>' +
+                    '</div>' +
+                '</div>';
+            });
+            el.innerHTML = html;
+            addActivity('search', '7-Tage-Regel-Scan: ' + stale.length + ' veraltete Dateien gefunden');
+            toast(stale.length + ' veraltete Dateien gefunden');
+        }
+
+        function moveStaleFile(name, location, size) {
+            var folder = location === 'Desktop' ? '05_DESKTOP_KEEP' : '06_DOWNLOADS_KEEP';
+            var catalog = getCatalog();
+            var now = new Date().toISOString();
+            catalog.push({
+                name: name,
+                folder: folder,
+                size: size,
+                date: now,
+                tags: ['7-tage-regel', location.toLowerCase()],
+                hash: simpleHash(name + size + now),
+                protected: true,
+                addedAt: now
+            });
+            saveCatalog(catalog);
+            addActivity('move', name + ' (' + location + ') → [DEEPKEEP]/' + folder + '/');
+            toast(name + ' in Tresor verschoben');
+            renderAll();
+            scanStaleFiles(); // Refresh list
+        }
+
+        // ─── EXPORT ───
+        function exportCSV() {
+            var catalog = getCatalog();
+            var header = 'Name,Pfad,Typ,Groesse,Datum,Tags,Hash\n';
+            var rows = catalog.map(function(f) {
+                var ft = detectFileType(f.name);
+                return [
+                    '"' + (f.name || '').replace(/"/g, '""') + '"',
+                    '"[DEEPKEEP]/' + (f.folder || '') + '/"',
+                    ft.label,
+                    f.size || 0,
+                    f.date || '',
+                    '"' + (f.tags || []).join(', ') + '"',
+                    f.hash || ''
+                ].join(',');
+            }).join('\n');
+
+            downloadFile('deepkeep-katalog.csv', header + rows, 'text/csv');
+            addActivity('export', 'CSV Export: ' + catalog.length + ' Eintraege');
+            toast('CSV Export erstellt');
+        }
+
+        function exportJSON() {
+            var catalog = getCatalog();
+            var data = {
+                format: 'deepkeep-v1',
+                exported: new Date().toISOString(),
+                total: catalog.length,
+                entries: catalog
+            };
+            downloadFile('deepkeep-katalog.json', JSON.stringify(data, null, 2), 'application/json');
+            addActivity('export', 'JSON Export: ' + catalog.length + ' Eintraege');
+            toast('JSON Export erstellt');
+        }
+
+        function downloadFile(name, content, mime) {
+            var blob = new Blob([content], { type: mime });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = name;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ─── PARTICLES ───
+        function initParticles() {
+            var canvas = document.getElementById('particles-canvas');
+            var ctx = canvas.getContext('2d');
+            var particles = [];
+            var count = 40;
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            for (var i = 0; i < count; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.3,
+                    vy: (Math.random() - 0.5) * 0.3,
+                    r: Math.random() * 1.5 + 0.5,
+                    a: Math.random() * 0.3 + 0.1
+                });
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Draw connections
+                for (var i = 0; i < particles.length; i++) {
+                    for (var j = i + 1; j < particles.length; j++) {
+                        var dx = particles[i].x - particles[j].x;
+                        var dy = particles[i].y - particles[j].y;
+                        var dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 150) {
+                            ctx.beginPath();
+                            ctx.strokeStyle = 'rgba(250,30,78,' + (0.04 * (1 - dist / 150)) + ')';
+                            ctx.lineWidth = 0.5;
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                // Draw particles
+                particles.forEach(function(p) {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                    if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(250,30,78,' + p.a + ')';
+                    ctx.fill();
+                });
+
+                requestAnimationFrame(draw);
+            }
+            draw();
+        }
+
+        // ─── RENDER ALL ───
+        function renderAll() {
+            renderStats();
+            renderFolders();
+            renderCatalogTable();
+            renderFeed();
+        }
+
+        // ─── INIT ───
+        function init() {
+            seedIfEmpty();
+            updateClock();
+            setInterval(updateClock, 1000);
+            initDragDrop();
+            initParticles();
+            renderAll();
+        }
+
+        // Boot
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+
+        // ─── PUBLIC API ───
+        return {
+            doSearch: doSearch,
+            debounceSearch: debounceSearch,
+            sortBy: sortByField,
+            filterByFolder: filterByFolder,
+            commitToTresor: commitToTresor,
+            clearPreview: clearPreview,
+            scanStaleFiles: scanStaleFiles,
+            moveStaleFile: moveStaleFile,
+            exportCSV: exportCSV,
+            exportJSON: exportJSON
+        };
+
+    })();
+    </script>
+</body>
+</html>
