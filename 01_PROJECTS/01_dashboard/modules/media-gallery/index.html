@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v1.0.0">
+    <title>&#127912; Media Gallery &#8212; DEVKiTZ&#8482;</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #fa1e4e;
+            --bg: #060608;
+            --bg-card: #0e0e12;
+            --bg-card2: #16161c;
+            --bg-hover: #1a1a22;
+            --text: #e8e8ec;
+            --text-dim: #8888a0;
+            --green: #00ff88;
+            --yellow: #ffb800;
+            --red: #ff3b5c;
+            --blue: #55acee;
+            --border: #1e1e28;
+            --radius: 12px;
+            --glass: rgba(14, 14, 18, 0.8);
+            --blur: blur(24px);
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 6px; }
+
+        .bg-mesh { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+        .bg-blob {
+            position: absolute; border-radius: 50%;
+            filter: blur(120px); opacity: .06;
+            animation: bf 20s ease-in-out infinite;
+        }
+        .bg-blob:nth-child(1) { width: 500px; height: 500px; background: var(--blue); top: -10%; left: 10%; }
+        .bg-blob:nth-child(2) { width: 350px; height: 350px; background: var(--accent); bottom: 10%; right: 10%; animation-delay: -8s; }
+        @keyframes bf { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(30px,-40px) scale(1.1); } }
+
+        .app { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
+        .header {
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            display: flex; align-items: center; gap: 14px;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .back-btn {
+            padding: 7px 14px; border: 1px solid var(--border); border-radius: 10px;
+            background: rgba(255,255,255,.03); color: var(--text-dim);
+            font-size: 11px; cursor: pointer; text-decoration: none; font-family: var(--font);
+        }
+        .header h1 {
+            font-size: 22px; font-weight: 900;
+            background: linear-gradient(135deg, var(--blue), var(--green));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .hdr-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+        .hdr-btn {
+            padding: 7px 13px; border: 1px solid var(--border); border-radius: 10px;
+            background: rgba(255,255,255,.03); color: var(--text-dim);
+            font-family: var(--font); font-size: 11px; cursor: pointer; transition: all .2s;
+        }
+        .hdr-btn:hover { border-color: var(--accent); color: var(--text); }
+        .hdr-btn.active { background: rgba(250,30,78,.12); border-color: var(--accent); color: var(--accent); }
+        .ver { font-size: 9px; color: var(--text-dim); font-family: var(--mono); }
+
+        .toolbar {
+            padding: 12px 28px;
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            border-bottom: 1px solid var(--border);
+            background: rgba(14,14,18,.5);
+        }
+        .search-box { position: relative; flex: 1; min-width: 200px; }
+        .search {
+            padding: 10px 14px 10px 36px; background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: 10px;
+            color: var(--text); font-family: var(--font); font-size: 12px;
+            outline: none; width: 100%; transition: border-color .2s;
+        }
+        .search:focus { border-color: var(--accent); }
+        .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 14px; pointer-events: none; }
+
+        .type-filters { display: flex; gap: 4px; }
+        .type-btn {
+            padding: 6px 14px; border: 1px solid var(--border); border-radius: 8px;
+            background: transparent; color: var(--text-dim); font-size: 10px;
+            cursor: pointer; font-family: var(--font); transition: all .2s;
+        }
+        .type-btn:hover { border-color: var(--accent); color: var(--text); }
+        .type-btn.active { background: rgba(250,30,78,.12); border-color: var(--accent); color: var(--accent); }
+
+        .view-toggle { display: flex; gap: 2px; }
+        .view-btn {
+            padding: 6px 10px; border: 1px solid var(--border);
+            background: transparent; color: var(--text-dim); font-size: 14px;
+            cursor: pointer; transition: all .2s;
+        }
+        .view-btn:first-child { border-radius: 8px 0 0 8px; }
+        .view-btn:last-child { border-radius: 0 8px 8px 0; }
+        .view-btn.active { background: rgba(250,30,78,.12); border-color: var(--accent); color: var(--accent); }
+
+        .content { padding: 20px 28px; flex: 1; }
+
+        .stats-bar {
+            display: flex; gap: 12px; margin-bottom: 16px;
+        }
+        .stat-pill {
+            padding: 6px 14px; background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: 20px;
+            font-size: 11px; color: var(--text-dim);
+        }
+        .stat-pill strong { color: var(--green); font-weight: 700; }
+
+        /* Grid View */
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+        }
+        .media-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 12px; overflow: hidden;
+            transition: all .3s; cursor: pointer;
+        }
+        .media-card:hover { border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 8px 32px rgba(250,30,78,.12); }
+        .media-thumb {
+            width: 100%; height: 160px; object-fit: cover;
+            background: var(--bg-card2); display: flex; align-items: center; justify-content: center;
+            position: relative; overflow: hidden;
+        }
+        .media-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .media-thumb .thumb-icon { font-size: 48px; opacity: .4; }
+        .media-thumb .type-badge {
+            position: absolute; top: 8px; right: 8px;
+            padding: 3px 8px; border-radius: 6px;
+            font-size: 9px; font-weight: 700; text-transform: uppercase;
+        }
+        .type-badge.image { background: rgba(85,172,238,.2); color: var(--blue); }
+        .type-badge.video { background: rgba(250,30,78,.2); color: var(--accent); }
+        .type-badge.audio { background: rgba(0,255,136,.2); color: var(--green); }
+        .media-info { padding: 12px; }
+        .media-info .mi-name { font-size: 12px; font-weight: 700; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .media-info .mi-meta { font-size: 10px; color: var(--text-dim); display: flex; justify-content: space-between; }
+        .media-info .mi-tags { margin-top: 6px; display: flex; gap: 4px; flex-wrap: wrap; }
+        .media-info .mi-tag {
+            padding: 2px 7px; font-size: 8px; border-radius: 8px;
+            background: rgba(255,255,255,.05); border: 1px solid var(--border); color: var(--text-dim);
+        }
+
+        /* List View */
+        .media-grid.list-view {
+            grid-template-columns: 1fr;
+            gap: 6px;
+        }
+        .media-grid.list-view .media-card {
+            display: flex; flex-direction: row;
+        }
+        .media-grid.list-view .media-thumb {
+            width: 80px; height: 60px; min-width: 80px;
+        }
+        .media-grid.list-view .media-info {
+            flex: 1; display: flex; align-items: center; gap: 16px;
+        }
+        .media-grid.list-view .mi-meta { flex: 1; }
+
+        /* Lightbox */
+        .lightbox {
+            position: fixed; inset: 0; background: rgba(0,0,0,.92);
+            z-index: 500; display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity .3s;
+        }
+        .lightbox.active { opacity: 1; pointer-events: all; }
+        .lightbox-content {
+            max-width: 90vw; max-height: 85vh; border-radius: 12px;
+            box-shadow: 0 16px 64px rgba(0,0,0,.5);
+        }
+        .lightbox-content img { max-width: 90vw; max-height: 85vh; border-radius: 12px; }
+        .lightbox-close {
+            position: absolute; top: 20px; right: 20px;
+            width: 40px; height: 40px; border: 1px solid rgba(255,255,255,.2);
+            border-radius: 50%; background: rgba(0,0,0,.5); color: #fff;
+            font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .lightbox-info {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            padding: 10px 24px; background: var(--glass); backdrop-filter: var(--blur);
+            border: 1px solid var(--border); border-radius: 12px;
+            text-align: center; font-size: 13px; font-weight: 600;
+        }
+        .lightbox-nav {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            width: 40px; height: 40px; border: 1px solid rgba(255,255,255,.2);
+            border-radius: 50%; background: rgba(0,0,0,.5); color: #fff;
+            font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .lightbox-nav.prev { left: 20px; }
+        .lightbox-nav.next { right: 20px; }
+
+        /* Drop Zone */
+        .drop-zone {
+            border: 2px dashed var(--border); border-radius: 14px;
+            padding: 40px; text-align: center; cursor: pointer;
+            transition: all .3s; margin-bottom: 16px;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--accent); background: rgba(250,30,78,.04);
+        }
+        .drop-zone .dz-icon { font-size: 36px; margin-bottom: 8px; }
+        .drop-zone .dz-text { font-size: 13px; color: var(--text-dim); }
+        .drop-zone .dz-hint { font-size: 10px; color: var(--text-dim); margin-top: 4px; opacity: .6; }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-dim); }
+        .empty-state .empty-icon { font-size: 64px; margin-bottom: 12px; }
+
+        .toast {
+            position: fixed; bottom: 24px; right: 24px;
+            padding: 12px 20px; background: var(--green); color: #000;
+            font-size: 12px; font-weight: 700; border-radius: 10px;
+            z-index: 600; opacity: 0; transform: translateY(20px);
+            transition: all .3s; pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+
+        @media (max-width: 768px) {
+            .toolbar { flex-direction: column; align-items: stretch; }
+            .media-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+            .stats-bar { flex-wrap: wrap; }
+        }
+    </style>
+    <script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="media-gallery" data-dkz-appid="DKZ-MOD-MGA" data-dkz-version="v1.0.0" data-dkz-title="Media Gallery" data-dkz-icon="&#127912;" data-dkz-separable="true">
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
+    <div class="app">
+        <div class="header">
+            <a href="../hub/index.html" class="back-btn" title="Hub">&#127968; Hub</a>
+            <h1>&#127912; Media Gallery</h1>
+            <div class="hdr-right">
+                <button class="hdr-btn" onclick="exportGallery()">&#11015; Export</button>
+                <button class="hdr-btn" onclick="importGallery()">&#128228; Import</button>
+                <span class="ver">v1.0.0</span>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <div class="search-box">
+                <span class="search-icon">&#128269;</span>
+                <input class="search" id="search" placeholder="Medien durchsuchen..." oninput="renderGallery()">
+            </div>
+            <div class="type-filters">
+                <button class="type-btn active" data-type="all" onclick="setTypeFilter('all',this)">Alle</button>
+                <button class="type-btn" data-type="image" onclick="setTypeFilter('image',this)">&#128247; Bilder</button>
+                <button class="type-btn" data-type="video" onclick="setTypeFilter('video',this)">&#127909; Videos</button>
+                <button class="type-btn" data-type="audio" onclick="setTypeFilter('audio',this)">&#127925; Audio</button>
+            </div>
+            <div class="view-toggle">
+                <button class="view-btn active" onclick="setView('grid',this)" title="Grid View">&#9638;</button>
+                <button class="view-btn" onclick="setView('list',this)" title="List View">&#9776;</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="drop-zone" id="dropZone" onclick="simulateUpload()">
+                <div class="dz-icon">&#128228;</div>
+                <div class="dz-text">Dateien hierhin ziehen oder klicken</div>
+                <div class="dz-hint">Bilder, Videos, Audio (simuliert)</div>
+            </div>
+
+            <div class="stats-bar" id="statsBar"></div>
+
+            <div class="media-grid" id="mediaGrid"></div>
+        </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+        <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+        <button class="lightbox-nav prev" onclick="event.stopPropagation();navLightbox(-1)">&#8249;</button>
+        <div class="lightbox-content" id="lightboxContent"></div>
+        <button class="lightbox-nav next" onclick="event.stopPropagation();navLightbox(1)">&#8250;</button>
+        <div class="lightbox-info" id="lightboxInfo"></div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        /* === XSS Protection === */
+        function esc(s) {
+            if (!s) return '';
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+        }
+
+        /* === State === */
+        var STORAGE_KEY = 'dkz-media-gallery';
+        var items = [];
+        var currentType = 'all';
+        var currentView = 'grid';
+        var lightboxIdx = -1;
+
+        /* Placeholder images via picsum/gradient */
+        var PLACEHOLDERS = {
+            image: [
+                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+                'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)',
+                'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',
+            ],
+            video: 'linear-gradient(135deg, #0c0c14 0%, #1a1a2e 100%)',
+            audio: 'linear-gradient(135deg, #0a0a12 0%, #1e3a5f 100%)'
+        };
+
+        var defaultItems = [
+            { id: 1, name: 'Dashboard Screenshot', type: 'image', size: '2.4 MB', date: '2026-05-29', tags: ['screenshot', 'ui'], thumb: 0 },
+            { id: 2, name: 'Logo Design Final', type: 'image', size: '840 KB', date: '2026-05-28', tags: ['logo', 'branding'], thumb: 1 },
+            { id: 3, name: 'Hero Banner Dark', type: 'image', size: '3.1 MB', date: '2026-05-27', tags: ['banner', 'dark'], thumb: 2 },
+            { id: 4, name: 'Walkthrough v2', type: 'video', size: '48 MB', date: '2026-05-29', tags: ['tutorial', 'walkthrough'], thumb: -1 },
+            { id: 5, name: 'Podcast Episode 12', type: 'audio', size: '22 MB', date: '2026-05-28', tags: ['podcast', 'audio'], thumb: -1 },
+            { id: 6, name: 'UI Components Set', type: 'image', size: '1.8 MB', date: '2026-05-26', tags: ['components', 'ui'], thumb: 3 },
+            { id: 7, name: 'Product Demo Clip', type: 'video', size: '120 MB', date: '2026-05-27', tags: ['demo', 'product'], thumb: -1 },
+            { id: 8, name: 'Background Music Loop', type: 'audio', size: '5.6 MB', date: '2026-05-25', tags: ['music', 'loop'], thumb: -1 },
+            { id: 9, name: 'Gradient Pack', type: 'image', size: '4.2 MB', date: '2026-05-26', tags: ['gradient', 'design'], thumb: 4 },
+            { id: 10, name: 'Icon Set Export', type: 'image', size: '960 KB', date: '2026-05-25', tags: ['icons', 'svg'], thumb: 5 },
+            { id: 11, name: 'Feature Walkthrough', type: 'video', size: '85 MB', date: '2026-05-24', tags: ['feature', 'video'], thumb: -1 },
+            { id: 12, name: 'Ambient Soundscape', type: 'audio', size: '12 MB', date: '2026-05-24', tags: ['ambient', 'sound'], thumb: -1 },
+        ];
+
+        /* === Init === */
+        function init() {
+            try {
+                var stored = localStorage.getItem(STORAGE_KEY);
+                items = stored ? JSON.parse(stored) : [];
+                if (!items.length) { items = defaultItems; save(); }
+            } catch (e) {
+                console.warn('Media Gallery: Init-Fehler', e);
+                items = defaultItems;
+            }
+            setupDropZone();
+            renderGallery();
+        }
+
+        function save() {
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }
+            catch (e) { console.warn('Media Gallery: Save-Fehler', e); }
+        }
+
+        /* === Drop Zone === */
+        function setupDropZone() {
+            var dz = document.getElementById('dropZone');
+            dz.addEventListener('dragenter', function(e) { e.preventDefault(); dz.classList.add('dragover'); });
+            dz.addEventListener('dragover', function(e) { e.preventDefault(); });
+            dz.addEventListener('dragleave', function() { dz.classList.remove('dragover'); });
+            dz.addEventListener('drop', function(e) {
+                e.preventDefault(); dz.classList.remove('dragover');
+                var files = e.dataTransfer.files;
+                for (var i = 0; i < files.length; i++) addSimulatedFile(files[i].name, files[i].size, files[i].type);
+            });
+        }
+
+        function simulateUpload() {
+            var types = ['image', 'video', 'audio'];
+            var names = ['Uploaded Photo', 'New Recording', 'Quick Capture', 'Design Export', 'Sound Clip'];
+            var type = types[Math.floor(Math.random() * types.length)];
+            var name = names[Math.floor(Math.random() * names.length)] + ' ' + Date.now().toString(36);
+            var sizes = { image: '1.5 MB', video: '65 MB', audio: '8 MB' };
+            addSimulatedFile(name, null, type + '/*');
+            showToast('&#128228; Datei simuliert hochgeladen!');
+        }
+
+        function addSimulatedFile(name, size, mimeType) {
+            var type = 'image';
+            if (mimeType && mimeType.startsWith('video')) type = 'video';
+            else if (mimeType && mimeType.startsWith('audio')) type = 'audio';
+
+            var sizeStr = size ? formatFileSize(size) : (type === 'image' ? '1.5 MB' : type === 'video' ? '65 MB' : '8 MB');
+            var thumbIdx = type === 'image' ? Math.floor(Math.random() * PLACEHOLDERS.image.length) : -1;
+
+            items.unshift({
+                id: Date.now(),
+                name: name.replace(/\.[^.]+$/, '') || 'Unnamed File',
+                type: type,
+                size: sizeStr,
+                date: new Date().toISOString().slice(0, 10),
+                tags: [type, 'upload'],
+                thumb: thumbIdx
+            });
+            save(); renderGallery();
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(0) + ' KB';
+            return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+
+        /* === Render === */
+        function renderGallery() {
+            var q = document.getElementById('search').value.toLowerCase();
+            var filtered = items.filter(function(item) {
+                if (currentType !== 'all' && item.type !== currentType) return false;
+                if (!q) return true;
+                return item.name.toLowerCase().includes(q) ||
+                       (item.tags || []).some(function(t) { return t.toLowerCase().includes(q); });
+            });
+
+            /* Stats */
+            var imgCount = items.filter(function(i) { return i.type === 'image'; }).length;
+            var vidCount = items.filter(function(i) { return i.type === 'video'; }).length;
+            var audCount = items.filter(function(i) { return i.type === 'audio'; }).length;
+            document.getElementById('statsBar').innerHTML =
+                '<div class="stat-pill">Gesamt: <strong>' + items.length + '</strong></div>' +
+                '<div class="stat-pill">&#128247; Bilder: <strong>' + imgCount + '</strong></div>' +
+                '<div class="stat-pill">&#127909; Videos: <strong>' + vidCount + '</strong></div>' +
+                '<div class="stat-pill">&#127925; Audio: <strong>' + audCount + '</strong></div>';
+
+            var grid = document.getElementById('mediaGrid');
+            grid.className = 'media-grid' + (currentView === 'list' ? ' list-view' : '');
+
+            if (!filtered.length) {
+                grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">&#127912;</div><p>Keine Medien gefunden</p></div>';
+                return;
+            }
+
+            grid.innerHTML = filtered.map(function(item, idx) {
+                var thumbStyle = '';
+                var thumbContent = '';
+                var typeIcons = { image: '&#128247;', video: '&#127909;', audio: '&#127925;' };
+
+                if (item.type === 'image' && item.thumb >= 0) {
+                    thumbStyle = 'background:' + PLACEHOLDERS.image[item.thumb % PLACEHOLDERS.image.length];
+                } else if (item.type === 'video') {
+                    thumbStyle = 'background:' + PLACEHOLDERS.video;
+                    thumbContent = '<span class="thumb-icon">&#9654;</span>';
+                } else if (item.type === 'audio') {
+                    thumbStyle = 'background:' + PLACEHOLDERS.audio;
+                    thumbContent = '<span class="thumb-icon">&#127925;</span>';
+                } else {
+                    thumbStyle = 'background:' + PLACEHOLDERS.image[0];
+                }
+
+                var tagsHtml = (item.tags || []).map(function(t) {
+                    return '<span class="mi-tag">' + esc(t) + '</span>';
+                }).join('');
+
+                return '<div class="media-card" onclick="openLightbox(' + item.id + ')">' +
+                    '<div class="media-thumb" style="' + thumbStyle + '">' +
+                    thumbContent +
+                    '<span class="type-badge ' + item.type + '">' + item.type + '</span>' +
+                    '</div>' +
+                    '<div class="media-info">' +
+                    '<div class="mi-name">' + esc(item.name) + '</div>' +
+                    '<div class="mi-meta"><span>' + esc(item.size) + '</span><span>' + esc(item.date) + '</span></div>' +
+                    '<div class="mi-tags">' + tagsHtml + '</div>' +
+                    '</div></div>';
+            }).join('');
+        }
+
+        /* === Filters === */
+        function setTypeFilter(type, el) {
+            currentType = type;
+            document.querySelectorAll('.type-btn').forEach(function(b) { b.classList.remove('active'); });
+            el.classList.add('active');
+            renderGallery();
+        }
+
+        function setView(view, el) {
+            currentView = view;
+            document.querySelectorAll('.view-btn').forEach(function(b) { b.classList.remove('active'); });
+            el.classList.add('active');
+            renderGallery();
+        }
+
+        /* === Lightbox === */
+        function getFilteredItems() {
+            var q = document.getElementById('search').value.toLowerCase();
+            return items.filter(function(item) {
+                if (currentType !== 'all' && item.type !== currentType) return false;
+                if (!q) return true;
+                return item.name.toLowerCase().includes(q) ||
+                       (item.tags || []).some(function(t) { return t.toLowerCase().includes(q); });
+            });
+        }
+
+        function openLightbox(id) {
+            var filtered = getFilteredItems();
+            lightboxIdx = filtered.findIndex(function(i) { return i.id === id; });
+            if (lightboxIdx < 0) return;
+            showLightboxItem(filtered[lightboxIdx]);
+            document.getElementById('lightbox').classList.add('active');
+        }
+
+        function showLightboxItem(item) {
+            var content = document.getElementById('lightboxContent');
+            var info = document.getElementById('lightboxInfo');
+
+            if (item.type === 'image' && item.thumb >= 0) {
+                var grad = PLACEHOLDERS.image[item.thumb % PLACEHOLDERS.image.length];
+                content.innerHTML = '<div style="width:70vw;height:70vh;border-radius:12px;background:' + grad + ';display:flex;align-items:center;justify-content:center"><span style="font-size:72px;opacity:.3">&#128247;</span></div>';
+            } else if (item.type === 'video') {
+                content.innerHTML = '<div style="width:70vw;height:70vh;border-radius:12px;background:' + PLACEHOLDERS.video + ';display:flex;align-items:center;justify-content:center;flex-direction:column"><span style="font-size:72px;opacity:.5">&#9654;</span><div style="margin-top:16px;font-size:14px;color:var(--text-dim)">Video Player (simuliert)</div></div>';
+            } else {
+                content.innerHTML = '<div style="width:50vw;height:30vh;border-radius:12px;background:' + PLACEHOLDERS.audio + ';display:flex;align-items:center;justify-content:center;flex-direction:column"><span style="font-size:72px;opacity:.5">&#127925;</span><div style="margin-top:16px;font-size:14px;color:var(--text-dim)">Audio Player (simuliert)</div><div style="width:60%;height:4px;background:var(--border);border-radius:4px;margin-top:16px;overflow:hidden"><div style="width:35%;height:100%;background:var(--green);border-radius:4px"></div></div></div>';
+            }
+
+            info.innerHTML = '<strong>' + esc(item.name) + '</strong><br><span style="font-size:10px;color:var(--text-dim)">' + esc(item.size) + ' &middot; ' + esc(item.date) + '</span>';
+        }
+
+        function closeLightbox(e) {
+            if (e && e.target !== document.getElementById('lightbox') && e.target !== document.querySelector('.lightbox-close')) return;
+            document.getElementById('lightbox').classList.remove('active');
+            lightboxIdx = -1;
+        }
+
+        function navLightbox(dir) {
+            var filtered = getFilteredItems();
+            lightboxIdx = (lightboxIdx + dir + filtered.length) % filtered.length;
+            showLightboxItem(filtered[lightboxIdx]);
+        }
+
+        /* === Keyboard Nav === */
+        document.addEventListener('keydown', function(e) {
+            if (!document.getElementById('lightbox').classList.contains('active')) return;
+            if (e.key === 'Escape') closeLightbox();
+            if (e.key === 'ArrowLeft') navLightbox(-1);
+            if (e.key === 'ArrowRight') navLightbox(1);
+        });
+
+        /* === Import/Export === */
+        function exportGallery() {
+            try {
+                var a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' }));
+                a.download = 'dkz-media-' + new Date().toISOString().slice(0,10) + '.json';
+                a.click();
+                showToast('&#11015; Export erfolgreich!');
+            } catch (e) { console.warn('Export-Fehler', e); showToast('Export fehlgeschlagen'); }
+        }
+
+        function importGallery() {
+            var input = document.createElement('input');
+            input.type = 'file'; input.accept = '.json';
+            input.onchange = function(e) {
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    try {
+                        var imported = JSON.parse(ev.target.result);
+                        if (Array.isArray(imported)) {
+                            items = imported; save(); renderGallery();
+                            showToast('&#128228; ' + imported.length + ' Medien importiert!');
+                        } else { showToast('Ungueltiges Format'); }
+                    } catch (err) { console.warn('Import-Fehler', err); showToast('Import fehlgeschlagen'); }
+                };
+                reader.readAsText(e.target.files[0]);
+            };
+            input.click();
+        }
+
+        /* === Toast === */
+        function showToast(msg) {
+            var t = document.getElementById('toast');
+            t.innerHTML = msg;
+            t.classList.add('show');
+            setTimeout(function() { t.classList.remove('show'); }, 2500);
+        }
+
+        /* === Start === */
+        init();
+    </script>
+
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(function(){});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#0e0e12;border:1px solid #1e1e28;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">&#127912; Media Gallery</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#e8e8ec;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#8888a0;line-height:1.8">Bilder, Videos und Audio verwalten. Grid/List View, Lightbox, Drag&amp;Drop Upload Simulation und localStorage Persistenz.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#0e0e12;border:1px solid #1e1e28;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">&#127912; Media Gallery</div><p style="font-size:.875rem;color:#8888a0;line-height:1.8;margin-bottom:1rem">Verwalte deine Medien-Bibliothek mit Grid/List View, Lightbox und Typ-Filter.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-media-gallery-onboarded','1')}if(!localStorage.getItem('dkz-media-gallery-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}</script>
+    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+<!-- &#8212; DEVKiTZ 2026 &#8212; All Rights Reserved -->
+</html>
