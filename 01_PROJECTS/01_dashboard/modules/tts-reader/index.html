@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v1.00.0_01">
+    <meta name="description" content="DEVKiTZ TTS Reader - Text-to-Speech with Web Speech API">
+    <title>TTS Reader | DEVKiTZ</title>
+    <link rel="manifest" href="../../shared/manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* === DkZ Design System — Neon Matrix TTS === */
+        :root {
+            --bg: #000000;
+            --bg-card: rgba(10, 10, 15, 0.85);
+            --bg-card-hover: rgba(15, 15, 25, 0.95);
+            --bg-input: rgba(8, 8, 12, 0.9);
+            --green: #00ff88;
+            --green-dim: rgba(0, 255, 136, 0.12);
+            --green-glow: 0 0 20px rgba(0, 255, 136, 0.25);
+            --accent: #fa1e4e;
+            --accent-dim: rgba(250, 30, 78, 0.12);
+            --accent-glow: 0 0 20px rgba(250, 30, 78, 0.25);
+            --yellow: #ffb800;
+            --yellow-dim: rgba(255, 184, 0, 0.12);
+            --red: #ff3b5c;
+            --cyan: #22d3ee;
+            --text: #e0e0e0;
+            --text-dim: #666;
+            --border: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(255, 255, 255, 0.12);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --font-ui: 'Inter', system-ui, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="high-contrast"] {
+            --bg: #000000;
+            --bg-card: rgba(0, 20, 10, 0.9);
+            --bg-card-hover: rgba(0, 30, 15, 0.95);
+            --text: #ffffff;
+            --text-dim: #00ff88;
+            --border: rgba(0, 255, 136, 0.2);
+            --border-hover: rgba(0, 255, 136, 0.4);
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-ui);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 30% 60%, rgba(0, 255, 136, 0.03) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 30%, rgba(250, 30, 78, 0.02) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* === Top Bar === */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .topbar-left { display: flex; align-items: center; gap: 14px; }
+
+        .hub-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--accent-dim);
+            color: var(--accent);
+            border: 1px solid rgba(250, 30, 78, 0.2);
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .hub-btn:hover { background: rgba(250, 30, 78, 0.2); box-shadow: var(--accent-glow); }
+
+        .topbar h1 {
+            font-size: 18px;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--green), var(--text));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .topbar-right { display: flex; align-items: center; gap: 8px; }
+
+        .toggle-btn {
+            padding: 6px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-dim);
+            font-size: 12px;
+            font-family: var(--font-mono);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .toggle-btn:hover, .toggle-btn.active {
+            color: var(--green);
+            border-color: rgba(0, 255, 136, 0.3);
+            background: var(--green-dim);
+        }
+
+        /* === Container === */
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 24px 20px 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* === Status Indicator === */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            animation: fadeInUp 0.4s ease forwards;
+            opacity: 0;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--text-dim);
+            transition: var(--transition);
+        }
+
+        .status-dot.ready { background: var(--green); box-shadow: 0 0 8px var(--green); }
+        .status-dot.speaking { background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: pulse 1s infinite; }
+        .status-dot.paused { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
+
+        .status-text { font-size: 13px; font-family: var(--font-mono); color: var(--text-dim); }
+
+        /* === Textarea === */
+        .input-section {
+            animation: fadeInUp 0.4s 0.1s ease forwards;
+            opacity: 0;
+        }
+
+        .textarea-wrap {
+            position: relative;
+            margin-bottom: 8px;
+        }
+
+        #ttsInput {
+            width: 100%;
+            min-height: 160px;
+            padding: 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-family: var(--font-ui);
+            font-size: 15px;
+            line-height: 1.7;
+            resize: vertical;
+            outline: none;
+            transition: var(--transition);
+            backdrop-filter: blur(12px);
+        }
+
+        #ttsInput:focus { border-color: var(--green); box-shadow: var(--green-glow); }
+
+        .char-count {
+            text-align: right;
+            font-size: 11px;
+            color: var(--text-dim);
+            font-family: var(--font-mono);
+            margin-bottom: 16px;
+        }
+
+        /* === Highlight Area (replaces textarea during speech) === */
+        .highlight-area {
+            display: none;
+            width: 100%;
+            min-height: 160px;
+            padding: 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--green);
+            border-radius: var(--radius);
+            font-family: var(--font-ui);
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text);
+            word-wrap: break-word;
+            backdrop-filter: blur(12px);
+            box-shadow: var(--green-glow);
+        }
+
+        .highlight-area .word-highlight {
+            background: var(--green-dim);
+            color: var(--green);
+            border-radius: 4px;
+            padding: 1px 3px;
+            font-weight: 600;
+            transition: background 0.1s;
+        }
+
+        /* === Equalizer Animation === */
+        .equalizer {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 32px;
+            margin-bottom: 16px;
+            justify-content: center;
+            animation: fadeInUp 0.4s 0.15s ease forwards;
+            opacity: 0;
+        }
+
+        .eq-bar {
+            width: 4px;
+            background: var(--green);
+            border-radius: 2px;
+            transition: height 0.15s;
+            height: 4px;
+            opacity: 0.4;
+        }
+
+        .equalizer.active .eq-bar { opacity: 1; animation: eqBounce 0.6s ease infinite alternate; }
+        .equalizer.active .eq-bar:nth-child(1) { animation-delay: 0s; }
+        .equalizer.active .eq-bar:nth-child(2) { animation-delay: 0.1s; }
+        .equalizer.active .eq-bar:nth-child(3) { animation-delay: 0.05s; }
+        .equalizer.active .eq-bar:nth-child(4) { animation-delay: 0.15s; }
+        .equalizer.active .eq-bar:nth-child(5) { animation-delay: 0.08s; }
+        .equalizer.active .eq-bar:nth-child(6) { animation-delay: 0.12s; }
+        .equalizer.active .eq-bar:nth-child(7) { animation-delay: 0.03s; }
+        .equalizer.active .eq-bar:nth-child(8) { animation-delay: 0.18s; }
+        .equalizer.active .eq-bar:nth-child(9) { animation-delay: 0.07s; }
+        .equalizer.active .eq-bar:nth-child(10) { animation-delay: 0.13s; }
+        .equalizer.active .eq-bar:nth-child(11) { animation-delay: 0.02s; }
+        .equalizer.active .eq-bar:nth-child(12) { animation-delay: 0.16s; }
+
+        @keyframes eqBounce {
+            0% { height: 4px; }
+            100% { height: 28px; }
+        }
+
+        /* === Controls === */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.4s 0.2s ease forwards;
+            opacity: 0;
+        }
+
+        .play-controls { display: flex; gap: 8px; }
+
+        .ctrl-btn {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            background: var(--bg-card);
+            color: var(--text);
+            font-size: 18px;
+            cursor: pointer;
+            transition: var(--transition);
+            backdrop-filter: blur(8px);
+        }
+
+        .ctrl-btn:hover { border-color: var(--green); color: var(--green); background: var(--green-dim); box-shadow: var(--green-glow); }
+        .ctrl-btn.active { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+        .ctrl-btn.stop:hover { border-color: var(--red); color: var(--red); background: rgba(255, 59, 92, 0.1); }
+
+        /* === Sliders === */
+        .slider-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.4s 0.25s ease forwards;
+            opacity: 0;
+        }
+
+        .slider-item {
+            flex: 1;
+            min-width: 200px;
+            padding: 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            backdrop-filter: blur(12px);
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+            font-family: var(--font-mono);
+        }
+
+        .slider-label .value { color: var(--green); font-weight: 600; }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--green);
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border: none;
+            border-radius: 50%;
+            background: var(--green);
+            cursor: pointer;
+        }
+
+        /* === Voice Selector === */
+        .voice-section {
+            animation: fadeInUp 0.4s 0.3s ease forwards;
+            opacity: 0;
+            margin-bottom: 20px;
+        }
+
+        .voice-select {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-family: var(--font-ui);
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .voice-select:focus { border-color: var(--green); box-shadow: var(--green-glow); }
+
+        /* === Queue Section === */
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title .count {
+            background: var(--green-dim);
+            color: var(--green);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-family: var(--font-mono);
+        }
+
+        .queue-section, .history-section {
+            animation: fadeInUp 0.4s 0.35s ease forwards;
+            opacity: 0;
+            margin-bottom: 24px;
+        }
+
+        .queue-add {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .queue-add input {
+            flex: 1;
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-family: var(--font-ui);
+            font-size: 13px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .queue-add input:focus { border-color: var(--green); }
+
+        .add-btn {
+            padding: 10px 18px;
+            background: var(--green-dim);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: var(--radius-sm);
+            color: var(--green);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .add-btn:hover { background: rgba(0, 255, 136, 0.2); box-shadow: var(--green-glow); }
+
+        .queue-list, .history-list { display: grid; gap: 8px; }
+
+        .queue-item, .history-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            backdrop-filter: blur(8px);
+            transition: var(--transition);
+        }
+
+        .queue-item:hover, .history-item:hover {
+            border-color: var(--border-hover);
+            background: var(--bg-card-hover);
+        }
+
+        .queue-text, .history-text {
+            flex: 1;
+            font-size: 13px;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .queue-status {
+            font-size: 10px;
+            font-family: var(--font-mono);
+            padding: 2px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+
+        .queue-status.pending { background: var(--yellow-dim); color: var(--yellow); }
+        .queue-status.playing { background: var(--green-dim); color: var(--green); }
+        .queue-status.done { background: rgba(100, 100, 100, 0.2); color: var(--text-dim); }
+
+        .small-btn {
+            padding: 4px 10px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-dim);
+            font-size: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .small-btn:hover { color: var(--green); border-color: rgba(0, 255, 136, 0.3); }
+        .small-btn.remove:hover { color: var(--red); border-color: rgba(255, 59, 92, 0.3); }
+
+        /* === Toast === */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            padding: 10px 20px;
+            background: var(--green-dim);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: var(--radius-sm);
+            color: var(--green);
+            font-size: 13px;
+            font-weight: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 300;
+        }
+
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* === Animations === */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* === Responsive === */
+        @media (max-width: 600px) {
+            .topbar { padding: 10px 14px; }
+            .topbar h1 { font-size: 15px; }
+            .container { padding: 16px 12px 30px; }
+            .controls { flex-direction: column; align-items: stretch; }
+            .play-controls { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Bar -->
+    <header class="topbar">
+        <div class="topbar-left">
+            <a href="../../hub/index.html" class="hub-btn">&#9668; Hub</a>
+            <h1>&#128264; TTS Reader</h1>
+        </div>
+        <div class="topbar-right">
+            <button class="toggle-btn" id="contrastToggle" title="Toggle High Contrast">&#9681; HC</button>
+            <button class="toggle-btn" id="langToggle" title="Toggle Language">EN</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-dot ready" id="statusDot"></div>
+            <span class="status-text" id="statusText">Ready</span>
+        </div>
+
+        <!-- Text Input -->
+        <div class="input-section">
+            <div class="textarea-wrap">
+                <textarea id="ttsInput" placeholder="Enter text to read aloud..."></textarea>
+            </div>
+            <div class="highlight-area" id="highlightArea"></div>
+            <div class="char-count"><span id="charCount">0</span> chars</div>
+        </div>
+
+        <!-- Equalizer -->
+        <div class="equalizer" id="equalizer">
+            <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+            <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+            <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+            <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+        </div>
+
+        <!-- Play Controls -->
+        <div class="controls">
+            <div class="play-controls">
+                <button class="ctrl-btn" id="playBtn" title="Play">&#9654;</button>
+                <button class="ctrl-btn" id="pauseBtn" title="Pause">&#10074;&#10074;</button>
+                <button class="ctrl-btn stop" id="stopBtn" title="Stop">&#9632;</button>
+            </div>
+        </div>
+
+        <!-- Sliders -->
+        <div class="slider-group">
+            <div class="slider-item">
+                <div class="slider-label">
+                    <span id="speedLabel">Speed</span>
+                    <span class="value" id="speedValue">1.0x</span>
+                </div>
+                <input type="range" id="speedSlider" min="0.5" max="3" step="0.1" value="1">
+            </div>
+            <div class="slider-item">
+                <div class="slider-label">
+                    <span id="pitchLabel">Pitch</span>
+                    <span class="value" id="pitchValue">1.0</span>
+                </div>
+                <input type="range" id="pitchSlider" min="0.1" max="2" step="0.1" value="1">
+            </div>
+        </div>
+
+        <!-- Voice Selector -->
+        <div class="voice-section">
+            <select class="voice-select" id="voiceSelect">
+                <option value="">Loading voices...</option>
+            </select>
+        </div>
+
+        <!-- Queue -->
+        <div class="queue-section">
+            <div class="section-title" id="queueTitle">
+                &#128203; Queue <span class="count" id="queueCount">0</span>
+            </div>
+            <div class="queue-add">
+                <input type="text" id="queueInput" placeholder="Add text to queue...">
+                <button class="add-btn" id="queueAddBtn">+ Add</button>
+            </div>
+            <div class="queue-list" id="queueList"></div>
+        </div>
+
+        <!-- History -->
+        <div class="history-section">
+            <div class="section-title" id="historyTitle">
+                &#128336; Recent History <span class="count" id="historyCount">0</span>
+            </div>
+            <div class="history-list" id="historyList"></div>
+        </div>
+    </main>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+    /* === DEVKiTZ TTS Reader === */
+    'use strict';
+
+    /* --- XSS Protection --- */
+    function esc(s) {
+        const d = document.createElement('div');
+        d.textContent = String(s);
+        return d.innerHTML;
+    }
+
+    /* --- i18n --- */
+    const i18n = {
+        en: {
+            title: '\u{1F508} TTS Reader',
+            placeholder: 'Enter text to read aloud...',
+            ready: 'Ready', speaking: 'Speaking...', paused: 'Paused',
+            speed: 'Speed', pitch: 'Pitch',
+            queueTitle: '\u{1F4CB} Queue', historyTitle: '\u{1F550} Recent History',
+            addQueue: 'Add text to queue...', add: '+ Add',
+            chars: 'chars', loadingVoices: 'Loading voices...',
+            pending: 'PENDING', playing: 'PLAYING', done: 'DONE'
+        },
+        de: {
+            title: '\u{1F508} TTS Reader',
+            placeholder: 'Text zum Vorlesen eingeben...',
+            ready: 'Bereit', speaking: 'Spricht...', paused: 'Pausiert',
+            speed: 'Geschwindigkeit', pitch: 'Tonhoehe',
+            queueTitle: '\u{1F4CB} Warteschlange', historyTitle: '\u{1F550} Letzte Texte',
+            addQueue: 'Text zur Warteschlange...', add: '+ Hinzufuegen',
+            chars: 'Zeichen', loadingVoices: 'Stimmen laden...',
+            pending: 'WARTEND', playing: 'AKTIV', done: 'FERTIG'
+        }
+    };
+
+    let currentLang = 'en';
+    function t(key) { return i18n[currentLang][key] || key; }
+
+    function applyLang() {
+        document.querySelector('.topbar h1').innerHTML = esc(t('title'));
+        document.getElementById('ttsInput').placeholder = t('placeholder');
+        document.getElementById('speedLabel').textContent = t('speed');
+        document.getElementById('pitchLabel').textContent = t('pitch');
+        document.getElementById('queueInput').placeholder = t('addQueue');
+        document.getElementById('queueAddBtn').textContent = t('add');
+        document.getElementById('langToggle').textContent = currentLang.toUpperCase();
+        updateStatus();
+        renderQueue();
+        renderHistory();
+    }
+
+    /* --- State --- */
+    const HISTORY_KEY = 'dkz-tts-history';
+    const MAX_HISTORY = 10;
+    let voices = [];
+    let queue = [];
+    let queueIndex = -1;
+    let currentUtterance = null;
+    let ttsState = 'ready'; /* ready | speaking | paused */
+    let currentWords = [];
+    let history = [];
+
+    function loadHistory() {
+        try {
+            const raw = localStorage.getItem(HISTORY_KEY);
+            history = raw ? JSON.parse(raw) : [];
+        } catch (_e) { history = []; }
+    }
+
+    function saveHistory() {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY)));
+    }
+
+    function addToHistory(text) {
+        if (!text || !text.trim()) return;
+        history = history.filter(function(h) { return h.text !== text; });
+        history.unshift({ text: text.slice(0, 500), timestamp: Date.now() });
+        if (history.length > MAX_HISTORY) history = history.slice(0, MAX_HISTORY);
+        saveHistory();
+        renderHistory();
+    }
+
+    /* --- Voice Loading --- */
+    function loadVoices() {
+        voices = window.speechSynthesis.getVoices();
+        const select = document.getElementById('voiceSelect');
+        if (voices.length === 0) return;
+        let html = '';
+        voices.forEach(function(v, i) {
+            const label = v.name + ' (' + v.lang + ')' + (v.default ? ' [Default]' : '');
+            html += '<option value="' + i + '">' + esc(label) + '</option>';
+        });
+        select.innerHTML = html;
+    }
+
+    /* --- Status --- */
+    function updateStatus() {
+        const dot = document.getElementById('statusDot');
+        const text = document.getElementById('statusText');
+        dot.className = 'status-dot ' + ttsState;
+        if (ttsState === 'ready') text.textContent = t('ready');
+        else if (ttsState === 'speaking') text.textContent = t('speaking');
+        else if (ttsState === 'paused') text.textContent = t('paused');
+
+        const eq = document.getElementById('equalizer');
+        if (ttsState === 'speaking') eq.classList.add('active');
+        else eq.classList.remove('active');
+    }
+
+    /* --- Word Highlighting --- */
+    function showHighlight(text) {
+        const textarea = document.getElementById('ttsInput');
+        const area = document.getElementById('highlightArea');
+        textarea.style.display = 'none';
+        area.style.display = 'block';
+        currentWords = text.split(/(\s+)/);
+        let html = '';
+        currentWords.forEach(function(w, i) {
+            if (/\S/.test(w)) {
+                html += '<span data-word-idx="' + i + '">' + esc(w) + '</span>';
+            } else {
+                html += esc(w);
+            }
+        });
+        area.innerHTML = html;
+    }
+
+    function highlightWord(charIndex) {
+        const area = document.getElementById('highlightArea');
+        const spans = area.querySelectorAll('span[data-word-idx]');
+        spans.forEach(function(s) { s.classList.remove('word-highlight'); });
+        let charCount = 0;
+        for (let i = 0; i < currentWords.length; i++) {
+            if (charCount >= charIndex && /\S/.test(currentWords[i])) {
+                const targetSpan = area.querySelector('[data-word-idx="' + i + '"]');
+                if (targetSpan) {
+                    targetSpan.classList.add('word-highlight');
+                    targetSpan.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                break;
+            }
+            charCount += currentWords[i].length;
+        }
+    }
+
+    function hideHighlight() {
+        document.getElementById('ttsInput').style.display = '';
+        document.getElementById('highlightArea').style.display = 'none';
+    }
+
+    /* --- Speech --- */
+    function speak(text) {
+        if (!text || !text.trim()) return;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        const voiceIdx = document.getElementById('voiceSelect').value;
+        if (voices[voiceIdx]) utterance.voice = voices[voiceIdx];
+        utterance.rate = parseFloat(document.getElementById('speedSlider').value);
+        utterance.pitch = parseFloat(document.getElementById('pitchSlider').value);
+
+        utterance.onstart = function() {
+            ttsState = 'speaking';
+            updateStatus();
+            showHighlight(text);
+            document.getElementById('playBtn').classList.add('active');
+        };
+
+        utterance.onboundary = function(e) {
+            if (e.name === 'word') highlightWord(e.charIndex);
+        };
+
+        utterance.onpause = function() {
+            ttsState = 'paused';
+            updateStatus();
+        };
+
+        utterance.onresume = function() {
+            ttsState = 'speaking';
+            updateStatus();
+        };
+
+        utterance.onend = function() {
+            ttsState = 'ready';
+            updateStatus();
+            hideHighlight();
+            document.getElementById('playBtn').classList.remove('active');
+            addToHistory(text);
+            processQueue();
+        };
+
+        utterance.onerror = function() {
+            ttsState = 'ready';
+            updateStatus();
+            hideHighlight();
+            document.getElementById('playBtn').classList.remove('active');
+        };
+
+        currentUtterance = utterance;
+        window.speechSynthesis.speak(utterance);
+    }
+
+    /* --- Queue --- */
+    function addToQueue(text) {
+        if (!text || !text.trim()) return;
+        queue.push({ id: 'q_' + Date.now(), text: text.trim(), status: 'pending' });
+        renderQueue();
+    }
+
+    function processQueue() {
+        const pending = queue.find(function(q) { return q.status === 'pending'; });
+        if (!pending) {
+            queueIndex = -1;
+            return;
+        }
+        pending.status = 'playing';
+        renderQueue();
+        speak(pending.text);
+        pending.status = 'done';
+    }
+
+    function renderQueue() {
+        const list = document.getElementById('queueList');
+        const countEl = document.getElementById('queueCount');
+        countEl.textContent = queue.length;
+        if (queue.length === 0) { list.innerHTML = ''; return; }
+        let html = '';
+        queue.forEach(function(item) {
+            const preview = item.text.length > 60 ? item.text.slice(0, 60) + '...' : item.text;
+            const statusLabel = t(item.status);
+            html += '<div class="queue-item">';
+            html += '  <span class="queue-text">' + esc(preview) + '</span>';
+            html += '  <span class="queue-status ' + esc(item.status) + '">' + esc(statusLabel) + '</span>';
+            html += '  <button class="small-btn remove" onclick="removeQueue(\'' + esc(item.id) + '\')">&times;</button>';
+            html += '</div>';
+        });
+        list.innerHTML = html;
+    }
+
+    function removeQueue(id) {
+        queue = queue.filter(function(q) { return q.id !== id; });
+        renderQueue();
+    }
+
+    /* --- History --- */
+    function renderHistory() {
+        const list = document.getElementById('historyList');
+        const countEl = document.getElementById('historyCount');
+        countEl.textContent = history.length;
+        if (history.length === 0) { list.innerHTML = ''; return; }
+        let html = '';
+        history.forEach(function(item, idx) {
+            const preview = item.text.length > 80 ? item.text.slice(0, 80) + '...' : item.text;
+            html += '<div class="history-item">';
+            html += '  <span class="history-text">' + esc(preview) + '</span>';
+            html += '  <button class="small-btn" onclick="replayHistory(' + idx + ')">&#9654;</button>';
+            html += '</div>';
+        });
+        list.innerHTML = html;
+    }
+
+    function replayHistory(idx) {
+        if (history[idx]) {
+            document.getElementById('ttsInput').value = history[idx].text;
+            document.getElementById('charCount').textContent = history[idx].text.length;
+            speak(history[idx].text);
+        }
+    }
+
+    /* --- Toast --- */
+    let toastTimer = null;
+    function showToast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function() { el.classList.remove('show'); }, 2200);
+    }
+
+    /* --- Init --- */
+    document.addEventListener('DOMContentLoaded', function() {
+        loadHistory();
+        loadVoices();
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+
+        renderQueue();
+        renderHistory();
+        updateStatus();
+
+        /* Char count */
+        document.getElementById('ttsInput').addEventListener('input', function() {
+            document.getElementById('charCount').textContent = this.value.length;
+        });
+
+        /* Speed slider */
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = parseFloat(this.value).toFixed(1) + 'x';
+        });
+
+        /* Pitch slider */
+        document.getElementById('pitchSlider').addEventListener('input', function() {
+            document.getElementById('pitchValue').textContent = parseFloat(this.value).toFixed(1);
+        });
+
+        /* Play */
+        document.getElementById('playBtn').addEventListener('click', function() {
+            if (ttsState === 'paused') {
+                window.speechSynthesis.resume();
+                return;
+            }
+            const text = document.getElementById('ttsInput').value;
+            if (text.trim()) speak(text);
+        });
+
+        /* Pause */
+        document.getElementById('pauseBtn').addEventListener('click', function() {
+            if (ttsState === 'speaking') window.speechSynthesis.pause();
+        });
+
+        /* Stop */
+        document.getElementById('stopBtn').addEventListener('click', function() {
+            window.speechSynthesis.cancel();
+            ttsState = 'ready';
+            updateStatus();
+            hideHighlight();
+            document.getElementById('playBtn').classList.remove('active');
+        });
+
+        /* Queue Add */
+        document.getElementById('queueAddBtn').addEventListener('click', function() {
+            const input = document.getElementById('queueInput');
+            addToQueue(input.value);
+            input.value = '';
+        });
+
+        document.getElementById('queueInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                addToQueue(this.value);
+                this.value = '';
+            }
+        });
+
+        /* Language Toggle */
+        document.getElementById('langToggle').addEventListener('click', function() {
+            currentLang = currentLang === 'en' ? 'de' : 'en';
+            applyLang();
+        });
+
+        /* Contrast Toggle */
+        document.getElementById('contrastToggle').addEventListener('click', function() {
+            const html = document.documentElement;
+            const isHC = html.dataset.theme === 'high-contrast';
+            html.dataset.theme = isHC ? 'dark' : 'high-contrast';
+            this.classList.toggle('active', !isHC);
+        });
+    });
+    </script>
+
+    <!-- DkZ Shared Scripts -->
+    <script src="../../shared/dkz-debug.js" defer></script>
+    <script src="../../shared/dkz-guide.js" defer></script>
+    <script src="../../shared/dkz-copilot.js" defer></script>
+    <script src="../../shared/dkz-james.js" defer></script>
+    <script src="../../shared/dkz-navbar.js" defer></script>
+    <script src="../../shared/dkz-console.js" defer></script>
+    <script src="../../shared/dkz-premium.js" defer></script>
+</body>
+</html>
