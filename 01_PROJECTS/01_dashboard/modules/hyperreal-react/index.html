@@ -1,20 +1,887 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="version" content="1.0.0">
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hyperreal UI — DkZ™ React Demo</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <style>:root { --accent: #fa1e4e; --bg: #060608; --green: #00ff88; --yellow: #ffb800; --red: #ff3b5c; }</style>
-  </head>
-  <body>
-    <a href="../hub/index.html" class="hub-btn" title="Hub" style="position:fixed;top:10px;right:10px;z-index:9999;background:var(--accent,#fa1e4e);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:14px;text-decoration:none;cursor:pointer;">🏠 Hub</a>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-    <script>function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }</script>
-    <script src="../../shared/dkz-debug.js"></script>
-    <script src="../shared/dkz-autobug.js" defer></script>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="dkz-version" content="v0.01.1_01">
+  <meta name="description" content="React-zu-Vanilla Converter — Konvertiert React-Komponenten zu purem HTML/CSS/JS">
+  <title>Hyperreal React — DkZ™ Converter</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+/* ═══ CSS Variables ═══ */
+:root {
+  --bg: #060608;
+  --card: #1a1a1c;
+  --card2: #222226;
+  --border: #333338;
+  --text: #f6f6f7;
+  --muted: #a1a1aa;
+  --green: #00ff88;
+  --blue: #55ACEE;
+  --yellow: #FFB800;
+  --red: #fa1e4e;
+  --purple: #ec4899;
+  --accent: #fa1e4e;
+  --accent-rgb: 250, 30, 78;
+  --font: 'Inter', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --glass: rgba(14, 14, 22, .72);
+  --blur: blur(24px);
+  --z-modal: 11000;
+  --z-toast: 12000;
+  --z-overlay: 9000;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 6px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ═══ Background ═══ */
+.bg-mesh { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.bg-blob { position: absolute; border-radius: 50%; filter: blur(120px); opacity: .06; animation: blobFloat 20s ease-in-out infinite; }
+.bg-blob:nth-child(1) { width: 500px; height: 500px; background: var(--blue); top: -10%; left: 20%; }
+.bg-blob:nth-child(2) { width: 350px; height: 350px; background: var(--purple); bottom: 10%; right: 10%; animation-delay: -8s; }
+.bg-blob:nth-child(3) { width: 280px; height: 280px; background: var(--accent); top: 50%; left: 60%; animation-delay: -14s; }
+@keyframes blobFloat { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(30px,-40px) scale(1.1); } }
+
+/* ═══ App ═══ */
+.app { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ═══ Header ═══ */
+.header {
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--glass);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  display: flex; align-items: center; gap: 12px;
+  position: sticky; top: 0; z-index: 100;
+}
+.back-btn {
+  padding: 6px 14px; border: 1px solid var(--border); border-radius: 10px;
+  background: rgba(255,255,255,.03); color: var(--muted); font-size: 11px;
+  text-decoration: none; font-family: var(--font); transition: all .2s;
+}
+.back-btn:hover { color: var(--text); border-color: var(--accent); }
+h1 {
+  font-size: 20px; font-weight: 900;
+  background: linear-gradient(135deg, var(--accent), var(--purple));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.hdr-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.ver { font-size: 9px; color: var(--muted); font-family: var(--mono); }
+
+/* ═══ Toolbar ═══ */
+.toolbar {
+  display: flex; align-items: center; gap: 8px; padding: 10px 24px;
+  border-bottom: 1px solid var(--border); background: rgba(14,14,22,.5);
+  flex-wrap: wrap;
+}
+.toolbar select, .toolbar button {
+  padding: 6px 12px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--card); color: var(--text); font-family: var(--font);
+  font-size: 11px; cursor: pointer; transition: all .2s;
+}
+.toolbar select:hover, .toolbar button:hover { border-color: var(--accent); }
+.toolbar button.primary {
+  background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700;
+}
+.toolbar button.primary:hover { box-shadow: 0 4px 16px rgba(var(--accent-rgb),.35); transform: translateY(-1px); }
+.toolbar .spacer { flex: 1; }
+.toolbar .stat-pill {
+  font-size: 10px; color: var(--muted); font-family: var(--mono);
+  padding: 4px 10px; background: var(--card2); border-radius: 6px; border: 1px solid var(--border);
+}
+
+/* ═══ Editor Area ═══ */
+.editor-area { display: flex; flex: 1; min-height: 0; }
+.pane {
+  flex: 1; display: flex; flex-direction: column; min-width: 0;
+}
+.pane-header {
+  display: flex; align-items: center; gap: 8px; padding: 10px 16px;
+  border-bottom: 1px solid var(--border); background: var(--card);
+  font-size: 11px; font-weight: 600;
+}
+.pane-header .dot { width: 8px; height: 8px; border-radius: 50%; }
+.pane-header .dot.react { background: var(--blue); box-shadow: 0 0 8px var(--blue); }
+.pane-header .dot.vanilla { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.pane-header .pane-actions { margin-left: auto; display: flex; gap: 6px; }
+.pane-header .pane-actions button {
+  padding: 4px 10px; border: 1px solid var(--border); border-radius: 6px;
+  background: transparent; color: var(--muted); font-size: 10px; cursor: pointer;
+  font-family: var(--font); transition: all .2s;
+}
+.pane-header .pane-actions button:hover { color: var(--green); border-color: var(--green); }
+
+.code-wrap {
+  flex: 1; position: relative; overflow: hidden;
+}
+.code-editor {
+  width: 100%; height: 100%; resize: none; border: none; outline: none;
+  background: var(--bg); color: var(--green); font-family: var(--mono);
+  font-size: 13px; line-height: 1.7; padding: 16px; tab-size: 2;
+}
+.code-editor.react-input { color: var(--blue); }
+.code-editor::placeholder { color: rgba(255,255,255,.15); }
+
+/* ═══ Splitter ═══ */
+.splitter {
+  width: 4px; background: var(--border); cursor: col-resize;
+  position: relative; transition: background .2s; flex-shrink: 0;
+}
+.splitter:hover, .splitter.active { background: var(--accent); }
+.splitter::after {
+  content: ''; position: absolute; top: 50%; left: -4px; right: -4px;
+  height: 40px; transform: translateY(-50%); border-radius: 4px;
+}
+
+/* ═══ Bottom Bar ═══ */
+.bottom-bar {
+  display: flex; align-items: center; gap: 12px; padding: 8px 24px;
+  border-top: 1px solid var(--border); background: var(--card);
+  font-size: 10px; color: var(--muted); font-family: var(--mono);
+}
+.bottom-bar .indicator { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); }
+.bottom-bar .spacer { flex: 1; }
+
+/* ═══ Side Panel (History + Templates) ═══ */
+.side-panel {
+  width: 280px; border-left: 1px solid var(--border); background: var(--card);
+  display: flex; flex-direction: column; overflow: hidden;
+  transition: width .3s, opacity .3s;
+}
+.side-panel.collapsed { width: 0; opacity: 0; overflow: hidden; border: none; }
+.side-tabs { display: flex; border-bottom: 1px solid var(--border); }
+.side-tab {
+  flex: 1; padding: 10px; text-align: center; font-size: 11px; font-weight: 600;
+  cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent;
+  transition: all .2s; background: none; border-top: none; border-left: none; border-right: none;
+}
+.side-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.side-content { flex: 1; overflow-y: auto; padding: 12px; }
+
+.tpl-card {
+  padding: 10px 12px; background: var(--card2); border: 1px solid var(--border);
+  border-radius: 10px; margin-bottom: 8px; cursor: pointer; transition: all .2s;
+}
+.tpl-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+.tpl-card .tpl-name { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+.tpl-card .tpl-desc { font-size: 10px; color: var(--muted); }
+
+.history-item {
+  padding: 8px 10px; background: var(--card2); border: 1px solid var(--border);
+  border-radius: 8px; margin-bottom: 6px; cursor: pointer; transition: all .2s;
+  font-size: 10px;
+}
+.history-item:hover { border-color: var(--blue); }
+.history-item .hi-time { color: var(--muted); font-family: var(--mono); }
+.history-item .hi-preview { color: var(--text); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ═══ Modal ═══ */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(8px);
+  z-index: var(--z-overlay); display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .3s;
+}
+.modal-overlay.show { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+  padding: 28px; max-width: 520px; width: 90%; max-height: 80vh; overflow-y: auto;
+  transform: scale(.95); transition: transform .3s;
+}
+.modal-overlay.show .modal { transform: scale(1); }
+.modal h2 {
+  font-size: 18px; font-weight: 800; margin-bottom: 12px;
+  background: linear-gradient(135deg, var(--accent), var(--blue));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.modal p { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 10px; }
+.modal .feature-list { list-style: none; margin: 12px 0; }
+.modal .feature-list li { padding: 6px 0; font-size: 12px; color: var(--text); }
+.modal .feature-list li::before { content: '▸ '; color: var(--accent); font-weight: 700; }
+.modal .btn-close {
+  margin-top: 16px; padding: 10px 24px; background: var(--accent); border: none;
+  border-radius: 10px; color: #fff; font-weight: 700; font-family: var(--font);
+  cursor: pointer; font-size: 12px; transition: all .2s; width: 100%;
+}
+.modal .btn-close:hover { box-shadow: 0 4px 16px rgba(var(--accent-rgb),.35); }
+
+/* ═══ Toast ═══ */
+.toast {
+  position: fixed; bottom: 24px; right: 24px; padding: 12px 20px;
+  background: var(--green); color: #000; font-size: 12px; font-weight: 700;
+  border-radius: 10px; z-index: var(--z-toast); opacity: 0; transform: translateY(20px);
+  transition: all .3s; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* ═══ Animations ═══ */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn .4s ease; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+
+/* ═══ Responsive ═══ */
+@media (max-width: 900px) {
+  .editor-area { flex-direction: column; }
+  .splitter { width: 100%; height: 4px; cursor: row-resize; }
+  .side-panel { width: 100%; border-left: none; border-top: 1px solid var(--border); max-height: 200px; }
+  .side-panel.collapsed { max-height: 0; }
+}
+@media (max-width: 600px) {
+  .toolbar { padding: 8px 12px; }
+  .header { padding: 10px 14px; }
+  h1 { font-size: 16px; }
+  .bottom-bar { padding: 6px 12px; flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+  </style>
+</head>
+<body>
+  <div class="bg-mesh">
+    <div class="bg-blob"></div>
+    <div class="bg-blob"></div>
+    <div class="bg-blob"></div>
+  </div>
+
+  <div class="app">
+    <!-- Header -->
+    <header class="header fade-in">
+      <a href="../hub/index.html" class="back-btn" title="Zurueck zum Hub">&#8592; Hub</a>
+      <h1>&#9883; Hyperreal React Converter</h1>
+      <div class="hdr-right">
+        <button id="btnToggleSide" class="back-btn" title="Seitenleiste ein-/ausblenden">&#9776; Panel</button>
+        <span class="ver">v0.01.1</span>
+      </div>
+    </header>
+
+    <!-- Toolbar -->
+    <div class="toolbar fade-in">
+      <select id="selTemplate" title="React Template laden">
+        <option value="">&#128196; Template waehlen...</option>
+        <option value="button">Button Component</option>
+        <option value="modal">Modal Component</option>
+        <option value="todolist">Todo List</option>
+        <option value="form">Contact Form</option>
+        <option value="card">Card Component</option>
+      </select>
+      <button class="primary" id="btnConvert" title="React-Code zu Vanilla konvertieren">&#9654; Konvertieren</button>
+      <button id="btnClear" title="Beide Editoren leeren">&#10006; Clear</button>
+      <div class="spacer"></div>
+      <span class="stat-pill" id="statLines">In: 0 | Out: 0</span>
+      <span class="stat-pill" id="statTime">0ms</span>
+    </div>
+
+    <!-- Main Editor -->
+    <div class="editor-area" style="flex:1; min-height: 0;">
+      <!-- React Pane -->
+      <div class="pane" id="paneLeft">
+        <div class="pane-header">
+          <span class="dot react"></span>
+          <span>React JSX</span>
+          <div class="pane-actions">
+            <button id="btnPasteReact" title="Aus Zwischenablage einfuegen">Paste</button>
+          </div>
+        </div>
+        <div class="code-wrap">
+          <textarea class="code-editor react-input" id="reactInput" placeholder="// React-Code hier eingeben...&#10;import React, { useState } from 'react';&#10;&#10;function App() {&#10;  const [count, setCount] = useState(0);&#10;  return &lt;button onClick={() => setCount(c => c+1)}&gt;{count}&lt;/button&gt;;&#10;}" spellcheck="false"></textarea>
+        </div>
+      </div>
+
+      <!-- Splitter -->
+      <div class="splitter" id="splitter" title="Ziehen zum Groesse aendern"></div>
+
+      <!-- Vanilla Pane -->
+      <div class="pane" id="paneRight">
+        <div class="pane-header">
+          <span class="dot vanilla"></span>
+          <span>Vanilla JS</span>
+          <div class="pane-actions">
+            <button id="btnCopy" title="Output in Zwischenablage kopieren">&#128203; Copy</button>
+            <button id="btnExport" title="Als .html Datei herunterladen">&#11015; Export</button>
+          </div>
+        </div>
+        <div class="code-wrap">
+          <textarea class="code-editor" id="vanillaOutput" placeholder="// Vanilla Output erscheint hier..." spellcheck="false" readonly></textarea>
+        </div>
+      </div>
+
+      <!-- Side Panel -->
+      <div class="side-panel" id="sidePanel">
+        <div class="side-tabs">
+          <button class="side-tab active" data-tab="templates" title="Vordefinierte React-Templates">&#128196; Templates</button>
+          <button class="side-tab" data-tab="history" title="Letzte 10 Konvertierungen">&#128337; History</button>
+        </div>
+        <div class="side-content" id="sideContent"></div>
+      </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="bottom-bar fade-in">
+      <span class="indicator"></span>
+      <span>Bereit</span>
+      <div class="spacer"></div>
+      <span id="bottomInfo">React → Vanilla Converter | DkZ&#8482;</span>
+    </div>
+  </div>
+
+  <!-- Onboarding Modal -->
+  <div class="modal-overlay" id="onboardingModal">
+    <div class="modal">
+      <h2>&#9883; Hyperreal React Converter</h2>
+      <p>Konvertiert React-Komponenten zu purem Vanilla HTML/CSS/JavaScript — kein Build-Tool noetig.</p>
+      <ul class="feature-list">
+        <li>JSX → document.createElement()</li>
+        <li>useState → let + render()</li>
+        <li>useEffect → addEventListener</li>
+        <li>5 Templates zum Starten</li>
+        <li>History der letzten 10 Konvertierungen</li>
+        <li>Copy &amp; Export als .html</li>
+      </ul>
+      <p style="font-size:11px; color: var(--muted);">Tipp: Waehle ein Template aus der Toolbar oder tippe eigenen React-Code.</p>
+      <button class="btn-close" id="btnCloseOnboarding">Verstanden — Los geht's!</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+/* ═══ XSS Protection ═══ */
+function esc(str) {
+  const d = document.createElement('div');
+  d.appendChild(document.createTextNode(String(str)));
+  return d.innerHTML;
+}
+
+/* ═══ Toast ═══ */
+function showToast(msg, duration) {
+  duration = duration || 2500;
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, duration);
+}
+
+/* ═══ Templates ═══ */
+const TEMPLATES = {
+  button: {
+    name: 'Button Component',
+    desc: 'Einfacher Counter-Button mit useState',
+    code: "import React, { useState } from 'react';\n\nfunction CounterButton() {\n  const [count, setCount] = useState(0);\n\n  return (\n    <button\n      className=\"counter-btn\"\n      onClick={() => setCount(count + 1)}\n    >\n      Klicks: {count}\n    </button>\n  );\n}\n\nexport default CounterButton;"
+  },
+  modal: {
+    name: 'Modal Component',
+    desc: 'Overlay Modal mit Open/Close State',
+    code: "import React, { useState } from 'react';\n\nfunction Modal() {\n  const [isOpen, setIsOpen] = useState(false);\n\n  return (\n    <div>\n      <button onClick={() => setIsOpen(true)}>Modal oeffnen</button>\n      {isOpen && (\n        <div className=\"overlay\">\n          <div className=\"modal-box\">\n            <h2>Modal Titel</h2>\n            <p>Inhalt des Modals.</p>\n            <button onClick={() => setIsOpen(false)}>Schliessen</button>\n          </div>\n        </div>\n      )}\n    </div>\n  );\n}\n\nexport default Modal;"
+  },
+  todolist: {
+    name: 'Todo List',
+    desc: 'Aufgabenliste mit Add/Remove',
+    code: "import React, { useState } from 'react';\n\nfunction TodoList() {\n  const [todos, setTodos] = useState([]);\n  const [input, setInput] = useState('');\n\n  const addTodo = () => {\n    if (input.trim()) {\n      setTodos([...todos, input.trim()]);\n      setInput('');\n    }\n  };\n\n  const removeTodo = (index) => {\n    setTodos(todos.filter((_, i) => i !== index));\n  };\n\n  return (\n    <div className=\"todo-app\">\n      <h2>Meine Todos</h2>\n      <div className=\"todo-input\">\n        <input\n          value={input}\n          onChange={(e) => setInput(e.target.value)}\n          placeholder=\"Neue Aufgabe...\"\n        />\n        <button onClick={addTodo}>Hinzufuegen</button>\n      </div>\n      <ul>\n        {todos.map((todo, i) => (\n          <li key={i}>\n            {todo}\n            <button onClick={() => removeTodo(i)}>X</button>\n          </li>\n        ))}\n      </ul>\n    </div>\n  );\n}\n\nexport default TodoList;"
+  },
+  form: {
+    name: 'Contact Form',
+    desc: 'Formular mit Controlled Inputs',
+    code: "import React, { useState } from 'react';\n\nfunction ContactForm() {\n  const [form, setForm] = useState({ name: '', email: '', message: '' });\n\n  const handleChange = (e) => {\n    setForm({ ...form, [e.target.name]: e.target.value });\n  };\n\n  const handleSubmit = (e) => {\n    e.preventDefault();\n    alert('Gesendet: ' + JSON.stringify(form));\n  };\n\n  return (\n    <form onSubmit={handleSubmit} className=\"contact-form\">\n      <input name=\"name\" value={form.name} onChange={handleChange} placeholder=\"Name\" />\n      <input name=\"email\" value={form.email} onChange={handleChange} placeholder=\"E-Mail\" />\n      <textarea name=\"message\" value={form.message} onChange={handleChange} placeholder=\"Nachricht\" />\n      <button type=\"submit\">Absenden</button>\n    </form>\n  );\n}\n\nexport default ContactForm;"
+  },
+  card: {
+    name: 'Card Component',
+    desc: 'Wiederverwendbare Card mit Props',
+    code: "import React from 'react';\n\nfunction Card({ title, description, image, onClick }) {\n  return (\n    <div className=\"card\" onClick={onClick}>\n      {image && <img src={image} alt={title} className=\"card-image\" />}\n      <div className=\"card-body\">\n        <h3 className=\"card-title\">{title}</h3>\n        <p className=\"card-desc\">{description}</p>\n      </div>\n    </div>\n  );\n}\n\nexport default Card;"
+  }
+};
+
+/* ═══ Conversion Engine ═══ */
+function convertReactToVanilla(reactCode) {
+  if (!reactCode.trim()) return '// Kein Input vorhanden';
+
+  var lines = reactCode.split('\n');
+  var output = [];
+  var componentName = 'App';
+  var stateVars = [];
+  var hasState = false;
+
+  /* Detect component name */
+  for (var i = 0; i < lines.length; i++) {
+    var fnMatch = lines[i].match(/function\s+(\w+)/);
+    if (fnMatch) { componentName = fnMatch[1]; break; }
+    var arrowMatch = lines[i].match(/(?:const|let|var)\s+(\w+)\s*=\s*\(?\s*(?:\{[^}]*\}|[^)]*)\)?\s*=>/);
+    if (arrowMatch) { componentName = arrowMatch[1]; break; }
+  }
+
+  output.push('/* ═══ ' + componentName + ' — Vanilla JS ═══ */');
+  output.push('/* Konvertiert von React mit DkZ Hyperreal Converter */');
+  output.push('');
+
+  /* Parse useState calls */
+  for (var j = 0; j < lines.length; j++) {
+    var stateMatch = lines[j].match(/const\s+\[(\w+),\s*(\w+)\]\s*=\s*useState\(([^)]*)\)/);
+    if (stateMatch) {
+      hasState = true;
+      stateVars.push({
+        name: stateMatch[1],
+        setter: stateMatch[2],
+        initial: stateMatch[3] || "null"
+      });
+    }
+  }
+
+  /* State variables */
+  if (hasState) {
+    output.push('/* ─── State ─── */');
+    for (var s = 0; s < stateVars.length; s++) {
+      output.push('let ' + stateVars[s].name + ' = ' + stateVars[s].initial + ';');
+    }
+    output.push('');
+  }
+
+  /* Setter functions */
+  for (var sf = 0; sf < stateVars.length; sf++) {
+    output.push('function ' + stateVars[sf].setter + '(newVal) {');
+    output.push('  if (typeof newVal === "function") {');
+    output.push('    ' + stateVars[sf].name + ' = newVal(' + stateVars[sf].name + ');');
+    output.push('  } else {');
+    output.push('    ' + stateVars[sf].name + ' = newVal;');
+    output.push('  }');
+    output.push('  render();');
+    output.push('}');
+    output.push('');
+  }
+
+  /* Build render function */
+  output.push('/* ─── Render ─── */');
+  output.push('function render() {');
+  output.push('  const root = document.getElementById("app");');
+  output.push('  if (!root) return;');
+  output.push('');
+
+  /* Extract JSX return block and convert */
+  var jsxBlock = extractJSXReturn(reactCode);
+  var vanillaDOM = convertJSXToDOM(jsxBlock, '  ');
+  output.push(vanillaDOM);
+
+  output.push('}');
+  output.push('');
+
+  /* useEffect -> event listeners */
+  var hasEffect = reactCode.indexOf('useEffect') > -1;
+  if (hasEffect) {
+    output.push('/* ─── Side Effects ─── */');
+    output.push("document.addEventListener('DOMContentLoaded', function() {");
+    output.push('  render();');
+    output.push('});');
+  } else {
+    output.push('/* ─── Init ─── */');
+    output.push("document.addEventListener('DOMContentLoaded', render);");
+  }
+
+  output.push('');
+  output.push('/* ─── HTML ─── */');
+  output.push('// <div id="app"></div>');
+
+  return output.join('\n');
+}
+
+function extractJSXReturn(code) {
+  var returnIdx = code.indexOf('return');
+  if (returnIdx === -1) return '<div></div>';
+
+  var afterReturn = code.substring(returnIdx + 6).trim();
+  /* Handle return (...) or return <...> */
+  if (afterReturn.charAt(0) === '(') {
+    var depth = 1;
+    var i = 1;
+    while (i < afterReturn.length && depth > 0) {
+      if (afterReturn.charAt(i) === '(') depth++;
+      if (afterReturn.charAt(i) === ')') depth--;
+      i++;
+    }
+    return afterReturn.substring(1, i - 1).trim();
+  }
+  /* Find end of JSX */
+  var endIdx = afterReturn.indexOf(';\n');
+  if (endIdx === -1) endIdx = afterReturn.indexOf('\n}');
+  if (endIdx === -1) endIdx = afterReturn.length;
+  return afterReturn.substring(0, endIdx).trim();
+}
+
+function convertJSXToDOM(jsx, indent) {
+  indent = indent || '';
+  var out = [];
+
+  /* Simple tag parsing */
+  var tagMatch = jsx.match(/<(\w+)([^>]*)>/);
+  if (!tagMatch) {
+    out.push(indent + 'root.textContent = ' + JSON.stringify(jsx.trim()) + ';');
+    return out.join('\n');
+  }
+
+  var tagName = tagMatch[1];
+  var attrs = tagMatch[2] || '';
+
+  /* Map HTML element */
+  var elName = tagName.charAt(0) === tagName.charAt(0).toUpperCase() ? 'div' : tagName;
+  out.push(indent + 'root.innerHTML = "";');
+  out.push(indent + 'const el = document.createElement("' + elName + '");');
+
+  /* className -> classList */
+  var classMatch = attrs.match(/className="([^"]+)"/);
+  if (classMatch) {
+    var classes = classMatch[1].split(' ');
+    for (var c = 0; c < classes.length; c++) {
+      out.push(indent + 'el.classList.add("' + classes[c] + '");');
+    }
+  }
+
+  /* onClick -> addEventListener */
+  var onClickMatch = attrs.match(/onClick=\{([^}]+)\}/);
+  if (onClickMatch) {
+    var handler = onClickMatch[1].trim();
+    /* Arrow function: () => ... */
+    if (handler.indexOf('=>') > -1) {
+      out.push(indent + 'el.addEventListener("click", ' + handler + ');');
+    } else {
+      out.push(indent + 'el.addEventListener("click", ' + handler + ');');
+    }
+  }
+
+  /* onChange -> addEventListener input */
+  var onChangeMatch = attrs.match(/onChange=\{([^}]+)\}/);
+  if (onChangeMatch) {
+    out.push(indent + 'el.addEventListener("input", ' + onChangeMatch[1].trim() + ');');
+  }
+
+  /* Extract text content between tags */
+  var innerMatch = jsx.match(/>([^<{]*)</);
+  if (innerMatch && innerMatch[1].trim()) {
+    out.push(indent + 'el.textContent = "' + innerMatch[1].trim() + '";');
+  }
+
+  /* JSX expression {variable} */
+  var exprMatch = jsx.match(/>\{([^}]+)\}</);
+  if (exprMatch) {
+    out.push(indent + 'el.textContent = ' + exprMatch[1].trim() + ';');
+  }
+
+  /* value attribute for inputs */
+  var valueMatch = attrs.match(/value=\{([^}]+)\}/);
+  if (valueMatch) {
+    out.push(indent + 'el.value = ' + valueMatch[1].trim() + ';');
+  }
+
+  /* placeholder */
+  var phMatch = attrs.match(/placeholder="([^"]+)"/);
+  if (phMatch) {
+    out.push(indent + 'el.placeholder = "' + phMatch[1] + '";');
+  }
+
+  /* type attribute */
+  var typeMatch = attrs.match(/type="([^"]+)"/);
+  if (typeMatch) {
+    out.push(indent + 'el.type = "' + typeMatch[1] + '";');
+  }
+
+  /* name attribute */
+  var nameMatch = attrs.match(/name="([^"]+)"/);
+  if (nameMatch) {
+    out.push(indent + 'el.name = "' + nameMatch[1] + '";');
+  }
+
+  out.push(indent + 'root.appendChild(el);');
+
+  return out.join('\n');
+}
+
+/* ═══ History ═══ */
+var MAX_HISTORY = 10;
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem('dkz-hrc-history') || '[]'); }
+  catch(e) { return []; }
+}
+
+function saveHistory(input, output) {
+  var hist = getHistory();
+  hist.unshift({
+    time: new Date().toLocaleString('de-DE'),
+    inputPreview: input.substring(0, 60),
+    input: input,
+    output: output
+  });
+  if (hist.length > MAX_HISTORY) hist = hist.slice(0, MAX_HISTORY);
+  try { localStorage.setItem('dkz-hrc-history', JSON.stringify(hist)); }
+  catch(e) { /* quota */ }
+}
+
+/* ═══ Render Side Panel ═══ */
+var currentTab = 'templates';
+
+function renderSidePanel() {
+  var container = document.getElementById('sideContent');
+  if (!container) return;
+
+  if (currentTab === 'templates') {
+    var html = '';
+    var keys = Object.keys(TEMPLATES);
+    for (var i = 0; i < keys.length; i++) {
+      var t = TEMPLATES[keys[i]];
+      html += '<div class="tpl-card" data-tpl="' + esc(keys[i]) + '" title="' + esc(t.desc) + '">';
+      html += '<div class="tpl-name">' + esc(t.name) + '</div>';
+      html += '<div class="tpl-desc">' + esc(t.desc) + '</div>';
+      html += '</div>';
+    }
+    container.innerHTML = html;
+
+    /* Attach click handlers */
+    var cards = container.querySelectorAll('.tpl-card');
+    for (var c = 0; c < cards.length; c++) {
+      cards[c].addEventListener('click', function() {
+        var key = this.getAttribute('data-tpl');
+        if (TEMPLATES[key]) {
+          document.getElementById('reactInput').value = TEMPLATES[key].code;
+          saveCurrentCode();
+          showToast('Template "' + TEMPLATES[key].name + '" geladen');
+        }
+      });
+    }
+  } else {
+    /* History tab */
+    var hist = getHistory();
+    if (hist.length === 0) {
+      container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px;">Noch keine Konvertierungen.</div>';
+      return;
+    }
+    var hHtml = '';
+    for (var h = 0; h < hist.length; h++) {
+      hHtml += '<div class="history-item" data-idx="' + h + '" title="Klicken zum Wiederherstellen">';
+      hHtml += '<div class="hi-time">' + esc(hist[h].time) + '</div>';
+      hHtml += '<div class="hi-preview">' + esc(hist[h].inputPreview) + '...</div>';
+      hHtml += '</div>';
+    }
+    container.innerHTML = hHtml;
+
+    var items = container.querySelectorAll('.history-item');
+    for (var hi = 0; hi < items.length; hi++) {
+      items[hi].addEventListener('click', function() {
+        var idx = parseInt(this.getAttribute('data-idx'), 10);
+        var entry = getHistory()[idx];
+        if (entry) {
+          document.getElementById('reactInput').value = entry.input;
+          document.getElementById('vanillaOutput').value = entry.output;
+          updateStats();
+          showToast('History-Eintrag geladen');
+        }
+      });
+    }
+  }
+}
+
+/* ═══ Save/Load current code ═══ */
+function saveCurrentCode() {
+  try {
+    localStorage.setItem('dkz-hrc-react', document.getElementById('reactInput').value);
+    localStorage.setItem('dkz-hrc-vanilla', document.getElementById('vanillaOutput').value);
+  } catch(e) { /* quota */ }
+}
+
+function loadCurrentCode() {
+  try {
+    var r = localStorage.getItem('dkz-hrc-react');
+    var v = localStorage.getItem('dkz-hrc-vanilla');
+    if (r) document.getElementById('reactInput').value = r;
+    if (v) document.getElementById('vanillaOutput').value = v;
+  } catch(e) { /* noop */ }
+}
+
+/* ═══ Stats ═══ */
+function updateStats() {
+  var inLines = (document.getElementById('reactInput').value.match(/\n/g) || []).length + 1;
+  var outLines = (document.getElementById('vanillaOutput').value.match(/\n/g) || []).length + 1;
+  document.getElementById('statLines').textContent = 'In: ' + inLines + ' | Out: ' + outLines;
+}
+
+/* ═══ Splitter Drag ═══ */
+function initSplitter() {
+  var splitter = document.getElementById('splitter');
+  var paneL = document.getElementById('paneLeft');
+  var paneR = document.getElementById('paneRight');
+  var dragging = false;
+
+  splitter.addEventListener('mousedown', function(e) {
+    dragging = true;
+    splitter.classList.add('active');
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
+    var container = document.querySelector('.editor-area');
+    var rect = container.getBoundingClientRect();
+    var sideW = document.getElementById('sidePanel').offsetWidth || 0;
+    var available = rect.width - sideW - 4;
+    var offset = e.clientX - rect.left;
+    var pct = Math.max(20, Math.min(80, (offset / available) * 100));
+    paneL.style.flex = '0 0 ' + pct + '%';
+    paneR.style.flex = '1';
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (dragging) {
+      dragging = false;
+      splitter.classList.remove('active');
+    }
+  });
+}
+
+/* ═══ Init ═══ */
+document.addEventListener('DOMContentLoaded', function() {
+  loadCurrentCode();
+  updateStats();
+  renderSidePanel();
+  initSplitter();
+
+  /* Onboarding */
+  if (!localStorage.getItem('dkz-hrc-onboarded')) {
+    document.getElementById('onboardingModal').classList.add('show');
+  }
+
+  /* Close onboarding */
+  document.getElementById('btnCloseOnboarding').addEventListener('click', function() {
+    document.getElementById('onboardingModal').classList.remove('show');
+    localStorage.setItem('dkz-hrc-onboarded', '1');
+  });
+
+  /* Convert button */
+  document.getElementById('btnConvert').addEventListener('click', function() {
+    var input = document.getElementById('reactInput').value;
+    if (!input.trim()) {
+      showToast('Bitte React-Code eingeben');
+      return;
+    }
+    var start = performance.now();
+    var result = convertReactToVanilla(input);
+    var elapsed = (performance.now() - start).toFixed(1);
+
+    document.getElementById('vanillaOutput').value = result;
+    document.getElementById('statTime').textContent = elapsed + 'ms';
+    updateStats();
+    saveHistory(input, result);
+    saveCurrentCode();
+    renderSidePanel();
+    showToast('Konvertierung abgeschlossen (' + elapsed + 'ms)');
+  });
+
+  /* Clear */
+  document.getElementById('btnClear').addEventListener('click', function() {
+    document.getElementById('reactInput').value = '';
+    document.getElementById('vanillaOutput').value = '';
+    updateStats();
+    saveCurrentCode();
+  });
+
+  /* Template select */
+  document.getElementById('selTemplate').addEventListener('change', function() {
+    var key = this.value;
+    if (TEMPLATES[key]) {
+      document.getElementById('reactInput').value = TEMPLATES[key].code;
+      saveCurrentCode();
+      updateStats();
+      showToast('Template "' + TEMPLATES[key].name + '" geladen');
+    }
+    this.value = '';
+  });
+
+  /* Copy */
+  document.getElementById('btnCopy').addEventListener('click', function() {
+    var output = document.getElementById('vanillaOutput').value;
+    if (!output.trim()) { showToast('Nichts zum Kopieren'); return; }
+    navigator.clipboard.writeText(output).then(function() {
+      showToast('In Zwischenablage kopiert!');
+    }).catch(function() {
+      showToast('Kopieren fehlgeschlagen');
+    });
+  });
+
+  /* Export */
+  document.getElementById('btnExport').addEventListener('click', function() {
+    var output = document.getElementById('vanillaOutput').value;
+    if (!output.trim()) { showToast('Nichts zum Exportieren'); return; }
+
+    var html = '<!DOCTYPE html>\n<html lang="de">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>Vanilla Component</title>\n</head>\n<body>\n  <div id="app"></div>\n  <script>\n' + output + '\n  <\/script>\n</body>\n</html>';
+
+    var blob = new Blob([html], { type: 'text/html' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'vanilla-component.html';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('Export heruntergeladen!');
+  });
+
+  /* Paste */
+  document.getElementById('btnPasteReact').addEventListener('click', function() {
+    navigator.clipboard.readText().then(function(text) {
+      document.getElementById('reactInput').value = text;
+      saveCurrentCode();
+      updateStats();
+      showToast('Eingefuegt!');
+    }).catch(function() {
+      showToast('Zugriff auf Zwischenablage verweigert');
+    });
+  });
+
+  /* Side panel tabs */
+  var tabs = document.querySelectorAll('.side-tab');
+  for (var t = 0; t < tabs.length; t++) {
+    tabs[t].addEventListener('click', function() {
+      for (var x = 0; x < tabs.length; x++) tabs[x].classList.remove('active');
+      this.classList.add('active');
+      currentTab = this.getAttribute('data-tab');
+      renderSidePanel();
+    });
+  }
+
+  /* Toggle side panel */
+  document.getElementById('btnToggleSide').addEventListener('click', function() {
+    document.getElementById('sidePanel').classList.toggle('collapsed');
+  });
+
+  /* Auto-save on input */
+  document.getElementById('reactInput').addEventListener('input', function() {
+    saveCurrentCode();
+    updateStats();
+  });
+
+  /* Keyboard shortcut: Ctrl+Enter to convert */
+  document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      document.getElementById('btnConvert').click();
+    }
+  });
+
+  /* Log access */
+  if (window.DkzEventLog) {
+    DkzEventLog.logAccess('module_open', 'hyperreal-react');
+  }
+});
+  </script>
+  <script src="../../shared/dkz-debug.js" defer></script>
+  <script src="../../shared/dkz-guide.js" defer></script>
+  <script src="../../shared/dkz-navbar.js" defer></script>
+  <script src="../../shared/dkz-autobug.js" defer></script>
 </body>
 </html>
