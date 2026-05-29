@@ -1,0 +1,50 @@
+name: Auto Update Issues on Commit
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  update-issues:
+    runs-on: ubuntu-latest
+    name: Link commits to issues
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 5
+
+      - name: Parse commits and update issues
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "=== Parsing recent commits ==="
+          
+          # Get last 5 commits
+          git log -5 --pretty=format:"%h %s" | while read -r line; do
+            echo "Commit: $line"
+            
+            # Extract issue numbers from commit messages
+            ISSUES=$(echo "$line" | grep -oP '#\d+' | tr -d '#' || true)
+            HASH=$(echo "$line" | cut -d' ' -f1)
+            MSG=$(echo "$line" | cut -d' ' -f2-)
+            
+            for ISSUE in $ISSUES; do
+              echo "  Linking to issue #$ISSUE"
+              gh issue comment "$ISSUE" --body "Commit [\`$HASH\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }}) referenced this issue: $MSG"
+            done
+          done
+
+      - name: Create daily status comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Count open issues by priority
+          HIGH=$(gh issue list --label "priority-high" --state open --json number --jq length 2>/dev/null || echo 0)
+          MED=$(gh issue list --label "priority-medium" --state open --json number --jq length 2>/dev/null || echo 0)
+          LOW=$(gh issue list --label "priority-low" --state open --json number --jq length 2>/dev/null || echo 0)
+          TOTAL=$(gh issue list --state open --json number --jq length 2>/dev/null || echo 0)
+          
+          echo "Open Issues: $TOTAL (High: $HIGH, Medium: $MED, Low: $LOW)"

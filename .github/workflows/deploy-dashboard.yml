@@ -1,70 +1,42 @@
-name: 🚀 DkZ Dashboard — Auto-Deploy (3 Domains)
+name: Deploy Dashboard to VPS
 
 on:
   push:
-    branches: [main, feat/second-brain-v2-dashy-nexus]
+    branches: [main]
     paths:
       - '01_PROJECTS/01_dashboard/**'
+      - '.github/workflows/deploy-dashboard.yml'
   workflow_dispatch:
-
-env:
-  VPS_HOST: srv1298466.hstgr.cloud
-  VPS_PATH: /var/www/devkitz-dashboard/
 
 jobs:
   deploy:
-    name: 📦 Deploy Dashboard → devkitz.sites + web.dkz.app + devkitz.eu
     runs-on: ubuntu-latest
+    name: Deploy to KVM8
+
     steps:
-      - name: ⬇️ Checkout
+      - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Deploy via rsync
+        uses: burnett01/rsync-deployments@7.0.1
         with:
-          sparse-checkout: |
-            01_PROJECTS/01_dashboard
+          switches: -avzr --delete --exclude='.git' --exclude='node_modules'
+          path: 01_PROJECTS/01_dashboard/
+          remote_path: /var/www/devkitz-dashboard/
+          remote_host: ${{ secrets.VPS_HOST }}
+          remote_user: ${{ secrets.VPS_USER }}
+          remote_key: ${{ secrets.VPS_SSH_KEY }}
 
-      - name: 🔑 Setup SSH
-        uses: webfactory/ssh-agent@v0.9.0
+      - name: Verify Deployment
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
-
-      - name: 🔒 Add known host
-        run: ssh-keyscan -H ${{ env.VPS_HOST }} >> ~/.ssh/known_hosts
-
-      - name: 🚀 Deploy via rsync
-        run: |
-          rsync -avz --delete \
-            --exclude='node_modules' \
-            --exclude='test-results' \
-            --exclude='test-reports' \
-            --exclude='.git' \
-            --exclude='*.spec.js' \
-            01_PROJECTS/01_dashboard/ \
-            root@${{ env.VPS_HOST }}:${{ env.VPS_PATH }}
-
-      - name: 🔧 Set permissions + reload Nginx
-        run: |
-          ssh root@${{ env.VPS_HOST }} << 'EOF'
-            chown -R www-data:www-data /var/www/devkitz-dashboard
-            chmod -R 755 /var/www/devkitz-dashboard
-            nginx -t && systemctl reload nginx
-          EOF
-
-      - name: ✅ Health Check (3 Domains)
-        run: |
-          echo "=== devkitz.sites ==="
-          curl -s -o /dev/null -w "HTTP %{http_code}\n" https://devkitz.sites/health || echo "⚠️ devkitz.sites not reachable"
-
-          echo "=== web.dkz.app ==="
-          curl -s -o /dev/null -w "HTTP %{http_code}\n" https://web.dkz.app/health || echo "⚠️ web.dkz.app not reachable"
-
-          echo "=== devkitz.eu (redirect) ==="
-          curl -s -o /dev/null -w "HTTP %{http_code}\n" -L https://devkitz.eu/ || echo "⚠️ devkitz.eu not reachable"
-
-      - name: 📢 Summary
-        if: always()
-        run: |
-          echo "::notice::✅ Deployed to 3 domains:"
-          echo "::notice::  🟢 https://devkitz.sites (Hub)"
-          echo "::notice::  🚀 https://web.dkz.app (App)"
-          echo "::notice::  🔵 https://devkitz.eu (→ redirect)"
-          echo "::notice::  📦 130 Module deployed"
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            echo "=== Deployment Check ==="
+            ls -la /var/www/devkitz-dashboard/hub/
+            echo "Module Count: $(ls -d /var/www/devkitz-dashboard/modules/*/ | wc -l)"
+            echo "=== nginx reload ==="
+            sudo nginx -t && sudo systemctl reload nginx
+            echo "=== DONE ==="
