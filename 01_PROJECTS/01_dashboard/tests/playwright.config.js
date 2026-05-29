@@ -1,7 +1,8 @@
 // @ts-check
 import { defineConfig } from '@playwright/test';
 
-const BASE = 'file:///C:/DEVKiTZ/01_PROJECTS';
+const FILE_BASE = 'file:///C:/DEVKiTZ/01_PROJECTS';
+const SERVER_BASE = 'http://localhost:8080';
 
 export default defineConfig({
   testDir: './specs',
@@ -15,7 +16,6 @@ export default defineConfig({
     ['list']
   ],
   use: {
-    baseURL: BASE,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -23,8 +23,28 @@ export default defineConfig({
   },
   projects: [
     {
-      name: 'chromium',
-      use: { channel: 'chromium' },
+      // DEFAULT: file:// Tests — laufen IMMER ohne Server
+      name: 'offline',
+      use: {
+        baseURL: FILE_BASE,
+        channel: 'chromium',
+      },
+      testMatch: [
+        '**/kontrollzentrum-smoke.spec.js',
+        '**/dashboard-smoke.spec.js',
+      ],
+    },
+    {
+      // SERVER: localhost:8080 Tests — nur mit --project=server
+      name: 'server',
+      use: {
+        baseURL: SERVER_BASE,
+        channel: 'chromium',
+      },
+      testMatch: [
+        '**/full-system.spec.js',
+        '**/agentic-audit.spec.js',
+      ],
     },
   ],
 });

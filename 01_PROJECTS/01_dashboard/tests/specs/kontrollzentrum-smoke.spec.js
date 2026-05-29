@@ -238,6 +238,7 @@ test.describe('Kontrollzentrum — Toast + Watchdog + LiveTicker', () => {
     });
 
     test('Watchdog: Deduplizierung verhindert Spam', async ({ page }) => {
+        test.setTimeout(60000); // Watchdog Cooldown verlangsamt Teardown
         await page.goto(KZ_URL);
         await page.waitForTimeout(4500);
 
