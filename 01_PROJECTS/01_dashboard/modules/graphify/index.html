@@ -209,7 +209,11 @@ let groups = [], ctxNode = null;
 const CAT_COLORS = {
   output:'#3b82f6', backend:'#8b5cf6', git:'#f59e0b', module:'#10b981',
   rules:'#ef4444', nlm:'#ec4899', design:'#06b6d4', data:'#84cc16',
-  security:'#f97316', agent:'#a855f7', research:'#14b8a6', infra:'#6366f1', general:'#6b7280'
+  security:'#f97316', agent:'#a855f7', research:'#14b8a6', infra:'#6366f1', general:'#6b7280',
+  // Multi-Source Categories (OpenHumans, GitNexus, MiroFish)
+  openhumans:'#a855f7', participant:'#ec4899', genomics:'#06b6d4',
+  file:'#f97316', 'class':'#3b82f6', 'function':'#00ff88', dependency:'#8b5cf6',
+  actor:'#3b82f6', policy:'#fa1e4e', topic:'#00ff88', factor:'#ffb800'
 };
 
 function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
@@ -904,6 +908,52 @@ window.graphifyOpenNode = function(nodeId){
 };
 
 // === SEARCH HIGHLIGHT ===
+// === MULTI-SOURCE IMPORT API: window.graphifyImport(source, data) ===
+window.graphifyImport = function(source, data){
+  if(!data || !data.nodes || !data.edges) return false;
+  const sourcePrefix = source || 'external';
+  // Add new nodes with offset to avoid overlap
+  const offsetX = (Math.random()-0.5) * 800;
+  const offsetY = (Math.random()-0.5) * 800;
+  data.nodes.forEach(n => {
+    // Skip duplicates
+    if(nodes.find(x => x.id === n.id)) return;
+    nodes.push({
+      ...n,
+      x: offsetX + Math.random()*400-200,
+      y: offsetY + Math.random()*400-200,
+      vx: 0, vy: 0, fx: null, fy: null,
+      radius: n.level===1 ? 14 : n.level===2 ? 9 : 6,
+      visible: true,
+      _source: sourcePrefix
+    });
+  });
+  data.edges.forEach(e => {
+    edges.push({...e, _source: sourcePrefix});
+  });
+  document.getElementById('nodeCount').textContent = nodes.length;
+  document.getElementById('edgeCount').textContent = edges.length;
+  buildFilters();
+  buildLegend();
+  startSim();
+  return true;
+};
+
+function handleAutoImport(){
+  const params = new URLSearchParams(window.location.search);
+  const importSrc = params.get('import');
+  if(!importSrc) return;
+  const key = 'graphify_import_' + importSrc;
+  const raw = localStorage.getItem(key);
+  if(!raw) return;
+  try {
+    const data = JSON.parse(raw);
+    window.graphifyImport(importSrc, data);
+    localStorage.removeItem(key); // Clean up after import
+  } catch(e) { /* silent */ }
+}
+
+// === SEARCH HIGHLIGHT ===
 const _origDraw2 = draw;
 draw = function(){
   _origDraw2();
@@ -940,6 +990,8 @@ window.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => { initNanoBots(); }, 100);
   // Deep-Link pruefen nach kurzer Verzoegerung (Graph muss geladen sein)
   setTimeout(() => { handleDeepLink(); }, 600);
+  // Auto-Import von localStorage (OpenHumans, GitNexus, MiroFish)
+  setTimeout(() => { handleAutoImport(); }, 700);
 });
 </script>
 <script src="../../shared/dkz-debug.js"></script>
