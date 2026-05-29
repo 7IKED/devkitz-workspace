@@ -1510,16 +1510,24 @@ Markdown + emoji. Concise bullets (BP-05). Complete copy-paste snippets.
         st.style.color = res.ok ? '#00ff88' : '#fa1e4e';
     }
 
-    // Init
+    // Init — mit Error-Boundary (kein roter Konsolen-Fehler)
     function init() {
-        _migrateKeysToCookies();
-        loadMatrixData();
-        injectChatWidget();
-        checkGateway().then(online => {
-            if (online) connectWebSocket();
-        });
-        if (_matrixConfig && _matrixConfig.token) {
-            setTimeout(_connectMatrix, 1000);
+        try {
+            _migrateKeysToCookies();
+            loadMatrixData();
+            injectChatWidget();
+            checkGateway().then(online => {
+                if (online) connectWebSocket();
+            }).catch(() => { /* Gateway offline — normal */ });
+            if (_matrixConfig && _matrixConfig.token) {
+                setTimeout(() => {
+                    try { _connectMatrix(); } catch (e) {
+                        console.warn('[DkZ Copilot] Matrix-Verbindung fehlgeschlagen:', e.message);
+                    }
+                }, 1000);
+            }
+        } catch (e) {
+            console.warn('[DkZ Copilot] Init-Fehler (nicht kritisch):', e.message);
         }
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
