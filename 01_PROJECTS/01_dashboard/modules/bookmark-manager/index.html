@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="de">
+
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <link rel="manifest" href="../../shared/manifest.json">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v1.0.0">
+    <title>&#128278; Bookmark Manager &#8212; DEVKiTZ&#8482;</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #fa1e4e;
+            --bg: #060608;
+            --bg-card: #0e0e12;
+            --bg-card2: #16161c;
+            --bg-hover: #1a1a22;
+            --text: #e8e8ec;
+            --text-dim: #8888a0;
+            --green: #00ff88;
+            --yellow: #ffb800;
+            --red: #ff3b5c;
+            --blue: #55acee;
+            --border: #1e1e28;
+            --radius: 12px;
+            --glass: rgba(14, 14, 18, 0.8);
+            --blur: blur(24px);
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 6px; }
+
+        .bg-mesh { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+        .bg-blob {
+            position: absolute; border-radius: 50%;
+            filter: blur(120px); opacity: .06;
+            animation: bf 20s ease-in-out infinite;
+        }
+        .bg-blob:nth-child(1) { width: 500px; height: 500px; background: var(--accent); top: -10%; left: 10%; }
+        .bg-blob:nth-child(2) { width: 350px; height: 350px; background: var(--green); bottom: 10%; right: 10%; animation-delay: -8s; }
+        @keyframes bf { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(30px,-40px) scale(1.1); } }
+
+        .app { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
+        .header {
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            display: flex; align-items: center; gap: 14px;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .back-btn {
+            padding: 7px 14px; border: 1px solid var(--border); border-radius: 10px;
+            background: rgba(255,255,255,.03); color: var(--text-dim);
+            font-size: 11px; cursor: pointer; text-decoration: none; font-family: var(--font);
+        }
+        .header h1 {
+            font-size: 22px; font-weight: 900;
+            background: linear-gradient(135deg, var(--accent), var(--yellow));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .hdr-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+        .hdr-btn {
+            padding: 7px 13px; border: 1px solid var(--border); border-radius: 10px;
+            background: rgba(255,255,255,.03); color: var(--text-dim);
+            font-family: var(--font); font-size: 11px; cursor: pointer;
+            transition: all .2s;
+        }
+        .hdr-btn:hover { border-color: var(--accent); color: var(--text); }
+        .ver { font-size: 9px; color: var(--text-dim); font-family: var(--mono); }
+
+        .content { padding: 20px 28px; flex: 1; display: flex; gap: 16px; }
+
+        .sidebar { width: 300px; display: flex; flex-direction: column; gap: 10px; }
+        .main { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+
+        .search-box {
+            position: relative;
+        }
+        .search {
+            padding: 10px 14px 10px 36px; background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: 10px;
+            color: var(--text); font-family: var(--font); font-size: 12px;
+            outline: none; width: 100%; transition: border-color .2s;
+        }
+        .search:focus { border-color: var(--accent); }
+        .search-icon {
+            position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+            font-size: 14px; pointer-events: none;
+        }
+
+        .tag-filters { display: flex; gap: 4px; flex-wrap: wrap; }
+        .tag-btn {
+            padding: 4px 10px; border: 1px solid var(--border); border-radius: 16px;
+            background: transparent; color: var(--text-dim); font-size: 9px;
+            cursor: pointer; font-family: var(--font); transition: all .2s;
+        }
+        .tag-btn:hover { border-color: var(--accent); color: var(--text); }
+        .tag-btn.active { background: rgba(250,30,78,.1); border-color: var(--accent); color: var(--accent); }
+
+        .bookmark-list { display: flex; flex-direction: column; gap: 6px; flex: 1; overflow-y: auto; }
+
+        .bm-item {
+            padding: 12px; background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: 10px;
+            cursor: pointer; transition: all .2s; position: relative;
+        }
+        .bm-item:hover, .bm-item.active { border-color: var(--accent); background: var(--bg-hover); }
+        .bm-item.dragging { opacity: .5; border-color: var(--green); }
+        .bm-item .bm-title { font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+        .bm-item .bm-url { font-size: 10px; color: var(--blue); font-family: var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .bm-item .bm-tags { margin-top: 4px; display: flex; gap: 4px; flex-wrap: wrap; }
+        .bm-item .bm-fav { position: absolute; top: 10px; right: 10px; font-size: 14px; cursor: pointer; filter: grayscale(1); transition: filter .2s; }
+        .bm-item .bm-fav.is-fav { filter: grayscale(0); }
+
+        .tag {
+            display: inline-block; padding: 2px 8px;
+            border-radius: 10px; font-size: 9px; margin-right: 2px;
+        }
+
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 18px;
+        }
+        .card h3 { font-size: 13px; font-weight: 800; margin-bottom: 12px; }
+
+        .form-row { display: flex; gap: 8px; margin-bottom: 8px; }
+        .input {
+            padding: 8px 12px; background: var(--bg-card2);
+            border: 1px solid var(--border); border-radius: 8px;
+            color: var(--text); font-family: var(--font); font-size: 12px;
+            outline: none; flex: 1; transition: border-color .2s;
+        }
+        .input:focus { border-color: var(--accent); }
+        select.input { cursor: pointer; }
+
+        .btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+        .btn {
+            padding: 8px 16px; border: none; border-radius: 8px;
+            background: var(--accent); color: #fff;
+            font-family: var(--font); font-size: 11px; font-weight: 700;
+            cursor: pointer; transition: all .2s;
+        }
+        .btn:hover { opacity: .85; transform: translateY(-1px); }
+        .btn.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .btn.secondary:hover { border-color: var(--accent); }
+        .btn.green { background: var(--green); color: #000; }
+
+        .stats-row {
+            display: flex; gap: 12px; margin-bottom: 6px;
+        }
+        .stat-card {
+            flex: 1; padding: 12px; background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: 10px; text-align: center;
+        }
+        .stat-card .stat-num { font-size: 24px; font-weight: 800; color: var(--green); }
+        .stat-card .stat-label { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+
+        .filter-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
+        .filter-btn {
+            padding: 5px 12px; border: 1px solid var(--border); border-radius: 8px;
+            background: transparent; color: var(--text-dim); font-size: 10px;
+            cursor: pointer; font-family: var(--font); transition: all .2s;
+        }
+        .filter-btn.active { background: rgba(250,30,78,.12); border-color: var(--accent); color: var(--accent); }
+
+        .empty-state {
+            text-align: center; padding: 40px 20px; color: var(--text-dim);
+        }
+        .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+        .empty-state p { font-size: 13px; }
+
+        .toast {
+            position: fixed; bottom: 24px; right: 24px;
+            padding: 12px 20px; background: var(--green); color: #000;
+            font-size: 12px; font-weight: 700; border-radius: 10px;
+            z-index: 300; opacity: 0; transform: translateY(20px);
+            transition: all .3s; pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+
+        @media (max-width: 768px) {
+            .content { flex-direction: column; }
+            .sidebar { width: 100%; }
+            .stats-row { flex-wrap: wrap; }
+            .stat-card { min-width: 80px; }
+        }
+    </style>
+    <script src="../../shared/dkz-updater.js"></script>
+</head>
+
+<body data-dkz-module="bookmark-manager" data-dkz-appid="DKZ-MOD-BKM" data-dkz-version="v1.0.0" data-dkz-title="Bookmark Manager" data-dkz-icon="&#128278;" data-dkz-separable="true">
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
+    <div class="app">
+        <div class="header">
+            <a href="../hub/index.html" class="back-btn" title="Hub">&#127968; Hub</a>
+            <h1>&#128278; Bookmark Manager</h1>
+            <div class="hdr-right">
+                <button class="hdr-btn" onclick="exportBookmarks()">&#11015; Export</button>
+                <button class="hdr-btn" onclick="importBookmarks()">&#128228; Import</button>
+                <span class="ver">v1.0.0</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="sidebar">
+                <div class="search-box">
+                    <span class="search-icon">&#128269;</span>
+                    <input class="search" id="search" placeholder="Bookmarks durchsuchen..." oninput="renderList()">
+                </div>
+
+                <div class="filter-bar">
+                    <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">Alle</button>
+                    <button class="filter-btn" data-filter="fav" onclick="setFilter('fav',this)">&#11088; Favoriten</button>
+                </div>
+
+                <div class="tag-filters" id="tagFilters"></div>
+
+                <button class="btn green" onclick="newBookmark()" style="width:100%">+ Neues Bookmark</button>
+
+                <div class="bookmark-list" id="bookmarkList"></div>
+            </div>
+
+            <div class="main">
+                <div class="stats-row">
+                    <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Gesamt</div></div>
+                    <div class="stat-card"><div class="stat-num" id="statFavs">0</div><div class="stat-label">Favoriten</div></div>
+                    <div class="stat-card"><div class="stat-num" id="statTags">0</div><div class="stat-label">Tags</div></div>
+                    <div class="stat-card"><div class="stat-num" id="statToday">0</div><div class="stat-label">Heute</div></div>
+                </div>
+
+                <div class="card" id="editor">
+                    <h3 id="editorTitle">&#10133; Neues Bookmark</h3>
+                    <div class="form-row">
+                        <input class="input" id="bmTitle" placeholder="Titel (z.B. GitHub Dashboard)">
+                    </div>
+                    <div class="form-row">
+                        <input class="input" id="bmUrl" placeholder="URL (z.B. https://github.com)">
+                    </div>
+                    <div class="form-row">
+                        <input class="input" id="bmTags" placeholder="Tags (kommasepariert, z.B. dev, tools, github)">
+                        <select class="input" id="bmCategory" style="max-width:160px">
+                            <option value="general">&#128193; Allgemein</option>
+                            <option value="dev">&#128187; Entwicklung</option>
+                            <option value="design">&#127912; Design</option>
+                            <option value="ai">&#129302; KI / AI</option>
+                            <option value="docs">&#128214; Dokumentation</option>
+                            <option value="tools">&#128295; Tools</option>
+                            <option value="social">&#128172; Social</option>
+                            <option value="news">&#128240; News</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <input class="input" id="bmNote" placeholder="Notiz (optional)">
+                    </div>
+                    <div class="btns">
+                        <button class="btn" onclick="saveBookmark()">&#128190; Speichern</button>
+                        <button class="btn secondary" onclick="newBookmark()">&#128221; Neu</button>
+                        <button class="btn secondary" onclick="deleteBookmark()">&#128465; Loeschen</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <script>
+        /* === XSS Protection === */
+        function esc(s) {
+            if (!s) return '';
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+        }
+
+        /* === State === */
+        const STORAGE_KEY = 'dkz-bookmark-manager';
+        let bookmarks = [];
+        let activeId = null;
+        let currentFilter = 'all';
+        let activeTag = null;
+        let dragSrcId = null;
+
+        const TAG_COLORS = [
+            { bg: 'rgba(250,30,78,.12)', border: 'rgba(250,30,78,.35)', color: '#fa1e4e' },
+            { bg: 'rgba(0,255,136,.12)', border: 'rgba(0,255,136,.35)', color: '#00ff88' },
+            { bg: 'rgba(85,172,238,.12)', border: 'rgba(85,172,238,.35)', color: '#55acee' },
+            { bg: 'rgba(255,184,0,.12)', border: 'rgba(255,184,0,.35)', color: '#ffb800' },
+            { bg: 'rgba(168,85,247,.12)', border: 'rgba(168,85,247,.35)', color: '#a855f7' },
+            { bg: 'rgba(236,72,153,.12)', border: 'rgba(236,72,153,.35)', color: '#ec4899' },
+            { bg: 'rgba(20,184,166,.12)', border: 'rgba(20,184,166,.35)', color: '#14b8a6' },
+            { bg: 'rgba(251,146,60,.12)', border: 'rgba(251,146,60,.35)', color: '#fb923c' },
+        ];
+
+        const CATEGORY_ICONS = {
+            general: '&#128193;', dev: '&#128187;', design: '&#127912;',
+            ai: '&#129302;', docs: '&#128214;', tools: '&#128295;',
+            social: '&#128172;', news: '&#128240;'
+        };
+
+        const defaultBookmarks = [
+            { id: 1, title: 'GitHub', url: 'https://github.com', tags: ['dev', 'code', 'git'], category: 'dev', fav: true, note: 'Code Repository', created: '2026-05-29' },
+            { id: 2, title: 'MDN Web Docs', url: 'https://developer.mozilla.org', tags: ['docs', 'web', 'referenz'], category: 'docs', fav: true, note: 'Web-Dokumentation', created: '2026-05-29' },
+            { id: 3, title: 'Figma', url: 'https://figma.com', tags: ['design', 'ui', 'prototyping'], category: 'design', fav: false, note: 'Design Tool', created: '2026-05-29' },
+            { id: 4, title: 'ChatGPT', url: 'https://chat.openai.com', tags: ['ai', 'chat', 'openai'], category: 'ai', fav: true, note: 'KI-Assistent', created: '2026-05-29' },
+            { id: 5, title: 'Hacker News', url: 'https://news.ycombinator.com', tags: ['news', 'tech', 'startups'], category: 'news', fav: false, note: 'Tech-News', created: '2026-05-29' },
+            { id: 6, title: 'Can I Use', url: 'https://caniuse.com', tags: ['dev', 'browser', 'css'], category: 'tools', fav: false, note: 'Browser-Kompatibilitaet', created: '2026-05-29' },
+            { id: 7, title: 'Dribbble', url: 'https://dribbble.com', tags: ['design', 'inspiration', 'ui'], category: 'design', fav: false, note: 'Design-Inspiration', created: '2026-05-28' },
+            { id: 8, title: 'DEVKiTZ Dashboard', url: 'http://localhost:3000', tags: ['dev', 'dashboard', 'dkz'], category: 'dev', fav: true, note: 'Lokales Dashboard', created: '2026-05-28' },
+        ];
+
+        /* === Init === */
+        function init() {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                bookmarks = stored ? JSON.parse(stored) : [];
+                if (!bookmarks.length) {
+                    bookmarks = defaultBookmarks;
+                    save();
+                }
+            } catch (e) {
+                console.warn('Bookmark Manager: Init-Fehler', e);
+                bookmarks = defaultBookmarks;
+            }
+            renderList();
+            renderTags();
+            updateStats();
+            if (bookmarks.length) loadBookmark(bookmarks[0].id);
+        }
+
+        function save() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(bookmarks));
+            } catch (e) {
+                console.warn('Bookmark Manager: Save-Fehler', e);
+            }
+        }
+
+        /* === Tag Color === */
+        function getTagColor(tag) {
+            let hash = 0;
+            for (let i = 0; i < tag.length; i++) hash = tag.charCodeAt(i) + ((hash << 5) - hash);
+            return TAG_COLORS[Math.abs(hash) % TAG_COLORS.length];
+        }
+
+        /* === Render === */
+        function renderList() {
+            const q = document.getElementById('search').value.toLowerCase();
+            const filtered = bookmarks.filter(function(bm) {
+                if (currentFilter === 'fav' && !bm.fav) return false;
+                if (activeTag && !(bm.tags || []).includes(activeTag)) return false;
+                if (!q) return true;
+                return bm.title.toLowerCase().includes(q) ||
+                       bm.url.toLowerCase().includes(q) ||
+                       (bm.note || '').toLowerCase().includes(q) ||
+                       (bm.tags || []).some(function(t) { return t.toLowerCase().includes(q); });
+            });
+
+            var container = document.getElementById('bookmarkList');
+            if (!filtered.length) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128278;</div><p>Keine Bookmarks gefunden</p></div>';
+                return;
+            }
+
+            container.innerHTML = filtered.map(function(bm) {
+                var catIcon = CATEGORY_ICONS[bm.category] || '&#128193;';
+                var tagsHtml = (bm.tags || []).map(function(t) {
+                    var c = getTagColor(t);
+                    return '<span class="tag" style="background:' + c.bg + ';border:1px solid ' + c.border + ';color:' + c.color + '">' + esc(t) + '</span>';
+                }).join('');
+                return '<div class="bm-item' + (bm.id === activeId ? ' active' : '') + '" onclick="loadBookmark(' + bm.id + ')" draggable="true" data-id="' + bm.id + '" ondragstart="dragStart(event,' + bm.id + ')" ondragover="dragOver(event)" ondrop="drop(event,' + bm.id + ')">' +
+                    '<div class="bm-title">' + catIcon + ' ' + esc(bm.title) + '</div>' +
+                    '<div class="bm-url">' + esc(bm.url) + '</div>' +
+                    '<div class="bm-tags">' + tagsHtml + '</div>' +
+                    '<span class="bm-fav' + (bm.fav ? ' is-fav' : '') + '" onclick="event.stopPropagation();toggleFav(' + bm.id + ')">' + (bm.fav ? '&#11088;' : '&#9734;') + '</span>' +
+                    '</div>';
+            }).join('');
+        }
+
+        function renderTags() {
+            var allTags = [];
+            bookmarks.forEach(function(bm) {
+                (bm.tags || []).forEach(function(t) {
+                    if (allTags.indexOf(t) === -1) allTags.push(t);
+                });
+            });
+            document.getElementById('tagFilters').innerHTML = allTags.map(function(t) {
+                var c = getTagColor(t);
+                return '<button class="tag-btn' + (activeTag === t ? ' active' : '') + '" onclick="toggleTag(\'' + esc(t) + '\')" style="' + (activeTag === t ? 'background:' + c.bg + ';border-color:' + c.border + ';color:' + c.color : '') + '">' + esc(t) + '</button>';
+            }).join('');
+        }
+
+        function updateStats() {
+            var today = new Date().toISOString().slice(0, 10);
+            var allTags = [];
+            bookmarks.forEach(function(bm) {
+                (bm.tags || []).forEach(function(t) { if (allTags.indexOf(t) === -1) allTags.push(t); });
+            });
+            document.getElementById('statTotal').textContent = bookmarks.length;
+            document.getElementById('statFavs').textContent = bookmarks.filter(function(b) { return b.fav; }).length;
+            document.getElementById('statTags').textContent = allTags.length;
+            document.getElementById('statToday').textContent = bookmarks.filter(function(b) { return b.created === today; }).length;
+        }
+
+        /* === CRUD === */
+        function loadBookmark(id) {
+            activeId = id;
+            var bm = bookmarks.find(function(x) { return x.id === id; });
+            if (!bm) return;
+            document.getElementById('bmTitle').value = bm.title;
+            document.getElementById('bmUrl').value = bm.url;
+            document.getElementById('bmTags').value = (bm.tags || []).join(', ');
+            document.getElementById('bmCategory').value = bm.category || 'general';
+            document.getElementById('bmNote').value = bm.note || '';
+            document.getElementById('editorTitle').innerHTML = '&#9998; Bookmark bearbeiten';
+            renderList();
+        }
+
+        function newBookmark() {
+            activeId = null;
+            ['bmTitle', 'bmUrl', 'bmTags', 'bmNote'].forEach(function(id) { document.getElementById(id).value = ''; });
+            document.getElementById('bmCategory').value = 'general';
+            document.getElementById('editorTitle').innerHTML = '&#10133; Neues Bookmark';
+            document.getElementById('bmTitle').focus();
+        }
+
+        function saveBookmark() {
+            var title = document.getElementById('bmTitle').value.trim();
+            var url = document.getElementById('bmUrl').value.trim();
+            if (!title) { showToast('Titel fehlt!'); return; }
+            if (!url) { showToast('URL fehlt!'); return; }
+            if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
+
+            var data = {
+                title: title,
+                url: url,
+                tags: document.getElementById('bmTags').value.split(',').map(function(t) { return t.trim().toLowerCase(); }).filter(Boolean),
+                category: document.getElementById('bmCategory').value,
+                note: document.getElementById('bmNote').value.trim()
+            };
+
+            if (activeId) {
+                var idx = bookmarks.findIndex(function(b) { return b.id === activeId; });
+                if (idx >= 0) bookmarks[idx] = Object.assign({}, bookmarks[idx], data);
+                showToast('&#9989; Bookmark aktualisiert!');
+            } else {
+                data.id = Date.now();
+                data.fav = false;
+                data.created = new Date().toISOString().slice(0, 10);
+                bookmarks.unshift(data);
+                activeId = data.id;
+                showToast('&#9989; Bookmark gespeichert!');
+            }
+            save(); renderList(); renderTags(); updateStats();
+        }
+
+        function deleteBookmark() {
+            if (!activeId) return;
+            bookmarks = bookmarks.filter(function(b) { return b.id !== activeId; });
+            activeId = null;
+            save(); newBookmark(); renderList(); renderTags(); updateStats();
+            showToast('&#128465; Bookmark geloescht!');
+        }
+
+        function toggleFav(id) {
+            var bm = bookmarks.find(function(b) { return b.id === id; });
+            if (bm) { bm.fav = !bm.fav; save(); renderList(); updateStats(); }
+        }
+
+        /* === Filter === */
+        function setFilter(f, el) {
+            currentFilter = f;
+            document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+            el.classList.add('active');
+            renderList();
+        }
+
+        function toggleTag(tag) {
+            activeTag = activeTag === tag ? null : tag;
+            renderTags(); renderList();
+        }
+
+        /* === Drag & Drop === */
+        function dragStart(e, id) {
+            dragSrcId = id;
+            e.dataTransfer.effectAllowed = 'move';
+            e.target.classList.add('dragging');
+        }
+        function dragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+        function drop(e, targetId) {
+            e.preventDefault();
+            document.querySelectorAll('.bm-item').forEach(function(el) { el.classList.remove('dragging'); });
+            if (dragSrcId === targetId) return;
+            var srcIdx = bookmarks.findIndex(function(b) { return b.id === dragSrcId; });
+            var tgtIdx = bookmarks.findIndex(function(b) { return b.id === targetId; });
+            if (srcIdx < 0 || tgtIdx < 0) return;
+            var item = bookmarks.splice(srcIdx, 1)[0];
+            bookmarks.splice(tgtIdx, 0, item);
+            save(); renderList();
+            showToast('&#128260; Reihenfolge aktualisiert');
+        }
+
+        /* === Import/Export === */
+        function exportBookmarks() {
+            try {
+                var a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([JSON.stringify(bookmarks, null, 2)], { type: 'application/json' }));
+                a.download = 'dkz-bookmarks-' + new Date().toISOString().slice(0,10) + '.json';
+                a.click();
+                showToast('&#11015; Export erfolgreich!');
+            } catch (e) {
+                console.warn('Export-Fehler', e);
+                showToast('Export fehlgeschlagen');
+            }
+        }
+
+        function importBookmarks() {
+            var input = document.createElement('input');
+            input.type = 'file'; input.accept = '.json';
+            input.onchange = function(e) {
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    try {
+                        var imported = JSON.parse(ev.target.result);
+                        if (Array.isArray(imported)) {
+                            bookmarks = imported;
+                            save(); renderList(); renderTags(); updateStats();
+                            showToast('&#128228; ' + imported.length + ' Bookmarks importiert!');
+                        } else {
+                            showToast('Ungueltiges Format');
+                        }
+                    } catch (err) {
+                        console.warn('Import-Fehler', err);
+                        showToast('Import fehlgeschlagen');
+                    }
+                };
+                reader.readAsText(e.target.files[0]);
+            };
+            input.click();
+        }
+
+        /* === Toast === */
+        function showToast(msg) {
+            var t = document.getElementById('toast');
+            t.innerHTML = msg;
+            t.classList.add('show');
+            setTimeout(function() { t.classList.remove('show'); }, 2500);
+        }
+
+        /* === Start === */
+        init();
+    </script>
+
+    <!-- DkZ Shared Scripts (Auto-Injected) -->
+    <script src="../../shared/dkz-auth.js"></script>
+    <script src="../../shared/dkz-james.js"></script>
+    <script src="../../shared/dkz-memory.js"></script>
+    <script src="../../shared/dkz-compaction.js"></script>
+    <script src="../../shared/dkz-iceberg.js"></script>
+    <script src="../../shared/dkz-prompt-score.js"></script>
+    <script src="../../shared/dkz-builder-bridge.js"></script>
+    <script src="../../shared/dkz-debug.js"></script>
+    <script src="../../shared/dkz-analyser.js"></script>
+    <script src="../../shared/dkz-guide.js"></script>
+    <script src="../../shared/dkz-copilot.js"></script>
+    <script src="../../shared/dkz-shortcuts.js"></script>
+    <script src="../../shared/dkz-export.js"></script>
+    <script src="../../shared/dkz-crosslinks.js"></script>
+    <script src="../../shared/dkz-a11y.js"></script>
+    <script src="../../shared/dkz-test.js"></script>
+    <script src="../../shared/dkz-puter.js"></script>
+    <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("../../shared/sw.js").catch(function(){});</script>
+
+<!-- DkZ INFO + ONBOARDING -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:.3s" id="info-modal"><div style="background:#0e0e12;border:1px solid #1e1e28;border-radius:16px;padding:2rem;max-width:500px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div style="font-size:1.25rem;font-weight:800">&#128278; Bookmark Manager</div><button onclick="document.getElementById('info-modal').style.opacity='0';document.getElementById('info-modal').style.pointerEvents='none'" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.05);border-radius:6px;color:#e8e8ec;cursor:pointer;font-size:1.25rem">&times;</button></div><p style="font-size:.875rem;color:#8888a0;line-height:1.8">Bookmarks speichern, taggen, durchsuchen. Kategorien mit Farbcodierung, Favoriten-System, Drag&amp;Drop Sortierung und JSON Import/Export.</p></div></div>
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1001;opacity:0;pointer-events:none;transition:.3s" id="onboarding"><div style="background:#0e0e12;border:1px solid #1e1e28;border-radius:16px;padding:2rem;max-width:420px;text-align:center"><div style="font-size:1.25rem;font-weight:800;margin-bottom:.75rem">&#128278; Bookmark Manager</div><p style="font-size:.875rem;color:#8888a0;line-height:1.8;margin-bottom:1rem">Verwalte deine Lesezeichen mit Tags, Kategorien und Favoriten. Alles offline in localStorage.</p><button style="width:100%;padding:.625rem;border:none;border-radius:6px;background:linear-gradient(135deg,#fa1e4e,#ec4899);color:#fff;font-weight:700;cursor:pointer;font-family:inherit" onclick="closeOnboarding()">Los geht's!</button><div style="font-size:.7rem;color:#606060;margin-top:.5rem">Wird nur 1x gezeigt</div></div></div>
+<script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-bookmark-manager-onboarded','1')}if(!localStorage.getItem('dkz-bookmark-manager-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}</script>
+    <script src="../../shared/dkz-headbar.js"></script>
+    <script src="../../shared/dkz-navbar.js"></script>
+    <script src="../../shared/dkz-console.js"></script>
+</body>
+
+<!-- &#8212; DEVKiTZ 2026 &#8212; All Rights Reserved -->
+</html>
