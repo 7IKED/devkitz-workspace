@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="dkz-version" content="v1.0.0">
+  <title>🎭 OpenClaw Vibe — DEVKiTZ™</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --accent: #fa1e4e;
+      --bg: #060608;
+      --bg-card: #0e0e12;
+      --bg-hover: #16161c;
+      --text: #e8e8ec;
+      --text-dim: #8888a0;
+      --green: #00ff88;
+      --yellow: #ffb800;
+      --red: #ff3b5c;
+      --border: #1e1e28;
+      --radius: 12px;
+      --glass: rgba(14, 14, 18, 0.8);
+      --blue: #4facfe;
+      --purple: #a78bfa;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      background-image:
+        radial-gradient(circle at 10% 20%, rgba(250,30,78,0.06), transparent 50%),
+        radial-gradient(circle at 90% 80%, rgba(0,255,136,0.04), transparent 50%);
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header h1 { font-size: 1.3rem; font-weight: 700; }
+    .header h1 span { color: var(--accent); }
+    .hub-btn {
+      text-decoration: none;
+      font-size: 1.4rem;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    .hub-btn:hover { background: rgba(250,30,78,0.15); border-color: var(--accent); }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+    }
+    .tab-btn {
+      padding: 12px 20px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-dim);
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+    .tab-panel { display: none; padding: 24px; }
+    .tab-panel.active { display: block; }
+
+    /* Main Layout */
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    /* Form Panel */
+    .form-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .form-card h2 { font-size: 1.1rem; margin-bottom: 16px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group label { font-size: 0.82rem; color: var(--text-dim); font-weight: 500; }
+    .form-input {
+      padding: 10px 14px;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus { border-color: var(--accent); }
+
+    /* Sliders */
+    .score-sliders { margin-top: 20px; }
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+    .slider-label {
+      width: 110px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .slider-track { flex: 1; position: relative; }
+    .slider-track input[type="range"] {
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      outline: none;
+    }
+    .slider-track input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(250,30,78,0.4);
+    }
+    .slider-val {
+      width: 36px;
+      text-align: right;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .btn-analyze {
+      margin-top: 16px;
+      padding: 12px 28px;
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+    }
+    .btn-analyze:hover { opacity: 0.85; box-shadow: 0 4px 20px rgba(250,30,78,0.3); }
+
+    /* Result Panel */
+    .result-panel {
+      display: none;
+      margin-top: 24px;
+    }
+    .result-panel.visible { display: block; }
+    .result-grid { display: grid; grid-template-columns: 280px 1fr; gap: 24px; }
+    @media (max-width: 768px) { .result-grid { grid-template-columns: 1fr; } }
+
+    /* Radar Chart (CSS Only) */
+    .radar-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .radar {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      margin: 10px 0;
+    }
+    .radar-bg {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+    }
+    .radar-ring {
+      position: absolute;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 50%;
+    }
+    .radar-axis {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 1px;
+      height: 50%;
+      background: rgba(255,255,255,0.06);
+      transform-origin: top center;
+    }
+    .radar-shape {
+      position: absolute;
+      inset: 0;
+    }
+    .radar-label {
+      position: absolute;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .radar-label.top { top: -20px; left: 50%; transform: translateX(-50%); }
+    .radar-label.right { right: -50px; top: 50%; transform: translateY(-50%); }
+    .radar-label.bottom { bottom: -20px; left: 50%; transform: translateX(-50%); }
+    .radar-label.left { left: -50px; top: 50%; transform: translateY(-50%); }
+
+    .total-score {
+      margin-top: 14px;
+      text-align: center;
+    }
+    .total-score .big {
+      font-size: 2.8rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .total-score .label { font-size: 0.8rem; color: var(--text-dim); margin-top: 4px; }
+
+    /* Score Details */
+    .score-details {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .score-details h3 { font-size: 1rem; margin-bottom: 16px; }
+    .score-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .score-bar-label { width: 90px; font-size: 0.82rem; color: var(--text-dim); }
+    .score-bar-track {
+      flex: 1;
+      height: 8px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .score-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.6s ease;
+    }
+    .score-bar-val {
+      width: 32px;
+      text-align: right;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    /* Badge */
+    .badge-section {
+      margin-top: 20px;
+      padding: 16px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .badge-section h4 { font-size: 0.9rem; margin-bottom: 10px; }
+    .vibe-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .badge-code {
+      width: 100%;
+      padding: 8px;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--green);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      resize: none;
+      outline: none;
+    }
+    .copy-btn {
+      margin-top: 6px;
+      padding: 6px 14px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover { border-color: var(--accent); }
+
+    /* History Tab */
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .history-table th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      font-weight: 500;
+      border-bottom: 1px solid var(--border);
+    }
+    .history-table td {
+      padding: 12px 14px;
+      font-size: 0.88rem;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .history-table tr:hover td { background: var(--bg-hover); }
+    .rank-num {
+      display: inline-flex;
+      width: 26px;
+      height: 26px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+    .rank-num.gold { background: rgba(255,184,0,0.2); color: var(--yellow); }
+    .rank-num.silver { background: rgba(200,200,200,0.15); color: #ccc; }
+    .rank-num.bronze { background: rgba(205,127,50,0.2); color: #cd7f32; }
+    .mini-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .history-delete {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+    .history-delete:hover { color: var(--red); }
+
+    .empty-state { text-align: center; padding: 60px 24px; color: var(--text-dim); }
+    .empty-state span { font-size: 3rem; display: block; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-left">
+      <a href="../hub/index.html" title="Hub" class="hub-btn">🏠</a>
+      <h1>🎭 OpenClaw <span>Vibe</span></h1>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="analyze">⚡ Analyse</button>
+    <button class="tab-btn" data-tab="history">📊 Ranking</button>
+  </div>
+
+  <div class="container">
+    <!-- Analyze Tab -->
+    <div class="tab-panel active" id="tab-analyze">
+      <div class="form-card">
+        <h2>🔬 Projekt Vibe Check</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Projekt Name</label>
+            <input type="text" class="form-input" id="projName" placeholder="z.B. DkZ Dashboard">
+          </div>
+          <div class="form-group">
+            <label>URL (optional)</label>
+            <input type="url" class="form-input" id="projUrl" placeholder="https://github.com/...">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Beschreibung</label>
+          <input type="text" class="form-input" id="projDesc" placeholder="Kurze Projektbeschreibung">
+        </div>
+
+        <div class="score-sliders">
+          <div class="slider-row">
+            <span class="slider-label">🎨 Design</span>
+            <div class="slider-track"><input type="range" min="0" max="100" value="70" id="slDesign"></div>
+            <span class="slider-val" id="valDesign">70</span>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">🧩 UX</span>
+            <div class="slider-track"><input type="range" min="0" max="100" value="65" id="slUX"></div>
+            <span class="slider-val" id="valUX">65</span>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">💻 Code</span>
+            <div class="slider-track"><input type="range" min="0" max="100" value="75" id="slCode"></div>
+            <span class="slider-val" id="valCode">75</span>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">⚡ Performance</span>
+            <div class="slider-track"><input type="range" min="0" max="100" value="60" id="slPerf"></div>
+            <span class="slider-val" id="valPerf">60</span>
+          </div>
+        </div>
+
+        <button class="btn-analyze" id="btnAnalyze">🎭 Vibe analysieren</button>
+      </div>
+
+      <!-- Result -->
+      <div class="result-panel" id="resultPanel">
+        <div class="result-grid">
+          <!-- Radar Chart -->
+          <div class="radar-container">
+            <h3 style="font-size:0.9rem;margin-bottom:8px;">Vibe Radar</h3>
+            <div class="radar" id="radarChart">
+              <!-- Rings -->
+              <div class="radar-ring" style="inset:10%;"></div>
+              <div class="radar-ring" style="inset:25%;"></div>
+              <div class="radar-ring" style="inset:40%;"></div>
+              <!-- Axes -->
+              <div class="radar-axis" style="transform:rotate(0deg);"></div>
+              <div class="radar-axis" style="transform:rotate(90deg);"></div>
+              <div class="radar-axis" style="transform:rotate(180deg);"></div>
+              <div class="radar-axis" style="transform:rotate(270deg);"></div>
+              <!-- Labels -->
+              <span class="radar-label top">Design</span>
+              <span class="radar-label right">UX</span>
+              <span class="radar-label bottom">Code</span>
+              <span class="radar-label left">Perf</span>
+              <!-- SVG Shape -->
+              <svg class="radar-shape" viewBox="0 0 220 220" id="radarSvg">
+                <polygon id="radarPoly" fill="rgba(250,30,78,0.2)" stroke="var(--accent)" stroke-width="2" points=""/>
+              </svg>
+            </div>
+            <div class="total-score">
+              <div class="big" id="totalScore">—</div>
+              <div class="label">Vibe Score</div>
+            </div>
+          </div>
+
+          <!-- Score Details -->
+          <div class="score-details">
+            <h3>Score Breakdown</h3>
+            <div class="score-bar-row">
+              <span class="score-bar-label">🎨 Design</span>
+              <div class="score-bar-track"><div class="score-bar-fill" id="barDesign" style="width:0;background:var(--accent);"></div></div>
+              <span class="score-bar-val" id="bvDesign">0</span>
+            </div>
+            <div class="score-bar-row">
+              <span class="score-bar-label">🧩 UX</span>
+              <div class="score-bar-track"><div class="score-bar-fill" id="barUX" style="width:0;background:var(--blue);"></div></div>
+              <span class="score-bar-val" id="bvUX">0</span>
+            </div>
+            <div class="score-bar-row">
+              <span class="score-bar-label">💻 Code</span>
+              <div class="score-bar-track"><div class="score-bar-fill" id="barCode" style="width:0;background:var(--green);"></div></div>
+              <span class="score-bar-val" id="bvCode">0</span>
+            </div>
+            <div class="score-bar-row">
+              <span class="score-bar-label">⚡ Performance</span>
+              <div class="score-bar-track"><div class="score-bar-fill" id="barPerf" style="width:0;background:var(--yellow);"></div></div>
+              <span class="score-bar-val" id="bvPerf">0</span>
+            </div>
+
+            <!-- Badge Generator -->
+            <div class="badge-section">
+              <h4>🏷️ Vibe Badge</h4>
+              <div id="badgePreview"></div>
+              <textarea class="badge-code" id="badgeCode" rows="2" readonly></textarea>
+              <button class="copy-btn" id="copyBadge">📋 Badge kopieren</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- History/Ranking Tab -->
+    <div class="tab-panel" id="tab-history">
+      <div class="form-card">
+        <h2>🏆 Vibe Ranking</h2>
+        <div style="overflow-x:auto;">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Projekt</th>
+                <th>Design</th>
+                <th>UX</th>
+                <th>Code</th>
+                <th>Perf</th>
+                <th>Score</th>
+                <th>Datum</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="historyBody"></tbody>
+          </table>
+          <div class="empty-state" id="historyEmpty" style="display:none;">
+            <span>🎭</span>
+            <p>Noch keine Analysen. Starte einen Vibe Check!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+
+    const STORAGE_KEY = 'dkz-openclaw-vibe';
+    let history = [];
+
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) history = JSON.parse(raw) || [];
+      } catch (e) {
+        console.warn('OpenClaw Vibe: Laden fehlgeschlagen', e);
+      }
+    }
+
+    function saveData() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+      } catch (e) {
+        console.warn('OpenClaw Vibe: Speichern fehlgeschlagen', e);
+      }
+    }
+
+    function getVibeLabel(score) {
+      if (score >= 90) return { label: '🔥 Legendary', color: 'var(--yellow)' };
+      if (score >= 75) return { label: '✨ Vibing', color: 'var(--green)' };
+      if (score >= 55) return { label: '👍 Decent', color: 'var(--blue)' };
+      if (score >= 35) return { label: '😐 Mid', color: 'var(--text-dim)' };
+      return { label: '💀 Oof', color: 'var(--red)' };
+    }
+
+    // Tabs
+    document.querySelectorAll('.tab-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+        document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+        if (btn.dataset.tab === 'history') renderHistory();
+      });
+    });
+
+    // Sliders sync
+    ['Design', 'UX', 'Code', 'Perf'].forEach(function(key) {
+      var sl = document.getElementById('sl' + key);
+      var val = document.getElementById('val' + key);
+      sl.addEventListener('input', function() { val.textContent = sl.value; });
+    });
+
+    // Analyze
+    document.getElementById('btnAnalyze').addEventListener('click', function() {
+      try {
+        var name = document.getElementById('projName').value.trim();
+        if (!name) { document.getElementById('projName').focus(); return; }
+
+        var scores = {
+          design: parseInt(document.getElementById('slDesign').value),
+          ux: parseInt(document.getElementById('slUX').value),
+          code: parseInt(document.getElementById('slCode').value),
+          perf: parseInt(document.getElementById('slPerf').value)
+        };
+        var total = Math.round((scores.design + scores.ux + scores.code + scores.perf) / 4);
+
+        var entry = {
+          id: 'v' + Date.now(),
+          name: name,
+          url: document.getElementById('projUrl').value.trim(),
+          desc: document.getElementById('projDesc').value.trim(),
+          scores: scores,
+          total: total,
+          date: new Date().toISOString().split('T')[0]
+        };
+
+        history.unshift(entry);
+        saveData();
+        showResult(entry);
+      } catch (e) {
+        console.warn('OpenClaw Vibe: Analyse fehlgeschlagen', e);
+      }
+    });
+
+    function showResult(entry) {
+      document.getElementById('resultPanel').classList.add('visible');
+      var s = entry.scores;
+
+      // Radar polygon (top=design, right=ux, bottom=code, left=perf)
+      var cx = 110, cy = 110, r = 95;
+      var topY = cy - (s.design / 100) * r;
+      var rightX = cx + (s.ux / 100) * r;
+      var bottomY = cy + (s.code / 100) * r;
+      var leftX = cx - (s.perf / 100) * r;
+      document.getElementById('radarPoly').setAttribute('points',
+        cx + ',' + topY + ' ' + rightX + ',' + cy + ' ' + cx + ',' + bottomY + ' ' + leftX + ',' + cy
+      );
+
+      // Total
+      var vibe = getVibeLabel(entry.total);
+      document.getElementById('totalScore').textContent = entry.total;
+      document.getElementById('totalScore').style.color = vibe.color;
+
+      // Bars
+      setTimeout(function() {
+        document.getElementById('barDesign').style.width = s.design + '%';
+        document.getElementById('bvDesign').textContent = s.design;
+        document.getElementById('barUX').style.width = s.ux + '%';
+        document.getElementById('bvUX').textContent = s.ux;
+        document.getElementById('barCode').style.width = s.code + '%';
+        document.getElementById('bvCode').textContent = s.code;
+        document.getElementById('barPerf').style.width = s.perf + '%';
+        document.getElementById('bvPerf').textContent = s.perf;
+      }, 50);
+
+      // Badge
+      var bp = document.getElementById('badgePreview');
+      bp.innerHTML = '<div class="vibe-badge" style="background:rgba(0,0,0,0.4);border:1px solid ' + vibe.color + ';color:' + vibe.color + ';">' +
+        vibe.label + ' · ' + esc(entry.total.toString()) + '/100</div>';
+      document.getElementById('badgeCode').value = '[![Vibe Score](https://img.shields.io/badge/Vibe_Score-' + entry.total + '-' +
+        (entry.total >= 75 ? '00ff88' : entry.total >= 55 ? '4facfe' : 'ff3b5c') + '?style=for-the-badge)]()';
+    }
+
+    document.getElementById('copyBadge').addEventListener('click', function() {
+      try {
+        var code = document.getElementById('badgeCode');
+        code.select();
+        document.execCommand('copy');
+        this.textContent = '✅ Kopiert!';
+        var self = this;
+        setTimeout(function() { self.textContent = '📋 Badge kopieren'; }, 1500);
+      } catch (e) {
+        console.warn('OpenClaw Vibe: Kopieren fehlgeschlagen', e);
+      }
+    });
+
+    function renderHistory() {
+      var body = document.getElementById('historyBody');
+      var empty = document.getElementById('historyEmpty');
+      var sorted = history.slice().sort(function(a, b) { return b.total - a.total; });
+
+      if (sorted.length === 0) {
+        body.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+
+      body.innerHTML = sorted.map(function(e, i) {
+        var vibe = getVibeLabel(e.total);
+        var rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+        return '<tr>' +
+          '<td><span class="rank-num ' + rankClass + '">' + (i + 1) + '</span></td>' +
+          '<td><strong>' + esc(e.name) + '</strong></td>' +
+          '<td>' + e.scores.design + '</td>' +
+          '<td>' + e.scores.ux + '</td>' +
+          '<td>' + e.scores.code + '</td>' +
+          '<td>' + e.scores.perf + '</td>' +
+          '<td><span class="mini-badge" style="background:rgba(0,0,0,0.3);color:' + vibe.color + ';border:1px solid ' + vibe.color + ';">' + e.total + '</span></td>' +
+          '<td style="color:var(--text-dim);font-size:0.8rem;">' + esc(e.date) + '</td>' +
+          '<td><button class="history-delete" data-del="' + esc(e.id) + '" title="Loeschen">🗑️</button></td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    document.getElementById('historyBody').addEventListener('click', function(e) {
+      var btn = e.target.closest('[data-del]');
+      if (!btn) return;
+      history = history.filter(function(h) { return h.id !== btn.dataset.del; });
+      saveData();
+      renderHistory();
+    });
+
+    // Init
+    loadData();
+  </script>
+</body>
+</html>
