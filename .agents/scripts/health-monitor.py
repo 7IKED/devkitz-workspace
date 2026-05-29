@@ -32,7 +32,7 @@ PROVIDERS = [
     {"name": "Webhook Hub",  "url": "http://localhost:9090/health",          "icon": "🔗", "critical": True},
     {"name": "n8n",          "url": "http://localhost:5678/healthz",         "icon": "⚡", "critical": False},
     {"name": "OpenHands",    "url": "http://localhost:3000/api/health",      "icon": "🤚", "critical": False},
-    {"name": "VPS Ollama",   "url": "http://72.61.93.129:8811/api/tags",    "icon": "🧠", "critical": False},
+    {"name": "VPS vLLM",     "url": "http://72.61.93.129:8811/v1/models",    "icon": "🧠", "critical": False},
 ]
 
 # Lokale Checks (kein HTTP)
