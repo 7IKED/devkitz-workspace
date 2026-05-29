@@ -17,34 +17,37 @@ jobs:
           fetch-depth: 5
 
       - name: Parse commits and update issues
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "=== Parsing recent commits ==="
-          
-          # Get last 5 commits
-          git log -5 --pretty=format:"%h %s" | while read -r line; do
+
+          git log -5 --pretty=format:"%h %s" | while IFS= read -r line; do
             echo "Commit: $line"
-            
-            # Extract issue numbers from commit messages
-            ISSUES=$(echo "$line" | grep -oP '#\d+' | tr -d '#' || true)
-            HASH=$(echo "$line" | cut -d' ' -f1)
+
+            HASH=$(echo "$line" | awk '{print $1}')
             MSG=$(echo "$line" | cut -d' ' -f2-)
-            
+
+            # Extract issue numbers (POSIX compatible)
+            ISSUES=$(echo "$line" | grep -oE '#[0-9]+' | tr -d '#' || true)
+
             for ISSUE in $ISSUES; do
-              echo "  Linking to issue #$ISSUE"
-              gh issue comment "$ISSUE" --body "Commit [\`$HASH\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }}) referenced this issue: $MSG"
+              if [ -n "$ISSUE" ]; then
+                echo "  Linking to issue #$ISSUE"
+                gh issue comment "$ISSUE" \
+                  --body "Commit [\`$HASH\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }}) referenced this issue: $MSG" \
+                  2>/dev/null || echo "  Skipped issue #$ISSUE (not found or closed)"
+              fi
             done
           done
+          echo "=== Done ==="
 
-      - name: Create daily status comment
+      - name: Issue stats
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Count open issues by priority
-          HIGH=$(gh issue list --label "priority-high" --state open --json number --jq length 2>/dev/null || echo 0)
-          MED=$(gh issue list --label "priority-medium" --state open --json number --jq length 2>/dev/null || echo 0)
-          LOW=$(gh issue list --label "priority-low" --state open --json number --jq length 2>/dev/null || echo 0)
           TOTAL=$(gh issue list --state open --json number --jq length 2>/dev/null || echo 0)
-          
-          echo "Open Issues: $TOTAL (High: $HIGH, Medium: $MED, Low: $LOW)"
+          echo "Open Issues: $TOTAL"
+
