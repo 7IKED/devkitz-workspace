@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dkz-version" content="v1.00.0_01">
+<title>DEVKiTZ Wiki — Ecosystem Knowledge Base</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#060608;--bg2:#0a0a0f;--surface:#0d0d14;--surface2:#12121c;
+  --glass:rgba(255,255,255,0.03);--glass2:rgba(255,255,255,0.06);
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);
+  --text:#e8e8f0;--text2:#8888a0;--text3:#555570;
+  --accent:#fa1e4e;--green:#00ff88;--yellow:#ffb800;--red:#ff3b5c;
+  --blue:#3b82f6;--purple:#a855f7;--cyan:#06b6d4;
+  --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden;min-height:100vh}
+
+/* === HEADER === */
+.wiki-header{
+  background:linear-gradient(135deg,var(--bg2),var(--surface));
+  border-bottom:1px solid var(--border);
+  padding:16px 24px;display:flex;align-items:center;gap:16px;
+  position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);
+}
+.wiki-header .hub-btn{
+  background:var(--glass2);border:1px solid var(--border2);border-radius:8px;
+  color:var(--text);padding:8px 12px;text-decoration:none;font-size:13px;
+  transition:all .2s;display:flex;align-items:center;gap:6px;
+}
+.wiki-header .hub-btn:hover{background:var(--accent);border-color:var(--accent)}
+.wiki-header h1{font-size:20px;font-weight:700;background:linear-gradient(135deg,var(--green),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.wiki-header .search-box{
+  margin-left:auto;background:var(--glass);border:1px solid var(--border);
+  border-radius:8px;padding:8px 16px;color:var(--text);font-family:var(--font);
+  font-size:13px;width:300px;outline:none;transition:border-color .2s;
+}
+.wiki-header .search-box:focus{border-color:var(--green)}
+
+/* === LAYOUT === */
+.wiki-layout{display:flex;height:calc(100vh - 60px)}
+.wiki-sidebar{
+  width:280px;min-width:280px;background:var(--bg2);border-right:1px solid var(--border);
+  overflow-y:auto;padding:16px 0;
+}
+.wiki-main{flex:1;overflow-y:auto;padding:32px 48px;max-width:900px}
+.wiki-toc{
+  width:240px;min-width:240px;background:var(--bg2);border-left:1px solid var(--border);
+  overflow-y:auto;padding:16px;display:none;
+}
+@media(min-width:1400px){.wiki-toc{display:block}}
+
+/* === SIDEBAR NAV === */
+.nav-section{margin-bottom:8px}
+.nav-section-title{
+  padding:8px 20px;font-size:11px;font-weight:600;text-transform:uppercase;
+  letter-spacing:1.2px;color:var(--text3);cursor:pointer;
+  display:flex;align-items:center;gap:8px;
+}
+.nav-section-title:hover{color:var(--text2)}
+.nav-section-title .arrow{transition:transform .2s;font-size:10px}
+.nav-section-title.collapsed .arrow{transform:rotate(-90deg)}
+.nav-item{
+  padding:6px 20px 6px 36px;font-size:13px;color:var(--text2);
+  cursor:pointer;transition:all .15s;border-left:2px solid transparent;
+  display:flex;align-items:center;gap:8px;
+}
+.nav-item:hover{color:var(--text);background:var(--glass)}
+.nav-item.active{color:var(--green);border-left-color:var(--green);background:rgba(0,255,136,0.05)}
+.nav-item .icon{font-size:14px;width:20px;text-align:center}
+.nav-badge{
+  margin-left:auto;background:var(--glass2);border-radius:10px;
+  padding:1px 7px;font-size:10px;color:var(--text3);font-family:var(--mono);
+}
+
+/* === CONTENT === */
+.wiki-content h1{font-size:32px;font-weight:900;margin-bottom:8px;background:linear-gradient(135deg,var(--accent),var(--yellow));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.wiki-content h2{font-size:22px;font-weight:700;margin:32px 0 12px;color:var(--text);padding-bottom:8px;border-bottom:1px solid var(--border)}
+.wiki-content h3{font-size:16px;font-weight:600;margin:24px 0 8px;color:var(--cyan)}
+.wiki-content p{font-size:14px;line-height:1.8;color:var(--text2);margin-bottom:16px}
+.wiki-content code{
+  background:var(--glass2);border:1px solid var(--border);border-radius:4px;
+  padding:2px 6px;font-family:var(--mono);font-size:12px;color:var(--green);
+}
+.wiki-content pre{
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:16px;overflow-x:auto;margin:16px 0;font-family:var(--mono);font-size:12px;
+  line-height:1.6;color:var(--text2);
+}
+.wiki-content table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+.wiki-content th{background:var(--surface);color:var(--text);padding:10px 12px;text-align:left;border:1px solid var(--border);font-weight:600}
+.wiki-content td{padding:8px 12px;border:1px solid var(--border);color:var(--text2)}
+.wiki-content tr:hover td{background:var(--glass)}
+
+.wiki-content .info-box{
+  background:linear-gradient(135deg,rgba(0,255,136,0.05),rgba(6,182,212,0.05));
+  border:1px solid rgba(0,255,136,0.2);border-radius:8px;padding:16px;margin:16px 0;
+}
+.wiki-content .info-box .info-title{color:var(--green);font-weight:600;font-size:13px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.wiki-content .warn-box{
+  background:rgba(255,184,0,0.05);border:1px solid rgba(255,184,0,0.2);
+  border-radius:8px;padding:16px;margin:16px 0;
+}
+.wiki-content .warn-box .warn-title{color:var(--yellow);font-weight:600;font-size:13px;margin-bottom:6px}
+
+/* === TOC === */
+.toc-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:12px}
+.toc-item{
+  padding:4px 0;font-size:12px;color:var(--text3);cursor:pointer;
+  transition:color .15s;border-left:1px solid var(--border);padding-left:12px;
+}
+.toc-item:hover{color:var(--text)}
+.toc-item.active{color:var(--green);border-left-color:var(--green)}
+.toc-sub{padding-left:24px}
+
+/* === STATS === */
+.wiki-stats{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0;
+}
+.stat-card{
+  background:var(--glass);border:1px solid var(--border);border-radius:10px;
+  padding:16px;text-align:center;transition:all .2s;
+}
+.stat-card:hover{border-color:var(--green);transform:translateY(-2px)}
+.stat-card .stat-val{font-size:28px;font-weight:900;font-family:var(--mono);color:var(--green)}
+.stat-card .stat-label{font-size:11px;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+
+/* === MODULE GRID === */
+.module-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin:16px 0}
+.mod-card{
+  background:var(--glass);border:1px solid var(--border);border-radius:8px;
+  padding:12px;cursor:pointer;transition:all .2s;
+}
+.mod-card:hover{border-color:var(--cyan);transform:translateY(-1px);box-shadow:0 4px 20px rgba(6,182,212,0.1)}
+.mod-card .mod-icon{font-size:20px;margin-bottom:4px}
+.mod-card .mod-name{font-size:12px;font-weight:600;color:var(--text)}
+.mod-card .mod-desc{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* === ANIMATION === */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .4s ease forwards;opacity:0}
+.fade-up:nth-child(2){animation-delay:.05s}
+.fade-up:nth-child(3){animation-delay:.1s}
+.fade-up:nth-child(4){animation-delay:.15s}
+
+/* === SCROLLBAR === */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+</style>
+</head>
+<body>
+
+<header class="wiki-header">
+  <a href="../../hub/index.html" class="hub-btn">◀ Hub</a>
+  <h1>📖 DEVKiTZ Wiki</h1>
+  <input type="text" class="search-box" id="wikiSearch" placeholder="Search wiki... (Ctrl+K)">
+</header>
+
+<div class="wiki-layout">
+  <!-- SIDEBAR -->
+  <nav class="wiki-sidebar" id="wikiSidebar"></nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="wiki-main">
+    <div class="wiki-content" id="wikiContent"></div>
+  </main>
+
+  <!-- TABLE OF CONTENTS -->
+  <aside class="wiki-toc" id="wikiToc">
+    <div class="toc-title">On This Page</div>
+    <div id="tocList"></div>
+  </aside>
+</div>
+
+<script>
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+const WIKI_PAGES = {
+  'overview': {
+    title: 'Ecosystem Overview',
+    icon: '🏠',
+    section: 'Getting Started',
+    content: function(){return `
+      <h1>DEVKiTZ Ecosystem</h1>
+      <p>Das vollstaendige KI-Entwickler-Oekosystem mit 143 Modulen, 53 Skills, 77 Workflows und 7 BMAD Agenten.</p>
+      <div class="wiki-stats">
+        <div class="stat-card fade-up"><div class="stat-val">143</div><div class="stat-label">Module</div></div>
+        <div class="stat-card fade-up"><div class="stat-val">53</div><div class="stat-label">Skills</div></div>
+        <div class="stat-card fade-up"><div class="stat-val">77</div><div class="stat-label">Workflows</div></div>
+        <div class="stat-card fade-up"><div class="stat-val">7</div><div class="stat-label">Agenten</div></div>
+      </div>
+      <h2>Architecture</h2>
+      <pre>
+    LOKAL (C:\\DEVKiTZ)          VPS (Hostinger)           CLOUD (GCP+CF)
+    ────────────────           ──────────────           ──────────────
+    143 Module                 KVM8: nginx, n8n         Cloudflare DNS
+    53 Skills                  KVM4: OpenClaw           GitHub Actions
+    77 Workflows               vLLM Fleet (8 Models)    CodeRabbit
+    7 BMAD Agenten             PostgreSQL + Redis       DeepSeek API
+      </pre>
+      <h2>Quick Links</h2>
+      <table>
+        <tr><th>Resource</th><th>URL</th><th>Status</th></tr>
+        <tr><td>Landing Page</td><td>devkitz.eu</td><td>🟢 Live</td></tr>
+        <tr><td>Dashboard</td><td>devkitz.sites</td><td>🟢 Live</td></tr>
+        <tr><td>App</td><td>dkz.app</td><td>🟢 Live</td></tr>
+        <tr><td>GitHub</td><td>github.com/D-VKITZ</td><td>🟢 Live</td></tr>
+      </table>
+    `}
+  },
+  'modules': {
+    title: 'Module Reference',
+    icon: '📦',
+    section: 'Getting Started',
+    content: function(){
+      let grid = '';
+      const cats = [
+        {name:'Core',mods:[{i:'🏠',n:'Hub',d:'Central Dashboard'},{i:'🤖',n:'Copilot',d:'AI Assistant'},{i:'📈',n:'Graphify',d:'Graph Viewer'},{i:'🔒',n:'DEEPKEEP',d:'Archive Tresor'}]},
+        {name:'Data',mods:[{i:'🧬',n:'OpenHumans Hub',d:'Citizen Science'},{i:'🔗',n:'GitNexus',d:'Code Intelligence'},{i:'🐟',n:'MiroFish',d:'Swarm AI'}]},
+        {name:'Automation',mods:[{i:'⚡',n:'n8n Viewer',d:'Workflow Editor'},{i:'🔔',n:'Webhooks',d:'Event Hub'},{i:'🤖',n:'Agent Builder',d:'Agent Config'}]},
+        {name:'Media',mods:[{i:'📸',n:'Screenshot Pro',d:'Captures'},{i:'🎬',n:'Media Hub',d:'Video/Audio'},{i:'📝',n:'Blog Commander',d:'53 Blogs'}]}
+      ];
+      cats.forEach(c => {
+        grid += '<h3>' + esc(c.name) + '</h3><div class="module-grid">';
+        c.mods.forEach(m => {
+          grid += '<div class="mod-card fade-up"><div class="mod-icon">' + esc(m.i) + '</div><div class="mod-name">' + esc(m.n) + '</div><div class="mod-desc">' + esc(m.d) + '</div></div>';
+        });
+        grid += '</div>';
+      });
+      return '<h1>Module Reference</h1><p>143 Module organisiert in Kategorien.</p>' + grid;
+    }
+  },
+  'agents': {
+    title: 'BMAD Agents',
+    icon: '🤖',
+    section: 'Architecture',
+    content: function(){return `
+      <h1>BMAD Agents</h1>
+      <p>Blueprint → Mapping → Analyse → Design — 7 spezialisierte Agenten.</p>
+      <table>
+        <tr><th>#</th><th>Agent</th><th>Role</th><th>Status</th></tr>
+        <tr><td>1</td><td>🎯 James</td><td>Guardian — ueberwacht alle, coded NICHT</td><td>🟢 Active</td></tr>
+        <tr><td>2</td><td>📋 DkZ PM</td><td>Product Manager — spec.md, User Stories</td><td>🟢 Defined</td></tr>
+        <tr><td>3</td><td>🏗️ DkZ Architekt</td><td>plan.md, Tech-Stack Decisions</td><td>🟢 Defined</td></tr>
+        <tr><td>4</td><td>👨‍💻 DkZ Developer</td><td>Coder — Ralph-Loop Executor</td><td>🟢 Defined</td></tr>
+        <tr><td>5</td><td>🔍 DkZ Reviewer</td><td>CodeRabbit — Quality Checks</td><td>🟢 Active</td></tr>
+        <tr><td>6</td><td>🧪 DkZ Tester</td><td>Tests + Validation</td><td>🟢 TestStrasse v3</td></tr>
+        <tr><td>7</td><td>📚 DkZ Dokumentar</td><td>README, Wiki, Learnings</td><td>🟢 Defined</td></tr>
+      </table>
+      <h2>Ralph-Loop</h2>
+      <pre>
+1. LESEN    → prd.json + constitution + AGENTS.md
+2. SPAWN    → Neue Instanz (frischer Kontext!)
+3. EXECUTE  → Developer schreibt Code
+4. VERIFY   → Tester/Reviewer prueft
+5. COMMIT   → Git commit + prd.json update
+6. LOOP     → Naechster Task
+      </pre>
+      <div class="info-box"><div class="info-title">💡 Key Principle</div><p>Jeder Task bekommt frischen Kontext — kein Context Drift!</p></div>
+    `}
+  },
+  'design-system': {
+    title: 'Design System v2',
+    icon: '🎨',
+    section: 'Architecture',
+    content: function(){return `
+      <h1>DkZ Design System v2</h1>
+      <p>CSS Custom Properties basiertes Design System fuer alle 143 Module.</p>
+      <h2>Color Palette</h2>
+      <table>
+        <tr><th>Token</th><th>Value</th><th>Usage</th></tr>
+        <tr><td><code>--bg</code></td><td>#060608</td><td>Page Background</td></tr>
+        <tr><td><code>--accent</code></td><td>#fa1e4e</td><td>Primary Accent (Headlines)</td></tr>
+        <tr><td><code>--green</code></td><td>#00ff88</td><td>Success, Active States</td></tr>
+        <tr><td><code>--yellow</code></td><td>#ffb800</td><td>Warnings, Highlights</td></tr>
+        <tr><td><code>--red</code></td><td>#ff3b5c</td><td>Errors, Critical</td></tr>
+      </table>
+      <h2>Typography</h2>
+      <table>
+        <tr><th>Font</th><th>Weight</th><th>Usage</th></tr>
+        <tr><td>Inter</td><td>300-900</td><td>UI Text, Headlines</td></tr>
+        <tr><td>JetBrains Mono</td><td>400-600</td><td>Code, Monospace, Stats</td></tr>
+      </table>
+      <h2>Components</h2>
+      <h3>Glassmorphism Card</h3>
+      <pre>
+.card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  backdrop-filter: blur(20px);
+  padding: 20px;
+}
+      </pre>
+      <h3>Neon Glow Button</h3>
+      <pre>
+.btn-neon {
+  background: transparent;
+  border: 1px solid var(--green);
+  color: var(--green);
+  border-radius: 8px;
+  padding: 8px 20px;
+  box-shadow: 0 0 15px rgba(0,255,136,0.2);
+}
+      </pre>
+    `}
+  },
+  'vps': {
+    title: 'VPS Infrastructure',
+    icon: '🌐',
+    section: 'Infrastructure',
+    content: function(){return `
+      <h1>VPS Infrastructure</h1>
+      <p>3 Hostinger KVM Server in der EU (Litauen, DSGVO-konform).</p>
+      <h2>Server Overview</h2>
+      <table>
+        <tr><th>VPS</th><th>Specs</th><th>Role</th><th>Status</th></tr>
+        <tr><td>KVM8 (#1298466)</td><td>8 vCPU, 16 GB RAM, 200 GB</td><td>Main Dashboard + LLM</td><td>🟢</td></tr>
+        <tr><td>KVM4 (#1368349)</td><td>4 vCPU, 8 GB RAM</td><td>OpenClaw Gateway</td><td>🟢</td></tr>
+        <tr><td>KVM Test (#1360185)</td><td>4 vCPU</td><td>Staging</td><td>🟢</td></tr>
+      </table>
+      <h2>Docker Services (KVM8)</h2>
+      <table>
+        <tr><th>Container</th><th>Port</th><th>Function</th><th>Status</th></tr>
+        <tr><td>nginx-proxy</td><td>:80/:443</td><td>Reverse Proxy + SSL</td><td>🟢</td></tr>
+        <tr><td>dkz-ontherun</td><td>:3040</td><td>MCP Gateway</td><td>🟢</td></tr>
+        <tr><td>dkz-postgres</td><td>:5432</td><td>PostgreSQL 16</td><td>🟢</td></tr>
+        <tr><td>dkz-redis</td><td>:6379</td><td>Redis AOF</td><td>🟢</td></tr>
+        <tr><td>vLLM Engine</td><td>:8811</td><td>LLM Inference</td><td>🔴 Auth</td></tr>
+        <tr><td>llama-swap</td><td>:8080</td><td>Model Router</td><td>🔴 Auth</td></tr>
+        <tr><td>dkz-n8n</td><td>:5678</td><td>Workflow Engine</td><td>🟡</td></tr>
+      </table>
+      <h2>LLM Fleet</h2>
+      <table>
+        <tr><th>Model</th><th>Size</th><th>Mode</th><th>TTL</th></tr>
+        <tr><td>Gemma4 E2B</td><td>~2 GB</td><td>Heartbeat</td><td>Always-On</td></tr>
+        <tr><td>Gemma4 E4B</td><td>~3 GB</td><td>Balance</td><td>SWAP 300s</td></tr>
+        <tr><td>Qwen3 4B</td><td>~3 GB</td><td>Quick</td><td>SWAP 300s</td></tr>
+        <tr><td>Qwen3.5 9B</td><td>~6 GB</td><td>Coder</td><td>SWAP 300s</td></tr>
+        <tr><td>Qwen3 14B</td><td>~10 GB</td><td>Standard</td><td>SWAP 300s</td></tr>
+        <tr><td>Gemma4 26B MoE</td><td>~16 GB</td><td>Frontend</td><td>SOLO 180s</td></tr>
+        <tr><td>Qwen3.6 27B</td><td>~17 GB</td><td>Dense</td><td>SOLO 180s</td></tr>
+        <tr><td>Qwen3.6 35B MoE</td><td>~22 GB</td><td>Backend</td><td>SOLO 180s</td></tr>
+      </table>
+    `}
+  },
+  'api': {
+    title: 'API Reference',
+    icon: '🔌',
+    section: 'Infrastructure',
+    content: function(){return `
+      <h1>API Reference</h1>
+      <h2>KVM8 Endpoints</h2>
+      <table>
+        <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+        <tr><td><code>GET</code></td><td>/api/automation/health</td><td>System Health Score</td></tr>
+        <tr><td><code>GET</code></td><td>/api/automation/ssl</td><td>SSL Certificate Status</td></tr>
+        <tr><td><code>GET</code></td><td>/api/automation/backup</td><td>Manual Backup Trigger</td></tr>
+        <tr><td><code>GET</code></td><td>/api/health/dashboard</td><td>Dashboard Statistics</td></tr>
+        <tr><td><code>POST</code></td><td>/webhook/gmail-scan</td><td>Gmail Webhook</td></tr>
+        <tr><td><code>POST</code></td><td>/webhook/drive-scan</td><td>Google Drive Webhook</td></tr>
+        <tr><td><code>POST</code></td><td>/webhook/docker/build</td><td>Docker Build Trigger</td></tr>
+      </table>
+      <h2>vLLM API (OpenAI-compatible)</h2>
+      <pre>
+# List Models
+curl http://72.61.93.129:8811/v1/models \\
+  -H "Authorization: Bearer YOUR_KEY"
+
+# Chat Completion
+curl http://72.61.93.129:8811/v1/chat/completions \\
+  -H "Authorization: Bearer YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"model":"gemma4","messages":[{"role":"user","content":"Hello"}]}'
+      </pre>
+    `}
+  },
+  'skills': {
+    title: 'Skills Reference',
+    icon: '⚡',
+    section: 'Development',
+    content: function(){return `
+      <h1>Skills Reference</h1>
+      <p>53 Skills im .agents/skills/ Verzeichnis.</p>
+      <h2>Core Skills</h2>
+      <table>
+        <tr><th>Skill</th><th>Trigger</th><th>Description</th></tr>
+        <tr><td>startup</td><td><code>/startup</code></td><td>Session-Start Health Check</td></tr>
+        <tr><td>checkup</td><td><code>/checkup</code></td><td>Deep Diagnostik</td></tr>
+        <tr><td>superpowers</td><td><code>/superpowers</code></td><td>14 Sub-Skills Meta-Skill</td></tr>
+        <tr><td>power</td><td><code>/power</code></td><td>1.442+ Awesome-Skills</td></tr>
+        <tr><td>playbook</td><td><code>/playbook</code></td><td>Alle Regeln + Playbooks</td></tr>
+      </table>
+      <h2>Build Skills</h2>
+      <table>
+        <tr><th>Skill</th><th>Trigger</th><th>Description</th></tr>
+        <tr><td>mod-builder</td><td><code>/create-module</code></td><td>Module Generator</td></tr>
+        <tr><td>dkz-webapp-builder</td><td>auto</td><td>WebApp Builder</td></tr>
+        <tr><td>mcp-builder</td><td>auto</td><td>MCP Server Builder</td></tr>
+        <tr><td>changelog-generator</td><td>auto</td><td>Release Notes</td></tr>
+      </table>
+    `}
+  },
+  'workflows': {
+    title: 'Workflows Reference',
+    icon: '🔄',
+    section: 'Development',
+    content: function(){return `
+      <h1>Workflows Reference</h1>
+      <p>77 Workflows fuer automatisierte Aufgaben.</p>
+      <h2>Essential Workflows</h2>
+      <table>
+        <tr><th>Command</th><th>Description</th></tr>
+        <tr><td><code>/startup</code></td><td>Session Start — IMMER zuerst</td></tr>
+        <tr><td><code>/byebye</code></td><td>Session Ende — alles sichern</td></tr>
+        <tr><td><code>/build</code></td><td>Feature/Modul/Komponente bauen</td></tr>
+        <tr><td><code>/create-module</code></td><td>Neues Dashboard Modul</td></tr>
+        <tr><td><code>/browser-test</code></td><td>Browser-Test + Screenshot</td></tr>
+        <tr><td><code>/system-check</code></td><td>Alle Module pruefen</td></tr>
+        <tr><td><code>/git-after-every-step</code></td><td>Auto Git Commit</td></tr>
+        <tr><td><code>/superpowers</code></td><td>Meta-Skill aktivieren</td></tr>
+      </table>
+    `}
+  },
+  'design-rules': {
+    title: 'Design Rules',
+    icon: '📐',
+    section: 'Standards',
+    content: function(){return `
+      <h1>DKZ Design Rules (D1-D10)</h1>
+      <div class="warn-box"><div class="warn-title">⚠️ Mandatory</div><p>ALLE neuen Module MUESSEN diese Regeln befolgen.</p></div>
+      <table>
+        <tr><th>#</th><th>Rule</th><th>Description</th></tr>
+        <tr><td>D1</td><td>Deep Black Base</td><td>#060608 background, KEINE anderen Basis-Farben</td></tr>
+        <tr><td>D2</td><td>Neon Green Matrix</td><td>#00ff88 fuer aktive Elemente, Status, Highlights</td></tr>
+        <tr><td>D3</td><td>Glassmorphism</td><td>rgba + blur + border fuer Cards und Panels</td></tr>
+        <tr><td>D4</td><td>Inter + JetBrains</td><td>UI = Inter, Code = JetBrains Mono</td></tr>
+        <tr><td>D5</td><td>Gradient Headlines</td><td>accent→yellow oder green→cyan Gradienten</td></tr>
+        <tr><td>D6</td><td>Micro-Animations</td><td>fadeIn, slideUp, glow-pulse, scale auf hover</td></tr>
+        <tr><td>D7</td><td>Canvas Particles</td><td>Subtiler animierter Hintergrund</td></tr>
+        <tr><td>D8</td><td>English UI</td><td>Interface Englisch, umschaltbar auf Deutsch</td></tr>
+        <tr><td>D9</td><td>Emojis in Headings</td><td>Symbole am Anfang jeder Ueberschrift</td></tr>
+        <tr><td>D10</td><td>Premium Quality</td><td>Hyperreal, 4K-ready, kein MVP-Look</td></tr>
+      </table>
+    `}
+  },
+  'git': {
+    title: 'Git & CI/CD',
+    icon: '🔀',
+    section: 'Standards',
+    content: function(){return `
+      <h1>Git & CI/CD</h1>
+      <h2>Commit Convention</h2>
+      <pre>feat(bereich): beschreibung    — Neues Feature
+fix(bereich): beschreibung     — Bug Fix
+docs(bereich): beschreibung    — Dokumentation
+refactor(bereich): beschreibung — Code-Umbau
+style(bereich): beschreibung   — CSS/Design
+chore(bereich): beschreibung   — Maintenance</pre>
+      <h2>GitHub Actions</h2>
+      <table>
+        <tr><th>Workflow</th><th>Trigger</th><th>Action</th></tr>
+        <tr><td>deploy-dashboard.yml</td><td>push to main</td><td>rsync to KVM8</td></tr>
+        <tr><td>deploy-pages.yml</td><td>push to main</td><td>GitHub Pages</td></tr>
+        <tr><td>blogger-push.js</td><td>commit with .md</td><td>Auto Blog Post</td></tr>
+      </table>
+      <h2>Repositories</h2>
+      <table>
+        <tr><th>Repo</th><th>Type</th><th>Description</th></tr>
+        <tr><td>7IKED/devkitz-workspace</td><td>Monorepo</td><td>Hauptrepo — alles</td></tr>
+        <tr><td>D-VKITZ/D-VKITZ.github.io</td><td>Pages</td><td>GitHub Pages Site</td></tr>
+        <tr><td>D-VKITZ/KERN</td><td>Core</td><td>Kern-Bibliothek</td></tr>
+      </table>
+    `}
+  }
+};
+
+// === BUILD SIDEBAR ===
+function buildSidebar(){
+  const sidebar = document.getElementById('wikiSidebar');
+  const sections = {};
+  Object.entries(WIKI_PAGES).forEach(([key, page]) => {
+    if(!sections[page.section]) sections[page.section] = [];
+    sections[page.section].push({key, ...page});
+  });
+  let html = '';
+  Object.entries(sections).forEach(([section, pages]) => {
+    html += '<div class="nav-section">';
+    html += '<div class="nav-section-title" onclick="toggleSection(this)"><span class="arrow">▼</span> ' + esc(section) + '</div>';
+    pages.forEach(p => {
+      html += '<div class="nav-item" data-page="' + esc(p.key) + '" onclick="loadPage(\'' + esc(p.key) + '\')">';
+      html += '<span class="icon">' + esc(p.icon) + '</span> ' + esc(p.title);
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  sidebar.innerHTML = html;
+}
+
+function toggleSection(el){
+  el.classList.toggle('collapsed');
+  const items = el.parentElement.querySelectorAll('.nav-item');
+  items.forEach(i => i.style.display = el.classList.contains('collapsed') ? 'none' : 'flex');
+}
+
+function loadPage(key){
+  const page = WIKI_PAGES[key];
+  if(!page) return;
+  document.getElementById('wikiContent').innerHTML = page.content();
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  const active = document.querySelector('[data-page="' + key + '"]');
+  if(active) active.classList.add('active');
+  buildToc();
+  document.querySelector('.wiki-main').scrollTop = 0;
+  history.replaceState(null, '', '?page=' + key);
+}
+
+function buildToc(){
+  const content = document.getElementById('wikiContent');
+  const headings = content.querySelectorAll('h2, h3');
+  const tocList = document.getElementById('tocList');
+  let html = '';
+  headings.forEach((h, i) => {
+    h.id = 'heading-' + i;
+    const cls = h.tagName === 'H3' ? 'toc-item toc-sub' : 'toc-item';
+    html += '<div class="' + cls + '" onclick="document.getElementById(\'heading-' + i + '\').scrollIntoView({behavior:\'smooth\'})">' + esc(h.textContent) + '</div>';
+  });
+  tocList.innerHTML = html;
+}
+
+// === SEARCH ===
+document.getElementById('wikiSearch').addEventListener('input', function(e){
+  const q = e.target.value.toLowerCase();
+  document.querySelectorAll('.nav-item').forEach(item => {
+    const text = item.textContent.toLowerCase();
+    item.style.display = !q || text.includes(q) ? 'flex' : 'none';
+  });
+});
+
+document.addEventListener('keydown', function(e){
+  if(e.ctrlKey && e.key === 'k'){e.preventDefault();document.getElementById('wikiSearch').focus()}
+});
+
+// === INIT ===
+buildSidebar();
+const urlPage = new URLSearchParams(window.location.search).get('page') || 'overview';
+loadPage(urlPage);
+</script>
+
+<script src="../../shared/dkz-debug.js" defer></script>
+<script src="../../shared/dkz-guide.js" defer></script>
+<script src="../../shared/dkz-copilot.js" defer></script>
+<script src="../../shared/dkz-james.js" defer></script>
+<script src="../../shared/dkz-navbar.js" defer></script>
+<script src="../../shared/dkz-console.js" defer></script>
+<script src="../../shared/dkz-premium.js" defer></script>
+</body>
+</html>
