@@ -358,12 +358,54 @@ function drawMinimap(){
   nodes.filter(n=>n.visible).forEach(n=>{ minX=Math.min(minX,n.x); maxX=Math.max(maxX,n.x); minY=Math.min(minY,n.y); maxY=Math.max(maxY,n.y); });
   const pad=50, rngX=maxX-minX+pad*2, rngY=maxY-minY+pad*2;
   const sc = Math.min(W/rngX, H/rngY);
+  // Store for click handler
+  miniCanvas._mmData = { minX, minY, pad, sc };
   nodes.filter(n=>n.visible).forEach(n=>{
     const mx=(n.x-minX+pad)*sc, my=(n.y-minY+pad)*sc;
     miniCtx.fillStyle=CAT_COLORS[n.category]||'#666';
     miniCtx.fillRect(mx-1,my-1,2,2);
   });
+  // Viewport rectangle
+  const cW=canvas.width, cH=canvas.height;
+  const vpX = (-camX/camZoom - cW/(2*camZoom));
+  const vpY = (-camY/camZoom - cH/(2*camZoom));
+  const vpW = cW/camZoom;
+  const vpH = cH/camZoom;
+  const rx = (vpX - minX + pad) * sc + cW/(2*camZoom)*sc;
+  const ry = (vpY - minY + pad) * sc + cH/(2*camZoom)*sc;
+  const rw = vpW * sc;
+  const rh = vpH * sc;
+  miniCtx.strokeStyle = 'rgba(250,30,78,0.6)';
+  miniCtx.lineWidth = 1;
+  miniCtx.strokeRect(
+    Math.max(0, (-camX/camZoom - cW/(2*camZoom) - minX + pad) * sc),
+    Math.max(0, (-camY/camZoom - cH/(2*camZoom) - minY + pad) * sc),
+    Math.min(W, cW/camZoom * sc),
+    Math.min(H, cH/camZoom * sc)
+  );
 }
+
+// === MINIMAP CLICK-TO-CENTER ===
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    const mm = document.getElementById('minimap');
+    if(!mm) return;
+    mm.style.cursor = 'crosshair';
+    mm.addEventListener('click', e => {
+      const data = mm._mmData;
+      if(!data) return;
+      const rect = mm.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      // Minimap coords -> world coords
+      const worldX = mx / data.sc - data.pad + data.minX;
+      const worldY = my / data.sc - data.pad + data.minY;
+      camX = -worldX * camZoom;
+      camY = -worldY * camZoom;
+      if(!simRunning){ draw(); drawMinimap(); }
+    });
+  }, 200);
+});
 
 // === INTERACTION ===
 function screenToWorld(sx,sy){
