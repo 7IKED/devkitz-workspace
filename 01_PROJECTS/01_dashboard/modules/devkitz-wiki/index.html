@@ -1,563 +1,1198 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de" data-theme="dark" data-lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="dkz-version" content="v1.00.0_01">
-<title>DEVKiTZ Wiki — Ecosystem Knowledge Base</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#060608;--bg2:#0a0a0f;--surface:#0d0d14;--surface2:#12121c;
-  --glass:rgba(255,255,255,0.03);--glass2:rgba(255,255,255,0.06);
-  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);
-  --text:#e8e8f0;--text2:#8888a0;--text3:#555570;
-  --accent:#fa1e4e;--green:#00ff88;--yellow:#ffb800;--red:#ff3b5c;
-  --blue:#3b82f6;--purple:#a855f7;--cyan:#06b6d4;
-  --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
-}
-body{background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden;min-height:100vh}
-
-/* === HEADER === */
-.wiki-header{
-  background:linear-gradient(135deg,var(--bg2),var(--surface));
-  border-bottom:1px solid var(--border);
-  padding:16px 24px;display:flex;align-items:center;gap:16px;
-  position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);
-}
-.wiki-header .hub-btn{
-  background:var(--glass2);border:1px solid var(--border2);border-radius:8px;
-  color:var(--text);padding:8px 12px;text-decoration:none;font-size:13px;
-  transition:all .2s;display:flex;align-items:center;gap:6px;
-}
-.wiki-header .hub-btn:hover{background:var(--accent);border-color:var(--accent)}
-.wiki-header h1{font-size:20px;font-weight:700;background:linear-gradient(135deg,var(--green),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.wiki-header .search-box{
-  margin-left:auto;background:var(--glass);border:1px solid var(--border);
-  border-radius:8px;padding:8px 16px;color:var(--text);font-family:var(--font);
-  font-size:13px;width:300px;outline:none;transition:border-color .2s;
-}
-.wiki-header .search-box:focus{border-color:var(--green)}
-
-/* === LAYOUT === */
-.wiki-layout{display:flex;height:calc(100vh - 60px)}
-.wiki-sidebar{
-  width:280px;min-width:280px;background:var(--bg2);border-right:1px solid var(--border);
-  overflow-y:auto;padding:16px 0;
-}
-.wiki-main{flex:1;overflow-y:auto;padding:32px 48px;max-width:900px}
-.wiki-toc{
-  width:240px;min-width:240px;background:var(--bg2);border-left:1px solid var(--border);
-  overflow-y:auto;padding:16px;display:none;
-}
-@media(min-width:1400px){.wiki-toc{display:block}}
-
-/* === SIDEBAR NAV === */
-.nav-section{margin-bottom:8px}
-.nav-section-title{
-  padding:8px 20px;font-size:11px;font-weight:600;text-transform:uppercase;
-  letter-spacing:1.2px;color:var(--text3);cursor:pointer;
-  display:flex;align-items:center;gap:8px;
-}
-.nav-section-title:hover{color:var(--text2)}
-.nav-section-title .arrow{transition:transform .2s;font-size:10px}
-.nav-section-title.collapsed .arrow{transform:rotate(-90deg)}
-.nav-item{
-  padding:6px 20px 6px 36px;font-size:13px;color:var(--text2);
-  cursor:pointer;transition:all .15s;border-left:2px solid transparent;
-  display:flex;align-items:center;gap:8px;
-}
-.nav-item:hover{color:var(--text);background:var(--glass)}
-.nav-item.active{color:var(--green);border-left-color:var(--green);background:rgba(0,255,136,0.05)}
-.nav-item .icon{font-size:14px;width:20px;text-align:center}
-.nav-badge{
-  margin-left:auto;background:var(--glass2);border-radius:10px;
-  padding:1px 7px;font-size:10px;color:var(--text3);font-family:var(--mono);
-}
-
-/* === CONTENT === */
-.wiki-content h1{font-size:32px;font-weight:900;margin-bottom:8px;background:linear-gradient(135deg,var(--accent),var(--yellow));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.wiki-content h2{font-size:22px;font-weight:700;margin:32px 0 12px;color:var(--text);padding-bottom:8px;border-bottom:1px solid var(--border)}
-.wiki-content h3{font-size:16px;font-weight:600;margin:24px 0 8px;color:var(--cyan)}
-.wiki-content p{font-size:14px;line-height:1.8;color:var(--text2);margin-bottom:16px}
-.wiki-content code{
-  background:var(--glass2);border:1px solid var(--border);border-radius:4px;
-  padding:2px 6px;font-family:var(--mono);font-size:12px;color:var(--green);
-}
-.wiki-content pre{
-  background:var(--surface);border:1px solid var(--border);border-radius:8px;
-  padding:16px;overflow-x:auto;margin:16px 0;font-family:var(--mono);font-size:12px;
-  line-height:1.6;color:var(--text2);
-}
-.wiki-content table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
-.wiki-content th{background:var(--surface);color:var(--text);padding:10px 12px;text-align:left;border:1px solid var(--border);font-weight:600}
-.wiki-content td{padding:8px 12px;border:1px solid var(--border);color:var(--text2)}
-.wiki-content tr:hover td{background:var(--glass)}
-
-.wiki-content .info-box{
-  background:linear-gradient(135deg,rgba(0,255,136,0.05),rgba(6,182,212,0.05));
-  border:1px solid rgba(0,255,136,0.2);border-radius:8px;padding:16px;margin:16px 0;
-}
-.wiki-content .info-box .info-title{color:var(--green);font-weight:600;font-size:13px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
-.wiki-content .warn-box{
-  background:rgba(255,184,0,0.05);border:1px solid rgba(255,184,0,0.2);
-  border-radius:8px;padding:16px;margin:16px 0;
-}
-.wiki-content .warn-box .warn-title{color:var(--yellow);font-weight:600;font-size:13px;margin-bottom:6px}
-
-/* === TOC === */
-.toc-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:12px}
-.toc-item{
-  padding:4px 0;font-size:12px;color:var(--text3);cursor:pointer;
-  transition:color .15s;border-left:1px solid var(--border);padding-left:12px;
-}
-.toc-item:hover{color:var(--text)}
-.toc-item.active{color:var(--green);border-left-color:var(--green)}
-.toc-sub{padding-left:24px}
-
-/* === STATS === */
-.wiki-stats{
-  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0;
-}
-.stat-card{
-  background:var(--glass);border:1px solid var(--border);border-radius:10px;
-  padding:16px;text-align:center;transition:all .2s;
-}
-.stat-card:hover{border-color:var(--green);transform:translateY(-2px)}
-.stat-card .stat-val{font-size:28px;font-weight:900;font-family:var(--mono);color:var(--green)}
-.stat-card .stat-label{font-size:11px;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
-
-/* === MODULE GRID === */
-.module-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin:16px 0}
-.mod-card{
-  background:var(--glass);border:1px solid var(--border);border-radius:8px;
-  padding:12px;cursor:pointer;transition:all .2s;
-}
-.mod-card:hover{border-color:var(--cyan);transform:translateY(-1px);box-shadow:0 4px 20px rgba(6,182,212,0.1)}
-.mod-card .mod-icon{font-size:20px;margin-bottom:4px}
-.mod-card .mod-name{font-size:12px;font-weight:600;color:var(--text)}
-.mod-card .mod-desc{font-size:10px;color:var(--text3);margin-top:2px}
-
-/* === ANIMATION === */
-@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-.fade-up{animation:fadeUp .4s ease forwards;opacity:0}
-.fade-up:nth-child(2){animation-delay:.05s}
-.fade-up:nth-child(3){animation-delay:.1s}
-.fade-up:nth-child(4){animation-delay:.15s}
-
-/* === SCROLLBAR === */
-::-webkit-scrollbar{width:6px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:var(--text3)}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="dkz-version" content="v2.00.0_01">
+  <meta name="description" content="DEVKiTZ Wiki + Kanban Dashboard - Vollstaendiges Oekosystem-Wiki mit 152 Modulen, 53 Skills, 77 Workflows">
+  <title>DEVKiTZ Wiki + Kanban</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ========== DkZ Design System v2 ========== */
+    :root {
+      --bg: #000000;
+      --bg-card: rgba(12, 12, 18, 0.85);
+      --bg-card-hover: rgba(20, 20, 30, 0.95);
+      --surface: #0a0a0f;
+      --surface-2: #111118;
+      --border: rgba(255, 255, 255, 0.06);
+      --border-glow: rgba(250, 30, 78, 0.25);
+      --accent: #fa1e4e;
+      --accent-dim: rgba(250, 30, 78, 0.15);
+      --green: #00ff88;
+      --green-dim: rgba(0, 255, 136, 0.12);
+      --yellow: #ffb800;
+      --yellow-dim: rgba(255, 184, 0, 0.12);
+      --red: #ff3b5c;
+      --red-dim: rgba(255, 59, 92, 0.12);
+      --cyan: #00d4ff;
+      --cyan-dim: rgba(0, 212, 255, 0.12);
+      --purple: #a855f7;
+      --text: #e8e8ec;
+      --text-dim: #8888a0;
+      --text-muted: #555568;
+      --font-ui: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --glass-bg: rgba(15, 15, 25, 0.7);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-blur: 16px;
+      --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    [data-theme="high-contrast"] {
+      --bg: #000000;
+      --text: #ffffff;
+      --text-dim: #cccccc;
+      --border: rgba(255,255,255,0.2);
+      --bg-card: rgba(20,20,20,0.95);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-ui);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    /* ========== HEADER ========== */
+    .dkz-header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+    }
+    .header-top {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0 8px;
+    }
+    .header-brand {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .header-brand h1 {
+      font-size: 1.25rem; font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .header-brand .badge {
+      font-size: 0.65rem; font-family: var(--font-mono);
+      background: var(--accent-dim); color: var(--accent);
+      padding: 2px 8px; border-radius: 20px;
+      border: 1px solid rgba(250,30,78,0.3);
+    }
+    .header-controls {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .ctrl-btn {
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      color: var(--text-dim); font-family: var(--font-mono);
+      font-size: 0.7rem; padding: 5px 10px; border-radius: var(--radius-sm);
+      cursor: pointer; transition: var(--transition);
+    }
+    .ctrl-btn:hover { color: var(--text); border-color: var(--accent); }
+    .hub-link {
+      background: linear-gradient(135deg, var(--accent), #d4164a);
+      color: #fff; text-decoration: none; font-weight: 600;
+      font-size: 0.75rem; padding: 6px 14px; border-radius: var(--radius-sm);
+      border: none; cursor: pointer; transition: var(--transition);
+    }
+    .hub-link:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(250,30,78,0.3); }
+    /* ========== TABS ========== */
+    .tab-nav {
+      display: flex; gap: 2px; overflow-x: auto;
+      scrollbar-width: none; padding-bottom: 0;
+    }
+    .tab-nav::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      background: transparent; border: none; border-bottom: 2px solid transparent;
+      color: var(--text-dim); font-family: var(--font-ui); font-size: 0.8rem;
+      font-weight: 500; padding: 10px 16px; cursor: pointer;
+      white-space: nowrap; transition: var(--transition);
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active {
+      color: var(--accent); border-bottom-color: var(--accent);
+    }
+    /* ========== MAIN CONTENT ========== */
+    .main-content { padding: 24px; max-width: 1440px; margin: 0 auto; }
+    .tab-panel { display: none; animation: fadeUp 0.35s ease; }
+    .tab-panel.active { display: block; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    /* ========== GLASS CARD ========== */
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(var(--glass-blur));
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 20px; margin-bottom: 16px;
+      transition: var(--transition);
+    }
+    .glass-card:hover {
+      border-color: var(--border-glow);
+      box-shadow: 0 0 20px rgba(250,30,78,0.06);
+    }
+    .card-title {
+      font-size: 0.85rem; font-weight: 600; color: var(--text);
+      margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+    }
+    .card-title .icon { font-size: 1rem; }
+    /* ========== STAT CARDS ========== */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px; margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur));
+      border: 1px solid var(--glass-border); border-radius: var(--radius);
+      padding: 16px; text-align: center; transition: var(--transition);
+    }
+    .stat-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .stat-number {
+      font-size: 1.8rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+    /* ========== SECTION TITLE ========== */
+    .section-title {
+      font-size: 1rem; font-weight: 700; color: var(--text);
+      margin: 28px 0 14px; padding-left: 12px;
+      border-left: 3px solid var(--accent);
+    }
+    /* ========== TABLES ========== */
+    .dkz-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .dkz-table th {
+      background: var(--surface); color: var(--text-dim);
+      font-weight: 600; text-align: left; padding: 10px 14px;
+      border-bottom: 1px solid var(--border); text-transform: uppercase;
+      font-size: 0.68rem; letter-spacing: 0.5px;
+    }
+    .dkz-table td {
+      padding: 10px 14px; border-bottom: 1px solid var(--border);
+      color: var(--text); vertical-align: top;
+    }
+    .dkz-table tr:hover td { background: rgba(250,30,78,0.03); }
+    /* ========== KANBAN ========== */
+    .kanban-board {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 14px; min-height: 500px;
+    }
+    .kanban-col {
+      background: var(--surface); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 14px;
+      min-height: 400px; transition: var(--transition);
+    }
+    .kanban-col.drag-over { border-color: var(--accent); background: var(--accent-dim); }
+    .kanban-col-header {
+      font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; margin-bottom: 14px; padding-bottom: 8px;
+      border-bottom: 2px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .kanban-col-header .count {
+      font-size: 0.65rem; background: var(--glass-bg);
+      padding: 2px 8px; border-radius: 10px; color: var(--text-dim);
+    }
+    .kanban-col[data-col="backlog"] .kanban-col-header { color: var(--text-dim); border-color: var(--text-muted); }
+    .kanban-col[data-col="progress"] .kanban-col-header { color: var(--cyan); border-color: var(--cyan); }
+    .kanban-col[data-col="done"] .kanban-col-header { color: var(--green); border-color: var(--green); }
+    .kanban-col[data-col="problem"] .kanban-col-header { color: var(--red); border-color: var(--red); }
+    .kanban-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px;
+      cursor: grab; transition: var(--transition); font-size: 0.78rem;
+    }
+    .kanban-card:active { cursor: grabbing; }
+    .kanban-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .kanban-card.dragging { opacity: 0.4; transform: scale(0.97); }
+    .kanban-card-title { font-weight: 600; margin-bottom: 6px; color: var(--text); }
+    .kanban-card-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+    .priority-badge {
+      font-size: 0.6rem; font-family: var(--font-mono); font-weight: 600;
+      padding: 2px 6px; border-radius: 4px;
+    }
+    .priority-badge.p1 { background: var(--red-dim); color: var(--red); }
+    .priority-badge.p2 { background: var(--yellow-dim); color: var(--yellow); }
+    .priority-badge.p3 { background: var(--green-dim); color: var(--green); }
+    .label-tag {
+      font-size: 0.6rem; padding: 2px 6px; border-radius: 4px;
+      background: var(--cyan-dim); color: var(--cyan);
+      font-family: var(--font-mono);
+    }
+    .add-task-btn {
+      width: 100%; background: transparent; border: 1px dashed var(--border);
+      color: var(--text-dim); padding: 10px; border-radius: var(--radius-sm);
+      cursor: pointer; font-family: var(--font-ui); font-size: 0.75rem;
+      transition: var(--transition); margin-top: 8px;
+    }
+    .add-task-btn:hover { border-color: var(--accent); color: var(--accent); }
+    /* ========== MODULE GRID ========== */
+    .module-filters {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+    }
+    .filter-btn {
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      color: var(--text-dim); font-family: var(--font-mono); font-size: 0.7rem;
+      padding: 6px 12px; border-radius: 20px; cursor: pointer;
+      transition: var(--transition);
+    }
+    .filter-btn:hover, .filter-btn.active {
+      background: var(--accent-dim); color: var(--accent);
+      border-color: var(--accent);
+    }
+    .search-input {
+      width: 100%; background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); font-family: var(--font-ui); font-size: 0.85rem;
+      padding: 12px 16px; border-radius: var(--radius-sm);
+      margin-bottom: 16px; outline: none; transition: var(--transition);
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .modules-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 8px;
+    }
+    .module-mini-card {
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm); padding: 10px 12px;
+      font-size: 0.72rem; cursor: pointer; transition: var(--transition);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .module-mini-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .module-mini-card .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+    }
+    .module-mini-card .status-dot.active { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .module-mini-card .status-dot.empty { background: var(--text-muted); }
+    /* ========== MINDMAP ========== */
+    .mindmap-block {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
+      overflow-x: auto;
+    }
+    .mindmap-block pre {
+      font-family: var(--font-mono); font-size: 0.72rem;
+      color: var(--green); line-height: 1.5; white-space: pre;
+    }
+    .mindmap-block .mm-title {
+      font-family: var(--font-ui); font-size: 0.85rem; font-weight: 700;
+      color: var(--accent); margin-bottom: 12px;
+    }
+    /* ========== DOCS ========== */
+    .doc-section { margin-bottom: 20px; }
+    .doc-section code {
+      font-family: var(--font-mono); font-size: 0.75rem;
+      background: var(--surface); padding: 2px 6px; border-radius: 4px;
+      color: var(--cyan);
+    }
+    .doc-section pre {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 14px;
+      font-family: var(--font-mono); font-size: 0.72rem;
+      color: var(--text); overflow-x: auto; line-height: 1.6;
+    }
+    .rule-item {
+      display: flex; gap: 10px; padding: 8px 0;
+      border-bottom: 1px solid var(--border); font-size: 0.8rem;
+    }
+    .rule-num {
+      font-family: var(--font-mono); color: var(--accent);
+      font-weight: 700; min-width: 24px;
+    }
+    /* ========== GITHUB CARDS ========== */
+    .repo-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 10px;
+    }
+    .repo-card {
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm); padding: 14px;
+      transition: var(--transition); font-size: 0.78rem;
+    }
+    .repo-card:hover { border-color: var(--accent); }
+    .repo-card .repo-name {
+      font-weight: 600; color: var(--cyan); margin-bottom: 4px;
+    }
+    .repo-card .repo-desc { color: var(--text-dim); font-size: 0.7rem; }
+    /* ========== AGENT FLOW ========== */
+    .flow-phases {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      align-items: center; margin: 16px 0;
+    }
+    .flow-phase {
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm); padding: 12px 16px;
+      text-align: center; min-width: 120px;
+    }
+    .flow-phase .phase-num {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      color: var(--accent); font-weight: 700;
+    }
+    .flow-phase .phase-name {
+      font-weight: 600; font-size: 0.8rem; margin-top: 4px;
+    }
+    .flow-phase .phase-desc {
+      font-size: 0.68rem; color: var(--text-dim); margin-top: 2px;
+    }
+    .flow-arrow { color: var(--accent); font-size: 1.2rem; }
+    /* ========== AGENT CARDS ========== */
+    .agent-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .agent-card {
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      border-radius: var(--radius); padding: 16px; text-align: center;
+      transition: var(--transition);
+    }
+    .agent-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .agent-card .agent-icon { font-size: 1.8rem; margin-bottom: 8px; }
+    .agent-card .agent-name { font-weight: 700; font-size: 0.85rem; }
+    .agent-card .agent-role { font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; }
+    /* ========== VPS ========== */
+    .infra-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+    }
+    .status-badge {
+      font-size: 0.6rem; font-family: var(--font-mono); font-weight: 600;
+      padding: 2px 8px; border-radius: 10px;
+    }
+    .status-badge.online { background: var(--green-dim); color: var(--green); }
+    .status-badge.planned { background: var(--yellow-dim); color: var(--yellow); }
+    .status-badge.issue { background: var(--red-dim); color: var(--red); }
+    /* ========== QUICK LINKS ========== */
+    .quick-links {
+      display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0;
+    }
+    .quick-link {
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      color: var(--cyan); text-decoration: none; font-size: 0.72rem;
+      padding: 6px 12px; border-radius: 20px; transition: var(--transition);
+      font-family: var(--font-mono);
+    }
+    .quick-link:hover { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+    /* ========== MODAL ========== */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 24px; width: 380px; max-width: 90%;
+    }
+    .modal-box h3 { font-size: 1rem; margin-bottom: 16px; }
+    .modal-box input, .modal-box select {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      color: var(--text); font-family: var(--font-ui); font-size: 0.85rem;
+      padding: 10px 12px; border-radius: var(--radius-sm);
+      margin-bottom: 10px; outline: none;
+    }
+    .modal-box input:focus, .modal-box select:focus { border-color: var(--accent); }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+    .btn-primary {
+      background: var(--accent); color: #fff; border: none;
+      padding: 8px 18px; border-radius: var(--radius-sm);
+      font-family: var(--font-ui); font-weight: 600; cursor: pointer;
+      font-size: 0.8rem; transition: var(--transition);
+    }
+    .btn-primary:hover { background: #d4164a; }
+    .btn-ghost {
+      background: transparent; color: var(--text-dim); border: 1px solid var(--border);
+      padding: 8px 18px; border-radius: var(--radius-sm);
+      font-family: var(--font-ui); cursor: pointer; font-size: 0.8rem;
+      transition: var(--transition);
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--text-dim); }
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 900px) {
+      .kanban-board { grid-template-columns: 1fr 1fr; }
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .kanban-board { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .main-content { padding: 14px; }
+      .tab-btn { font-size: 0.7rem; padding: 8px 10px; }
+    }
+    /* ========== SCROLLBAR ========== */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+    /* ========== CATEGORY HEADER ========== */
+    .cat-header {
+      font-size: 0.78rem; font-weight: 700; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 1px;
+      margin: 20px 0 10px; padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+    .issue-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; border-bottom: 1px solid var(--border);
+      font-size: 0.78rem;
+    }
+    .issue-num { font-family: var(--font-mono); color: var(--text-dim); min-width: 36px; }
+  </style>
 </head>
 <body>
+  <!-- ============ HEADER ============ -->
+  <header class="dkz-header" id="dkz-header">
+    <div class="header-top">
+      <div class="header-brand">
+        <h1>DEVKiTZ Wiki + Kanban</h1>
+        <span class="badge">v2.00.0</span>
+      </div>
+      <div class="header-controls">
+        <button class="ctrl-btn" id="langToggle" onclick="toggleLang()" title="EN/DE">DE</button>
+        <button class="ctrl-btn" id="contrastToggle" onclick="toggleContrast()" title="Kontrast">&#9681;</button>
+        <a href="../../hub/index.html" class="hub-link">&#8592; HUB</a>
+      </div>
+    </div>
+    <nav class="tab-nav" id="tabNav">
+      <button class="tab-btn active" data-tab="wiki">&#128218; Wiki</button>
+      <button class="tab-btn" data-tab="kanban">&#128203; Kanban</button>
+      <button class="tab-btn" data-tab="vps">&#9729; VPS Infra</button>
+      <button class="tab-btn" data-tab="agenten">&#129302; Agenten</button>
+      <button class="tab-btn" data-tab="module">&#128230; Module</button>
+      <button class="tab-btn" data-tab="mindmaps">&#129504; Mindmaps</button>
+      <button class="tab-btn" data-tab="docs">&#128196; Docs</button>
+      <button class="tab-btn" data-tab="github">&#128025; GitHub</button>
+    </nav>
+  </header>
 
-<header class="wiki-header">
-  <a href="../../hub/index.html" class="hub-btn">◀ Hub</a>
-  <h1>📖 DEVKiTZ Wiki</h1>
-  <input type="text" class="search-box" id="wikiSearch" placeholder="Search wiki... (Ctrl+K)">
-</header>
+  <main class="main-content">
+    <!-- ============ TAB 1: WIKI ============ -->
+    <section class="tab-panel active" id="panel-wiki">
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="section-title">Quick Links</div>
+      <div class="quick-links">
+        <a class="quick-link" href="../kanban-board/index.html">Kanban Board</a>
+        <a class="quick-link" href="../nanobot-center/index.html">NanoBot Center</a>
+        <a class="quick-link" href="../system-check/index.html">System Check</a>
+        <a class="quick-link" href="../copilot-presentation/index.html">Copilot</a>
+        <a class="quick-link" href="../vps-monitor/index.html">VPS Monitor</a>
+        <a class="quick-link" href="../wissen-hub/index.html">WissenHub</a>
+        <a class="quick-link" href="../loop-dashboard/index.html">Loop Dashboard</a>
+        <a class="quick-link" href="../docker-ops/index.html">Docker Ops</a>
+        <a class="quick-link" href="../workflow-viewer/index.html">Workflows</a>
+        <a class="quick-link" href="../research/index.html">Research</a>
+      </div>
+      <div class="section-title">Tech Stack</div>
+      <div class="glass-card">
+        <table class="dkz-table" id="techTable"></table>
+      </div>
+      <div class="section-title">BMAD Agenten Uebersicht</div>
+      <div class="agent-grid" id="wikiAgentGrid"></div>
+    </section>
 
-<div class="wiki-layout">
-  <!-- SIDEBAR -->
-  <nav class="wiki-sidebar" id="wikiSidebar"></nav>
+    <!-- ============ TAB 2: KANBAN ============ -->
+    <section class="tab-panel" id="panel-kanban">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div class="section-title" style="margin:0;">Task Board</div>
+        <button class="btn-primary" onclick="openModal()">+ New Task</button>
+      </div>
+      <div class="kanban-board" id="kanbanBoard">
+        <div class="kanban-col" data-col="backlog" ondragover="onDragOver(event)" ondrop="onDrop(event, 'backlog')">
+          <div class="kanban-col-header">Backlog <span class="count" id="count-backlog">0</span></div>
+          <div class="kanban-cards" id="cards-backlog"></div>
+        </div>
+        <div class="kanban-col" data-col="progress" ondragover="onDragOver(event)" ondrop="onDrop(event, 'progress')">
+          <div class="kanban-col-header">In Progress <span class="count" id="count-progress">0</span></div>
+          <div class="kanban-cards" id="cards-progress"></div>
+        </div>
+        <div class="kanban-col" data-col="done" ondragover="onDragOver(event)" ondrop="onDrop(event, 'done')">
+          <div class="kanban-col-header">Done <span class="count" id="count-done">0</span></div>
+          <div class="kanban-cards" id="cards-done"></div>
+        </div>
+        <div class="kanban-col" data-col="problem" ondragover="onDragOver(event)" ondrop="onDrop(event, 'problem')">
+          <div class="kanban-col-header">Problem <span class="count" id="count-problem">0</span></div>
+          <div class="kanban-cards" id="cards-problem"></div>
+        </div>
+      </div>
+    </section>
 
-  <!-- MAIN CONTENT -->
-  <main class="wiki-main">
-    <div class="wiki-content" id="wikiContent"></div>
+    <!-- ============ TAB 3: VPS INFRA ============ -->
+    <section class="tab-panel" id="panel-vps">
+      <div class="section-title">VPS Infrastruktur</div>
+      <div class="infra-grid">
+        <div class="glass-card">
+          <div class="card-title"><span class="icon">&#9889;</span> KVM8 Server</div>
+          <table class="dkz-table">
+            <tr><td>IP</td><td style="font-family:var(--font-mono);color:var(--cyan)">147.45.77.245</td></tr>
+            <tr><td>OS</td><td>Ubuntu 22.04 LTS</td></tr>
+            <tr><td>RAM</td><td>8 GB</td></tr>
+            <tr><td>CPU</td><td>4 vCPU</td></tr>
+            <tr><td>SSD</td><td>200 GB NVMe</td></tr>
+            <tr><td>Status</td><td><span class="status-badge online">ONLINE</span></td></tr>
+          </table>
+        </div>
+        <div class="glass-card">
+          <div class="card-title"><span class="icon">&#127760;</span> Domain Routing</div>
+          <table class="dkz-table">
+            <tr><td>devkitz.eu</td><td><span class="status-badge online">SSL</span></td></tr>
+            <tr><td>devkitz.sites</td><td><span class="status-badge online">SSL</span></td></tr>
+            <tr><td>dkz.app</td><td><span class="status-badge planned">GEPLANT</span></td></tr>
+          </table>
+        </div>
+        <div class="glass-card">
+          <div class="card-title"><span class="icon">&#128279;</span> EU Cloud Plan</div>
+          <table class="dkz-table">
+            <tr><td>Platform</td><td>Puter.com</td></tr>
+            <tr><td>Container</td><td>Docker Compose</td></tr>
+            <tr><td>Registry</td><td>GHCR (geplant)</td></tr>
+            <tr><td>Status</td><td><span class="status-badge planned">PHASE 1</span></td></tr>
+          </table>
+        </div>
+        <div class="glass-card">
+          <div class="card-title"><span class="icon">&#9881;</span> Auto-Update Pipeline</div>
+          <table class="dkz-table">
+            <tr><td>Cron</td><td style="font-family:var(--font-mono)">0 3 * * *</td></tr>
+            <tr><td>Script</td><td style="font-family:var(--font-mono)">/opt/dkz/update.sh</td></tr>
+            <tr><td>Backup</td><td style="font-family:var(--font-mono)">/opt/dkz/backup/</td></tr>
+            <tr><td>nginx</td><td><span class="status-badge online">ACTIVE</span></td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="section-title">Docker Container</div>
+      <div class="glass-card">
+        <table class="dkz-table" id="dockerTable"></table>
+      </div>
+    </section>
+
+    <!-- ============ TAB 4: AGENTEN ============ -->
+    <section class="tab-panel" id="panel-agenten">
+      <div class="section-title">BMAD 7 Agenten</div>
+      <div class="agent-grid" id="agentGrid"></div>
+      <div class="section-title">Ralph-Loop 6 Phasen</div>
+      <div class="flow-phases" id="ralphFlow"></div>
+      <div class="section-title">NanoBot Fleet</div>
+      <div class="two-col">
+        <div class="glass-card">
+          <div class="card-title"><span class="icon">&#129302;</span> Antigravity Bot</div>
+          <p style="font-size:0.78rem;color:var(--text-dim)">Gemini Agent Kommunikation via nanobot-antigravity.js</p>
+        </div>
+        <div class="glass-card">
+          <div class="card-title"><span class="icon">&#129302;</span> OpenCode Bot</div>
+          <p style="font-size:0.78rem;color:var(--text-dim)">OpenCode Agent Kommunikation via nanobot-opencode.js</p>
+        </div>
+      </div>
+      <div class="section-title">James Score System</div>
+      <div class="glass-card">
+        <table class="dkz-table">
+          <tr><th>Metrik</th><th>Gewicht</th><th>Beschreibung</th></tr>
+          <tr><td>esc() Nutzung</td><td style="color:var(--accent)">30%</td><td>XSS-Schutz bei innerHTML</td></tr>
+          <tr><td>CSS Variables</td><td style="color:var(--accent)">20%</td><td>DkZ Design System Compliance</td></tr>
+          <tr><td>Shared Scripts</td><td style="color:var(--accent)">20%</td><td>Einbindung der geteilten Scripts</td></tr>
+          <tr><td>Git Commits</td><td style="color:var(--accent)">15%</td><td>Regelmaessige Commits</td></tr>
+          <tr><td>features.json</td><td style="color:var(--accent)">15%</td><td>Aktualisierung nach Aenderungen</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ TAB 5: MODULE ============ -->
+    <section class="tab-panel" id="panel-module">
+      <input type="text" class="search-input" id="moduleSearch" placeholder="Module durchsuchen... (152 Module)" oninput="filterModules()">
+      <div class="module-filters" id="moduleFilters"></div>
+      <div id="modulesContainer"></div>
+    </section>
+
+    <!-- ============ TAB 6: MINDMAPS ============ -->
+    <section class="tab-panel" id="panel-mindmaps">
+      <div class="section-title">ASCII Mindmaps - DEVKiTZ Oekosystem</div>
+      <div id="mindmapContainer"></div>
+    </section>
+
+    <!-- ============ TAB 7: DOCS ============ -->
+    <section class="tab-panel" id="panel-docs">
+      <div class="section-title">10 Eiserne Regeln</div>
+      <div class="glass-card" id="rulesContainer"></div>
+      <div class="section-title">Tech Stack Standards</div>
+      <div class="glass-card doc-section">
+        <pre>Frontend:  Vanilla HTML5 + CSS3 + JS ES6+
+Fonts:     Inter (UI) + JetBrains Mono (Code)
+Colors:    --accent: #fa1e4e | --bg: #000000 | --green: #00ff88
+Backend:   Node.js 18+ / Express
+Data:      localStorage (Offline-First), DuckDB, Apache Iceberg
+Kein:      React, Vue, Angular, jQuery — VERBOTEN</pre>
+      </div>
+      <div class="section-title">Syntax Standards</div>
+      <div class="two-col">
+        <div class="glass-card doc-section">
+          <div class="card-title">HTML / CSS</div>
+          <pre>- Semantische HTML5 Elemente
+- CSS Custom Properties (--var)
+- BEM-aehnliche Klassen
+- Mobile-First Responsive
+- backdrop-filter: blur()
+- Glassmorphism Cards</pre>
+        </div>
+        <div class="glass-card doc-section">
+          <div class="card-title">JavaScript / Git</div>
+          <pre>- ES6+ (const, let, arrow, template)
+- esc() bei JEDEM innerHTML
+- Kein console.log in Produktion
+- localStorage Offline-First
+- Git: feat(bereich): beschreibung
+- Commits nach JEDER Aenderung</pre>
+        </div>
+      </div>
+      <div class="section-title">Code Patterns</div>
+      <div class="glass-card doc-section">
+        <pre>// XSS-Schutz Pattern
+function esc(str) {
+  const d = document.createElement('div');
+  d.appendChild(document.createTextNode(str));
+  return d.innerHTML;
+}
+
+// localStorage Pattern
+function loadData(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) || fallback; }
+  catch { return fallback; }
+}
+function saveData(key, data) {
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
+// Event Delegation Pattern
+container.addEventListener('click', (e) => {
+  const card = e.target.closest('.card');
+  if (!card) return;
+  handleCardClick(card.dataset.id);
+});</pre>
+      </div>
+      <div class="section-title">Templates</div>
+      <div class="two-col">
+        <div class="glass-card doc-section">
+          <div class="card-title">HTML Modul Template</div>
+          <pre>&lt;!DOCTYPE html&gt;
+&lt;html lang="de"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="dkz-version"
+    content="v2.00.0_01"&gt;
+  &lt;title&gt;DkZ Modul&lt;/title&gt;
+  &lt;link href="fonts..." /&gt;
+  &lt;style&gt;:root { ... }&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;!-- Shared Scripts --&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+        </div>
+        <div class="glass-card doc-section">
+          <div class="card-title">README Template</div>
+          <pre># Modul-Name
+
+> Beschreibung
+
+## Features
+- Feature 1
+- Feature 2
+
+## Tech Stack
+- Vanilla HTML/CSS/JS
+
+## Status
+![Status](badge)
+
+## Links
+- [Dashboard](../hub/)
+- [GitHub](repo-url)</pre>
+        </div>
+      </div>
+      <div class="section-title">GitHub Links</div>
+      <div class="quick-links">
+        <a class="quick-link" href="https://github.com/D-VKITZ/KERN" target="_blank">D-VKITZ/KERN</a>
+        <a class="quick-link" href="https://github.com/D-VKITZ/devkitz-ecosystem" target="_blank">devkitz-ecosystem</a>
+        <a class="quick-link" href="https://github.com/dkz-playbook/zero-rules" target="_blank">zero-rules</a>
+        <a class="quick-link" href="https://github.com/dkz-playbook/zero-playbook" target="_blank">zero-playbook</a>
+      </div>
+    </section>
+
+    <!-- ============ TAB 8: GITHUB ============ -->
+    <section class="tab-panel" id="panel-github">
+      <div class="section-title">29 D-VKITZ Repositories</div>
+      <div class="repo-grid" id="repoGrid"></div>
+      <div class="section-title">14 Issues</div>
+      <div class="glass-card" id="issuesList"></div>
+      <div class="section-title">GitHub Actions</div>
+      <div class="two-col">
+        <div class="glass-card">
+          <div class="card-title"><span class="icon">&#9881;</span> Active Workflows</div>
+          <div class="issue-item"><span class="status-badge online">PASS</span> CI/CD Deploy Pipeline</div>
+          <div class="issue-item"><span class="status-badge online">PASS</span> Module Health Check</div>
+          <div class="issue-item"><span class="status-badge online">PASS</span> README Auto-Update</div>
+        </div>
+        <div class="glass-card">
+          <div class="card-title"><span class="icon">&#128101;</span> 5 Teams</div>
+          <div class="issue-item">Core — Kern-Entwicklung</div>
+          <div class="issue-item">Infra — VPS + Docker + CI/CD</div>
+          <div class="issue-item">AI/ML — KI Module + NanoBots</div>
+          <div class="issue-item">Content — Blog + Wiki + Docs</div>
+          <div class="issue-item">Community — Support + Outreach</div>
+        </div>
+      </div>
+      <div class="section-title">19 Projects</div>
+      <div class="glass-card" id="projectsList"></div>
+    </section>
   </main>
 
-  <!-- TABLE OF CONTENTS -->
-  <aside class="wiki-toc" id="wikiToc">
-    <div class="toc-title">On This Page</div>
-    <div id="tocList"></div>
-  </aside>
-</div>
-
-<script>
-function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
-
-const WIKI_PAGES = {
-  'overview': {
-    title: 'Ecosystem Overview',
-    icon: '🏠',
-    section: 'Getting Started',
-    content: function(){return `
-      <h1>DEVKiTZ Ecosystem</h1>
-      <p>Das vollstaendige KI-Entwickler-Oekosystem mit 143 Modulen, 53 Skills, 77 Workflows und 7 BMAD Agenten.</p>
-      <div class="wiki-stats">
-        <div class="stat-card fade-up"><div class="stat-val">143</div><div class="stat-label">Module</div></div>
-        <div class="stat-card fade-up"><div class="stat-val">53</div><div class="stat-label">Skills</div></div>
-        <div class="stat-card fade-up"><div class="stat-val">77</div><div class="stat-label">Workflows</div></div>
-        <div class="stat-card fade-up"><div class="stat-val">7</div><div class="stat-label">Agenten</div></div>
+  <!-- ============ NEW TASK MODAL ============ -->
+  <div class="modal-overlay" id="taskModal">
+    <div class="modal-box">
+      <h3>Neuer Task</h3>
+      <input type="text" id="newTaskTitle" placeholder="Task Titel...">
+      <select id="newTaskPriority">
+        <option value="p1">P1 - Kritisch</option>
+        <option value="p2" selected>P2 - Wichtig</option>
+        <option value="p3">P3 - Nice-to-Have</option>
+      </select>
+      <input type="text" id="newTaskLabel" placeholder="Label (z.B. VPS, Module...)">
+      <select id="newTaskColumn">
+        <option value="backlog">Backlog</option>
+        <option value="progress">In Progress</option>
+        <option value="done">Done</option>
+        <option value="problem">Problem</option>
+      </select>
+      <div class="modal-actions">
+        <button class="btn-ghost" onclick="closeModal()">Abbrechen</button>
+        <button class="btn-primary" onclick="addTask()">Erstellen</button>
       </div>
-      <h2>Architecture</h2>
-      <pre>
-    LOKAL (C:\\DEVKiTZ)          VPS (Hostinger)           CLOUD (GCP+CF)
-    ────────────────           ──────────────           ──────────────
-    143 Module                 KVM8: nginx, n8n         Cloudflare DNS
-    53 Skills                  KVM4: OpenClaw           GitHub Actions
-    77 Workflows               vLLM Fleet (8 Models)    CodeRabbit
-    7 BMAD Agenten             PostgreSQL + Redis       DeepSeek API
-      </pre>
-      <h2>Quick Links</h2>
-      <table>
-        <tr><th>Resource</th><th>URL</th><th>Status</th></tr>
-        <tr><td>Landing Page</td><td>devkitz.eu</td><td>🟢 Live</td></tr>
-        <tr><td>Dashboard</td><td>devkitz.sites</td><td>🟢 Live</td></tr>
-        <tr><td>App</td><td>dkz.app</td><td>🟢 Live</td></tr>
-        <tr><td>GitHub</td><td>github.com/D-VKITZ</td><td>🟢 Live</td></tr>
-      </table>
-    `}
-  },
-  'modules': {
-    title: 'Module Reference',
-    icon: '📦',
-    section: 'Getting Started',
-    content: function(){
-      let grid = '';
-      const cats = [
-        {name:'Core',mods:[{i:'🏠',n:'Hub',d:'Central Dashboard'},{i:'🤖',n:'Copilot',d:'AI Assistant'},{i:'📈',n:'Graphify',d:'Graph Viewer'},{i:'🔒',n:'DEEPKEEP',d:'Archive Tresor'}]},
-        {name:'Data',mods:[{i:'🧬',n:'OpenHumans Hub',d:'Citizen Science'},{i:'🔗',n:'GitNexus',d:'Code Intelligence'},{i:'🐟',n:'MiroFish',d:'Swarm AI'}]},
-        {name:'Automation',mods:[{i:'⚡',n:'n8n Viewer',d:'Workflow Editor'},{i:'🔔',n:'Webhooks',d:'Event Hub'},{i:'🤖',n:'Agent Builder',d:'Agent Config'}]},
-        {name:'Media',mods:[{i:'📸',n:'Screenshot Pro',d:'Captures'},{i:'🎬',n:'Media Hub',d:'Video/Audio'},{i:'📝',n:'Blog Commander',d:'53 Blogs'}]}
-      ];
-      cats.forEach(c => {
-        grid += '<h3>' + esc(c.name) + '</h3><div class="module-grid">';
-        c.mods.forEach(m => {
-          grid += '<div class="mod-card fade-up"><div class="mod-icon">' + esc(m.i) + '</div><div class="mod-name">' + esc(m.n) + '</div><div class="mod-desc">' + esc(m.d) + '</div></div>';
-        });
-        grid += '</div>';
-      });
-      return '<h1>Module Reference</h1><p>143 Module organisiert in Kategorien.</p>' + grid;
+    </div>
+  </div>
+
+  <!-- ============ JAVASCRIPT ============ -->
+  <script>
+    /* ===== XSS Protection ===== */
+    function esc(str) {
+      if (str === null || str === undefined) return '';
+      var d = document.createElement('div');
+      d.appendChild(document.createTextNode(String(str)));
+      return d.innerHTML;
     }
-  },
-  'agents': {
-    title: 'BMAD Agents',
-    icon: '🤖',
-    section: 'Architecture',
-    content: function(){return `
-      <h1>BMAD Agents</h1>
-      <p>Blueprint → Mapping → Analyse → Design — 7 spezialisierte Agenten.</p>
-      <table>
-        <tr><th>#</th><th>Agent</th><th>Role</th><th>Status</th></tr>
-        <tr><td>1</td><td>🎯 James</td><td>Guardian — ueberwacht alle, coded NICHT</td><td>🟢 Active</td></tr>
-        <tr><td>2</td><td>📋 DkZ PM</td><td>Product Manager — spec.md, User Stories</td><td>🟢 Defined</td></tr>
-        <tr><td>3</td><td>🏗️ DkZ Architekt</td><td>plan.md, Tech-Stack Decisions</td><td>🟢 Defined</td></tr>
-        <tr><td>4</td><td>👨‍💻 DkZ Developer</td><td>Coder — Ralph-Loop Executor</td><td>🟢 Defined</td></tr>
-        <tr><td>5</td><td>🔍 DkZ Reviewer</td><td>CodeRabbit — Quality Checks</td><td>🟢 Active</td></tr>
-        <tr><td>6</td><td>🧪 DkZ Tester</td><td>Tests + Validation</td><td>🟢 TestStrasse v3</td></tr>
-        <tr><td>7</td><td>📚 DkZ Dokumentar</td><td>README, Wiki, Learnings</td><td>🟢 Defined</td></tr>
-      </table>
-      <h2>Ralph-Loop</h2>
-      <pre>
-1. LESEN    → prd.json + constitution + AGENTS.md
-2. SPAWN    → Neue Instanz (frischer Kontext!)
-3. EXECUTE  → Developer schreibt Code
-4. VERIFY   → Tester/Reviewer prueft
-5. COMMIT   → Git commit + prd.json update
-6. LOOP     → Naechster Task
-      </pre>
-      <div class="info-box"><div class="info-title">💡 Key Principle</div><p>Jeder Task bekommt frischen Kontext — kein Context Drift!</p></div>
-    `}
-  },
-  'design-system': {
-    title: 'Design System v2',
-    icon: '🎨',
-    section: 'Architecture',
-    content: function(){return `
-      <h1>DkZ Design System v2</h1>
-      <p>CSS Custom Properties basiertes Design System fuer alle 143 Module.</p>
-      <h2>Color Palette</h2>
-      <table>
-        <tr><th>Token</th><th>Value</th><th>Usage</th></tr>
-        <tr><td><code>--bg</code></td><td>#060608</td><td>Page Background</td></tr>
-        <tr><td><code>--accent</code></td><td>#fa1e4e</td><td>Primary Accent (Headlines)</td></tr>
-        <tr><td><code>--green</code></td><td>#00ff88</td><td>Success, Active States</td></tr>
-        <tr><td><code>--yellow</code></td><td>#ffb800</td><td>Warnings, Highlights</td></tr>
-        <tr><td><code>--red</code></td><td>#ff3b5c</td><td>Errors, Critical</td></tr>
-      </table>
-      <h2>Typography</h2>
-      <table>
-        <tr><th>Font</th><th>Weight</th><th>Usage</th></tr>
-        <tr><td>Inter</td><td>300-900</td><td>UI Text, Headlines</td></tr>
-        <tr><td>JetBrains Mono</td><td>400-600</td><td>Code, Monospace, Stats</td></tr>
-      </table>
-      <h2>Components</h2>
-      <h3>Glassmorphism Card</h3>
-      <pre>
-.card {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 12px;
-  backdrop-filter: blur(20px);
-  padding: 20px;
-}
-      </pre>
-      <h3>Neon Glow Button</h3>
-      <pre>
-.btn-neon {
-  background: transparent;
-  border: 1px solid var(--green);
-  color: var(--green);
-  border-radius: 8px;
-  padding: 8px 20px;
-  box-shadow: 0 0 15px rgba(0,255,136,0.2);
-}
-      </pre>
-    `}
-  },
-  'vps': {
-    title: 'VPS Infrastructure',
-    icon: '🌐',
-    section: 'Infrastructure',
-    content: function(){return `
-      <h1>VPS Infrastructure</h1>
-      <p>3 Hostinger KVM Server in der EU (Litauen, DSGVO-konform).</p>
-      <h2>Server Overview</h2>
-      <table>
-        <tr><th>VPS</th><th>Specs</th><th>Role</th><th>Status</th></tr>
-        <tr><td>KVM8 (#1298466)</td><td>8 vCPU, 16 GB RAM, 200 GB</td><td>Main Dashboard + LLM</td><td>🟢</td></tr>
-        <tr><td>KVM4 (#1368349)</td><td>4 vCPU, 8 GB RAM</td><td>OpenClaw Gateway</td><td>🟢</td></tr>
-        <tr><td>KVM Test (#1360185)</td><td>4 vCPU</td><td>Staging</td><td>🟢</td></tr>
-      </table>
-      <h2>Docker Services (KVM8)</h2>
-      <table>
-        <tr><th>Container</th><th>Port</th><th>Function</th><th>Status</th></tr>
-        <tr><td>nginx-proxy</td><td>:80/:443</td><td>Reverse Proxy + SSL</td><td>🟢</td></tr>
-        <tr><td>dkz-ontherun</td><td>:3040</td><td>MCP Gateway</td><td>🟢</td></tr>
-        <tr><td>dkz-postgres</td><td>:5432</td><td>PostgreSQL 16</td><td>🟢</td></tr>
-        <tr><td>dkz-redis</td><td>:6379</td><td>Redis AOF</td><td>🟢</td></tr>
-        <tr><td>vLLM Engine</td><td>:8811</td><td>LLM Inference</td><td>🔴 Auth</td></tr>
-        <tr><td>llama-swap</td><td>:8080</td><td>Model Router</td><td>🔴 Auth</td></tr>
-        <tr><td>dkz-n8n</td><td>:5678</td><td>Workflow Engine</td><td>🟡</td></tr>
-      </table>
-      <h2>LLM Fleet</h2>
-      <table>
-        <tr><th>Model</th><th>Size</th><th>Mode</th><th>TTL</th></tr>
-        <tr><td>Gemma4 E2B</td><td>~2 GB</td><td>Heartbeat</td><td>Always-On</td></tr>
-        <tr><td>Gemma4 E4B</td><td>~3 GB</td><td>Balance</td><td>SWAP 300s</td></tr>
-        <tr><td>Qwen3 4B</td><td>~3 GB</td><td>Quick</td><td>SWAP 300s</td></tr>
-        <tr><td>Qwen3.5 9B</td><td>~6 GB</td><td>Coder</td><td>SWAP 300s</td></tr>
-        <tr><td>Qwen3 14B</td><td>~10 GB</td><td>Standard</td><td>SWAP 300s</td></tr>
-        <tr><td>Gemma4 26B MoE</td><td>~16 GB</td><td>Frontend</td><td>SOLO 180s</td></tr>
-        <tr><td>Qwen3.6 27B</td><td>~17 GB</td><td>Dense</td><td>SOLO 180s</td></tr>
-        <tr><td>Qwen3.6 35B MoE</td><td>~22 GB</td><td>Backend</td><td>SOLO 180s</td></tr>
-      </table>
-    `}
-  },
-  'api': {
-    title: 'API Reference',
-    icon: '🔌',
-    section: 'Infrastructure',
-    content: function(){return `
-      <h1>API Reference</h1>
-      <h2>KVM8 Endpoints</h2>
-      <table>
-        <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
-        <tr><td><code>GET</code></td><td>/api/automation/health</td><td>System Health Score</td></tr>
-        <tr><td><code>GET</code></td><td>/api/automation/ssl</td><td>SSL Certificate Status</td></tr>
-        <tr><td><code>GET</code></td><td>/api/automation/backup</td><td>Manual Backup Trigger</td></tr>
-        <tr><td><code>GET</code></td><td>/api/health/dashboard</td><td>Dashboard Statistics</td></tr>
-        <tr><td><code>POST</code></td><td>/webhook/gmail-scan</td><td>Gmail Webhook</td></tr>
-        <tr><td><code>POST</code></td><td>/webhook/drive-scan</td><td>Google Drive Webhook</td></tr>
-        <tr><td><code>POST</code></td><td>/webhook/docker/build</td><td>Docker Build Trigger</td></tr>
-      </table>
-      <h2>vLLM API (OpenAI-compatible)</h2>
-      <pre>
-# List Models
-curl http://72.61.93.129:8811/v1/models \\
-  -H "Authorization: Bearer YOUR_KEY"
 
-# Chat Completion
-curl http://72.61.93.129:8811/v1/chat/completions \\
-  -H "Authorization: Bearer YOUR_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{"model":"gemma4","messages":[{"role":"user","content":"Hello"}]}'
-      </pre>
-    `}
-  },
-  'skills': {
-    title: 'Skills Reference',
-    icon: '⚡',
-    section: 'Development',
-    content: function(){return `
-      <h1>Skills Reference</h1>
-      <p>53 Skills im .agents/skills/ Verzeichnis.</p>
-      <h2>Core Skills</h2>
-      <table>
-        <tr><th>Skill</th><th>Trigger</th><th>Description</th></tr>
-        <tr><td>startup</td><td><code>/startup</code></td><td>Session-Start Health Check</td></tr>
-        <tr><td>checkup</td><td><code>/checkup</code></td><td>Deep Diagnostik</td></tr>
-        <tr><td>superpowers</td><td><code>/superpowers</code></td><td>14 Sub-Skills Meta-Skill</td></tr>
-        <tr><td>power</td><td><code>/power</code></td><td>1.442+ Awesome-Skills</td></tr>
-        <tr><td>playbook</td><td><code>/playbook</code></td><td>Alle Regeln + Playbooks</td></tr>
-      </table>
-      <h2>Build Skills</h2>
-      <table>
-        <tr><th>Skill</th><th>Trigger</th><th>Description</th></tr>
-        <tr><td>mod-builder</td><td><code>/create-module</code></td><td>Module Generator</td></tr>
-        <tr><td>dkz-webapp-builder</td><td>auto</td><td>WebApp Builder</td></tr>
-        <tr><td>mcp-builder</td><td>auto</td><td>MCP Server Builder</td></tr>
-        <tr><td>changelog-generator</td><td>auto</td><td>Release Notes</td></tr>
-      </table>
-    `}
-  },
-  'workflows': {
-    title: 'Workflows Reference',
-    icon: '🔄',
-    section: 'Development',
-    content: function(){return `
-      <h1>Workflows Reference</h1>
-      <p>77 Workflows fuer automatisierte Aufgaben.</p>
-      <h2>Essential Workflows</h2>
-      <table>
-        <tr><th>Command</th><th>Description</th></tr>
-        <tr><td><code>/startup</code></td><td>Session Start — IMMER zuerst</td></tr>
-        <tr><td><code>/byebye</code></td><td>Session Ende — alles sichern</td></tr>
-        <tr><td><code>/build</code></td><td>Feature/Modul/Komponente bauen</td></tr>
-        <tr><td><code>/create-module</code></td><td>Neues Dashboard Modul</td></tr>
-        <tr><td><code>/browser-test</code></td><td>Browser-Test + Screenshot</td></tr>
-        <tr><td><code>/system-check</code></td><td>Alle Module pruefen</td></tr>
-        <tr><td><code>/git-after-every-step</code></td><td>Auto Git Commit</td></tr>
-        <tr><td><code>/superpowers</code></td><td>Meta-Skill aktivieren</td></tr>
-      </table>
-    `}
-  },
-  'design-rules': {
-    title: 'Design Rules',
-    icon: '📐',
-    section: 'Standards',
-    content: function(){return `
-      <h1>DKZ Design Rules (D1-D10)</h1>
-      <div class="warn-box"><div class="warn-title">⚠️ Mandatory</div><p>ALLE neuen Module MUESSEN diese Regeln befolgen.</p></div>
-      <table>
-        <tr><th>#</th><th>Rule</th><th>Description</th></tr>
-        <tr><td>D1</td><td>Deep Black Base</td><td>#060608 background, KEINE anderen Basis-Farben</td></tr>
-        <tr><td>D2</td><td>Neon Green Matrix</td><td>#00ff88 fuer aktive Elemente, Status, Highlights</td></tr>
-        <tr><td>D3</td><td>Glassmorphism</td><td>rgba + blur + border fuer Cards und Panels</td></tr>
-        <tr><td>D4</td><td>Inter + JetBrains</td><td>UI = Inter, Code = JetBrains Mono</td></tr>
-        <tr><td>D5</td><td>Gradient Headlines</td><td>accent→yellow oder green→cyan Gradienten</td></tr>
-        <tr><td>D6</td><td>Micro-Animations</td><td>fadeIn, slideUp, glow-pulse, scale auf hover</td></tr>
-        <tr><td>D7</td><td>Canvas Particles</td><td>Subtiler animierter Hintergrund</td></tr>
-        <tr><td>D8</td><td>English UI</td><td>Interface Englisch, umschaltbar auf Deutsch</td></tr>
-        <tr><td>D9</td><td>Emojis in Headings</td><td>Symbole am Anfang jeder Ueberschrift</td></tr>
-        <tr><td>D10</td><td>Premium Quality</td><td>Hyperreal, 4K-ready, kein MVP-Look</td></tr>
-      </table>
-    `}
-  },
-  'git': {
-    title: 'Git & CI/CD',
-    icon: '🔀',
-    section: 'Standards',
-    content: function(){return `
-      <h1>Git & CI/CD</h1>
-      <h2>Commit Convention</h2>
-      <pre>feat(bereich): beschreibung    — Neues Feature
-fix(bereich): beschreibung     — Bug Fix
-docs(bereich): beschreibung    — Dokumentation
-refactor(bereich): beschreibung — Code-Umbau
-style(bereich): beschreibung   — CSS/Design
-chore(bereich): beschreibung   — Maintenance</pre>
-      <h2>GitHub Actions</h2>
-      <table>
-        <tr><th>Workflow</th><th>Trigger</th><th>Action</th></tr>
-        <tr><td>deploy-dashboard.yml</td><td>push to main</td><td>rsync to KVM8</td></tr>
-        <tr><td>deploy-pages.yml</td><td>push to main</td><td>GitHub Pages</td></tr>
-        <tr><td>blogger-push.js</td><td>commit with .md</td><td>Auto Blog Post</td></tr>
-      </table>
-      <h2>Repositories</h2>
-      <table>
-        <tr><th>Repo</th><th>Type</th><th>Description</th></tr>
-        <tr><td>7IKED/devkitz-workspace</td><td>Monorepo</td><td>Hauptrepo — alles</td></tr>
-        <tr><td>D-VKITZ/D-VKITZ.github.io</td><td>Pages</td><td>GitHub Pages Site</td></tr>
-        <tr><td>D-VKITZ/KERN</td><td>Core</td><td>Kern-Bibliothek</td></tr>
-      </table>
-    `}
-  }
-};
-
-// === BUILD SIDEBAR ===
-function buildSidebar(){
-  const sidebar = document.getElementById('wikiSidebar');
-  const sections = {};
-  Object.entries(WIKI_PAGES).forEach(([key, page]) => {
-    if(!sections[page.section]) sections[page.section] = [];
-    sections[page.section].push({key, ...page});
-  });
-  let html = '';
-  Object.entries(sections).forEach(([section, pages]) => {
-    html += '<div class="nav-section">';
-    html += '<div class="nav-section-title" onclick="toggleSection(this)"><span class="arrow">▼</span> ' + esc(section) + '</div>';
-    pages.forEach(p => {
-      html += '<div class="nav-item" data-page="' + esc(p.key) + '" onclick="loadPage(\'' + esc(p.key) + '\')">';
-      html += '<span class="icon">' + esc(p.icon) + '</span> ' + esc(p.title);
-      html += '</div>';
+    /* ===== Tab Navigation ===== */
+    document.querySelectorAll('.tab-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+        document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        var panel = document.getElementById('panel-' + btn.dataset.tab);
+        if (panel) panel.classList.add('active');
+      });
     });
-    html += '</div>';
-  });
-  sidebar.innerHTML = html;
-}
 
-function toggleSection(el){
-  el.classList.toggle('collapsed');
-  const items = el.parentElement.querySelectorAll('.nav-item');
-  items.forEach(i => i.style.display = el.classList.contains('collapsed') ? 'none' : 'flex');
-}
+    /* ===== Language Toggle ===== */
+    function toggleLang() {
+      var html = document.documentElement;
+      var lang = html.dataset.lang === 'de' ? 'en' : 'de';
+      html.dataset.lang = lang;
+      document.getElementById('langToggle').textContent = lang.toUpperCase();
+    }
 
-function loadPage(key){
-  const page = WIKI_PAGES[key];
-  if(!page) return;
-  document.getElementById('wikiContent').innerHTML = page.content();
-  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-  const active = document.querySelector('[data-page="' + key + '"]');
-  if(active) active.classList.add('active');
-  buildToc();
-  document.querySelector('.wiki-main').scrollTop = 0;
-  history.replaceState(null, '', '?page=' + key);
-}
+    /* ===== Contrast Toggle ===== */
+    function toggleContrast() {
+      var html = document.documentElement;
+      var theme = html.dataset.theme === 'dark' ? 'high-contrast' : 'dark';
+      html.dataset.theme = theme;
+    }
 
-function buildToc(){
-  const content = document.getElementById('wikiContent');
-  const headings = content.querySelectorAll('h2, h3');
-  const tocList = document.getElementById('tocList');
-  let html = '';
-  headings.forEach((h, i) => {
-    h.id = 'heading-' + i;
-    const cls = h.tagName === 'H3' ? 'toc-item toc-sub' : 'toc-item';
-    html += '<div class="' + cls + '" onclick="document.getElementById(\'heading-' + i + '\').scrollIntoView({behavior:\'smooth\'})">' + esc(h.textContent) + '</div>';
-  });
-  tocList.innerHTML = html;
-}
+    /* ===== Stats Data ===== */
+    var STATS = [
+      { num: '152', label: 'Module' },
+      { num: '53', label: 'Skills' },
+      { num: '77', label: 'Workflows' },
+      { num: '29', label: 'Repos' },
+      { num: '14', label: 'Issues' },
+      { num: '19', label: 'Projects' }
+    ];
+    (function renderStats() {
+      var grid = document.getElementById('statsGrid');
+      var html = '';
+      STATS.forEach(function(s) {
+        html += '<div class="stat-card"><div class="stat-number">' + esc(s.num) + '</div><div class="stat-label">' + esc(s.label) + '</div></div>';
+      });
+      grid.innerHTML = html;
+    })();
 
-// === SEARCH ===
-document.getElementById('wikiSearch').addEventListener('input', function(e){
-  const q = e.target.value.toLowerCase();
-  document.querySelectorAll('.nav-item').forEach(item => {
-    const text = item.textContent.toLowerCase();
-    item.style.display = !q || text.includes(q) ? 'flex' : 'none';
-  });
-});
+    /* ===== Tech Stack Table ===== */
+    (function renderTechTable() {
+      var rows = [
+        ['Frontend', 'Vanilla HTML5 + CSS3 + JS ES6+'],
+        ['Fonts', 'Inter (UI) + JetBrains Mono (Code)'],
+        ['CSS', 'DkZ Design System v2 + Custom Properties'],
+        ['Backend', 'Node.js 18+ / Express'],
+        ['Daten', 'localStorage, DuckDB, Apache Iceberg'],
+        ['CI/CD', 'GitHub Actions + Auto-Deploy'],
+        ['VPS', 'Hostinger KVM8 + Docker Compose'],
+        ['LLMs', 'DeepSeek V3/R1, Qwen 3.6, Gemma 4']
+      ];
+      var html = '<tr><th>Komponente</th><th>Technologie</th></tr>';
+      rows.forEach(function(r) {
+        html += '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>';
+      });
+      document.getElementById('techTable').innerHTML = html;
+    })();
 
-document.addEventListener('keydown', function(e){
-  if(e.ctrlKey && e.key === 'k'){e.preventDefault();document.getElementById('wikiSearch').focus()}
-});
+    /* ===== BMAD Agents ===== */
+    var AGENTS = [
+      { icon: '\uD83C\uDFAF', name: 'James\u2122', role: 'Guardian - ueberwacht alle, coded NICHT', num: '#1' },
+      { icon: '\uD83D\uDCCB', name: 'DkZ PM\u2122', role: 'Product Manager - spec.md, User Stories', num: '#2' },
+      { icon: '\uD83C\uDFD7\uFE0F', name: 'DkZ Architekt\u2122', role: 'plan.md, Tech-Stack Entscheidungen', num: '#3' },
+      { icon: '\uD83D\uDC68\u200D\uD83D\uDCBB', name: 'DkZ Developer\u2122', role: 'Coder - Ralph-Loop Executor', num: '#4' },
+      { icon: '\uD83D\uDD0D', name: 'DkZ Reviewer\u2122', role: 'CodeRabbit - Qualitaetspruefung', num: '#5' },
+      { icon: '\uD83E\uDDEA', name: 'DkZ Tester\u2122', role: 'Tests + Validierung', num: '#6' },
+      { icon: '\uD83D\uDCDA', name: 'DkZ Dokumentar\u2122', role: 'README, Wiki, Learnings', num: '#7' }
+    ];
+    function renderAgentGrid(containerId) {
+      var html = '';
+      AGENTS.forEach(function(a) {
+        html += '<div class="agent-card"><div class="agent-icon">' + a.icon + '</div><div class="agent-name">' + esc(a.name) + '</div><div class="agent-role">' + esc(a.role) + '</div></div>';
+      });
+      document.getElementById(containerId).innerHTML = html;
+    }
+    renderAgentGrid('wikiAgentGrid');
+    renderAgentGrid('agentGrid');
 
-// === INIT ===
-buildSidebar();
-const urlPage = new URLSearchParams(window.location.search).get('page') || 'overview';
-loadPage(urlPage);
-</script>
+    /* ===== Ralph-Loop Flow ===== */
+    (function renderRalphFlow() {
+      var phases = [
+        { num: '1', name: 'LESEN', desc: 'prd.json + constitution' },
+        { num: '2', name: 'SPAWN', desc: 'Neue Instanz (frisch!)' },
+        { num: '3', name: 'EXECUTE', desc: 'Developer schreibt Code' },
+        { num: '4', name: 'VERIFY', desc: 'Tester/Reviewer prueft' },
+        { num: '5', name: 'COMMIT', desc: 'Git + prd.json update' },
+        { num: '6', name: 'LOOP', desc: 'Naechster Task' }
+      ];
+      var container = document.getElementById('ralphFlow');
+      var html = '';
+      phases.forEach(function(p, i) {
+        html += '<div class="flow-phase"><div class="phase-num">Phase ' + esc(p.num) + '</div><div class="phase-name">' + esc(p.name) + '</div><div class="phase-desc">' + esc(p.desc) + '</div></div>';
+        if (i < phases.length - 1) html += '<span class="flow-arrow">\u2192</span>';
+      });
+      container.innerHTML = html;
+    })();
 
-<script src="../../shared/dkz-debug.js" defer></script>
-<script src="../../shared/dkz-guide.js" defer></script>
-<script src="../../shared/dkz-copilot.js" defer></script>
-<script src="../../shared/dkz-james.js" defer></script>
-<script src="../../shared/dkz-navbar.js" defer></script>
-<script src="../../shared/dkz-console.js" defer></script>
-<script src="../../shared/dkz-premium.js" defer></script>
+    /* ===== Kanban Data ===== */
+    var DEFAULT_TASKS = {
+      backlog: [
+        { id: 'k1', title: 'EU Cloud VPS #214', priority: 'p1', label: 'VPS' },
+        { id: 'k2', title: 'Immich Setup #215', priority: 'p2', label: 'VPS' },
+        { id: 'k3', title: 'Paperless-ngx #216', priority: 'p2', label: 'VPS' },
+        { id: 'k4', title: 'n8n Workflows #217', priority: 'p2', label: 'Automation' }
+      ],
+      progress: [
+        { id: 'k5', title: 'vLLM Auth System #208', priority: 'p1', label: 'AI/ML' },
+        { id: 'k6', title: 'Telegram Bot #209', priority: 'p1', label: 'Bot' },
+        { id: 'k7', title: '3 Module online #218', priority: 'p2', label: 'Module' }
+      ],
+      done: [
+        { id: 'k8', title: 'Premium READMEs #220', priority: 'p3', label: 'Docs' },
+        { id: 'k9', title: '14 Issues erstellt', priority: 'p3', label: 'GitHub' },
+        { id: 'k10', title: '29 Repos angelegt', priority: 'p3', label: 'GitHub' },
+        { id: 'k11', title: '152 Module registriert', priority: 'p3', label: 'System' },
+        { id: 'k12', title: 'llms.txt System', priority: 'p3', label: 'System' }
+      ],
+      problem: [
+        { id: 'k13', title: 'Blogger API #210', priority: 'p1', label: 'GCP Console' },
+        { id: 'k14', title: 'Google Photos #211', priority: 'p1', label: 'OAuth' }
+      ]
+    };
+
+    function loadKanban() {
+      try { var d = JSON.parse(localStorage.getItem('dkz-wiki-kanban')); if (d && d.backlog) return d; } catch(e) { /* ignore */ }
+      return JSON.parse(JSON.stringify(DEFAULT_TASKS));
+    }
+    function saveKanban(data) { localStorage.setItem('dkz-wiki-kanban', JSON.stringify(data)); }
+
+    var kanbanData = loadKanban();
+    var draggedCardId = null;
+    var draggedFromCol = null;
+
+    function renderKanban() {
+      ['backlog','progress','done','problem'].forEach(function(col) {
+        var container = document.getElementById('cards-' + col);
+        var tasks = kanbanData[col] || [];
+        var html = '';
+        tasks.forEach(function(t) {
+          html += '<div class="kanban-card" draggable="true" data-id="' + esc(t.id) + '" data-col="' + esc(col) + '" ondragstart="onDragStart(event)" ondragend="onDragEnd(event)">';
+          html += '<div class="kanban-card-title">' + esc(t.title) + '</div>';
+          html += '<div class="kanban-card-meta">';
+          html += '<span class="priority-badge ' + esc(t.priority) + '">' + esc(t.priority.toUpperCase()) + '</span>';
+          html += '<span class="label-tag">' + esc(t.label) + '</span>';
+          html += '</div></div>';
+        });
+        container.innerHTML = html;
+        document.getElementById('count-' + col).textContent = tasks.length;
+      });
+    }
+    renderKanban();
+
+    function onDragStart(e) {
+      draggedCardId = e.target.dataset.id;
+      draggedFromCol = e.target.dataset.col;
+      e.target.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    }
+    function onDragEnd(e) { e.target.classList.remove('dragging'); }
+    function onDragOver(e) {
+      e.preventDefault();
+      e.currentTarget.classList.add('drag-over');
+    }
+    function onDrop(e, targetCol) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('drag-over');
+      if (!draggedCardId || draggedFromCol === targetCol) return;
+      var fromTasks = kanbanData[draggedFromCol];
+      var idx = -1;
+      for (var i = 0; i < fromTasks.length; i++) {
+        if (fromTasks[i].id === draggedCardId) { idx = i; break; }
+      }
+      if (idx === -1) return;
+      var card = fromTasks.splice(idx, 1)[0];
+      kanbanData[targetCol].push(card);
+      saveKanban(kanbanData);
+      renderKanban();
+      draggedCardId = null;
+      draggedFromCol = null;
+    }
+    document.querySelectorAll('.kanban-col').forEach(function(col) {
+      col.addEventListener('dragleave', function() { col.classList.remove('drag-over'); });
+    });
+
+    /* ===== Modal ===== */
+    function openModal() { document.getElementById('taskModal').classList.add('open'); }
+    function closeModal() { document.getElementById('taskModal').classList.remove('open'); }
+    function addTask() {
+      var title = document.getElementById('newTaskTitle').value.trim();
+      if (!title) return;
+      var priority = document.getElementById('newTaskPriority').value;
+      var label = document.getElementById('newTaskLabel').value.trim() || 'General';
+      var col = document.getElementById('newTaskColumn').value;
+      var task = { id: 'k' + Date.now(), title: title, priority: priority, label: label };
+      kanbanData[col].push(task);
+      saveKanban(kanbanData);
+      renderKanban();
+      closeModal();
+      document.getElementById('newTaskTitle').value = '';
+      document.getElementById('newTaskLabel').value = '';
+    }
+
+    /* ===== Module Data ===== */
+    var MODULES = {
+      'Builder': ['action-builder','agent-builder','app-builder','appscript-builder','black8-builder','builder-gallery','changelog-builder','cron-builder','css-generator','hood-builder','leadership-builder','skill-builder','team-builder','workflow-builder'],
+      'AI/ML': ['agent-control-panel','ai_chat','botnet-admin','claudia-cloud','copilot-presentation','free-ai-hub','hermes-3d','ki-lernplattform','llm-arena','nanobot-center','neural-swarm','nlm-builder','openclaw-vibe','prompter','prompt-generator','whisper-tts'],
+      'Tools': ['analyser','api-tester','ascii-tool','base64-tools','bookmark-manager','clipboard','code-differ','color-picker','converter','devnotes','dkz-search','doc-engine','emoji-picker','html_viewer','ip-tools','json-formatter','link-generator','lorem-generator','markdown_converter','meta-tag-gen','noter','qr-generator','seo-toolkit','timer-tools'],
+      'Media': ['awesome-design-stitch','awesome-design-vanilla','blog-commander','blog-designer','dkz-design-studio','favicon-gen','gallery','hyperreal-canvas','hyperreal-demo','icon-creator','image-forge','media-gallery','obs-fx-overlay','video-generator'],
+      'Data': ['cost-calculator','cost-dashboard','ecosystem-analyzer','graphify','iceberg','kanban-board','llm-cost-board','paperless','playbook-archiv','project-registry','rating-system','research','second-brain','social-dashboard','ttl-visualizer','wissen-hub'],
+      'System': ['cloud-control','display-config','docker-ops','domain-control','loop-dashboard','matrix-center','n8n-viewer','ruleboard','settings','supervisor-panel','system-check','vps-monitor','webhook-dashboard','workflow-viewer'],
+      'PWA': ['copypaste-app','tts-reader','qr-scanner','dkz-timer','clipboard-manager','screenshot-tool','devkitz-wiki','designboard','template-hub'],
+      'Security': ['hash-generator','password-gen','security-scanner']
+    };
+    var activeModules = ['nanobot-center','system-check','kanban-board','copilot-presentation','wissen-hub','agent-control-panel','ai_chat','vps-monitor','loop-dashboard','docker-ops','research','action-builder','devkitz-wiki','settings','analyser'];
+    var activeFilter = 'all';
+
+    function renderModuleFilters() {
+      var cats = Object.keys(MODULES);
+      var html = '<button class="filter-btn active" onclick="setFilter(\'all\', this)">Alle (' + 152 + ')</button>';
+      cats.forEach(function(c) {
+        html += '<button class="filter-btn" onclick="setFilter(\'' + esc(c) + '\', this)">' + esc(c) + ' (' + MODULES[c].length + ')</button>';
+      });
+      document.getElementById('moduleFilters').innerHTML = html;
+    }
+    renderModuleFilters();
+
+    function setFilter(cat, btn) {
+      activeFilter = cat;
+      document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+      if (btn) btn.classList.add('active');
+      filterModules();
+    }
+
+    function filterModules() {
+      var query = document.getElementById('moduleSearch').value.toLowerCase();
+      var container = document.getElementById('modulesContainer');
+      var html = '';
+      var cats = activeFilter === 'all' ? Object.keys(MODULES) : [activeFilter];
+      cats.forEach(function(cat) {
+        if (!MODULES[cat]) return;
+        var mods = MODULES[cat].filter(function(m) {
+          return !query || m.toLowerCase().indexOf(query) !== -1;
+        });
+        if (mods.length === 0) return;
+        html += '<div class="cat-header">' + esc(cat) + ' (' + mods.length + ')</div>';
+        html += '<div class="modules-grid">';
+        mods.forEach(function(m) {
+          var isActive = activeModules.indexOf(m) !== -1;
+          html += '<div class="module-mini-card" onclick="window.open(\'../' + esc(m) + '/index.html\', \'_blank\')">';
+          html += '<span>' + esc(m) + '</span>';
+          html += '<span class="status-dot ' + (isActive ? 'active' : 'empty') + '"></span>';
+          html += '</div>';
+        });
+        html += '</div>';
+      });
+      container.innerHTML = html;
+    }
+    filterModules();
+
+    /* ===== Mindmaps ===== */
+    (function renderMindmaps() {
+      var maps = [
+        { title: 'VPS Infrastruktur', map: 'DEVKiTZ VPS\n\u251C\u2500\u2500 KVM8 (147.45.77.245)\n\u2502   \u251C\u2500\u2500 :3000 vLLM API\n\u2502   \u251C\u2500\u2500 :3030 ONTHERUN MCP\n\u2502   \u251C\u2500\u2500 :3040 NanoChat Bridge\n\u2502   \u251C\u2500\u2500 :5678 n8n Workflows\n\u2502   \u251C\u2500\u2500 :8080 Nginx Proxy\n\u2502   \u2514\u2500\u2500 :9090 Monitoring\n\u251C\u2500\u2500 Domains\n\u2502   \u251C\u2500\u2500 devkitz.eu (SSL)\n\u2502   \u251C\u2500\u2500 devkitz.sites (SSL)\n\u2502   \u2514\u2500\u2500 dkz.app (geplant)\n\u2514\u2500\u2500 EU Cloud (Phase 1)\n    \u251C\u2500\u2500 Puter.com\n    \u251C\u2500\u2500 Docker Compose\n    \u2514\u2500\u2500 GHCR Registry' },
+        { title: 'BMAD Agenten', map: 'BMAD Framework\n\u251C\u2500\u2500 #1 James (Guardian)\n\u251C\u2500\u2500 #2 PM (Specs)\n\u251C\u2500\u2500 #3 Architekt (Plans)\n\u251C\u2500\u2500 #4 Developer (Code)\n\u251C\u2500\u2500 #5 Reviewer (Quality)\n\u251C\u2500\u2500 #6 Tester (Validation)\n\u2514\u2500\u2500 #7 Dokumentar (Docs)\n    \u2514\u2500\u2500 Ralph-Loop\n        \u251C\u2500\u2500 1. LESEN\n        \u251C\u2500\u2500 2. SPAWN\n        \u251C\u2500\u2500 3. EXECUTE\n        \u251C\u2500\u2500 4. VERIFY\n        \u251C\u2500\u2500 5. COMMIT\n        \u2514\u2500\u2500 6. LOOP' },
+        { title: 'Skills (53)', map: 'Skills Ecosystem\n\u251C\u2500\u2500 Kern\n\u2502   \u251C\u2500\u2500 startup, checkup, health-agent\n\u2502   \u251C\u2500\u2500 power, power-openspec\n\u2502   \u2514\u2500\u2500 superpowers (14 sub-skills)\n\u251C\u2500\u2500 Entwicklung\n\u2502   \u251C\u2500\u2500 mod-builder, webapp-builder\n\u2502   \u251C\u2500\u2500 dkz-skillpack, mcp-builder\n\u2502   \u2514\u2500\u2500 ralph-loop-tester\n\u251C\u2500\u2500 Content\n\u2502   \u251C\u2500\u2500 notebooklm-integration\n\u2502   \u251C\u2500\u2500 frontpage-builder\n\u2502   \u2514\u2500\u2500 changelog-generator\n\u2514\u2500\u2500 Meta\n    \u251C\u2500\u2500 playbook, grill, handoff\n    \u251C\u2500\u2500 chatsearch, byebye, rebye\n    \u2514\u2500\u2500 anal (Wochen-Analyse)' },
+        { title: 'Module (152)', map: 'Dashboard Module\n\u251C\u2500\u2500 Builder (14)\n\u251C\u2500\u2500 AI/ML (16)\n\u251C\u2500\u2500 Tools (24)\n\u251C\u2500\u2500 Media (14)\n\u251C\u2500\u2500 Data (16)\n\u251C\u2500\u2500 System (14)\n\u251C\u2500\u2500 PWA (9)\n\u2514\u2500\u2500 Security (3)\n    Total: 110 aktiv / 42 leer' },
+        { title: 'Domains & DNS', map: 'Domain Struktur\n\u251C\u2500\u2500 devkitz.eu\n\u2502   \u251C\u2500\u2500 A \u2192 147.45.77.245\n\u2502   \u251C\u2500\u2500 www \u2192 CNAME devkitz.eu\n\u2502   \u2514\u2500\u2500 api \u2192 :3030/api\n\u251C\u2500\u2500 devkitz.sites\n\u2502   \u251C\u2500\u2500 Hostinger Websites\n\u2502   \u2514\u2500\u2500 Auto-SSL\n\u2514\u2500\u2500 dkz.app (geplant)\n    \u251C\u2500\u2500 PWA Hosting\n    \u2514\u2500\u2500 Cloudflare' },
+        { title: 'LLM Navigation', map: 'llms.txt System\n\u251C\u2500\u2500 C:\\DEVKiTZ\\llms.txt (Root)\n\u251C\u2500\u2500 01_PROJECTS/01_dashboard/llms.txt\n\u2502   \u2514\u2500\u2500 130 Module Eintraege\n\u251C\u2500\u2500 .agents/skills/llms.txt\n\u2502   \u2514\u2500\u2500 53 Skills\n\u251C\u2500\u2500 .agents/workflows/llms.txt\n\u2502   \u2514\u2500\u2500 77 Workflows\n\u2514\u2500\u2500 NAVIGATOR.md\n    \u2514\u2500\u2500 Terminal + Alias' },
+        { title: 'GitHub Backup', map: 'GitHub Ecosystem\n\u251C\u2500\u2500 D-VKITZ (Organisation)\n\u2502   \u251C\u2500\u2500 29 Repositories\n\u2502   \u251C\u2500\u2500 14 Issues\n\u2502   \u251C\u2500\u2500 19 Projects\n\u2502   \u2514\u2500\u2500 5 Teams\n\u251C\u2500\u2500 Actions\n\u2502   \u251C\u2500\u2500 CI/CD Deploy\n\u2502   \u251C\u2500\u2500 Health Check\n\u2502   \u2514\u2500\u2500 README Update\n\u2514\u2500\u2500 Logbackup\n    \u2514\u2500\u2500 Daily Push' },
+        { title: 'Auto-Update Pipeline', map: 'Update System\n\u251C\u2500\u2500 Cron: 0 3 * * *\n\u251C\u2500\u2500 /opt/dkz/update.sh\n\u2502   \u251C\u2500\u2500 git pull origin main\n\u2502   \u251C\u2500\u2500 docker compose pull\n\u2502   \u251C\u2500\u2500 docker compose up -d\n\u2502   \u2514\u2500\u2500 health check\n\u251C\u2500\u2500 Backup: /opt/dkz/backup/\n\u2502   \u251C\u2500\u2500 DB Dump\n\u2502   \u251C\u2500\u2500 Config Snapshot\n\u2502   \u2514\u2500\u2500 Rotation: 7 Tage\n\u2514\u2500\u2500 Monitoring\n    \u251C\u2500\u2500 Uptime Kuma\n    \u2514\u2500\u2500 Alerts: Telegram' }
+      ];
+      var container = document.getElementById('mindmapContainer');
+      var html = '';
+      maps.forEach(function(m) {
+        html += '<div class="mindmap-block"><div class="mm-title">' + esc(m.title) + '</div><pre>' + esc(m.map) + '</pre></div>';
+      });
+      container.innerHTML = html;
+    })();
+
+    /* ===== Rules ===== */
+    (function renderRules() {
+      var rules = [
+        'esc() bei JEDEM User-Input vor innerHTML - XSS-Schutz',
+        'DkZ CSS Variables - kein Hardcoded #fa1e4e',
+        'Shared Scripts einbinden (dkz-debug, dkz-guide, dkz-navbar...)',
+        'features.json nach Modul-Aenderung aktualisieren',
+        'Git Commit nach JEDER Aenderung',
+        'R24 ALARM vor Archivierung - 777 muss bestaetigen',
+        '99_ARCHIVE/ nur ablegen, NIEMALS loeschen',
+        'Desktop nur ablegen - NIEMALS bestehende Dateien aendern',
+        'Kein console.log in Produktion',
+        'Kein jQuery ohne Ruecksprache'
+      ];
+      var html = '';
+      rules.forEach(function(r, i) {
+        html += '<div class="rule-item"><span class="rule-num">' + esc(String(i + 1)) + '</span><span>' + esc(r) + '</span></div>';
+      });
+      document.getElementById('rulesContainer').innerHTML = html;
+    })();
+
+    /* ===== Docker Table ===== */
+    (function renderDockerTable() {
+      var containers = [
+        ['vllm-server', '3000', 'ONLINE', 'vLLM Inference API'],
+        ['ontherun-mcp', '3030', 'ONLINE', 'MCP Server'],
+        ['nanochat-bridge', '3040', 'ONLINE', 'Agent Bridge'],
+        ['n8n', '5678', 'PLANNED', 'Workflow Automation'],
+        ['nginx-proxy', '80/443', 'ONLINE', 'Reverse Proxy + SSL'],
+        ['immich', '2283', 'PLANNED', 'Photo Management'],
+        ['paperless-ngx', '8010', 'PLANNED', 'Document Management'],
+        ['uptime-kuma', '3001', 'ONLINE', 'Monitoring']
+      ];
+      var html = '<tr><th>Container</th><th>Port</th><th>Status</th><th>Beschreibung</th></tr>';
+      containers.forEach(function(c) {
+        var badge = c[2] === 'ONLINE' ? 'online' : 'planned';
+        html += '<tr><td style="font-family:var(--font-mono);color:var(--cyan)">' + esc(c[0]) + '</td>';
+        html += '<td style="font-family:var(--font-mono)">' + esc(c[1]) + '</td>';
+        html += '<td><span class="status-badge ' + badge + '">' + esc(c[2]) + '</span></td>';
+        html += '<td>' + esc(c[3]) + '</td></tr>';
+      });
+      document.getElementById('dockerTable').innerHTML = html;
+    })();
+
+    /* ===== GitHub Repos ===== */
+    (function renderRepos() {
+      var repos = [
+        ['KERN','Core Ecosystem Repository'],['devkitz-ecosystem','Haupt-Monorepo'],
+        ['devkitz-dashboard','Dashboard Frontend'],['devkitz-mcp','MCP Server'],
+        ['devkitz-wiki','Wiki + Kanban Modul'],['devkitz-vps','VPS Konfiguration'],
+        ['devkitz-docker','Docker Compose Files'],['devkitz-ci','CI/CD Pipelines'],
+        ['devkitz-docs','Dokumentation'],['devkitz-templates','Code Templates'],
+        ['devkitz-pwa','PWA Apps'],['devkitz-ai','AI/ML Module'],
+        ['devkitz-tools','Developer Tools'],['devkitz-media','Media Assets'],
+        ['devkitz-blog','Blog System'],['devkitz-bot','Telegram Bot'],
+        ['devkitz-api','REST API'],['devkitz-cli','CLI Tools'],
+        ['devkitz-plugins','Plugin System'],['devkitz-themes','Design Themes'],
+        ['zero-rules','Playbook Rules'],['zero-playbook','Playbook Methodik'],
+        ['devkitz-backup','Backup Scripts'],['devkitz-monitor','Monitoring'],
+        ['devkitz-auth','Auth System'],['devkitz-data','Data Layer'],
+        ['devkitz-nlm','NotebookLM Integration'],['devkitz-test','Test Suite'],
+        ['devkitz-deploy','Deploy Scripts']
+      ];
+      var html = '';
+      repos.forEach(function(r) {
+        html += '<div class="repo-card"><div class="repo-name">' + esc(r[0]) + '</div><div class="repo-desc">' + esc(r[1]) + '</div></div>';
+      });
+      document.getElementById('repoGrid').innerHTML = html;
+    })();
+
+    /* ===== GitHub Issues ===== */
+    (function renderIssues() {
+      var issues = [
+        ['#208','vLLM Auth System','p1','In Progress'],
+        ['#209','Telegram Bot Setup','p1','In Progress'],
+        ['#210','Blogger API GCP Console','p1','Problem'],
+        ['#211','Google Photos OAuth','p1','Problem'],
+        ['#214','EU Cloud VPS Setup','p1','Backlog'],
+        ['#215','Immich Photo Management','p2','Backlog'],
+        ['#216','Paperless-ngx Setup','p2','Backlog'],
+        ['#217','n8n Workflow Automation','p2','Backlog'],
+        ['#218','3 Module online bringen','p2','In Progress'],
+        ['#219','Domain Routing nginx','p2','Backlog'],
+        ['#220','Premium READMEs','p3','Done'],
+        ['#221','CI/CD Pipeline v2','p2','Backlog'],
+        ['#222','Health Dashboard','p2','Backlog'],
+        ['#223','NanoBot Fleet Setup','p2','Backlog']
+      ];
+      var html = '';
+      issues.forEach(function(is) {
+        var statusClass = is[3] === 'Done' ? 'online' : (is[3] === 'Problem' ? 'issue' : 'planned');
+        html += '<div class="issue-item"><span class="issue-num">' + esc(is[0]) + '</span>';
+        html += '<span style="flex:1">' + esc(is[1]) + '</span>';
+        html += '<span class="priority-badge ' + esc(is[2]) + '">' + esc(is[2].toUpperCase()) + '</span>';
+        html += '<span class="status-badge ' + statusClass + '">' + esc(is[3]) + '</span></div>';
+      });
+      document.getElementById('issuesList').innerHTML = html;
+    })();
+
+    /* ===== GitHub Projects ===== */
+    (function renderProjects() {
+      var projects = [
+        'DEVKiTZ Core','VPS Infrastruktur','AI/ML Pipeline','Blog Network',
+        'NanoBot Fleet','Dashboard v3','PWA Collection','Docker Stack',
+        'CI/CD Pipeline','Monitoring System','Auth & Security','Data Layer',
+        'Content Strategy','Community Hub','Plugin Marketplace','Template Library',
+        'CLI Tools','API Gateway','Test Automation'
+      ];
+      var html = '';
+      projects.forEach(function(p, i) {
+        html += '<div class="issue-item"><span class="issue-num">#' + esc(String(i+1)) + '</span><span>' + esc(p) + '</span></div>';
+      });
+      document.getElementById('projectsList').innerHTML = html;
+    })();
+  </script>
+
+  <!-- ============ SHARED SCRIPTS ============ -->
+  <script src="../../shared/dkz-debug.js" defer></script>
+  <script src="../../shared/dkz-guide.js" defer></script>
+  <script src="../../shared/dkz-copilot.js" defer></script>
+  <script src="../../shared/dkz-james.js" defer></script>
+  <script src="../../shared/dkz-navbar.js" defer></script>
+  <script src="../../shared/dkz-console.js" defer></script>
+  <script src="../../shared/dkz-premium.js" defer></script>
 </body>
 </html>
