@@ -16,7 +16,9 @@
  * R9: Videos → NUR in 03_MEDIA/Videos
  * R10: Inbox [00] ist der EINZIGE Ordner der sortiert wird
  * R11: Desktop — NUR Dateien ABLEGEN, nie bestehende aendern
- * R12: 04_SYSTEM — NUR verschieben, NIEMALS loeschen
+ * R12: 04_SYSTEM — NUR rein-verschieben, NIEMALS loeschen/raus
+ * R13: 99_ARCHIVE — NUR rein, NIEMALS raus, UNLOESCHBAR (auch nicht mit LLM)
+ * R14: [DEEPKEEP] — UNLOESCHBAR, NUR KOPIEREN (auch nicht mit LLM)
  * R13: Apps Script ALLEINE darf NUR Dateien REIN-verschieben (Dauer-Sortierung)
  * R14: ERWEITERTE Aktionen (umbenennen, editieren, loeschen) NUR mit LLM_OVERRIDE
  *      → Haupt-LLM (Antigravity/Claude) setzt Override-Token wenn noetig
@@ -74,14 +76,21 @@ function disableLLMOverride() {
 }
 
 // Prueft ob eine Aktion erlaubt ist
-function isAllowed(action) {
+function isAllowed(action, folder) {
+  // ABSOLUTE REGEL: 99_ARCHIVE + [DEEPKEEP] = UNLOESCHBAR, EGAL WAS
+  if (folder && (isArchiveFolder(folder) || isDeepKeep(folder))) {
+    if (action === 'DELETE' || action === 'REMOVE' || action === 'MOVE_OUT' || action === 'TRASH') {
+      _log('ABSOLUT', '!', 'ARCHIVE/DEEPKEEP ist UNLOESCHBAR — kein Override moeglich');
+      return false;
+    }
+  }
   var mode = getMode();
   // AUTO: NUR moveTo/SORT erlaubt
   if (mode === MODE.AUTO) {
     var allowed = ['SORT', 'MOVE', 'MOVE_IN', 'DEEPKEEP-COPY', 'REPORT'];
     return allowed.indexOf(action) !== -1;
   }
-  // LLM: Alles erlaubt (ausser loeschen in geschuetzten Zonen)
+  // LLM: Erweitert erlaubt (aber ARCHIVE/DEEPKEEP loeschen TROTZDEM NICHT)
   return true;
 }
 
@@ -150,7 +159,8 @@ var CONFIG = {
 // Zone 5: 09_BRAIN²        — SecondBrain + raw
 // Zone 6: [DEEPKEEP]       — NUR KOPIEREN
 // Zone 7: raw              — NIE ANFASSEN
-// Zone 8: 04_SYSTEM        — NUR VERSCHIEBEN, nie loeschen
+// Zone 8: 04_SYSTEM        — NUR REIN, nie loeschen/raus
+// Zone 9: 99_ARCHIVE       — NUR REIN, nie raus, nie loeschen
 //
 // Schutz 1: isProtected()  — Name-Check (Ordner + 5 Eltern)
 // Schutz 2: isBlocked()    — Nummer-Check (05/06/07/08/09)
@@ -246,7 +256,7 @@ function isRaw(folder) {
   return false;
 }
 
-// ═══ SCHUTZ 3b: SYSTEM-ORDNER (nur rein, nie loeschen) ═══
+// ═══ SCHUTZ 3b: SYSTEM + ARCHIVE (nur rein, nie loeschen/raus) ═══
 function isSystemFolder(folder) {
   if (!folder) return false;
   var name = folder.getName();
@@ -256,6 +266,22 @@ function isSystemFolder(folder) {
     try {
       parent = parent.getParents().next();
       if (parent.getName() === '04_SYSTEM') return true;
+    } catch(e) { break; }
+  }
+  return false;
+}
+
+function isArchiveFolder(folder) {
+  if (!folder) return false;
+  var name = folder.getName();
+  if (name === '99_ARCHIVE' || name.indexOf('99_ARCHIVE') === 0) return true;
+  if (name === 'Papierkorb') return true;
+  var parent = folder;
+  for (var d = 0; d < 5; d++) {
+    try {
+      parent = parent.getParents().next();
+      var pn = parent.getName();
+      if (pn === '99_ARCHIVE' || pn === 'Papierkorb') return true;
     } catch(e) { break; }
   }
   return false;
@@ -284,9 +310,13 @@ function tripleGuard(folder, action, fileName) {
     _log('GUARD-3', fileName || '?', action + ' BLOCKED — raw (nie anfassen!)');
     return false;
   }
-  // Check 4: SYSTEM — nur rein, nie loeschen/raus
-  if (isSystemFolder(folder) && (action === 'DELETE' || action === 'ARCHIVE' || action === 'REMOVE')) {
-    _log('GUARD-4', fileName || '?', action + ' BLOCKED — 04_SYSTEM: nur rein-verschieben!');
+  // Check 4: SYSTEM + ARCHIVE — nur rein, nie loeschen/raus
+  if (isSystemFolder(folder) && (action === 'DELETE' || action === 'ARCHIVE' || action === 'REMOVE' || action === 'MOVE_OUT')) {
+    _log('GUARD-4', fileName || '?', action + ' BLOCKED — 04_SYSTEM: nur rein!');
+    return false;
+  }
+  if (isArchiveFolder(folder) && (action === 'DELETE' || action === 'REMOVE' || action === 'MOVE_OUT')) {
+    _log('GUARD-4', fileName || '?', action + ' BLOCKED — 99_ARCHIVE: nur rein, nie raus!');
     return false;
   }
   return true; // SICHER
@@ -383,9 +413,14 @@ function safeArchive(file, sub) {
       _log('BLOCK', file.getName(), 'Geschuetzt — ABBRUCH');
       return false;
     }
-    // 04_SYSTEM: NIEMALS Dateien raus-archivieren
+    // 04_SYSTEM: NIEMALS raus-archivieren
     if (isSystemFolder(parent)) {
-      _log('BLOCK', file.getName(), '04_SYSTEM — nur rein, nie raus/loeschen!');
+      _log('BLOCK', file.getName(), '04_SYSTEM — nur rein, nie raus!');
+      return false;
+    }
+    // 99_ARCHIVE: Was drin ist BLEIBT drin
+    if (isArchiveFolder(parent)) {
+      _log('BLOCK', file.getName(), '99_ARCHIVE — nur rein, NIEMALS raus!');
       return false;
     }
   } catch(e) {}

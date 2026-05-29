@@ -1,82 +1,90 @@
-﻿#!/usr/bin/env node
+#!/usr/bin/env node
 /**
- * ­ƒöä DkZÔäó Drive Sync ÔÇö Desktop ÔåÆ Google Drive 00-99
- * ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+ * DkZ™ Drive Sync v2.0 — Desktop → Google Drive 00-99
+ * ═══════════════════════════════════════════════════════
  * Synchronisiert lokale Ordner in die 00-99 Drive-Struktur
  * 
- * Features:
- * - Desktop, Downloads, Documents ÔåÆ Drive Inbox [00]
- * - Fotos/Videos ÔåÆ Google Fotos oder [09] Medien
- * - Automatische MIME-basierte Sortierung
- * - Duplikat-Pr├╝fung vor Upload
- * - Trockenlauf-Modus (--dry-run)
+ * EISERNE REGELN (von 777):
+ * ──────────────────────────
+ * R1: NIEMALS loeschen — nur verschieben/kopieren
+ * R2: 07_NOTEPAD — ABSOLUT UNANTASTBAR
+ * R3: [DEEPKEEP] — NUR KOPIEREN, nie verschieben
+ * R4: "raw" Ordner — IMMER unangetastet
+ * R5: Fotos → NUR in Fotos-Ordner
+ * R6: Videos → NUR in Videos-Ordner
+ * R7: Desktop — NUR ablegen, nie bestehende aendern
  * 
  * Setup:
  *   npm install googleapis
- *   node drive-sync.js --dry-run     ÔåÉ Vorschau
- *   node drive-sync.js               ÔåÉ Echte Ausf├╝hrung
- *   node drive-sync.js --watch       ÔåÉ Dauerbetrieb
+ *   node drive-sync.js --dry-run     → Vorschau
+ *   node drive-sync.js               → Echte Ausfuehrung
+ *   node drive-sync.js --watch       → Dauerbetrieb
+ * 
+ * @version 2.0.0
  */
 
-import { readdirSync, statSync, readFileSync, createReadStream } from 'fs';
-import { join, extname, basename } from 'path';
+import { readdirSync, statSync, readFileSync, existsSync } from 'fs';
+import { join, extname, basename, dirname } from 'path';
 import { homedir } from 'os';
 import { createHash } from 'crypto';
 
-// ÔòÉÔòÉÔòÉ CONFIG ÔòÉÔòÉÔòÉ
+// ═══ GESCHUETZTE PFADE (NIEMALS ANFASSEN!) ═══
+const PROTECTED_PATHS = [
+  '07_NOTEPAD', '07_notepad', 'NOTEPAD',
+  '[DEEPKEEP]', 'DEEPKEEP', 'deepkeep',
+  'raw'
+];
+
+// ═══ CONFIG ═══
 const CONFIG = {
-  // Lokale Quell-Ordner (Windows)
   sources: [
-    { path: join(homedir(), 'Desktop'), target: '00' },
-    { path: join(homedir(), 'Downloads'), target: '00' },
-    { path: join(homedir(), 'Documents'), target: '05' },
-    { path: join(homedir(), 'Music'), target: '09' },
-    { path: join(homedir(), 'Videos'), target: '09' },
-    { path: join(homedir(), 'Pictures'), target: '09' },
+    { path: join(homedir(), 'Desktop'), target: '00', mode: 'scan-only' },  // Desktop: NUR scannen, NIE aendern
+    { path: join(homedir(), 'Downloads'), target: '00', mode: 'move' },
+    { path: join(homedir(), 'Documents'), target: '05', mode: 'scan-only' },
+    { path: join(homedir(), 'Music'), target: '04-03', mode: 'copy' },      // Musik → Medien/Musik
+    { path: join(homedir(), 'Videos'), target: '04-02', mode: 'copy' },     // Videos → NUR Video-Ordner
+    { path: join(homedir(), 'Pictures'), target: '04-01', mode: 'copy' },   // Fotos → NUR Foto-Ordner
   ],
   
-  // MIME ÔåÆ Ziel-Ordner Mapping
-  mimeRouting: {
-    'application/pdf': '04',           // Vertr├ñge/Dokumente
-    'image/': '09',                    // Medien
-    'video/': '09',                    // Medien
-    'audio/': '09',                    // Medien
-    'application/vnd.ms-excel': '03',  // Finanzen
-    'application/vnd.openxmlformats-officedocument.spreadsheetml': '03',
-    'text/markdown': '05',            // Wissen
-    'application/json': '10',          // DEVKiTZ
-    'text/javascript': '10',           // DEVKiTZ
-  },
-  
-  // Dateiendung ÔåÆ Ziel-Ordner
+  // STRENGE Zuordnung: Fotos NUR zu Fotos, Videos NUR zu Videos
   extRouting: {
-    '.pdf': '04', '.doc': '04', '.docx': '04',
-    '.xls': '03', '.xlsx': '03', '.csv': '03',
-    '.png': '09', '.jpg': '09', '.jpeg': '09', '.gif': '09', '.webp': '09', '.svg': '08',
-    '.mp4': '09', '.mov': '09', '.avi': '09', '.mkv': '09',
-    '.mp3': '09', '.wav': '09', '.flac': '09',
-    '.md': '05', '.txt': '05',
-    '.js': '10', '.ts': '10', '.py': '10', '.json': '10',
-    '.zip': '15', '.rar': '15', '.7z': '15',
-    '.psd': '08', '.ai': '08', '.fig': '08',
+    // Fotos → 04-01 (Fotos)
+    '.png': '04-01', '.jpg': '04-01', '.jpeg': '04-01', '.gif': '04-01',
+    '.webp': '04-01', '.svg': '04-01', '.bmp': '04-01', '.heic': '04-01',
+    '.tiff': '04-01', '.ico': '04-01', '.raw': '04-01',
+    // Videos → 04-02 (Videos)
+    '.mp4': '04-02', '.mov': '04-02', '.avi': '04-02', '.mkv': '04-02',
+    '.webm': '04-02', '.flv': '04-02', '.wmv': '04-02', '.m4v': '04-02',
+    // Musik → 04-03 (Musik)
+    '.mp3': '04-03', '.wav': '04-03', '.flac': '04-03', '.aac': '04-03',
+    '.ogg': '04-03', '.wma': '04-03', '.m4a': '04-03',
+    // Dokumente → 05
+    '.pdf': '05-01', '.doc': '05-05', '.docx': '05-05',
+    '.xls': '05-04', '.xlsx': '05-04', '.csv': '05-04',
+    '.ppt': '05-02', '.pptx': '05-02',
+    '.md': '05-05', '.txt': '05-05',
+    // Code → 10 (DEVKiTZ)
+    '.js': '10', '.ts': '10', '.py': '10', '.json': '10', '.html': '10', '.css': '10',
+    // Archive → 15
+    '.zip': '15', '.rar': '15', '.7z': '15', '.tar': '15', '.gz': '15',
+    // Design → 08
+    '.psd': '08', '.ai': '08', '.fig': '08', '.sketch': '08',
   },
   
-  // Skip-Patterns
-  skipFiles: ['.DS_Store', 'Thumbs.db', 'desktop.ini', '.gitignore'],
-  skipExtensions: ['.tmp', '.crdownload', '.part'],
-  maxFileSizeMB: 500, // Max 500MB pro Datei
+  skipFiles: ['.DS_Store', 'Thumbs.db', 'desktop.ini', '.gitignore', '.gitkeep'],
+  skipExtensions: ['.tmp', '.crdownload', '.part', '.download'],
+  maxFileSizeMB: 500,
   
-  // Drive Parent Folder ID (muss gesetzt werden)
   driveParentId: process.env.DRIVE_PARENT_ID || null,
 };
 
-// ÔòÉÔòÉÔòÉ CLI ÔòÉÔòÉÔòÉ
+// ═══ CLI ARGS ═══
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');
 const WATCH = args.includes('--watch');
 const VERBOSE = args.includes('-v') || args.includes('--verbose');
 
-// ÔòÉÔòÉÔòÉ TERMINAL COLORS ÔòÉÔòÉÔòÉ
+// ═══ TERMINAL COLORS ═══
 const C = {
   reset: '\x1b[0m', red: '\x1b[31m', green: '\x1b[32m',
   yellow: '\x1b[33m', blue: '\x1b[34m', cyan: '\x1b[36m',
@@ -87,134 +95,201 @@ function log(icon, msg) {
   console.log(`${C.dim}[${new Date().toLocaleTimeString('de-DE')}]${C.reset} ${icon} ${msg}`);
 }
 
-// ÔòÉÔòÉÔòÉ FILE SCANNER ÔòÉÔòÉÔòÉ
+// ═══ SICHERHEITS-CHECKS ═══
+
+function isProtectedPath(filePath) {
+  var lower = filePath.toLowerCase();
+  for (var i = 0; i < PROTECTED_PATHS.length; i++) {
+    if (lower.indexOf(PROTECTED_PATHS[i].toLowerCase()) !== -1) return true;
+  }
+  return false;
+}
+
+function isDeepKeepPath(filePath) {
+  var lower = filePath.toLowerCase();
+  return lower.indexOf('deepkeep') !== -1;
+}
+
+function isRawPath(filePath) {
+  // Prueft ob irgendwo im Pfad ein "raw" Ordner liegt
+  var parts = filePath.replace(/\\/g, '/').split('/');
+  return parts.some(function(p) { return p.toLowerCase() === 'raw'; });
+}
+
+// ═══ FILE SCANNER ═══
 function scanSource(sourcePath) {
-  const files = [];
+  var files = [];
   try {
-    const entries = readdirSync(sourcePath);
-    for (const entry of entries) {
-      const fullPath = join(sourcePath, entry);
+    var entries = readdirSync(sourcePath);
+    for (var entry of entries) {
+      var fullPath = join(sourcePath, entry);
       try {
-        const stat = statSync(fullPath);
-        if (stat.isDirectory()) continue; // Nur Dateien auf erster Ebene
+        var stat = statSync(fullPath);
+        if (stat.isDirectory()) continue;
         
-        const ext = extname(entry).toLowerCase();
+        var ext = extname(entry).toLowerCase();
         if (CONFIG.skipFiles.includes(entry)) continue;
         if (CONFIG.skipExtensions.includes(ext)) continue;
         if (stat.size > CONFIG.maxFileSizeMB * 1024 * 1024) continue;
+        
+        // SICHERHEITSCHECK
+        if (isProtectedPath(fullPath)) {
+          if (VERBOSE) log('🛡️', `${C.yellow}GESCHUETZT: ${entry}${C.reset}`);
+          continue;
+        }
         
         files.push({
           name: entry,
           path: fullPath,
           size: stat.size,
-          ext,
+          ext: ext,
           modified: stat.mtime,
           md5: computeMD5(fullPath, stat.size),
         });
       } catch (e) { /* skip inaccessible files */ }
     }
   } catch (e) {
-    log('ÔÜá´©Å', `${C.yellow}Ordner nicht lesbar: ${sourcePath}${C.reset}`);
+    log('⚠️', `${C.yellow}Ordner nicht lesbar: ${sourcePath}${C.reset}`);
   }
   return files;
 }
 
 function computeMD5(filePath, size) {
-  // Nur erste 64KB hashen f├╝r Performance
   try {
-    const buffer = readFileSync(filePath, { length: Math.min(65536, size) });
+    var buffer = readFileSync(filePath, { length: Math.min(65536, size) });
     return createHash('md5').update(buffer).digest('hex').substring(0, 12);
-  } catch { return 'unknown'; }
+  } catch(e) { return 'unknown'; }
 }
 
 function resolveTarget(file, sourceTarget) {
-  // 1. Ext-basiertes Routing hat Priorit├ñt
+  // STRENG: Ext-basiertes Routing hat absolute Prioritaet
   if (CONFIG.extRouting[file.ext]) return CONFIG.extRouting[file.ext];
-  // 2. Fallback auf Quell-Ordner-Default
   return sourceTarget;
 }
 
-// ÔòÉÔòÉÔòÉ MAIN ÔòÉÔòÉÔòÉ
+// ═══ MAIN ═══
 async function main() {
   console.log(`
-${C.magenta}${C.bold}ÔòöÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòù
-Ôòæ  ­ƒöä DkZÔäó Drive Sync                     Ôòæ
-Ôòæ  Desktop ÔåÆ Google Drive 00-99            Ôòæ
-ÔòÜÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòØ${C.reset}
+${C.magenta}${C.bold}╔══════════════════════════════════════════╗
+║  DkZ™ Drive Sync v2.0                   ║
+║  Desktop → Google Drive 00-99            ║
+║  SICHERHEITS-MODUS: AKTIV               ║
+╚══════════════════════════════════════════╝${C.reset}
 `);
   
-  if (DRY_RUN) log('­ƒöì', `${C.yellow}DRY RUN ÔÇö Keine ├änderungen${C.reset}`);
+  // Safety Report
+  log('🛡️', `${C.red}GESCHUETZT: 07_NOTEPAD, [DEEPKEEP], raw${C.reset}`);
+  log('🛡️', `${C.red}DEEPKEEP: Nur KOPIEREN erlaubt${C.reset}`);
+  log('🛡️', `${C.red}LOESCHEN: VERBOTEN${C.reset}`);
+  console.log('');
   
-  let totalFiles = 0;
-  let totalSize = 0;
-  const plan = [];
+  if (DRY_RUN) log('🔍', `${C.yellow}DRY RUN — Keine Aenderungen${C.reset}`);
   
-  for (const source of CONFIG.sources) {
-    log('­ƒôé', `${C.bold}Scanne:${C.reset} ${source.path}`);
-    const files = scanSource(source.path);
+  var totalFiles = 0;
+  var totalSize = 0;
+  var totalSkipped = 0;
+  var plan = [];
+  
+  for (var source of CONFIG.sources) {
+    log('📂', `${C.bold}Scanne:${C.reset} ${source.path} ${C.dim}(${source.mode})${C.reset}`);
+    
+    // Desktop: NIE Dateien aendern — nur scannen
+    if (source.mode === 'scan-only') {
+      var scanFiles = scanSource(source.path);
+      log('  ', `${C.dim}${scanFiles.length} Dateien (nur Bericht, kein Move)${C.reset}`);
+      for (var sf of scanFiles) {
+        var scanTarget = resolveTarget(sf, source.target);
+        plan.push({ ...sf, target: scanTarget, folder: '[' + scanTarget + ']', action: 'REPORT' });
+      }
+      totalFiles += scanFiles.length;
+      continue;
+    }
+    
+    var files = scanSource(source.path);
     
     if (files.length === 0) {
       log('  ', `${C.dim}Keine Dateien gefunden${C.reset}`);
       continue;
     }
     
-    for (const file of files) {
-      const target = resolveTarget(file, source.target);
-      const folder = `[${target}]`;
-      plan.push({ ...file, target, folder });
+    for (var file of files) {
+      var target = resolveTarget(file, source.target);
+      var folder = '[' + target + ']';
+      
+      // SICHERHEIT: Ziel 07 blockieren
+      if (target.startsWith('07')) {
+        log('🛡️', `${C.red}BLOCK: ${file.name} → 07_NOTEPAD verboten${C.reset}`);
+        totalSkipped++;
+        continue;
+      }
+      
+      var action = source.mode === 'copy' ? 'COPY' : 'MOVE';
+      
+      // DEEPKEEP: Immer COPY
+      if (isDeepKeepPath(file.path)) {
+        action = 'COPY';
+      }
+      
+      plan.push({ ...file, target: target, folder: folder, action: action });
       totalFiles++;
       totalSize += file.size;
       
       if (VERBOSE) {
-        log('  ', `${C.dim}${file.name} ÔåÆ ${folder} (${formatSize(file.size)})${C.reset}`);
+        log('  ', `${C.dim}[${action}] ${file.name} → ${folder} (${formatSize(file.size)})${C.reset}`);
       }
     }
     
-    log('  ', `${C.green}${files.length} Dateien${C.reset} ÔåÆ Sortiert in 00-99`);
+    log('  ', `${C.green}${files.length} Dateien${C.reset} → Sortiert in 00-99`);
   }
   
   // Zusammenfassung
-  console.log(`\n${C.magenta}ÔöüÔöüÔöü ZUSAMMENFASSUNG ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü${C.reset}`);
-  log('­ƒôè', `${C.bold}${totalFiles} Dateien${C.reset} ┬À ${formatSize(totalSize)}`);
-  
-  // Gruppierung nach Ziel-Ordner
-  const groups = {};
-  for (const file of plan) {
-    if (!groups[file.target]) groups[file.target] = [];
-    groups[file.target].push(file);
+  console.log(`\n${C.magenta}═══ ZUSAMMENFASSUNG ══════════════════════${C.reset}`);
+  log('📊', `${C.bold}${totalFiles} Dateien${C.reset} · ${formatSize(totalSize)}`);
+  if (totalSkipped > 0) {
+    log('🛡️', `${C.yellow}${totalSkipped} uebersprungen (geschuetzt)${C.reset}`);
   }
   
-  for (const [target, files] of Object.entries(groups).sort()) {
-    log('  ', `[${target}] ÔåÆ ${C.cyan}${files.length} Dateien${C.reset}`);
+  // Gruppierung nach Ziel
+  var groups = {};
+  for (var pf of plan) {
+    if (!groups[pf.target]) groups[pf.target] = { files: [], actions: {} };
+    groups[pf.target].files.push(pf);
+    groups[pf.target].actions[pf.action] = (groups[pf.target].actions[pf.action] || 0) + 1;
+  }
+  
+  for (var [gTarget, gData] of Object.entries(groups).sort()) {
+    var actionStr = Object.entries(gData.actions).map(function(e) { return e[1] + 'x ' + e[0]; }).join(', ');
+    log('  ', `[${gTarget}] → ${C.cyan}${gData.files.length} Dateien${C.reset} (${actionStr})`);
   }
   
   if (DRY_RUN) {
-    log('­ƒöì', `${C.yellow}DRY RUN fertig. Starte ohne --dry-run f├╝r echte Ausf├╝hrung.${C.reset}`);
+    log('🔍', `${C.yellow}DRY RUN fertig. Starte ohne --dry-run fuer echte Ausfuehrung.${C.reset}`);
   } else if (!CONFIG.driveParentId) {
-    log('ÔÜá´©Å', `${C.yellow}DRIVE_PARENT_ID nicht gesetzt! Setze in .env oder als Umgebungsvariable.${C.reset}`);
-    log('­ƒÆí', `${C.dim}F├╝r lokale Sortierung reicht der Dry-Run Modus.${C.reset}`);
+    log('⚠️', `${C.yellow}DRIVE_PARENT_ID nicht gesetzt!${C.reset}`);
   } else {
-    log('­ƒÜÇ', `${C.green}Upload startet...${C.reset}`);
-    // TODO: Google Drive API Upload implementieren
-    // const { google } = await import('googleapis');
-    // Credentials ├╝ber OAuth2 oder Service Account
+    log('🚀', `${C.green}Upload startet...${C.reset}`);
+    // TODO: Google Drive API Upload
   }
   
-  // JSON-Report speichern
-  const reportPath = join(process.cwd(), 'sync-report.json');
-  const report = {
+  // JSON-Report
+  var reportPath = join(process.cwd(), 'sync-report.json');
+  var report = {
     timestamp: new Date().toISOString(),
-    totalFiles,
-    totalSize,
-    groups: Object.fromEntries(Object.entries(groups).map(([k, v]) => [k, v.length])),
-    plan: plan.map(f => ({ name: f.name, target: f.target, size: f.size, ext: f.ext }))
+    version: '2.0.0',
+    safetyMode: true,
+    protectedFolders: PROTECTED_PATHS,
+    totalFiles: totalFiles,
+    totalSkipped: totalSkipped,
+    totalSize: totalSize,
+    groups: Object.fromEntries(Object.entries(groups).map(function(e) { return [e[0], e[1].files.length]; })),
+    plan: plan.map(function(f) { return { name: f.name, target: f.target, size: f.size, ext: f.ext, action: f.action }; })
   };
   
   try {
-    const { writeFileSync } = await import('fs');
+    var { writeFileSync } = await import('fs');
     writeFileSync(reportPath, JSON.stringify(report, null, 2));
-    log('­ƒÆ¥', `${C.dim}Report: ${reportPath}${C.reset}`);
-  } catch {}
+    log('💾', `${C.dim}Report: ${reportPath}${C.reset}`);
+  } catch(e) {}
 }
 
 function formatSize(bytes) {
@@ -224,7 +299,7 @@ function formatSize(bytes) {
   return (bytes / 1073741824).toFixed(1) + ' GB';
 }
 
-main().catch(err => {
-  log('­ƒÆÑ', `${C.red}Fehler: ${err.message}${C.reset}`);
+main().catch(function(err) {
+  log('💥', `${C.red}Fehler: ${err.message}${C.reset}`);
   process.exit(1);
 });
