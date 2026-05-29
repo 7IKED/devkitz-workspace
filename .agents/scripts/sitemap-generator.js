@@ -1,7 +1,7 @@
 /**
  * DkZ™ Global Sitemap Generator
  * 
- * Scannt alle 96 Module in 01_PROJECTS und baut eine dynamische global-sitemap.json.
+ * Scannt alle 140+ Module in 01_PROJECTS und baut eine dynamische global-sitemap.json.
  * Wird vom dkz-mesh.js Frontend-Script geladen, um Querverweise zu bauen.
  */
 
@@ -14,7 +14,7 @@ const OUTPUT_FILE = path.join(__dirname, '../../01_PROJECTS/global-sitemap.json'
 const BASE_DOMAIN = 'devkitz.eu';
 
 function generateSitemap() {
-    console.log('🌐 Starte DkZ Global Mesh Scan...');
+    console.warn('[Sitemap] Starte DkZ Global Mesh Scan...');
     let sitemap = [];
 
     const items = fs.readdirSync(PROJECTS_DIR);
@@ -60,7 +60,7 @@ function generateSitemap() {
     }
 
     fs.writeFileSync(OUTPUT_FILE, JSON.stringify(sitemap, null, 2), 'utf8');
-    console.log(`✅ Global Sitemap generiert: ${sitemap.length} Module erfasst.`);
+    console.warn('[Sitemap] Global Sitemap generiert: ' + sitemap.length + ' Module erfasst.');
 }
 
 generateSitemap();
