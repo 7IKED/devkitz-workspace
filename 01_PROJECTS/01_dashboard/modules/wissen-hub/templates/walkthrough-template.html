@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DkZ™ Walkthrough Template — [SESSION]</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="walkthrough.css">
+</head>
+<body>
+
+<h1>[EMOJI] Session Walkthrough — [TITEL]</h1>
+<div class="meta">[DATUM] · [KATEGORIE] · Commits [COMMITS]</div>
+
+<!-- ═══ MODUS BAR ═══ -->
+<div class="mode-bar" id="modeBar">
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="btnSmart" onclick="setMode('smart')">🎯 SMART</button>
+    <button class="mode-btn" id="btnFull" onclick="setMode('full')">📋 FULL</button>
+  </div>
+</div>
+
+<!-- ═══ ABGESCHLOSSENE ARBEITEN ═══ -->
+<h2>✅ Abgeschlossene Arbeiten ([ANZAHL] Items)</h2>
+
+<!-- TEMPLATE CARD: Kopiere diesen Block fuer jedes Item -->
+<div class="card">
+  <div class="card-title">
+    [EMOJI] [FEATURE NAME]
+    <span class="badge badge-new">NEW</span>
+    <!-- Optionen: badge-new, badge-done, badge-warn -->
+  </div>
+  <div>[BESCHREIBUNG] <code>[TECHNISCHES DETAIL]</code></div>
+  <!-- Feedback Button -->
+  <div style="margin-top:.4rem">
+    <button class="fb-btn" onclick="toggleFeedback(this)">💬 Feedback</button>
+    <div class="fb-panel" style="display:none">
+      <textarea class="fb-text" placeholder="Dein Kommentar..."></textarea>
+      <button class="fb-send" onclick="sendFeedback(this)">Senden</button>
+    </div>
+  </div>
+</div>
+<!-- /TEMPLATE CARD -->
+
+<!-- ═══ VERIFIZIERUNG ═══ -->
+<h2>📊 Verifizierung</h2>
+<table>
+<tr><th>Test</th><th>Ergebnis</th></tr>
+<tr><td>[TEST 1]</td><td class="status-ok">[ERGEBNIS]</td></tr>
+<tr><td>[TEST 2]</td><td class="status-ok">[ERGEBNIS]</td></tr>
+<!-- status-ok = gruen, status-warn = gelb, status-err = rot -->
+</table>
+
+<!-- ═══ OFFENE FRAGEN ═══ -->
+<div class="oq-section" id="oqSection">
+  <h2>❓ Offene Fragen <span class="oq-counter" id="oqCounter">0/0</span></h2>
+  <!-- Feedback-faehige Fragen -->
+  <div class="oq-item">
+    <div class="oq-question">[FRAGE]</div>
+    <button class="fb-btn" onclick="toggleFeedback(this)">💬 Antworten</button>
+    <div class="fb-panel" style="display:none">
+      <textarea class="fb-text" placeholder="Deine Antwort..."></textarea>
+      <button class="fb-send" onclick="sendFeedback(this)">Senden</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ NAECHSTE SCHRITTE ═══ -->
+<div class="next-steps">
+<h2>🔜 Naechste Schritte</h2>
+<div class="shortcut-bar">Tippe <kbd>1</kbd>–<kbd>6</kbd> fuer einzelne Schritte · <kbd>0</kbd> = Alle starten</div>
+<div class="btn-grid">
+  <a class="btn" onclick="pick(this)" data-num="1" data-cmd="[COMMAND 1]">
+    <span class="num-badge">1</span>
+    <span class="btn-icon">[EMOJI]</span>
+    <span class="btn-label">[LABEL]</span>
+    <span class="btn-desc">[BESCHREIBUNG]</span>
+  </a>
+  <!-- Weitere Buttons nach Bedarf -->
+</div>
+</div>
+
+<!-- ═══ SICHERHEITSREGELN ═══ -->
+<div class="safety-box" style="background:rgba(250,30,78,.05);border:1px solid rgba(250,30,78,.15);border-radius:10px;padding:1rem;margin:1rem 0;font-size:.7rem">
+  <h3 style="color:#fa1e4e;margin-bottom:.5rem">🛡️ Eiserne Regeln</h3>
+  <ul style="color:rgba(240,240,244,.6);line-height:1.8">
+    <li>07_NOTEPAD — ABSOLUT UNANTASTBAR</li>
+    <li>[DEEPKEEP] — NUR KOPIEREN, nie verschieben/loeschen</li>
+    <li>raw — IMMER unangetastet</li>
+    <li>Fotos → NUR in Fotos · Videos → NUR in Videos</li>
+    <li>Desktop — NUR ablegen, nie bestehende aendern</li>
+    <li>NIEMALS loeschen — nur safeArchive()</li>
+  </ul>
+</div>
+
+<script src="walkthrough.js"></script>
+<script>
+// Feedback System
+function toggleFeedback(btn) {
+  var panel = btn.nextElementSibling;
+  if (!panel) panel = btn.parentElement.querySelector('.fb-panel');
+  if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function sendFeedback(btn) {
+  var panel = btn.parentElement;
+  var text = panel.querySelector('.fb-text');
+  if (!text || !text.value.trim()) return;
+  
+  // In localStorage speichern
+  var key = 'dkz-walk-feedback';
+  var fb = JSON.parse(localStorage.getItem(key) || '[]');
+  fb.push({
+    text: text.value.trim(),
+    date: new Date().toISOString(),
+    page: document.title
+  });
+  localStorage.setItem(key, JSON.stringify(fb));
+  
+  // Visuelles Feedback
+  text.value = '';
+  text.placeholder = 'Gespeichert!';
+  text.style.borderColor = '#00ff88';
+  setTimeout(function() {
+    panel.style.display = 'none';
+    text.placeholder = 'Dein Kommentar...';
+    text.style.borderColor = '';
+  }, 1500);
+}
+</script>
+
+<style>
+/* Feedback Inline Styles */
+.fb-btn{padding:.2rem .5rem;border-radius:5px;font-size:.55rem;font-weight:700;border:1px solid rgba(85,172,238,.2);background:rgba(85,172,238,.05);color:#55ACEE;cursor:pointer;font-family:inherit}
+.fb-btn:hover{background:rgba(85,172,238,.12)}
+.fb-panel{margin-top:.4rem;padding:.5rem;background:rgba(26,26,34,.8);border:1px solid rgba(30,30,42,.8);border-radius:8px}
+.fb-text{width:100%;background:#060608;border:1px solid #1e1e2a;border-radius:5px;padding:.4rem;color:#f0f0f4;font-size:.65rem;font-family:inherit;resize:vertical;min-height:40px;outline:none}
+.fb-text:focus{border-color:#55ACEE}
+.fb-send{margin-top:.3rem;padding:.2rem .5rem;border-radius:5px;font-size:.55rem;font-weight:700;border:none;background:#55ACEE;color:#fff;cursor:pointer;font-family:inherit}
+.oq-item{padding:.6rem;margin:.4rem 0;background:rgba(17,17,22,.5);border-radius:8px;border:1px solid rgba(30,30,42,.5)}
+.oq-question{font-size:.75rem;margin-bottom:.3rem;color:rgba(240,240,244,.8)}
+</style>
+</body>
+</html>
