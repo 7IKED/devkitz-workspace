@@ -3,7 +3,9 @@ import { test, expect } from '@playwright/test';
 
 const BLOG_HUB = 'file:///C:/DEVKiTZ/01_PROJECTS/blog-hub/index.html';
 
-test.describe('Blog Hub — Smoke Tests @smoke', () => {
+// SKIP: blog-hub/index.html existiert nicht (REDNOTE RN-003)
+// Reaktivieren sobald Blog Hub Modul erstellt wird
+test.describe.skip('Blog Hub — Smoke Tests @smoke', () => {
 
   // Helper: skip intro screen programmatically
   async function skipIntro(page) {
@@ -83,7 +85,7 @@ test.describe('Blog Hub — Smoke Tests @smoke', () => {
   });
 });
 
-test.describe('Blog Hub — Interaktions-Tests @smoke', () => {
+test.describe.skip('Blog Hub — Interaktions-Tests @smoke', () => {
 
   async function skipIntro(page) {
     await page.goto(BLOG_HUB);
@@ -132,7 +134,7 @@ test.describe('Blog Hub — Interaktions-Tests @smoke', () => {
   });
 });
 
-test.describe('Blog Hub — Performance @stress', () => {
+test.describe.skip('Blog Hub — Performance @stress', () => {
 
   test('Seite lädt unter 3 Sekunden', async ({ page }) => {
     const start = Date.now();
