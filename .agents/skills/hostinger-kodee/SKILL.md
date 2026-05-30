@@ -1,4 +1,5 @@
 ---
+name: hostinger-kodee
 description: Hostinger Kodee Anforderungen stellen — Domains, VPS, WordPress, DNS einrichten
 ---
 

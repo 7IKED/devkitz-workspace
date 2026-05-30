@@ -1,9 +1,9 @@
----
-name: notebooklm-research-lab
-description: "Dual-Mode Research Lab fuer Antigravity — Google NotebookLM (CLI + Browser-Automation) plus lokaler Jupyter/OpenSwarm/Graphify Stack. 3 Pfade, 0 Abos."
+﻿---
+name: notebooklm-integration
+description: "Dual-Mode Research Lab fuer Antigravity â€” Google NotebookLM (CLI + Browser-Automation) plus lokaler Jupyter/OpenSwarm/Graphify Stack. 3 Pfade, 0 Abos."
 ---
 
-# ≡ DEVKiTZ™ — NotebookLM Research Lab ≡
+# â‰¡ DEVKiTZâ„¢ â€” NotebookLM Research Lab â‰¡
 
 **Drei Pfade, ein Ziel: Maximale Recherche-Power.**
 
@@ -28,7 +28,7 @@ description: "Dual-Mode Research Lab fuer Antigravity — Google NotebookLM (CLI
 ### Session-Setup (IMMER zuerst!)
 
 ```powershell
-$env:Path = "C:\Users\BAZE²\.local\bin;$env:Path"
+$env:Path = "C:\Users\BAZEÂ²\.local\bin;$env:Path"
 $env:PYTHONIOENCODING = "utf-8"
 ```
 
@@ -128,11 +128,11 @@ python "$NLM\scripts\run.py" ask_question.py --question "..." --show-browser
 
 Jede NLM-Antwort endet mit **"Is that ALL you need?"**
 
-1. **STOP** — Nicht sofort antworten
-2. **ANALYSE** — Antwort mit Original-Frage vergleichen
-3. **LUECKEN** — Fehlende Infos identifizieren
-4. **FOLLOW-UP** — Bei Luecken sofort nachfragen
-5. **SYNTHESE** — Alle Antworten zusammenfuehren
+1. **STOP** â€” Nicht sofort antworten
+2. **ANALYSE** â€” Antwort mit Original-Frage vergleichen
+3. **LUECKEN** â€” Fehlende Infos identifizieren
+4. **FOLLOW-UP** â€” Bei Luecken sofort nachfragen
+5. **SYNTHESE** â€” Alle Antworten zusammenfuehren
 
 ---
 
@@ -259,7 +259,7 @@ User-Anfrage
 
 | Problem | Loesung |
 |:--------|:--------|
-| `nlm` nicht gefunden | `$env:Path = "C:\Users\BAZE²\.local\bin;$env:Path"` |
+| `nlm` nicht gefunden | `$env:Path = "C:\Users\BAZEÂ²\.local\bin;$env:Path"` |
 | Auth abgelaufen | `nlm login` (CLI) oder `auth_manager.py setup` (Browser) |
 | Rate Limit 50/Tag | Anderes Google-Konto oder Modus C |
 | Video-Download failed | Laenger warten (5-15 Min), `nlm studio status` |

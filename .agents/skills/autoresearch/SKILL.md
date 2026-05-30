@@ -1,5 +1,5 @@
----
-name: AutoResearch Meta
+﻿---
+name: autoresearch
 description: Die finale "Claude Code + Karpathy AutoResearch = The New Meta" Methodik zur Kondensierung gigantischer Datenmengen.
 tags: [research, autoresearch, karpathy]
 ---

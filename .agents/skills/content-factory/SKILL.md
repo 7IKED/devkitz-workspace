@@ -1,3 +1,8 @@
+---
+name: content-factory
+description: Batch content creation pipeline for blog posts, social media, and documentation. Use when generating multiple content pieces from a single topic.
+---
+
 # 🏭 DkZ™ Content Factory — Master Skill
 
 > **Skill-ID:** `content-factory`

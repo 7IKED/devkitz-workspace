@@ -1,3 +1,8 @@
+---
+name: hermes-model-manager
+description: Manage, verify, and switch Hermes free models on OpenRouter. Use when working with Hermes LLM models.
+---
+
 # Hermes Model Manager
 
 > Skill zum Verwalten, Verifizieren und Wechseln von Hermes Free-Modellen auf OpenRouter.

@@ -1,5 +1,5 @@
----
-name: Builder Install
+﻿---
+name: builder-install
 description: Integriert externe GitHub Repositories oder YouTube Konzepte umfaenglich in das DEVKiTZ System.
 tags: [builder, install, github, youtube, integration]
 ---

@@ -1,52 +1,52 @@
----
-name: dkz-power-openspec
-description: "DkZ™ /+ Mode — Power+ Fusion mit OpenSpec Spec-Driven Development. Vollständiger Workflow: Grill → OpenSpec Propose → Design → Tasks → Build → Test → Commit"
+﻿---
+name: power-openspec
+description: "DkZâ„¢ /+ Mode â€” Power+ Fusion mit OpenSpec Spec-Driven Development. VollstÃ¤ndiger Workflow: Grill â†’ OpenSpec Propose â†’ Design â†’ Tasks â†’ Build â†’ Test â†’ Commit"
 risk: safe
-source: "DEVKiTZ™ Fusion Skill v2"
+source: "DEVKiTZâ„¢ Fusion Skill v2"
 date_added: "2026-05-17"
 trigger: "/+"
 aliases: ["/power+", "/plus"]
 ---
 
-# ⚡ DkZ™ /+ Mode — Power+ × OpenSpec Fusion
+# âš¡ DkZâ„¢ /+ Mode â€” Power+ Ã— OpenSpec Fusion
 
-> `/+` = Power+ (Grill + DDD + Agent Harness) × OpenSpec (Spec-Driven Development)
-> Ein Befehl — voller Workflow von Idee bis Commit
+> `/+` = Power+ (Grill + DDD + Agent Harness) Ã— OpenSpec (Spec-Driven Development)
+> Ein Befehl â€” voller Workflow von Idee bis Commit
 
 ---
 
 ## When to Use
 
-Nutze `/+` wenn du die **maximale KI-gestützte Entwicklung** brauchst:
+Nutze `/+` wenn du die **maximale KI-gestÃ¼tzte Entwicklung** brauchst:
 - Neues Feature oder Modul planen + bauen
 - Architektur-Entscheidungen mit OpenSpec festhalten
 - Spec-Driven statt Code-First arbeiten
-- Vollständigen Audit-Trail mit Proposal → Design → Tasks
+- VollstÃ¤ndigen Audit-Trail mit Proposal â†’ Design â†’ Tasks
 
 ---
 
-## ═══ DER /+ WORKFLOW (10 Schritte) ═══
+## â•â•â• DER /+ WORKFLOW (10 Schritte) â•â•â•
 
 ```
 /+ activated!
 
-┌─────────────────────────────────────────────────────┐
-│  1. 🎯 GRILL     → Interview + Requirements        │
-│  2. 📖 LANGUAGE  → UBIQUITOUS_LANGUAGE.md           │
-│  3. 📋 PROPOSE   → openspec new change "name"      │
-│  4. 📐 DESIGN    → design.md (Architektur)          │
-│  5. ✅ TASKS     → tasks.md (Atomare Schritte)      │
-│  6. 🧠 CONTEXT   → ADRs + GSD Checkpoint           │
-│  7. ⚡ BUILD     → Code nach tasks.md               │
-│  8. 🧪 TEST      → TestStraße + Playwright          │
-│  9. 📝 DOC       → README + llms.txt                │
-│ 10. 🔄 COMMIT    → Git + openspec archive           │
-└─────────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚  1. ðŸŽ¯ GRILL     â†’ Interview + Requirements        â”‚
+â”‚  2. ðŸ“– LANGUAGE  â†’ UBIQUITOUS_LANGUAGE.md           â”‚
+â”‚  3. ðŸ“‹ PROPOSE   â†’ openspec new change "name"      â”‚
+â”‚  4. ðŸ“ DESIGN    â†’ design.md (Architektur)          â”‚
+â”‚  5. âœ… TASKS     â†’ tasks.md (Atomare Schritte)      â”‚
+â”‚  6. ðŸ§  CONTEXT   â†’ ADRs + GSD Checkpoint           â”‚
+â”‚  7. âš¡ BUILD     â†’ Code nach tasks.md               â”‚
+â”‚  8. ðŸ§ª TEST      â†’ TestStraÃŸe + Playwright          â”‚
+â”‚  9. ðŸ“ DOC       â†’ README + llms.txt                â”‚
+â”‚ 10. ðŸ”„ COMMIT    â†’ Git + openspec archive           â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ---
 
-## ═══ PHASE 1: Grill-With-Docs (von Power+) ═══
+## â•â•â• PHASE 1: Grill-With-Docs (von Power+) â•â•â•
 
 ### Schritt 1: Ubiquitous Language
 Erstelle `UBIQUITOUS_LANGUAGE.md` im Projekt-Root:
@@ -55,10 +55,10 @@ Erstelle `UBIQUITOUS_LANGUAGE.md` im Projekt-Root:
 # Ubiquitous Language
 
 ## Terms
-- **[Begriff]**: [Präzise Definition wie in DIESEM Projekt verwendet]
+- **[Begriff]**: [PrÃ¤zise Definition wie in DIESEM Projekt verwendet]
 
 ## Anti-Terms (NICHT verwenden)
-- **[Verwirrender Begriff]** → Nutze **[korrekter Begriff]**
+- **[Verwirrender Begriff]** â†’ Nutze **[korrekter Begriff]**
 
 ## Scope
 - [Was ist IN scope]
@@ -66,14 +66,14 @@ Erstelle `UBIQUITOUS_LANGUAGE.md` im Projekt-Root:
 ```
 
 ### Schritt 2: Grill-Session
-1. **5+ Runden probing questions** über die Domain
-2. **Annahmen hinterfragen** — "Warum nicht X statt Y?"
+1. **5+ Runden probing questions** Ã¼ber die Domain
+2. **Annahmen hinterfragen** â€” "Warum nicht X statt Y?"
 3. **Entscheidungen dokumentieren** als ADRs
 4. **Stoppen wenn** die KI deine Design-Entscheidungen vorhersagen kann
 
 ---
 
-## ═══ PHASE 2: OpenSpec Spec-Driven (NEU) ═══
+## â•â•â• PHASE 2: OpenSpec Spec-Driven (NEU) â•â•â•
 
 ### Schritt 3: Change Proposal erstellen
 ```bash
@@ -85,14 +85,14 @@ openspec new change "<kebab-case-name>"
 # Build-Reihenfolge holen
 openspec status --change "<name>" --json
 
-# Für jedes Artifact:
+# FÃ¼r jedes Artifact:
 openspec instructions <artifact-id> --change "<name>" --json
 ```
 
 **Artifact-Reihenfolge:**
-1. `proposal.md` — Was & Warum
-2. `design.md` — Wie (Architektur, Tech-Stack)
-3. `tasks.md` — Atomare Implementierungs-Schritte
+1. `proposal.md` â€” Was & Warum
+2. `design.md` â€” Wie (Architektur, Tech-Stack)
+3. `tasks.md` â€” Atomare Implementierungs-Schritte
 
 ### Schritt 5: Validierung
 ```bash
@@ -102,23 +102,23 @@ openspec status --change "<name>"
 
 ---
 
-## ═══ PHASE 3: Build + Test (von Power+) ═══
+## â•â•â• PHASE 3: Build + Test (von Power+) â•â•â•
 
 ### Schritt 6: Code nach Tasks
-- Arbeite tasks.md ab — ein Task nach dem anderen
-- **Ralph-Loop™**: Task → Spawn → Execute → Verify → Commit → Loop
+- Arbeite tasks.md ab â€” ein Task nach dem anderen
+- **Ralph-Loopâ„¢**: Task â†’ Spawn â†’ Execute â†’ Verify â†’ Commit â†’ Loop
 - **DkZ Design System v2** ist Standard
-- `esc()` bei jedem User-Input — XSS-Schutz
+- `esc()` bei jedem User-Input â€” XSS-Schutz
 
 ### Schritt 7: Tests
-- **TestStraße v3.0.0**: Playwright E2E Smoke Tests
+- **TestStraÃŸe v3.0.0**: Playwright E2E Smoke Tests
 - Browser-Test mit Aufnahme (`/browser-test`)
 - Feature-Test pro Modul
 
 ### Schritt 8: Dokumentation
 - `README.md` im Modul-Ordner
 - `features.json` aktualisieren
-- `llms.txt` für neue Endpoints
+- `llms.txt` fÃ¼r neue Endpoints
 - `REGISTRY.json` + `BLAUPAUSE.md` updaten
 
 ### Schritt 9: Commit + Archive
@@ -133,20 +133,20 @@ openspec archive "<name>"
 
 ---
 
-## ═══ REGELN ═══
+## â•â•â• REGELN â•â•â•
 
-1. **NIEMALS** die Grill-Phase überspringen — Context Alignment ist Pflicht
+1. **NIEMALS** die Grill-Phase Ã¼berspringen â€” Context Alignment ist Pflicht
 2. **IMMER** `openspec new change` BEVOR Code geschrieben wird
-3. **ADRs** sind Pflicht für jede Architektur-Entscheidung
+3. **ADRs** sind Pflicht fÃ¼r jede Architektur-Entscheidung
 4. **GSD Checkpoints** nach jeder signifikanten Arbeitseinheit
-5. **Design Tokens** aus DkZ Design System v2 — keine hardcoded Werte
-6. **TestStraße** muss bestehen vor Commit
-7. **Dateien sind heilig** — nie löschen, immer erst kopieren → verifizieren
+5. **Design Tokens** aus DkZ Design System v2 â€” keine hardcoded Werte
+6. **TestStraÃŸe** muss bestehen vor Commit
+7. **Dateien sind heilig** â€” nie lÃ¶schen, immer erst kopieren â†’ verifizieren
 8. **OpenSpec archive** nach Abschluss jedes Changes
 
 ---
 
-## ═══ OPENSPEC CLI QUICK REFERENCE ═══
+## â•â•â• OPENSPEC CLI QUICK REFERENCE â•â•â•
 
 | Befehl | Aktion |
 |:-------|:-------|
@@ -154,14 +154,14 @@ openspec archive "<name>"
 | `openspec status` | Dashboard anzeigen |
 | `openspec instructions <artifact>` | Artifact-Anleitung |
 | `openspec validate "name"` | Change validieren |
-| `openspec archive "name"` | Change abschließen |
+| `openspec archive "name"` | Change abschlieÃŸen |
 | `openspec list --changes` | Alle Changes listen |
 | `openspec list --specs` | Alle Specs listen |
 | `openspec view` | Interaktives Dashboard |
 
 ---
 
-## ═══ TRIGGER VERGLEICH ═══
+## â•â•â• TRIGGER VERGLEICH â•â•â•
 
 | Trigger | Was es macht |
 |:--------|:-------------|
@@ -174,4 +174,4 @@ openspec archive "<name>"
 ## Sources
 - Matt Pocock: /grill-with-docs (aihero.dev)
 - Fission-AI: OpenSpec v1.3.1 (github.com/Fission-AI/OpenSpec)
-- DkZ™: Ralph-Loop, TestStraße, BMAD, Free AI Hub
+- DkZâ„¢: Ralph-Loop, TestStraÃŸe, BMAD, Free AI Hub

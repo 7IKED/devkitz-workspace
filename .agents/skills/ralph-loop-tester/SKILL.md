@@ -1,3 +1,8 @@
+---
+name: ralph-loop-tester
+description: Ralph Loop test runner connecting browser testing with n8n automation. Use when testing skills and modules in the Ralph Loop pipeline.
+---
+
 # Ralph-Loop Test Runner — Alle Skills testen + n8n Automations-Loop
 
 > Verbindet Ralph-Loop™ Methodik mit Browser-Testing, n8n Automation

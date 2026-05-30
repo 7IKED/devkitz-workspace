@@ -1,3 +1,8 @@
+---
+name: glassmorphism-3d
+description: Glassmorphism 3D design system with frosted glass effects, depth layers, and premium aesthetics. Use when creating hyperreal UI components.
+---
+
 # 🔮 Glassmorphism 3D — Design Skill
 
 > **Skill-ID:** `glassmorphism-3d`

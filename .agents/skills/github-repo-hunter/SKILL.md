@@ -1,3 +1,8 @@
+---
+name: github-repo-hunter
+description: Systematic GitHub search for skills, docs, workflows, and frameworks. Use when finding open-source resources for integration.
+---
+
 # GitHub Repo Hunter — Skills, Docs, Workflows & Frameworks finden
 
 > Systematische GitHub-Suche nach Dokumentationen, Skills, Workflows,

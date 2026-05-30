@@ -1,3 +1,8 @@
+---
+name: canvas-engine
+description: Canvas animation engine for dashboard modules with smooth transitions, particle effects, and interactive visuals. Use when creating animated UI elements or canvas-based graphics.
+---
+
 # ✨ Canvas Engine — Animation Skill
 
 > **Skill-ID:** `canvas-engine`
