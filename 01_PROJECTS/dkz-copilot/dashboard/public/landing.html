@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="dkz-version" content="v2.0.0">
+  <title>DkZ CoPilot™ — Landing Page</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #fa1e4e;
+      --bg: #060608;
+      --card: rgba(255,255,255,0.03);
+      --card-hover: rgba(255,255,255,0.06);
+      --border: rgba(255,255,255,0.08);
+      --green: #00ff88;
+      --yellow: #ffb800;
+      --red: #ff3b5c;
+      --purple: #7c3aed;
+      --blue: #3b82f6;
+      --text: #e0e0e0;
+      --dim: #888;
+      --font: 'Inter', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; }
+    a { color:var(--accent); text-decoration:none; }
+
+    .container { max-width:900px; margin:0 auto; padding:20px; }
+
+    /* Hero */
+    .hero {
+      text-align:center; padding:60px 20px 40px;
+      background:linear-gradient(180deg, rgba(250,30,78,0.06), transparent);
+      border-bottom:1px solid var(--border);
+    }
+    .hero h1 {
+      font-size:2.5rem; font-weight:900;
+      background:linear-gradient(135deg, var(--accent), var(--purple));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .hero p { color:var(--dim); margin-top:8px; font-size:0.9rem; }
+    .hero .badges { display:flex; gap:8px; justify-content:center; margin-top:16px; flex-wrap:wrap; }
+    .badge { padding:4px 12px; border-radius:20px; font-size:11px; font-weight:600; }
+    .badge-green { background:rgba(0,255,136,0.12); color:var(--green); }
+    .badge-yellow { background:rgba(255,184,0,0.12); color:var(--yellow); }
+    .badge-red { background:rgba(255,59,92,0.12); color:var(--red); }
+    .badge-purple { background:rgba(124,58,237,0.12); color:var(--purple); }
+
+    /* Cards */
+    .card {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:16px; padding:20px; margin-bottom:16px;
+      transition:all 0.3s;
+    }
+    .card:hover { background:var(--card-hover); border-color:rgba(250,30,78,0.2); }
+    .card h3 { font-size:1rem; font-weight:700; margin-bottom:8px; }
+    .card-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:12px; }
+
+    /* Section */
+    .section { margin:40px 0; }
+    .section-title {
+      font-size:0.7rem; font-weight:700; text-transform:uppercase;
+      letter-spacing:0.1em; color:var(--dim); margin-bottom:16px;
+      padding-bottom:8px; border-bottom:1px solid var(--border);
+    }
+
+    /* Components */
+    .comp-row {
+      display:flex; align-items:center; gap:10px; padding:10px 0;
+      border-bottom:1px solid rgba(255,255,255,0.04); font-size:13px;
+    }
+    .comp-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .comp-dot.done { background:var(--green); box-shadow:0 0 6px var(--green); }
+    .comp-dot.pending { background:var(--yellow); box-shadow:0 0 6px var(--yellow); }
+    .comp-dot.new { background:var(--accent); box-shadow:0 0 6px var(--accent); }
+    .comp-name { font-weight:600; flex:1; }
+    .comp-file { font-family:var(--mono); font-size:11px; color:var(--dim); }
+
+    /* Walk Steps */
+    .walk-step {
+      display:flex; align-items:flex-start; gap:12px; padding:12px;
+      border:1px solid var(--border); border-radius:12px; margin-bottom:8px;
+      cursor:pointer; transition:all 0.2s;
+    }
+    .walk-step:hover { border-color:var(--accent); }
+    .walk-step.done { border-color:var(--green); background:rgba(0,255,136,0.03); }
+    .step-num {
+      width:28px; height:28px; border-radius:50%; display:flex;
+      align-items:center; justify-content:center; font-size:11px;
+      font-weight:700; flex-shrink:0; background:var(--card); color:var(--dim);
+    }
+    .walk-step.done .step-num { background:var(--green); color:#000; }
+    .step-title { font-size:13px; font-weight:600; }
+    .step-desc { font-size:11px; color:var(--dim); margin-top:2px; }
+    .step-cmd {
+      font-family:var(--mono); font-size:11px; color:var(--green);
+      background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:6px; margin-left:auto;
+    }
+
+    /* Webhook Trigger */
+    .hook-section {
+      background:linear-gradient(180deg, transparent, rgba(250,30,78,0.04));
+      border-top:1px solid var(--border); padding:40px 0; margin-top:40px;
+    }
+    .hook-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:10px; }
+    .hook-btn {
+      display:flex; align-items:center; gap:8px; padding:14px 16px;
+      background:var(--card); border:1px solid var(--border); border-radius:12px;
+      color:var(--text); font-size:13px; font-weight:600; cursor:pointer;
+      transition:all 0.2s; font-family:var(--font);
+    }
+    .hook-btn:hover { border-color:var(--accent); background:var(--card-hover); transform:translateY(-2px); }
+    .hook-btn:active { transform:scale(0.97); }
+    .hook-btn .icon { font-size:18px; }
+    .hook-btn.fire {
+      background:linear-gradient(135deg, var(--accent), var(--purple));
+      border:none; color:#fff;
+    }
+    .hook-btn.fire:hover { box-shadow:0 6px 20px rgba(250,30,78,0.4); }
+
+    /* Custom Hook */
+    .custom-hook {
+      margin-top:20px; display:flex; gap:8px;
+    }
+    .custom-hook select, .custom-hook input, .custom-hook textarea {
+      background:rgba(0,0,0,0.3); border:1px solid var(--border);
+      border-radius:10px; padding:10px 14px; color:var(--text);
+      font-family:var(--font); font-size:13px; outline:none;
+    }
+    .custom-hook select:focus, .custom-hook input:focus, .custom-hook textarea:focus {
+      border-color:var(--accent);
+    }
+    .custom-hook textarea { width:100%; min-height:80px; resize:vertical; }
+
+    /* Toast */
+    .toast {
+      position:fixed; bottom:20px; right:20px; padding:12px 20px;
+      background:rgba(0,255,136,0.15); color:var(--green); border:1px solid var(--green);
+      border-radius:12px; font-size:13px; font-weight:600;
+      transform:translateY(100px); opacity:0; transition:all 0.3s;
+      z-index:100;
+    }
+    .toast.show { transform:translateY(0); opacity:1; }
+
+    /* Log */
+    .log-entry {
+      font-family:var(--mono); font-size:11px; padding:6px 10px;
+      border-bottom:1px solid rgba(255,255,255,0.03); color:var(--dim);
+    }
+    .log-entry .time { color:var(--green); }
+    .log-entry .type { color:var(--yellow); font-weight:600; }
+
+    @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    .fade-in { animation:fadeIn 0.4s ease; }
+
+    @media(max-width:600px) {
+      .hero h1 { font-size:1.8rem; }
+      .card-grid, .hook-grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HERO -->
+  <div class="hero fade-in">
+    <h1>DkZ CoPilot&#8482;</h1>
+    <p>Self-Hosted KI Coding Agent — Gateway v2 · EventLog · AutoSync</p>
+    <div class="badges">
+      <span class="badge badge-green" id="status-badge">● Online</span>
+      <span class="badge badge-purple">Gateway :3060</span>
+      <span class="badge badge-yellow" id="ticket-badge">0 Tickets</span>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- IMPLEMENTATION PLAN -->
+    <div class="section fade-in">
+      <div class="section-title">📐 Implementation Plan — Komponenten</div>
+      <div id="components"></div>
+    </div>
+
+    <!-- WALKTHROUGH -->
+    <div class="section fade-in">
+      <div class="section-title">🚶 Walkthrough — Session Start v2</div>
+      <div id="walkthrough"></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="section fade-in">
+      <div class="section-title">📜 History</div>
+      <div class="card-grid" id="history"></div>
+    </div>
+
+  </div>
+
+  <!-- WEBHOOK TRIGGER -->
+  <div class="hook-section">
+    <div class="container">
+      <div class="section-title">⚡ Webhook Trigger — Hooks an Agent abfeuern</div>
+
+      <div class="hook-grid" id="hook-buttons">
+        <!-- JS generiert -->
+      </div>
+
+      <!-- Custom Hook -->
+      <div style="margin-top:24px">
+        <div class="section-title">📝 Custom Hook / Ticket</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <select id="hook-type" style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text);font-family:var(--font)">
+            <option value="anfrage">📝 Anfrage (AN)</option>
+            <option value="bug">🐛 Bug (BG)</option>
+            <option value="idee">💡 Idee (ID)</option>
+            <option value="prio">🔥 Prio (PR)</option>
+            <option value="feedback">💬 Feedback (FB)</option>
+            <option value="james">🎯 James GPT (JM)</option>
+          </select>
+          <input id="hook-title" type="text" placeholder="Kurztitel..." style="flex:1;min-width:200px;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text);font-family:var(--font)">
+        </div>
+        <textarea id="hook-body" placeholder="Details — wird als Ticket gespeichert und vom Agent gelesen..." style="width:100%;min-height:80px;resize:vertical;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text);font-family:var(--font);font-size:13px;outline:none"></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="hook-btn fire" onclick="fireCustomHook()" style="flex:1">⚡ Hook abfeuern</button>
+          <button class="hook-btn" onclick="fireTicket()" style="flex:1">📝 Als Ticket speichern</button>
+        </div>
+      </div>
+
+      <!-- Live Log -->
+      <div style="margin-top:24px">
+        <div class="section-title">📊 Live Event Log</div>
+        <div id="live-log" style="max-height:200px;overflow-y:auto;background:rgba(0,0,0,0.3);border-radius:12px;border:1px solid var(--border)">
+          <div class="log-entry"><span class="time">--:--:--</span> Warte auf Events...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API = '/api';
+    const GW = 'http://localhost:3060';
+
+    // === DATEN ===
+    const COMPONENTS = [
+      { name:'Webhook Receiver', file:'webhook_server.py', status:'done' },
+      { name:'Agent Orchestrator', file:'agent.py', status:'done' },
+      { name:'Git Worker', file:'git_worker.py', status:'done' },
+      { name:'File Analyzer', file:'file_analyzer.py', status:'done' },
+      { name:'CLOUDIA\u00b2', file:'cloudia.py', status:'done' },
+      { name:'Local Webhooks', file:'webhook_local.py', status:'done' },
+      { name:'Server Connector', file:'server.py', status:'done' },
+      { name:'Gateway v2', file:'gateway.py', status:'done' },
+      { name:'React Dashboard', file:'dashboard/', status:'done' },
+      { name:'Landing Page', file:'landing.html', status:'done' },
+      { name:'Java Scanner', file:'ModuleScanner.java', status:'pending' },
+      { name:'Java BatchFixer', file:'BatchFixer.java', status:'pending' },
+      { name:'VPS Gateway', file:'gateway.py (VPS)', status:'new' },
+    ];
+
+    const WALKS = [
+      { title:'Bootstrap', desc:'LLM_BOOTSTRAP.md laden', cmd:'/startup' },
+      { title:'Regeln', desc:'REGELWERK + GEMINI.md pruefen', cmd:null },
+      { title:'Git Status', desc:'git log -5 pruefen', cmd:'/status' },
+      { title:'Health Check', desc:'Gateway + Downstream testen', cmd:'/health' },
+      { title:'Offene Tickets', desc:'dkz-XX-NNN pending', cmd:'/tickets' },
+      { title:'Begruessungsprotokoll', desc:'Hallo Europa! 🫡', cmd:null },
+    ];
+
+    const HISTORY = [
+      { date:'2026-05-30', title:'Gateway v2 + Landing Page + EventLog + AutoSync', commits:4, files:28 },
+      { date:'2026-05-29', title:'React Dashboard + CLOUDIA\u00b2 + 16 Python Files', commits:8, files:22 },
+      { date:'2026-05-28', title:'DkZ Copilot Architektur + Implementation Plan', commits:5, files:15 },
+    ];
+
+    const HOOKS = [
+      { icon:'\u2601\ufe0f', label:'Sync All', type:'sync', color:'var(--blue)' },
+      { icon:'\ud83c\udfe5', label:'Health Check', type:'health', color:'var(--green)' },
+      { icon:'\ud83d\ude80', label:'VPS Deploy', type:'vps.deploy', color:'var(--purple)' },
+      { icon:'\ud83d\udd04', label:'Update', type:'update', color:'var(--yellow)' },
+      { icon:'\ud83d\udd12', label:'SSL Renew', type:'vps.ssl', color:'var(--accent)' },
+      { icon:'\ud83e\udde0', label:'LLM Check', type:'llm.check', color:'var(--purple)' },
+      { icon:'\ud83d\udcca', label:'EventLog Stats', type:'events.stats', color:'var(--blue)' },
+      { icon:'\ud83d\udcc2', label:'Git Status', type:'git.status', color:'var(--green)' },
+    ];
+
+    // Walk progress
+    const walkDone = JSON.parse(localStorage.getItem('walk-done') || '{}');
+    const logEntries = [];
+
+    // === RENDER ===
+    function render() {
+      // Components
+      const compEl = document.getElementById('components');
+      compEl.innerHTML = COMPONENTS.map(c => `
+        <div class="comp-row">
+          <span class="comp-dot ${c.status}"></span>
+          <span class="comp-name">${esc(c.name)}</span>
+          <span class="comp-file">${esc(c.file)}</span>
+          <span class="badge badge-${c.status==='done'?'green':c.status==='new'?'red':'yellow'}">${c.status}</span>
+        </div>
+      `).join('');
+
+      // Walkthrough
+      const walkEl = document.getElementById('walkthrough');
+      walkEl.innerHTML = WALKS.map((w,i) => {
+        const done = walkDone[i];
+        return `
+        <div class="walk-step ${done?'done':''}" onclick="toggleWalk(${i})">
+          <div class="step-num">${done?'\u2713':i+1}</div>
+          <div style="flex:1">
+            <div class="step-title" style="${done?'text-decoration:line-through;opacity:0.5':''}">${esc(w.title)}</div>
+            <div class="step-desc">${esc(w.desc)}</div>
+          </div>
+          ${w.cmd ? `<span class="step-cmd">${esc(w.cmd)}</span>` : ''}
+        </div>`;
+      }).join('');
+
+      // History
+      const histEl = document.getElementById('history');
+      histEl.innerHTML = HISTORY.map(h => `
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-weight:700;font-size:13px">${esc(h.date)}</span>
+            <div style="display:flex;gap:6px">
+              <span class="badge badge-purple">${h.commits} Commits</span>
+              <span class="badge badge-green">${h.files} Files</span>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--dim)">${esc(h.title)}</div>
+        </div>
+      `).join('');
+
+      // Hook Buttons
+      const hookEl = document.getElementById('hook-buttons');
+      hookEl.innerHTML = HOOKS.map(h => `
+        <button class="hook-btn" onclick="fireHook('${h.type}','${h.label}')">
+          <span class="icon">${h.icon}</span> ${esc(h.label)}
+        </button>
+      `).join('');
+    }
+
+    // === ACTIONS ===
+    function toggleWalk(i) {
+      walkDone[i] = !walkDone[i];
+      localStorage.setItem('walk-done', JSON.stringify(walkDone));
+      render();
+    }
+
+    async function fireHook(type, label) {
+      addLog('hook', `Firing: ${type}`);
+      toast(`\u26a1 ${label} gesendet...`);
+      try {
+        const r = await fetch(`${GW}/gateway`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ type, source:'landing-page', payload:{ action:type } })
+        });
+        const d = await r.json();
+        addLog('ok', `${label}: ${JSON.stringify(d).slice(0,100)}`);
+        toast(`\u2705 ${label} — OK`);
+      } catch(e) {
+        // Fallback: lokaler API Call
+        try {
+          await fetch(`${API}/${type.replace('.','/') }`, { method:'POST' });
+          addLog('ok', `${label}: local fallback`);
+          toast(`\u2705 ${label} — lokal`);
+        } catch {
+          addLog('error', `${label}: offline`);
+          toast(`\u274c ${label} — Gateway offline`, true);
+        }
+      }
+    }
+
+    async function fireCustomHook() {
+      const type = document.getElementById('hook-type').value;
+      const title = document.getElementById('hook-title').value || 'Custom Hook';
+      const body = document.getElementById('hook-body').value || '';
+      addLog('hook', `Custom: ${type} — ${title}`);
+      toast(`\u26a1 Custom Hook: ${title}`);
+      try {
+        const r = await fetch(`${GW}/gateway`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ type, source:'landing-page', payload:{ title, body, pattern:type } })
+        });
+        const d = await r.json();
+        addLog('ok', `Routed: ${JSON.stringify(d).slice(0,80)}`);
+        toast('\u2705 Hook gesendet');
+      } catch {
+        addLog('error', 'Gateway offline — lokal gespeichert');
+        toast('\u274c Gateway offline', true);
+      }
+    }
+
+    async function fireTicket() {
+      const pattern = document.getElementById('hook-type').value;
+      const title = document.getElementById('hook-title').value;
+      const body = document.getElementById('hook-body').value;
+      const text = title ? `${title}: ${body}` : body || 'Neues Ticket';
+      addLog('ticket', `Ticket [${pattern}]: ${text.slice(0,60)}`);
+      toast('\ud83d\udcdd Ticket wird erstellt...');
+      try {
+        const r = await fetch(`${GW}/tickets`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ text, pattern, source:'landing-page', assignee:'james-gpt' })
+        });
+        const d = await r.json();
+        if (d.ticket) {
+          addLog('ok', `\u2705 ${d.ticket.id} erstellt`);
+          toast(`\u2705 Ticket ${d.ticket.id} erstellt`);
+          document.getElementById('hook-title').value = '';
+          document.getElementById('hook-body').value = '';
+          loadTicketCount();
+        }
+      } catch {
+        // Lokal speichern
+        const tickets = JSON.parse(localStorage.getItem('dkz-tickets') || '[]');
+        const counter = parseInt(localStorage.getItem('dkz-ticket-counter') || '0') + 1;
+        localStorage.setItem('dkz-ticket-counter', String(counter));
+        const codes = {anfrage:'AN',bug:'BG',idee:'ID',prio:'PR',feedback:'FB',james:'JM'};
+        const id = `dkz-${codes[pattern]||'XX'}-${String(counter).padStart(3,'0')}`;
+        tickets.unshift({ id, text, pattern, status:'pending', created:new Date().toISOString() });
+        localStorage.setItem('dkz-tickets', JSON.stringify(tickets));
+        addLog('ok', `\u2705 ${id} lokal gespeichert`);
+        toast(`\u2705 ${id} lokal gespeichert`);
+        loadTicketCount();
+      }
+    }
+
+    // === HELPERS ===
+    function esc(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    function toast(msg, isError) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.background = isError ? 'rgba(255,59,92,0.15)' : 'rgba(0,255,136,0.15)';
+      t.style.color = isError ? 'var(--red)' : 'var(--green)';
+      t.style.borderColor = isError ? 'var(--red)' : 'var(--green)';
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    function addLog(type, msg) {
+      const now = new Date().toLocaleTimeString('de-DE');
+      const el = document.getElementById('live-log');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.innerHTML = `<span class="time">${now}</span> <span class="type">[${type}]</span> ${esc(msg)}`;
+      el.prepend(entry);
+      if (el.children.length > 50) el.removeChild(el.lastChild);
+    }
+
+    async function loadTicketCount() {
+      try {
+        const r = await fetch(`${GW}/tickets?status=pending`);
+        const d = await r.json();
+        document.getElementById('ticket-badge').textContent = `${d.tickets?.length || 0} Tickets`;
+      } catch {
+        const local = JSON.parse(localStorage.getItem('dkz-tickets') || '[]');
+        const pending = local.filter(t => t.status === 'pending').length;
+        document.getElementById('ticket-badge').textContent = `${pending} Tickets`;
+      }
+    }
+
+    async function checkHealth() {
+      try {
+        const r = await fetch(`${GW}/health`, { signal:AbortSignal.timeout(3000) });
+        const d = await r.json();
+        document.getElementById('status-badge').textContent = '\u25cf ' + (d.status || 'Online');
+        document.getElementById('status-badge').className = 'badge badge-green';
+        addLog('health', `Gateway: ${d.status} | Events: ${d.events?.total || 0}`);
+      } catch {
+        document.getElementById('status-badge').textContent = '\u25cf Offline';
+        document.getElementById('status-badge').className = 'badge badge-red';
+      }
+    }
+
+    // === INIT ===
+    render();
+    checkHealth();
+    loadTicketCount();
+    setInterval(checkHealth, 30000);
+  </script>
+</body>
+</html>
