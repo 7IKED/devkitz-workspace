@@ -1,0 +1,235 @@
+# docker-compose.dkz-secure.yml
+# ===============================
+# DkZ Chirurg-Architektur v2
+# REGEL #0: NIE ersetzen, NIE loeschen, NUR versionieren + archivieren
+#
+# Starten: docker compose -f docker-compose.dkz-secure.yml up -d
+
+services:
+  # =============================================
+  # CHIRURG — Einziger Agent mit VeraCrypt Mount
+  # =============================================
+  chirurg:
+    image: python:3.12-slim
+    container_name: dkz-chirurg
+    privileged: true
+    restart: unless-stopped
+    volumes:
+      - veracrypt-mount:/data/tresor:rw
+      - ./archive:/data/archive:rw
+      - ./versions:/data/versions:rw
+      - ./logs:/data/logs:rw
+      - ./scripts:/app/scripts:ro
+      - ./chirurg_guard.py:/app/chirurg_guard.py:ro
+      - ./config:/app/config:ro
+    environment:
+      - ROLE=chirurg
+      - MODEL=antigravity-gemini
+      - ALLOWED_OPS=read,copy,write,move,delete
+      - TRESOR_PATH=/data/tresor
+      - ARCHIVE_PATH=/data/archive
+      - VERSION_PATH=/data/versions
+      - LOG_PATH=/data/logs
+    networks:
+      - dkz-secure
+    healthcheck:
+      test: ["CMD", "python", "-c", "import chirurg_guard; print('OK')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # =============================================
+  # KOPISTEN — Nur Read-Only + eigenes tmpfs
+  # =============================================
+  kimi-worker:
+    image: python:3.12-slim
+    container_name: dkz-kimi
+    read_only: true
+    restart: unless-stopped
+    tmpfs:
+      - /tmp/work:size=2G,mode=1777
+    volumes:
+      - veracrypt-mount:/data/tresor:ro
+      - ./results/kimi:/data/output:rw
+      - ./logs:/data/logs:rw
+      - ./chirurg_guard.py:/app/chirurg_guard.py:ro
+    environment:
+      - ROLE=kopist
+      - MODEL=kimi-k2.6
+      - ALLOWED_OPS=read,copy
+      - TRESOR_PATH=/data/tresor
+      - ARCHIVE_PATH=/data/archive
+      - LOG_PATH=/data/logs
+    secrets:
+      - kimi_api_key
+    networks:
+      - dkz-secure
+    depends_on:
+      - chirurg
+
+  grok-worker:
+    image: python:3.12-slim
+    container_name: dkz-grok
+    read_only: true
+    restart: unless-stopped
+    tmpfs:
+      - /tmp/work:size=2G,mode=1777
+    volumes:
+      - veracrypt-mount:/data/tresor:ro
+      - ./results/grok:/data/output:rw
+      - ./logs:/data/logs:rw
+      - ./chirurg_guard.py:/app/chirurg_guard.py:ro
+    environment:
+      - ROLE=kopist
+      - MODEL=grok-4.3
+      - ALLOWED_OPS=read,copy
+      - TRESOR_PATH=/data/tresor
+      - ARCHIVE_PATH=/data/archive
+      - LOG_PATH=/data/logs
+    secrets:
+      - grok_api_key
+    networks:
+      - dkz-secure
+    depends_on:
+      - chirurg
+
+  gemma-worker:
+    image: python:3.12-slim
+    container_name: dkz-gemma
+    read_only: true
+    restart: unless-stopped
+    tmpfs:
+      - /tmp/work:size=2G,mode=1777
+    volumes:
+      - veracrypt-mount:/data/tresor:ro
+      - ./results/gemma:/data/output:rw
+      - ./logs:/data/logs:rw
+      - ./chirurg_guard.py:/app/chirurg_guard.py:ro
+    environment:
+      - ROLE=kopist
+      - MODEL=gemma4-26b
+      - ALLOWED_OPS=read,copy
+      - TRESOR_PATH=/data/tresor
+      - ARCHIVE_PATH=/data/archive
+      - LOG_PATH=/data/logs
+    networks:
+      - dkz-secure
+    depends_on:
+      - chirurg
+
+  # =============================================
+  # CHAT-CONTAINER — MiroFish + GitNexus
+  # =============================================
+  mirofish-chat:
+    image: python:3.12-slim
+    container_name: dkz-mirofish-chat
+    read_only: true
+    restart: unless-stopped
+    tmpfs:
+      - /tmp/work:size=1G,mode=1777
+    volumes:
+      - veracrypt-mount:/data/tresor:ro
+      - ./results/mirofish:/data/output:rw
+      - ./logs:/data/logs:rw
+      - ./chirurg_guard.py:/app/chirurg_guard.py:ro
+      - ./scripts/mirofish_chat.py:/app/chat.py:ro
+    ports:
+      - "3041:3041"
+    environment:
+      - ROLE=kopist
+      - MODEL=kimi-k2.6
+      - ALLOWED_OPS=read,copy
+      - CHAT_MODE=mirofish
+      - CHAT_PORT=3041
+      - TRESOR_PATH=/data/tresor
+      - LOG_PATH=/data/logs
+    secrets:
+      - kimi_api_key
+    command: ["python", "/app/chat.py"]
+    networks:
+      - dkz-secure
+    depends_on:
+      - chirurg
+
+  gitnexus-chat:
+    image: python:3.12-slim
+    container_name: dkz-gitnexus-chat
+    read_only: true
+    restart: unless-stopped
+    tmpfs:
+      - /tmp/work:size=1G,mode=1777
+    volumes:
+      - veracrypt-mount:/data/tresor:ro
+      - ./results/gitnexus:/data/output:rw
+      - ./logs:/data/logs:rw
+      - ./chirurg_guard.py:/app/chirurg_guard.py:ro
+      - ./scripts/gitnexus_chat.py:/app/chat.py:ro
+    ports:
+      - "3042:3042"
+    environment:
+      - ROLE=kopist
+      - MODEL=grok-4.1-fast
+      - ALLOWED_OPS=read,copy
+      - CHAT_MODE=gitnexus
+      - CHAT_PORT=3042
+      - TRESOR_PATH=/data/tresor
+      - LOG_PATH=/data/logs
+    secrets:
+      - grok_api_key
+    command: ["python", "/app/chat.py"]
+    networks:
+      - dkz-secure
+    depends_on:
+      - chirurg
+
+  # =============================================
+  # GATEWAY — Routing + Auth + Health
+  # =============================================
+  gateway:
+    image: python:3.12-slim
+    container_name: dkz-gateway
+    restart: unless-stopped
+    ports:
+      - "3060:3060"
+    volumes:
+      - ./config:/app/config:ro
+      - ./logs:/data/logs:rw
+      - ./chirurg_guard.py:/app/chirurg_guard.py:ro
+    environment:
+      - ROLE=gateway
+      - CHIRURG_CONTAINER=dkz-chirurg
+      - GATEWAY_PORT=3060
+    networks:
+      - dkz-secure
+    depends_on:
+      - chirurg
+      - mirofish-chat
+      - gitnexus-chat
+
+# =============================================
+# VOLUMES
+# =============================================
+volumes:
+  veracrypt-mount:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/veracrypt
+
+# =============================================
+# SECRETS (API Keys — NIE im Code!)
+# =============================================
+secrets:
+  kimi_api_key:
+    file: ./secrets/kimi.key
+  grok_api_key:
+    file: ./secrets/grok.key
+
+# =============================================
+# NETWORK (intern — kein Internet fuer Worker!)
+# =============================================
+networks:
+  dkz-secure:
+    driver: bridge
+    internal: true
