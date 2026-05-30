@@ -1,0 +1,48 @@
+# Copilot Setup Steps — DEVKiTZ
+# Diese Datei definiert die Umgebung fuer den Copilot Coding Agent
+# Wird automatisch ausgefuehrt wenn Copilot einen PR erstellt
+
+name: Copilot Setup
+
+on:
+  workflow_dispatch:
+
+jobs:
+  copilot-setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          npm install --prefix 01_PROJECTS/01_dashboard 2>/dev/null || true
+          echo "Dependencies installed"
+
+      - name: Validate environment
+        run: |
+          echo "=== DEVKiTZ Copilot Environment ==="
+          echo "Node: $(node -v)"
+          echo "NPM: $(npm -v)"
+          echo "Git: $(git --version)"
+          echo ""
+          echo "=== Module Count ==="
+          MODULE_COUNT=$(find 01_PROJECTS/01_dashboard/modules -maxdepth 1 -type d | wc -l)
+          echo "Modules: $MODULE_COUNT"
+          echo ""
+          echo "=== Shared Scripts ==="
+          ls -la 01_PROJECTS/01_dashboard/shared/dkz-*.js 2>/dev/null || echo "No shared scripts found"
+          echo ""
+          echo "=== features.json ==="
+          if [ -f "01_PROJECTS/01_dashboard/features.json" ]; then
+            echo "features.json exists"
+            FEATURE_COUNT=$(python3 -c "import json; print(len(json.load(open('01_PROJECTS/01_dashboard/features.json'))['modules']))" 2>/dev/null || echo "parse error")
+            echo "Registered modules: $FEATURE_COUNT"
+          fi
