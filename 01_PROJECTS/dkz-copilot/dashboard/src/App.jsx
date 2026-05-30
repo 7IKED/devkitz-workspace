@@ -7,14 +7,36 @@ import IntegrationsPanel from './panels/IntegrationsPanel'
 import ChatPanel from './panels/ChatPanel'
 import VPSPanel from './panels/VPSPanel'
 import WebhookPanel from './panels/WebhookPanel'
+import GraphifyPanel from './panels/GraphifyPanel'
 
-const TABS = [
-  { id: 'dashboard', icon: '📊', label: 'Home' },
-  { id: 'github', icon: '📋', label: 'GitHub' },
-  { id: 'integrations', icon: '🔌', label: 'Module' },
-  { id: 'chat', icon: '💬', label: 'Chat' },
-  { id: 'vps', icon: '🖥', label: 'VPS' },
-  { id: 'webhooks', icon: '🔗', label: 'Hooks' },
+// === i18n ===
+const LANG = {
+  de: {
+    home:'Home', github:'GitHub', modules:'Module', chat:'Chat', vps:'VPS', hooks:'Hooks', graph:'Graph',
+    ticket:'Neues Ticket', tickets:'Tickets', patterns:'Patterns', plan:'Impl. Plan', history:'History',
+    comparison:'Vergleich', docs:'Dokumentation', actions:'Aktionen', walks:'Walkthroughs', comm:'Kommunikation',
+    project:'Projekt', nav:'Navigation', quick:'Quick', syncAll:'Alles sync', deploy:'VPS Deploy',
+    health:'Health Check', ssl:'SSL Renew', create:'Erstellen', back:'Zurueck', open:'offen',
+    askAgent:'Was soll der Agent tun?', fire:'Hook abfeuern', contrast:'Kontrast', lang:'Sprache'
+  },
+  en: {
+    home:'Home', github:'GitHub', modules:'Modules', chat:'Chat', vps:'VPS', hooks:'Hooks', graph:'Graph',
+    ticket:'New Ticket', tickets:'Tickets', patterns:'Patterns', plan:'Impl. Plan', history:'History',
+    comparison:'Comparison', docs:'Documentation', actions:'Actions', walks:'Walkthroughs', comm:'Communication',
+    project:'Project', nav:'Navigation', quick:'Quick', syncAll:'Sync All', deploy:'VPS Deploy',
+    health:'Health Check', ssl:'SSL Renew', create:'Create', back:'Back', open:'open',
+    askAgent:'What should the agent do?', fire:'Fire Hook', contrast:'Contrast', lang:'Language'
+  }
+}
+
+const TABS_BASE = [
+  { id: 'dashboard', icon: '📊', key: 'home' },
+  { id: 'github', icon: '📋', key: 'github' },
+  { id: 'integrations', icon: '🔌', key: 'modules' },
+  { id: 'graphify', icon: '📈', key: 'graph' },
+  { id: 'chat', icon: '💬', key: 'chat' },
+  { id: 'vps', icon: '🖥', key: 'vps' },
+  { id: 'webhooks', icon: '🔗', key: 'hooks' },
 ]
 
 const API = localStorage.getItem('dkz-copilot-api') || '/api'
@@ -137,6 +159,20 @@ export default function App() {
   const [showTicketForm, setShowTicketForm] = useState(false)
   const [ticketInput, setTicketInput] = useState('')
   const [ticketPattern, setTicketPattern] = useState('anfrage')
+  const [lang, setLang] = useState(() => localStorage.getItem('dkz-lang') || 'de')
+  const [contrast, setContrast] = useState(() => localStorage.getItem('dkz-contrast') === 'true')
+  const t = LANG[lang] || LANG.de
+  const TABS = TABS_BASE.map(tb => ({ ...tb, label: t[tb.key] || tb.key }))
+
+  // Contrast + Lang persist
+  useEffect(() => {
+    localStorage.setItem('dkz-lang', lang)
+    document.documentElement.lang = lang
+  }, [lang])
+  useEffect(() => {
+    localStorage.setItem('dkz-contrast', String(contrast))
+    document.body.classList.toggle('high-contrast', contrast)
+  }, [contrast])
 
   const [integrations, setIntegrations] = useState(() => {
     const s = localStorage.getItem('dkz-integrations')
@@ -217,11 +253,13 @@ export default function App() {
   return (
     <div className="min-h-screen">
       {/* === HAMBURGER HEADER === */}
-      <header className="sticky top-0 z-40 px-4 py-3 flex items-center justify-between" style={{background:'rgba(6,6,8,0.9)', backdropFilter:'blur(16px)', borderBottom:'1px solid var(--color-border)'}}>
+      <header className="sticky top-0 z-40 px-4 py-3 flex items-center justify-between glass-header" style={{background:'rgba(6,6,8,0.85)', backdropFilter:'blur(20px) saturate(180%)', borderBottom:'1px solid var(--color-border)', boxShadow:'0 4px 30px rgba(0,0,0,0.3)'}}>
         <button onClick={() => { setShowMenu(true); setMenuSection(null) }} className="text-2xl hover:scale-110 transition-transform">☰</button>
         <h1 className="text-base font-bold bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-neon-purple)] bg-clip-text text-transparent">DkZ CoPilot™</h1>
         <div className="flex items-center gap-2">
           <span className={`badge ${statusBadge[status] || 'badge-red'}`}>{status}</span>
+          <button onClick={() => setLang(l => l === 'de' ? 'en' : 'de')} className="text-xs px-2 py-1 rounded-lg border transition-all hover:border-[var(--color-accent)]" style={{borderColor:'var(--color-border)', color:'var(--color-text-dim)'}} title={t.lang}>{lang.toUpperCase()}</button>
+          <button onClick={() => setContrast(c => !c)} className="text-xs px-2 py-1 rounded-lg border transition-all hover:border-[var(--color-accent)]" style={{borderColor:'var(--color-border)', color: contrast ? 'var(--color-neon-yellow)' : 'var(--color-text-dim)'}} title={t.contrast}>{contrast ? '◑' : '◐'}</button>
           <button onClick={() => fetch(`${API}/status`).catch(() => {})} className="text-lg hover:rotate-180 transition-transform">🔄</button>
         </div>
       </header>
@@ -232,6 +270,7 @@ export default function App() {
         {activeTab === 'dashboard' && <DashboardPanel status={status} integrations={integrations} />}
         {activeTab === 'github' && <GitHubPanel />}
         {activeTab === 'integrations' && <IntegrationsPanel integrations={integrations} onToggle={toggleInteg} />}
+        {activeTab === 'graphify' && <GraphifyPanel />}
         {activeTab === 'chat' && <ChatPanel integrations={integrations} />}
         {activeTab === 'vps' && <VPSPanel />}
         {activeTab === 'webhooks' && <WebhookPanel log={webhookLog} onSend={handleLocalWebhook} />}
