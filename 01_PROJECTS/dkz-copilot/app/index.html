@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="dkz-version" content="v2.00.0_01">
+  <meta name="theme-color" content="#fa1e4e">
+  <meta name="description" content="DkZ CoPilot - Self-Hosted Coding Agent Steuermodul">
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <title>DkZ CoPilot&trade;</title>
+  <style>
+    :root {
+      --accent: #fa1e4e;
+      --accent-glow: rgba(250, 30, 78, 0.3);
+      --bg: #060608;
+      --bg-card: rgba(255,255,255,0.03);
+      --bg-card-hover: rgba(255,255,255,0.06);
+      --border: rgba(255,255,255,0.08);
+      --green: #00ff88;
+      --yellow: #ffb800;
+      --red: #ff3b5c;
+      --blue: #3b82f6;
+      --purple: #7c3aed;
+      --text: #e0e0e0;
+      --text-dim: #888;
+      --font-ui: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-ui);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* === HEADER === */
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(6,6,8,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .header-logo {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .header-logo .dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s infinite;
+    }
+    .header-logo .dot.offline { background: var(--red); box-shadow: 0 0 8px var(--red); }
+    .header-logo .dot.working { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); animation: pulse 0.5s infinite; }
+    .header-logo h1 {
+      font-size: 18px; font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .header-actions { display: flex; gap: 8px; }
+    .header-actions button {
+      background: var(--bg-card); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px; padding: 6px 12px;
+      font-size: 12px; cursor: pointer; font-family: var(--font-ui);
+      transition: all 0.2s;
+    }
+    .header-actions button:hover { background: var(--bg-card-hover); border-color: var(--accent); }
+
+    /* === TABS === */
+    .tabs {
+      display: flex; overflow-x: auto; gap: 0;
+      border-bottom: 1px solid var(--border);
+      scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      padding: 12px 18px; white-space: nowrap;
+      font-size: 13px; font-weight: 500;
+      color: var(--text-dim); cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab:hover { color: var(--text); }
+
+    /* === PANELS === */
+    .panel { display: none; padding: 16px; }
+    .panel.active { display: block; }
+
+    /* === CARDS === */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: all 0.3s;
+    }
+    .card:hover { background: var(--bg-card-hover); border-color: rgba(250,30,78,0.2); }
+    .card-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 10px;
+    }
+    .card-title { font-size: 14px; font-weight: 600; }
+    .card-badge {
+      padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    }
+    .badge-green { background: rgba(0,255,136,0.15); color: var(--green); }
+    .badge-yellow { background: rgba(255,184,0,0.15); color: var(--yellow); }
+    .badge-red { background: rgba(255,59,92,0.15); color: var(--red); }
+    .badge-blue { background: rgba(59,130,246,0.15); color: var(--blue); }
+    .badge-purple { background: rgba(124,58,237,0.15); color: var(--purple); }
+
+    /* === STATS GRID === */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px; margin-bottom: 16px;
+    }
+    .stat-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 14px; text-align: center;
+    }
+    .stat-value {
+      font-size: 28px; font-weight: 900;
+      font-family: var(--font-mono);
+    }
+    .stat-label { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+    /* === ISSUE LIST === */
+    .issue-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; border-radius: var(--radius-sm);
+      background: var(--bg-card); border: 1px solid var(--border);
+      margin-bottom: 6px; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .issue-item:hover { transform: translateX(4px); border-color: var(--accent); }
+    .issue-number { font-family: var(--font-mono); font-size: 12px; color: var(--text-dim); min-width: 30px; }
+    .issue-title { font-size: 13px; flex: 1; }
+    .issue-labels { display: flex; gap: 4px; flex-wrap: wrap; }
+    .issue-label {
+      font-size: 10px; padding: 2px 6px; border-radius: 10px;
+      white-space: nowrap;
+    }
+
+    /* === CHAT === */
+    .chat-container {
+      display: flex; flex-direction: column; height: calc(100vh - 140px);
+    }
+    .chat-messages {
+      flex: 1; overflow-y: auto; padding: 10px;
+      scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+    }
+    .chat-msg {
+      max-width: 85%; margin-bottom: 10px; padding: 10px 14px;
+      border-radius: 14px; font-size: 13px; line-height: 1.5;
+      animation: fadeIn 0.3s ease;
+    }
+    .chat-msg.user {
+      background: linear-gradient(135deg, var(--accent), #d4163f);
+      margin-left: auto; border-bottom-right-radius: 4px;
+    }
+    .chat-msg.bot {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+    }
+    .chat-msg.bot pre {
+      background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px;
+      margin: 6px 0; overflow-x: auto;
+      font-family: var(--font-mono); font-size: 12px;
+    }
+    .chat-input-bar {
+      display: flex; gap: 8px; padding: 10px;
+      border-top: 1px solid var(--border);
+    }
+    .chat-input {
+      flex: 1; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 10px 14px; color: var(--text);
+      font-family: var(--font-ui); font-size: 14px; outline: none;
+      transition: border-color 0.2s;
+    }
+    .chat-input:focus { border-color: var(--accent); }
+    .chat-send {
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      border: none; border-radius: 12px; padding: 10px 18px;
+      color: #fff; font-weight: 600; cursor: pointer;
+      font-family: var(--font-ui); transition: transform 0.2s;
+    }
+    .chat-send:hover { transform: scale(1.05); }
+
+    /* === WALKTHROUGH === */
+    .walk-step {
+      display: flex; gap: 14px; padding: 14px;
+      border-left: 3px solid var(--border); margin-left: 10px;
+      margin-bottom: 4px; transition: all 0.2s;
+    }
+    .walk-step.done { border-left-color: var(--green); }
+    .walk-step.active { border-left-color: var(--accent); background: var(--bg-card); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+    .walk-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--bg-card); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; flex-shrink: 0;
+    }
+    .walk-step.done .walk-num { background: var(--green); color: #000; border-color: var(--green); }
+    .walk-step.active .walk-num { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .walk-content h3 { font-size: 14px; margin-bottom: 4px; }
+    .walk-content p { font-size: 12px; color: var(--text-dim); }
+
+    /* === LLM PANEL === */
+    .llm-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .llm-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+    }
+    .llm-info { flex: 1; }
+    .llm-name { font-size: 14px; font-weight: 600; }
+    .llm-role { font-size: 11px; color: var(--text-dim); }
+    .llm-status { font-size: 11px; font-weight: 600; }
+
+    /* === TICKET FORM === */
+    .ticket-form { display: flex; flex-direction: column; gap: 10px; }
+    .ticket-form input, .ticket-form textarea, .ticket-form select {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 14px;
+      color: var(--text); font-family: var(--font-ui); font-size: 13px;
+      outline: none; transition: border-color 0.2s;
+    }
+    .ticket-form input:focus, .ticket-form textarea:focus { border-color: var(--accent); }
+    .ticket-form textarea { min-height: 100px; resize: vertical; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      border: none; border-radius: var(--radius-sm); padding: 12px;
+      color: #fff; font-weight: 600; font-size: 14px; cursor: pointer;
+      font-family: var(--font-ui); transition: all 0.2s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px var(--accent-glow); }
+
+    /* === ANIMATIONS === */
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* === MOBILE === */
+    @media (max-width: 600px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .header-logo h1 { font-size: 15px; }
+      .chat-msg { max-width: 92%; }
+    }
+  </style>
+</head>
+<body>
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-logo">
+      <div class="dot" id="statusDot"></div>
+      <h1>DkZ CoPilot&trade;</h1>
+    </div>
+    <div class="header-actions">
+      <button onclick="refreshAll()" title="Aktualisieren">&#x21BB;</button>
+      <button onclick="toggleDesktop()" title="Desktop/Mobile">&#x1F5A5;</button>
+    </div>
+  </header>
+
+  <!-- TABS -->
+  <nav class="tabs" id="tabs">
+    <div class="tab active" data-panel="dashboard">&#x1F4CA; Dashboard</div>
+    <div class="tab" data-panel="tickets">&#x1F3AB; Tickets</div>
+    <div class="tab" data-panel="chat">&#x1F4AC; Chat</div>
+    <div class="tab" data-panel="walks">&#x1F6B6; Walks</div>
+    <div class="tab" data-panel="llms">&#x1F916; LLMs</div>
+    <div class="tab" data-panel="sync">&#x1F504; Sync</div>
+  </nav>
+
+  <!-- PANEL: DASHBOARD -->
+  <div class="panel active" id="panel-dashboard">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--green)" id="statPRs">0</div>
+        <div class="stat-label">PRs erstellt</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--yellow)" id="statIssues">0</div>
+        <div class="stat-label">Offene Issues</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--blue)" id="statModules">152</div>
+        <div class="stat-label">Module</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--purple)" id="statTokens">0</div>
+        <div class="stat-label">LLM Tokens</div>
+      </div>
+    </div>
+
+    <h3 style="margin:14px 0 8px;font-size:14px;color:var(--text-dim)">Letzte Agent-Aktivitaet</h3>
+    <div id="activityFeed"></div>
+
+    <h3 style="margin:14px 0 8px;font-size:14px;color:var(--text-dim)">Issue Queue</h3>
+    <div id="issueQueue"></div>
+  </div>
+
+  <!-- PANEL: TICKETS -->
+  <div class="panel" id="panel-tickets">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">&#x1F3AB; Neues Ticket erstellen</span>
+      </div>
+      <form class="ticket-form" onsubmit="createTicket(event)">
+        <input type="text" id="ticketTitle" placeholder="Titel (z.B. Fix XSS in qr-scanner)" required>
+        <select id="ticketType">
+          <option value="fix">&#x1F527; Fix — Bug beheben</option>
+          <option value="feature">&#x1F3D7; Feature — Neues bauen</option>
+          <option value="audit">&#x1F50D; Audit — Modul pruefen</option>
+          <option value="docs">&#x1F4DA; Docs — Dokumentation</option>
+          <option value="sync">&#x1F504; Sync — Synchronisieren</option>
+        </select>
+        <select id="ticketPrio">
+          <option value="P1">&#x1F534; PRIO1 — Kritisch</option>
+          <option value="P2">&#x1F7E1; PRIO2 — Wichtig</option>
+          <option value="P3" selected>&#x1F7E2; PRIO3 — Normal</option>
+        </select>
+        <textarea id="ticketBody" placeholder="Beschreibung... Was soll der Agent tun?"></textarea>
+        <select id="ticketAgent">
+          <option value="auto">&#x1F916; Auto (Agent waehlt LLM)</option>
+          <option value="qwen">Qwen 3.5 7B — Coder</option>
+          <option value="gemma">Gemma 4 2B — Mini Tasks</option>
+          <option value="coder">Qwen 2.5 Coder — Deep Code</option>
+        </select>
+        <button type="submit" class="btn-primary">&#x1F680; Ticket erstellen &amp; Agent starten</button>
+      </form>
+    </div>
+
+    <h3 style="margin:14px 0 8px;font-size:14px;color:var(--text-dim)">Offene Tickets</h3>
+    <div id="ticketList"></div>
+  </div>
+
+  <!-- PANEL: CHAT -->
+  <div class="panel" id="panel-chat">
+    <div class="chat-container">
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-msg bot">
+          Hallo 777! &#x1F44B; Ich bin der DkZ CoPilot Agent.<br><br>
+          Ich kann:<br>
+          &#x2022; Module fixen (<code>/fix qr-scanner</code>)<br>
+          &#x2022; Neue Module bauen (<code>/create modul-name</code>)<br>
+          &#x2022; Code reviewen (<code>/review PR#7</code>)<br>
+          &#x2022; Status zeigen (<code>/status</code>)<br>
+          &#x2022; Sync starten (<code>/sync</code>)<br><br>
+          Welches LLM soll ich nutzen?<br>
+          <span style="color:var(--green)">Qwen 3.5 7B</span> (Coder) | <span style="color:var(--yellow)">Gemma 4 2B</span> (Mini) | <span style="color:var(--blue)">Qwen 2.5 Coder</span> (Deep)
+        </div>
+      </div>
+      <div class="chat-input-bar">
+        <input class="chat-input" id="chatInput" placeholder="Nachricht an CoPilot..." onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="chat-send" onclick="sendChat()">&#x27A4;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL: WALKTHROUGHS -->
+  <div class="panel" id="panel-walks">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">&#x1F6B6; Walkthrough Templates</span>
+        <span class="card-badge badge-purple">6 Templates</span>
+      </div>
+    </div>
+
+    <div id="walkTemplates">
+      <div class="card" onclick="loadWalk('fix-module')" style="cursor:pointer">
+        <div class="card-header">
+          <span class="card-title">&#x1F527; Modul Fix Walkthrough</span>
+          <span class="card-badge badge-red">5 Steps</span>
+        </div>
+        <p style="font-size:12px;color:var(--text-dim)">XSS, CSS Variables, Shared Scripts, Meta Tags, Hub Button</p>
+      </div>
+      <div class="card" onclick="loadWalk('create-module')" style="cursor:pointer">
+        <div class="card-header">
+          <span class="card-title">&#x1F3D7; Neues Modul Walkthrough</span>
+          <span class="card-badge badge-green">7 Steps</span>
+        </div>
+        <p style="font-size:12px;color:var(--text-dim)">Ordner, HTML, CSS, Scripts, features.json, Git, PR</p>
+      </div>
+      <div class="card" onclick="loadWalk('vps-deploy')" style="cursor:pointer">
+        <div class="card-header">
+          <span class="card-title">&#x1F680; VPS Deploy Walkthrough</span>
+          <span class="card-badge badge-blue">4 Steps</span>
+        </div>
+        <p style="font-size:12px;color:var(--text-dim)">Build, rsync, nginx reload, Health Check</p>
+      </div>
+      <div class="card" onclick="loadWalk('security-audit')" style="cursor:pointer">
+        <div class="card-header">
+          <span class="card-title">&#x1F512; Security Audit Walkthrough</span>
+          <span class="card-badge badge-red">6 Steps</span>
+        </div>
+        <p style="font-size:12px;color:var(--text-dim)">XSS Scan, CSRF, Headers, Secrets, SSL, Report</p>
+      </div>
+      <div class="card" onclick="loadWalk('weekly-report')" style="cursor:pointer">
+        <div class="card-header">
+          <span class="card-title">&#x1F4CA; Wochen-Report Walkthrough</span>
+          <span class="card-badge badge-yellow">5 Steps</span>
+        </div>
+        <p style="font-size:12px;color:var(--text-dim)">Git Stats, Issues, CI Status, Metriken, Report</p>
+      </div>
+      <div class="card" onclick="loadWalk('batch-fix')" style="cursor:pointer">
+        <div class="card-header">
+          <span class="card-title">&#x26A1; Batch Fix Walkthrough</span>
+          <span class="card-badge badge-purple">4 Steps</span>
+        </div>
+        <p style="font-size:12px;color:var(--text-dim)">Scan, Priorisieren, Batch-Fix, PR erstellen</p>
+      </div>
+    </div>
+
+    <div id="walkSteps" style="display:none">
+      <button onclick="backToTemplates()" style="background:var(--bg-card);border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:8px;margin-bottom:12px;cursor:pointer;font-family:var(--font-ui)">&larr; Zurueck</button>
+      <div id="walkContent"></div>
+    </div>
+  </div>
+
+  <!-- PANEL: LLMs -->
+  <div class="panel" id="panel-llms">
+    <h3 style="margin-bottom:12px;font-size:14px;color:var(--text-dim)">Multi-LLM System</h3>
+
+    <div class="llm-card">
+      <div class="llm-icon" style="background:rgba(0,255,136,0.1)">&#x1F9E0;</div>
+      <div class="llm-info">
+        <div class="llm-name">Qwen 3.5 7B</div>
+        <div class="llm-role">Haupt-Coder &mdash; PRs, Fixes, Features</div>
+      </div>
+      <div class="llm-status" style="color:var(--green)" id="llmQwen">&#x25CF; Bereit</div>
+    </div>
+
+    <div class="llm-card">
+      <div class="llm-icon" style="background:rgba(255,184,0,0.1)">&#x26A1;</div>
+      <div class="llm-info">
+        <div class="llm-name">Gemma 4 2B</div>
+        <div class="llm-role">Mini-LLM &mdash; Text, Summaries, Transform</div>
+      </div>
+      <div class="llm-status" style="color:var(--yellow)" id="llmGemma">&#x25CF; Standby</div>
+    </div>
+
+    <div class="llm-card">
+      <div class="llm-icon" style="background:rgba(59,130,246,0.1)">&#x1F4BB;</div>
+      <div class="llm-info">
+        <div class="llm-name">Qwen 2.5 Coder 7B</div>
+        <div class="llm-role">Deep Coder &mdash; Komplexe Refactorings</div>
+      </div>
+      <div class="llm-status" style="color:var(--blue)" id="llmCoder">&#x25CF; Standby</div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="card-header">
+        <span class="card-title">LLM Routing</span>
+      </div>
+      <table style="width:100%;font-size:12px;border-collapse:collapse">
+        <tr style="color:var(--text-dim)">
+          <td style="padding:6px">Task-Typ</td><td>LLM</td><td>Tokens/Req</td>
+        </tr>
+        <tr><td style="padding:6px">&#x1F527; Fix/Bug</td><td style="color:var(--green)">Qwen 3.5 7B</td><td>~2000</td></tr>
+        <tr><td style="padding:6px">&#x1F3D7; Feature</td><td style="color:var(--green)">Qwen 3.5 7B</td><td>~4000</td></tr>
+        <tr><td style="padding:6px">&#x1F4DD; Text/Summary</td><td style="color:var(--yellow)">Gemma 4 2B</td><td>~500</td></tr>
+        <tr><td style="padding:6px">&#x1F504; Transform</td><td style="color:var(--yellow)">Gemma 4 2B</td><td>~300</td></tr>
+        <tr><td style="padding:6px">&#x1F50D; Refactor</td><td style="color:var(--blue)">Qwen Coder</td><td>~3000</td></tr>
+        <tr><td style="padding:6px">&#x1F50D; Review</td><td style="color:var(--blue)">Qwen Coder</td><td>~1500</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- PANEL: SYNC -->
+  <div class="panel" id="panel-sync">
+    <h3 style="margin-bottom:12px;font-size:14px;color:var(--text-dim)">Sync &amp; Pflege</h3>
+
+    <div class="card" onclick="runSync('features')" style="cursor:pointer">
+      <div class="card-header">
+        <span class="card-title">&#x1F504; features.json synchronisieren</span>
+        <span class="card-badge badge-green" id="syncFeatures">Bereit</span>
+      </div>
+      <p style="font-size:12px;color:var(--text-dim)">Scannt alle Module und aktualisiert features.json</p>
+    </div>
+
+    <div class="card" onclick="runSync('llms')" style="cursor:pointer">
+      <div class="card-header">
+        <span class="card-title">&#x1F4C4; llms.txt regenerieren</span>
+        <span class="card-badge badge-green" id="syncLlms">Bereit</span>
+      </div>
+    </div>
+
+    <div class="card" onclick="runSync('git')" style="cursor:pointer">
+      <div class="card-header">
+        <span class="card-title">&#x1F500; Git Push (lokal → GitHub)</span>
+        <span class="card-badge badge-green" id="syncGit">Bereit</span>
+      </div>
+    </div>
+
+    <div class="card" onclick="runSync('vps')" style="cursor:pointer">
+      <div class="card-header">
+        <span class="card-title">&#x1F680; VPS Deploy (Dashboard)</span>
+        <span class="card-badge badge-yellow" id="syncVps">VPS noetig</span>
+      </div>
+    </div>
+
+    <div class="card" onclick="runSync('health')" style="cursor:pointer">
+      <div class="card-header">
+        <span class="card-title">&#x1F3E5; Health Check (alle Module)</span>
+        <span class="card-badge badge-green" id="syncHealth">Bereit</span>
+      </div>
+    </div>
+
+    <div class="card" onclick="runSync('backup')" style="cursor:pointer">
+      <div class="card-header">
+        <span class="card-title">&#x1F4BE; Backup (Drive + Iceberg)</span>
+        <span class="card-badge badge-yellow" id="syncBackup">Drive noetig</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // DkZ CoPilot — Frontend Logic
+    // ============================================
+
+    const API_BASE = localStorage.getItem('dkz-copilot-api') || 'http://localhost:3050';
+    let agentStatus = 'idle'; // idle, working, error, offline
+
+    // --- Sanitize ---
+    function esc(str) {
+      if (!str) return '';
+      const d = document.createElement('div');
+      d.textContent = String(str);
+      return d.innerHTML;
+    }
+
+    // --- Tab Navigation ---
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+      });
+    });
+
+    // --- Dashboard ---
+    async function refreshAll() {
+      try {
+        const res = await fetch(API_BASE + '/status');
+        if (!res.ok) throw new Error('API offline');
+        const data = await res.json();
+        updateStatus(data.status);
+        document.getElementById('statPRs').textContent = data.prs_created || 0;
+        document.getElementById('statIssues').textContent = data.issues_pending || 0;
+        document.getElementById('statTokens').textContent = formatTokens(data.tokens_used || 0);
+      } catch (e) {
+        updateStatus('offline');
+        // Fallback: Demo-Daten
+        document.getElementById('statPRs').textContent = '3';
+        document.getElementById('statIssues').textContent = '51';
+        document.getElementById('statTokens').textContent = '0';
+        loadDemoActivity();
+      }
+    }
+
+    function updateStatus(status) {
+      agentStatus = status;
+      const dot = document.getElementById('statusDot');
+      dot.className = 'dot';
+      if (status === 'working') dot.classList.add('working');
+      else if (status === 'error' || status === 'offline') dot.classList.add('offline');
+    }
+
+    function formatTokens(n) {
+      if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+      if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+      return String(n);
+    }
+
+    function loadDemoActivity() {
+      const feed = document.getElementById('activityFeed');
+      const items = [
+        { time: 'Gerade', action: 'Agent gestartet', badge: 'badge-green', label: 'Online' },
+        { time: '02:30', action: 'Labels in 11 Repos erstellt', badge: 'badge-purple', label: '18 Labels' },
+        { time: '02:00', action: '48 Issues getaggt', badge: 'badge-blue', label: 'KERN' },
+        { time: '01:45', action: 'Retro-Analyse erstellt', badge: 'badge-yellow', label: '#48' },
+      ];
+      feed.innerHTML = items.map(i =>
+        '<div class="issue-item">' +
+          '<span class="issue-number">' + esc(i.time) + '</span>' +
+          '<span class="issue-title">' + esc(i.action) + '</span>' +
+          '<span class="issue-label card-badge ' + esc(i.badge) + '">' + esc(i.label) + '</span>' +
+        '</div>'
+      ).join('');
+    }
+
+    // --- Tickets ---
+    async function createTicket(e) {
+      e.preventDefault();
+      const title = document.getElementById('ticketTitle').value;
+      const type = document.getElementById('ticketType').value;
+      const prio = document.getElementById('ticketPrio').value;
+      const body = document.getElementById('ticketBody').value;
+      const agent = document.getElementById('ticketAgent').value;
+
+      const labelMap = {
+        fix: '\uD83D\uDD27 fix', feature: '\uD83C\uDFD7\uFE0F feature',
+        audit: '\uD83D\uDD0D audit', docs: '\uD83D\uDCDA docs', sync: '\uD83D\uDD04 sync'
+      };
+      const prioMap = { P1: '\uD83D\uDD34 PRIO1', P2: '\uD83D\uDFE1 PRIO2', P3: '\uD83D\uDFE2 PRIO3' };
+
+      try {
+        const res = await fetch(API_BASE + '/ticket', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, type, prio, body, agent })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          addChatMsg('bot', 'Ticket erstellt: #' + esc(String(data.issue_number)) + ' — Agent arbeitet...');
+          e.target.reset();
+        }
+      } catch (err) {
+        addChatMsg('bot', 'API offline — Ticket lokal gespeichert. Wird bei Reconnect gesendet.');
+        const tickets = JSON.parse(localStorage.getItem('dkz-tickets') || '[]');
+        tickets.push({ title, type, prio, body, agent, created: new Date().toISOString() });
+        localStorage.setItem('dkz-tickets', JSON.stringify(tickets));
+        e.target.reset();
+      }
+      loadTickets();
+    }
+
+    function loadTickets() {
+      const list = document.getElementById('ticketList');
+      const local = JSON.parse(localStorage.getItem('dkz-tickets') || '[]');
+      list.innerHTML = local.map((t, i) =>
+        '<div class="issue-item">' +
+          '<span class="issue-number">#L' + (i + 1) + '</span>' +
+          '<span class="issue-title">' + esc(t.title) + '</span>' +
+          '<span class="issue-label card-badge badge-yellow">' + esc(t.prio) + '</span>' +
+        '</div>'
+      ).join('') || '<p style="color:var(--text-dim);font-size:12px;padding:10px">Keine lokalen Tickets</p>';
+    }
+
+    // --- Chat ---
+    function sendChat() {
+      const input = document.getElementById('chatInput');
+      const msg = input.value.trim();
+      if (!msg) return;
+      addChatMsg('user', msg);
+      input.value = '';
+      processChat(msg);
+    }
+
+    function addChatMsg(role, html) {
+      const container = document.getElementById('chatMessages');
+      const div = document.createElement('div');
+      div.className = 'chat-msg ' + role;
+      div.innerHTML = html;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    async function processChat(msg) {
+      const cmd = msg.toLowerCase().trim();
+
+      if (cmd === '/status') {
+        addChatMsg('bot', 'Agent: <span style="color:var(--green)">' + esc(agentStatus) + '</span><br>Module: 152<br>Issues: 51 offen<br>LLMs: 3 konfiguriert');
+        return;
+      }
+      if (cmd.startsWith('/fix ')) {
+        const modul = esc(cmd.replace('/fix ', ''));
+        addChatMsg('bot', 'Starte Fix fuer <code>' + modul + '</code>...<br>LLM: Qwen 3.5 7B<br>Erstelle Branch + PR...');
+        return;
+      }
+      if (cmd.startsWith('/create ')) {
+        const modul = esc(cmd.replace('/create ', ''));
+        addChatMsg('bot', 'Erstelle neues Modul <code>' + modul + '</code>...<br>Template: DkZ Design System v2<br>Walkthrough: 7 Steps');
+        return;
+      }
+      if (cmd === '/sync') {
+        addChatMsg('bot', 'Sync gestartet...<br>1. features.json<br>2. llms.txt<br>3. Git Push<br>4. VPS Deploy');
+        return;
+      }
+
+      // LLM Chat
+      try {
+        const res = await fetch(API_BASE + '/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: msg, model: 'auto' })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          addChatMsg('bot', esc(data.response));
+        } else {
+          throw new Error('API Error');
+        }
+      } catch (e) {
+        addChatMsg('bot', 'Ich bin gerade offline. Verbinde mich mit dem VPS ueber <code>Settings</code>.');
+      }
+    }
+
+    // --- Walkthroughs ---
+    const WALKS = {
+      'fix-module': {
+        title: 'Modul Fix Walkthrough',
+        steps: [
+          { title: 'XSS Scan', desc: 'innerHTML ohne esc() finden' },
+          { title: 'CSS Variables', desc: 'Hardcoded Farben durch var(--accent) ersetzen' },
+          { title: 'Shared Scripts', desc: 'dkz-debug.js, dkz-guide.js, dkz-navbar.js einbinden' },
+          { title: 'Meta Tags', desc: 'dkz-version + viewport hinzufuegen' },
+          { title: 'PR erstellen', desc: 'Branch, Commit, Push, PR mit @7IKED Review' }
+        ]
+      },
+      'create-module': {
+        title: 'Neues Modul Walkthrough',
+        steps: [
+          { title: 'Ordner erstellen', desc: 'modules/[name]/ anlegen' },
+          { title: 'index.html', desc: 'DkZ Design System v2 Template' },
+          { title: 'CSS Styling', desc: 'Custom Properties, Glassmorphism' },
+          { title: 'JavaScript', desc: 'ES6+, esc(), Event Listeners' },
+          { title: 'Shared Scripts', desc: 'Am Body-Ende einbinden' },
+          { title: 'features.json', desc: 'Modul registrieren' },
+          { title: 'Git + PR', desc: 'feat(name): Neues Modul' }
+        ]
+      },
+      'vps-deploy': {
+        title: 'VPS Deploy Walkthrough',
+        steps: [
+          { title: 'Build', desc: 'npm run build / Dateien vorbereiten' },
+          { title: 'rsync', desc: 'Dashboard auf VPS kopieren' },
+          { title: 'nginx reload', desc: 'Webserver neu laden' },
+          { title: 'Health Check', desc: 'Alle Endpoints testen' }
+        ]
+      },
+      'security-audit': {
+        title: 'Security Audit',
+        steps: [
+          { title: 'XSS Scan', desc: 'Alle innerHTML pruefen' },
+          { title: 'CSRF Check', desc: 'Token-Validierung' },
+          { title: 'Headers', desc: 'Security Headers pruefen' },
+          { title: 'Secrets', desc: 'Keine API Keys im Code' },
+          { title: 'SSL', desc: 'Zertifikate pruefen' },
+          { title: 'Report', desc: 'Findings als Issue' }
+        ]
+      },
+      'weekly-report': {
+        title: 'Wochen-Report',
+        steps: [
+          { title: 'Git Stats', desc: 'Commits pro Tag zaehlen' },
+          { title: 'Issues', desc: 'Offen/Geschlossen Ratio' },
+          { title: 'CI Status', desc: 'Success/Failure Rate' },
+          { title: 'Metriken', desc: 'Module, Scripts, Tests' },
+          { title: 'Report Issue', desc: 'Als Issue in KERN posten' }
+        ]
+      },
+      'batch-fix': {
+        title: 'Batch Fix',
+        steps: [
+          { title: 'Scan', desc: 'Java ModuleScanner ausfuehren' },
+          { title: 'Priorisieren', desc: 'XSS > CSS > Meta' },
+          { title: 'Batch-Fix', desc: '10 Module pro PR' },
+          { title: 'PR erstellen', desc: 'Labels + Review' }
+        ]
+      }
+    };
+
+    function loadWalk(name) {
+      const walk = WALKS[name];
+      if (!walk) return;
+      document.getElementById('walkTemplates').style.display = 'none';
+      document.getElementById('walkSteps').style.display = 'block';
+      const content = document.getElementById('walkContent');
+      content.innerHTML = '<h3 style="margin-bottom:12px">' + esc(walk.title) + '</h3>' +
+        walk.steps.map((s, i) =>
+          '<div class="walk-step' + (i === 0 ? ' active' : '') + '" onclick="toggleStep(this)">' +
+            '<div class="walk-num">' + (i + 1) + '</div>' +
+            '<div class="walk-content"><h3>' + esc(s.title) + '</h3><p>' + esc(s.desc) + '</p></div>' +
+          '</div>'
+        ).join('');
+    }
+
+    function backToTemplates() {
+      document.getElementById('walkTemplates').style.display = 'block';
+      document.getElementById('walkSteps').style.display = 'none';
+    }
+
+    function toggleStep(el) {
+      if (el.classList.contains('done')) {
+        el.classList.remove('done');
+      } else {
+        el.classList.add('done');
+        el.classList.remove('active');
+        const next = el.nextElementSibling;
+        if (next) next.classList.add('active');
+      }
+    }
+
+    // --- Sync ---
+    async function runSync(type) {
+      const badge = document.getElementById('sync' + type.charAt(0).toUpperCase() + type.slice(1));
+      if (badge) { badge.textContent = 'Laeuft...'; badge.className = 'card-badge badge-yellow'; }
+      try {
+        const res = await fetch(API_BASE + '/sync/' + type, { method: 'POST' });
+        if (res.ok) {
+          if (badge) { badge.textContent = 'Fertig'; badge.className = 'card-badge badge-green'; }
+        }
+      } catch (e) {
+        if (badge) { badge.textContent = 'Offline'; badge.className = 'card-badge badge-red'; }
+      }
+    }
+
+    // --- Desktop Toggle ---
+    function toggleDesktop() {
+      document.body.classList.toggle('desktop-mode');
+    }
+
+    // --- Init ---
+    refreshAll();
+    loadTickets();
+    setInterval(refreshAll, 30000);
+
+    // PWA Registration
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>

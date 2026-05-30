@@ -1,0 +1,138 @@
+# DkZ CoPilot — Docker Compose
+# Vollstaendiger Self-Hosted Coding Agent Stack
+# Start: docker compose up -d
+
+services:
+  # === DkZ CoPilot API (Python FastAPI) ===
+  dkz-copilot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dkz-copilot
+    ports:
+      - "3050:3050"
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+      - VLLM_URL=http://ollama:11434/v1
+      - MODEL_CODER=qwen3.5:7b
+      - MODEL_MINI=gemma4:2b
+      - MODEL_DEEP=qwen2.5-coder:7b
+      - REPO_OWNER=D-VKITZ
+      - DEFAULT_REPO=KERN
+      - REVIEWER=7IKED
+      - OPENHANDS_URL=http://openhands:3000
+      - OPENHUMANS_TOKEN=${OPENHUMANS_TOKEN}
+    volumes:
+      - copilot-repos:/repos
+      - copilot-data:/data
+    depends_on:
+      - ollama
+      - openhands
+    restart: always
+    networks:
+      - dkz-net
+
+  # === OpenHands (Self-Hosted Coding Agent) ===
+  openhands:
+    image: ghcr.io/all-hands-ai/openhands:latest
+    container_name: openhands
+    ports:
+      - "3000:3000"
+    environment:
+      - SANDBOX_RUNTIME_CONTAINER_IMAGE=ghcr.io/all-hands-ai/runtime:latest
+      - LOG_ALL_EVENTS=true
+      - LLM_API_KEY=ollama
+      - LLM_BASE_URL=http://ollama:11434/v1
+      - LLM_MODEL=qwen3.5:7b
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - openhands-data:/.openhands
+      - copilot-repos:/repos
+    restart: always
+    networks:
+      - dkz-net
+
+  # === Ollama (Multi-Model LLM Backend) ===
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_MAX_LOADED_MODELS=2
+    restart: always
+    networks:
+      - dkz-net
+    # GPU Support (auskommentieren wenn keine GPU):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - capabilities: [gpu]
+
+  # === n8n (Workflow Automation) ===
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_USER:-admin}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASS:-devkitz}
+      - WEBHOOK_URL=https://${DOMAIN:-localhost}/n8n/
+    volumes:
+      - n8n-data:/home/node/.n8n
+    restart: always
+    networks:
+      - dkz-net
+
+  # === PR-Agent (Auto Code Review) ===
+  pr-agent:
+    image: pragent/pr-agent:latest
+    container_name: pr-agent
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - OPENAI_API_BASE=http://ollama:11434/v1
+      - OPENAI_API_KEY=ollama
+      - CONFIG.MODEL=qwen3.5:7b
+    restart: always
+    networks:
+      - dkz-net
+
+  # === Nginx Reverse Proxy ===
+  nginx:
+    image: nginx:alpine
+    container_name: dkz-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./app:/usr/share/nginx/html/copilot:ro
+      - ssl-certs:/etc/ssl/certs
+    depends_on:
+      - dkz-copilot
+      - openhands
+      - n8n
+    restart: always
+    networks:
+      - dkz-net
+
+volumes:
+  copilot-repos:
+  copilot-data:
+  openhands-data:
+  ollama-models:
+  n8n-data:
+  ssl-certs:
+
+networks:
+  dkz-net:
+    driver: bridge
