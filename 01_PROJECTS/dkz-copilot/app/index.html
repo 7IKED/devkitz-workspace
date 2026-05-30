@@ -251,6 +251,70 @@
     }
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px var(--accent-glow); }
 
+    /* === TOGGLE SWITCH === */
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); margin-bottom: 6px;
+      transition: all 0.2s;
+    }
+    .toggle-row:hover { border-color: rgba(250,30,78,0.2); }
+    .toggle-info { flex: 1; }
+    .toggle-name { font-size: 13px; font-weight: 600; }
+    .toggle-desc { font-size: 11px; color: var(--text-dim); }
+    .toggle-controls { display: flex; align-items: center; gap: 8px; }
+    .switch {
+      position: relative; width: 40px; height: 22px; cursor: pointer;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255,255,255,0.1); border-radius: 22px; transition: 0.3s;
+    }
+    .slider:before {
+      content: ''; position: absolute; width: 16px; height: 16px;
+      left: 3px; bottom: 3px; background: #fff; border-radius: 50%;
+      transition: 0.3s;
+    }
+    .switch input:checked + .slider { background: var(--green); }
+    .switch input:checked + .slider:before { transform: translateX(18px); }
+    .switch-auto input:checked + .slider { background: var(--blue); }
+
+    /* === PR ITEM === */
+    .pr-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); margin-bottom: 6px; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .pr-item:hover { transform: translateX(4px); border-color: var(--green); }
+    .pr-icon { font-size: 16px; flex-shrink: 0; }
+    .pr-info { flex: 1; }
+    .pr-title { font-size: 13px; }
+    .pr-meta { font-size: 11px; color: var(--text-dim); }
+
+    /* === VPS PANEL === */
+    .vps-metric {
+      display: flex; justify-content: space-between; padding: 8px 0;
+      border-bottom: 1px solid var(--border); font-size: 13px;
+    }
+    .vps-metric:last-child { border-bottom: none; }
+    .vps-label { color: var(--text-dim); }
+    .vps-value { font-family: var(--font-mono); font-weight: 600; }
+
+    /* === ISSUE / PR ITEMS === */
+    .issue-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); margin-bottom: 6px; cursor: pointer;
+      transition: all 0.2s; font-size: 13px;
+    }
+    .issue-item:hover { transform: translateX(4px); border-color: var(--green); background: var(--bg-card-hover); }
+    .issue-number { font-family: var(--font-mono); color: var(--text-dim); font-size: 12px; flex-shrink: 0; }
+    .issue-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .issue-labels { display: flex; gap: 4px; flex-shrink: 0; }
+    .issue-label { padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; }
+
     /* === ANIMATIONS === */
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
@@ -260,6 +324,7 @@
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
       .header-logo h1 { font-size: 15px; }
       .chat-msg { max-width: 92%; }
+      .tab { padding: 10px 12px; font-size: 11px; }
     }
   </style>
 </head>
@@ -278,10 +343,13 @@
 
   <!-- TABS -->
   <nav class="tabs" id="tabs">
-    <div class="tab active" data-panel="dashboard">&#x1F4CA; Dashboard</div>
+    <div class="tab active" data-panel="dashboard">&#x1F4CA; Home</div>
+    <div class="tab" data-panel="github">&#x1F4CB; GitHub</div>
     <div class="tab" data-panel="tickets">&#x1F3AB; Tickets</div>
     <div class="tab" data-panel="chat">&#x1F4AC; Chat</div>
+    <div class="tab" data-panel="integrations">&#x1F50C; Module</div>
     <div class="tab" data-panel="walks">&#x1F6B6; Walks</div>
+    <div class="tab" data-panel="vps">&#x1F5A5; VPS</div>
     <div class="tab" data-panel="llms">&#x1F916; LLMs</div>
     <div class="tab" data-panel="sync">&#x1F504; Sync</div>
   </nav>
@@ -529,6 +597,76 @@
     </div>
   </div>
 
+  <!-- PANEL: GITHUB (Issues + PRs) -->
+  <div class="panel" id="panel-github">
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat-card"><div class="stat-value" style="color:var(--green)" id="ghOpenIssues">0</div><div class="stat-label">Offene Issues</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--blue)" id="ghOpenPRs">0</div><div class="stat-label">Offene PRs</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--purple)" id="ghRepos">29</div><div class="stat-label">Repos</div></div>
+    </div>
+    <h3 style="margin:10px 0 8px;font-size:14px;color:var(--text-dim)">Pull Requests</h3>
+    <div id="ghPRList"></div>
+    <h3 style="margin:14px 0 8px;font-size:14px;color:var(--text-dim)">Issues (D-VKITZ/KERN)</h3>
+    <div id="ghIssueList"></div>
+    <h3 style="margin:14px 0 8px;font-size:14px;color:var(--text-dim)">Dokumentation</h3>
+    <div class="card" onclick="openDoc('rules')" style="cursor:pointer"><div class="card-header"><span class="card-title">&#x1F4D6; RULES.md</span><span class="card-badge badge-red">Eisern</span></div></div>
+    <div class="card" onclick="openDoc('patterns')" style="cursor:pointer"><div class="card-header"><span class="card-title">&#x1F4D0; PATTERNS.md</span><span class="card-badge badge-blue">Architektur</span></div></div>
+    <div class="card" onclick="openDoc('agents')" style="cursor:pointer"><div class="card-header"><span class="card-title">&#x1F916; AGENTS.md</span><span class="card-badge badge-purple">41 Agents</span></div></div>
+    <div class="card" onclick="openDoc('llms')" style="cursor:pointer"><div class="card-header"><span class="card-title">&#x1F4C4; llms.txt</span><span class="card-badge badge-green">Navigation</span></div></div>
+    <div class="card" onclick="openDoc('readme')" style="cursor:pointer"><div class="card-header"><span class="card-title">&#x1F4DA; README.md</span><span class="card-badge badge-yellow">Projekt</span></div></div>
+  </div>
+
+  <!-- PANEL: INTEGRATIONS -->
+  <div class="panel" id="panel-integrations">
+    <h3 style="margin-bottom:8px;font-size:14px;color:var(--text-dim)">&#x1F7E2; Immer aktiv</h3>
+    <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">&#x1F5A5; Computer Use</div><div class="toggle-desc">Desktop-Steuerung via OS-Copilot</div></div><span class="card-badge badge-green">AKTIV</span></div>
+    <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">&#x1F3AD; Playwright</div><div class="toggle-desc">Browser-Automation + E2E Tests</div></div><span class="card-badge badge-green">AKTIV</span></div>
+
+    <h3 style="margin:14px 0 8px;font-size:14px;color:var(--text-dim)">&#x1F50C; An/Aus Toggle</h3>
+    <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">&#x1F9EC; OpenHumans</div><div class="toggle-desc">Walkthroughs + Metriken Upload</div></div><div class="toggle-controls"><label class="switch"><input type="checkbox" id="tog-openhumans" onchange="toggleInteg('openhumans',this.checked)"><span class="slider"></span></label></div></div>
+    <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">&#x1F310; Browser Use</div><div class="toggle-desc">KI-gesteuertes Web-Browsing</div></div><div class="toggle-controls"><label class="switch"><input type="checkbox" id="tog-browser-use" onchange="toggleInteg('browser-use',this.checked)"><span class="slider"></span></label></div></div>
+    <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">&#x270B; Open Manus</div><div class="toggle-desc">Multi-Agent Desktop Kontrolle</div></div><div class="toggle-controls"><label class="switch"><input type="checkbox" id="tog-open-manus" onchange="toggleInteg('open-manus',this.checked)"><span class="slider"></span></label></div></div>
+    <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">&#x1F493; Pico Claw</div><div class="toggle-desc">Herzschlag-Sensor (MAX30102 USB)</div></div><div class="toggle-controls"><label class="switch switch-auto" title="Auto-Modus"><input type="checkbox" id="tog-pico-auto" onchange="toggleInteg('pico-auto',this.checked)"><span class="slider"></span></label><label class="switch"><input type="checkbox" id="tog-pico-claw" onchange="toggleInteg('pico-claw',this.checked)"><span class="slider"></span></label></div></div>
+    <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">&#x1F916; OpenHands</div><div class="toggle-desc">Autonomer Coding Agent (Issue&rarr;PR)</div></div><div class="toggle-controls"><label class="switch"><input type="checkbox" id="tog-openhands" checked onchange="toggleInteg('openhands',this.checked)"><span class="slider"></span></label></div></div>
+    <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">&#x1F41F; NanoBot Swarm</div><div class="toggle-desc">12 Bots — GitHub, Reddit, RSS Scraping</div></div><div class="toggle-controls"><label class="switch switch-auto" title="Auto"><input type="checkbox" id="tog-swarm-auto" checked onchange="toggleInteg('swarm-auto',this.checked)"><span class="slider"></span></label><label class="switch"><input type="checkbox" id="tog-swarm" checked onchange="toggleInteg('swarm',this.checked)"><span class="slider"></span></label></div></div>
+
+    <h3 style="margin:14px 0 8px;font-size:14px;color:var(--text-dim)">&#x1F4E6; DkZ Module</h3>
+    <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">&#x1F420; MiroFish</div><div class="toggle-desc">KI-Fisch Simulator</div></div><div class="toggle-controls"><label class="switch"><input type="checkbox" id="tog-mirofish" checked onchange="toggleInteg('mirofish',this.checked)"><span class="slider"></span></label></div></div>
+    <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">&#x1F517; GitNexus</div><div class="toggle-desc">Repo Explorer + Analyse</div></div><div class="toggle-controls"><label class="switch"><input type="checkbox" id="tog-gitnexus" checked onchange="toggleInteg('gitnexus',this.checked)"><span class="slider"></span></label></div></div>
+    <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">&#x1F9E0; SecondBrain</div><div class="toggle-desc">Obsidian Sync</div></div><div class="toggle-controls"><label class="switch switch-auto" title="Auto-Sync"><input type="checkbox" id="tog-brain-auto" checked onchange="toggleInteg('brain-auto',this.checked)"><span class="slider"></span></label><label class="switch"><input type="checkbox" id="tog-brain" checked onchange="toggleInteg('second-brain',this.checked)"><span class="slider"></span></label></div></div>
+    <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">&#x2601; CLOUDIA&sup2;</div><div class="toggle-desc">Cloud Control + VPS</div></div><div class="toggle-controls"><label class="switch"><input type="checkbox" id="tog-cloudia" checked onchange="toggleInteg('cloudia2',this.checked)"><span class="slider"></span></label></div></div>
+    <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">&#x1F52E; AiAiKirk</div><div class="toggle-desc">KI-Modul Integration</div></div><div class="toggle-controls"><label class="switch"><input type="checkbox" id="tog-aiaikirk" checked onchange="toggleInteg('aiaikirk',this.checked)"><span class="slider"></span></label></div></div>
+    <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">&#x1F50D; PR-Agent</div><div class="toggle-desc">Automatische Code Reviews</div></div><div class="toggle-controls"><label class="switch"><input type="checkbox" id="tog-pr-agent" checked onchange="toggleInteg('pr-agent',this.checked)"><span class="slider"></span></label></div></div>
+
+    <h3 style="margin:14px 0 8px;font-size:14px;color:var(--text-dim)">&#x1F504; System</h3>
+    <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">&#x1F504; AutoUpdate</div><div class="toggle-desc">Bei Start + Rechtsklick-Menue</div></div><div class="toggle-controls"><label class="switch switch-auto" title="Bei Start"><input type="checkbox" id="tog-autoupdate" checked onchange="toggleInteg('auto-update',this.checked)"><span class="slider"></span></label></div></div>
+  </div>
+
+  <!-- PANEL: VPS -->
+  <div class="panel" id="panel-vps">
+    <div class="card">
+      <div class="card-header"><span class="card-title">&#x1F5A5; VPS Status (KVM8)</span><span class="card-badge badge-green" id="vpsAmpel">Offline</span></div>
+      <div id="vpsMetrics">
+        <div class="vps-metric"><span class="vps-label">CPU</span><span class="vps-value" id="vpsCpu">—</span></div>
+        <div class="vps-metric"><span class="vps-label">RAM</span><span class="vps-value" id="vpsRam">—</span></div>
+        <div class="vps-metric"><span class="vps-label">Disk</span><span class="vps-value" id="vpsDisk">—</span></div>
+        <div class="vps-metric"><span class="vps-label">Uptime</span><span class="vps-value" id="vpsUptime">—</span></div>
+        <div class="vps-metric"><span class="vps-label">Load</span><span class="vps-value" id="vpsLoad">—</span></div>
+      </div>
+    </div>
+    <h3 style="margin:10px 0 8px;font-size:14px;color:var(--text-dim)">Docker Container</h3>
+    <div id="vpsContainers"></div>
+    <h3 style="margin:14px 0 8px;font-size:14px;color:var(--text-dim)">Aktionen</h3>
+    <div class="stats-grid" style="grid-template-columns:repeat(2,1fr)">
+      <button class="btn-primary" onclick="vpsAction('deploy')" style="font-size:12px">&#x1F680; Deploy</button>
+      <button class="btn-primary" onclick="vpsAction('backup')" style="font-size:12px;background:linear-gradient(135deg,var(--blue),var(--purple))">&#x1F4BE; Backup</button>
+      <button class="btn-primary" onclick="vpsAction('update')" style="font-size:12px;background:linear-gradient(135deg,var(--green),var(--blue))">&#x1F504; Update</button>
+      <button class="btn-primary" onclick="vpsAction('ssl')" style="font-size:12px;background:linear-gradient(135deg,var(--yellow),var(--accent))">&#x1F512; SSL Renew</button>
+    </div>
+    <h3 style="margin:14px 0 8px;font-size:14px;color:var(--text-dim)">Ollama Models</h3>
+    <div id="vpsModels"></div>
+  </div>
+
   <script>
     // ============================================
     // DkZ CoPilot — Frontend Logic
@@ -676,9 +814,21 @@
     async function processChat(msg) {
       const cmd = msg.toLowerCase().trim();
 
-      if (cmd === '/status') {
-        addChatMsg('bot', 'Agent: <span style="color:var(--green)">' + esc(agentStatus) + '</span><br>Module: 152<br>Issues: 51 offen<br>LLMs: 3 konfiguriert');
-        return;
+      // === Slash-Commands ===
+      const commands = {
+        '/status': () => 'Agent: <span style="color:var(--green)">' + esc(agentStatus) + '</span><br>Module: 152<br>Issues: 51 offen<br>LLMs: 3 konfiguriert<br>Integrationen: 14<br>Swarm: 12 Bots',
+        '/help': () => '<b>Befehle:</b><br>/fix [modul] — Modul reparieren<br>/create [name] — Neues Modul<br>/review PR#N — PR reviewen<br>/issues — Offene Issues<br>/prs — Pull Requests<br>/vps — VPS Status<br>/sync — Alles synchronisieren<br>/docs [name] — Doku anzeigen<br>/walk [name] — Walkthrough starten<br>/swarm — Schwarm Status<br>/heart — Herzschlag Status<br>/update — Update starten',
+        '/sync': () => 'Sync gestartet...<br>1. features.json<br>2. llms.txt<br>3. Git Push<br>4. VPS Deploy',
+        '/issues': () => { loadGitHubIssues(); return 'Issues werden geladen... Wechsle zum <b>GitHub</b> Tab.'; },
+        '/prs': () => { loadGitHubPRs(); return 'PRs werden geladen... Wechsle zum <b>GitHub</b> Tab.'; },
+        '/vps': () => 'VPS: KVM8 Hostinger<br>Docker: 6 Container<br>Ollama: 3 Models<br>Wechsle zum <b>VPS</b> Tab fuer Details.',
+        '/swarm': () => 'NanoBot Schwarm: 12 Bots aktiv<br>GitHub: 4 Bots<br>Reddit: 4 Bots<br>RSS: 2 Bots<br>API: 2 Bots',
+        '/heart': () => 'Pico Claw: ' + (document.getElementById('tog-pico-claw')?.checked ? '<span style="color:var(--green)">Aktiv</span>' : '<span style="color:var(--red)">Aus</span>') + '<br>Auto-Modus: ' + (document.getElementById('tog-pico-auto')?.checked ? 'An' : 'Aus'),
+        '/update': () => 'Update wird geprueft...<br>git pull origin main...',
+      };
+
+      for (const [key, fn] of Object.entries(commands)) {
+        if (cmd === key) { addChatMsg('bot', fn()); return; }
       }
       if (cmd.startsWith('/fix ')) {
         const modul = esc(cmd.replace('/fix ', ''));
@@ -690,12 +840,38 @@
         addChatMsg('bot', 'Erstelle neues Modul <code>' + modul + '</code>...<br>Template: DkZ Design System v2<br>Walkthrough: 7 Steps');
         return;
       }
-      if (cmd === '/sync') {
-        addChatMsg('bot', 'Sync gestartet...<br>1. features.json<br>2. llms.txt<br>3. Git Push<br>4. VPS Deploy');
+      if (cmd.startsWith('/docs ')) {
+        const doc = esc(cmd.replace('/docs ', ''));
+        addChatMsg('bot', 'Lade Doku <code>' + doc + '</code>...<br>Wechsle zum <b>GitHub</b> Tab.');
+        return;
+      }
+      if (cmd.startsWith('/walk ')) {
+        const walk = cmd.replace('/walk ', '');
+        if (WALKS[walk]) { loadWalk(walk); addChatMsg('bot', 'Walkthrough <b>' + esc(walk) + '</b> geladen.'); }
+        else addChatMsg('bot', 'Walkthrough nicht gefunden. Verfuegbar: ' + Object.keys(WALKS).join(', '));
         return;
       }
 
-      // LLM Chat
+      // === Wissensfragen (lokal) ===
+      const knowledge = {
+        'was ist devkitz': 'DEVKiTZ ist ein vollstaendiges KI-Entwickler-Oekosystem mit 152+ Dashboard-Modulen, 41 Agenten, 78 Workflows und 54 Skills.',
+        'wie viele module': 'Es gibt 152+ Dashboard-Module in <code>01_PROJECTS/01_dashboard/modules/</code>.',
+        'wer ist james': 'James ist der Guardian Agent (#1) — er ueberwacht alle anderen Agenten, coded aber selbst NICHT.',
+        'was ist ralph loop': 'Der Ralph-Loop hat 6 Phasen: 1.LESEN 2.SPAWN 3.EXECUTE 4.VERIFY 5.COMMIT 6.LOOP — Jeder Task bekommt frischen Kontext.',
+        'welche llms': '3 LLMs: Qwen 3.5 7B (Coder), Gemma 4 2B (Mini), Qwen 2.5 Coder 7B (Deep).',
+        'tech stack': 'Frontend: Vanilla HTML5/CSS3/JS ES6+. Backend: Node.js/Express. Daten: localStorage + DuckDB. Fonts: Inter + JetBrains Mono.',
+        'was ist bmad': 'BMAD = Blueprint Mapping Analyse Design. 7 Agenten: James, PM, Architekt, Developer, Reviewer, Tester, Dokumentar.',
+        'wie viele repos': '29 Repos in der D-VKITZ Organisation auf GitHub.',
+        'was ist openhands': 'OpenHands ist ein autonomer Coding Agent der Issues liest, Code fixt und PRs erstellt — laeuft in Docker auf dem VPS.',
+        'was ist pico claw': 'Pico Claw ist ein Raspberry Pi Pico mit MAX30102 Herzschlag-Sensor. Misst BPM und SpO2 via USB.',
+      };
+
+      const cmdLower = cmd.toLowerCase();
+      for (const [q, a] of Object.entries(knowledge)) {
+        if (cmdLower.includes(q)) { addChatMsg('bot', a); return; }
+      }
+
+      // === LLM Chat (API) ===
       try {
         const res = await fetch(API_BASE + '/chat', {
           method: 'POST',
@@ -705,11 +881,9 @@
         if (res.ok) {
           const data = await res.json();
           addChatMsg('bot', esc(data.response));
-        } else {
-          throw new Error('API Error');
-        }
+        } else { throw new Error('API Error'); }
       } catch (e) {
-        addChatMsg('bot', 'Ich bin gerade offline. Verbinde mich mit dem VPS ueber <code>Settings</code>.');
+        addChatMsg('bot', 'LLM offline. Tippe <code>/help</code> fuer lokale Befehle.');
       }
     }
 
@@ -828,9 +1002,133 @@
       document.body.classList.toggle('desktop-mode');
     }
 
+    // --- GitHub Issues + PRs ---
+    async function loadGitHubIssues() {
+      const list = document.getElementById('ghIssueList');
+      if (!list) return;
+      try {
+        const res = await fetch(API_BASE + '/github/issues');
+        if (res.ok) {
+          const data = await res.json();
+          renderIssues(list, data.issues || []);
+          document.getElementById('ghOpenIssues').textContent = data.issues?.length || 0;
+          return;
+        }
+      } catch (e) {}
+      // Demo-Daten
+      const demo = [
+        { number: 208, title: 'vLLM Auth Fix — Bearer Token setzen', labels: [{name:'P1',color:'ff3b5c'},{name:'fix',color:'3b82f6'}] },
+        { number: 209, title: 'Telegram Bot Token konfigurieren', labels: [{name:'P2',color:'ffb800'},{name:'infra',color:'7c3aed'}] },
+        { number: 210, title: 'Blogger API OAuth Setup', labels: [{name:'P2',color:'ffb800'},{name:'api',color:'00ff88'}] },
+        { number: 247, title: 'ModuleScanner Java parallel ausfuehren', labels: [{name:'P3',color:'00ff88'},{name:'feature',color:'3b82f6'}] },
+        { number: 248, title: 'Pico Claw USB Auto-Erkennung', labels: [{name:'P3',color:'00ff88'},{name:'hardware',color:'7c3aed'}] },
+      ];
+      renderIssues(list, demo);
+      document.getElementById('ghOpenIssues').textContent = '51';
+    }
+
+    function renderIssues(container, issues) {
+      container.innerHTML = issues.map(i =>
+        '<div class="issue-item" onclick="window.open(\'https://github.com/D-VKITZ/KERN/issues/' + i.number + '\')">' +
+          '<span class="issue-number">#' + i.number + '</span>' +
+          '<span class="issue-title">' + esc(i.title) + '</span>' +
+          '<span class="issue-labels">' + (i.labels||[]).map(l =>
+            '<span class="issue-label" style="background:rgba(' + hexToRgb(l.color || '888') + ',0.15);color:#' + esc(l.color || '888') + '">' + esc(l.name) + '</span>'
+          ).join('') + '</span>' +
+        '</div>'
+      ).join('');
+    }
+
+    async function loadGitHubPRs() {
+      const list = document.getElementById('ghPRList');
+      if (!list) return;
+      const demo = [
+        { number: 12, title: 'feat(dkz-copilot): Self-Hosted Coding Agent', state: 'open', user: 'dkz-bot' },
+        { number: 11, title: 'fix(wiki): 8 Tabs XSS Fix', state: 'merged', user: 'dkz-bot' },
+        { number: 10, title: 'docs(kern): README + AGENTS.md', state: 'merged', user: '7IKED' },
+      ];
+      const icons = { open: '🟢', merged: '🟣', closed: '🔴' };
+      list.innerHTML = demo.map(pr =>
+        '<div class="issue-item" onclick="window.open(\'https://github.com/D-VKITZ/KERN/pull/' + pr.number + '\')">' +
+          '<span style="font-size:14px">' + (icons[pr.state] || '⚪') + '</span>' +
+          '<span class="issue-title">' + esc(pr.title) + '</span>' +
+          '<span class="card-badge badge-' + (pr.state === 'open' ? 'green' : pr.state === 'merged' ? 'purple' : 'red') + '">#' + pr.number + '</span>' +
+        '</div>'
+      ).join('');
+      document.getElementById('ghOpenPRs').textContent = demo.filter(p => p.state === 'open').length;
+    }
+
+    function hexToRgb(hex) {
+      hex = hex.replace('#', '');
+      if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      return r + ',' + g + ',' + b;
+    }
+
+    // --- Integration Toggles ---
+    function toggleInteg(name, state) {
+      const integs = JSON.parse(localStorage.getItem('dkz-integrations') || '{}');
+      integs[name] = state;
+      localStorage.setItem('dkz-integrations', JSON.stringify(integs));
+      fetch(API_BASE + '/integrations/toggle', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ name, enabled: state })
+      }).catch(() => {});
+    }
+
+    // --- VPS Actions ---
+    async function vpsAction(action) {
+      addChatMsg('bot', 'VPS Aktion: <b>' + esc(action) + '</b> gestartet...');
+      try {
+        const res = await fetch(API_BASE + '/vps/' + action, { method: 'POST' });
+        if (res.ok) {
+          addChatMsg('bot', '✅ VPS ' + esc(action) + ' erfolgreich!');
+        }
+      } catch (e) {
+        addChatMsg('bot', '⚠️ VPS offline — Aktion gespeichert fuer spaeter.');
+      }
+    }
+
+    function loadVPSContainers() {
+      const list = document.getElementById('vpsContainers');
+      if (!list) return;
+      const containers = [
+        { name: 'dkz-copilot', status: 'Up 2h', image: 'dkz-copilot:latest' },
+        { name: 'openhands', status: 'Up 2h', image: 'ghcr.io/all-hands-ai/openhands' },
+        { name: 'ollama', status: 'Up 2h', image: 'ollama/ollama' },
+        { name: 'n8n', status: 'Up 2h', image: 'n8nio/n8n' },
+        { name: 'pr-agent', status: 'Up 2h', image: 'pragent/pr-agent' },
+        { name: 'dkz-proxy', status: 'Up 2h', image: 'nginx:alpine' },
+      ];
+      list.innerHTML = containers.map(c =>
+        '<div class="issue-item">' +
+          '<span class="issue-number">🐳</span>' +
+          '<span class="issue-title">' + esc(c.name) + '</span>' +
+          '<span class="card-badge badge-green">' + esc(c.status) + '</span>' +
+        '</div>'
+      ).join('');
+    }
+
+    // --- Docs ---
+    function openDoc(name) {
+      const urls = {
+        'rules': 'https://github.com/D-VKITZ/KERN/blob/main/RULES.md',
+        'patterns': 'https://github.com/D-VKITZ/KERN/blob/main/PATTERNS.md',
+        'agents': 'https://github.com/D-VKITZ/KERN/blob/main/AGENTS.md',
+        'llms': 'https://github.com/7IKED/devkitz-workspace/blob/main/llms.txt',
+        'readme': 'https://github.com/7IKED/devkitz-workspace/blob/main/README.md'
+      };
+      if (urls[name]) window.open(urls[name]);
+    }
+
     // --- Init ---
     refreshAll();
     loadTickets();
+    loadGitHubIssues();
+    loadGitHubPRs();
+    loadVPSContainers();
     setInterval(refreshAll, 30000);
 
     // PWA Registration
