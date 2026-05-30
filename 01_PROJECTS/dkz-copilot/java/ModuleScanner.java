@@ -1,4 +1,4 @@
-package de.devkitz.copilot;
+// DkZ ModuleScanner — kein Package fuer flache Ausfuehrung
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
