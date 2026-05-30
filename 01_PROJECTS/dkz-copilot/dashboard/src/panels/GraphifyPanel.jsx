@@ -450,6 +450,9 @@ export default function GraphifyPanel() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          <button onClick={exportToSecondBrain} className="px-2 py-1 rounded-lg text-[10px] font-bold border transition-all hover:border-[var(--color-neon-green)]" style={{borderColor:'var(--color-border)', color:'var(--color-text-dim)'}} title="Graph nach Second Brain exportieren">{'\ud83e\udde0'} Brain</button>
+          <button onClick={() => { setChatMsgs(prev => [...prev, { role:'system', text:'MiroFish Chat verbunden (Port 3041). Frag mich ueber Agenten, Ecosystem oder Simulation.' }]) }} className="px-2 py-1 rounded-lg text-[10px] font-bold border transition-all hover:border-[#ec4899]" style={{borderColor:'var(--color-border)', color:'#ec4899'}} title="MiroFish Chat oeffnen">{'\ud83d\udc1f'} MiroChat</button>
+          <button onClick={() => { setChatMsgs(prev => [...prev, { role:'system', text:'GitNexus Chat verbunden (Port 3042). Frag mich ueber Commits, Branches, Issues oder Struktur.' }]) }} className="px-2 py-1 rounded-lg text-[10px] font-bold border transition-all hover:border-[#06b6d4]" style={{borderColor:'var(--color-border)', color:'#06b6d4'}} title="GitNexus Chat oeffnen">{'\ud83d\udd0d'} GitNexus</button>
           <button onClick={() => setShowStats(s => !s)} className="px-2 py-1 rounded-lg text-[10px] font-bold border transition-all hover:border-[var(--color-accent)]" style={{borderColor:'var(--color-border)', color: showStats ? 'var(--color-accent)' : 'var(--color-text-dim)'}}>{'\ud83d\udcca'} Stats</button>
           <span className="text-xs" style={{color:'var(--color-text-dim)'}}>
             <span style={{color:'var(--color-neon-green)', fontWeight:600}}>{nodes.length}</span> N · <span style={{color:'var(--color-neon-green)', fontWeight:600}}>{edges.length}</span> E
