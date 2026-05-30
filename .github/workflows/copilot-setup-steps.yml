@@ -1,48 +1,60 @@
 # Copilot Setup Steps — DEVKiTZ
-# Diese Datei definiert die Umgebung fuer den Copilot Coding Agent
-# Wird automatisch ausgefuehrt wenn Copilot einen PR erstellt
+# WICHTIG: Job-Name MUSS "copilot-setup-steps" sein (GitHub Requirement)
+# Konfiguriert das ephemere Cloud-Environment des Copilot Coding Agents
 
-name: Copilot Setup
+name: "Copilot Setup Steps"
 
 on:
   workflow_dispatch:
 
 jobs:
-  copilot-setup:
+  copilot-setup-steps:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
+    permissions:
+      contents: read
 
-      - name: Setup Node.js
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
       - name: Install dependencies
+        continue-on-error: true
         run: |
-          npm install --prefix 01_PROJECTS/01_dashboard 2>/dev/null || true
-          echo "Dependencies installed"
+          if [ -f "package.json" ]; then
+            npm ci 2>/dev/null || npm install 2>/dev/null || true
+          fi
 
-      - name: Validate environment
+      - name: Verify DEVKiTZ environment
         run: |
           echo "=== DEVKiTZ Copilot Environment ==="
           echo "Node: $(node -v)"
           echo "NPM: $(npm -v)"
-          echo "Git: $(git --version)"
           echo ""
           echo "=== Module Count ==="
-          MODULE_COUNT=$(find 01_PROJECTS/01_dashboard/modules -maxdepth 1 -type d | wc -l)
-          echo "Modules: $MODULE_COUNT"
+          MODULE_COUNT=$(find 01_PROJECTS/01_dashboard/modules -maxdepth 1 -type d 2>/dev/null | wc -l)
+          echo "Dashboard Modules: $MODULE_COUNT"
           echo ""
           echo "=== Shared Scripts ==="
-          ls -la 01_PROJECTS/01_dashboard/shared/dkz-*.js 2>/dev/null || echo "No shared scripts found"
+          ls 01_PROJECTS/01_dashboard/shared/dkz-*.js 2>/dev/null | head -10 || echo "None found"
           echo ""
           echo "=== features.json ==="
           if [ -f "01_PROJECTS/01_dashboard/features.json" ]; then
-            echo "features.json exists"
-            FEATURE_COUNT=$(python3 -c "import json; print(len(json.load(open('01_PROJECTS/01_dashboard/features.json'))['modules']))" 2>/dev/null || echo "parse error")
-            echo "Registered modules: $FEATURE_COUNT"
+            echo "OK — features.json exists"
+          else
+            echo "MISSING — features.json not found"
           fi
+          echo ""
+          echo "=== Skills ==="
+          SKILL_COUNT=$(find .agents/skills -name "SKILL.md" 2>/dev/null | wc -l)
+          echo "Skills: $SKILL_COUNT"
+          echo ""
+          echo "=== Workflows ==="
+          WF_COUNT=$(find .agents/workflows -name "*.md" 2>/dev/null | wc -l)
+          echo "Workflows: $WF_COUNT"
+          echo ""
+          echo "=== Ready for Copilot Coding Agent ==="
