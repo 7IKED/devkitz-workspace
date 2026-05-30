@@ -10,16 +10,167 @@ const CAT_COLORS = {
   gitnexus:'#06b6d4', mirofish:'#ec4899', openhands:'#f59e0b', skill:'#10b981'
 }
 
-const CHAT_API = 'http://localhost:3040/api/v1/free-hub/cascade'
-
-// Multi-Source Definitions
-const SOURCES = [
-  { id:'playbook', label:'Playbook', icon:'\ud83d\udcd6', path:'/modules/graphify/playbook-graph.json', active:true },
-  { id:'gitnexus', label:'GitNexus', icon:'\ud83d\udd0d', path:null, storageKey:'graphify_import_gitnexus', active:false },
-  { id:'mirofish', label:'MiroFish', icon:'\ud83d\udc1f', path:null, storageKey:'graphify_import_mirofish', active:false },
-  { id:'openhumans', label:'OpenHumans', icon:'\ud83e\udec0', path:null, storageKey:'openhumans_graphify_export', active:false },
-  { id:'openhands', label:'OpenHands', icon:'\ud83d\udd90\ufe0f', path:null, storageKey:'openhands_graphify_export', active:false },
-]
+// Built-in graph data per source (Fallback wenn kein JSON/localStorage)
+const BUILTIN_DATA = {
+  playbook: {
+    nodes: [
+      { id:'pb-root', label:'DEVKiTZ', category:'rules', level:1 },
+      { id:'pb-bmad', label:'BMAD Methodik', category:'rules', level:2 },
+      { id:'pb-ralph', label:'Ralph-Loop', category:'rules', level:2 },
+      { id:'pb-james', label:'James Guardian', category:'agent', level:3 },
+      { id:'pb-pm', label:'DkZ PM', category:'agent', level:3 },
+      { id:'pb-dev', label:'DkZ Developer', category:'agent', level:3 },
+      { id:'pb-review', label:'DkZ Reviewer', category:'agent', level:3 },
+      { id:'pb-test', label:'DkZ Tester', category:'agent', level:3 },
+      { id:'pb-doc', label:'DkZ Dokumentar', category:'agent', level:3 },
+      { id:'pb-design', label:'DkZ Design System', category:'design', level:2 },
+      { id:'pb-css', label:'CSS Variables', category:'design', level:3 },
+      { id:'pb-glass', label:'Glassmorphism', category:'design', level:3 },
+      { id:'pb-font', label:'Inter + JetBrains', category:'design', level:3 },
+      { id:'pb-shared', label:'Shared Scripts', category:'module', level:2 },
+      { id:'pb-debug', label:'dkz-debug.js', category:'module', level:3 },
+      { id:'pb-guide', label:'dkz-guide.js', category:'module', level:3 },
+      { id:'pb-navbar', label:'dkz-navbar.js', category:'module', level:3 },
+      { id:'pb-event', label:'dkz-eventlog.js', category:'module', level:3 },
+      { id:'pb-gate', label:'Gateway v2', category:'backend', level:2 },
+      { id:'pb-nano', label:'NanoChat Bridge', category:'backend', level:3 },
+      { id:'pb-webhook', label:'Webhook Server', category:'backend', level:3 },
+      { id:'pb-vps', label:'VPS KVM8', category:'infra', level:2 },
+      { id:'pb-health', label:'Health System', category:'infra', level:3 },
+      { id:'pb-rednote', label:'REDNOTE.json', category:'data', level:3 },
+    ],
+    edges: [
+      { source:'pb-root', target:'pb-bmad' }, { source:'pb-root', target:'pb-ralph' },
+      { source:'pb-root', target:'pb-design' }, { source:'pb-root', target:'pb-shared' },
+      { source:'pb-root', target:'pb-gate' }, { source:'pb-root', target:'pb-vps' },
+      { source:'pb-bmad', target:'pb-james' }, { source:'pb-bmad', target:'pb-pm' },
+      { source:'pb-bmad', target:'pb-dev' }, { source:'pb-bmad', target:'pb-review' },
+      { source:'pb-bmad', target:'pb-test' }, { source:'pb-bmad', target:'pb-doc' },
+      { source:'pb-design', target:'pb-css' }, { source:'pb-design', target:'pb-glass' },
+      { source:'pb-design', target:'pb-font' },
+      { source:'pb-shared', target:'pb-debug' }, { source:'pb-shared', target:'pb-guide' },
+      { source:'pb-shared', target:'pb-navbar' }, { source:'pb-shared', target:'pb-event' },
+      { source:'pb-gate', target:'pb-nano' }, { source:'pb-gate', target:'pb-webhook' },
+      { source:'pb-vps', target:'pb-health' }, { source:'pb-health', target:'pb-rednote' },
+      { source:'pb-ralph', target:'pb-dev' }, { source:'pb-ralph', target:'pb-test' },
+    ]
+  },
+  gitnexus: {
+    nodes: [
+      { id:'gn-root', label:'devkitz-workspace', category:'gitnexus', level:1 },
+      { id:'gn-proj', label:'01_PROJECTS', category:'gitnexus', level:2 },
+      { id:'gn-dash', label:'01_dashboard', category:'module', level:3 },
+      { id:'gn-copilot', label:'dkz-copilot', category:'module', level:3 },
+      { id:'gn-keep', label:'dkz-keep', category:'module', level:3 },
+      { id:'gn-sys', label:'04_SYSTEM', category:'infra', level:2 },
+      { id:'gn-scripts', label:'scripts/', category:'infra', level:3 },
+      { id:'gn-agents', label:'.agents/', category:'agent', level:2 },
+      { id:'gn-skills', label:'skills/ (53)', category:'skill', level:3 },
+      { id:'gn-workflows', label:'workflows/ (77)', category:'skill', level:3 },
+      { id:'gn-mods', label:'modules/ (130+)', category:'module', level:2 },
+      { id:'gn-wiki', label:'devkitz-wiki', category:'module', level:3 },
+      { id:'gn-kanban', label:'kanban-board', category:'module', level:3 },
+      { id:'gn-graphify', label:'graphify', category:'module', level:3 },
+      { id:'gn-wissen', label:'wissen-hub', category:'data', level:3 },
+      { id:'gn-archive', label:'99_ARCHIVE', category:'data', level:2 },
+      { id:'gn-github', label:'GitHub Actions', category:'git', level:2 },
+      { id:'gn-ci', label:'CI/CD Pipeline', category:'git', level:3 },
+      { id:'gn-labels', label:'Labels (26)', category:'git', level:3 },
+    ],
+    edges: [
+      { source:'gn-root', target:'gn-proj' }, { source:'gn-root', target:'gn-sys' },
+      { source:'gn-root', target:'gn-agents' }, { source:'gn-root', target:'gn-mods' },
+      { source:'gn-root', target:'gn-archive' }, { source:'gn-root', target:'gn-github' },
+      { source:'gn-proj', target:'gn-dash' }, { source:'gn-proj', target:'gn-copilot' },
+      { source:'gn-proj', target:'gn-keep' },
+      { source:'gn-sys', target:'gn-scripts' },
+      { source:'gn-agents', target:'gn-skills' }, { source:'gn-agents', target:'gn-workflows' },
+      { source:'gn-mods', target:'gn-wiki' }, { source:'gn-mods', target:'gn-kanban' },
+      { source:'gn-mods', target:'gn-graphify' }, { source:'gn-mods', target:'gn-wissen' },
+      { source:'gn-github', target:'gn-ci' }, { source:'gn-github', target:'gn-labels' },
+      { source:'gn-dash', target:'gn-mods' }, { source:'gn-copilot', target:'gn-graphify' },
+    ]
+  },
+  mirofish: {
+    nodes: [
+      { id:'mf-root', label:'MiroFish Sim', category:'mirofish', level:1 },
+      { id:'mf-agent', label:'Agent Network', category:'agent', level:2 },
+      { id:'mf-james', label:'James Node', category:'agent', level:3 },
+      { id:'mf-swarm', label:'Swarm Controller', category:'agent', level:3 },
+      { id:'mf-nano', label:'NanoBot Fleet', category:'agent', level:3 },
+      { id:'mf-sim', label:'Simulation', category:'mirofish', level:2 },
+      { id:'mf-pool', label:'Fish Pool', category:'mirofish', level:3 },
+      { id:'mf-eco', label:'Ecosystem', category:'mirofish', level:3 },
+      { id:'mf-data', label:'Data Feed', category:'data', level:2 },
+      { id:'mf-api', label:'REST API', category:'backend', level:3 },
+      { id:'mf-ws', label:'WebSocket', category:'backend', level:3 },
+    ],
+    edges: [
+      { source:'mf-root', target:'mf-agent' }, { source:'mf-root', target:'mf-sim' },
+      { source:'mf-root', target:'mf-data' },
+      { source:'mf-agent', target:'mf-james' }, { source:'mf-agent', target:'mf-swarm' },
+      { source:'mf-agent', target:'mf-nano' },
+      { source:'mf-sim', target:'mf-pool' }, { source:'mf-sim', target:'mf-eco' },
+      { source:'mf-data', target:'mf-api' }, { source:'mf-data', target:'mf-ws' },
+      { source:'mf-swarm', target:'mf-nano' }, { source:'mf-pool', target:'mf-eco' },
+    ]
+  },
+  openhands: {
+    nodes: [
+      { id:'oh-root', label:'OpenHands', category:'openhands', level:1 },
+      { id:'oh-agent', label:'Agent Runtime', category:'agent', level:2 },
+      { id:'oh-code', label:'CodeAct Agent', category:'agent', level:3 },
+      { id:'oh-browse', label:'Browser Agent', category:'agent', level:3 },
+      { id:'oh-plan', label:'Planner Agent', category:'agent', level:3 },
+      { id:'oh-sand', label:'Sandbox', category:'infra', level:2 },
+      { id:'oh-docker', label:'Docker Runtime', category:'infra', level:3 },
+      { id:'oh-shell', label:'Shell Executor', category:'infra', level:3 },
+      { id:'oh-vps', label:'VPS Integration', category:'infra', level:3 },
+      { id:'oh-brain', label:'Second Brain', category:'research', level:2 },
+      { id:'oh-obsidian', label:'Obsidian Vault', category:'research', level:3 },
+      { id:'oh-daily', label:'Daily Notes', category:'research', level:3 },
+      { id:'oh-logs', label:'Session Logs', category:'research', level:3 },
+      { id:'oh-learn', label:'Learnings DB', category:'data', level:3 },
+      { id:'oh-tasks', label:'Task Queue', category:'data', level:2 },
+      { id:'oh-issues', label:'GitHub Issues', category:'git', level:3 },
+      { id:'oh-prs', label:'Auto PRs', category:'git', level:3 },
+    ],
+    edges: [
+      { source:'oh-root', target:'oh-agent' }, { source:'oh-root', target:'oh-sand' },
+      { source:'oh-root', target:'oh-brain' }, { source:'oh-root', target:'oh-tasks' },
+      { source:'oh-agent', target:'oh-code' }, { source:'oh-agent', target:'oh-browse' },
+      { source:'oh-agent', target:'oh-plan' },
+      { source:'oh-sand', target:'oh-docker' }, { source:'oh-sand', target:'oh-shell' },
+      { source:'oh-sand', target:'oh-vps' },
+      { source:'oh-brain', target:'oh-obsidian' }, { source:'oh-brain', target:'oh-daily' },
+      { source:'oh-brain', target:'oh-logs' }, { source:'oh-brain', target:'oh-learn' },
+      { source:'oh-tasks', target:'oh-issues' }, { source:'oh-tasks', target:'oh-prs' },
+      { source:'oh-code', target:'oh-shell' }, { source:'oh-plan', target:'oh-tasks' },
+      { source:'oh-daily', target:'oh-logs' }, { source:'oh-learn', target:'oh-obsidian' },
+    ]
+  },
+  openhumans: {
+    nodes: [
+      { id:'ohu-root', label:'OpenHumans Hub', category:'openhumans', level:1 },
+      { id:'ohu-data', label:'Data Sources', category:'data', level:2 },
+      { id:'ohu-genome', label:'Genomics', category:'genomics', level:3 },
+      { id:'ohu-fitness', label:'Fitness API', category:'data', level:3 },
+      { id:'ohu-survey', label:'Surveys', category:'data', level:3 },
+      { id:'ohu-parts', label:'Participants', category:'participant', level:2 },
+      { id:'ohu-dash', label:'Dashboard', category:'module', level:2 },
+      { id:'ohu-viz', label:'Visualizer', category:'module', level:3 },
+      { id:'ohu-export', label:'Export Engine', category:'module', level:3 },
+    ],
+    edges: [
+      { source:'ohu-root', target:'ohu-data' }, { source:'ohu-root', target:'ohu-parts' },
+      { source:'ohu-root', target:'ohu-dash' },
+      { source:'ohu-data', target:'ohu-genome' }, { source:'ohu-data', target:'ohu-fitness' },
+      { source:'ohu-data', target:'ohu-survey' },
+      { source:'ohu-dash', target:'ohu-viz' }, { source:'ohu-dash', target:'ohu-export' },
+      { source:'ohu-parts', target:'ohu-survey' }, { source:'ohu-viz', target:'ohu-genome' },
+    ]
+  }
+}
 
 export default function GraphifyPanel() {
   const canvasRef = useRef(null)
@@ -42,6 +193,22 @@ export default function GraphifyPanel() {
   const dragRef = useRef(null)
   const panRef = useRef(null)
 
+  // Export to Second Brain
+  const exportToSecondBrain = useCallback(() => {
+    const data = {
+      timestamp: new Date().toISOString(),
+      sources: sources.filter(s => s.active).map(s => s.id),
+      nodeCount: nodes.length,
+      edgeCount: edges.length,
+      categories: [...new Set(nodes.map(n => n.category))],
+      nodes: nodes.map(n => ({ id:n.id, label:n.label, category:n.category, source:n.source, level:n.level })),
+      edges: edges.map(e => ({ source:e.source, target:e.target })),
+    }
+    localStorage.setItem('graphify_second_brain_export', JSON.stringify(data))
+    localStorage.setItem('graphify_last_export', new Date().toISOString())
+    setChatMsgs(prev => [...prev, { role:'system', text:`Second Brain Export: ${data.nodeCount} Knoten, ${data.edgeCount} Kanten, ${data.sources.length} Quellen gespeichert.` }])
+  }, [nodes, edges, sources])
+
   // Load graph data from all active sources
   useEffect(() => {
     const load = async () => {
@@ -49,36 +216,41 @@ export default function GraphifyPanel() {
         let allNodes = [], allEdges = []
         let sourceResults = [...sources]
 
-        // 1. Playbook JSON
+        // 1. Playbook JSON (try fetch, fallback to built-in)
         try {
-          const r = await fetch('/modules/graphify/playbook-graph.json', { signal: AbortSignal.timeout(3000) })
+          const r = await fetch('/modules/graphify/playbook-graph.json', { signal: AbortSignal.timeout(2000) })
           if (r.ok) {
             const data = await r.json()
             allNodes.push(...(data.nodes || []).map(n => ({ ...n, source:'playbook' })))
             allEdges.push(...(data.edges || []))
             sourceResults = sourceResults.map(s => s.id === 'playbook' ? { ...s, active:true, count: data.nodes?.length } : s)
-          }
-        } catch {}
+          } else { throw new Error('fetch failed') }
+        } catch {
+          // Fallback: Built-in Playbook
+          const pb = BUILTIN_DATA.playbook
+          allNodes.push(...pb.nodes.map(n => ({ ...n, source:'playbook' })))
+          allEdges.push(...pb.edges)
+          sourceResults = sourceResults.map(s => s.id === 'playbook' ? { ...s, active:true, count: pb.nodes.length } : s)
+        }
 
-        // 2. localStorage imports (GitNexus, MiroFish, OpenHumans, OpenHands)
+        // 2. localStorage imports OR built-in fallback
         for (const src of sources.filter(s => s.storageKey)) {
           try {
             const raw = localStorage.getItem(src.storageKey)
             if (raw) {
               const data = JSON.parse(raw)
               const importNodes = (data.nodes || []).map(n => ({ ...n, source: src.id, category: n.category || src.id }))
-              const importEdges = data.edges || []
               allNodes.push(...importNodes)
-              allEdges.push(...importEdges)
+              allEdges.push(...(data.edges || []))
               sourceResults = sourceResults.map(s => s.id === src.id ? { ...s, active:true, count: importNodes.length } : s)
+            } else if (BUILTIN_DATA[src.id]) {
+              // Fallback: Built-in data
+              const bd = BUILTIN_DATA[src.id]
+              allNodes.push(...bd.nodes.map(n => ({ ...n, source: src.id })))
+              allEdges.push(...bd.edges)
+              sourceResults = sourceResults.map(s => s.id === src.id ? { ...s, active:true, count: bd.nodes.length } : s)
             }
           } catch {}
-        }
-
-        if (allNodes.length === 0) {
-          setError('Keine Graph-Daten gefunden. playbook-graph.json pruefen oder Daten aus GitNexus/MiroFish exportieren.')
-          setLoading(false)
-          return
         }
 
         const nodeList = allNodes.map((n, i) => ({
