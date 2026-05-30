@@ -1,3 +1,8 @@
+---
+name: deep-knowledge-extractor
+description: Autonomous knowledge extraction from YouTube, NLM mind maps, and research sources. Use when building deep knowledge bases from video and document sources.
+---
+
 # Deep Knowledge Extractor — NLM-Driven Research Loop
 
 > Autonomer Wissens-Extraktions-Workflow: YouTube Video → NLM Mind Map →

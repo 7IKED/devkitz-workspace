@@ -1,3 +1,8 @@
+---
+name: doc-ripper
+description: Extract and convert documentation from websites, GitHub repos, and APIs to structured Markdown. Use when ripping docs for offline reference.
+---
+
 # Doc Ripper — Dokumentationen extrahieren und als Markdown speichern
 
 > Komplette Dokumentationen von Websites, GitHub Repos und APIs rippen

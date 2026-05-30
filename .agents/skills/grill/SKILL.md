@@ -1,5 +1,5 @@
 ---
-name: Grill
+name: grill
 description: "Grill-Modus — NanoBot beantwortet Fragen statt User. Durchsucht WissenHub, Research-Archive und Internet für fundierte Antworten."
 ---
 

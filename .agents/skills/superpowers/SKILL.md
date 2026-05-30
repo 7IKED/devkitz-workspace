@@ -1,5 +1,5 @@
 ---
-name: Superpowers
+name: superpowers
 description: "DEVKiTZ Superpowers — Meta-Skill mit 14 Sub-Skills fuer fortgeschrittene Agenten-Faehigkeiten. Brainstorming, Parallel-Agents, Git Worktrees, TDD, Debugging, Code Review, Plan Execution. Skills MUESSEN geprueft werden BEVOR jede Antwort oder Aktion."
 ---
 

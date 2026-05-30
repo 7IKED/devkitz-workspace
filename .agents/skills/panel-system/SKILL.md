@@ -1,3 +1,8 @@
+---
+name: panel-system
+description: Panel-based UI system for dashboard layouts with drag-drop, resize, and tab management. Use when building panel-based interfaces.
+---
+
 # 📐 Panel System — UI Skill
 
 > **Skill-ID:** `panel-system`

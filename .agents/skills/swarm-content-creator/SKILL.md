@@ -1,5 +1,5 @@
----
-name: OpenSwarm Content Creator
+﻿---
+name: swarm-content-creator
 description: Ein dedizierter Swarm-Skill fuer die autonome Content-Erstellung. Baut temporaere Sub-Swarm-Netzwerke (Researcher, Writer, SEO, Editor) auf.
 tags: [swarm, content, orchestration, creator]
 ---

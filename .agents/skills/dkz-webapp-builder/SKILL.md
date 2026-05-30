@@ -1,3 +1,8 @@
+---
+name: dkz-webapp-builder
+description: DkZ WebApp builder for creating full web applications with DkZ Design System. Use when building standalone web apps or dashboard modules.
+---
+
 # 🏗️ DkZ™ WebApp Builder — Master Skill
 
 > **Skill-ID:** `dkz-webapp-builder`

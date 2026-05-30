@@ -1,11 +1,11 @@
----
-name: Mod Builder
-description: "DkZ Dashboard Modul-Generator — Erstellt neue Module mit korrektem Layout, Shared Scripts, Features.json und Hub-Registrierung."
+﻿---
+name: mod-builder
+description: "DkZ Dashboard Modul-Generator â€” Erstellt neue Module mit korrektem Layout, Shared Scripts, Features.json und Hub-Registrierung."
 ---
 
 # Mod Builder
 
-Automatisierter Generator für neue DkZ Dashboard Module.
+Automatisierter Generator fÃ¼r neue DkZ Dashboard Module.
 
 ## Generiert
 
@@ -21,4 +21,4 @@ Automatisierter Generator für neue DkZ Dashboard Module.
 /create-module
 ```
 
-Folge dem interaktiven Workflow für Modul-Name, Kategorie und Features.
+Folge dem interaktiven Workflow fÃ¼r Modul-Name, Kategorie und Features.
