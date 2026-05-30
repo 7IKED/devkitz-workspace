@@ -1,6 +1,6 @@
 # DkZ AGENTS.md — Agenten-Registry
 
-> Stand: 2026-05-30 · 41 Agenten · Zentrale Agent-Uebersicht fuer alle LLMs
+> Stand: 2026-05-30 · 51 Agenten · Zentrale Agent-Uebersicht fuer alle LLMs
 
 ---
 
@@ -36,6 +36,25 @@
 | 19 | Webhook Hub Builder | Webhook Dashboard | infra-team |
 | 20 | Skeleton Module Builder | Modul-Grundgerueste (Batch) | core-team |
 | 21 | Module Builder (Batch) | Mehrere Module parallel | core-team |
+
+---
+
+## Antigravity Session Agenten (10)
+
+> Subagents aus Gemini Antigravity Brain — definiert als agent.json
+
+| # | Agent | Aufgabe | Team | Datei |
+|:--|:------|:--------|:-----|:------|
+| 42 | DkZ CoPilot Builder | Python FastAPI Backend, Webhook Server, Agent Orchestrator | core-team | dkz-copilot-builder |
+| 43 | DkZ Issue Fixer | CodeRabbit/Ralph Loop Issues fixen (XSS, Security) | dkz-reviewer | dkz-issue-fixer |
+| 44 | DkZ LLMs Builder | llms.txt Dateien + Rules/Playbooks nach GitHub pushen | docs-team | dkz-llms-builder |
+| 45 | DkZ Module Builder | Dashboard Module mit DkZ Design System (Glassmorphism) | core-team | dkz-module-builder |
+| 46 | DkZ Module Builder v2 | Module mit Hyperreal Aesthetics + dkz-premium.js | core-team | dkz-module-builder-v2 |
+| 47 | DkZ Module Scaffold | Modul-Grundgeruest mit Layout, Design System, Shared Scripts | core-team | dkz-module-scaffold |
+| 48 | Git Cleanup Agent | Git Staging, Commits, Untracked Files aufraeumen | infra-team | git-cleanup-agent |
+| 49 | Git Housekeeping | Branches, Stashes, Untracked Files bereinigen | infra-team | git-housekeeping |
+| 50 | GitHub README Pusher | Premium READMEs mit Shields.io Badges nach D-VKITZ Repos | docs-team | github-readme-pusher |
+| 51 | React Panel Builder | React Panel-Komponenten fuer DkZ CoPilot Dashboard | core-team | react-panel-builder |
 
 ---
 
