@@ -3,379 +3,260 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="DEVKiTZ Walkthrough — Interaktives Session-Protokoll mit Kommentaren">
+    <meta name="description" content="DEVKiTZ Walkthrough — Interaktives Session-Protokoll mit Popups und Dropdowns">
     <title>Walkthrough — DEVKiTZ™</title>
     <link rel="stylesheet" href="../dkz-theme.css">
+    <!--
+    ═══════════════════════════════════════════════════════════════
+    DkZ™ WALKTHROUGH TEMPLATE v0.02.0
+    ═══════════════════════════════════════════════════════════════
+    PATTERN: Alles ist Dropdown/Popup.
+    Agenten lesen NUR <summary> Tags = minimaler Context.
+    Inhalt steckt in <details> = wird NICHT gelesen.
+    Kommentare sind schwebende Popups = 0 Context-Verbrauch.
+    ═══════════════════════════════════════════════════════════════
+    -->
     <style>
-    /* ═══ Walkthrough Layout ═══ */
-    .wt-container {
-        max-width: 960px;
-        margin: 0 auto;
-        padding: 28px 24px 60px;
-    }
+    /* ═══ Layout ═══ */
+    .wt-wrap { max-width: 960px; margin: 0 auto; padding: 28px 24px 60px; }
 
     .wt-meta {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-        margin-bottom: 24px;
+        display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;
     }
-
     .wt-tag {
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 10px;
-        font-weight: 700;
-        font-family: var(--mono);
-        letter-spacing: .5px;
+        padding: 4px 12px; border-radius: 20px; font-size: 10px;
+        font-weight: 700; font-family: var(--mono); letter-spacing: .5px;
         text-transform: uppercase;
     }
-
     .wt-tag.date     { background: rgba(85,172,238,.12); color: var(--blue); }
     .wt-tag.session  { background: rgba(0,255,136,.1); color: var(--green); }
     .wt-tag.status   { background: rgba(250,30,78,.1); color: var(--accent); }
     .wt-tag.duration { background: rgba(255,184,0,.1); color: var(--yellow); }
 
-    /* ═══ Collapsible Section ═══ */
-    .wt-section {
-        margin-bottom: 12px;
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        background: var(--card);
-        overflow: hidden;
+    /* ═══ Stats (immer sichtbar) ═══ */
+    .wt-stats {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px; margin-bottom: 20px;
+    }
+    .wt-stat {
+        background: var(--glass); backdrop-filter: var(--blur);
+        border: 1px solid var(--border); border-radius: 12px;
+        padding: 14px; text-align: center; transition: all .3s;
+    }
+    .wt-stat:hover { transform: translateY(-2px); }
+    .wt-stat-val { font-size: 24px; font-weight: 800; font-family: var(--mono); }
+    .wt-stat-lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+    /* ═══ Toolbar ═══ */
+    .wt-toolbar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .wt-tb {
+        padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border);
+        background: rgba(255,255,255,.03); color: var(--muted); font-family: var(--font);
+        font-size: 11px; font-weight: 600; cursor: pointer; transition: all .2s;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .wt-tb:hover { color: var(--text); border-color: var(--accent); background: rgba(var(--accent-rgb),.06); }
+
+    /* ═══════════════════════════════════════ */
+    /* ═══ DROPDOWN SECTIONS (<details>)  ═══ */
+    /* ═══════════════════════════════════════ */
+    .wt-drop {
+        margin-bottom: 8px; border: 1px solid var(--border);
+        border-radius: 14px; background: var(--card); overflow: hidden;
         transition: border-color .3s;
     }
+    .wt-drop:hover { border-color: rgba(var(--accent-rgb), .25); }
 
-    .wt-section:hover {
-        border-color: rgba(var(--accent-rgb), .25);
+    .wt-drop > summary {
+        display: flex; align-items: center; gap: 12px;
+        padding: 14px 18px; cursor: pointer; user-select: none;
+        list-style: none; position: relative; transition: background .2s;
     }
+    .wt-drop > summary::-webkit-details-marker { display: none; }
+    .wt-drop > summary::marker { display: none; content: ''; }
+    .wt-drop > summary:hover { background: rgba(255,255,255,.02); }
 
-    .wt-section-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 16px 20px;
-        cursor: pointer;
-        user-select: none;
-        position: relative;
-        transition: background .2s;
+    .wt-drop-icon {
+        font-size: 16px; width: 30px; height: 30px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 8px; background: rgba(255,255,255,.04); flex-shrink: 0;
     }
+    .wt-drop-title { font-size: 13px; font-weight: 700; color: var(--text); flex: 1; }
 
-    .wt-section-header:hover {
-        background: rgba(255,255,255,.02);
+    /* ═══ Progress Badge ═══ */
+    .wt-badge {
+        padding: 3px 10px; border-radius: 20px; font-size: 11px;
+        font-weight: 700; font-family: var(--mono); flex-shrink: 0;
     }
+    .wt-badge.ok   { background: rgba(0,255,136,.12); color: var(--green); }
+    .wt-badge.warn { background: rgba(255,184,0,.12); color: var(--yellow); }
+    .wt-badge.fail { background: rgba(250,30,78,.12); color: var(--accent); }
+    .wt-badge.info { background: rgba(85,172,238,.12); color: var(--blue); }
+    .wt-badge.muted { background: rgba(255,255,255,.06); color: var(--muted); }
 
-    .wt-section-icon {
-        font-size: 18px;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 8px;
-        background: rgba(255,255,255,.04);
-        flex-shrink: 0;
-    }
-
-    .wt-section-title {
-        font-size: 14px;
-        font-weight: 700;
-        color: var(--text);
-        flex: 1;
-    }
-
-    /* ═══ Progress Badge (4/7) ═══ */
-    .wt-progress {
-        padding: 3px 10px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: 700;
-        font-family: var(--mono);
-        letter-spacing: .3px;
-        flex-shrink: 0;
-        transition: all .3s;
-    }
-
-    .wt-progress.complete {
-        background: rgba(0,255,136,.12);
-        color: var(--green);
-    }
-
-    .wt-progress.partial {
-        background: rgba(255,184,0,.12);
-        color: var(--yellow);
-    }
-
-    .wt-progress.empty {
-        background: rgba(255,255,255,.06);
-        color: var(--muted);
-    }
-
-    /* ═══ Chevron Toggle ═══ */
-    .wt-chevron {
-        width: 20px;
-        height: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--muted);
+    /* ═══ Chevron ═══ */
+    .wt-chev {
+        width: 18px; height: 18px; color: var(--muted); flex-shrink: 0;
         transition: transform .3s cubic-bezier(.4,0,.2,1), color .2s;
-        flex-shrink: 0;
     }
-
-    .wt-chevron svg {
-        width: 14px;
-        height: 14px;
-    }
-
-    .wt-section.open .wt-chevron {
-        transform: rotate(180deg);
-        color: var(--accent);
-    }
+    .wt-chev svg { width: 14px; height: 14px; display: block; }
+    .wt-drop[open] > summary .wt-chev { transform: rotate(180deg); color: var(--accent); }
 
     /* ═══ Section Body ═══ */
-    .wt-section-body {
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height .4s cubic-bezier(.4,0,.2,1), padding .3s;
+    .wt-body {
+        padding: 0 18px 16px; border-top: 1px solid var(--border);
+        animation: wtSlideIn .25s ease;
+    }
+    @keyframes wtSlideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ═══ Sub-Dropdowns (nested <details>) ═══ */
+    .wt-sub {
+        margin: 8px 0; border: 1px solid rgba(255,255,255,.06);
+        border-radius: 10px; background: rgba(255,255,255,.015); overflow: hidden;
+    }
+    .wt-sub > summary {
+        display: flex; align-items: center; gap: 8px;
+        padding: 10px 14px; cursor: pointer; user-select: none;
+        list-style: none; font-size: 12px; font-weight: 700;
+        color: var(--text); transition: background .2s;
+    }
+    .wt-sub > summary::-webkit-details-marker { display: none; }
+    .wt-sub > summary::marker { display: none; content: ''; }
+    .wt-sub > summary:hover { background: rgba(255,255,255,.025); }
+
+    .wt-sub-chev {
+        width: 14px; height: 14px; color: var(--muted); flex-shrink: 0;
+        transition: transform .25s;
+    }
+    .wt-sub-chev svg { width: 12px; height: 12px; display: block; }
+    .wt-sub[open] > summary .wt-sub-chev { transform: rotate(90deg); color: var(--accent); }
+
+    .wt-sub-body {
+        padding: 0 14px 12px;
+        animation: wtSlideIn .2s ease;
     }
 
-    .wt-section.open .wt-section-body {
-        max-height: 2000px;
-        padding: 0 20px 20px;
+    /* ═══ Comment "+" Trigger ═══ */
+    .wt-note-btn {
+        width: 24px; height: 24px; border-radius: 50%;
+        border: 1px solid var(--border); background: transparent;
+        color: var(--muted); font-size: 15px; font-weight: 700;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; opacity: 0; transition: all .25s;
+        line-height: 1; flex-shrink: 0; position: relative;
     }
-
-    .wt-section-body-inner {
-        padding-top: 12px;
-        border-top: 1px solid var(--border);
+    summary:hover .wt-note-btn,
+    .wt-note-btn.has { opacity: 1; }
+    .wt-note-btn:hover {
+        border-color: var(--accent); color: var(--accent);
+        background: rgba(var(--accent-rgb), .08); transform: scale(1.15);
     }
-
-    /* ═══ Comment System (+) ═══ */
-    .wt-comment-trigger {
-        position: absolute;
-        right: 52px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 26px;
-        height: 26px;
-        border-radius: 50%;
-        border: 1px solid var(--border);
-        background: rgba(255,255,255,.03);
-        color: var(--muted);
-        font-size: 16px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        opacity: 0;
-        transition: all .25s;
-        z-index: 5;
-        line-height: 1;
-    }
-
-    .wt-section-header:hover .wt-comment-trigger,
-    .wt-comment-trigger.has-comments {
-        opacity: 1;
-    }
-
-    .wt-comment-trigger:hover {
-        border-color: var(--accent);
-        color: var(--accent);
-        background: rgba(var(--accent-rgb), .08);
-        transform: translateY(-50%) scale(1.15);
-    }
-
-    .wt-comment-trigger.has-comments {
-        border-color: var(--blue);
-        color: var(--blue);
+    .wt-note-btn.has {
+        border-color: var(--blue); color: var(--blue);
         background: rgba(85,172,238,.1);
     }
-
-    .wt-comment-trigger.has-comments::after {
-        content: '';
-        position: absolute;
-        top: -2px;
-        right: -2px;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--accent);
-        border: 2px solid var(--card);
+    .wt-note-btn.has::after {
+        content: ''; position: absolute; top: -2px; right: -2px;
+        width: 7px; height: 7px; border-radius: 50%;
+        background: var(--accent); border: 2px solid var(--card);
     }
 
-    /* ═══ Comment Panel ═══ */
-    .wt-comment-panel {
-        margin-top: 12px;
-        padding: 14px;
-        border-radius: 10px;
-        background: rgba(85,172,238,.04);
-        border: 1px solid rgba(85,172,238,.15);
-        display: none;
-        animation: dkzFadeIn .25s ease;
+    /* ═══════════════════════════════════════ */
+    /* ═══ POPUP / POPOVER (schwebend)    ═══ */
+    /* ═══════════════════════════════════════ */
+    .wt-popup-overlay {
+        display: none; position: fixed; inset: 0; z-index: 9998;
+        background: rgba(0,0,0,.45); backdrop-filter: blur(4px);
+        animation: wtFadeIn .15s ease;
     }
+    .wt-popup-overlay.open { display: block; }
+    @keyframes wtFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-    .wt-comment-panel.visible {
-        display: block;
+    .wt-popup {
+        display: none; position: fixed; z-index: 9999;
+        width: 380px; max-width: 90vw; max-height: 70vh;
+        background: var(--card); border: 1px solid var(--border);
+        border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.5);
+        overflow: hidden; animation: wtPopIn .2s cubic-bezier(.34,1.56,.64,1);
     }
+    .wt-popup.open { display: flex; flex-direction: column; }
+    @keyframes wtPopIn { from { opacity: 0; transform: scale(.92) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 
-    .wt-comment-panel-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 10px;
-    }
-
-    .wt-comment-panel-title {
-        font-size: 11px;
-        font-weight: 700;
-        color: var(--blue);
-        text-transform: uppercase;
-        letter-spacing: .8px;
-    }
-
-    .wt-comment-count {
-        font-size: 10px;
-        color: var(--muted);
-        font-family: var(--mono);
-    }
-
-    .wt-comment-list {
-        list-style: none;
-        margin-bottom: 10px;
-    }
-
-    .wt-comment-item {
-        padding: 8px 12px;
-        border-radius: 8px;
-        background: rgba(255,255,255,.03);
-        border: 1px solid rgba(255,255,255,.05);
-        margin-bottom: 6px;
-        font-size: 12px;
-        color: var(--text);
-        display: flex;
-        align-items: flex-start;
-        gap: 8px;
-    }
-
-    .wt-comment-item .wt-comment-text {
-        flex: 1;
-        line-height: 1.5;
-    }
-
-    .wt-comment-item .wt-comment-time {
-        font-size: 9px;
-        color: var(--muted);
-        font-family: var(--mono);
-        white-space: nowrap;
-        margin-top: 2px;
-    }
-
-    .wt-comment-item .wt-comment-delete {
-        width: 18px;
-        height: 18px;
-        border-radius: 4px;
-        border: none;
-        background: transparent;
-        color: var(--muted);
-        cursor: pointer;
-        font-size: 11px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        transition: all .2s;
-        flex-shrink: 0;
-    }
-
-    .wt-comment-item:hover .wt-comment-delete {
-        opacity: 1;
-    }
-
-    .wt-comment-item .wt-comment-delete:hover {
-        background: rgba(var(--accent-rgb), .15);
-        color: var(--accent);
-    }
-
-    .wt-comment-input-row {
-        display: flex;
-        gap: 8px;
-    }
-
-    .wt-comment-input {
-        flex: 1;
-        padding: 8px 12px;
-        background: var(--card2);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        color: var(--text);
-        font-family: var(--font);
-        font-size: 12px;
-        outline: none;
-        transition: border-color .2s;
-        resize: none;
-        min-height: 36px;
-        max-height: 120px;
-    }
-
-    .wt-comment-input:focus {
-        border-color: var(--blue);
-    }
-
-    .wt-comment-input::placeholder {
-        color: var(--muted);
-    }
-
-    .wt-comment-send {
-        padding: 8px 14px;
-        border-radius: 8px;
-        border: none;
-        background: var(--blue);
-        color: #fff;
-        font-family: var(--font);
-        font-size: 11px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all .2s;
-        white-space: nowrap;
-        align-self: flex-end;
-    }
-
-    .wt-comment-send:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(85,172,238,.3);
-    }
-
-    /* ═══ Tables inside sections ═══ */
-    .wt-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 12px;
-        margin: 10px 0;
-    }
-
-    .wt-table th {
-        text-align: left;
-        padding: 8px 12px;
-        font-size: 10px;
-        font-weight: 700;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: .8px;
-        border-bottom: 1px solid var(--border);
-    }
-
-    .wt-table td {
-        padding: 8px 12px;
-        border-bottom: 1px solid rgba(255,255,255,.03);
-        color: var(--text);
-    }
-
-    .wt-table tr:hover td {
+    .wt-popup-head {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 14px 16px; border-bottom: 1px solid var(--border);
         background: rgba(255,255,255,.02);
     }
+    .wt-popup-title {
+        font-size: 12px; font-weight: 700; color: var(--blue);
+        text-transform: uppercase; letter-spacing: .8px;
+    }
+    .wt-popup-count { font-size: 10px; color: var(--muted); font-family: var(--mono); }
+    .wt-popup-close {
+        width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border);
+        background: transparent; color: var(--muted); font-size: 16px;
+        cursor: pointer; display: flex; align-items: center; justify-content: center;
+        transition: all .2s;
+    }
+    .wt-popup-close:hover { color: var(--accent); border-color: var(--accent); background: rgba(var(--accent-rgb),.08); }
 
-    /* ═══ Status Icons ═══ */
+    .wt-popup-body {
+        flex: 1; overflow-y: auto; padding: 12px 16px;
+    }
+
+    .wt-popup-foot {
+        padding: 10px 16px; border-top: 1px solid var(--border);
+        display: flex; gap: 8px;
+    }
+    .wt-popup-input {
+        flex: 1; padding: 8px 12px; background: var(--card2);
+        border: 1px solid var(--border); border-radius: 8px;
+        color: var(--text); font-family: var(--font); font-size: 12px;
+        outline: none; resize: none; min-height: 36px; max-height: 100px;
+        transition: border-color .2s;
+    }
+    .wt-popup-input:focus { border-color: var(--blue); }
+    .wt-popup-input::placeholder { color: var(--muted); }
+    .wt-popup-send {
+        padding: 8px 14px; border-radius: 8px; border: none;
+        background: var(--blue); color: #fff; font-family: var(--font);
+        font-size: 11px; font-weight: 700; cursor: pointer;
+        transition: all .2s; white-space: nowrap; align-self: flex-end;
+    }
+    .wt-popup-send:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(85,172,238,.3); }
+
+    /* ═══ Comment Items ═══ */
+    .wt-cmt {
+        padding: 8px 12px; border-radius: 8px; background: rgba(255,255,255,.03);
+        border: 1px solid rgba(255,255,255,.05); margin-bottom: 6px;
+        font-size: 12px; display: flex; align-items: flex-start; gap: 8px;
+    }
+    .wt-cmt-text { flex: 1; color: var(--text); line-height: 1.5; }
+    .wt-cmt-time { font-size: 9px; color: var(--muted); font-family: var(--mono); white-space: nowrap; margin-top: 2px; }
+    .wt-cmt-del {
+        width: 18px; height: 18px; border-radius: 4px; border: none;
+        background: transparent; color: var(--muted); cursor: pointer;
+        font-size: 12px; display: flex; align-items: center; justify-content: center;
+        opacity: 0; transition: all .2s; flex-shrink: 0;
+    }
+    .wt-cmt:hover .wt-cmt-del { opacity: 1; }
+    .wt-cmt-del:hover { background: rgba(var(--accent-rgb),.15); color: var(--accent); }
+
+    .wt-cmt-empty {
+        text-align: center; padding: 20px; color: var(--muted);
+        font-size: 11px; font-style: italic;
+    }
+
+    /* ═══ Tables ═══ */
+    .wt-tbl { width: 100%; border-collapse: collapse; font-size: 12px; margin: 8px 0; }
+    .wt-tbl th {
+        text-align: left; padding: 7px 10px; font-size: 10px; font-weight: 700;
+        color: var(--muted); text-transform: uppercase; letter-spacing: .8px;
+        border-bottom: 1px solid var(--border);
+    }
+    .wt-tbl td { padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,.03); }
+    .wt-tbl tr:hover td { background: rgba(255,255,255,.02); }
+
     .wt-ok   { color: var(--green); }
     .wt-warn { color: var(--yellow); }
     .wt-fail { color: var(--accent); }
@@ -383,821 +264,523 @@
 
     /* ═══ Code Block ═══ */
     .wt-code {
-        background: var(--card2);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 12px 16px;
-        font-family: var(--mono);
-        font-size: 11px;
-        color: var(--text);
-        overflow-x: auto;
-        margin: 10px 0;
-        line-height: 1.6;
-    }
-
-    .wt-code .wt-code-ok   { color: var(--green); }
-    .wt-code .wt-code-fail { color: var(--accent); }
-    .wt-code .wt-code-skip { color: var(--yellow); }
-
-    /* ═══ Stats Row ═══ */
-    .wt-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-        gap: 10px;
-        margin-bottom: 16px;
-    }
-
-    .wt-stat {
-        background: var(--glass);
-        backdrop-filter: var(--blur);
-        -webkit-backdrop-filter: var(--blur);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 14px;
-        text-align: center;
-        transition: all .3s;
-    }
-
-    .wt-stat:hover { transform: translateY(-2px); }
-
-    .wt-stat-val {
-        font-size: 24px;
-        font-weight: 800;
-        font-family: var(--mono);
-    }
-
-    .wt-stat-lbl {
-        font-size: 9px;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-top: 4px;
-    }
-
-    /* ═══ Subsection Headings ═══ */
-    .wt-sub-heading {
-        position: relative;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 6px 0;
-        margin: 14px 0 8px;
-    }
-
-    .wt-sub-heading h4 {
-        font-size: 12px;
-        font-weight: 700;
-        color: var(--text);
-    }
-
-    .wt-sub-comment-btn {
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        border: 1px solid var(--border);
-        background: transparent;
-        color: var(--muted);
-        font-size: 13px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        opacity: 0;
-        transition: all .25s;
-        line-height: 1;
-    }
-
-    .wt-sub-heading:hover .wt-sub-comment-btn,
-    .wt-sub-comment-btn.has-comments {
-        opacity: 1;
-    }
-
-    .wt-sub-comment-btn:hover {
-        border-color: var(--accent);
-        color: var(--accent);
-        background: rgba(var(--accent-rgb), .08);
-        transform: scale(1.15);
-    }
-
-    .wt-sub-comment-btn.has-comments {
-        border-color: var(--blue);
-        color: var(--blue);
-        background: rgba(85,172,238,.1);
+        background: var(--card2); border: 1px solid var(--border);
+        border-radius: 8px; padding: 10px 14px; font-family: var(--mono);
+        font-size: 11px; overflow-x: auto; margin: 8px 0; line-height: 1.6;
+        white-space: pre;
     }
 
     /* ═══ Footer ═══ */
-    .wt-footer {
-        text-align: center;
-        padding: 24px;
-        font-size: 10px;
-        color: var(--muted);
-        font-family: var(--mono);
-        border-top: 1px solid var(--border);
-        margin-top: 20px;
-    }
-
-    /* ═══ Toolbar ═══ */
-    .wt-toolbar {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-    }
-
-    .wt-toolbar-btn {
-        padding: 6px 14px;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-        background: rgba(255,255,255,.03);
-        color: var(--muted);
-        font-family: var(--font);
-        font-size: 11px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all .2s;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .wt-toolbar-btn:hover {
-        color: var(--text);
-        border-color: var(--accent);
-        background: rgba(var(--accent-rgb), .06);
-    }
-
-    .wt-toolbar-btn.active {
-        border-color: var(--accent);
-        color: var(--accent);
-        background: rgba(var(--accent-rgb), .08);
+    .wt-foot {
+        text-align: center; padding: 20px; font-size: 10px;
+        color: var(--muted); font-family: var(--mono);
+        border-top: 1px solid var(--border); margin-top: 16px;
     }
 
     /* ═══ Responsive ═══ */
     @media (max-width: 768px) {
-        .wt-container { padding: 16px 12px 40px; }
-        .wt-section-header { padding: 12px 14px; }
+        .wt-wrap { padding: 14px 10px 40px; }
         .wt-stats { grid-template-columns: repeat(2, 1fr); }
-        .wt-comment-trigger { right: 44px; }
+        .wt-popup { width: 95vw; left: 2.5vw !important; }
     }
     </style>
 </head>
 <body>
-    <!-- Background Mesh -->
-    <div class="bg-mesh">
-        <div class="bg-blob"></div>
-        <div class="bg-blob"></div>
-    </div>
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
 
     <div class="app">
         <!-- Header -->
-        <header class="dkz-header" id="wt-header">
+        <header class="dkz-header" id="wt-hdr">
             <a href="../kontrollzentrum/index.html" class="back-btn" id="btn-back">← Dashboard</a>
-            <h1>📋 Walkthrough Viewer</h1>
-            <div class="hdr-right">
-                <span class="ver" id="wt-version">v0.01.0</span>
-            </div>
+            <h1>📋 Walkthrough</h1>
+            <div class="hdr-right"><span class="ver">v0.02.0</span></div>
         </header>
 
-        <!-- Content -->
-        <main class="wt-container" id="wt-main" role="main">
-            <!-- Meta Tags -->
-            <div class="wt-meta" id="wt-meta">
-                <span class="wt-tag date" id="wt-date">📅 2026-05-30</span>
-                <span class="wt-tag session" id="wt-session">🧠 Session b7c6a645</span>
-                <span class="wt-tag status" id="wt-status">🟢 Complete</span>
-                <span class="wt-tag duration" id="wt-duration">⏱️ ~25 Min</span>
+        <main class="wt-wrap" id="wt-main" role="main">
+            <!-- Meta -->
+            <div class="wt-meta">
+                <span class="wt-tag date">📅 2026-05-31</span>
+                <span class="wt-tag session">🧠 b7c6a645</span>
+                <span class="wt-tag status">🟢 Complete</span>
+                <span class="wt-tag duration">⏱️ ~25 Min</span>
             </div>
 
-            <!-- Stats Overview -->
-            <div class="wt-stats" id="wt-stats">
-                <div class="wt-stat">
-                    <div class="wt-stat-val wt-ok" id="stat-passed">24</div>
-                    <div class="wt-stat-lbl">Bestanden</div>
-                </div>
-                <div class="wt-stat">
-                    <div class="wt-stat-val wt-fail" id="stat-failed">3</div>
-                    <div class="wt-stat-lbl">Fehlgeschlagen</div>
-                </div>
-                <div class="wt-stat">
-                    <div class="wt-stat-val wt-skip" id="stat-skipped">5</div>
-                    <div class="wt-stat-lbl">Uebersprungen</div>
-                </div>
-                <div class="wt-stat">
-                    <div class="wt-stat-val" id="stat-total" style="color:var(--blue)">32</div>
-                    <div class="wt-stat-lbl">Gesamt</div>
-                </div>
+            <!-- Stats (immer sichtbar — winzig) -->
+            <div class="wt-stats">
+                <div class="wt-stat"><div class="wt-stat-val wt-ok">24</div><div class="wt-stat-lbl">Bestanden</div></div>
+                <div class="wt-stat"><div class="wt-stat-val wt-fail">3</div><div class="wt-stat-lbl">Fehlgeschlagen</div></div>
+                <div class="wt-stat"><div class="wt-stat-val wt-skip">5</div><div class="wt-stat-lbl">Uebersprungen</div></div>
+                <div class="wt-stat"><div class="wt-stat-val" style="color:var(--blue)">32</div><div class="wt-stat-lbl">Gesamt</div></div>
             </div>
 
             <!-- Toolbar -->
-            <div class="wt-toolbar" id="wt-toolbar">
-                <button class="wt-toolbar-btn active" id="btn-expand-all" aria-label="Alle aufklappen">
-                    📂 Alle aufklappen
-                </button>
-                <button class="wt-toolbar-btn" id="btn-collapse-all" aria-label="Alle zuklappen">
-                    📁 Alle zuklappen
-                </button>
-                <button class="wt-toolbar-btn" id="btn-export-comments" aria-label="Kommentare exportieren">
-                    💬 Kommentare exportieren
-                </button>
-                <button class="wt-toolbar-btn" id="btn-clear-comments" aria-label="Kommentare loeschen">
-                    🗑️ Kommentare loeschen
-                </button>
+            <div class="wt-toolbar">
+                <button class="wt-tb" id="btn-open-all">📂 Alle oeffnen</button>
+                <button class="wt-tb" id="btn-close-all">📁 Alle schliessen</button>
+                <button class="wt-tb" id="btn-export">💬 Kommentare exportieren</button>
+                <button class="wt-tb" id="btn-clear">🗑️ Alle loeschen</button>
             </div>
 
-            <!-- ═══ SECTION: Uebersicht ═══ -->
-            <div class="wt-section open" data-section="overview" id="section-overview">
-                <div class="wt-section-header" role="button" aria-expanded="true" tabindex="0">
-                    <div class="wt-section-icon">📋</div>
-                    <div class="wt-section-title">Uebersicht</div>
-                    <button class="wt-comment-trigger" title="Kommentar hinzufuegen" aria-label="Kommentar hinzufuegen">+</button>
-                    <div class="wt-progress complete">3/3</div>
-                    <div class="wt-chevron">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-                    </div>
+            <!-- ═══════════════════════════════════════ -->
+            <!-- SECTION: Uebersicht                    -->
+            <!-- Agent liest NUR: "📋 Uebersicht — 3/3" -->
+            <!-- ═══════════════════════════════════════ -->
+            <details class="wt-drop" data-id="overview">
+                <summary>
+                    <span class="wt-drop-icon">📋</span>
+                    <span class="wt-drop-title">Uebersicht</span>
+                    <button class="wt-note-btn" data-note="overview" title="Notiz">+</button>
+                    <span class="wt-badge ok">3/3</span>
+                    <span class="wt-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+                </summary>
+                <div class="wt-body">
+                    <table class="wt-tbl">
+                        <thead><tr><th>Quelle</th><th>Ergebnis</th><th>Status</th></tr></thead>
+                        <tbody>
+                            <tr><td>🔍 Git History</td><td>121 Commits in 10 Tagen</td><td class="wt-ok">✅</td></tr>
+                            <tr><td>📁 Workspace</td><td>137 Module, 29 Projekte</td><td class="wt-ok">✅</td></tr>
+                            <tr><td>🧠 Brain Sessions</td><td>179 Conversations</td><td class="wt-ok">✅</td></tr>
+                        </tbody>
+                    </table>
                 </div>
-                <div class="wt-section-body">
-                    <div class="wt-section-body-inner">
-                        <!-- Comment Panel (injected by JS) -->
-                        <table class="wt-table">
-                            <thead><tr><th>Quelle</th><th>Ergebnis</th><th>Status</th></tr></thead>
-                            <tbody>
-                                <tr><td>🔍 Git History</td><td>121 Commits in 10 Tagen</td><td class="wt-ok">✅</td></tr>
-                                <tr><td>📁 Workspace</td><td>137 Module, 29 Projekte</td><td class="wt-ok">✅</td></tr>
-                                <tr><td>🧠 Brain Sessions</td><td>179 Conversations</td><td class="wt-ok">✅</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+            </details>
 
-            <!-- ═══ SECTION: React Tests ═══ -->
-            <div class="wt-section" data-section="react" id="section-react">
-                <div class="wt-section-header" role="button" aria-expanded="false" tabindex="0">
-                    <div class="wt-section-icon">⚛️</div>
-                    <div class="wt-section-title">React Tests</div>
-                    <button class="wt-comment-trigger" title="Kommentar hinzufuegen" aria-label="Kommentar hinzufuegen">+</button>
-                    <div class="wt-progress partial">5/8</div>
-                    <div class="wt-chevron">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-                    </div>
-                </div>
-                <div class="wt-section-body">
-                    <div class="wt-section-body-inner">
-                        <div class="wt-sub-heading" data-sub="react-components">
-                            <h4>Komponenten-Tests</h4>
-                            <button class="wt-sub-comment-btn" title="Kommentar" aria-label="Kommentar zu Komponenten-Tests">+</button>
+            <!-- ═══════════════════════════════════════ -->
+            <!-- SECTION: React Tests                    -->
+            <!-- Agent liest NUR: "⚛️ React Tests — 5/8" -->
+            <!-- ═══════════════════════════════════════ -->
+            <details class="wt-drop" data-id="react">
+                <summary>
+                    <span class="wt-drop-icon">⚛️</span>
+                    <span class="wt-drop-title">React Tests</span>
+                    <button class="wt-note-btn" data-note="react" title="Notiz">+</button>
+                    <span class="wt-badge warn">5/8</span>
+                    <span class="wt-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+                </summary>
+                <div class="wt-body">
+                    <!-- Sub-Dropdown: Komponenten -->
+                    <details class="wt-sub" data-id="react-comp">
+                        <summary>
+                            <span class="wt-sub-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            Komponenten-Tests
+                            <button class="wt-note-btn" data-note="react-comp" title="Notiz" style="margin-left:auto">+</button>
+                            <span class="wt-badge warn" style="font-size:10px">4/5</span>
+                        </summary>
+                        <div class="wt-sub-body">
+                            <table class="wt-tbl">
+                                <thead><tr><th>Komponente</th><th>Test</th><th>Status</th></tr></thead>
+                                <tbody>
+                                    <tr><td>CoPilot Panel</td><td>Render + Props</td><td class="wt-ok">✅</td></tr>
+                                    <tr><td>Agent Card</td><td>Click-Events</td><td class="wt-ok">✅</td></tr>
+                                    <tr><td>Settings Modal</td><td>Open/Close/Save</td><td class="wt-ok">✅</td></tr>
+                                    <tr><td>Chat Widget</td><td>Message Rendering</td><td class="wt-fail">❌</td></tr>
+                                    <tr><td>Status Badge</td><td>Color Updates</td><td class="wt-ok">✅</td></tr>
+                                </tbody>
+                            </table>
                         </div>
-                        <table class="wt-table">
-                            <thead><tr><th>Komponente</th><th>Test</th><th>Status</th></tr></thead>
-                            <tbody>
-                                <tr><td>CoPilot Panel</td><td>Render + Props</td><td class="wt-ok">✅</td></tr>
-                                <tr><td>Agent Card</td><td>Click-Events</td><td class="wt-ok">✅</td></tr>
-                                <tr><td>Settings Modal</td><td>Open/Close/Save</td><td class="wt-ok">✅</td></tr>
-                                <tr><td>Chat Widget</td><td>Message Rendering</td><td class="wt-fail">❌</td></tr>
-                                <tr><td>Status Badge</td><td>Color Updates</td><td class="wt-ok">✅</td></tr>
-                            </tbody>
-                        </table>
+                    </details>
 
-                        <div class="wt-sub-heading" data-sub="react-hooks">
-                            <h4>Hook-Tests</h4>
-                            <button class="wt-sub-comment-btn" title="Kommentar" aria-label="Kommentar zu Hook-Tests">+</button>
+                    <!-- Sub-Dropdown: Hooks -->
+                    <details class="wt-sub" data-id="react-hooks">
+                        <summary>
+                            <span class="wt-sub-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            Hook-Tests
+                            <button class="wt-note-btn" data-note="react-hooks" title="Notiz" style="margin-left:auto">+</button>
+                            <span class="wt-badge fail" style="font-size:10px">1/3</span>
+                        </summary>
+                        <div class="wt-sub-body">
+                            <table class="wt-tbl">
+                                <thead><tr><th>Hook</th><th>Szenario</th><th>Status</th></tr></thead>
+                                <tbody>
+                                    <tr><td>useAgent()</td><td>State + Dispatch</td><td class="wt-ok">✅</td></tr>
+                                    <tr><td>useWebSocket()</td><td>Connect/Reconnect</td><td class="wt-fail">❌</td></tr>
+                                    <tr><td>useLocalStorage()</td><td>Persist/Hydrate</td><td class="wt-fail">❌</td></tr>
+                                </tbody>
+                            </table>
                         </div>
-                        <table class="wt-table">
-                            <thead><tr><th>Hook</th><th>Szenario</th><th>Status</th></tr></thead>
-                            <tbody>
-                                <tr><td>useAgent()</td><td>State + Dispatch</td><td class="wt-ok">✅</td></tr>
-                                <tr><td>useWebSocket()</td><td>Connect/Reconnect</td><td class="wt-fail">❌</td></tr>
-                                <tr><td>useLocalStorage()</td><td>Persist/Hydrate</td><td class="wt-fail">❌</td></tr>
-                            </tbody>
-                        </table>
+                    </details>
 
-                        <div class="wt-code">
-<span class="wt-code-ok">✓ 5 passing</span> (2.3s)
-<span class="wt-code-fail">✗ 3 failing</span>
-  1) Chat Widget — Message Rendering: scrollToBottom nicht aufgerufen
-  2) useWebSocket — Reconnect: Timeout nach 5000ms
-  3) useLocalStorage — Hydrate: SSR mismatch
+                    <!-- Sub-Dropdown: Output -->
+                    <details class="wt-sub" data-id="react-output">
+                        <summary>
+                            <span class="wt-sub-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            Test-Output
+                            <button class="wt-note-btn" data-note="react-output" title="Notiz" style="margin-left:auto">+</button>
+                        </summary>
+                        <div class="wt-sub-body">
+                            <div class="wt-code"><span class="wt-ok">✓ 5 passing</span> (2.3s)
+<span class="wt-fail">✗ 3 failing</span>
+  1) Chat Widget — scrollToBottom nicht aufgerufen
+  2) useWebSocket — Timeout nach 5000ms
+  3) useLocalStorage — SSR mismatch</div>
                         </div>
-                    </div>
+                    </details>
                 </div>
-            </div>
+            </details>
 
-            <!-- ═══ SECTION: TestCafe ═══ -->
-            <div class="wt-section" data-section="testcafe" id="section-testcafe">
-                <div class="wt-section-header" role="button" aria-expanded="false" tabindex="0">
-                    <div class="wt-section-icon">🧪</div>
-                    <div class="wt-section-title">TestCafe</div>
-                    <button class="wt-comment-trigger" title="Kommentar hinzufuegen" aria-label="Kommentar hinzufuegen">+</button>
-                    <div class="wt-progress partial">4/7</div>
-                    <div class="wt-chevron">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-                    </div>
-                </div>
-                <div class="wt-section-body">
-                    <div class="wt-section-body-inner">
-                        <div class="wt-sub-heading" data-sub="tc-ui">
-                            <h4>UI-Tests</h4>
-                            <button class="wt-sub-comment-btn" title="Kommentar" aria-label="Kommentar zu UI-Tests">+</button>
+            <!-- ═══════════════════════════════════════ -->
+            <!-- SECTION: TestCafe                       -->
+            <!-- Agent liest NUR: "🧪 TestCafe — 4/7"   -->
+            <!-- ═══════════════════════════════════════ -->
+            <details class="wt-drop" data-id="testcafe">
+                <summary>
+                    <span class="wt-drop-icon">🧪</span>
+                    <span class="wt-drop-title">TestCafe</span>
+                    <button class="wt-note-btn" data-note="testcafe" title="Notiz">+</button>
+                    <span class="wt-badge warn">4/7</span>
+                    <span class="wt-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+                </summary>
+                <div class="wt-body">
+                    <details class="wt-sub" data-id="tc-ui">
+                        <summary>
+                            <span class="wt-sub-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            UI-Tests
+                            <button class="wt-note-btn" data-note="tc-ui" title="Notiz" style="margin-left:auto">+</button>
+                            <span class="wt-badge warn" style="font-size:10px">3/4</span>
+                        </summary>
+                        <div class="wt-sub-body">
+                            <table class="wt-tbl">
+                                <thead><tr><th>Fixture</th><th>Test</th><th>Status</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Grundstruktur</td><td>Seite laedt, Title, CSS/JS</td><td class="wt-ok">✅</td></tr>
+                                    <tr><td>Navigation</td><td>Tabs wechseln, Buttons</td><td class="wt-ok">✅</td></tr>
+                                    <tr><td>Toast System</td><td>Show/Hide/Typ-Farben</td><td class="wt-ok">✅</td></tr>
+                                    <tr><td>Watchdog Alerts</td><td>Dedup + Clear</td><td class="wt-fail">❌</td></tr>
+                                </tbody>
+                            </table>
                         </div>
-                        <table class="wt-table">
-                            <thead><tr><th>Fixture</th><th>Test</th><th>Status</th></tr></thead>
-                            <tbody>
-                                <tr><td>Grundstruktur</td><td>Seite laedt, Title, CSS/JS</td><td class="wt-ok">✅</td></tr>
-                                <tr><td>Navigation</td><td>Tabs wechseln, Buttons klickbar</td><td class="wt-ok">✅</td></tr>
-                                <tr><td>Toast System</td><td>Show/Hide/Typ-Farben</td><td class="wt-ok">✅</td></tr>
-                                <tr><td>Watchdog Alerts</td><td>Dedup + Clear</td><td class="wt-fail">❌</td></tr>
-                            </tbody>
-                        </table>
+                    </details>
 
-                        <div class="wt-sub-heading" data-sub="tc-integration">
-                            <h4>Integrations-Tests</h4>
-                            <button class="wt-sub-comment-btn" title="Kommentar" aria-label="Kommentar zu Integrations-Tests">+</button>
+                    <details class="wt-sub" data-id="tc-int">
+                        <summary>
+                            <span class="wt-sub-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            Integrations-Tests
+                            <button class="wt-note-btn" data-note="tc-int" title="Notiz" style="margin-left:auto">+</button>
+                            <span class="wt-badge fail" style="font-size:10px">1/3</span>
+                        </summary>
+                        <div class="wt-sub-body">
+                            <table class="wt-tbl">
+                                <thead><tr><th>Fixture</th><th>Test</th><th>Status</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Console</td><td>/help, /debug Befehle</td><td class="wt-ok">✅</td></tr>
+                                    <tr><td>LiveTicker</td><td>Publish + Subscribe</td><td class="wt-fail">❌</td></tr>
+                                    <tr><td>Persistenz</td><td>localStorage Save/Load</td><td class="wt-fail">❌</td></tr>
+                                </tbody>
+                            </table>
                         </div>
-                        <table class="wt-table">
-                            <thead><tr><th>Fixture</th><th>Test</th><th>Status</th></tr></thead>
-                            <tbody>
-                                <tr><td>Console</td><td>/help, /debug Befehle</td><td class="wt-ok">✅</td></tr>
-                                <tr><td>LiveTicker</td><td>Publish + Subscribe</td><td class="wt-fail">❌</td></tr>
-                                <tr><td>Persistenz</td><td>localStorage Save/Load</td><td class="wt-fail">❌</td></tr>
-                            </tbody>
-                        </table>
+                    </details>
 
-                        <div class="wt-code">
-<span class="wt-code-ok">✓ 4 passing</span> (8.7s)
-<span class="wt-code-fail">✗ 3 failing</span>
-  1) Watchdog Alerts — Dedup: Cooldown-Timer zu kurz (30s→60s noetig)
-  2) LiveTicker — Publish: cross-tab Event nicht empfangen
-  3) Persistenz — Save: localStorage quota exceeded (mock fehlt)
+                    <details class="wt-sub" data-id="tc-out">
+                        <summary>
+                            <span class="wt-sub-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            Test-Output
+                        </summary>
+                        <div class="wt-sub-body">
+                            <div class="wt-code"><span class="wt-ok">✓ 4 passing</span> (8.7s)
+<span class="wt-fail">✗ 3 failing</span>
+  1) Watchdog — Cooldown-Timer zu kurz (30s→60s)
+  2) LiveTicker — cross-tab Event nicht empfangen
+  3) Persistenz — localStorage quota exceeded</div>
                         </div>
-                    </div>
+                    </details>
                 </div>
-            </div>
+            </details>
 
-            <!-- ═══ SECTION: Playwright ═══ -->
-            <div class="wt-section" data-section="playwright" id="section-playwright">
-                <div class="wt-section-header" role="button" aria-expanded="false" tabindex="0">
-                    <div class="wt-section-icon">🎭</div>
-                    <div class="wt-section-title">Playwright</div>
-                    <button class="wt-comment-trigger" title="Kommentar hinzufuegen" aria-label="Kommentar hinzufuegen">+</button>
-                    <div class="wt-progress complete">12/12</div>
-                    <div class="wt-chevron">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-                    </div>
-                </div>
-                <div class="wt-section-body">
-                    <div class="wt-section-body-inner">
-                        <div class="wt-code">
-<span class="wt-code-ok">✓ 12 passing</span> (14.2s)
+            <!-- ═══════════════════════════════════════ -->
+            <!-- SECTION: Playwright                     -->
+            <!-- Agent liest NUR: "🎭 Playwright — 12/12"-->
+            <!-- ═══════════════════════════════════════ -->
+            <details class="wt-drop" data-id="playwright">
+                <summary>
+                    <span class="wt-drop-icon">🎭</span>
+                    <span class="wt-drop-title">Playwright</span>
+                    <button class="wt-note-btn" data-note="playwright" title="Notiz">+</button>
+                    <span class="wt-badge ok">12/12</span>
+                    <span class="wt-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+                </summary>
+                <div class="wt-body">
+                    <div class="wt-code"><span class="wt-ok">✓ 12 passing</span> (14.2s)
   ✓ Dashboard laedt ohne JS-Fehler
   ✓ Alle 6 Shared Scripts geladen
   ✓ Navigation zwischen 5 Modulen
   ✓ Darkmode Toggle
   ✓ Mobile Viewport (375px)
-  ✓ Keyboard Navigation (Tab-Reihenfolge)
+  ✓ Keyboard Navigation
   ✓ Console oeffnet mit ESC
   ✓ Toast zeigt bei Aktion
   ✓ Guide FAB klickbar
   ✓ Settings-Panel oeffnet/schliesst
   ✓ Keine Console-Errors
-  ✓ Performance: LCP unter 2.5s
-                        </div>
-                    </div>
+  ✓ Performance: LCP &lt; 2.5s</div>
                 </div>
-            </div>
+            </details>
 
-            <!-- ═══ SECTION: Git Commits ═══ -->
-            <div class="wt-section" data-section="git" id="section-git">
-                <div class="wt-section-header" role="button" aria-expanded="false" tabindex="0">
-                    <div class="wt-section-icon">🔀</div>
-                    <div class="wt-section-title">Git Commits</div>
-                    <button class="wt-comment-trigger" title="Kommentar hinzufuegen" aria-label="Kommentar hinzufuegen">+</button>
-                    <div class="wt-progress complete">5/5</div>
-                    <div class="wt-chevron">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-                    </div>
+            <!-- ═══════════════════════════════════════ -->
+            <!-- SECTION: Git Commits                    -->
+            <!-- Agent liest NUR: "🔀 Git Commits — 5/5" -->
+            <!-- ═══════════════════════════════════════ -->
+            <details class="wt-drop" data-id="git">
+                <summary>
+                    <span class="wt-drop-icon">🔀</span>
+                    <span class="wt-drop-title">Git Commits</span>
+                    <button class="wt-note-btn" data-note="git" title="Notiz">+</button>
+                    <span class="wt-badge ok">5/5</span>
+                    <span class="wt-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+                </summary>
+                <div class="wt-body">
+                    <table class="wt-tbl">
+                        <thead><tr><th>Hash</th><th>Message</th></tr></thead>
+                        <tbody>
+                            <tr><td style="font-family:var(--mono);font-size:11px;color:var(--yellow)">b2f7986f</td><td>feat(dkz): DkZ Kern-Projekt initialisiert</td></tr>
+                            <tr><td style="font-family:var(--mono);font-size:11px;color:var(--yellow)">abfce281</td><td>feat(baze): BAZE² Projekt initialisiert</td></tr>
+                            <tr><td style="font-family:var(--mono);font-size:11px;color:var(--yellow)">50e990b7</td><td>chore(system): REDNOTE.json + features.json</td></tr>
+                            <tr><td style="font-family:var(--mono);font-size:11px;color:var(--yellow)">7654b92b</td><td>fix(tests): Playwright + Dedup Timeout</td></tr>
+                            <tr><td style="font-family:var(--mono);font-size:11px;color:var(--yellow)">acea690c</td><td>docs(rednote): 6 Eintraege resolved</td></tr>
+                        </tbody>
+                    </table>
                 </div>
-                <div class="wt-section-body">
-                    <div class="wt-section-body-inner">
-                        <table class="wt-table">
-                            <thead><tr><th>Hash</th><th>Message</th></tr></thead>
-                            <tbody>
-                                <tr><td style="font-family:var(--mono);font-size:11px;color:var(--yellow)">b2f7986f</td><td>feat(dkz): DkZ Kern-Projekt initialisiert</td></tr>
-                                <tr><td style="font-family:var(--mono);font-size:11px;color:var(--yellow)">abfce281</td><td>feat(baze): BAZE² Projekt initialisiert</td></tr>
-                                <tr><td style="font-family:var(--mono);font-size:11px;color:var(--yellow)">50e990b7</td><td>chore(system): REDNOTE.json + features.json 138 Module</td></tr>
-                                <tr><td style="font-family:var(--mono);font-size:11px;color:var(--yellow)">7654b92b</td><td>fix(tests): Playwright offline/server Projekte + Dedup Timeout</td></tr>
-                                <tr><td style="font-family:var(--mono);font-size:11px;color:var(--yellow)">acea690c</td><td>docs(rednote): 6 Eintraege resolved/won't-do</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+            </details>
 
-            <!-- ═══ SECTION: Offene Punkte ═══ -->
-            <div class="wt-section" data-section="open-items" id="section-open-items">
-                <div class="wt-section-header" role="button" aria-expanded="false" tabindex="0">
-                    <div class="wt-section-icon">⚠️</div>
-                    <div class="wt-section-title">Offene Punkte</div>
-                    <button class="wt-comment-trigger" title="Kommentar hinzufuegen" aria-label="Kommentar hinzufuegen">+</button>
-                    <div class="wt-progress partial">1/4</div>
-                    <div class="wt-chevron">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-                    </div>
+            <!-- ═══════════════════════════════════════ -->
+            <!-- SECTION: Offene Punkte                  -->
+            <!-- Agent liest NUR: "⚠️ Offen — 1/4"     -->
+            <!-- ═══════════════════════════════════════ -->
+            <details class="wt-drop" data-id="open">
+                <summary>
+                    <span class="wt-drop-icon">⚠️</span>
+                    <span class="wt-drop-title">Offene Punkte</span>
+                    <button class="wt-note-btn" data-note="open" title="Notiz">+</button>
+                    <span class="wt-badge warn">1/4</span>
+                    <span class="wt-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+                </summary>
+                <div class="wt-body">
+                    <table class="wt-tbl">
+                        <thead><tr><th>#</th><th>Item</th><th>Aktion</th><th>Status</th></tr></thead>
+                        <tbody>
+                            <tr><td>1</td><td>Hermes Telegram Token</td><td>Token in .env setzen</td><td class="wt-ok">✅</td></tr>
+                            <tr><td>2</td><td>5 Module ohne index.html</td><td>Bauen oder archivieren?</td><td class="wt-warn">⏳</td></tr>
+                            <tr><td>3</td><td>~49 Module ohne README</td><td>deploy-readmes.ps1</td><td class="wt-warn">⏳</td></tr>
+                            <tr><td>4</td><td>Git Push Token</td><td>GitHub PAT generieren</td><td class="wt-warn">⏳</td></tr>
+                        </tbody>
+                    </table>
                 </div>
-                <div class="wt-section-body">
-                    <div class="wt-section-body-inner">
-                        <table class="wt-table">
-                            <thead><tr><th>#</th><th>Item</th><th>Aktion</th><th>Status</th></tr></thead>
-                            <tbody>
-                                <tr><td>1</td><td>Hermes Telegram Token</td><td>Token in .env setzen</td><td class="wt-ok">✅</td></tr>
-                                <tr><td>2</td><td>5 Module ohne index.html</td><td>Bauen oder archivieren?</td><td class="wt-warn">⏳</td></tr>
-                                <tr><td>3</td><td>~49 Module ohne README</td><td>deploy-readmes.ps1 ausfuehren</td><td class="wt-warn">⏳</td></tr>
-                                <tr><td>4</td><td>Git Push Token</td><td>Neuen GitHub PAT generieren</td><td class="wt-warn">⏳</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+            </details>
 
-            <!-- Footer -->
-            <footer class="wt-footer" id="wt-footer">
-                Walkthrough erstellt: <span id="wt-created">2026-05-30 23:00</span> · DkZ™ Walkthrough Template v0.01.0
+            <footer class="wt-foot">
+                Walkthrough erstellt: 2026-05-31 03:00 · DkZ™ v0.02.0 · Alles ist Dropdown. Context-Spar-Modus.
             </footer>
         </main>
     </div>
 
+    <!-- ═══ POPUP OVERLAY (global, 1x im DOM) ═══ -->
+    <div class="wt-popup-overlay" id="popup-overlay"></div>
+    <div class="wt-popup" id="popup" role="dialog" aria-modal="true" aria-label="Notizen">
+        <div class="wt-popup-head">
+            <div>
+                <span class="wt-popup-title" id="popup-title">💬 Notizen</span>
+                <span class="wt-popup-count" id="popup-count"></span>
+            </div>
+            <button class="wt-popup-close" id="popup-close" aria-label="Schliessen">&times;</button>
+        </div>
+        <div class="wt-popup-body" id="popup-body"></div>
+        <div class="wt-popup-foot">
+            <textarea class="wt-popup-input" id="popup-input" placeholder="Notiz schreiben..." rows="1"></textarea>
+            <button class="wt-popup-send" id="popup-send">Senden</button>
+        </div>
+    </div>
+
     <script>
     /**
-     * DkZ™ Walkthrough Viewer — Interactive Template
-     * @DKZ:RULES → R21 Shared Scripts
-     * @version v0.01.0
-     *
-     * Features:
-     * - Collapsible sections with progress counters (4/7)
-     * - Hover "+" on every heading → inline comment field
-     * - Comments persisted in localStorage
-     * - Expand/Collapse all toolbar
-     * - Export comments as JSON
+     * DkZ™ Walkthrough Viewer v0.02.0
+     * PATTERN: Alles Dropdown + Popup. Agent liest nur <summary>.
+     * Kommentare = schwebende Popups = 0 extra DOM = 0 Context.
+     * esc() bei JEDEM User-Input vor innerHTML.
      */
     (function() {
         'use strict';
 
-        // ═══ Constants ═══
-        const LS_KEY = 'dkz-walkthrough-comments';
-        const TOAST_DURATION = 2500;
+        var LS = 'dkz-wt-comments';
+        var comments = {};
+        var currentSection = null;
 
-        // ═══ State ═══
-        let comments = {};
-
-        // ═══ Init ═══
-        function init() {
-            loadComments();
-            setupSections();
-            setupToolbar();
-            setupSubComments();
-            renderAllComments();
-        }
-
-        // ═══ Escape HTML (XSS) ═══
-        function esc(str) {
-            const d = document.createElement('div');
-            d.textContent = str;
-            return d.innerHTML;
-        }
+        // ═══ XSS ═══
+        function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
         // ═══ Toast ═══
-        function showToast(msg) {
-            let t = document.querySelector('.toast');
-            if (!t) {
-                t = document.createElement('div');
-                t.className = 'toast';
-                document.body.appendChild(t);
-            }
-            t.textContent = msg;
-            t.classList.add('show');
-            clearTimeout(t._timer);
-            t._timer = setTimeout(function() { t.classList.remove('show'); }, TOAST_DURATION);
+        function toast(msg) {
+            var t = document.getElementById('wt-toast');
+            if (!t) { t = document.createElement('div'); t.className = 'toast'; t.id = 'wt-toast'; document.body.appendChild(t); }
+            t.textContent = msg; t.classList.add('show');
+            clearTimeout(t._t); t._t = setTimeout(function() { t.classList.remove('show'); }, 2500);
         }
 
-        // ═══ LocalStorage ═══
-        function loadComments() {
-            try {
-                const raw = localStorage.getItem(LS_KEY);
-                comments = raw ? JSON.parse(raw) : {};
-            } catch(e) {
-                comments = {};
-            }
+        // ═══ Storage ═══
+        function load() { try { comments = JSON.parse(localStorage.getItem(LS)) || {}; } catch(e) { comments = {}; } }
+        function save() { try { localStorage.setItem(LS, JSON.stringify(comments)); } catch(e) {} }
+
+        function addC(sid, txt) {
+            if (!txt.trim()) return;
+            if (!comments[sid]) comments[sid] = [];
+            comments[sid].push({ text: txt.trim(), time: new Date().toISOString() });
+            save();
+        }
+        function delC(sid, idx) {
+            if (comments[sid]) { comments[sid].splice(idx, 1); if (!comments[sid].length) delete comments[sid]; save(); }
         }
 
-        function saveComments() {
-            try {
-                localStorage.setItem(LS_KEY, JSON.stringify(comments));
-            } catch(e) {
-                showToast('Fehler beim Speichern');
-            }
-        }
-
-        function addComment(sectionId, text) {
-            if (!text.trim()) return;
-            if (!comments[sectionId]) comments[sectionId] = [];
-            comments[sectionId].push({
-                text: text.trim(),
-                time: new Date().toISOString()
-            });
-            saveComments();
-        }
-
-        function deleteComment(sectionId, idx) {
-            if (comments[sectionId] && comments[sectionId][idx] !== undefined) {
-                comments[sectionId].splice(idx, 1);
-                if (comments[sectionId].length === 0) delete comments[sectionId];
-                saveComments();
-            }
-        }
-
-        // ═══ Time format ═══
         function fmtTime(iso) {
-            const d = new Date(iso);
-            const hh = String(d.getHours()).padStart(2, '0');
-            const mm = String(d.getMinutes()).padStart(2, '0');
-            const dd = String(d.getDate()).padStart(2, '0');
-            const mo = String(d.getMonth() + 1).padStart(2, '0');
-            return dd + '.' + mo + ' ' + hh + ':' + mm;
+            var d = new Date(iso);
+            return String(d.getDate()).padStart(2,'0') + '.' +
+                   String(d.getMonth()+1).padStart(2,'0') + ' ' +
+                   String(d.getHours()).padStart(2,'0') + ':' +
+                   String(d.getMinutes()).padStart(2,'0');
         }
 
-        // ═══ Build Comment Panel HTML ═══
-        function buildCommentPanel(sectionId) {
-            const items = comments[sectionId] || [];
-            let listHtml = '';
-            items.forEach(function(c, i) {
-                listHtml += '<li class="wt-comment-item">' +
-                    '<span class="wt-comment-text">' + esc(c.text) + '</span>' +
-                    '<span class="wt-comment-time">' + esc(fmtTime(c.time)) + '</span>' +
-                    '<button class="wt-comment-delete" data-section="' + esc(sectionId) + '" data-idx="' + i + '" title="Loeschen" aria-label="Kommentar loeschen">&times;</button>' +
-                    '</li>';
-            });
+        // ═══ Popup ═══
+        var overlay = document.getElementById('popup-overlay');
+        var popup = document.getElementById('popup');
+        var popBody = document.getElementById('popup-body');
+        var popInput = document.getElementById('popup-input');
+        var popTitle = document.getElementById('popup-title');
+        var popCount = document.getElementById('popup-count');
 
-            return '<div class="wt-comment-panel" data-panel="' + esc(sectionId) + '">' +
-                '<div class="wt-comment-panel-header">' +
-                    '<span class="wt-comment-panel-title">💬 Notizen</span>' +
-                    '<span class="wt-comment-count">' + items.length + ' Kommentar' + (items.length !== 1 ? 'e' : '') + '</span>' +
-                '</div>' +
-                (listHtml ? '<ul class="wt-comment-list">' + listHtml + '</ul>' : '') +
-                '<div class="wt-comment-input-row">' +
-                    '<textarea class="wt-comment-input" data-input="' + esc(sectionId) + '" placeholder="Notiz hinzufuegen..." rows="1"></textarea>' +
-                    '<button class="wt-comment-send" data-send="' + esc(sectionId) + '">Senden</button>' +
-                '</div>' +
-                '</div>';
+        function openPopup(sid, anchorRect) {
+            currentSection = sid;
+            renderPopup();
+
+            // Position near the anchor button
+            var top = Math.min(anchorRect.bottom + 8, window.innerHeight - 400);
+            var left = Math.min(anchorRect.right - 380, window.innerWidth - 400);
+            if (left < 10) left = 10;
+            if (top < 10) top = 60;
+
+            popup.style.top = top + 'px';
+            popup.style.left = left + 'px';
+
+            overlay.classList.add('open');
+            popup.classList.add('open');
+            popInput.value = '';
+            popInput.focus();
         }
 
-        // ═══ Render Comment Panel for a section ═══
-        function renderCommentPanel(sectionId) {
-            // Find the body inner (section-level) or parent (sub-heading)
-            let existing = document.querySelector('[data-panel="' + sectionId + '"]');
-            const html = buildCommentPanel(sectionId);
+        function closePopup() {
+            overlay.classList.remove('open');
+            popup.classList.remove('open');
+            currentSection = null;
+        }
 
-            if (existing) {
-                existing.outerHTML = html;
+        function renderPopup() {
+            if (!currentSection) return;
+            var items = comments[currentSection] || [];
+            var n = items.length;
+            popCount.textContent = n + ' Kommentar' + (n !== 1 ? 'e' : '');
+
+            // Find section title
+            var btn = document.querySelector('[data-note="' + currentSection + '"]');
+            var titleEl = btn ? btn.closest('summary') : null;
+            var titleText = '';
+            if (titleEl) {
+                var t = titleEl.querySelector('.wt-drop-title');
+                if (t) titleText = t.textContent;
+                else titleText = titleEl.textContent.replace('+','').trim().split('\n')[0];
+            }
+            popTitle.textContent = '💬 ' + (titleText || currentSection);
+
+            if (n === 0) {
+                popBody.innerHTML = '<div class="wt-cmt-empty">Noch keine Notizen. Schreib was dazu!</div>';
             } else {
-                // Section-level: insert after section-body-inner's first element
-                const section = document.querySelector('[data-section="' + sectionId + '"]');
-                if (section) {
-                    const inner = section.querySelector('.wt-section-body-inner');
-                    if (inner) inner.insertAdjacentHTML('afterbegin', html);
-                }
-                // Sub-heading level
-                const sub = document.querySelector('[data-sub="' + sectionId + '"]');
-                if (sub) {
-                    sub.insertAdjacentHTML('afterend', html);
-                }
+                var html = '';
+                items.forEach(function(c, i) {
+                    html += '<div class="wt-cmt">' +
+                        '<span class="wt-cmt-text">' + esc(c.text) + '</span>' +
+                        '<span class="wt-cmt-time">' + esc(fmtTime(c.time)) + '</span>' +
+                        '<button class="wt-cmt-del" data-idx="' + i + '" title="Loeschen">&times;</button>' +
+                        '</div>';
+                });
+                popBody.innerHTML = html;
             }
 
-            // Rebind events on the new panel
-            const panel = document.querySelector('[data-panel="' + sectionId + '"]');
-            if (!panel) return;
-
-            // Send button
-            const sendBtn = panel.querySelector('[data-send="' + sectionId + '"]');
-            const input = panel.querySelector('[data-input="' + sectionId + '"]');
-            if (sendBtn && input) {
-                sendBtn.onclick = function() {
-                    addComment(sectionId, input.value);
-                    input.value = '';
-                    renderCommentPanel(sectionId);
-                    updateTriggerState(sectionId);
-                    showToast('Kommentar gespeichert ✓');
-                };
-                input.onkeydown = function(e) {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        sendBtn.click();
-                    }
-                };
-            }
-
-            // Delete buttons
-            panel.querySelectorAll('.wt-comment-delete').forEach(function(btn) {
-                btn.onclick = function() {
-                    deleteComment(btn.dataset.section, parseInt(btn.dataset.idx, 10));
-                    renderCommentPanel(sectionId);
-                    updateTriggerState(sectionId);
-                    showToast('Kommentar geloescht');
+            // Delete handlers
+            popBody.querySelectorAll('.wt-cmt-del').forEach(function(b) {
+                b.onclick = function() {
+                    delC(currentSection, parseInt(b.dataset.idx, 10));
+                    renderPopup();
+                    updateBadge(currentSection);
+                    toast('Geloescht');
                 };
             });
         }
 
-        // ═══ Update trigger button state ═══
-        function updateTriggerState(sectionId) {
-            const hasComments = comments[sectionId] && comments[sectionId].length > 0;
+        // Close popup
+        document.getElementById('popup-close').onclick = closePopup;
+        overlay.onclick = closePopup;
+        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closePopup(); });
 
-            // Section-level triggers
-            const section = document.querySelector('[data-section="' + sectionId + '"]');
-            if (section) {
-                const trigger = section.querySelector('.wt-comment-trigger');
-                if (trigger) trigger.classList.toggle('has-comments', hasComments);
-            }
+        // Send comment
+        document.getElementById('popup-send').onclick = function() {
+            if (!currentSection) return;
+            addC(currentSection, popInput.value);
+            popInput.value = '';
+            renderPopup();
+            updateBadge(currentSection);
+            toast('Gespeichert ✓');
+        };
+        popInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); document.getElementById('popup-send').click(); }
+        });
 
-            // Sub-heading triggers
-            const sub = document.querySelector('[data-sub="' + sectionId + '"]');
-            if (sub) {
-                const btn = sub.querySelector('.wt-sub-comment-btn');
-                if (btn) btn.classList.toggle('has-comments', hasComments);
-            }
+        // ═══ Badge State ═══
+        function updateBadge(sid) {
+            var btn = document.querySelector('[data-note="' + sid + '"]');
+            if (btn) btn.classList.toggle('has', !!(comments[sid] && comments[sid].length));
         }
 
-        // ═══ Toggle comment panel visibility ═══
-        function toggleCommentPanel(sectionId) {
-            let panel = document.querySelector('[data-panel="' + sectionId + '"]');
-            if (!panel) {
-                renderCommentPanel(sectionId);
-                panel = document.querySelector('[data-panel="' + sectionId + '"]');
-                if (panel) {
-                    panel.classList.add('visible');
-                    const input = panel.querySelector('.wt-comment-input');
-                    if (input) input.focus();
-                }
-            } else {
-                const isVisible = panel.classList.contains('visible');
-                panel.classList.toggle('visible');
-                if (!isVisible) {
-                    const input = panel.querySelector('.wt-comment-input');
-                    if (input) input.focus();
-                }
-            }
-        }
-
-        // ═══ Section Toggle ═══
-        function toggleSection(section) {
-            const isOpen = section.classList.contains('open');
-            section.classList.toggle('open');
-            const header = section.querySelector('.wt-section-header');
-            if (header) header.setAttribute('aria-expanded', !isOpen);
-        }
-
-        // ═══ Setup Sections ═══
-        function setupSections() {
-            document.querySelectorAll('.wt-section').forEach(function(section) {
-                const header = section.querySelector('.wt-section-header');
-                if (!header) return;
-
-                // Click on header (but NOT on + button) toggles section
-                header.addEventListener('click', function(e) {
-                    if (e.target.closest('.wt-comment-trigger')) return;
-                    toggleSection(section);
-                });
-
-                // Keyboard: Enter/Space
-                header.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        if (e.target.closest('.wt-comment-trigger')) return;
-                        toggleSection(section);
-                    }
-                });
-
-                // Comment trigger (+)
-                const trigger = section.querySelector('.wt-comment-trigger');
-                if (trigger) {
-                    trigger.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        const sid = section.dataset.section;
-                        // Auto-open section if closed
-                        if (!section.classList.contains('open')) {
-                            section.classList.add('open');
-                            header.setAttribute('aria-expanded', 'true');
-                        }
-                        toggleCommentPanel(sid);
-                    });
-                }
+        function updateAllBadges() {
+            document.querySelectorAll('[data-note]').forEach(function(btn) {
+                var sid = btn.dataset.note;
+                btn.classList.toggle('has', !!(comments[sid] && comments[sid].length));
             });
         }
 
-        // ═══ Setup Sub-Heading Comments ═══
-        function setupSubComments() {
-            document.querySelectorAll('.wt-sub-comment-btn').forEach(function(btn) {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const sub = btn.closest('.wt-sub-heading');
-                    if (!sub) return;
-                    const sid = sub.dataset.sub;
-                    toggleCommentPanel(sid);
-                });
+        // ═══ Note Buttons ("+") ═══
+        document.querySelectorAll('.wt-note-btn').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var sid = btn.dataset.note;
+                var rect = btn.getBoundingClientRect();
+                openPopup(sid, rect);
             });
-        }
-
-        // ═══ Render all existing comments on load ═══
-        function renderAllComments() {
-            Object.keys(comments).forEach(function(sid) {
-                if (comments[sid] && comments[sid].length > 0) {
-                    renderCommentPanel(sid);
-                    updateTriggerState(sid);
-                    // Auto-show panels with existing comments
-                    const panel = document.querySelector('[data-panel="' + sid + '"]');
-                    if (panel) panel.classList.add('visible');
-                }
-            });
-        }
+        });
 
         // ═══ Toolbar ═══
-        function setupToolbar() {
-            var btnExpand = document.getElementById('btn-expand-all');
-            var btnCollapse = document.getElementById('btn-collapse-all');
-            var btnExport = document.getElementById('btn-export-comments');
-            var btnClear = document.getElementById('btn-clear-comments');
+        document.getElementById('btn-open-all').onclick = function() {
+            document.querySelectorAll('.wt-drop, .wt-sub').forEach(function(d) { d.open = true; });
+        };
+        document.getElementById('btn-close-all').onclick = function() {
+            document.querySelectorAll('.wt-drop, .wt-sub').forEach(function(d) { d.open = false; });
+        };
+        document.getElementById('btn-export').onclick = function() {
+            var n = Object.keys(comments).reduce(function(s, k) { return s + (comments[k] ? comments[k].length : 0); }, 0);
+            if (!n) { toast('Keine Kommentare'); return; }
+            var blob = new Blob([JSON.stringify(comments, null, 2)], { type: 'application/json' });
+            var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = 'wt-kommentare-' + new Date().toISOString().slice(0,10) + '.json';
+            a.click(); URL.revokeObjectURL(a.href);
+            toast(n + ' Kommentare exportiert ✓');
+        };
+        document.getElementById('btn-clear').onclick = function() {
+            var n = Object.keys(comments).reduce(function(s, k) { return s + (comments[k] ? comments[k].length : 0); }, 0);
+            if (!n) { toast('Keine Kommentare'); return; }
+            if (!confirm('Alle ' + n + ' Kommentare loeschen?')) return;
+            comments = {}; save();
+            updateAllBadges();
+            toast('Alle geloescht');
+        };
 
-            if (btnExpand) {
-                btnExpand.addEventListener('click', function() {
-                    document.querySelectorAll('.wt-section').forEach(function(s) {
-                        s.classList.add('open');
-                        var h = s.querySelector('.wt-section-header');
-                        if (h) h.setAttribute('aria-expanded', 'true');
-                    });
-                    btnExpand.classList.add('active');
-                    if (btnCollapse) btnCollapse.classList.remove('active');
-                });
-            }
-
-            if (btnCollapse) {
-                btnCollapse.addEventListener('click', function() {
-                    document.querySelectorAll('.wt-section').forEach(function(s) {
-                        s.classList.remove('open');
-                        var h = s.querySelector('.wt-section-header');
-                        if (h) h.setAttribute('aria-expanded', 'false');
-                    });
-                    btnCollapse.classList.add('active');
-                    if (btnExpand) btnExpand.classList.remove('active');
-                });
-            }
-
-            if (btnExport) {
-                btnExport.addEventListener('click', function() {
-                    var count = Object.keys(comments).reduce(function(sum, k) {
-                        return sum + (comments[k] ? comments[k].length : 0);
-                    }, 0);
-                    if (count === 0) {
-                        showToast('Keine Kommentare vorhanden');
-                        return;
-                    }
-                    var blob = new Blob([JSON.stringify(comments, null, 2)], { type: 'application/json' });
-                    var url = URL.createObjectURL(blob);
-                    var a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'walkthrough-kommentare-' + new Date().toISOString().slice(0, 10) + '.json';
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    showToast(count + ' Kommentare exportiert ✓');
-                });
-            }
-
-            if (btnClear) {
-                btnClear.addEventListener('click', function() {
-                    var count = Object.keys(comments).reduce(function(sum, k) {
-                        return sum + (comments[k] ? comments[k].length : 0);
-                    }, 0);
-                    if (count === 0) {
-                        showToast('Keine Kommentare vorhanden');
-                        return;
-                    }
-                    if (!confirm('Alle ' + count + ' Kommentare loeschen?')) return;
-                    comments = {};
-                    saveComments();
-                    // Remove all panels
-                    document.querySelectorAll('.wt-comment-panel').forEach(function(p) { p.remove(); });
-                    // Reset trigger states
-                    document.querySelectorAll('.wt-comment-trigger, .wt-sub-comment-btn').forEach(function(t) {
-                        t.classList.remove('has-comments');
-                    });
-                    showToast('Alle Kommentare geloescht');
-                });
-            }
-        }
-
-        // ═══ Start ═══
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
-            init();
-        }
+        // ═══ Init ═══
+        load();
+        updateAllBadges();
     })();
     </script>
 </body>
