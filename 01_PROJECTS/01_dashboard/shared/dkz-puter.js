@@ -177,14 +177,51 @@ const DkzPuter = (() => {
         } catch { return []; }
     }
 
-    // ═══ AI (via puter.ai) ═══
+    // ═══ AI (via puter.ai) — mit Auto-SignIn + VPS Fallback ═══
     async function aiChat(prompt, model) {
         try {
             const sdk = await _loadSDK();
+            // Auto-SignIn wenn noetig
+            if (!_isSignedIn) {
+                try {
+                    if (await sdk.auth.isSignedIn()) {
+                        _isSignedIn = true;
+                        _user = await sdk.auth.getUser();
+                    } else {
+                        await sdk.auth.signIn();
+                        _isSignedIn = true;
+                        _user = await sdk.auth.getUser();
+                    }
+                } catch (authErr) {
+                    console.warn('[DkzPuter] Auth fehlgeschlagen, nutze VPS Fallback');
+                    return await _vpsFallback(prompt, model);
+                }
+            }
             const response = await sdk.ai.chat(prompt, { model: model || 'gpt-4o-mini' });
             return response;
         } catch (err) {
-            if(window.DKZ_DEBUG) console.warn('[DkzPuter]', err);
+            if(window.DKZ_DEBUG) console.warn('[DkzPuter] AI Fehler, Fallback:', err);
+            // Fallback auf VPS Gateway
+            return await _vpsFallback(prompt, model);
+        }
+    }
+
+    // VPS Gateway Fallback fuer Puter AI
+    async function _vpsFallback(prompt, model) {
+        try {
+            const r = await fetch('http://localhost:3040/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: model || 'qwen3:4b',
+                    messages: [{ role: 'user', content: prompt }],
+                    max_tokens: 2048
+                })
+            });
+            const d = await r.json();
+            return d.choices?.[0]?.message?.content || null;
+        } catch (e) {
+            console.warn('[DkzPuter] VPS Fallback auch fehlgeschlagen:', e);
             return null;
         }
     }

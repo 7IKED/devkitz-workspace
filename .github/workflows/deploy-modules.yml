@@ -1,0 +1,27 @@
+name: Deploy Modules to Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '01_PROJECTS/01_dashboard/modules/**/index.html'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy Dashboard Modules
+        # We assume you have a Cloudflare Pages project named "devkitz-site" 
+        # which is hooked to *.devkitz.eu via Custom Domains in Cloudflare.
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: devkitz-site # Dein primäres Cloudflare Projekt
+          directory: 01_PROJECTS/01_dashboard/modules/
+          # Optional: The branch to deploy to
+          branch: main

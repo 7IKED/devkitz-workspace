@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 
     <link rel="stylesheet" href="../shared/dkz-theme.css">
@@ -57,240 +57,281 @@
             </div>
         </section>
 
-        <!-- --- DUCKDUCKGO SEARCH --- -->
+        <!-- --- OMNI SEARCH --- -->
         <div class="search-wrap" id="search-section">
             <form class="search-bar" id="search-form" autocomplete="off">
                 <span class="search-icon">&#128269;</span>
-                <input type="text" id="search-input" placeholder="Suche mit DuckDuckGo..." autocomplete="off"
-                    spellcheck="false">
-                <span class="search-engine-badge">&#129414; DDG</span>
-                <button type="submit" class="search-submit" title="Suchen">&#10132;</button>
+                <input type="text" id="search-input" placeholder="Module, Dashboards, Hubs, Wissen durchsuchen..." autocomplete="off" spellcheck="false">
+                <span class="search-engine-badge">&#128270; OMNI</span>
+                <button type="submit" class="search-submit" title="Web-Suche (DDG)">&#10132;</button>
             </form>
+            <!-- Quick Filters -->
+            <div style="display:flex;gap:6px;margin-top:8px;justify-content:center;flex-wrap:wrap">
+                <button class="qf-btn qf-active" data-filter="all" onclick="omniFilter('all',this)">Alle</button>
+                <button class="qf-btn" data-filter="dash" onclick="omniFilter('dash',this)">&#128202; Dashboards</button>
+                <button class="qf-btn" data-filter="hub" onclick="omniFilter('hub',this)">&#128640; Hubs</button>
+                <button class="qf-btn" data-filter="build" onclick="omniFilter('build',this)">&#128295; Builder</button>
+                <button class="qf-btn" data-filter="arch" onclick="omniFilter('arch',this)">&#128218; Archiv</button>
+                <button class="qf-btn" data-filter="github" onclick="window.open('https://github.com/7IKED?tab=repositories&q='+encodeURIComponent(document.getElementById('search-input').value),'_blank')">&#128025; GitHub</button>
+                <button class="qf-btn" data-filter="drive" onclick="window.open('https://drive.google.com/drive/search?q='+encodeURIComponent(document.getElementById('search-input').value),'_blank')">&#128194; Drive</button>
+            </div>
+            <style>
+                .qf-btn { padding:5px 12px; border-radius:20px; border:1px solid var(--border,rgba(255,255,255,.08)); background:transparent; color:var(--muted,#888); font-size:11px; font-weight:600; font-family:var(--font,Inter,sans-serif); cursor:pointer; transition:all .2s; }
+                .qf-btn:hover { border-color:var(--accent,#fa1e4e); color:var(--text,#e8e8e8); }
+                .qf-btn.qf-active { background:rgba(250,30,78,.12); border-color:var(--accent,#fa1e4e); color:var(--accent,#fa1e4e); }
+                .cat-item.hidden, .tile.hidden { display:none !important; }
+                .cat-col.hidden { display:none !important; }
+                .omni-count { font-size:10px; color:var(--muted,#888); text-align:center; margin-top:6px; font-family:var(--mono,monospace); }
+            </style>
+            <div class="omni-count" id="omni-count"></div>
         </div>
+        <script>
+        // Omni-Search: Filtert alle Kategorien live
+        const searchInput = document.getElementById('search-input');
+        let activeFilter = 'all';
 
-        <!-- --- QUICK ACCESS TILES --- -->
+        // Column-to-filter mapping
+        const colMap = {
+            'dash': 0, 'hub': 1, 'build': 2, 'arch': 3
+        };
+
+        searchInput.addEventListener('input', () => omniSearch());
+
+        function omniFilter(filter, btn) {
+            if (filter === 'github' || filter === 'drive') return;
+            activeFilter = filter;
+            document.querySelectorAll('.qf-btn').forEach(b => b.classList.remove('qf-active'));
+            btn.classList.add('qf-active');
+            omniSearch();
+        }
+
+        function omniSearch() {
+            const q = searchInput.value.toLowerCase().trim();
+            const cols = document.querySelectorAll('.cat-col');
+            let total = 0, visible = 0;
+
+            cols.forEach((col, i) => {
+                const items = col.querySelectorAll('.cat-item');
+                let colVisible = 0;
+
+                items.forEach(item => {
+                    total++;
+                    const name = (item.querySelector('.ci-name')?.textContent || '').toLowerCase();
+                    const tag = (item.querySelector('.ci-tag')?.textContent || '').toLowerCase();
+                    const matchText = !q || name.includes(q) || tag.includes(q);
+                    const matchFilter = activeFilter === 'all' || colMap[activeFilter] === i;
+
+                    if (matchText && matchFilter) {
+                        item.classList.remove('hidden');
+                        colVisible++;
+                        visible++;
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+
+                // Hide entire column if no visible items
+                if (activeFilter !== 'all' && colMap[activeFilter] !== i) {
+                    col.classList.add('hidden');
+                } else {
+                    col.classList.toggle('hidden', colVisible === 0 && q.length > 0);
+                }
+            });
+
+            // Also filter walk tiles and service tiles
+            document.querySelectorAll('#walk-grid .tile, #services-grid .tile').forEach(tile => {
+                total++;
+                const text = tile.textContent.toLowerCase();
+                if (!q || text.includes(q)) {
+                    tile.classList.remove('hidden');
+                    visible++;
+                } else {
+                    tile.classList.add('hidden');
+                }
+            });
+
+            const countEl = document.getElementById('omni-count');
+            if (q.length > 0) {
+                countEl.textContent = visible + ' / ' + total + ' gefunden';
+            } else {
+                countEl.textContent = '';
+                // Reset column visibility
+                cols.forEach((col, i) => {
+                    if (activeFilter === 'all' || colMap[activeFilter] === i) {
+                        col.classList.remove('hidden');
+                    }
+                });
+            }
+        }
+
+        // Enter = Web-Suche via DDG
+        document.getElementById('search-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const q = searchInput.value.trim();
+            if (q) window.open('https://duckduckgo.com/?q=' + encodeURIComponent(q), '_blank');
+        });
+        </script>
+
+        <!-- --- 4 SPALTEN KATEGORIEN --- -->
         <div class="section" id="tiles-section">
             <div class="section-header">
                 <h2>&#9889; Schnellzugriff</h2>
                 <div class="line"></div>
             </div>
-            <div class="tile-grid" id="tile-grid">
 
-                <!-- DkZ Mainboard -->
-                <a class="tile" href="../mainboard/index.html" id="tile-mainboard">
-                    <span class="tile-icon">&#128421;</span>
-                    <div class="tile-name">DkZ Mainboard&#8482; <span id="info-mainboard"></span></div>
-                    <div class="tile-desc">Zentrales Dashboard f&#252;r alle Projekte und Module</div>
-                    <div class="tile-footer">
-                        <span class="tile-tag tag-core">CORE</span>
-                        <div class="tile-status"><span class="dot"></span> Online</div>
-                    </div>
-                </a>
+            <style>
+                .cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+                @media (max-width: 900px) { .cat-grid { grid-template-columns: repeat(2, 1fr); } }
+                @media (max-width: 520px) { .cat-grid { grid-template-columns: 1fr; } }
+                .cat-col { background: var(--card, rgba(255,255,255,.03)); border: 1px solid var(--border, rgba(255,255,255,.08)); border-radius: 16px; overflow: hidden; }
+                .cat-head { padding: 14px 16px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border, rgba(255,255,255,.08)); display: flex; align-items: center; gap: 8px; }
+                .cat-list { list-style: none; margin: 0; padding: 6px 0; }
+                .cat-item { display: block; padding: 10px 16px; color: var(--text, #e8e8e8); text-decoration: none; font-size: 12px; font-weight: 500; transition: all .2s; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,.03); }
+                .cat-item:last-child { border-bottom: none; }
+                .cat-item:hover { background: rgba(255,255,255,.04); padding-left: 20px; }
+                .cat-item .ci-icon { font-size: 15px; width: 22px; text-align: center; flex-shrink: 0; }
+                .cat-item .ci-name { flex: 1; }
+                .cat-item .ci-tag { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 10px; text-transform: uppercase; letter-spacing: .5px; flex-shrink: 0; }
+                .tag-live { background: rgba(0,255,136,.12); color: #00ff88; }
+                .tag-dash { background: rgba(85,172,238,.12); color: #55acee; }
+                .tag-hub { background: rgba(250,30,78,.12); color: #fa1e4e; }
+                .tag-build { background: rgba(255,184,0,.12); color: #ffb800; }
+                .tag-arch { background: rgba(99,102,241,.12); color: #6366f1; }
+            </style>
 
-                <!-- Drive Organizer -->
-                <a class="tile" href="../drive-organizer/dashboard.html" id="tile-drive">
-                    <span class="tile-icon">&#128194;</span>
-                    <div class="tile-name">Drive Organizer</div>
-                    <div class="tile-desc">Google Drive Struktur & 5&#8211;99 Organisation</div>
-                    <div class="tile-footer">
-                        <span class="tile-tag tag-tool">TOOL</span>
-                        <div class="tile-status"><span class="dot"></span> Online</div>
-                    </div>
-                </a>
+            <div class="cat-grid">
 
-                <!-- SEO Dashboard -->
-                <a class="tile" href="../seo-dashboard/index.html" id="tile-seo">
-                    <span class="tile-icon">&#128187;</span>
-                    <div class="tile-name">SEO Dashboard</div>
-                    <div class="tile-desc">SEO Analyzer, AdSense, Google Business & Maps</div>
-                    <div class="tile-footer">
-                        <span class="tile-tag tag-tool">TOOL</span>
-                        <div class="tile-status"><span class="dot"></span> Online</div>
+                <!-- ═══ SPALTE 1: DASHBOARDS ═══ -->
+                <div class="cat-col">
+                    <div class="cat-head" style="color:#55acee">&#128202; Dashboards</div>
+                    <div class="cat-list">
+                        <a class="cat-item" href="../mainboard/index.html"><span class="ci-icon">&#128421;</span><span class="ci-name">DkZ Mainboard&#8482;</span><span class="ci-tag tag-dash">CORE</span></a>
+                        <a class="cat-item" href="../agenten_dashboard/index.html"><span class="ci-icon">&#129302;</span><span class="ci-name">Agenten Dashboard</span><span class="ci-tag tag-dash">ADMIN</span></a>
+                        <a class="cat-item" href="../seo-dashboard/index.html"><span class="ci-icon">&#128200;</span><span class="ci-name">SEO Dashboard</span><span class="ci-tag tag-dash">SEO</span></a>
+                        <a class="cat-item" href="../modules/social-dashboard/index.html"><span class="ci-icon">&#127760;</span><span class="ci-name">Social Dashboard</span><span class="ci-tag tag-dash">SOCIAL</span></a>
+                        <a class="cat-item" href="../modules/loop-dashboard/index.html"><span class="ci-icon">&#128260;</span><span class="ci-name">Loop Dashboard</span><span class="ci-tag tag-dash">AUTO</span></a>
+                        <a class="cat-item" href="../modules/llm-cost-board/index.html"><span class="ci-icon">&#128176;</span><span class="ci-name">LLM Cost Board</span><span class="ci-tag tag-dash">TOOL</span></a>
+                        <a class="cat-item" href="../modules/webhook-dashboard/index.html"><span class="ci-icon">&#128268;</span><span class="ci-name">Webhook Dashboard</span><span class="ci-tag tag-dash">API</span></a>
+                        <a class="cat-item" href="../modules/cost-dashboard/index.html"><span class="ci-icon">&#128178;</span><span class="ci-name">Cost Dashboard</span><span class="ci-tag tag-dash">$$</span></a>
+                        <a class="cat-item" href="../blogger-dashboard/index.html"><span class="ci-icon">&#128221;</span><span class="ci-name">Blogger Dashboard</span><span class="ci-tag tag-dash">BLOG</span></a>
+                        <a class="cat-item" href="../modules/vps-monitor/index.html"><span class="ci-icon">&#128187;</span><span class="ci-name">VPS Monitor</span><span class="ci-tag tag-dash">VPS</span></a>
+                        <a class="cat-item" href="../modules/kontrollzentrum/index.html"><span class="ci-icon">&#128737;</span><span class="ci-name">Kontrollzentrum</span><span class="ci-tag tag-live">LIVE</span></a>
+                        <a class="cat-item" href="../modules/system-check/index.html"><span class="ci-icon">&#9881;</span><span class="ci-name">System-Check</span><span class="ci-tag tag-dash">ADMIN</span></a>
+                        <a class="cat-item" href="../modules/supervisor-panel/index.html"><span class="ci-icon">&#128065;</span><span class="ci-name">Supervisor Panel</span><span class="ci-tag tag-dash">ADMIN</span></a>
                     </div>
-                </a>
+                </div>
 
-                <!-- AI Chat -->
-                <a class="tile" href="../modules/ai_chat/index.html" id="tile-ai">
-                    <span class="tile-icon">&#129302;</span>
-                    <div class="tile-name">AI Chat</div>
-                    <div class="tile-desc">Multi-Modell Chat mit OpenRouter & Gemini</div>
-                    <div class="tile-footer">
-                        <span class="tile-tag tag-ai">AI</span>
-                        <div class="tile-status"><span class="dot"></span> Online</div>
+                <!-- ═══ SPALTE 2: HUBS ═══ -->
+                <div class="cat-col">
+                    <div class="cat-head" style="color:#fa1e4e">&#128640; Hubs</div>
+                    <div class="cat-list">
+                        <a class="cat-item" href="../hub/index.html"><span class="ci-icon">&#128640;</span><span class="ci-name">DkZ Hub</span><span class="ci-tag tag-hub">CORE</span></a>
+                        <a class="cat-item" href="../modules/free-ai-hub/index.html"><span class="ci-icon">&#129302;</span><span class="ci-name">Free AI Hub</span><span class="ci-tag tag-hub">AI</span></a>
+                        <a class="cat-item" href="../modules/drive-hub/index.html"><span class="ci-icon">&#128194;</span><span class="ci-name">Drive Hub</span><span class="ci-tag tag-hub">DRIVE</span></a>
+                        <a class="cat-item" href="../modules/pattern-hub/index.html"><span class="ci-icon">&#128208;</span><span class="ci-name">Pattern Hub</span><span class="ci-tag tag-hub">DEV</span></a>
+                        <a class="cat-item" href="../modules/template-hub/index.html"><span class="ci-icon">&#128196;</span><span class="ci-name">Template Hub</span><span class="ci-tag tag-hub">TPL</span></a>
+                        <a class="cat-item" href="../modules/openhumans-hub/index.html"><span class="ci-icon">&#129309;</span><span class="ci-name">OpenHumans Hub</span><span class="ci-tag tag-hub">AI</span></a>
+                        <a class="cat-item" href="../modules/nanobot-center/index.html"><span class="ci-icon">&#129516;</span><span class="ci-name">NanoBot Center</span><span class="ci-tag tag-hub">BOT</span></a>
+                        <a class="cat-item" href="../modules/ai_chat/index.html"><span class="ci-icon">&#128172;</span><span class="ci-name">AI Chat</span><span class="ci-tag tag-hub">CHAT</span></a>
+                        <a class="cat-item" href="http://localhost:3002" target="_blank"><span class="ci-icon">&#128126;</span><span class="ci-name">Hermes Frontend</span><span class="ci-tag tag-live">LIVE</span></a>
+                        <a class="cat-item" href="../modules/grok-chat/index.html"><span class="ci-icon">&#129302;</span><span class="ci-name">Grok Chat Heavy</span><span class="ci-tag tag-live">xAI</span></a>
+                        <a class="cat-item" href="../modules/hermes-3d/index.html"><span class="ci-icon">&#127756;</span><span class="ci-name">Hermes 3D</span><span class="ci-tag tag-hub">3D</span></a>
+                        <a class="cat-item" href="../modules/llm-arena/index.html"><span class="ci-icon">&#127941;</span><span class="ci-name">LLM Arena</span><span class="ci-tag tag-hub">AI</span></a>
+                        <a class="cat-item" href="../modules/copilot-presentation/index.html"><span class="ci-icon">&#128187;</span><span class="ci-name">Copilot Deck</span><span class="ci-tag tag-hub">DECK</span></a>
+                        <a class="cat-item" href="../drive-organizer/dashboard.html"><span class="ci-icon">&#128193;</span><span class="ci-name">Drive Organizer</span><span class="ci-tag tag-hub">ORG</span></a>
                     </div>
-                </a>
+                </div>
 
-                <!-- Prompt Builder -->
-                <a class="tile" href="../modules/prompt-generator/index.html" id="tile-prompt">
-                    <span class="tile-icon">&#9881;</span>
-                    <div class="tile-name">Prompt Generator <span id="info-prompt"></span></div>
-                    <div class="tile-desc">Timeline Aktionsketten-Builder f&#252;r KI-Prompts</div>
-                    <div class="tile-footer">
-                        <span class="tile-tag tag-ai">AI</span>
-                        <div class="tile-status"><span class="dot"></span> Online</div>
+                <!-- ═══ SPALTE 3: BUILDER ═══ -->
+                <div class="cat-col">
+                    <div class="cat-head" style="color:#ffb800">&#128295; Builder</div>
+                    <div class="cat-list">
+                        <a class="cat-item" href="../modules/prompt-generator/index.html"><span class="ci-icon">&#9881;</span><span class="ci-name">Prompt Generator</span><span class="ci-tag tag-build">AI</span></a>
+                        <a class="cat-item" href="../modules/workflow-builder/index.html"><span class="ci-icon">&#128260;</span><span class="ci-name">Workflow Builder</span><span class="ci-tag tag-build">AUTO</span></a>
+                        <a class="cat-item" href="../modules/agent-builder/index.html"><span class="ci-icon">&#129302;</span><span class="ci-name">Agent Builder</span><span class="ci-tag tag-build">BMAD</span></a>
+                        <a class="cat-item" href="../modules/skill-builder/index.html"><span class="ci-icon">&#128218;</span><span class="ci-name">Skill Builder</span><span class="ci-tag tag-build">SKILL</span></a>
+                        <a class="cat-item" href="../modules/app-builder/index.html"><span class="ci-icon">&#128241;</span><span class="ci-name">App Builder</span><span class="ci-tag tag-build">PWA</span></a>
+                        <a class="cat-item" href="../modules/blog-designer/index.html"><span class="ci-icon">&#127912;</span><span class="ci-name">Blog Designer</span><span class="ci-tag tag-build">BLOG</span></a>
+                        <a class="cat-item" href="../modules/cron-builder/index.html"><span class="ci-icon">&#9200;</span><span class="ci-name">Cron Builder</span><span class="ci-tag tag-build">CRON</span></a>
+                        <a class="cat-item" href="../modules/css-generator/index.html"><span class="ci-icon">&#127912;</span><span class="ci-name">CSS Generator</span><span class="ci-tag tag-build">CSS</span></a>
+                        <a class="cat-item" href="../modules/changelog-builder/index.html"><span class="ci-icon">&#128203;</span><span class="ci-name">Changelog Builder</span><span class="ci-tag tag-build">LOG</span></a>
+                        <a class="cat-item" href="../modules/nlm-builder/index.html"><span class="ci-icon">&#128218;</span><span class="ci-name">NLM Builder</span><span class="ci-tag tag-build">NLM</span></a>
+                        <a class="cat-item" href="../modules/hood-builder/index.html"><span class="ci-icon">&#128736;</span><span class="ci-name">Hood Builder</span><span class="ci-tag tag-build">DEV</span></a>
+                        <a class="cat-item" href="../modules/team-builder/index.html"><span class="ci-icon">&#129309;</span><span class="ci-name">Team Builder</span><span class="ci-tag tag-build">TEAM</span></a>
+                        <a class="cat-item" href="../modules/action-builder/index.html"><span class="ci-icon">&#9889;</span><span class="ci-name">Action Builder</span><span class="ci-tag tag-build">ACT</span></a>
                     </div>
-                </a>
+                </div>
 
-                <!-- OpenClaw -->
-                <a class="tile" href="../modules/openclaw/index.html" id="tile-claw">
-                    <span class="tile-icon">&#128187;</span>
-                    <div class="tile-name">OpenClaw&#8482;</div>
-                    <div class="tile-desc">Docker Orchestrator &#183; Almighty Control Center</div>
-                    <div class="tile-footer">
-                        <span class="tile-tag tag-core">DOCKER</span>
-                        <div class="tile-status"><span class="dot"></span> Online</div>
+                <!-- ═══ SPALTE 4: ARCHIV / WISSEN ═══ -->
+                <div class="cat-col">
+                    <div class="cat-head" style="color:#6366f1">&#128218; Archiv &middot; Wissen</div>
+                    <div class="cat-list">
+                        <a class="cat-item" href="../modules/iceberg/index.html"><span class="ci-icon">&#129529;</span><span class="ci-name">Iceberg Knowledge</span><span class="ci-tag tag-arch">LAKE</span></a>
+                        <a class="cat-item" href="../modules/wissen-hub/index.html"><span class="ci-icon">&#128218;</span><span class="ci-name">Wissen Hub</span><span class="ci-tag tag-arch">WIKI</span></a>
+                        <a class="cat-item" href="../knowledge-hub/index.html"><span class="ci-icon">&#128161;</span><span class="ci-name">Knowledge Hub</span><span class="ci-tag tag-arch">KB</span></a>
+                        <a class="cat-item" href="../modules/research-archive/index.html"><span class="ci-icon">&#128269;</span><span class="ci-name">Research Archive</span><span class="ci-tag tag-arch">RES</span></a>
+                        <a class="cat-item" href="../modules/playbook-archiv/index.html"><span class="ci-icon">&#128214;</span><span class="ci-name">Playbook Archiv</span><span class="ci-tag tag-arch">PLAY</span></a>
+                        <a class="cat-item" href="../modules/devkitz-wiki/index.html"><span class="ci-icon">&#128196;</span><span class="ci-name">DEVKiTZ Wiki</span><span class="ci-tag tag-arch">WIKI</span></a>
+                        <a class="cat-item" href="../modules/gallery/index.html"><span class="ci-icon">&#128248;</span><span class="ci-name">Gallery</span><span class="ci-tag tag-arch">IMG</span></a>
+                        <a class="cat-item" href="../modules/design-gallery/index.html"><span class="ci-icon">&#127912;</span><span class="ci-name">Design Gallery</span><span class="ci-tag tag-arch">UI</span></a>
+                        <a class="cat-item" href="../modules/vibe-gallery/index.html"><span class="ci-icon">&#127752;</span><span class="ci-name">Vibe Gallery</span><span class="ci-tag tag-arch">VIBE</span></a>
+                        <a class="cat-item" href="../modules/builder-gallery/index.html"><span class="ci-icon">&#128444;</span><span class="ci-name">Builder Gallery</span><span class="ci-tag tag-arch">BUILD</span></a>
+                        <a class="cat-item" href="../modules/media-gallery/index.html"><span class="ci-icon">&#127909;</span><span class="ci-name">Media Gallery</span><span class="ci-tag tag-arch">MEDIA</span></a>
+                        <a class="cat-item" href="../modules/second-brain/index.html"><span class="ci-icon">&#129504;</span><span class="ci-name">Second Brain</span><span class="ci-tag tag-arch">OBS</span></a>
+                        <a class="cat-item" href="../modules/graphify/index.html"><span class="ci-icon">&#128200;</span><span class="ci-name">Graphify</span><span class="ci-tag tag-arch">VIZ</span></a>
                     </div>
-                </a>
-
-                <!-- Flyer Pro -->
-                <a class="tile" href="../modules/flyer-engine/index.html" id="tile-flyer">
-                    <span class="tile-icon">&#128187;</span>
-                    <div class="tile-name">Flyer Pro</div>
-                    <div class="tile-desc">Design-Engine f&#252;r Flyer, Banner & Print</div>
-                    <div class="tile-footer">
-                        <span class="tile-tag tag-tool">DESIGN</span>
-                        <div class="tile-status"><span class="dot"></span> Online</div>
-                    </div>
-                </a>
-
-                <!-- AutoPilot -->
-                <a class="tile" href="../hub/index.html" id="tile-autopilot">
-                    <span class="tile-icon">&#128187;</span>
-                    <div class="tile-name">AutoPilot Hub</div>
-                    <div class="tile-desc">Browser-Automatisierung & Pattern-Engine</div>
-                    <div class="tile-footer">
-                        <span class="tile-tag tag-ai">AUTO</span>
-                        <div class="tile-status"><span class="dot"></span> Online</div>
-                    </div>
-                </a>
-
-                <!-- Text to Speech -->
-                <a class="tile" href="../modules/text_to_speech/index.html" id="tile-tts">
-                    <span class="tile-icon">&#128187;</span>
-                    <div class="tile-name">Text to Speech</div>
-                    <div class="tile-desc">Text in Sprache umwandeln</div>
-                    <div class="tile-footer">
-                        <span class="tile-tag tag-tool">AUDIO</span>
-                        <div class="tile-status"><span class="dot"></span> Online</div>
-                    </div>
-                </a>
-
-                <!-- Speech to Text -->
-                <a class="tile" href="../modules/speech_to_text/index.html" id="tile-stt">
-                    <span class="tile-icon">&#128187;</span>
-                    <div class="tile-name">Speech to Text</div>
-                    <div class="tile-desc">Sprache in Text transkribieren</div>
-                    <div class="tile-footer">
-                        <span class="tile-tag tag-tool">AUDIO</span>
-                        <div class="tile-status"><span class="dot"></span> Online</div>
-                    </div>
-                </a>
-
-                <!-- Analyser -->
-                <a class="tile" href="../modules/analyser/index.html" id="tile-analyser">
-                    <span class="tile-icon">&#128187;</span>
-                    <div class="tile-name">Code Analyser</div>
-                    <div class="tile-desc">Text & Code Analyse mit AI-Power</div>
-                    <div class="tile-footer">
-                        <span class="tile-tag tag-tool">TOOL</span>
-                        <div class="tile-status"><span class="dot"></span> Online</div>
-                    </div>
-                </a>
-
-                <!-- Raw API Hub -->
-                <a class="tile" href="../modules/raw-api-hub.html" id="tile-api">
-                    <span class="tile-icon">&#128187;</span>
-                    <div class="tile-name">Raw API Hub</div>
-                    <div class="tile-desc">Free API Pools &#183; Photos, Fonts, Templates</div>
-                    <div class="tile-footer">
-                        <span class="tile-tag tag-core">API</span>
-                        <div class="tile-status"><span class="dot"></span> Online</div>
-                    </div>
-                </a>
+                </div>
 
             </div>
+        </div>
 
-            <!-- DkZ Ecosystem Quick Links (via Guide System) -->
-            <div class="tile-grid" style="margin-top:12px" id="ecosystem-links">
-
-                <!-- Loop Dashboard -->
-                <a class="tile" href="../modules/loop-dashboard/index.html" id="tile-loops">
-                    <span class="tile-icon">&#128260;</span>
-                    <div class="tile-name">Loop Dashboard <span id="info-loops"></span></div>
-                    <div class="tile-desc">Loop Builder & Automatisierungs-Workflows</div>
-                    <div class="tile-footer">
-                        <span class="tile-tag tag-ai">AUTO</span>
-                        <div class="tile-status"><span class="dot"></span> Online</div>
-                    </div>
-                </a>
-
-                <!-- Iceberg -->
-                <a class="tile" href="../modules/iceberg/index.html" id="tile-iceberg">
-                    <span class="tile-icon">&#129529;</span>
-                    <div class="tile-name">Iceberg Knowledge Lake <span id="info-iceberg"></span></div>
-                    <div class="tile-desc">Wissens-Katalog mit James Lite Evaluator</div>
-                    <div class="tile-footer">
-                        <span class="tile-tag tag-core">CORE</span>
-                        <div class="tile-status"><span class="dot"></span> Online</div>
-                    </div>
-                </a>
-
-                <!-- LLM Cost Board -->
-                <a class="tile" href="../modules/llm-cost-board/index.html" id="tile-costs">
-                    <span class="tile-icon">&#128176;</span>
-                    <div class="tile-name">LLM Cost Board <span id="info-costs"></span></div>
-                    <div class="tile-desc">Token-Verbrauch & Kosten-Tracking</div>
-                    <div class="tile-footer">
-                        <span class="tile-tag tag-tool">TOOL</span>
-                        <div class="tile-status"><span class="dot"></span> Online</div>
-                    </div>
-                </a>
-
-                <!-- DkZ Hub -->
-                <a class="tile" href="../hub/index.html" id="tile-hub">
-                    <span class="tile-icon">&#128640;</span>
-                    <div class="tile-name">DkZ Hub <span id="info-hub"></span></div>
-                    <div class="tile-desc">Auto-Discovery Dashboard &#183; 59 Module</div>
-                    <div class="tile-footer">
-                        <span class="tile-tag tag-core">CORE</span>
-                        <div class="tile-status"><span class="dot"></span> Online</div>
-                    </div>
-                </a>
-
+        <!-- --- LETZTE 3 WALKTHROUGHS --- -->
+        <div class="section" id="walks-section">
+            <div class="section-header">
+                <h2>&#128214; Letzte Walkthroughs</h2>
+                <div class="line"></div>
             </div>
+            <div class="tile-grid" id="walk-grid">
 
-            <!-- Admin-Only Section -->
-            <div data-admin-only style="display:none">
-                <div class="section-header" style="margin-top:16px">
-                    <h2>&#128736; Admin Tools</h2>
-                    <div class="line"></div>
-                </div>
-                <div class="tile-grid" id="admin-tiles">
-                    <a class="tile" href="../modules/system-check/index.html" id="tile-syscheck">
-                        <span class="tile-icon">&#128187;</span>
-                        <div class="tile-name">System-Check</div>
-                        <div class="tile-desc">Dependencies, Health Status, Runtime</div>
-                        <div class="tile-footer"><span class="tile-tag tag-core">ADMIN</span></div>
-                    </a>
-                    <a class="tile" href="../modules/ruleboard/index.html" id="tile-rules">
-                        <span class="tile-icon">&#128187;</span>
-                        <div class="tile-name">Ruleboard</div>
-                        <div class="tile-desc">REGELWERK R0&#8211;R22 Referenz</div>
-                        <div class="tile-footer"><span class="tile-tag tag-core">ADMIN</span></div>
-                    </a>
-                    <a class="tile" href="../agenten_dashboard/index.html" id="tile-agents">
-                        <span class="tile-icon">&#128187;</span>
-                        <div class="tile-name">Agenten Dashboard</div>
-                        <div class="tile-desc">KI-Agenten Steuerung & Logs</div>
-                        <div class="tile-footer"><span class="tile-tag tag-ai">ADMIN</span></div>
-                    </a>
-                </div>
+                <!-- Walk 1: Tiefenanalyse -->
+                <a class="tile" href="walks/walk-tiefenanalyse.html" id="walk-1">
+                    <span class="tile-icon">&#128270;</span>
+                    <div class="tile-name">Tiefenanalyse &mdash; 16 Phantom-Systeme</div>
+                    <div class="tile-desc">Root-Cause Parser-Loop gefixt &middot; 500+ Dateien durchsucht &middot; 30+ Commits analysiert</div>
+                    <div class="tile-footer">
+                        <span class="tile-tag" style="background:rgba(255,59,92,0.15);color:#ff3b5c">&#128308; KRITISCH</span>
+                        <div class="tile-status"><span class="dot"></span> 01.06.2026</div>
+                    </div>
+                </a>
+
+                <!-- Walk 2: AgentSkills 100% -->
+                <a class="tile" href="walks/walk-agentskills.html" id="walk-2">
+                    <span class="tile-icon">&#127942;</span>
+                    <div class="tile-name">100% AgentSkills.io Compliance</div>
+                    <div class="tile-desc">54/54 Skills konform &middot; KVM4 Analyse &middot; Chirurg v2 Docker &middot; 4 Commits</div>
+                    <div class="tile-footer">
+                        <span class="tile-tag" style="background:rgba(0,255,136,0.15);color:#00ff88">&#9989; 100%</span>
+                        <div class="tile-status"><span class="dot"></span> 30.05.2026</div>
+                    </div>
+                </a>
+
+                <!-- Walk 3: 6 Neon Matrix PWAs -->
+                <a class="tile" href="walks/walk-neon-pwas.html" id="walk-3">
+                    <span class="tile-icon">&#127760;</span>
+                    <div class="tile-name">6 Neon Matrix PWAs</div>
+                    <div class="tile-desc">CopyPaste, TTS, Notes, Translate, Keep, Files &middot; React+Vite &middot; 3 parallele Builder</div>
+                    <div class="tile-footer">
+                        <span class="tile-tag" style="background:rgba(99,102,241,0.15);color:#6366f1">&#128241; PWA</span>
+                        <div class="tile-status"><span class="dot"></span> 29.05.2026</div>
+                    </div>
+                </a>
+
             </div>
         </div>
 
         <!-- --- BUSINESS WIDGETS (nur bei ?profile=business) --- -->
         <div class="section">
-            <div class="section-header business-widgets" style="display:none" id="biz-header">
+            <div class="section-header business-widgets" id="biz-header">
                 <h2>&#128188; Business Center</h2>
                 <div class="line"></div>
             </div>
@@ -346,6 +387,83 @@
                     </div>
                     <textarea class="biz-notes-area" id="biz-notes" placeholder="Notizen hier eingeben..."></textarea>
                 </div>
+
+            </div>
+        </div>
+
+        <!-- --- LIVE SERVICES --- -->
+        <div class="section" id="services-section">
+            <div class="section-header">
+                <h2>&#x1F680; Live Services</h2>
+                <div class="line"></div>
+            </div>
+            <div class="tile-grid" id="services-grid">
+
+                <!-- Hermes Frontend -->
+                <a class="tile" href="http://localhost:3002" target="_blank" id="tile-hermes">
+                    <span class="tile-icon">&#x1F916;</span>
+                    <div class="tile-name">Hermes Frontend</div>
+                    <div class="tile-desc">Agent Workspace &middot; LLM Chat &middot; Code &middot; Grok Heavy</div>
+                    <div class="tile-footer">
+                        <span class="tile-tag" style="background:rgba(0,255,136,0.15);color:#00ff88">LIVE</span>
+                        <div class="tile-status"><span class="dot"></span> :3002</div>
+                    </div>
+                </a>
+
+                <!-- Hermes 3D -->
+                <a class="tile" href="../modules/hermes-3d/index.html" id="tile-hermes3d">
+                    <span class="tile-icon">&#x1F30C;</span>
+                    <div class="tile-name">Hermes 3D</div>
+                    <div class="tile-desc">Agent Ecosystem &middot; Three.js &middot; BMAD Visualisierung</div>
+                    <div class="tile-footer">
+                        <span class="tile-tag" style="background:rgba(250,30,78,0.15);color:#fa1e4e">3D</span>
+                        <div class="tile-status"><span class="dot"></span> Online</div>
+                    </div>
+                </a>
+
+                <!-- Copilot -->
+                <a class="tile" href="../modules/copilot-presentation/index.html" id="tile-copilot">
+                    <span class="tile-icon">&#x1F4BB;</span>
+                    <div class="tile-name">Copilot Presentation</div>
+                    <div class="tile-desc">Features &middot; Showcase &middot; Deck</div>
+                    <div class="tile-footer">
+                        <span class="tile-tag" style="background:rgba(59,130,246,0.15);color:#3b82f6">DECK</span>
+                        <div class="tile-status"><span class="dot"></span> Online</div>
+                    </div>
+                </a>
+
+                <!-- OpenCode -->
+                <a class="tile" href="../modules/kontrollzentrum/index.html" id="tile-opencode" title="OpenCode Log im Kontrollzentrum">
+                    <span class="tile-icon">&#x1F4DD;</span>
+                    <div class="tile-name">OpenCode Log</div>
+                    <div class="tile-desc">Session Logs &middot; Gemma 4 26B &middot; DeepSeek &middot; Qwen</div>
+                    <div class="tile-footer">
+                        <span class="tile-tag" style="background:rgba(99,102,241,0.15);color:#6366f1">LOG</span>
+                        <div class="tile-status"><span class="dot"></span> TUI</div>
+                    </div>
+                </a>
+
+                <!-- Kontrollzentrum -->
+                <a class="tile" href="../modules/kontrollzentrum/index.html" id="tile-kontroll">
+                    <span class="tile-icon">&#x1F6E1;</span>
+                    <div class="tile-name">Kontrollzentrum</div>
+                    <div class="tile-desc">Watchdog &middot; EventLog &middot; AutoHealth &middot; Hermes Embed</div>
+                    <div class="tile-footer">
+                        <span class="tile-tag tag-core">CORE</span>
+                        <div class="tile-status"><span class="dot"></span> Online</div>
+                    </div>
+                </a>
+
+                <!-- Landing Page Server -->
+                <a class="tile" href="http://localhost:7777" id="tile-landing">
+                    <span class="tile-icon">&#x1F3E0;</span>
+                    <div class="tile-name">Landing Page</div>
+                    <div class="tile-desc">Diese Seite &middot; DkZ Landing&trade; &middot; Port 7777</div>
+                    <div class="tile-footer">
+                        <span class="tile-tag" style="background:rgba(255,184,0,0.15);color:#ffb800">HOME</span>
+                        <div class="tile-status"><span class="dot"></span> :7777</div>
+                    </div>
+                </a>
 
             </div>
         </div>

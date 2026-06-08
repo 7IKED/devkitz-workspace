@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes Overlay™ — Agent Control Center</title>
+<link rel="stylesheet" href="../../shared/dkz-theme.css">
+<style>
+/* ═══ OVERLAY VARIABLES ═══ */
+:root {
+  --card-deep: #14141a;
+  --surface: #0d0d12;
+  --border-subtle: #1e1e28;
+  --glow-accent: rgba(250, 30, 78, .12);
+  --glow-green: rgba(0, 255, 136, .12);
+  --tab-h: 44px;
+}
+
+/* ═══ TAB BAR ═══ */
+.tab-bar {
+  display: flex;
+  gap: 2px;
+  padding: 0 28px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 56px;
+  z-index: 90;
+}
+.tab-btn {
+  padding: 12px 20px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .25s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tab-btn:hover { color: var(--text); background: rgba(255,255,255,.02); }
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: rgba(var(--accent-rgb), .04);
+}
+.tab-btn .badge-count {
+  font-size: 9px;
+  font-family: var(--mono);
+  background: rgba(var(--accent-rgb), .15);
+  color: var(--accent);
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+/* ═══ TAB PANELS ═══ */
+.tab-panel { display: none; padding: 20px 28px; animation: dkzFadeIn .25s ease; }
+.tab-panel.active { display: block; }
+
+/* ═══ AMPEL DOT ═══ */
+.ampel-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.ampel-dot.green { background: var(--green); box-shadow: 0 0 8px rgba(0,255,136,.5); }
+.ampel-dot.yellow { background: var(--yellow); box-shadow: 0 0 8px rgba(255,184,0,.5); }
+.ampel-dot.red { background: var(--red); box-shadow: 0 0 8px rgba(255,59,92,.5); }
+
+/* ═══ CLOUD STATUS ═══ */
+.cloud-status {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10px; font-family: var(--mono);
+  padding: 4px 10px; border-radius: 6px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.02);
+}
+
+/* ═══ FOOTER STATS ═══ */
+.footer-stats {
+  display: flex;
+  gap: 4px;
+  padding: 8px 28px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  position: sticky;
+  bottom: 0;
+  z-index: 90;
+  flex-wrap: wrap;
+}
+.fstat {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10px; color: var(--muted);
+  padding: 4px 10px;
+  background: rgba(255,255,255,.02);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  font-family: var(--mono);
+}
+.fstat .fv { color: var(--accent); font-weight: 700; }
+
+/* ═══════════════════════════════════════
+   TAB 1: AGENTEN
+═══════════════════════════════════════ */
+.agent-toolbar {
+  display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.filter-btn {
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+}
+.filter-btn:hover { color: var(--text); border-color: rgba(var(--accent-rgb), .3); }
+.filter-btn.active {
+  background: rgba(var(--accent-rgb), .12);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.agent-search {
+  margin-left: auto;
+  padding: 5px 12px;
+  background: var(--card-deep);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 11px;
+  outline: none;
+  min-width: 180px;
+  transition: border .2s;
+}
+.agent-search:focus { border-color: var(--accent); }
+.agent-search::placeholder { color: var(--muted); }
+
+.agent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+.agent-card {
+  background: var(--card-deep);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  transition: all .25s;
+  cursor: default;
+}
+.agent-card:hover {
+  border-color: rgba(var(--accent-rgb), .25);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,0,0,.3);
+}
+.agent-icon {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.agent-icon.bmad { background: linear-gradient(135deg, var(--accent), #d91643); }
+.agent-icon.builders { background: linear-gradient(135deg, var(--yellow), #e6a500); }
+.agent-icon.antigravity { background: linear-gradient(135deg, var(--blue, #55ACEE), #3b82f6); }
+.agent-icon.infra { background: linear-gradient(135deg, var(--purple, #ec4899), #a855f7); }
+.agent-icon.github { background: linear-gradient(135deg, #6e5494, #4a3670); }
+.agent-icon.analyse { background: linear-gradient(135deg, var(--green), #00cc6e); }
+.agent-info { flex: 1; min-width: 0; }
+.agent-name {
+  font-size: 12px; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.agent-team {
+  font-size: 9px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .5px; margin-top: 2px;
+}
+.agent-activity {
+  font-size: 9px; color: var(--muted);
+  font-family: var(--mono); margin-top: 4px;
+}
+.agent-status {
+  width: 8px; height: 8px;
+  border-radius: 50%; flex-shrink: 0; margin-top: 4px;
+}
+.agent-status.green { background: var(--green); box-shadow: 0 0 6px rgba(0,255,136,.4); }
+.agent-status.yellow { background: var(--yellow); box-shadow: 0 0 6px rgba(255,184,0,.4); }
+.agent-status.red { background: var(--red); box-shadow: 0 0 6px rgba(255,59,92,.4); }
+
+/* ═══════════════════════════════════════
+   TAB 2: HERMES CONSOLE
+═══════════════════════════════════════ */
+.console-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.cstat {
+  background: var(--card-deep);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 14px;
+  text-align: center;
+}
+.cstat-icon { font-size: 22px; margin-bottom: 6px; }
+.cstat-val {
+  font-size: 20px; font-weight: 800;
+  font-family: var(--mono);
+}
+.cstat-label {
+  font-size: 9px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1px; margin-top: 2px;
+}
+.console-log {
+  background: var(--card-deep);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.console-log-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; gap: 8px;
+  color: var(--muted);
+}
+.console-log-header .live-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,255,136,.4); }
+  50% { opacity: .6; box-shadow: 0 0 8px 4px rgba(0,255,136,.15); }
+}
+.log-feed {
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 8px 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.7;
+}
+.log-line { display: flex; gap: 8px; }
+.log-ts { color: var(--muted); flex-shrink: 0; }
+.log-level { font-weight: 700; flex-shrink: 0; width: 40px; text-align: right; }
+.log-level.info { color: var(--blue, #55ACEE); }
+.log-level.ok { color: var(--green); }
+.log-level.warn { color: var(--yellow); }
+.log-level.err { color: var(--red); }
+.log-msg { color: var(--text); word-break: break-word; }
+
+.console-cmd {
+  display: flex; gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border-subtle);
+  background: rgba(255,255,255,.01);
+}
+.console-cmd input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 12px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  outline: none;
+}
+.console-cmd input:focus { border-color: var(--accent); }
+.console-cmd input::placeholder { color: var(--muted); }
+.console-cmd button {
+  padding: 7px 16px;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+}
+.console-cmd button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 10px rgba(var(--accent-rgb), .3);
+}
+
+/* ═══════════════════════════════════════
+   TAB 3: PAPERLESS
+═══════════════════════════════════════ */
+.paperless-toolbar {
+  display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;
+}
+.paperless-toolbar .input {
+  flex: 1; min-width: 200px;
+}
+.doc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+.doc-card {
+  background: var(--card-deep);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 14px;
+  transition: all .25s;
+}
+.doc-card:hover {
+  border-color: rgba(var(--accent-rgb), .25);
+  transform: translateY(-1px);
+}
+.doc-card-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.doc-card-icon { font-size: 22px; }
+.doc-card-title {
+  font-size: 12px; font-weight: 700;
+  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.doc-card-date { font-size: 9px; color: var(--muted); font-family: var(--mono); }
+.doc-card-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; }
+.doc-tag {
+  font-size: 9px; padding: 2px 8px;
+  border-radius: 6px; font-weight: 600;
+  background: rgba(var(--accent-rgb), .1);
+  color: var(--accent);
+  border: 1px solid rgba(var(--accent-rgb), .15);
+}
+.doc-card-ocr {
+  font-size: 9px; color: var(--muted); margin-top: 6px;
+  font-family: var(--mono);
+}
+.doc-card-ocr .ocr-ok { color: var(--green); }
+.doc-card-ocr .ocr-pending { color: var(--yellow); }
+.paperless-notice {
+  background: var(--card-deep);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.paperless-notice code {
+  background: rgba(255,255,255,.05);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+}
+
+/* ═══════════════════════════════════════
+   TAB 4: CLIPBOARD
+═══════════════════════════════════════ */
+.clip-sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 960px) { .clip-sections { grid-template-columns: 1fr; } }
+
+.clip-panel {
+  background: var(--card-deep);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.clip-panel-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.clip-panel-body {
+  padding: 10px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+.clip-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  transition: all .2s;
+  cursor: default;
+}
+.clip-item:hover {
+  border-color: rgba(var(--accent-rgb), .25);
+}
+.clip-cat {
+  font-size: 14px; flex-shrink: 0; margin-top: 1px;
+}
+.clip-content {
+  flex: 1; min-width: 0;
+  font-size: 11px;
+  font-family: var(--mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+  line-height: 1.5;
+}
+.clip-content .clip-label {
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 10px;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 2px;
+}
+.clip-actions {
+  display: flex; gap: 4px; flex-shrink: 0;
+}
+.clip-btn {
+  width: 26px; height: 26px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s;
+}
+.clip-btn:hover { color: var(--accent); border-color: var(--accent); }
+.clip-btn.del:hover { color: var(--red); border-color: var(--red); }
+
+.clip-add-bar {
+  display: flex; gap: 6px;
+  padding: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+.clip-add-bar input, .clip-add-bar select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 11px;
+  outline: none;
+}
+.clip-add-bar input { flex: 1; }
+.clip-add-bar input:focus, .clip-add-bar select:focus { border-color: var(--accent); }
+.clip-add-bar select { width: 90px; }
+.clip-add-bar button {
+  padding: 6px 12px;
+  background: var(--accent);
+  border: none; border-radius: 6px;
+  color: #fff; font-size: 11px; font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all .2s;
+}
+.clip-add-bar button:hover { box-shadow: 0 2px 8px rgba(var(--accent-rgb), .3); }
+
+.clip-cat-filters {
+  display: flex; gap: 4px; padding: 8px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.clip-cat-btn {
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 10px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.clip-cat-btn:hover { color: var(--text); }
+.clip-cat-btn.active {
+  background: rgba(var(--accent-rgb), .12);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width: 768px) {
+  .tab-bar { padding: 0 14px; overflow-x: auto; }
+  .tab-btn { padding: 10px 12px; font-size: 11px; }
+  .tab-panel { padding: 14px; }
+  .agent-grid { grid-template-columns: 1fr; }
+  .console-stats { grid-template-columns: repeat(2, 1fr); }
+  .doc-grid { grid-template-columns: 1fr; }
+  .footer-stats { padding: 6px 14px; }
+  .agent-toolbar { flex-direction: column; }
+  .agent-search { margin-left: 0; width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ BACKGROUND ═══ -->
+<div class="bg-mesh">
+  <div class="bg-blob"></div>
+  <div class="bg-blob"></div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div class="app">
+
+  <!-- ═══ HEADER ═══ -->
+  <header class="header">
+    <a href="../../hub/index.html" class="back-btn">← Hub</a>
+    <h1>Hermes Overlay™ — Agent Control Center</h1>
+    <div class="hdr-right">
+      <div class="cloud-status" id="cloudStatus">
+        <div class="ampel-dot green" id="cloudDot"></div>
+        <span id="cloudLabel">Puter: verbunden</span>
+      </div>
+      <div class="ampel-dot green" id="mainAmpel" title="System Health"></div>
+      <span class="ver">v1.0.0</span>
+    </div>
+  </header>
+
+  <!-- ═══ TAB BAR ═══ -->
+  <nav class="tab-bar" role="tablist">
+    <button class="tab-btn active" data-tab="agents" role="tab" aria-selected="true">
+      🤖 Agenten <span class="badge-count">51</span>
+    </button>
+    <button class="tab-btn" data-tab="console" role="tab" aria-selected="false">
+      📊 Hermes Console
+    </button>
+    <button class="tab-btn" data-tab="paperless" role="tab" aria-selected="false">
+      📄 Paperless
+    </button>
+    <button class="tab-btn" data-tab="paperclip" role="tab" aria-selected="false">
+      📋 Clipboard
+    </button>
+  </nav>
+
+  <!-- ═══ CONTENT ═══ -->
+  <main class="content" id="mainContent" style="padding:0;">
+
+    <!-- ══════════════════════════════
+         TAB 1: AGENTEN
+    ══════════════════════════════ -->
+    <div class="tab-panel active" id="panel-agents" role="tabpanel">
+      <div class="agent-toolbar">
+        <button class="filter-btn active" data-filter="all">Alle</button>
+        <button class="filter-btn" data-filter="bmad">BMAD</button>
+        <button class="filter-btn" data-filter="builders">Builders</button>
+        <button class="filter-btn" data-filter="antigravity">Antigravity</button>
+        <button class="filter-btn" data-filter="infra">Infra</button>
+        <button class="filter-btn" data-filter="github">GitHub</button>
+        <button class="filter-btn" data-filter="analyse">Analyse</button>
+        <input type="text" class="agent-search" id="agentSearch" placeholder="Agent suchen...">
+      </div>
+      <div class="agent-grid" id="agentGrid"></div>
+    </div>
+
+    <!-- ══════════════════════════════
+         TAB 2: HERMES CONSOLE
+    ══════════════════════════════ -->
+    <div class="tab-panel" id="panel-console" role="tabpanel">
+      <div class="console-stats" id="consoleStats"></div>
+      <div class="console-log">
+        <div class="console-log-header">
+          <div class="live-dot"></div>
+          LIVE LOG FEED
+        </div>
+        <div class="log-feed" id="logFeed"></div>
+        <div class="console-cmd">
+          <input type="text" id="cmdInput" placeholder="hermes> Befehl eingeben..." maxlength="200">
+          <button onclick="HermesOverlay.sendCmd()">Senden</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════
+         TAB 3: PAPERLESS
+    ══════════════════════════════ -->
+    <div class="tab-panel" id="panel-paperless" role="tabpanel">
+      <div class="paperless-toolbar">
+        <input type="text" class="input" id="paperlessSearch" placeholder="Dokument suchen...">
+        <select class="input" id="paperlessTagFilter" style="width:140px;">
+          <option value="">Alle Tags</option>
+        </select>
+        <button class="btn" onclick="HermesOverlay.uploadDoc()">📤 Upload</button>
+        <button class="btn secondary" onclick="HermesOverlay.refreshPaperless()">🔄 Refresh</button>
+      </div>
+      <div class="doc-grid" id="docGrid"></div>
+      <div class="paperless-notice" id="paperlessNotice" style="display:none;"></div>
+    </div>
+
+    <!-- ══════════════════════════════
+         TAB 4: CLIPBOARD
+    ══════════════════════════════ -->
+    <div class="tab-panel" id="panel-paperclip" role="tabpanel">
+      <div class="clip-sections">
+        <!-- Clipboard History -->
+        <div class="clip-panel">
+          <div class="clip-panel-header">
+            📋 Clipboard History
+            <span style="font-size:10px;color:var(--muted);font-family:var(--mono);" id="clipCount">0</span>
+          </div>
+          <div class="clip-cat-filters" id="clipCatFilters">
+            <button class="clip-cat-btn active" data-cat="all">Alle</button>
+            <button class="clip-cat-btn" data-cat="code">Code</button>
+            <button class="clip-cat-btn" data-cat="url">URLs</button>
+            <button class="clip-cat-btn" data-cat="text">Texte</button>
+            <button class="clip-cat-btn" data-cat="cmd">Commands</button>
+          </div>
+          <div class="clip-panel-body" id="clipList"></div>
+          <div class="clip-add-bar">
+            <input type="text" id="clipInput" placeholder="Neues Item..." maxlength="500">
+            <select id="clipCatSelect">
+              <option value="text">Text</option>
+              <option value="code">Code</option>
+              <option value="url">URL</option>
+              <option value="cmd">Cmd</option>
+            </select>
+            <button onclick="HermesOverlay.addClipItem()">+</button>
+          </div>
+        </div>
+
+        <!-- Snippet Manager -->
+        <div class="clip-panel">
+          <div class="clip-panel-header">
+            ✂️ Code Snippets
+            <span style="font-size:10px;color:var(--muted);font-family:var(--mono);" id="snippetCount">0</span>
+          </div>
+          <div class="clip-panel-body" id="snippetList"></div>
+          <div class="clip-add-bar">
+            <input type="text" id="snippetTitle" placeholder="Snippet Name..." maxlength="100" style="width:120px;">
+            <input type="text" id="snippetCode" placeholder="Code / Text..." maxlength="1000">
+            <button onclick="HermesOverlay.addSnippet()">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ═══ FOOTER STATS BAR ═══ -->
+  <footer class="footer-stats" id="footerStats"></footer>
+
+</div>
+
+<!-- ═══ TOAST ═══ -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+ *  Hermes Overlay™ — Agent Control Center v1.0.0
+ *  @DKZ:RULES → R1(esc), R5(localStorage), R8(no-umlauts)
+ *  @DKZ:TAG → [SYS:hermes-overlay] [CAT:module] [LANG:js]
+ * ═══════════════════════════════════════════════════════════════ */
+const HermesOverlay = (() => {
+'use strict';
+
+/* ═══ XSS PROTECTION (R1) ═══ */
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = String(s ?? '');
+  return d.innerHTML;
+}
+
+/* ═══ STORAGE KEYS ═══ */
+const KEYS = {
+  CLIP: 'dkz-clipboard-history',
+  SNIP: 'dkz-snippets',
+  LOGS: 'dkz-hermes-logs'
+};
+
+const MAX_CLIP = 100;
+
+/* ═══ 51 AGENTS REGISTRY ═══ */
+const AGENTS = [
+  // BMAD (7)
+  { id:1, name:'James Guardian', icon:'🎯', team:'bmad', status:'green', role:'Guardian — ueberwacht alle' },
+  { id:2, name:'DkZ PM', icon:'📋', team:'bmad', status:'green', role:'Product Manager, Specs' },
+  { id:3, name:'DkZ Architekt', icon:'🏗️', team:'bmad', status:'green', role:'plan.md, Tech-Stack' },
+  { id:4, name:'DkZ Developer', icon:'👨‍💻', team:'bmad', status:'green', role:'Coder, Ralph-Loop' },
+  { id:5, name:'DkZ Reviewer', icon:'🔍', team:'bmad', status:'green', role:'CodeRabbit QA' },
+  { id:6, name:'DkZ Tester', icon:'🧪', team:'bmad', status:'green', role:'Tests + Validierung' },
+  { id:7, name:'DkZ Dokumentar', icon:'📚', team:'bmad', status:'green', role:'README, Wiki' },
+  // Builders (14)
+  { id:8, name:'Wiki+Kanban Mega Builder', icon:'📖', team:'builders', status:'green', role:'Wiki Modul (8 Tabs)' },
+  { id:9, name:'Kanban+Patterns Builder', icon:'📋', team:'builders', status:'green', role:'GitHub Kanban Boards' },
+  { id:10, name:'LLMs.txt+GitHub Rules Builder', icon:'📄', team:'builders', status:'yellow', role:'llms.txt + KERN Backup' },
+  { id:11, name:'PWA Builder 1', icon:'📱', team:'builders', status:'green', role:'CopyPaste, TTS, QR' },
+  { id:12, name:'PWA Builder 2', icon:'📱', team:'builders', status:'green', role:'Timer, Clipboard, Screenshot' },
+  { id:13, name:'MiroFish Module Builder', icon:'🐟', team:'builders', status:'yellow', role:'MiroFish Simulator' },
+  { id:14, name:'GitNexus Module Builder', icon:'🔗', team:'builders', status:'green', role:'GitNexus Explorer' },
+  { id:15, name:'OpenHumans Module Builder', icon:'🧬', team:'builders', status:'yellow', role:'OpenHumans Hub' },
+  { id:16, name:'AiAiKirk Module Builder', icon:'🤖', team:'builders', status:'green', role:'AI Module Integration' },
+  { id:17, name:'CLOUDIA Module Builder', icon:'☁️', team:'builders', status:'green', role:'Cloud Control' },
+  { id:18, name:'DEEPKEEP Module Builder', icon:'🛡️', team:'builders', status:'green', role:'Security + Sanitizer' },
+  { id:19, name:'Webhook Hub Builder', icon:'🔔', team:'builders', status:'green', role:'Webhook Dashboard' },
+  { id:20, name:'Skeleton Module Builder', icon:'💀', team:'builders', status:'yellow', role:'Modul-Grundgerueste' },
+  { id:21, name:'Module Builder Batch', icon:'⚡', team:'builders', status:'green', role:'Mehrere Module parallel' },
+  // Antigravity Session (10)
+  { id:42, name:'CoPilot Builder', icon:'🚀', team:'antigravity', status:'green', role:'Python FastAPI Backend' },
+  { id:43, name:'Issue Fixer', icon:'🔧', team:'antigravity', status:'green', role:'CodeRabbit Issues fixen' },
+  { id:44, name:'LLMs Builder', icon:'📝', team:'antigravity', status:'green', role:'llms.txt nach GitHub' },
+  { id:45, name:'Module Builder', icon:'🏗️', team:'antigravity', status:'green', role:'Dashboard Module' },
+  { id:46, name:'Module Builder v2', icon:'✨', team:'antigravity', status:'green', role:'Hyperreal Aesthetics' },
+  { id:47, name:'Module Scaffold', icon:'🗂️', team:'antigravity', status:'green', role:'Modul-Grundgeruest' },
+  { id:48, name:'Git Cleanup', icon:'🧹', team:'antigravity', status:'yellow', role:'Git Staging, Commits' },
+  { id:49, name:'Git Housekeeping', icon:'🏠', team:'antigravity', status:'green', role:'Branches, Stashes' },
+  { id:50, name:'README Pusher', icon:'📄', team:'antigravity', status:'green', role:'Premium READMEs' },
+  { id:51, name:'React Panel Builder', icon:'⚛️', team:'antigravity', status:'green', role:'React Panel-Komponenten' },
+  // Infrastructure (8)
+  { id:22, name:'Infrastructure Researcher', icon:'🔬', team:'infra', status:'green', role:'VPS + Cloud Recherche' },
+  { id:23, name:'VPS Researcher', icon:'🖥️', team:'infra', status:'green', role:'KVM8 Server Analyse' },
+  { id:24, name:'Cloud Analyst', icon:'☁️', team:'infra', status:'yellow', role:'EU Cloud + Puter' },
+  { id:25, name:'Automation Script Builder', icon:'⚙️', team:'infra', status:'green', role:'Python/Bash Automatisierung' },
+  { id:26, name:'Python Automation', icon:'🐍', team:'infra', status:'green', role:'vps-auto-update.py' },
+  { id:27, name:'System Integration', icon:'🔌', team:'infra', status:'green', role:'System-Verbindungen' },
+  { id:28, name:'OpenHands Researcher', icon:'👐', team:'infra', status:'yellow', role:'OpenHands VPS' },
+  { id:29, name:'Drive Health Analyst', icon:'💾', team:'infra', status:'green', role:'Google Drive Sync' },
+  // GitHub (6)
+  { id:30, name:'7IKED Repos Updater', icon:'📦', team:'github', status:'green', role:'25 Repos READMEs' },
+  { id:31, name:'D-VKITZ Pusher', icon:'📤', team:'github', status:'green', role:'11 Repos READMEs' },
+  { id:32, name:'Issues Creator', icon:'🎫', team:'github', status:'green', role:'Issues #208-#247' },
+  { id:33, name:'Critical Issue Fixer', icon:'🚨', team:'github', status:'green', role:'P1/P2 Issues fixen' },
+  { id:34, name:'README Generator', icon:'📝', team:'github', status:'green', role:'Batch README Generierung' },
+  { id:35, name:'Git Branch Cleaner', icon:'✂️', team:'github', status:'yellow', role:'Alte Branches aufraeumen' },
+  // Analyse (6)
+  { id:36, name:'Unfinished Work Scanner', icon:'🔎', team:'analyse', status:'green', role:'Unfertige Module finden' },
+  { id:37, name:'Brain Conversation Scanner', icon:'🧠', team:'analyse', status:'green', role:'Brain durchsuchen' },
+  { id:38, name:'Features.json Drift Analyst', icon:'📊', team:'analyse', status:'yellow', role:'Module vs features.json' },
+  { id:39, name:'Workspace Structure Analyst', icon:'🗂️', team:'analyse', status:'green', role:'Ordnerstruktur' },
+  { id:40, name:'Git History Analyst', icon:'📜', team:'analyse', status:'green', role:'Git Log Auswertung' },
+  { id:41, name:'Legacy Project Analyst', icon:'🏚️', team:'analyse', status:'green', role:'Alte Projekte evaluieren' }
+];
+
+/* ═══ MOCK LOG DATA ═══ */
+const MOCK_LOGS = [
+  { ts:'19:24:01', level:'info', msg:'Hermes Gateway gestartet — Port 3040' },
+  { ts:'19:24:02', level:'ok',   msg:'NanoChat Bridge verbunden' },
+  { ts:'19:24:03', level:'info', msg:'51 Agenten registriert' },
+  { ts:'19:24:04', level:'ok',   msg:'Paperless-ngx API erreichbar (200 OK)' },
+  { ts:'19:24:05', level:'warn', msg:'Gemma4 E2B: Cold Start — 3.2s Latenz' },
+  { ts:'19:24:06', level:'info', msg:'Ralph-Loop Session TKT-042 gestartet' },
+  { ts:'19:24:07', level:'ok',   msg:'Health Check: GRUEN — alle Systeme nominal' },
+  { ts:'19:24:08', level:'info', msg:'LLM Logger: 847 Eintraege in DB' },
+  { ts:'19:24:09', level:'warn', msg:'Puter Cloud: Latenz 280ms (Threshold: 200ms)' },
+  { ts:'19:24:10', level:'err',  msg:'Webhook #12 fehlgeschlagen — Retry in 30s' },
+  { ts:'19:24:11', level:'ok',   msg:'Git Sync: 3 neue Commits gepusht' },
+  { ts:'19:24:12', level:'info', msg:'Clipboard: 23 Snippets geladen' },
+  { ts:'19:24:13', level:'ok',   msg:'REDNOTE Scanner: 0 neue Fehler' },
+  { ts:'19:24:14', level:'info', msg:'Session Memory: 512MB / 2048MB' },
+  { ts:'19:24:15', level:'ok',   msg:'Heartbeat: Alle 51 Agenten antworten' }
+];
+
+/* ═══ MOCK PAPERLESS DOCS ═══ */
+const MOCK_DOCS = [
+  { id:1, title:'DEVKiTZ Architecture v2', date:'2026-05-30', tags:['architektur','system'], ocr:'ok', icon:'📐' },
+  { id:2, title:'Sprint Planning KW22', date:'2026-05-28', tags:['sprint','planning'], ocr:'ok', icon:'📋' },
+  { id:3, title:'VPS Migration Guide', date:'2026-05-25', tags:['infra','vps'], ocr:'ok', icon:'🖥️' },
+  { id:4, title:'API Schema v3 Spec', date:'2026-05-22', tags:['api','spec'], ocr:'ok', icon:'📄' },
+  { id:5, title:'Security Audit Report', date:'2026-05-20', tags:['security','audit'], ocr:'ok', icon:'🛡️' },
+  { id:6, title:'LLM Cost Analysis Q2', date:'2026-05-18', tags:['llm','kosten'], ocr:'ok', icon:'💰' },
+  { id:7, title:'Dashboard Module Inventory', date:'2026-05-15', tags:['dashboard','module'], ocr:'ok', icon:'📊' },
+  { id:8, title:'Ralph-Loop Workflow Doc', date:'2026-05-12', tags:['workflow','ralph-loop'], ocr:'pending', icon:'🔄' },
+  { id:9, title:'Rechnung Hostinger Mai', date:'2026-05-10', tags:['rechnung','hosting'], ocr:'ok', icon:'🧾' },
+  { id:10, title:'BMAD Methodik Handbuch', date:'2026-05-08', tags:['methodik','bmad'], ocr:'ok', icon:'📖' },
+  { id:11, title:'GitHub Workflow Docs', date:'2026-05-05', tags:['github','ci-cd'], ocr:'ok', icon:'🔧' },
+  { id:12, title:'Netzwerk Topologie Diagramm', date:'2026-05-02', tags:['netzwerk','infra'], ocr:'pending', icon:'🌐' }
+];
+
+/* ═══ STATE ═══ */
+let currentTab = 'agents';
+let agentFilter = 'all';
+let agentSearchTerm = '';
+let clipFilter = 'all';
+let clipItems = [];
+let snippets = [];
+let paperlessOnline = false;
+
+/* ═══ TOAST ═══ */
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+/* ═══ PERSISTENCE ═══ */
+function loadClip() {
+  try {
+    const raw = localStorage.getItem(KEYS.CLIP);
+    if (raw) { clipItems = JSON.parse(raw); return; }
+  } catch(e) { /* fallback */ }
+  clipItems = [
+    { id: Date.now()-5, cat:'code', content:'const esc = s => { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }' },
+    { id: Date.now()-4, cat:'url', content:'https://paperless.devkitz.eu' },
+    { id: Date.now()-3, cat:'cmd', content:'git log --oneline -20' },
+    { id: Date.now()-2, cat:'text', content:'TODO: features.json Drift Check ausfuehren' },
+    { id: Date.now()-1, cat:'code', content:'document.querySelectorAll(".tab-btn").forEach(b => b.addEventListener("click", switchTab))' }
+  ];
+  saveClip();
+}
+function saveClip() {
+  if (clipItems.length > MAX_CLIP) clipItems = clipItems.slice(0, MAX_CLIP);
+  localStorage.setItem(KEYS.CLIP, JSON.stringify(clipItems));
+}
+
+function loadSnippets() {
+  try {
+    const raw = localStorage.getItem(KEYS.SNIP);
+    if (raw) { snippets = JSON.parse(raw); return; }
+  } catch(e) { /* fallback */ }
+  snippets = [
+    { id: Date.now()-3, title:'XSS esc()', code:'function esc(s){const d=document.createElement("div");d.textContent=String(s);return d.innerHTML}' },
+    { id: Date.now()-2, title:'Toast Trigger', code:'toast("Gespeichert!");' },
+    { id: Date.now()-1, title:'LocalStorage safe', code:'try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}' }
+  ];
+  saveSnippets();
+}
+function saveSnippets() { localStorage.setItem(KEYS.SNIP, JSON.stringify(snippets)); }
+
+/* ═══ TAB SWITCHING ═══ */
+function switchTab(tabId) {
+  currentTab = tabId;
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    const isActive = b.dataset.tab === tabId;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-selected', isActive);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => {
+    p.classList.toggle('active', p.id === 'panel-' + tabId);
+  });
+}
+
+/* ═══════════════════════════════════════
+   RENDER: AGENTS (TAB 1)
+═══════════════════════════════════════ */
+function renderAgents() {
+  const grid = document.getElementById('agentGrid');
+  const filtered = AGENTS.filter(a => {
+    if (agentFilter !== 'all' && a.team !== agentFilter) return false;
+    if (agentSearchTerm && !a.name.toLowerCase().includes(agentSearchTerm.toLowerCase())
+        && !a.role.toLowerCase().includes(agentSearchTerm.toLowerCase())) return false;
+    return true;
+  });
+
+  const timeStamps = ['vor 2m', 'vor 5m', 'vor 12m', 'vor 30m', 'vor 1h', 'vor 2h', 'vor 4h', 'heute'];
+
+  grid.innerHTML = filtered.map(a => {
+    const activity = timeStamps[Math.floor(Math.random() * timeStamps.length)];
+    return `<div class="agent-card">
+      <div class="agent-icon ${esc(a.team)}">${a.icon}</div>
+      <div class="agent-info">
+        <div class="agent-name">${esc(a.name)}</div>
+        <div class="agent-team">${esc(a.team)} · #${a.id}</div>
+        <div class="agent-activity">⏱ ${esc(activity)}</div>
+      </div>
+      <div class="agent-status ${esc(a.status)}" title="${esc(a.status)}"></div>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════
+   RENDER: HERMES CONSOLE (TAB 2)
+═══════════════════════════════════════ */
+function renderConsole() {
+  const statsEl = document.getElementById('consoleStats');
+  const stats = [
+    { icon:'🌐', val:'Online', label:'Gateway', color:'var(--green)' },
+    { icon:'📡', val:'3', label:'Sessions', color:'var(--accent)' },
+    { icon:'🔌', val:'12', label:'Plugins', color:'var(--blue, #55ACEE)' },
+    { icon:'⚡', val:'53', label:'Skills', color:'var(--yellow)' },
+    { icon:'🤖', val:'8', label:'Models', color:'var(--purple, #ec4899)' }
+  ];
+
+  statsEl.innerHTML = stats.map(s => `
+    <div class="cstat">
+      <div class="cstat-icon">${s.icon}</div>
+      <div class="cstat-val" style="color:${s.color}">${esc(s.val)}</div>
+      <div class="cstat-label">${esc(s.label)}</div>
+    </div>
+  `).join('');
+
+  renderLogs();
+}
+
+function renderLogs() {
+  const feed = document.getElementById('logFeed');
+  feed.innerHTML = MOCK_LOGS.map(l => `
+    <div class="log-line">
+      <span class="log-ts">${esc(l.ts)}</span>
+      <span class="log-level ${esc(l.level)}">${esc(l.level.toUpperCase())}</span>
+      <span class="log-msg">${esc(l.msg)}</span>
+    </div>
+  `).join('');
+  feed.scrollTop = feed.scrollHeight;
+}
+
+function sendCmd() {
+  const input = document.getElementById('cmdInput');
+  const cmd = input.value.trim();
+  if (!cmd) return;
+
+  const now = new Date();
+  const ts = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+
+  MOCK_LOGS.push({ ts, level:'info', msg: '> ' + cmd });
+
+  // Mock responses
+  const responses = {
+    'status': 'System nominal — 51 Agenten aktiv, 0 Fehler',
+    'health': 'Health Check: GRUEN — CPU 23%, RAM 61%, Disk 44%',
+    'agents': '51 Agenten registriert — 44 gruen, 7 gelb, 0 rot',
+    'help': 'Befehle: status, health, agents, logs, clear, paperless, skills'
+  };
+
+  const resp = responses[cmd.toLowerCase()] || 'Unbekannter Befehl: ' + cmd + ' — "help" fuer Hilfe';
+  MOCK_LOGS.push({ ts, level:'ok', msg: resp });
+
+  if (MOCK_LOGS.length > 50) MOCK_LOGS.splice(0, MOCK_LOGS.length - 50);
+
+  renderLogs();
+  input.value = '';
+}
+
+/* ═══════════════════════════════════════
+   RENDER: PAPERLESS (TAB 3)
+═══════════════════════════════════════ */
+async function renderPaperless() {
+  const grid = document.getElementById('docGrid');
+  const notice = document.getElementById('paperlessNotice');
+  const search = document.getElementById('paperlessSearch').value.toLowerCase();
+  const tagFilter = document.getElementById('paperlessTagFilter').value;
+
+  // Try live API
+  try {
+    const resp = await fetch('https://paperless.devkitz.eu/api/documents/?format=json', {
+      signal: AbortSignal.timeout(3000),
+      headers: { 'Accept': 'application/json' }
+    });
+    if (resp.ok) {
+      paperlessOnline = true;
+      notice.style.display = 'none';
+      // Live data would render here
+    }
+  } catch(e) {
+    paperlessOnline = false;
+  }
+
+  // Fallback: Mock data
+  let docs = MOCK_DOCS;
+  if (search) {
+    docs = docs.filter(d => d.title.toLowerCase().includes(search) ||
+      d.tags.some(t => t.toLowerCase().includes(search)));
+  }
+  if (tagFilter) {
+    docs = docs.filter(d => d.tags.includes(tagFilter));
+  }
+
+  // Build tag filter options
+  const allTags = [...new Set(MOCK_DOCS.flatMap(d => d.tags))].sort();
+  const tagSelect = document.getElementById('paperlessTagFilter');
+  if (tagSelect.options.length <= 1) {
+    allTags.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t;
+      opt.textContent = t;
+      tagSelect.appendChild(opt);
+    });
+  }
+
+  grid.innerHTML = docs.map(d => `
+    <div class="doc-card">
+      <div class="doc-card-header">
+        <span class="doc-card-icon">${d.icon}</span>
+        <span class="doc-card-title">${esc(d.title)}</span>
+      </div>
+      <div class="doc-card-date">📅 ${esc(d.date)}</div>
+      <div class="doc-card-tags">
+        ${d.tags.map(t => `<span class="doc-tag">${esc(t)}</span>`).join('')}
+      </div>
+      <div class="doc-card-ocr">OCR: <span class="${d.ocr === 'ok' ? 'ocr-ok' : 'ocr-pending'}">${d.ocr === 'ok' ? '✓ Verarbeitet' : '⏳ Ausstehend'}</span></div>
+    </div>
+  `).join('');
+
+  if (!paperlessOnline) {
+    notice.style.display = 'block';
+    notice.innerHTML = `
+      ⚠️ <strong>Paperless-ngx API nicht erreichbar</strong> — Mock-Daten werden angezeigt.<br><br>
+      Setup: <code>docker-compose up -d</code> auf VPS starten.<br>
+      API-Endpoint: <code>https://paperless.devkitz.eu/api/</code> oder <code>http://localhost:8000/api/</code><br>
+      Docs: <a href="https://docs.paperless-ngx.com" target="_blank" rel="noopener" style="color:var(--accent)">docs.paperless-ngx.com</a>
+    `;
+  }
+}
+
+function uploadDoc() {
+  toast('Upload: Paperless-ngx API wird benoetigt');
+}
+
+function refreshPaperless() {
+  renderPaperless();
+  toast('Paperless: Refresh ausgefuehrt');
+}
+
+/* ═══════════════════════════════════════
+   RENDER: CLIPBOARD (TAB 4)
+═══════════════════════════════════════ */
+const CAT_ICONS = { code:'💻', url:'🔗', text:'📝', cmd:'⌨️' };
+
+function renderClipboard() {
+  const list = document.getElementById('clipList');
+  const filtered = clipFilter === 'all' ? clipItems : clipItems.filter(c => c.cat === clipFilter);
+
+  document.getElementById('clipCount').textContent = clipItems.length + '/' + MAX_CLIP;
+
+  list.innerHTML = filtered.length === 0
+    ? '<div style="padding:20px;text-align:center;color:var(--muted);font-size:11px">Keine Items</div>'
+    : filtered.map(c => `
+    <div class="clip-item">
+      <span class="clip-cat">${CAT_ICONS[c.cat] || '📝'}</span>
+      <div class="clip-content">
+        <span class="clip-label">${esc(c.cat.toUpperCase())}</span>
+        ${esc(c.content)}
+      </div>
+      <div class="clip-actions">
+        <button class="clip-btn" onclick="HermesOverlay.copyClip(${c.id})" title="Kopieren">📋</button>
+        <button class="clip-btn del" onclick="HermesOverlay.delClip(${c.id})" title="Loeschen">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderSnippets() {
+  const list = document.getElementById('snippetList');
+  document.getElementById('snippetCount').textContent = snippets.length;
+
+  list.innerHTML = snippets.length === 0
+    ? '<div style="padding:20px;text-align:center;color:var(--muted);font-size:11px">Keine Snippets</div>'
+    : snippets.map(s => `
+    <div class="clip-item">
+      <span class="clip-cat">✂️</span>
+      <div class="clip-content">
+        <span class="clip-label">${esc(s.title)}</span>
+        ${esc(s.code)}
+      </div>
+      <div class="clip-actions">
+        <button class="clip-btn" onclick="HermesOverlay.copySnippet(${s.id})" title="Kopieren">📋</button>
+        <button class="clip-btn del" onclick="HermesOverlay.delSnippet(${s.id})" title="Loeschen">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addClipItem() {
+  const input = document.getElementById('clipInput');
+  const cat = document.getElementById('clipCatSelect').value;
+  const content = input.value.trim();
+  if (!content) return;
+
+  clipItems.unshift({ id: Date.now(), cat, content });
+  saveClip();
+  renderClipboard();
+  renderFooter();
+  input.value = '';
+  toast('Clipboard: Item hinzugefuegt');
+}
+
+function delClip(id) {
+  clipItems = clipItems.filter(c => c.id !== id);
+  saveClip();
+  renderClipboard();
+  renderFooter();
+}
+
+function copyClip(id) {
+  const item = clipItems.find(c => c.id === id);
+  if (!item) return;
+  navigator.clipboard.writeText(item.content).then(() => toast('Kopiert!')).catch(() => toast('Kopieren fehlgeschlagen'));
+}
+
+function addSnippet() {
+  const titleEl = document.getElementById('snippetTitle');
+  const codeEl = document.getElementById('snippetCode');
+  const title = titleEl.value.trim();
+  const code = codeEl.value.trim();
+  if (!title || !code) return;
+
+  snippets.unshift({ id: Date.now(), title, code });
+  saveSnippets();
+  renderSnippets();
+  titleEl.value = '';
+  codeEl.value = '';
+  toast('Snippet gespeichert');
+}
+
+function delSnippet(id) {
+  snippets = snippets.filter(s => s.id !== id);
+  saveSnippets();
+  renderSnippets();
+}
+
+function copySnippet(id) {
+  const s = snippets.find(x => x.id === id);
+  if (!s) return;
+  navigator.clipboard.writeText(s.code).then(() => toast('Snippet kopiert!')).catch(() => toast('Fehlgeschlagen'));
+}
+
+/* ═══ FOOTER ═══ */
+function renderFooter() {
+  const activeAgents = AGENTS.filter(a => a.status === 'green').length;
+  const el = document.getElementById('footerStats');
+  el.innerHTML = `
+    <div class="fstat">🤖 Agenten aktiv: <span class="fv">${activeAgents}/51</span></div>
+    <div class="fstat">📡 Hermes Sessions: <span class="fv">3</span></div>
+    <div class="fstat">📄 Paperless Docs: <span class="fv">${MOCK_DOCS.length}</span></div>
+    <div class="fstat">📎 Clipboard Items: <span class="fv">${clipItems.length}</span></div>
+    <div class="fstat">📊 LLM Logs: <span class="fv">${MOCK_LOGS.length}</span></div>
+  `;
+}
+
+/* ═══ CLOUD STATUS CHECK ═══ */
+async function checkCloud() {
+  const dot = document.getElementById('cloudDot');
+  const label = document.getElementById('cloudLabel');
+  try {
+    if (typeof window.puter !== 'undefined') {
+      dot.className = 'ampel-dot green';
+      label.textContent = 'Puter: verbunden';
+      return;
+    }
+  } catch(e) { /* offline */ }
+  dot.className = 'ampel-dot yellow';
+  label.textContent = 'Puter: offline';
+}
+
+/* ═══ EVENT LISTENERS ═══ */
+function initEvents() {
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  // Agent filter buttons
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      agentFilter = btn.dataset.filter;
+      renderAgents();
+    });
+  });
+
+  // Agent search
+  document.getElementById('agentSearch').addEventListener('input', e => {
+    agentSearchTerm = e.target.value;
+    renderAgents();
+  });
+
+  // Clipboard category filter
+  document.querySelectorAll('.clip-cat-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.clip-cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      clipFilter = btn.dataset.cat;
+      renderClipboard();
+    });
+  });
+
+  // Paperless search
+  document.getElementById('paperlessSearch').addEventListener('input', () => renderPaperless());
+  document.getElementById('paperlessTagFilter').addEventListener('change', () => renderPaperless());
+
+  // Console command enter
+  document.getElementById('cmdInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendCmd();
+  });
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    if (e.key === '1') switchTab('agents');
+    if (e.key === '2') switchTab('console');
+    if (e.key === '3') switchTab('paperless');
+    if (e.key === '4') switchTab('paperclip');
+  });
+}
+
+/* ═══ INIT ═══ */
+async function init() {
+  loadClip();
+  loadSnippets();
+  renderAgents();
+  renderConsole();
+  renderPaperless();
+  renderClipboard();
+  renderSnippets();
+  renderFooter();
+  initEvents();
+  await checkCloud();
+}
+
+init();
+
+/* ═══ PUBLIC API ═══ */
+return {
+  switchTab,
+  sendCmd,
+  addClipItem,
+  delClip,
+  copyClip,
+  addSnippet,
+  delSnippet,
+  copySnippet,
+  uploadDoc,
+  refreshPaperless,
+  toast
+};
+
+})();
+</script>
+<script src="../../shared/dkz-debug.js"></script>
+<script src="../../shared/dkz-navbar.js"></script>
+<script src="../../shared/dkz-llm-logger.js" defer></script>
+<script src="../../shared/dkz-premium.js" defer></script>
+</body>
+</html>

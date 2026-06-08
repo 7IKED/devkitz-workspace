@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DkZ CUBE² — Voice Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #060608; --surface: #0e0e12; --card: #14141a;
+            --border: #1e1e28; --text: #f0f0f2; --muted: #6a6a7a;
+            --accent: #fa1e4e; --green: #00ff88; --yellow: #ffb800;
+            --red: #ff3b5c; --blue: #55ACEE; --purple: #a855f7;
+            --font: 'Inter', sans-serif; --mono: 'JetBrains Mono', monospace;
+        }
+        body {
+            font-family: var(--font); background: var(--bg); color: var(--text);
+            min-height: 100vh; overflow-x: hidden;
+        }
+
+        /* ══ BG ══ */
+        .bg-mesh { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+        .bg-blob {
+            position: absolute; border-radius: 50%; filter: blur(120px); opacity: .15;
+            animation: drift 12s ease-in-out infinite alternate;
+        }
+        .bg-blob:nth-child(1) { width: 300px; height: 300px; background: var(--accent); top: -50px; left: -50px; }
+        .bg-blob:nth-child(2) { width: 250px; height: 250px; background: var(--purple); bottom: -30px; right: -30px; animation-delay: -4s; }
+        .bg-blob:nth-child(3) { width: 200px; height: 200px; background: var(--green); top: 50%; left: 50%; transform: translate(-50%,-50%); animation-delay: -8s; }
+        @keyframes drift { to { transform: translate(30px, -20px) scale(1.1); } }
+
+        .app { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
+        /* ══ HEADER ══ */
+        .header {
+            padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(135deg, rgba(250,30,78,.04), rgba(168,85,247,.04));
+        }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; font-weight: 900;
+        }
+        .logo-text h1 { font-size: .85rem; font-weight: 800; letter-spacing: -.02em; }
+        .logo-text span { font-size: .55rem; color: var(--muted); font-family: var(--mono); }
+        .ampel { width: 10px; height: 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px rgba(0,255,136,.5); }
+
+        /* ══ STATUS BAR ══ */
+        .status-bar {
+            display: flex; gap: 6px; padding: 8px 20px; overflow-x: auto;
+            border-bottom: 1px solid var(--border); background: rgba(10,10,14,.5);
+        }
+        .status-pill {
+            display: flex; align-items: center; gap: 5px; padding: 4px 10px;
+            background: rgba(255,255,255,.03); border: 1px solid var(--border);
+            border-radius: 8px; font-size: .55rem; font-family: var(--mono);
+            white-space: nowrap; flex-shrink: 0;
+        }
+        .status-dot { width: 5px; height: 5px; border-radius: 50%; }
+        .status-dot.on { background: var(--green); box-shadow: 0 0 4px var(--green); }
+        .status-dot.off { background: var(--red); }
+        .status-dot.warn { background: var(--yellow); }
+
+        /* ══ VOICE BUTTON ══ */
+        .voice-section {
+            flex: 1; display: flex; flex-direction: column; align-items: center;
+            justify-content: center; padding: 40px 20px; gap: 20px;
+        }
+        .voice-btn {
+            width: 120px; height: 120px; border-radius: 50%; border: none;
+            background: linear-gradient(135deg, var(--accent), #d91640);
+            color: #fff; font-size: 40px; cursor: pointer;
+            box-shadow: 0 0 0 0 rgba(250,30,78,.3);
+            transition: all .3s; position: relative;
+        }
+        .voice-btn:active { transform: scale(.95); }
+        .voice-btn.listening {
+            animation: pulse-ring 1.5s infinite;
+            box-shadow: 0 0 40px rgba(250,30,78,.4);
+        }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(250,30,78,.4); }
+            70% { box-shadow: 0 0 0 25px rgba(250,30,78,0); }
+            100% { box-shadow: 0 0 0 0 rgba(250,30,78,0); }
+        }
+        .voice-btn .ripple {
+            position: absolute; inset: -8px; border-radius: 50%;
+            border: 2px solid var(--accent); opacity: 0;
+        }
+        .voice-btn.listening .ripple {
+            animation: ripple-out 2s infinite;
+        }
+        .voice-btn.listening .ripple:nth-child(2) { animation-delay: .5s; }
+        .voice-btn.listening .ripple:nth-child(3) { animation-delay: 1s; }
+        @keyframes ripple-out {
+            0% { transform: scale(1); opacity: .5; }
+            100% { transform: scale(1.6); opacity: 0; }
+        }
+
+        .voice-label { font-size: .75rem; color: var(--muted); font-weight: 600; }
+        .voice-transcript {
+            max-width: 320px; text-align: center; font-size: .8rem;
+            line-height: 1.5; min-height: 40px; color: var(--text);
+        }
+        .voice-transcript .interim { color: var(--muted); font-style: italic; }
+
+        /* ══ RESPONSE ══ */
+        .response-area {
+            margin: 0 20px; padding: 14px; background: var(--card);
+            border: 1px solid var(--border); border-radius: 12px;
+            max-height: 200px; overflow-y: auto; font-size: .78rem;
+            line-height: 1.6; display: none;
+        }
+        .response-area.visible { display: block; animation: slideUp .3s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .response-area code { font-family: var(--mono); background: rgba(255,255,255,.05); padding: 1px 4px; border-radius: 3px; font-size: .72rem; }
+        .response-area pre { background: rgba(0,0,0,.3); padding: 8px; border-radius: 6px; overflow-x: auto; font-family: var(--mono); font-size: .68rem; margin: 6px 0; }
+
+        /* ══ QUICK ACTIONS ══ */
+        .actions-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 8px; padding: 12px 20px;
+        }
+        .action-btn {
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            padding: 12px 6px; background: var(--card);
+            border: 1px solid var(--border); border-radius: 12px;
+            color: var(--text); font-size: .55rem; font-weight: 600;
+            cursor: pointer; transition: all .2s; text-decoration: none;
+        }
+        .action-btn:hover, .action-btn:active {
+            border-color: rgba(250,30,78,.3);
+            background: rgba(250,30,78,.05);
+            transform: translateY(-1px);
+        }
+        .action-btn .action-icon { font-size: 20px; }
+
+        /* ══ CHAT INPUT ══ */
+        .chat-bar {
+            display: flex; gap: 8px; padding: 12px 20px;
+            border-top: 1px solid var(--border); background: var(--surface);
+        }
+        .chat-input {
+            flex: 1; padding: 10px 14px; background: var(--card);
+            border: 1px solid var(--border); border-radius: 12px;
+            color: var(--text); font-family: var(--font); font-size: .8rem;
+            outline: none;
+        }
+        .chat-input:focus { border-color: var(--accent); }
+        .chat-input::placeholder { color: var(--muted); }
+        .chat-send {
+            width: 42px; height: 42px; border-radius: 12px; border: none;
+            background: linear-gradient(135deg, var(--accent), #d91640);
+            color: #fff; font-size: 1rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* ══ BOTTOM NAV ══ */
+        .bottom-nav {
+            display: flex; border-top: 1px solid var(--border);
+            background: var(--surface); padding: 6px 0 env(safe-area-inset-bottom, 8px);
+        }
+        .nav-item {
+            flex: 1; display: flex; flex-direction: column; align-items: center;
+            gap: 2px; padding: 6px 0; cursor: pointer; color: var(--muted);
+            font-size: .5rem; font-weight: 600; transition: color .2s;
+        }
+        .nav-item.active { color: var(--accent); }
+        .nav-item .nav-icon { font-size: 18px; }
+
+        /* ══ MODEL SELECT ══ */
+        .model-bar {
+            display: flex; align-items: center; gap: 8px;
+            padding: 6px 20px; border-bottom: 1px solid var(--border);
+            background: rgba(10,10,14,.5);
+        }
+        .model-bar label { font-size: .6rem; color: var(--muted); font-weight: 600; }
+        .model-bar select {
+            padding: 4px 8px; background: var(--card);
+            border: 1px solid var(--border); border-radius: 6px;
+            color: var(--text); font-size: .62rem; font-family: var(--font); outline: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-mesh">
+    <div class="bg-blob"></div>
+    <div class="bg-blob"></div>
+    <div class="bg-blob"></div>
+</div>
+
+<div class="app">
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">C²</div>
+            <div class="logo-text">
+                <h1>DkZ CUBE²</h1>
+                <span>Voice Command Center · v1.0</span>
+            </div>
+        </div>
+        <div class="ampel" id="ampelDot"></div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar" id="statusBar">
+        <div class="status-pill"><div class="status-dot on" id="dotVPS"></div> VPS Hermes</div>
+        <div class="status-pill"><div class="status-dot on" id="dotGateway"></div> Gateway</div>
+        <div class="status-pill"><div class="status-dot warn" id="dotGithub"></div> GitHub</div>
+        <div class="status-pill"><div class="status-dot on" id="dotAppScript"></div> Apps Script</div>
+        <div class="status-pill"><div class="status-dot warn" id="dotCube"></div> CUBE²</div>
+    </div>
+
+    <!-- Model Selector -->
+    <div class="model-bar">
+        <label>Modell:</label>
+        <select id="modelSelect">
+            <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (VPS)</option>
+            <option value="qwen3:14b">Qwen3 14B (VPS Ollama)</option>
+            <option value="gpt-4o-mini">GPT-4o Mini (CUBE²)</option>
+            <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+        </select>
+    </div>
+
+    <!-- Voice Section -->
+    <div class="voice-section">
+        <div class="voice-label" id="voiceLabel">Druecke fuer Spracheingabe</div>
+        <button class="voice-btn" id="voiceBtn" onclick="VoiceCmd.toggleVoice()">
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+            🎤
+        </button>
+        <div class="voice-transcript" id="transcript"></div>
+    </div>
+
+    <!-- AI Response -->
+    <div class="response-area" id="responseArea"></div>
+
+    <!-- Quick Actions -->
+    <div class="actions-grid">
+        <div class="action-btn" onclick="VoiceCmd.quickAction('status')">
+            <span class="action-icon">🚦</span> Status
+        </div>
+        <div class="action-btn" onclick="VoiceCmd.quickAction('git')">
+            <span class="action-icon">📦</span> Git
+        </div>
+        <div class="action-btn" onclick="VoiceCmd.quickAction('deploy')">
+            <span class="action-icon">🚀</span> Deploy
+        </div>
+        <div class="action-btn" onclick="VoiceCmd.quickAction('health')">
+            <span class="action-icon">🏥</span> Health
+        </div>
+        <div class="action-btn" onclick="VoiceCmd.openGithub()">
+            <span class="action-icon">🐙</span> GitHub
+        </div>
+        <div class="action-btn" onclick="VoiceCmd.openAppScript()">
+            <span class="action-icon">📋</span> Apps Script
+        </div>
+        <div class="action-btn" onclick="VoiceCmd.openDashboard()">
+            <span class="action-icon">📊</span> Dashboard
+        </div>
+        <div class="action-btn" onclick="VoiceCmd.openHermes()">
+            <span class="action-icon">⚡</span> Hermes
+        </div>
+    </div>
+
+    <!-- Chat Bar -->
+    <div class="chat-bar">
+        <input type="text" class="chat-input" id="chatInput" placeholder="Befehl oder Frage eingeben...">
+        <button class="chat-send" onclick="VoiceCmd.sendText()">→</button>
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="VoiceCmd.switchView('voice')">
+            <span class="nav-icon">🎤</span> Voice
+        </div>
+        <div class="nav-item" onclick="VoiceCmd.switchView('chat')">
+            <span class="nav-icon">💬</span> Chat
+        </div>
+        <div class="nav-item" onclick="VoiceCmd.switchView('systems')">
+            <span class="nav-icon">⚡</span> Systeme
+        </div>
+        <div class="nav-item" onclick="VoiceCmd.switchView('logs')">
+            <span class="nav-icon">📜</span> Logs
+        </div>
+    </div>
+</div>
+
+<!-- Puter SDK for CUBE² -->
+<script src="https://js.puter.com/v2/"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+ *  DkZ CUBE² — Mobile Voice Command Center v1.0
+ *  Voice → VPS Hermes → Action → TTS Response
+ * ═══════════════════════════════════════════════════════════ */
+const VoiceCmd = (() => {
+'use strict';
+
+// ═══ CONFIG ═══
+const API = {
+    hermes: 'http://srv1298466.hstgr.cloud:8642/v1/chat/completions',
+    hermesKey: 'dkz-remote-2026-pi',
+    gateway: 'http://localhost:3040/api/v1/chat/completions',
+    ollama: 'http://72.61.93.129:8811/v1/chat/completions',
+    ollamaKey: 'DKZ-OLLAMA-2026-SECURE',
+    github: 'https://api.github.com',
+    appscript: 'https://script.google.com/macros/s/'
+};
+
+const SYSTEM_PROMPT = `Du bist DkZ CUBE² — Sprachassistent fuer das DEVKiTZ Oekosystem.
+Du steuerst: VPS Server, GitHub Repos, Google Apps Script, Hermes Agent, ONTHERUN Gateway.
+Antworte KURZ und PRAEZISE auf Deutsch. Keine Umlaute (ae/oe/ue/ss). Max 3 Saetze.
+Bei Befehlen: Bestaetigung + Ergebnis. Bei Fragen: Direkte Antwort.
+Verfuegbare Aktionen: git status, git push, deploy, health check, server restart, logs.`;
+
+// ═══ STATE ═══
+let isListening = false;
+let recognition = null;
+let speechSynth = window.speechSynthesis;
+let chatHistory = [];
+
+// ═══ XSS ═══
+function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = String(s ?? '');
+    return d.innerHTML;
+}
+
+// ═══ VOICE RECOGNITION ═══
+function initSpeechRecognition() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+        document.getElementById('voiceLabel').textContent = 'Spracheingabe nicht verfuegbar';
+        return;
+    }
+
+    recognition = new SR();
+    recognition.lang = 'de-DE';
+    recognition.interimResults = true;
+    recognition.continuous = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (e) => {
+        let interim = '';
+        let final = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+            if (e.results[i].isFinal) {
+                final += e.results[i][0].transcript;
+            } else {
+                interim += e.results[i][0].transcript;
+            }
+        }
+        const el = document.getElementById('transcript');
+        if (final) {
+            el.innerHTML = esc(final);
+            processVoiceCommand(final);
+        } else {
+            el.innerHTML = '<span class="interim">' + esc(interim) + '</span>';
+        }
+    };
+
+    recognition.onend = () => {
+        isListening = false;
+        updateVoiceUI();
+    };
+
+    recognition.onerror = (e) => {
+        isListening = false;
+        updateVoiceUI();
+        if (e.error !== 'no-speech') {
+            document.getElementById('transcript').textContent = 'Fehler: ' + e.error;
+        }
+    };
+}
+
+function toggleVoice() {
+    if (!recognition) initSpeechRecognition();
+    if (!recognition) return;
+
+    if (isListening) {
+        recognition.stop();
+        isListening = false;
+    } else {
+        recognition.start();
+        isListening = true;
+        document.getElementById('transcript').textContent = '';
+        document.getElementById('responseArea').classList.remove('visible');
+    }
+    updateVoiceUI();
+}
+
+function updateVoiceUI() {
+    const btn = document.getElementById('voiceBtn');
+    const label = document.getElementById('voiceLabel');
+    btn.classList.toggle('listening', isListening);
+    label.textContent = isListening ? 'Hoere zu...' : 'Druecke fuer Spracheingabe';
+}
+
+// ═══ PROCESS VOICE / TEXT ═══
+async function processVoiceCommand(text) {
+    isListening = false;
+    updateVoiceUI();
+    await sendToHermes(text);
+}
+
+async function sendText() {
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    document.getElementById('transcript').textContent = text;
+    await sendToHermes(text);
+}
+
+// ═══ HERMES API ═══
+async function sendToHermes(text) {
+    const responseEl = document.getElementById('responseArea');
+    responseEl.innerHTML = '<span style="color:var(--muted)">⏳ Denke nach...</span>';
+    responseEl.classList.add('visible');
+
+    const model = document.getElementById('modelSelect').value;
+    chatHistory.push({ role: 'user', content: text });
+
+    const messages = [
+        { role: 'system', content: SYSTEM_PROMPT },
+        ...chatHistory.slice(-8),
+    ];
+
+    try {
+        let answer = '';
+        const isOllama = model.includes('qwen') || model.includes('gemma');
+        const isHermes = model === 'gemini-2.5-flash';
+        const isCube = !isOllama && !isHermes;
+
+        // CUBE² (Puter) Route
+        if (isCube && window.puter) {
+            try {
+                const isAuth = await puter.auth.isSignedIn();
+                if (!isAuth) await puter.auth.signIn();
+                const res = await puter.ai.chat(messages, { model });
+                answer = typeof res === 'string' ? res : (res?.message?.content || res?.text || JSON.stringify(res));
+            } catch(puterErr) {
+                // Fallback to Hermes
+                const data = await fetchAPI(API.hermes, API.hermesKey, model, messages);
+                answer = data.choices?.[0]?.message?.content || JSON.stringify(data);
+            }
+        }
+        // VPS Route (Hermes or Ollama)
+        else {
+            const url = isOllama ? API.ollama : API.hermes;
+            const key = isOllama ? API.ollamaKey : API.hermesKey;
+            const data = await fetchAPI(url, key, model, messages);
+            answer = data.choices?.[0]?.message?.content || JSON.stringify(data);
+        }
+
+        chatHistory.push({ role: 'assistant', content: answer });
+        responseEl.innerHTML = formatResponse(answer);
+
+        // TTS Response
+        speakText(answer);
+
+        // Log to localStorage
+        saveLog(text, answer, model);
+
+    } catch (err) {
+        responseEl.innerHTML = '<span style="color:var(--red)">❌ ' + esc(err.message) + '</span>';
+    }
+}
+
+async function fetchAPI(url, key, model, messages) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (key) headers['Authorization'] = 'Bearer ' + key;
+    const res = await fetch(url, {
+        method: 'POST', headers,
+        body: JSON.stringify({ model, messages, max_tokens: 1024, stream: false })
+    });
+    if (!res.ok) throw new Error('API ' + res.status + ': ' + (await res.text()).substring(0, 150));
+    return res.json();
+}
+
+function formatResponse(text) {
+    let html = esc(text);
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\n/g, '<br>');
+    return html;
+}
+
+// ═══ TEXT-TO-SPEECH ═══
+function speakText(text) {
+    if (!speechSynth) return;
+    speechSynth.cancel();
+    const clean = text.replace(/[`*#\[\]]/g, '').substring(0, 500);
+    const utter = new SpeechSynthesisUtterance(clean);
+    utter.lang = 'de-DE';
+    utter.rate = 1.1;
+    utter.pitch = 1.0;
+    // Prefer German voice
+    const voices = speechSynth.getVoices();
+    const deVoice = voices.find(v => v.lang.startsWith('de'));
+    if (deVoice) utter.voice = deVoice;
+    speechSynth.speak(utter);
+}
+
+// ═══ QUICK ACTIONS ═══
+function quickAction(action) {
+    const cmds = {
+        status: 'Zeige mir den aktuellen System-Status aller Services',
+        git: 'Zeige den Git-Status des DEVKiTZ Repositories',
+        deploy: 'Was muss ich tun um die neueste Version zu deployen?',
+        health: 'Fuehre einen Health-Check durch und zeige Ergebnisse'
+    };
+    document.getElementById('transcript').textContent = cmds[action] || action;
+    sendToHermes(cmds[action] || action);
+}
+
+function openGithub() { window.open('https://github.com/7IKED', '_blank'); }
+function openAppScript() { window.open('https://script.google.com', '_blank'); }
+function openDashboard() { window.open('http://srv1298466.hstgr.cloud:9119', '_blank'); }
+function openHermes() { window.open('http://srv1298466.hstgr.cloud:8642/docs', '_blank'); }
+
+// ═══ VIEWS ═══
+function switchView(view) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    event.currentTarget?.classList.add('active');
+    // For now, all views in single page — later could route
+}
+
+// ═══ LOGGING ═══
+function saveLog(query, answer, model) {
+    try {
+        const logs = JSON.parse(localStorage.getItem('cube2-voice-logs') || '[]');
+        logs.unshift({
+            ts: new Date().toISOString(),
+            query, answer, model
+        });
+        if (logs.length > 100) logs.length = 100;
+        localStorage.setItem('cube2-voice-logs', JSON.stringify(logs));
+    } catch(e) {}
+}
+
+// ═══ HEALTH CHECK ═══
+async function checkServices() {
+    const checks = [
+        { id: 'dotVPS', url: API.hermes.replace('/v1/chat/completions', '/v1/models'), key: API.hermesKey },
+    ];
+    for (const c of checks) {
+        try {
+            const headers = {};
+            if (c.key) headers['Authorization'] = 'Bearer ' + c.key;
+            const res = await fetch(c.url, { headers, signal: AbortSignal.timeout(5000) });
+            document.getElementById(c.id).className = 'status-dot ' + (res.ok ? 'on' : 'off');
+        } catch(e) {
+            document.getElementById(c.id).className = 'status-dot off';
+        }
+    }
+}
+
+// ═══ INIT ═══
+function init() {
+    initSpeechRecognition();
+    checkServices();
+    // Keyboard
+    document.getElementById('chatInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); sendText(); }
+    });
+    // Load voices
+    if (speechSynth) speechSynth.onvoiceschanged = () => {};
+}
+
+init();
+
+return { toggleVoice, sendText, quickAction, switchView, openGithub, openAppScript, openDashboard, openHermes };
+
+})();
+</script>
+</body>
+</html>

@@ -146,12 +146,25 @@ const DkzLLM = (() => {
             authHeader: () => ({ 'Authorization': 'Bearer DKZ-OLLAMA-2026-SECURE', 'Content-Type': 'application/json' }),
             format: 'openai',
             models: [
-                { id: 'google/gemma-4-26b-a4b-it', name: 'Gemma 4 26B (Frontend/Build)', cost: 0, free: true },
-                { id: 'qwen2.5:32b', name: 'Qwen 2.5 32B (Backend/Plan)', cost: 0, free: true },
-                { id: 'qwen2.5-coder:7b', name: 'Qwen 2.5 Coder 7B (Qwen 3.5)', cost: 0, free: true },
-                { id: 'gemma2:2b', name: 'Gemma 2 2B', cost: 0, free: true },
-                { id: 'qwen2.5:3b', name: 'Qwen 2.5 3B', cost: 0, free: true },
-                { id: 'qwen2.5:7b', name: 'Qwen 2.5 7B', cost: 0, free: true }
+                { id: 'qwen3.5:27b', name: 'Qwen 3.5 27B', cost: 0, free: true },
+                { id: 'gemma3n:e4b', name: 'Gemma 4 12B (Gemma3n)', cost: 0, free: true },
+                { id: 'qwen3.5:9b', name: 'Qwen 3.5 9B', cost: 0, free: true },
+                { id: 'qwen2.5-coder:7b', name: 'Qwen 2.5 Coder 7B', cost: 0, free: true },
+                { id: 'qwen3:14b', name: 'Qwen3 14B', cost: 0, free: true },
+                { id: 'qwen2.5:32b', name: 'Qwen 2.5 32B', cost: 0, free: true },
+                { id: 'gemma3:4b', name: 'Gemma3 4B', cost: 0, free: true },
+                { id: 'gemma2:2b', name: 'Gemma 2 2B', cost: 0, free: true }
+            ]
+        },
+        'local-ollama': {
+            name: 'Local Ollama', icon: '💻', color: '#00ff88',
+            baseUrl: 'http://localhost:11434/v1/chat/completions',
+            authHeader: () => ({ 'Content-Type': 'application/json' }),
+            format: 'openai',
+            models: [
+                { id: 'qwen2.5-coder:7b', name: 'Qwen 2.5 Coder 7B', cost: 0, free: true },
+                { id: 'gemma3n:e4b', name: 'Gemma 4 12B (Gemma3n)', cost: 0, free: true },
+                { id: 'gemma2:2b', name: 'Gemma 2 2B', cost: 0, free: true }
             ]
         },
         puter: {

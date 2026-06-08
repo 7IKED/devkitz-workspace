@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="DEVKiTZ Walkthrough — Tiefenanalyse: 16 Phantom-Systeme identifiziert und Parser-Loop Root-Cause gefixed">
+    <title>Tiefenanalyse — 16 Phantom-Systeme · DEVKiTZ™</title>
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    <style>
+    /* ═══ Layout ═══ */
+    .wt-wrap { max-width: 960px; margin: 0 auto; padding: 28px 24px 60px; }
+
+    .wt-meta {
+        display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;
+    }
+    .wt-tag {
+        padding: 4px 12px; border-radius: 20px; font-size: 10px;
+        font-weight: 700; font-family: var(--mono); letter-spacing: .5px;
+        text-transform: uppercase;
+    }
+    .wt-tag.date     { background: rgba(85,172,238,.12); color: var(--blue); }
+    .wt-tag.session  { background: rgba(0,255,136,.1); color: var(--green); }
+    .wt-tag.status   { background: rgba(250,30,78,.1); color: var(--accent); }
+    .wt-tag.duration { background: rgba(255,184,0,.1); color: var(--yellow); }
+
+    /* ═══ Stats ═══ */
+    .wt-stats {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px; margin-bottom: 20px;
+    }
+    .wt-stat {
+        background: var(--glass); backdrop-filter: var(--blur);
+        border: 1px solid var(--border); border-radius: 12px;
+        padding: 14px; text-align: center; transition: all .3s;
+    }
+    .wt-stat:hover { transform: translateY(-2px); }
+    .wt-stat-val { font-size: 24px; font-weight: 800; font-family: var(--mono); }
+    .wt-stat-lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+    /* ═══ Toolbar ═══ */
+    .wt-toolbar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .wt-tb {
+        padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border);
+        background: rgba(255,255,255,.03); color: var(--muted); font-family: var(--font);
+        font-size: 11px; font-weight: 600; cursor: pointer; transition: all .2s;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .wt-tb:hover { color: var(--text); border-color: var(--accent); background: rgba(var(--accent-rgb),.06); }
+
+    /* ═══ Dropdown Sections ═══ */
+    .wt-drop {
+        margin-bottom: 8px; border: 1px solid var(--border);
+        border-radius: 14px; background: var(--card); overflow: hidden;
+        transition: border-color .3s;
+    }
+    .wt-drop:hover { border-color: rgba(var(--accent-rgb), .25); }
+
+    .wt-drop > summary {
+        display: flex; align-items: center; gap: 12px;
+        padding: 14px 18px; cursor: pointer; user-select: none;
+        list-style: none; position: relative; transition: background .2s;
+    }
+    .wt-drop > summary::-webkit-details-marker { display: none; }
+    .wt-drop > summary::marker { display: none; content: ''; }
+    .wt-drop > summary:hover { background: rgba(255,255,255,.02); }
+
+    .wt-drop-icon {
+        font-size: 16px; width: 30px; height: 30px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 8px; background: rgba(255,255,255,.04); flex-shrink: 0;
+    }
+    .wt-drop-title { font-size: 13px; font-weight: 700; color: var(--text); flex: 1; }
+
+    /* ═══ Badge ═══ */
+    .wt-badge {
+        padding: 3px 10px; border-radius: 20px; font-size: 11px;
+        font-weight: 700; font-family: var(--mono); flex-shrink: 0;
+    }
+    .wt-badge.ok   { background: rgba(0,255,136,.12); color: var(--green); }
+    .wt-badge.warn { background: rgba(255,184,0,.12); color: var(--yellow); }
+    .wt-badge.fail { background: rgba(250,30,78,.12); color: var(--accent); }
+    .wt-badge.info { background: rgba(85,172,238,.12); color: var(--blue); }
+    .wt-badge.muted { background: rgba(255,255,255,.06); color: var(--muted); }
+
+    /* ═══ Chevron ═══ */
+    .wt-chev {
+        width: 18px; height: 18px; color: var(--muted); flex-shrink: 0;
+        transition: transform .3s cubic-bezier(.4,0,.2,1), color .2s;
+    }
+    .wt-chev svg { width: 14px; height: 14px; display: block; }
+    .wt-drop[open] > summary .wt-chev { transform: rotate(180deg); color: var(--accent); }
+
+    /* ═══ Section Body ═══ */
+    .wt-body {
+        padding: 0 18px 16px; border-top: 1px solid var(--border);
+        animation: wtSlideIn .25s ease;
+    }
+    @keyframes wtSlideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ═══ Sub-Dropdowns ═══ */
+    .wt-sub {
+        margin: 8px 0; border: 1px solid rgba(255,255,255,.06);
+        border-radius: 10px; background: rgba(255,255,255,.015); overflow: hidden;
+    }
+    .wt-sub > summary {
+        display: flex; align-items: center; gap: 8px;
+        padding: 10px 14px; cursor: pointer; user-select: none;
+        list-style: none; font-size: 12px; font-weight: 700;
+        color: var(--text); transition: background .2s;
+    }
+    .wt-sub > summary::-webkit-details-marker { display: none; }
+    .wt-sub > summary::marker { display: none; content: ''; }
+    .wt-sub > summary:hover { background: rgba(255,255,255,.025); }
+
+    .wt-sub-chev {
+        width: 14px; height: 14px; color: var(--muted); flex-shrink: 0;
+        transition: transform .25s;
+    }
+    .wt-sub-chev svg { width: 12px; height: 12px; display: block; }
+    .wt-sub[open] > summary .wt-sub-chev { transform: rotate(90deg); color: var(--accent); }
+
+    .wt-sub-body {
+        padding: 0 14px 12px;
+        animation: wtSlideIn .2s ease;
+    }
+
+    /* ═══ Tables ═══ */
+    .wt-tbl { width: 100%; border-collapse: collapse; font-size: 12px; margin: 8px 0; }
+    .wt-tbl th {
+        text-align: left; padding: 7px 10px; font-size: 10px; font-weight: 700;
+        color: var(--muted); text-transform: uppercase; letter-spacing: .8px;
+        border-bottom: 1px solid var(--border);
+    }
+    .wt-tbl td { padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,.03); }
+    .wt-tbl tr:hover td { background: rgba(255,255,255,.02); }
+
+    .wt-ok   { color: var(--green); }
+    .wt-warn { color: var(--yellow); }
+    .wt-fail { color: var(--accent); }
+    .wt-skip { color: var(--muted); }
+
+    /* ═══ Code Block ═══ */
+    .wt-code {
+        background: var(--card2); border: 1px solid var(--border);
+        border-radius: 8px; padding: 10px 14px; font-family: var(--mono);
+        font-size: 11px; overflow-x: auto; margin: 8px 0; line-height: 1.6;
+        white-space: pre;
+    }
+
+    /* ═══ Footer ═══ */
+    .wt-foot {
+        text-align: center; padding: 20px; font-size: 10px;
+        color: var(--muted); font-family: var(--mono);
+        border-top: 1px solid var(--border); margin-top: 16px;
+    }
+
+    /* ═══ Responsive ═══ */
+    @media (max-width: 768px) {
+        .wt-wrap { padding: 14px 10px 40px; }
+        .wt-stats { grid-template-columns: repeat(2, 1fr); }
+    }
+    </style>
+</head>
+<body>
+    <div class="bg-mesh"><div class="bg-blob"></div><div class="bg-blob"></div></div>
+
+    <div class="app">
+        <header class="dkz-header">
+            <a href="../index.html" class="back-btn">← Zurueck</a>
+            <h1>🔬 Tiefenanalyse — 16 Phantom-Systeme</h1>
+            <div class="hdr-right"><span class="ver">v0.02.0</span></div>
+        </header>
+
+        <main class="wt-wrap" role="main">
+            <!-- Meta -->
+            <div class="wt-meta">
+                <span class="wt-tag date">📅 01.06.2026</span>
+                <span class="wt-tag session">🧠 b7c6a645</span>
+                <span class="wt-tag status">🔴 KRITISCH</span>
+                <span class="wt-tag duration">⏱️ ~45 Min</span>
+            </div>
+
+            <!-- Stats -->
+            <div class="wt-stats">
+                <div class="wt-stat"><div class="wt-stat-val wt-fail">16</div><div class="wt-stat-lbl">Phantom-Systeme</div></div>
+                <div class="wt-stat"><div class="wt-stat-val wt-ok">500+</div><div class="wt-stat-lbl">Dateien</div></div>
+                <div class="wt-stat"><div class="wt-stat-val" style="color:var(--blue)">30+</div><div class="wt-stat-lbl">Commits</div></div>
+                <div class="wt-stat"><div class="wt-stat-val wt-warn">3</div><div class="wt-stat-lbl">Subagenten</div></div>
+                <div class="wt-stat"><div class="wt-stat-val wt-fail">7</div><div class="wt-stat-lbl">Kern-Agenten</div></div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="wt-toolbar">
+                <button class="wt-tb" onclick="document.querySelectorAll('.wt-drop,.wt-sub').forEach(d=>d.open=true)">📂 Alle oeffnen</button>
+                <button class="wt-tb" onclick="document.querySelectorAll('.wt-drop,.wt-sub').forEach(d=>d.open=false)">📁 Alle schliessen</button>
+            </div>
+
+            <!-- ═══ SECTION: Root-Cause ═══ -->
+            <details class="wt-drop" open>
+                <summary>
+                    <span class="wt-drop-icon">🔥</span>
+                    <span class="wt-drop-title">Root-Cause: Parser-Loop</span>
+                    <span class="wt-badge fail">KRITISCH</span>
+                    <span class="wt-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+                </summary>
+                <div class="wt-body">
+                    <p style="font-size:12px;color:var(--text);line-height:1.7;margin:10px 0">
+                        CLAUDE.md und GEMINI.md enthielten <strong>imperative Befehle</strong> die zu Endlosschleifen fuehrten.
+                        Der Agent las die Dateien, fand Befehle wie "LESE X", fuehrte sie aus, las erneut — Loop.
+                    </p>
+                    <div class="wt-code">Root-Cause: Imperative Befehle in Regel-Dateien
+CLAUDE.md → "LESE REGELWERK.md" → Agent fuehrt aus → liest CLAUDE.md erneut → Loop
+GEMINI.md → Gleicher Pattern
+
+Fix: Commit 13319b57
+→ Imperative Befehle entfernt
+→ Deklarative Referenzen stattdessen
+→ LLM_BOOTSTRAP.md als Entry-Point</div>
+                </div>
+            </details>
+
+            <!-- ═══ SECTION: 16 Phantom-Systeme ═══ -->
+            <details class="wt-drop">
+                <summary>
+                    <span class="wt-drop-icon">👻</span>
+                    <span class="wt-drop-title">16 Phantom-Systeme</span>
+                    <span class="wt-badge fail">16 FEHLEN</span>
+                    <span class="wt-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+                </summary>
+                <div class="wt-body">
+                    <details class="wt-sub">
+                        <summary>
+                            <span class="wt-sub-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            Referenziert aber nie gebaut
+                            <span class="wt-badge fail" style="font-size:10px;margin-left:auto">6</span>
+                        </summary>
+                        <div class="wt-sub-body">
+                            <table class="wt-tbl">
+                                <thead><tr><th>System</th><th>Referenz</th><th>Status</th></tr></thead>
+                                <tbody>
+                                    <tr><td>ONTHERUN :3040</td><td>NanoChat MCP Server</td><td class="wt-fail">❌ Nie gebaut</td></tr>
+                                    <tr><td>gate.html</td><td>Gateway Dashboard</td><td class="wt-fail">❌ Fehlt</td></tr>
+                                    <tr><td>DkzJames.getKnowledge()</td><td>James Guardian API</td><td class="wt-fail">❌ Fehlt</td></tr>
+                                    <tr><td>global-sitemap.json</td><td>Modul-Registry</td><td class="wt-fail">❌ Fehlt</td></tr>
+                                    <tr><td>Webhook :9090</td><td>Webhook Hub Server</td><td class="wt-fail">❌ Nie deployed</td></tr>
+                                    <tr><td>EventLog :9877</td><td>Event-Logging Server</td><td class="wt-fail">❌ Nie deployed</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </details>
+
+                    <details class="wt-sub">
+                        <summary>
+                            <span class="wt-sub-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            Weitere Phantom-Referenzen
+                            <span class="wt-badge warn" style="font-size:10px;margin-left:auto">10</span>
+                        </summary>
+                        <div class="wt-sub-body">
+                            <p style="font-size:11px;color:var(--muted);line-height:1.6;margin:6px 0">
+                                10 weitere Systeme wurden in Dokumentation, Code-Kommentaren oder Konfigurationen referenziert,
+                                existieren aber nicht als funktionsfaehiger Code. Details in der Session-Analyse.
+                            </p>
+                        </div>
+                    </details>
+                </div>
+            </details>
+
+            <!-- ═══ SECTION: Was FUNKTIONIERT ═══ -->
+            <details class="wt-drop">
+                <summary>
+                    <span class="wt-drop-icon">✅</span>
+                    <span class="wt-drop-title">Was FUNKTIONIERT</span>
+                    <span class="wt-badge ok">7/7</span>
+                    <span class="wt-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+                </summary>
+                <div class="wt-body">
+                    <table class="wt-tbl">
+                        <thead><tr><th>System</th><th>Beschreibung</th><th>Status</th></tr></thead>
+                        <tbody>
+                            <tr><td>EventBus</td><td>Cross-Modul Kommunikation</td><td class="wt-ok">✅ Aktiv</td></tr>
+                            <tr><td>EventLog</td><td>Lokales Event-Logging</td><td class="wt-ok">✅ Aktiv</td></tr>
+                            <tr><td>Watchdog</td><td>Error-Monitoring + Dedup</td><td class="wt-ok">✅ Aktiv</td></tr>
+                            <tr><td>Ralph Loop</td><td>6-Phasen Task-Execution</td><td class="wt-ok">✅ Aktiv</td></tr>
+                            <tr><td>Toast</td><td>Notification System</td><td class="wt-ok">✅ Aktiv</td></tr>
+                            <tr><td>NanoBot</td><td>Agent-Kommunikation</td><td class="wt-ok">✅ Aktiv</td></tr>
+                            <tr><td>features.json</td><td>152 Module registriert</td><td class="wt-ok">✅ Aktiv</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </details>
+
+            <!-- ═══ SECTION: BMAD 21→7 Agenten ═══ -->
+            <details class="wt-drop">
+                <summary>
+                    <span class="wt-drop-icon">🤖</span>
+                    <span class="wt-drop-title">BMAD Agenten: 21 → 7 Kern</span>
+                    <span class="wt-badge info">REDUZIERT</span>
+                    <span class="wt-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+                </summary>
+                <div class="wt-body">
+                    <p style="font-size:12px;color:var(--text);line-height:1.7;margin:10px 0">
+                        Das Original-BMAD-Paket in <code style="font-family:var(--mono);font-size:11px;color:var(--yellow)">13_dkz-claude</code> definierte 21 Agenten.
+                        Fuer den produktiven Betrieb auf 7 Kern-Agenten reduziert:
+                    </p>
+                    <table class="wt-tbl">
+                        <thead><tr><th>#</th><th>Agent</th><th>Rolle</th></tr></thead>
+                        <tbody>
+                            <tr><td>1</td><td>James Guardian</td><td>Ueberwacht, coded NICHT</td></tr>
+                            <tr><td>2</td><td>DkZ PM</td><td>Product Manager, Specs</td></tr>
+                            <tr><td>3</td><td>DkZ Architekt</td><td>plan.md, Tech-Stack</td></tr>
+                            <tr><td>4</td><td>DkZ Developer</td><td>Coder, Ralph-Loop Executor</td></tr>
+                            <tr><td>5</td><td>DkZ Reviewer</td><td>CodeRabbit Qualitaet</td></tr>
+                            <tr><td>6</td><td>DkZ Tester</td><td>Tests + Validierung</td></tr>
+                            <tr><td>7</td><td>DkZ Dokumentar</td><td>README, Wiki, Learnings</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </details>
+
+            <!-- ═══ SECTION: Git Fix ═══ -->
+            <details class="wt-drop">
+                <summary>
+                    <span class="wt-drop-icon">🔀</span>
+                    <span class="wt-drop-title">Fix-Commit</span>
+                    <span class="wt-badge ok">GEFIXT</span>
+                    <span class="wt-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+                </summary>
+                <div class="wt-body">
+                    <div class="wt-code"><span class="wt-ok">Commit 13319b57</span>
+fix(rules): Parser-Loop in CLAUDE.md/GEMINI.md behoben
+
+- Imperative Befehle entfernt
+- Deklarative Referenzen eingefuehrt
+- LLM_BOOTSTRAP.md als zentraler Entry-Point
+- Phantom-System-Referenzen dokumentiert</div>
+                </div>
+            </details>
+
+            <footer class="wt-foot">
+                Walkthrough erstellt: 01.06.2026 · Session b7c6a645 · DEVKiTZ™ v0.02.0 · Status: KRITISCH
+            </footer>
+        </main>
+    </div>
+</body>
+</html>

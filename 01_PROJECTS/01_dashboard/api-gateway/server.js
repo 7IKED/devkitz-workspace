@@ -32,6 +32,7 @@ import { mcpRoutes } from './routes/mcp.js';
 import { seoRoutes } from './routes/seo.js';
 import { syncRoutes } from './routes/sync.js';
 import { toolRoutes } from './routes/tools.js';
+import { llmRoutes } from './routes/llm.js';
 import { authMiddleware } from './middleware/auth.js';
 import { requestLogger } from './middleware/logger.js';
 
@@ -85,7 +86,10 @@ app.get('/', (req, res) => {
             ecosystem: '/api/v1/ecosystem',
             registry: '/api/v1/registry',
             metrics: '/api/v1/metrics',
-            docs: '/api/v1/docs'
+            docs: '/api/v1/docs',
+            llm: '/v1/chat/completions (OpenAI-kompatibel)',
+            llmModels: '/v1/models',
+            llmHealth: '/v1/health/llm'
         },
         docs: `http://localhost:${port}/api/v1/docs`
     });
@@ -108,6 +112,10 @@ app.use('/api/v1', mcpRoutes);
 app.use('/api/v1', seoRoutes);
 app.use('/api/v1', syncRoutes);
 app.use('/api/v1', toolRoutes);
+app.use('/api/v1', llmRoutes);
+
+// ═══ OpenAI-KOMPATIBEL: /v1/* direkt (fuer Continue.dev, OpenCode, etc.) ═══
+app.use('', llmRoutes);
 
 // ═══ ECOSYSTEM INFO ═══
 app.get('/api/v1/ecosystem', (req, res) => {

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>DkZ AI Studio Exporter</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      background: #060608; 
+      color: #e0e0e0; 
+      font-family: 'Inter', sans-serif; 
+      padding: 40px;
+      min-height: 100vh;
+    }
+    h1 { color: #fa1e4e; font-size: 28px; margin-bottom: 10px; }
+    h2 { color: #00ff88; font-size: 18px; margin: 20px 0 10px; }
+    .info { color: #888; margin-bottom: 30px; }
+    .step { 
+      background: #111; 
+      border: 1px solid #333; 
+      border-radius: 12px; 
+      padding: 20px; 
+      margin: 15px 0;
+    }
+    .step.active { border-color: #fa1e4e; }
+    .step.done { border-color: #00ff88; }
+    button {
+      background: #fa1e4e;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover { background: #e0183f; }
+    button:disabled { background: #333; color: #666; cursor: not-allowed; }
+    button.green { background: #00ff88; color: #000; }
+    #status { 
+      background: #0a0a0a; 
+      border: 1px solid #333; 
+      border-radius: 8px;
+      padding: 15px; 
+      margin: 15px 0; 
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      max-height: 400px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+    #result { display: none; }
+    textarea { 
+      width: 100%; 
+      height: 200px; 
+      background: #0a0a0a; 
+      color: #00ff88;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+    .counter { 
+      font-size: 48px; 
+      color: #fa1e4e; 
+      font-weight: bold; 
+      text-align: center;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🚀 DEVKiTZ™ AI Studio Exporter</h1>
+  <p class="info">Exportiert alle deine Builder Tools aus Google AI Studio</p>
+
+  <div class="step" id="step1">
+    <h2>Schritt 1: AI Studio oeffnen</h2>
+    <p>Klick den Button um AI Studio in einem neuen Tab zu oeffnen. Du musst dort eingeloggt sein!</p>
+    <br>
+    <button onclick="openAiStudio()">🌐 AI Studio oeffnen</button>
+  </div>
+
+  <div class="step" id="step2">
+    <h2>Schritt 2: Export starten</h2>
+    <p>Wenn du eingeloggt bist, klick hier. Das Bookmarklet wird in die Adresszeile kopiert.</p>
+    <br>
+    <button onclick="startExport()" class="green">📋 Export Code kopieren</button>
+    <p style="margin-top:10px;color:#888">Danach: Neuen Tab mit AI Studio oeffnen → In Adresszeile klicken → Strg+V → Enter</p>
+  </div>
+
+  <div class="step" id="step3">
+    <h2>Schritt 3: Ergebnis einfuegen</h2>
+    <p>Nachdem das Script gelaufen ist, fuege das Ergebnis hier ein:</p>
+    <br>
+    <textarea id="pasteArea" placeholder="Ergebnis hier einfuegen (Strg+V)..."></textarea>
+    <br><br>
+    <button onclick="processResult()">💾 Verarbeiten & Speichern</button>
+  </div>
+
+  <div id="status"></div>
+
+  <div id="result">
+    <div class="counter" id="toolCount">0</div>
+    <p style="text-align:center;color:#888">Tools gefunden</p>
+    <br>
+    <button onclick="downloadAll()">⬇️ Als JSON herunterladen</button>
+    <button onclick="downloadTxt()">📄 Als TXT herunterladen</button>
+  </div>
+
+  <script>
+    let exportedData = null;
+
+    function log(msg) {
+      const el = document.getElementById('status');
+      el.textContent += msg + '\n';
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function openAiStudio() {
+      window.open('https://aistudio.google.com/apps', '_blank');
+      document.getElementById('step1').classList.add('done');
+      log('✅ AI Studio Tab geoeffnet');
+    }
+
+    function startExport() {
+      // Bookmarklet-Code der alle Tools von der Seite extrahiert
+      const code = `javascript:void(async function(){
+        const delay=ms=>new Promise(r=>setTimeout(r,ms));
+        let allItems=[];
+        
+        /* Scroll to load all */
+        for(let i=0;i<30;i++){
+          window.scrollTo(0,document.body.scrollHeight);
+          await delay(500);
+        }
+        window.scrollTo(0,0);
+        await delay(1000);
+        
+        /* Extract all card-like elements */
+        const selectors=['[class*=card]','[class*=Card]','[class*=tile]','[class*=Tile]','[class*=applet]','[class*=Applet]','[role=listitem]','mat-card','.mat-mdc-card','[class*=prompt]','[class*=Prompt]'];
+        
+        for(const sel of selectors){
+          const els=document.querySelectorAll(sel);
+          if(els.length>3){
+            els.forEach((el,i)=>{
+              const title=el.querySelector('h1,h2,h3,h4,[class*=title],[class*=Title],[class*=name],[class*=Name]');
+              const desc=el.querySelector('p,[class*=desc],[class*=Desc],[class*=subtitle]');
+              allItems.push({
+                index:i,
+                title:title?title.textContent.trim():el.textContent.trim().substring(0,100),
+                description:desc?desc.textContent.trim():'',
+                fullText:el.textContent.trim().substring(0,300),
+                selector:sel
+              });
+            });
+            break;
+          }
+        }
+        
+        /* Fallback: just get all text */
+        if(allItems.length===0){
+          allItems=[{fullPage:document.body.innerText}];
+        }
+        
+        const result=JSON.stringify({
+          url:location.href,
+          timestamp:new Date().toISOString(),
+          totalItems:allItems.length,
+          items:allItems
+        },null,2);
+        
+        /* Copy to clipboard */
+        await navigator.clipboard.writeText(result);
+        alert(allItems.length+' Items exportiert und in Zwischenablage kopiert!\\n\\nGehe zurueck zum DkZ Exporter und fuege ein (Strg+V).');
+      }())`;
+
+      navigator.clipboard.writeText(code).then(() => {
+        log('✅ Export-Code in Zwischenablage kopiert!');
+        log('');
+        log('JETZT:');
+        log('1. Gehe zum AI Studio Tab');
+        log('2. Klick in die Adresszeile (URL-Leiste)');
+        log('3. Drueck Strg+V (einfuegen)');
+        log('4. Drueck Enter');
+        log('5. Warte bis das Alert-Popup erscheint');
+        log('6. Komm hierher zurueck und fuege in Schritt 3 ein');
+        document.getElementById('step2').classList.add('done');
+      }).catch(e => {
+        log('❌ Clipboard Fehler. Kopiere den Code manuell:');
+        const ta = document.createElement('textarea');
+        ta.value = code;
+        ta.style.cssText = 'width:100%;height:200px;background:#0a0a0a;color:#00ff88;border:1px solid #333;margin:10px 0;font-size:11px';
+        document.getElementById('step2').appendChild(ta);
+      });
+    }
+
+    function processResult() {
+      const text = document.getElementById('pasteArea').value.trim();
+      if (!text) {
+        log('❌ Kein Text eingefuegt!');
+        return;
+      }
+
+      try {
+        exportedData = JSON.parse(text);
+        const count = exportedData.totalItems || exportedData.items?.length || 0;
+        document.getElementById('toolCount').textContent = count;
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('step3').classList.add('done');
+        log(`✅ ${count} Tools verarbeitet!`);
+      } catch (e) {
+        // Not JSON — treat as plain text
+        exportedData = { plainText: text, items: text.split('\n').filter(l => l.trim()) };
+        const count = exportedData.items.length;
+        document.getElementById('toolCount').textContent = count;
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('step3').classList.add('done');
+        log(`✅ ${count} Zeilen als Text verarbeitet`);
+      }
+    }
+
+    function downloadAll() {
+      const blob = new Blob([JSON.stringify(exportedData, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'ai-studio-tools.json';
+      a.click();
+      log('⬇️ JSON heruntergeladen');
+    }
+
+    function downloadTxt() {
+      let text = '';
+      if (exportedData.items) {
+        exportedData.items.forEach((item, i) => {
+          text += `--- Tool ${i+1} ---\n`;
+          text += `Title: ${item.title || ''}\n`;
+          text += `Description: ${item.description || ''}\n`;
+          text += `Text: ${item.fullText || item}\n\n`;
+        });
+      } else {
+        text = exportedData.plainText || JSON.stringify(exportedData, null, 2);
+      }
+      const blob = new Blob([text], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'ai-studio-tools.txt';
+      a.click();
+      log('⬇️ TXT heruntergeladen');
+    }
+
+    log('🔧 DkZ AI Studio Exporter bereit');
+    log('Folge den 3 Schritten oben');
+  </script>
+</body>
+</html>
