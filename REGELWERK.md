@@ -1,6 +1,6 @@
 # DEVKiTZ™ REGELWERK — Oekosystem-Regeln
 
-> **Version:** v2.00 | **Stand:** 2026-05-22 | **Status:** AKTIV
+> **Version:** v2.01 | **Stand:** 2026-05-31 | **Status:** AKTIV
 > Fuer Basis-Kontext: Lies zuerst `LLM_BOOTSTRAP.md`
 > **Pfad:** `C:\DEVKiTZ\REGELWERK.md`
 
@@ -167,6 +167,24 @@
 ### R44: HTML AUTO-OPEN PFLICHT
 > Wenn HTML erstellt/geupdated → sofort im Browser oeffnen: `start "Pfad\zur\datei.html"`
 
+### R90: EVENT-LOGGING PFLICHT
+> Jedes Modul MUSS `dkz-eventlog.js` einbinden und Events loggen:
+> `creation` (Modul geladen), `action` (User-Interaktion), `error` (Fehler).
+> ID-Format: `EVT-{timestamp}-{hex4}` | Session: `SES-{timestamp}`
+
+### R95: EXTERNE LLM PROMPT-ARCHIVPFLICHT
+> Alle Prompts — auch von externen LLMs (Gemini, GPT, Claude, Copilot) —
+> MUESSEN im DkZ Prompt-Archiv hinterlegt werden. Kein Prompt undokumentiert.
+
+### R96: PLAYBOOK-BINDUNGSPFLICHT
+> Wenn ein LLM das Playbook liest, ist der GESAMTE Output bindend an Playbook-Standards.
+> Format, Farben, Struktur, Konventionen — kein Bauchgefuehl, nur Regelwerk.
+
+### R97: RALPH LOOP — AUTOMATISCHE FEHLERBEHANDLUNG
+> Watchdog-Alerts mit Severity `error`/`critical` triggern automatisch den Ralph Loop:
+> LESEN → SPAWN → EXECUTE → VERIFY → COMMIT → LOOP.
+> Script: `shared/dkz-ralph.js` | Cooldown: 60s | Max Retries: 2
+
 ### R101: GITHUB PUSH PFLICHT
 > Nach JEDER Session: `git push origin master`. Push-Ergebnis pruefen.
 
@@ -192,7 +210,7 @@
 C:\DEVKiTZ\
 ├── 00_INBOX/          ← Eingang, Downloads, RAW
 ├── 01_PROJECTS/       ← Alle aktiven Projekte
-│   └── 01_dashboard/  ← Dashboard + 89+ Module
+│   └── 01_dashboard/  ← Dashboard + 152 Module
 ├── 02_RESEARCH/       ← Forschung, Dokumentation
 ├── 03_MEDIA/          ← Bilder, Videos, OUT_NOW
 ├── 04_SYSTEM/         ← System-Dateien, Configs
@@ -215,6 +233,7 @@ C:\DEVKiTZ\
 | 2026-03-11 | v1.05 — R21-R23 + 59 Module |
 | 2026-03-11 | v1.06 — R24 Archiv-Schutz, R25 Naming |
 | 2026-05-22 | v2.00 — Kondensierung, R39 ENTFERNT (Widerspruch zu R8), R8 ist einzige Encoding-Regel |
+| 2026-05-31 | v2.01 — R90 Event-Logging, R95 Prompt-Archiv, R96 Playbook-Bindung, R97 Ralph Loop. 152 Module. James KNOWLEDGE synchronisiert. |
 
 ---
 

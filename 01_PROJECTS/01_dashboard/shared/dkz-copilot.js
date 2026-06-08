@@ -7,7 +7,7 @@
  * Features:
  * 1. Google Technik 6-Part Prompt (context/task/rules/examples/tools/output)
  * 2. Iceberg block builder — sucht Bausteine, baut Prompt, zeigt Animation
- * 3. 5 LLM Provider (OpenAI, Anthropic, Gemini, Grok, vLLM)
+ * 3. 32 Provider (OpenAI, Anthropic, Gemini, Grok, vLLM, Blackbox AI, VPS Ollama, Puter)
  * 4. English prompts → German output
  * 5. ≤23 Zeichen Regel (XML/EN ausgenommen)
  * 6. Auto-registers new prompts in Iceberg catalog
@@ -57,7 +57,7 @@ const DkzCopilot = (() => {
         'gemini-flash': 'https://aistudio.google.com/apikey',
         'gemini-pro': 'https://aistudio.google.com/apikey',
         grok: 'https://console.x.ai/',
-        'grok-fast': 'https://console.x.ai/',
+        'grok-build': 'https://console.x.ai/',
         mistral: 'https://console.mistral.ai/api-keys/',
         deepseek: 'https://platform.deepseek.com/api_keys',
         groq: 'https://console.groq.com/keys',
@@ -67,7 +67,15 @@ const DkzCopilot = (() => {
         openrouter: 'https://openrouter.ai/keys',
         huggingface: 'https://huggingface.co/settings/tokens',
         nvidia: 'https://build.nvidia.com/',
+        cerebras: 'https://cloud.cerebras.ai/',
+        fireworks: 'https://fireworks.ai/account/api-keys',
         'github-copilot': 'https://github.com/settings/copilot',
+        blackbox: 'https://www.blackbox.ai/settings',
+        'blackbox-grok': 'https://www.blackbox.ai/settings',
+        minimax: 'https://www.minimax.chat/',
+        kimi: 'https://platform.moonshot.cn/',
+        zhipu: 'https://open.bigmodel.cn/',
+        siliconflow: 'https://siliconflow.cn/',
     };
     const PROVIDERS = {
         // ─── Tier 1: Direkte APIs ───
@@ -76,9 +84,9 @@ const DkzCopilot = (() => {
         // ─── Gemini (Flash + Pro) ───
         'gemini-flash':{ name: 'Gemini Flash',      url: 'https://generativelanguage.googleapis.com/v1beta/',  model: 'gemini-2.5-flash',                             apiFormat: 'gemini',    header: _geminiH },
         'gemini-pro':  { name: 'Gemini Pro',        url: 'https://generativelanguage.googleapis.com/v1beta/',  model: 'gemini-2.5-pro',                               apiFormat: 'gemini',    header: _geminiH },
-        // ─── Grok (Reasoning + Fast) ───
-        grok:          { name: 'Grok Reasoning',    url: 'https://api.x.ai/v1/chat/completions',              model: 'grok-3',                                       apiFormat: 'openai',    header: _bearer },
-        'grok-fast':   { name: 'Grok Fast',         url: 'https://api.x.ai/v1/chat/completions',              model: 'grok-3-fast',                                  apiFormat: 'openai',    header: _bearer },
+        // ─── Grok (xAI — Mai 2026) ───
+        grok:          { name: 'Grok 4.3',           url: 'https://api.x.ai/v1/chat/completions',              model: 'grok-4.3',                                     apiFormat: 'openai',    header: _bearer },
+        'grok-build':  { name: 'Grok Build',         url: 'https://api.x.ai/v1/chat/completions',              model: 'grok-build-0.1',                               apiFormat: 'openai',    header: _bearer },
         // ─── Weitere Direkte APIs ───
         mistral:       { name: 'Mistral AI',        url: 'https://api.mistral.ai/v1/chat/completions',        model: 'mistral-medium-latest',                        apiFormat: 'openai',    header: _bearer },
         deepseek:      { name: 'DeepSeek',          url: 'https://api.deepseek.com/chat/completions',         model: 'deepseek-chat',                                apiFormat: 'openai',    header: _bearer },
@@ -90,10 +98,36 @@ const DkzCopilot = (() => {
         openrouter:    { name: 'OpenRouter',        url: 'https://openrouter.ai/api/v1/chat/completions',     model: 'openai/gpt-4o-mini',                           apiFormat: 'openai',    header: _bearer },
         huggingface:   { name: 'HuggingFace',       url: 'https://router.huggingface.co/v1/chat/completions', model: 'meta-llama/Llama-3.3-70B-Instruct',            apiFormat: 'openai',    header: _bearer },
         nvidia:        { name: 'NVIDIA NIM',        url: 'https://integrate.api.nvidia.com/v1/chat/completions', model: 'meta/llama-3.1-70b-instruct',               apiFormat: 'openai',    header: _bearer },
+        // ─── Neue Provider (2026) ───
+        cerebras:      { name: 'Cerebras',           url: 'https://api.cerebras.ai/v1/chat/completions',       model: 'llama-3.3-70b',                                apiFormat: 'openai',    header: _bearer },
+        fireworks:     { name: 'Fireworks AI',       url: 'https://api.fireworks.ai/inference/v1/chat/completions', model: 'accounts/fireworks/models/llama-v3p3-70b-instruct', apiFormat: 'openai', header: _bearer },
+        // ─── Blackbox AI (FREE MiniMax + Grok Code) ───
+        'blackbox':       { name: 'Blackbox AI',       url: 'https://api.blackbox.ai/v1/chat/completions',     model: 'blackboxai/minimax/minimax-free',               apiFormat: 'openai',    header: _bearer },
+        'blackbox-grok':  { name: 'Blackbox Grok',     url: 'https://api.blackbox.ai/v1/chat/completions',     model: 'blackboxai/x-ai/grok-code-fast-1:free',        apiFormat: 'openai',    header: _bearer },
+        // ─── MiniMax (direkt, falls API-Key vorhanden) ───
+        minimax:       { name: 'MiniMax (Free)',     url: 'https://api.minimax.chat/v1/text/chatcompletion_v2', model: 'MiniMax-Text-01',                              apiFormat: 'openai',    header: _bearer },
+        // ─── Kimi / Moonshot ───
+        kimi:          { name: 'Kimi (Moonshot)',    url: 'https://api.moonshot.cn/v1/chat/completions',       model: 'moonshot-v1-8k',                               apiFormat: 'openai',    header: _bearer },
+        // ─── Zhipu GLM-4 ───
+        zhipu:         { name: 'Zhipu GLM-4',       url: 'https://open.bigmodel.cn/api/paas/v4/chat/completions', model: 'glm-4-flash',                              apiFormat: 'openai',    header: _bearer },
+        // ─── SiliconFlow (FREE Tier) ───
+        siliconflow:   { name: 'SiliconFlow',        url: 'https://api.siliconflow.cn/v1/chat/completions',    model: 'Qwen/Qwen2.5-7B-Instruct',                    apiFormat: 'openai',    header: _bearer },
         // ─── GitHub Copilot ───
         'github-copilot': { name: 'GitHub Copilot', url: 'https://api.githubcopilot.com/chat/completions',    model: 'gpt-4o',                                       apiFormat: 'openai',    header: _bearer },
-        // ─── Lokal (vLLM + llama-swap) ───
-        vllm:          { name: 'vLLM Local',        url: 'http://srv1298466.hstgr.cloud:8080/v1/chat/completions', model: 'gemma4-26b',                               apiFormat: 'openai',    header: () => ({ 'Content-Type': 'application/json' }) },
+        // ─── VPS Ollama (CPU, 8 Modelle via Nginx :11435) ───
+        // ✅ Getestet & funktionierend (6 Modelle)
+        'vps-qwen25-3b':  { name: '🟢 VPS Qwen2.5 3B',  url: 'http://srv1298466.hstgr.cloud:11435/v1/chat/completions', model: 'qwen2.5:3b',        apiFormat: 'openai', header: () => ({ 'Content-Type': 'application/json' }) },
+        'vps-qwen25-7b':  { name: '🟢 VPS Qwen2.5 7B',  url: 'http://srv1298466.hstgr.cloud:11435/v1/chat/completions', model: 'qwen2.5:7b',        apiFormat: 'openai', header: () => ({ 'Content-Type': 'application/json' }) },
+        'vps-qwen25-32b': { name: '🟢 VPS Qwen2.5 32B', url: 'http://srv1298466.hstgr.cloud:11435/v1/chat/completions', model: 'qwen2.5:32b',       apiFormat: 'openai', header: () => ({ 'Content-Type': 'application/json' }) },
+        'vps-coder-7b':   { name: '🟢 VPS Coder 7B',    url: 'http://srv1298466.hstgr.cloud:11435/v1/chat/completions', model: 'qwen2.5-coder:7b',  apiFormat: 'openai', header: () => ({ 'Content-Type': 'application/json' }) },
+        'vps-gemma3-4b':  { name: '🟢 VPS Gemma3 4B',   url: 'http://srv1298466.hstgr.cloud:11435/v1/chat/completions', model: 'gemma3:4b',          apiFormat: 'openai', header: () => ({ 'Content-Type': 'application/json' }) },
+        'vps-gemma2-2b':  { name: '🟢 VPS Gemma2 2B',   url: 'http://srv1298466.hstgr.cloud:11435/v1/chat/completions', model: 'gemma2:2b',          apiFormat: 'openai', header: () => ({ 'Content-Type': 'application/json' }) },
+        // ⚠️ Qwen3 — Ollama OpenAI-compat Bug (nur Thinking, keine Antwort)
+        'vps-qwen3-4b':   { name: '⚠️ VPS Qwen3 4B',    url: 'http://srv1298466.hstgr.cloud:11435/v1/chat/completions', model: 'qwen3:4b',          apiFormat: 'openai', header: () => ({ 'Content-Type': 'application/json' }) },
+        'vps-qwen3-14b':  { name: '⚠️ VPS Qwen3 14B',   url: 'http://srv1298466.hstgr.cloud:11435/v1/chat/completions', model: 'qwen3:14b',         apiFormat: 'openai', header: () => ({ 'Content-Type': 'application/json' }) },
+        // ─── vLLM Default (llama-swap :8080, braucht GPU — aktuell offline) ───
+        vllm:          { name: 'vLLM (GPU nötig)',  url: 'http://srv1298466.hstgr.cloud:8080/v1/chat/completions', model: 'gemma4-26b',      apiFormat: 'openai', header: () => ({ 'Content-Type': 'application/json' }) },
+        'local-ollama': { name: '💻 Local Ollama (Offline)', url: 'http://localhost:11434/v1/chat/completions', model: 'qwen2.5-coder:7b', apiFormat: 'openai', header: () => ({ 'Content-Type': 'application/json' }) },
         puter:         { name: 'Puter AI',          url: '',                                                   model: 'gpt-4o-mini',                                  apiFormat: 'puter',     header: () => ({}) }
     };
 
@@ -137,7 +171,7 @@ const DkzCopilot = (() => {
     }
 
     function getProvider() {
-        const id = _getCookie('dkz-cop-prov') || localStorage.getItem('dkz-copilot-provider') || 'vllm';
+        const id = _getCookie('dkz-cop-prov') || localStorage.getItem('dkz-copilot-provider') || 'vps-qwen25-3b';
         return { id, ...PROVIDERS[id] };
     }
     function getApiKey() {
@@ -235,13 +269,37 @@ Markdown + emoji. Concise bullets (BP-05). Complete copy-paste snippets.
     //                    Together, OpenRouter, HuggingFace, NVIDIA NIM)
     async function callOpenAI(sys, usr, key, p) {
         const model = localStorage.getItem(`dkz-copilot-model-${p.id}`) || p.model;
-        const body = { model, messages: [{ role: 'system', content: sys }, { role: 'user', content: usr }], temperature: 0.7, max_tokens: 2000 };
+        // Qwen3 Thinking-Fix: /no_think deaktiviert den internen Think-Block
+        const isQwen3 = model.startsWith('qwen3');
+        const sysPrompt = isQwen3 ? sys + '\n/no_think' : sys;
+        const body = { model, messages: [{ role: 'system', content: sysPrompt }, { role: 'user', content: usr }], temperature: 0.7, max_tokens: 2000 };
         // OpenRouter braucht HTTP-Referer
         const headers = p.header(key);
         if (p.id === 'openrouter') { headers['HTTP-Referer'] = 'https://devkitz.dev'; headers['X-Title'] = 'DkZ Copilot'; }
-        const r = await fetch(p.url, { method: 'POST', headers, body: JSON.stringify(body) });
-        const d = await r.json();
-        return d.choices?.[0] ? { ok: true, text: d.choices[0].message.content, provider: p.name, tokens: d.usage?.total_tokens } : { ok: false, text: d.error?.message || JSON.stringify(d.error || d) || 'Fehler', provider: p.name };
+        // Timeout: 90s (Cold-Start kann bei Ollama CPU bis zu 60s dauern)
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 90000);
+        try {
+            const r = await fetch(p.url, { method: 'POST', headers, body: JSON.stringify(body), signal: ctrl.signal });
+            clearTimeout(timer);
+            const d = await r.json();
+            if (d.choices?.[0]) {
+                let text = d.choices[0].message.content || '';
+                // Qwen3 Think-Block entfernen: <think>...</think> am Anfang
+                text = text.replace(/^<think>[\s\S]*?<\/think>\s*/i, '').trim();
+                // Fallback: reasoning_content (Ollama Qwen3)
+                if (!text && d.choices[0].message.reasoning_content) {
+                    text = '💭 ' + d.choices[0].message.reasoning_content.substring(0, 500) + '...';
+                }
+                if (!text) text = '(Modell hat nur gedacht aber keine Antwort generiert. Versuche erneut oder wechsle zu Qwen2.5)';
+                return { ok: true, text, provider: p.name, tokens: d.usage?.total_tokens };
+            }
+            return { ok: false, text: d.error?.message || JSON.stringify(d.error || d) || 'Fehler', provider: p.name };
+        } catch (e) {
+            clearTimeout(timer);
+            if (e.name === 'AbortError') return { ok: false, text: '⏱️ Timeout (90s) — Modell wird geladen (Cold-Start). Versuche in 30s erneut.', provider: p.name };
+            throw e;
+        }
     }
 
     // Anthropic (eigenes Format: system + messages)
@@ -275,12 +333,30 @@ Markdown + emoji. Concise bullets (BP-05). Complete copy-paste snippets.
     }
 
     async function callPuter(sys, usr, p) {
-        if (typeof DkzPuter === 'undefined') throw new Error('DkzPuter shared script nicht geladen');
-        const model = localStorage.getItem(`dkz-copilot-model-${p.id}`) || p.model;
-        const prompt = `[SYSTEM: ${sys}]\nUser: ${usr}`;
-        const reply = await DkzPuter.aiChat(prompt, model);
-        if (reply) return { ok: true, text: reply, provider: p.name };
-        throw new Error('Puter AI gab keine Antwort zurueck');
+        // Versuch 1: Puter Cloud AI
+        if (typeof DkzPuter !== 'undefined') {
+            try {
+                const model = localStorage.getItem(`dkz-copilot-model-${p.id}`) || p.model;
+                const prompt = `[SYSTEM: ${sys}]\nUser: ${usr}`;
+                const reply = await DkzPuter.aiChat(prompt, model);
+                if (reply) return { ok: true, text: reply, provider: 'Puter Cloud' };
+            } catch (e) { console.warn('[Copilot] Puter fehlgeschlagen, nutze VPS:', e); }
+        }
+        // Versuch 2: VPS llama-swap Fallback (direkt)
+        try {
+            const r = await fetch('http://srv1298466.hstgr.cloud:8080/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'qwen3-4b',
+                    messages: [{ role: 'system', content: sys }, { role: 'user', content: usr }],
+                    max_tokens: 2048
+                })
+            });
+            const d = await r.json();
+            if (d.choices?.[0]) return { ok: true, text: d.choices[0].message.content, provider: 'VPS Qwen3 (Fallback)' };
+        } catch {}
+        return { ok: false, text: 'Puter + VPS beide nicht erreichbar. Pruefe Netzwerk oder wechsle Provider (.settings)', provider: p.name };
     }
 
     // ─── Gateway Proxy Call ───
@@ -379,6 +455,33 @@ Markdown + emoji. Concise bullets (BP-05). Complete copy-paste snippets.
             }
             // Built-in copilot commands
             const cmds = {
+                '.help': () => {
+                    const msgs2 = document.getElementById('dkz-cop-msgs');
+                    msgs2.innerHTML += `<div style="background:rgba(250,30,78,0.04);border:1px solid rgba(250,30,78,0.18);border-radius:10px;padding:14px 16px;margin-bottom:8px;font-size:.7rem;color:#a1a1aa;font-family:'JetBrains Mono',monospace;line-height:1.8">` +
+                        `<div style="font-size:.8rem;font-weight:700;color:#fa1e4e;margin-bottom:10px">❓ DkZ Copilot — Alle Befehle</div>` +
+                        `<div style="margin-bottom:8px"><span style="font-size:.65rem;font-weight:600;color:#3b82f6;text-transform:uppercase;letter-spacing:.5px">📌 Navigation</span><br>` +
+                        `• <code style="background:#1a1a20;padding:1px 5px;border-radius:3px;font-size:.65rem;color:#00ff88">.hub</code> — Hub öffnen<br>` +
+                        `• <code style="background:#1a1a20;padding:1px 5px;border-radius:3px;font-size:.65rem;color:#00ff88">.iceberg</code> — Iceberg öffnen<br>` +
+                        `• <code style="background:#1a1a20;padding:1px 5px;border-radius:3px;font-size:.65rem;color:#00ff88">.loops</code> — Loop Dashboard<br>` +
+                        `• <code style="background:#1a1a20;padding:1px 5px;border-radius:3px;font-size:.65rem;color:#00ff88">.gitops</code> — GitOps Doku</div>` +
+                        `<div style="margin-bottom:8px"><span style="font-size:.65rem;font-weight:600;color:#3b82f6;text-transform:uppercase;letter-spacing:.5px">🛠️ Tools</span><br>` +
+                        `• <code style="background:#1a1a20;padding:1px 5px;border-radius:3px;font-size:.65rem;color:#00ff88">.skills</code> — Alle Skills anzeigen (Node.js + Antigravity + Hermes)<br>` +
+                        `• <code style="background:#1a1a20;padding:1px 5px;border-radius:3px;font-size:.65rem;color:#00ff88">.grill</code> — Disziplinierter Dev-Workflow<br>` +
+                        `• <code style="background:#1a1a20;padding:1px 5px;border-radius:3px;font-size:.65rem;color:#00ff88">.grill-me</code> — Sokratisches Design-Interview<br>` +
+                        `• <code style="background:#1a1a20;padding:1px 5px;border-radius:3px;font-size:.65rem;color:#00ff88">.providers</code> — Alle LLM Provider auflisten<br>` +
+                        `• <code style="background:#1a1a20;padding:1px 5px;border-radius:3px;font-size:.65rem;color:#00ff88">.blackbox [minimax|grok]</code> — Blackbox AI Free Models<br>` +
+                        `• <code style="background:#1a1a20;padding:1px 5px;border-radius:3px;font-size:.65rem;color:#00ff88">.gitnexus [repo]</code> — GitNexus Repo Analyse<br>` +
+                        `• <code style="background:#1a1a20;padding:1px 5px;border-radius:3px;font-size:.65rem;color:#00ff88">.costs</code> — LLM Kosten Board<br>` +
+                        `• <code style="background:#1a1a20;padding:1px 5px;border-radius:3px;font-size:.65rem;color:#00ff88">.prompts</code> — Prompt Generator<br>` +
+                        `• <code style="background:#1a1a20;padding:1px 5px;border-radius:3px;font-size:.65rem;color:#00ff88">.mcp</code> — MCP Status<br>` +
+                        `• <code style="background:#1a1a20;padding:1px 5px;border-radius:3px;font-size:.65rem;color:#00ff88">.notebooklm</code> — NotebookLM Info</div>` +
+                        `<div><span style="font-size:.65rem;font-weight:600;color:#3b82f6;text-transform:uppercase;letter-spacing:.5px">⚙️ Einstellungen</span><br>` +
+                        `• <code style="background:#1a1a20;padding:1px 5px;border-radius:3px;font-size:.65rem;color:#00ff88">.settings</code> — Copilot Einstellungen<br>` +
+                        `• <code style="background:#1a1a20;padding:1px 5px;border-radius:3px;font-size:.65rem;color:#00ff88">.help</code> — Diese Hilfe anzeigen</div>` +
+                        `<div style="margin-top:8px;font-size:.55rem;color:#52525b;border-top:1px solid rgba(250,30,78,0.1);padding-top:6px">DkZ Copilot ${esc(VERSION)} · Tippe einen Befehl oder stelle eine Frage</div></div>`;
+                    msgs2.scrollTop = msgs2.scrollHeight;
+                    return null;
+                },
                 '.costs': () => { window.location.href = _resolveModulePath('llm-cost-board'); return '💰 Öffne LLM Cost Board...'; },
                 '.prompts': () => { window.location.href = _resolveModulePath('prompt-generator'); return '🎯 Öffne Prompt Generator...'; },
                 '.loops': () => { window.location.href = _resolveModulePath('loop-dashboard'); return '🔄 Öffne Loop Dashboard...'; },
@@ -386,6 +489,63 @@ Markdown + emoji. Concise bullets (BP-05). Complete copy-paste snippets.
                 '.gitops': () => { window.location.href = _resolveModulePath('wissen-hub') + '#gitops'; return '🤖 Öffne GitOps & DeepKeep Doku...'; },
                 '.hub': () => { window.location.href = _resolveHubPath(); return '🎯 Öffne Hub...'; },
                 '.settings': () => { openSettings(); return '⚙️ Einstellungen geöffnet'; },
+                '.skills': () => {
+                    const msgs2 = document.getElementById('dkz-cop-msgs');
+                    // Node.js Skills (dkz-center)
+                    const nodeSkills = [
+                        { name: 'health-check', icon: '🏥', desc: 'Alle Services + VPS + GitHub prüfen', cmd: 'dkz skill run health-check' },
+                        { name: 'code-review', icon: '🔍', desc: 'Datei per LLM reviewen (Qualität 1-10)', cmd: 'dkz skill run code-review --file=...' },
+                        { name: 'git-summary', icon: '📝', desc: 'Git-Commits zusammenfassen', cmd: 'dkz skill run git-summary --count=10' },
+                        { name: 'quick-translate', icon: '🌍', desc: 'Text übersetzen (DE/EN/FR/ES/...)', cmd: 'dkz skill run quick-translate --text=...' },
+                    ];
+                    // Antigravity / Gemini Skills
+                    const agSkills = [
+                        { name: 'grill', icon: '🔥', desc: 'Disziplinierter Dev-Workflow mit PROGRESS.md', cmd: '/grill' },
+                        { name: 'grill-me', icon: '🎯', desc: 'Sokratisches Interview vor Implementierung', cmd: '/grill-me' },
+                        { name: 'grill-with-docs', icon: '📚', desc: 'Plan gegen Domain-Modell testen', cmd: '/grill-with-docs' },
+                        { name: 'superpowers', icon: '⚡', desc: '12-Skill Engineering Framework', cmd: '/superpowers' },
+                    ];
+                    // Hermes Skills
+                    const hermesSkills = [
+                        { name: 'skill-factory', icon: '🏭', desc: 'Hermes Skill Factory — Skills erstellen', cmd: 'hermes skill create' },
+                    ];
+                    let html = `<div style="background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.15);border-radius:10px;padding:14px 16px;margin-bottom:8px;font-size:.7rem;color:#a1a1aa;font-family:'JetBrains Mono',monospace;line-height:1.8">` +
+                        `<div style="font-size:.8rem;font-weight:700;color:#00ff88;margin-bottom:10px">🧩 Alle Skills (${nodeSkills.length + agSkills.length + hermesSkills.length})</div>`;
+                    // Node.js
+                    html += `<div style="margin-bottom:8px"><span style="font-size:.65rem;font-weight:600;color:#3b82f6;text-transform:uppercase;letter-spacing:.5px">🟢 Node.js Skills (CLI: dkz skill run)</span><br>`;
+                    nodeSkills.forEach(s => {
+                        html += `• ${s.icon} <code style="background:#1a1a20;padding:1px 5px;border-radius:3px;font-size:.65rem;color:#00ff88">${esc(s.name)}</code> — ${esc(s.desc)}<br><span style="font-size:.55rem;color:#52525b;margin-left:18px">$ ${esc(s.cmd)}</span><br>`;
+                    });
+                    html += `</div>`;
+                    // Antigravity
+                    html += `<div style="margin-bottom:8px"><span style="font-size:.65rem;font-weight:600;color:#a855f7;text-transform:uppercase;letter-spacing:.5px">🚀 Antigravity Skills (Slash-Commands)</span><br>`;
+                    agSkills.forEach(s => {
+                        html += `• ${s.icon} <code style="background:#1a1a20;padding:1px 5px;border-radius:3px;font-size:.65rem;color:#a855f7">${esc(s.cmd)}</code> — ${esc(s.desc)}<br>`;
+                    });
+                    html += `</div>`;
+                    // Hermes
+                    html += `<div><span style="font-size:.65rem;font-weight:600;color:#ffb800;text-transform:uppercase;letter-spacing:.5px">🤖 Hermes Skills</span><br>`;
+                    hermesSkills.forEach(s => {
+                        html += `• ${s.icon} <code style="background:#1a1a20;padding:1px 5px;border-radius:3px;font-size:.65rem;color:#ffb800">${esc(s.name)}</code> — ${esc(s.desc)}<br>`;
+                    });
+                    html += `</div>`;
+                    html += `<div style="margin-top:8px;font-size:.55rem;color:#52525b;border-top:1px solid rgba(0,255,136,0.1);padding-top:6px">Tippe .grill oder .grill-me direkt · CLI: dkz skills</div></div>`;
+                    msgs2.innerHTML += html;
+                    msgs2.scrollTop = msgs2.scrollHeight;
+                    return null;
+                },
+                '.grill': () => {
+                    const msgs2 = document.getElementById('dkz-cop-msgs');
+                    msgs2.innerHTML += `<div style="background:rgba(255,100,0,0.06);border-left:3px solid #f97316;padding:10px 12px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:.7rem;color:#a1a1aa;font-family:'JetBrains Mono',monospace;line-height:1.7"><strong style="color:#f97316">🔥 Grill Workflow aktiviert!</strong><br><br><strong style="color:#00ff88">Checkliste:</strong><br>☐ PROGRESS.md lesen/erstellen<br>☐ git log --oneline -10<br>☐ EINE Aufgabe wählen<br>☐ Durcharbeiten mit Beweisen<br>☐ PROGRESS.md aktualisieren<br>☐ Git commit<br><br><span style="font-size:.55rem;color:#52525b">Nutze /grill im Antigravity Chat für den vollen Workflow</span></div>`;
+                    msgs2.scrollTop = msgs2.scrollHeight;
+                    return null;
+                },
+                '.grill-me': () => {
+                    const msgs2 = document.getElementById('dkz-cop-msgs');
+                    msgs2.innerHTML += `<div style="background:rgba(168,85,247,0.06);border-left:3px solid #a855f7;padding:10px 12px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:.7rem;color:#a1a1aa;font-family:'JetBrains Mono',monospace;line-height:1.7"><strong style="color:#a855f7">🎯 Grill-Me — Sokratisches Interview</strong><br><br><strong style="color:#00ff88">7 Fragen:</strong><br>1. Was ist das Ziel? (Problem, nicht Lösung)<br>2. Wer nutzt das? (User Persona)<br>3. Was wenn es schiefgeht? (Failure Mode)<br>4. Was existiert schon? (Bestandscode)<br>5. Was sind die Constraints?<br>6. Welche Alternativen verworfen?<br>7. Einfachster erster Schritt? (MVP)<br><br><span style="font-size:.55rem;color:#52525b">Nutze /grill-me im Antigravity Chat für das Interview</span></div>`;
+                    msgs2.scrollTop = msgs2.scrollHeight;
+                    return null;
+                },
                 '.providers': () => {
                     const list = Object.entries(PROVIDERS).map(([id, p]) => `• ${p.name} (${p.model})`).join('\n');
                     const msgs2 = document.getElementById('dkz-cop-msgs');
@@ -408,6 +568,34 @@ Markdown + emoji. Concise bullets (BP-05). Complete copy-paste snippets.
                         <code style="background:#1a1a20;padding:2px 6px;border-radius:3px;font-size:.65rem;display:block;margin:4px 0">npx -y notebooklm-mcp</code>
                         In Claude Desktop → Settings → MCP Server hinzufügen.<br>
                         <span style="font-size:.6rem;color:#52525b">Benötigt: Google Cloud OAuth + NotebookLM Zugang</span></div>`;
+                    msgs2.scrollTop = msgs2.scrollHeight;
+                    return null;
+                },
+                '.gitnexus': () => {
+                    const repo = msg.split(/\s+/).slice(1).join(' ').trim();
+                    if (repo) {
+                        window.open(_resolveModulePath('gitnexus-explorer') + '?repo=' + encodeURIComponent(repo), '_blank');
+                        return '\ud83d\udd17 GitNexus: Analysiere ' + repo + '...';
+                    }
+                    const msgs2 = document.getElementById('dkz-cop-msgs');
+                    msgs2.innerHTML += `<div style="background:rgba(59,130,246,0.06);border-left:3px solid #3b82f6;padding:10px 12px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:.7rem;color:#a1a1aa;font-family:'JetBrains Mono',monospace;line-height:1.7"><strong style="color:#3b82f6">\ud83d\udd17 GitNexus Explorer</strong><br><br><strong style="color:#00ff88">Befehle:</strong><br>\u2022 <code style="background:#1a1a20;padding:1px 4px;border-radius:3px;font-size:.65rem">.gitnexus 7IKED/dkz-command-center</code> \u2014 Repo analysieren<br>\u2022 <code style="background:#1a1a20;padding:1px 4px;border-radius:3px;font-size:.65rem">.gitnexus</code> \u2014 Explorer \u00f6ffnen<br><br><strong style="color:#ffb800">Features:</strong><br>\u2022 Dependency Graph \u2014 Abh\u00e4ngigkeiten visualisieren<br>\u2022 File Tree \u2014 Repository-Struktur<br>\u2022 Code Analysis \u2014 Klassen, Funktionen, Imports<br>\u2022 RAG Query \u2014 Codebase durchsuchen<br>\u2022 Export zu Graphify</div>`;
+                    msgs2.scrollTop = msgs2.scrollHeight;
+                    return null;
+                },
+                '.blackbox': () => {
+                    const sub = msg.split(/\s+/).slice(1).join(' ').trim().toLowerCase();
+                    if (sub === 'minimax' || sub === 'free') {
+                        localStorage.setItem('dkz-copilot-provider', 'blackbox');
+                        _setCookie('dkz-cop-prov', 'blackbox');
+                        return '\ud83d\udda4 Blackbox AI aktiviert \u2014 MiniMax Free Modell';
+                    }
+                    if (sub === 'grok' || sub === 'code') {
+                        localStorage.setItem('dkz-copilot-provider', 'blackbox-grok');
+                        _setCookie('dkz-cop-prov', 'blackbox-grok');
+                        return '\ud83d\udda4 Blackbox Grok Code aktiviert \u2014 Free Coding Modell';
+                    }
+                    const msgs2 = document.getElementById('dkz-cop-msgs');
+                    msgs2.innerHTML += `<div style="background:rgba(30,30,40,0.9);border-left:3px solid #333;padding:10px 12px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:.7rem;color:#a1a1aa;font-family:'JetBrains Mono',monospace;line-height:1.7"><strong style="color:#e8e8ec">\ud83d\udda4 Blackbox AI (Free Tier)</strong><br><br><strong style="color:#00ff88">Free Modelle:</strong><br>\u2022 <code style="background:#1a1a20;padding:1px 4px;border-radius:3px;font-size:.65rem">.blackbox minimax</code> \u2014 MiniMax Text-01 (Free)<br>\u2022 <code style="background:#1a1a20;padding:1px 4px;border-radius:3px;font-size:.65rem">.blackbox grok</code> \u2014 Grok Code Fast (Free)<br><br><strong style="color:#ffb800">API:</strong> api.blackbox.ai \u2014 OpenAI-kompatibel<br><strong style="color:#818cf8">Status:</strong> Kein API-Key n\u00f6tig f\u00fcr Free Tier</div>`;
                     msgs2.scrollTop = msgs2.scrollHeight;
                     return null;
                 },
@@ -1620,7 +1808,7 @@ Markdown + emoji. Concise bullets (BP-05). Complete copy-paste snippets.
     }
     function _startBuild() {
         const opts = [];
-        const checkboxes = document.querySelectorAll('#dkz-cop-panel-builder input[type="checkbox"]');
+        const checkboxes = document.querySelectorAll('#dkz-cop-panel-promptr input[type="checkbox"]');
         checkboxes.forEach(cb => { if (cb.checked && cb.parentElement?.textContent) opts.push(cb.parentElement.textContent.trim()); });
         const localPath = document.getElementById('dkz-cop-local-path')?.value || '';
         const fileNames = _uploadedFiles.map(f => f.name);
@@ -1696,7 +1884,29 @@ Markdown + emoji. Concise bullets (BP-05). Complete copy-paste snippets.
         {n:'VPS Monitor',p:'vps-monitor',c:'system',i:'🖥️'},{n:'Webhooks',p:'webhook-dashboard',c:'system',i:'🔔'},
         {n:'Whisper TTS',p:'whisper-tts',c:'ai',i:'🗣️'},{n:'Wiki Viewer',p:'wiki-viewer',c:'data',i:'📖'},
         {n:'WissenHub',p:'wissen-hub',c:'data',i:'🧠'},{n:'Workflow Builder',p:'workflow-builder',c:'builder',i:'🔧'},
-        {n:'Workflow Viewer',p:'workflow-viewer',c:'system',i:'👁️'}
+        {n:'Workflow Viewer',p:'workflow-viewer',c:'system',i:'👁️'},
+        // ─── Neue Module (Audit 2026-06-04) ───
+        {n:'AIAIKirk',p:'aiaikirk',c:'ai',i:'🧠'},{n:'Blog Gallery',p:'blog-gallery',c:'media',i:'📸'},
+        {n:'Clipboard Manager',p:'clipboard-manager',c:'tools',i:'📋'},{n:'Cloudia',p:'cloudia',c:'ai',i:'☁️'},
+        {n:'CopyPaste',p:'copypaste-app',c:'tools',i:'📎'},{n:'DeepKeep',p:'deepkeep',c:'data',i:'🔒'},
+        {n:'Designboard',p:'designboard',c:'media',i:'🎨'},{n:'Design Gallery',p:'design-gallery',c:'media',i:'🖌️'},
+        {n:'DEVKiTZ Wiki',p:'devkitz-wiki',c:'data',i:'📚'},{n:'DkZ Timer',p:'dkz-timer',c:'tools',i:'⏰'},
+        {n:'Flash UI',p:'flash-ui',c:'builder',i:'⚡'},{n:'GitNexus',p:'gitnexus-explorer',c:'data',i:'🔗'},
+        {n:'Grok Chat',p:'grok-chat',c:'ai',i:'🤖'},{n:'Hermes Overlay',p:'hermes-overlay',c:'ai',i:'🧬'},
+        {n:'Hyperreal React',p:'hyperreal-react',c:'media',i:'✨'},{n:'Kontrollzentrum',p:'kontrollzentrum',c:'system',i:'🎛️'},
+        {n:'Markdown Gen',p:'markdown-gen',c:'tools',i:'📝'},{n:'MiroFish Sim',p:'mirofish-sim',c:'ai',i:'🐟'},
+        {n:'Nexuz Builder',p:'nexuz-builder',c:'builder',i:'🔮'},{n:'NLM Demo',p:'nlm-demo',c:'ai',i:'📓'},
+        {n:'Notes Manager',p:'notes-manager',c:'tools',i:'📝'},{n:'OpenHumans Hub',p:'openhumans-hub',c:'ai',i:'👥'},
+        {n:'Ordner Blueprint',p:'ordner-blaupause',c:'system',i:'📁'},{n:'Paperclip',p:'paperclip',c:'tools',i:'📎'},
+        {n:'Pattern Hub',p:'pattern-hub',c:'builder',i:'🔷'},{n:'Prompt Viewer',p:'prompt-viewer',c:'ai',i:'👁️'},
+        {n:'QR Scanner',p:'qr-scanner',c:'tools',i:'📱'},{n:'Raw API Hub',p:'raw-api-hub',c:'tools',i:'🔌'},
+        {n:'Regex Tester',p:'regex-tester',c:'tools',i:'🔤'},{n:'Research Archiv',p:'research-archive',c:'data',i:'📚'},
+        {n:'Screenshot',p:'screenshot-tool',c:'tools',i:'📸'},{n:'Side Panel',p:'side-panel',c:'system',i:'📌'},
+        {n:'Source Registry',p:'source-registry',c:'data',i:'📋'},{n:'Speech2Text',p:'speech_to_text',c:'ai',i:'🎙️'},
+        {n:'Split Browser',p:'split-browser',c:'tools',i:'🔲'},{n:'Template Hub',p:'template-hub',c:'builder',i:'📄'},
+        {n:'Text Summary',p:'text_summary',c:'ai',i:'📝'},{n:'Text2Speech',p:'text_to_speech',c:'ai',i:'🗣️'},
+        {n:'TTS Reader',p:'tts-reader',c:'ai',i:'📖'},{n:'Vibe Gallery',p:'vibe-gallery',c:'media',i:'🎨'},
+        {n:'Vier Ordner',p:'vier-ordner',c:'system',i:'📁'}
     ];
     let _modStatusCache = {};
     let _modItemsCache = null;

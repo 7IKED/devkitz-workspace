@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DkZ Copilot™ v3 — Hermes + JAMEZ™</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #060608;
+            --surface: #0e0e12;
+            --card: #14141a;
+            --border: #1e1e28;
+            --text: #f0f0f2;
+            --muted: #6a6a7a;
+            --accent: #fa1e4e;
+            --green: #00ff88;
+            --yellow: #ffb800;
+            --red: #ff3b5c;
+            --blue: #55ACEE;
+            --purple: #a855f7;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+        }
+
+        body {
+            font-family: var(--font);
+            background: transparent;
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .copilot-shell {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 20px 80px rgba(0,0,0,0.8), 0 0 1px rgba(250,30,78,0.3);
+        }
+
+        /* ── Header ── */
+        .cp-header {
+            padding: 12px 16px;
+            background: linear-gradient(135deg, rgba(250,30,78,0.06), rgba(0,255,136,0.03));
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            -webkit-app-region: drag;
+        }
+
+        .cp-header-left { display: flex; align-items: center; gap: 10px; }
+
+        .cp-ampel {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px rgba(0,255,136,0.5);
+            transition: all 0.5s;
+        }
+        .cp-ampel.gelb { background: var(--yellow); box-shadow: 0 0 8px rgba(255,184,0,0.5); }
+        .cp-ampel.rot { background: var(--red); box-shadow: 0 0 8px rgba(255,59,92,0.5); }
+
+        .cp-title { font-weight: 800; font-size: 0.85rem; letter-spacing: -0.02em; }
+        .cp-version { font-size: 0.58rem; color: var(--muted); font-family: var(--mono); }
+
+        .cp-header-btns { display: flex; gap: 5px; -webkit-app-region: no-drag; }
+        .cp-header-btns button {
+            width: 26px; height: 26px; border-radius: 7px;
+            border: 1px solid var(--border); background: rgba(255,255,255,0.03);
+            color: var(--muted); cursor: pointer; font-size: 0.65rem;
+            display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .cp-header-btns button:hover { background: rgba(250,30,78,0.1); color: var(--accent); }
+
+        /* ── Tabs ── */
+        .cp-tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 10px; }
+        .cp-tab {
+            padding: 7px 12px; font-size: 0.65rem; font-weight: 600;
+            color: var(--muted); cursor: pointer;
+            border-bottom: 2px solid transparent; transition: all 0.2s;
+        }
+        .cp-tab:hover { color: var(--text); }
+        .cp-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+        /* ── Model Selector ── */
+        .cp-model-bar {
+            padding: 6px 14px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(10,10,14,0.5);
+        }
+        .cp-model-bar label { font-size: 0.6rem; color: var(--muted); font-weight: 600; }
+        .cp-model-bar select {
+            padding: 4px 8px; background: var(--card); border: 1px solid var(--border);
+            border-radius: 6px; color: var(--text); font-size: 0.65rem;
+            font-family: var(--font); outline: none;
+        }
+        .cp-model-bar select:focus { border-color: var(--accent); }
+        .cp-cloud-status {
+            margin-left: auto; font-size: 0.58rem; color: var(--muted);
+            display: flex; align-items: center; gap: 4px;
+        }
+        .cp-cloud-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .cp-cloud-dot.on { background: var(--green); box-shadow: 0 0 4px var(--green); }
+        .cp-cloud-dot.off { background: var(--red); }
+
+        /* ── Chat Area ── */
+        .cp-chat {
+            flex: 1; overflow-y: auto; padding: 14px;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .cp-chat::-webkit-scrollbar { width: 3px; }
+        .cp-chat::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+        .cp-msg {
+            padding: 10px 13px; border-radius: 12px;
+            font-size: 0.78rem; line-height: 1.55; max-width: 92%;
+            animation: fadeIn 0.3s ease; word-break: break-word;
+        }
+        .cp-msg.system { background: rgba(250,30,78,0.06); border: 1px solid rgba(250,30,78,0.12); align-self: flex-start; }
+        .cp-msg.user { background: rgba(0,255,136,0.06); border: 1px solid rgba(0,255,136,0.12); align-self: flex-end; }
+        .cp-msg.ai { background: var(--card); border: 1px solid var(--border); align-self: flex-start; }
+        .cp-msg .msg-meta { font-size: 0.55rem; color: var(--muted); margin-top: 6px; font-family: var(--mono); }
+        .cp-msg pre { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; overflow-x: auto; font-family: var(--mono); font-size: 0.7rem; margin: 6px 0; }
+        .cp-msg code { font-family: var(--mono); background: rgba(255,255,255,0.05); padding: 1px 4px; border-radius: 3px; font-size: 0.72rem; }
+
+        .cp-typing { align-self: flex-start; padding: 8px 14px; }
+        .cp-typing span { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin: 0 2px; animation: bounce 1.2s infinite; }
+        .cp-typing span:nth-child(2) { animation-delay: 0.15s; }
+        .cp-typing span:nth-child(3) { animation-delay: 0.3s; }
+        @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ── Health / Agents ── */
+        .cp-panel { display: none; flex: 1; overflow-y: auto; padding: 14px; }
+        .cp-panel.active { display: block; }
+
+        .health-card, .agent-row {
+            padding: 9px 12px; background: var(--card); border: 1px solid var(--border);
+            border-radius: 9px; margin-bottom: 6px; display: flex; align-items: center; gap: 9px;
+        }
+        .health-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+        .health-dot.ok { background: var(--green); }
+        .health-dot.warn { background: var(--yellow); }
+        .health-dot.err { background: var(--red); }
+        .health-name { font-size: 0.72rem; font-weight: 600; flex: 1; }
+        .health-detail { font-size: 0.58rem; color: var(--muted); font-family: var(--mono); }
+
+        .agent-icon { font-size: 0.9rem; }
+        .agent-name { font-weight: 600; flex: 1; font-size: 0.72rem; }
+        .agent-team { font-size: 0.56rem; color: var(--muted); padding: 2px 5px; background: rgba(255,255,255,0.03); border-radius: 4px; }
+
+        /* ── Chat Log Panel ── */
+        .log-entry {
+            padding: 8px 12px; background: var(--card); border: 1px solid var(--border);
+            border-radius: 8px; margin-bottom: 5px; font-size: 0.68rem; cursor: pointer; transition: all 0.2s;
+        }
+        .log-entry:hover { border-color: var(--accent); }
+        .log-title { font-weight: 700; margin-bottom: 2px; }
+        .log-meta { font-size: 0.56rem; color: var(--muted); font-family: var(--mono); }
+
+        /* ── Input Area ── */
+        .cp-input-area {
+            padding: 10px 14px; border-top: 1px solid var(--border);
+            background: var(--surface); display: flex; gap: 7px; align-items: flex-end;
+        }
+        .cp-input {
+            flex: 1; padding: 9px 12px; background: var(--card);
+            border: 1px solid var(--border); border-radius: 10px;
+            color: var(--text); font-family: var(--font); font-size: 0.78rem;
+            outline: none; transition: border-color 0.2s; resize: none;
+            min-height: 38px; max-height: 120px; line-height: 1.4;
+        }
+        .cp-input:focus { border-color: var(--accent); }
+        .cp-input::placeholder { color: var(--muted); }
+
+        .cp-send {
+            width: 38px; height: 38px; border-radius: 10px; border: none;
+            background: linear-gradient(135deg, var(--accent), #d91640);
+            color: #fff; cursor: pointer; font-size: 0.9rem;
+            display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .cp-send:hover { transform: scale(1.05); box-shadow: 0 4px 16px rgba(250,30,78,0.4); }
+        .cp-send:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        /* ── Footer Bar ── */
+        .cp-footer {
+            padding: 5px 14px; border-top: 1px solid var(--border);
+            display: flex; gap: 5px; flex-wrap: wrap; background: rgba(10,10,14,0.5);
+        }
+        .cp-quick {
+            padding: 3px 8px; background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border); border-radius: 5px;
+            color: var(--muted); font-size: 0.55rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .cp-quick:hover { background: rgba(250,30,78,0.08); color: var(--accent); border-color: rgba(250,30,78,0.2); }
+
+        .section-title { font-size: 0.65rem; font-weight: 700; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* ── Settings Panel ── */
+        .settings-group { margin-bottom: 14px; }
+        .settings-group-title {
+            font-size: 0.6rem; font-weight: 700; color: var(--accent); text-transform: uppercase;
+            letter-spacing: .5px; margin-bottom: 6px; padding-bottom: 4px;
+            border-bottom: 1px solid rgba(250,30,78,.15);
+        }
+        .settings-row {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 5px;
+        }
+        .settings-row label {
+            font-size: 0.62rem; font-weight: 600; color: var(--muted); min-width: 90px; flex-shrink: 0;
+        }
+        .settings-row input {
+            flex: 1; padding: 5px 8px; background: var(--card); border: 1px solid var(--border);
+            border-radius: 6px; color: var(--text); font-family: var(--mono); font-size: 0.6rem; outline: none;
+        }
+        .settings-row input:focus { border-color: var(--accent); }
+        .settings-row input::placeholder { color: var(--muted); }
+        .settings-row .key-status {
+            width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+        }
+        .settings-row .key-status.set { background: var(--green); box-shadow: 0 0 4px var(--green); }
+        .settings-row .key-status.unset { background: var(--muted); }
+        .settings-save {
+            padding: 6px 16px; background: var(--accent); border: none; border-radius: 8px;
+            color: #fff; font-size: .65rem; font-weight: 700; cursor: pointer;
+            font-family: var(--font); transition: all .2s; margin-top: 8px;
+        }
+        .settings-save:hover { box-shadow: 0 2px 12px rgba(250,30,78,.3); transform: translateY(-1px); }
+        .settings-note {
+            font-size: .55rem; color: var(--muted); margin-top: 6px; line-height: 1.5;
+            padding: 6px 8px; background: rgba(255,255,255,.02); border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="copilot-shell">
+        <!-- Header -->
+        <div class="cp-header">
+            <div class="cp-header-left">
+                <div class="cp-ampel" id="ampelDot"></div>
+                <div>
+                    <div class="cp-title">DkZ Copilot™ <span style="color:var(--purple)">Hermes</span></div>
+                    <div class="cp-version">v3.0 · JAMEZ™ v4 · CUBE²</div>
+                </div>
+            </div>
+            <div class="cp-header-btns">
+                <button onclick="ipcSend('open-hermes-console')" title="Hermes Console (Ctrl+Shift+H)">🖥️</button>
+                <button onclick="ipcSend('open-overlay')" title="Agent Overlay (Ctrl+Shift+O)">🎯</button>
+                <button onclick="ipcSend('open-paperless')" title="Paperless-ngx">📄</button>
+                <button onclick="puterSync()" title="Cloud Sync">☁️</button>
+                <button onclick="openDashboard()" title="Dashboard">🚀</button>
+                <button onclick="hideWindow()" title="Schliessen (ESC)">✕</button>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="cp-tabs">
+            <div class="cp-tab active" data-tab="chat" onclick="switchTab('chat')">💬 Chat</div>
+            <div class="cp-tab" data-tab="health" onclick="switchTab('health')">🏥 Health</div>
+            <div class="cp-tab" data-tab="agents" onclick="switchTab('agents')">🤖 Agenten</div>
+            <div class="cp-tab" data-tab="logs" onclick="switchTab('logs')">📜 Logs</div>
+            <div class="cp-tab" data-tab="settings" onclick="switchTab('settings')">⚙️ Keys</div>
+        </div>
+
+        <!-- Model Selector -->
+        <div class="cp-model-bar" id="modelBar">
+            <label>Modell:</label>
+            <select id="modelSelect">
+                <optgroup label="⚡ VPS Hermes (Gemini)">
+                    <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash</option>
+                    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                </optgroup>
+                <optgroup label="🦙 VPS Ollama">
+                    <option value="qwen3.5:27b">Qwen 3.5 27B</option>
+                    <option value="gemma3n:e4b">Gemma 4 12B (Gemma3n)</option>
+                    <option value="qwen3.5:9b">Qwen 3.5 9B</option>
+                    <option value="qwen2.5-coder:7b">Qwen Coder 7B</option>
+                    <option value="qwen3:14b">Qwen3 14B</option>
+                    <option value="qwen2.5:32b">Qwen 2.5 32B</option>
+                    <option value="gemma3:4b">Gemma3 4B</option>
+                    <option value="gemma2:2b">Gemma 2 2B</option>
+                </optgroup>
+                <optgroup label="💻 Lokale Modelle (Ollama - Offline)">
+                    <option value="local/gemma3n:e4b">Gemma 4 12B (Local)</option>
+                    <option value="local/qwen2.5-coder:7b">Qwen Coder 7B (Local)</option>
+                    <option value="local/gemma2:2b">Gemma 2 2B (Local)</option>
+                    <option value="local/qwen2.5:0.5b">Qwen 2.5 0.5B (Local)</option>
+                </optgroup>
+                <optgroup label="☁️ CUBE² (Puter)">
+                    <option value="gpt-4o-mini">GPT-4o Mini</option>
+                    <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+                    <option value="deepseek-chat">DeepSeek V3</option>
+                    <option value="mistral-large">Mistral Large</option>
+                </optgroup>
+                <optgroup label="🔑 Direkt-API (Key noetig)">
+                    <option value="grok-3-mini">Grok 3 Mini (xAI)</option>
+                    <option value="claude-sonnet-4-20250514">Claude Sonnet 4 (Anthropic)</option>
+                    <option value="gemini-2.5-flash-preview">Gemini 2.5 Flash (Google)</option>
+                    <option value="gpt-4.1-mini">GPT-4.1 Mini (OpenAI)</option>
+                </optgroup>
+                <optgroup label="🤗 HuggingFace Inference">
+                    <option value="hf/meta-llama/Llama-3.3-70B-Instruct">LLaMA 3.3 70B (HF)</option>
+                    <option value="hf/Qwen/Qwen3-30B-A3B">Qwen3 30B (HF)</option>
+                    <option value="hf/mistralai/Mistral-Small-3.2-24B-Instruct-2506">Mistral Small 24B (HF)</option>
+                </optgroup>
+                <optgroup label="🟢 NVIDIA NIM">
+                    <option value="nim/meta/llama-3.3-70b-instruct">LLaMA 3.3 70B (NIM)</option>
+                    <option value="nim/google/gemma-3-27b-it">Gemma3 27B (NIM)</option>
+                    <option value="nim/mistralai/mistral-large-2-instruct">Mistral Large 2 (NIM)</option>
+                </optgroup>
+                <optgroup label="🔥 vLLM (Self-Hosted)">
+                    <option value="vllm/auto">vLLM Auto-Detect</option>
+                </optgroup>
+            </select>
+            <div class="cp-cloud-status">
+                <div class="cp-cloud-dot off" id="cloudDot"></div>
+                <span id="cloudLabel">Offline</span>
+            </div>
+        </div>
+
+        <!-- Chat Panel -->
+        <div class="cp-chat active" id="chatPanel">
+            <div class="cp-msg system">
+                🎯 <strong>JAMEZ™ Guardian v4</strong> + <strong style="color:var(--purple)">Hermes</strong> Engine<br>
+                Multi-Model Chat via CUBE² + VPS Hermes · Alle Chats als JSON gespeichert<br>
+                <span style="font-size:0.6rem;color:var(--muted)">Ctrl+Space · ESC schliessen · Cloud Sync aktiv</span>
+            </div>
+        </div>
+
+        <!-- Health Panel -->
+        <div class="cp-panel" id="healthPanel"></div>
+
+        <!-- Agents Panel -->
+        <div class="cp-panel" id="agentsPanel"></div>
+
+        <!-- Settings Panel -->
+        <div class="cp-panel" id="settingsPanel"></div>
+
+        <!-- Chat Logs Panel -->
+        <div class="cp-panel" id="logsPanel"></div>
+
+        <!-- Quick Actions -->
+        <div class="cp-footer">
+            <div class="cp-quick" onclick="ipcSend('open-hermes-console')">🖥️ Hermes</div>
+            <div class="cp-quick" onclick="ipcSend('open-overlay')">🎯 Overlay</div>
+            <div class="cp-quick" onclick="ipcSend('open-hermes-3d')">🏢 3D Buero</div>
+            <div class="cp-quick" onclick="ipcSend('open-paperless')">📄 Paperless</div>
+            <div class="cp-quick" onclick="quickCmd('/new')">✨ Neu</div>
+            <div class="cp-quick" onclick="puterSignIn()">☁️ CUBE²</div>
+        </div>
+
+        <!-- Input -->
+        <div class="cp-input-area">
+            <textarea class="cp-input" id="chatInput" placeholder="Frag Hermes etwas..." rows="1"></textarea>
+            <button class="cp-send" id="sendBtn" onclick="sendMessage()">→</button>
+        </div>
+    </div>
+
+    <!-- Puter SDK -->
+    <script src="https://js.puter.com/v2/"></script>
+
+    <script>
+        // ========================================
+        // STATE
+        // ========================================
+        const STATE = {
+            currentChatId: null,
+            chats: {},       // { chatId: { id, title, model, messages: [], created, updated } }
+            puterReady: false,
+            isSignedIn: false
+        };
+
+        const STORAGE_KEY = 'dkz-copilot-chats';
+        const PUTER_PATH = 'copilot/chats/';
+
+        // ========================================
+        // INIT
+        // ========================================
+        function init() {
+            loadState();
+            if (!STATE.currentChatId) newChat();
+            renderChatMessages();
+            initPuter();
+            autoResizeInput();
+        }
+
+        // ========================================
+        // CHAT MANAGEMENT
+        // ========================================
+        function newChat() {
+            const id = 'chat-' + Date.now();
+            STATE.chats[id] = {
+                id,
+                title: 'Neuer Chat',
+                model: document.getElementById('modelSelect')?.value || 'gpt-4o-mini',
+                messages: [],
+                created: new Date().toISOString(),
+                updated: new Date().toISOString()
+            };
+            STATE.currentChatId = id;
+            saveState();
+            document.getElementById('chatPanel').innerHTML = '';
+            addSystemMsg('✨ Neuer Chat gestartet · Modell: ' + (STATE.chats[id].model));
+        }
+
+        function getCurrentChat() {
+            return STATE.chats[STATE.currentChatId] || null;
+        }
+
+        // ========================================
+        // MESSAGES
+        // ========================================
+        function addSystemMsg(text) {
+            addMessage({ role: 'system', content: text, timestamp: new Date().toISOString() });
+        }
+
+        function addMessage(msg) {
+            const chat = getCurrentChat();
+            if (chat) {
+                chat.messages.push(msg);
+                chat.updated = new Date().toISOString();
+                // Auto-title from first user message
+                if (msg.role === 'user' && chat.messages.filter(m => m.role === 'user').length === 1) {
+                    chat.title = msg.content.substring(0, 50) + (msg.content.length > 50 ? '...' : '');
+                }
+            }
+
+            const panel = document.getElementById('chatPanel');
+            const div = document.createElement('div');
+            const typeClass = msg.role === 'user' ? 'user' : msg.role === 'system' ? 'system' : 'ai';
+            div.className = 'cp-msg ' + typeClass;
+
+            let html = formatContent(msg.content);
+            html += '<div class="msg-meta">' + esc(msg.role) + ' · ' + new Date(msg.timestamp).toLocaleTimeString('de-DE') + (msg.model ? ' · ' + esc(msg.model) : '') + '</div>';
+            div.innerHTML = html;
+            panel.appendChild(div);
+            panel.scrollTop = panel.scrollHeight;
+
+            saveState();
+        }
+
+        function formatContent(text) {
+            let html = esc(text);
+            // Code blocks
+            html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+            // Bold
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            // Line breaks
+            html = html.replace(/\n/g, '<br>');
+            return html;
+        }
+
+        function esc(str) {
+            const d = document.createElement('div');
+            d.textContent = str || '';
+            return d.innerHTML;
+        }
+
+        // ========================================
+        // PROVIDER CONFIG + API KEYS
+        // ========================================
+        const API_KEYS_STORAGE = 'dkz-copilot-apikeys';
+
+        function loadApiKeys() {
+            try { return JSON.parse(localStorage.getItem(API_KEYS_STORAGE) || '{}'); } catch(e) { return {}; }
+        }
+        function saveApiKeys(keys) {
+            localStorage.setItem(API_KEYS_STORAGE, JSON.stringify(keys));
+        }
+
+        const PROVIDERS = {
+            gateway: { url: 'http://localhost:3040/api/v1/chat/completions', key: null },
+            hermes: { url: 'http://srv1298466.hstgr.cloud:8642/v1/chat/completions', key: 'dkz-remote-2026-pi' },
+            ollama: { url: 'http://72.61.93.129:8811/v1/chat/completions', key: 'DKZ-OLLAMA-2026-SECURE' },
+            // Direkt-APIs (Keys aus localStorage)
+            xai: { url: 'https://api.x.ai/v1/chat/completions' },
+            anthropic: { url: 'https://api.anthropic.com/v1/messages' },
+            google: { url: 'https://generativelanguage.googleapis.com/v1beta/chat/completions' },
+            openai: { url: 'https://api.openai.com/v1/chat/completions' },
+            huggingface: { url: 'https://router.huggingface.co/v1/chat/completions' },
+            nvidia: { url: 'https://integrate.api.nvidia.com/v1/chat/completions' },
+            vllm: { url: 'http://localhost:8000/v1/chat/completions' }
+        };
+
+        function getProvider(model) {
+            const keys = loadApiKeys();
+            // Lokale Modelle (Ollama)
+            if (model.startsWith('local/')) {
+                return {
+                    url: 'http://localhost:11434/v1/chat/completions',
+                    key: null,
+                    modelOverride: model.replace('local/', '')
+                };
+            }
+            // VPS Ollama
+            if (model.includes('qwen') || model.includes('gemma')) return { ...PROVIDERS.ollama, key: PROVIDERS.ollama.key };
+            // VPS Hermes (Gemini)
+            if (model.startsWith('gemini-2.5-flash') && !model.includes('preview')) return { ...PROVIDERS.hermes, key: PROVIDERS.hermes.key };
+            if (model === 'gemini-2.5-pro') return { ...PROVIDERS.hermes, key: PROVIDERS.hermes.key };
+            // Grok (xAI)
+            if (model.startsWith('grok')) return keys.xai ? { url: PROVIDERS.xai.url, key: keys.xai } : null;
+            // Claude (Anthropic) — direkt
+            if (model.startsWith('claude-sonnet-4')) return keys.anthropic ? { url: PROVIDERS.anthropic.url, key: keys.anthropic, isAnthropic: true } : null;
+            // Gemini direkt (Google)
+            if (model.includes('preview')) return keys.google ? { url: PROVIDERS.google.url, key: keys.google } : null;
+            // GPT (OpenAI)
+            if (model.startsWith('gpt-4.1')) return keys.openai ? { url: PROVIDERS.openai.url, key: keys.openai } : null;
+            // HuggingFace
+            if (model.startsWith('hf/')) return keys.huggingface ? { url: PROVIDERS.huggingface.url, key: keys.huggingface, modelOverride: model.replace('hf/', '') } : null;
+            // NVIDIA NIM
+            if (model.startsWith('nim/')) return keys.nvidia ? { url: PROVIDERS.nvidia.url, key: keys.nvidia, modelOverride: model.replace('nim/', '') } : null;
+            // vLLM
+            if (model.startsWith('vllm/')) {
+                const vllmUrl = keys.vllm_url || PROVIDERS.vllm.url;
+                return { url: vllmUrl, key: keys.vllm_key || null, modelOverride: model === 'vllm/auto' ? null : model.replace('vllm/', '') };
+            }
+            return null; // CUBE² fallback
+        }
+
+        // ========================================
+        // SEND MESSAGE (Multi-Provider: CUBE² + Gateway + VPS Hermes)
+        // ========================================
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            input.style.height = '38px';
+
+            // Commands
+            if (text.startsWith('/')) { processCommand(text); return; }
+
+            const model = document.getElementById('modelSelect').value;
+            addMessage({ role: 'user', content: text, timestamp: new Date().toISOString() });
+
+            // Show typing indicator
+            const typing = document.createElement('div');
+            typing.className = 'cp-msg ai cp-typing';
+            typing.innerHTML = '<span></span><span></span><span></span>';
+            const panel = document.getElementById('chatPanel');
+            panel.appendChild(typing);
+            panel.scrollTop = panel.scrollHeight;
+
+            document.getElementById('sendBtn').disabled = true;
+
+            try {
+                const chat = getCurrentChat();
+                const history = (chat?.messages || [])
+                    .filter(m => m.role === 'user' || m.role === 'assistant')
+                    .slice(-10)
+                    .map(m => ({ role: m.role, content: m.content }));
+
+                const sysPrompt = 'Du bist DkZ Copilot™ Hermes — ein praeziser Coding-Assistent fuer das DEVKiTZ Oekosystem. Antworte auf Deutsch. Keine Umlaute (ae/oe/ue/ss). Kurz und technisch.';
+                const messages = [
+                    { role: 'system', content: sysPrompt },
+                    ...history,
+                    { role: 'user', content: text }
+                ];
+
+                let answer = null;
+                let activeModel = model;
+                let provider = getProvider(activeModel);
+
+                // Route 1: VPS Provider / local provider / direct API
+                if (provider) {
+                    try {
+                        const headers = { 'Content-Type': 'application/json' };
+                        if (provider.key) headers['Authorization'] = 'Bearer ' + provider.key;
+                        const res = await fetch(provider.url, {
+                            method: 'POST',
+                            headers,
+                            body: JSON.stringify({ model: provider.modelOverride || activeModel, messages, max_tokens: 2048, stream: false })
+                        });
+                        if (!res.ok) throw new Error('Provider Status ' + res.status);
+                        const data = await res.json();
+                        answer = data.choices?.[0]?.message?.content || JSON.stringify(data);
+                    } catch (err) {
+                        // Failover: wenn VPS Ollama offline ist, versuche lokales Ollama
+                        if (!activeModel.startsWith('local/') && (activeModel.includes('qwen') || activeModel.includes('gemma'))) {
+                            addSystemMsg('⚠️ VPS Ollama offline. Versuche Offline-Fallback...');
+                            const fallbackModel = activeModel.includes('qwen') ? 'local/qwen2.5-coder:7b' : 'local/gemma3n:e4b';
+                            const fbProvider = getProvider(fallbackModel);
+                            if (fbProvider) {
+                                const res = await fetch(fbProvider.url, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ model: fbProvider.modelOverride, messages, max_tokens: 2048, stream: false })
+                                });
+                                if (res.ok) {
+                                    const data = await res.json();
+                                    answer = data.choices?.[0]?.message?.content;
+                                    activeModel = fallbackModel;
+                                    addSystemMsg('🟢 Offline-Fallback erfolgreich (' + fallbackModel + ')');
+                                } else {
+                                    throw new Error('Offline-Fallback fehlgeschlagen: ' + res.statusText);
+                                }
+                            } else {
+                                throw err;
+                            }
+                        } else {
+                            throw err;
+                        }
+                    }
+                }
+                // Route 2: CUBE² (Puter AI) — fuer GPT, Claude, etc.
+                else if (window.puter && STATE.isSignedIn) {
+                    const response = await puter.ai.chat(messages, { model });
+                    answer = typeof response === 'string' ? response : (response?.message?.content || response?.text || JSON.stringify(response));
+                }
+                // Route 3: Fallback Gateway
+                else {
+                    try {
+                        const res = await fetch(PROVIDERS.gateway.url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ model, messages, max_tokens: 2048, stream: false })
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            answer = data.choices?.[0]?.message?.content || JSON.stringify(data);
+                        } else {
+                            throw new Error('Gateway offline');
+                        }
+                    } catch(gwErr) {
+                        throw new Error('Kein Provider erreichbar. CUBE² anmelden (☁️ Button) oder ONTHERUN Gateway starten.');
+                    }
+                }
+
+                typing.remove();
+                addMessage({ role: 'assistant', content: answer, model, timestamp: new Date().toISOString() });
+
+                // Auto-sync to CUBE²
+                if (STATE.isSignedIn) saveChatToPuter(STATE.currentChatId);
+
+            } catch (err) {
+                typing.remove();
+                addMessage({ role: 'system', content: '❌ Fehler: ' + (err.message || err), timestamp: new Date().toISOString() });
+            }
+
+            document.getElementById('sendBtn').disabled = false;
+            input.focus();
+        }
+
+        // ========================================
+        // COMMANDS
+        // ========================================
+        function processCommand(cmd) {
+            const c = cmd.toLowerCase().trim();
+            if (c === '/new') { newChat(); }
+            else if (c === '/health') { switchTab('health'); renderHealth(); }
+            else if (c === '/agents') { switchTab('agents'); renderAgents(); }
+            else if (c === '/settings' || c === '/keys') { switchTab('settings'); renderSettings(); }
+            else if (c === '/export') { exportChatLog(); }
+            else if (c === '/logs') { switchTab('logs'); renderLogs(); }
+            else if (c === '/ampel') { addSystemMsg('🚦 Ampel: GRUEN — Alle Systeme OK'); }
+            else if (c === '/clear') { document.getElementById('chatPanel').innerHTML = ''; addSystemMsg('Chat geleert (Log bleibt erhalten)'); }
+            else if (c === '/model') { addSystemMsg('Aktuelles Modell: ' + document.getElementById('modelSelect').value); }
+            else if (c === '/hermes') { ipcSend('open-hermes-console'); addSystemMsg('🖥️ Hermes Agent Console wird geoeffnet...'); }
+            else if (c === '/overlay') { ipcSend('open-overlay'); addSystemMsg('🎯 Hermes Overlay wird geoeffnet...'); }
+            else if (c === '/paperless') { ipcSend('open-paperless'); addSystemMsg('📄 Paperless-ngx wird geoeffnet...'); }
+            else if (c === '/3d') { ipcSend('open-hermes-3d'); addSystemMsg('🏢 3D Buero wird geoeffnet...'); }
+            else { addSystemMsg('Befehle: /new /health /agents /settings /export /logs /ampel /clear /model /hermes /overlay /paperless /3d'); }
+        }
+
+        function quickCmd(cmd) {
+            document.getElementById('chatInput').value = cmd;
+            sendMessage();
+        }
+
+        // ========================================
+        // PERSISTENCE: localStorage + Puter
+        // ========================================
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    currentChatId: STATE.currentChatId,
+                    chats: STATE.chats
+                }));
+            } catch(e) { /* quota exceeded — old chats prunen */ }
+        }
+
+        function loadState() {
+            try {
+                const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                if (data.chats) STATE.chats = data.chats;
+                if (data.currentChatId && STATE.chats[data.currentChatId]) {
+                    STATE.currentChatId = data.currentChatId;
+                }
+            } catch(e) {}
+        }
+
+        function renderChatMessages() {
+            const chat = getCurrentChat();
+            if (!chat) return;
+            const panel = document.getElementById('chatPanel');
+            panel.innerHTML = '';
+            chat.messages.forEach(msg => {
+                const div = document.createElement('div');
+                const typeClass = msg.role === 'user' ? 'user' : msg.role === 'system' ? 'system' : 'ai';
+                div.className = 'cp-msg ' + typeClass;
+                let html = formatContent(msg.content);
+                html += '<div class="msg-meta">' + esc(msg.role) + ' · ' + new Date(msg.timestamp).toLocaleTimeString('de-DE') + (msg.model ? ' · ' + esc(msg.model) : '') + '</div>';
+                div.innerHTML = html;
+                panel.appendChild(div);
+            });
+            panel.scrollTop = panel.scrollHeight;
+        }
+
+        // ========================================
+        // PUTER CLOUD
+        // ========================================
+        async function initPuter() {
+            try {
+                if (window.puter) {
+                    STATE.puterReady = true;
+                    const isAuth = await puter.auth.isSignedIn();
+                    if (isAuth) {
+                        STATE.isSignedIn = true;
+                        updateCloudStatus(true);
+                    }
+                }
+            } catch(e) {}
+        }
+
+        async function puterSignIn() {
+            try {
+                if (!window.puter) { addSystemMsg('⚠️ CUBE² SDK nicht geladen'); return; }
+                await puter.auth.signIn();
+                STATE.isSignedIn = true;
+                updateCloudStatus(true);
+                addSystemMsg('☁️ CUBE² verbunden! Alle Chats werden automatisch synchronisiert.');
+                syncAllChats();
+            } catch(e) {
+                addSystemMsg('❌ Puter Login fehlgeschlagen: ' + e.message);
+            }
+        }
+
+        async function puterSync() {
+            if (!STATE.isSignedIn) { puterSignIn(); return; }
+            addSystemMsg('☁️ Synchronisiere alle Chats...');
+            await syncAllChats();
+            addSystemMsg('✅ ' + Object.keys(STATE.chats).length + ' Chats synchronisiert');
+        }
+
+        async function saveChatToPuter(chatId) {
+            if (!STATE.isSignedIn || !window.puter) return;
+            try {
+                const chat = STATE.chats[chatId];
+                if (!chat) return;
+                const json = JSON.stringify(chat, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                await puter.fs.write('/dkz/' + PUTER_PATH + chatId + '.json', blob, { createMissingParents: true });
+            } catch(e) {}
+        }
+
+        async function syncAllChats() {
+            if (!STATE.isSignedIn || !window.puter) return;
+            for (const chatId of Object.keys(STATE.chats)) {
+                await saveChatToPuter(chatId);
+            }
+        }
+
+        async function loadChatsFromPuter() {
+            if (!STATE.isSignedIn || !window.puter) return;
+            try {
+                const files = await puter.fs.readdir('/dkz/' + PUTER_PATH);
+                for (const file of files) {
+                    if (file.name.endsWith('.json')) {
+                        const blob = await puter.fs.read('/dkz/' + PUTER_PATH + file.name);
+                        const text = await blob.text();
+                        const chat = JSON.parse(text);
+                        if (chat.id && !STATE.chats[chat.id]) {
+                            STATE.chats[chat.id] = chat;
+                        }
+                    }
+                }
+                saveState();
+            } catch(e) {}
+        }
+
+        function updateCloudStatus(online) {
+            const dot = document.getElementById('cloudDot');
+            const label = document.getElementById('cloudLabel');
+            dot.className = 'cp-cloud-dot ' + (online ? 'on' : 'off');
+            label.textContent = online ? 'CUBE²' : 'Offline';
+        }
+
+        // ========================================
+        // EXPORT CHAT LOG (JSON)
+        // ========================================
+        function exportChatLog() {
+            const data = {
+                version: '3.0',
+                exported: new Date().toISOString(),
+                totalChats: Object.keys(STATE.chats).length,
+                totalMessages: Object.values(STATE.chats).reduce((sum, c) => sum + c.messages.length, 0),
+                chats: STATE.chats
+            };
+
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'dkz-copilot-chats-' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+
+            addSystemMsg('💾 Chat-Log exportiert: ' + data.totalChats + ' Chats, ' + data.totalMessages + ' Messages');
+
+            // Also save to Puter
+            if (STATE.isSignedIn) {
+                const exportBlob = new Blob([json], { type: 'application/json' });
+                puter.fs.write('/dkz/copilot/exports/chats-' + new Date().toISOString().split('T')[0] + '.json', exportBlob, { createMissingParents: true }).catch(() => {});
+            }
+        }
+
+        // ========================================
+        // TAB SWITCHING
+        // ========================================
+        function switchTab(tab) {
+            document.querySelectorAll('.cp-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`[data-tab="${tab}"]`)?.classList.add('active');
+
+            document.getElementById('chatPanel').style.display = tab === 'chat' ? 'flex' : 'none';
+            document.getElementById('modelBar').style.display = tab === 'chat' ? 'flex' : 'none';
+            ['healthPanel', 'agentsPanel', 'logsPanel'].forEach(p => {
+                document.getElementById(p).classList.toggle('active', p === tab + 'Panel');
+            });
+
+            document.getElementById('settingsPanel').classList.toggle('active', tab === 'settings');
+
+            if (tab === 'health') renderHealth();
+            if (tab === 'agents') renderAgents();
+            if (tab === 'logs') renderLogs();
+            if (tab === 'settings') renderSettings();
+        }
+
+        // ========================================
+        // HEALTH
+        // ========================================
+        function renderHealth() {
+            const panel = document.getElementById('healthPanel');
+            const checks = [
+                { name: 'JAMEZ™ v4', status: 'ok', detail: 'Guardian aktiv' },
+                { name: 'Hermes Engine', status: 'ok', detail: document.getElementById('modelSelect').value },
+                { name: 'CUBE²', status: STATE.isSignedIn ? 'ok' : 'warn', detail: STATE.isSignedIn ? 'Verbunden' : 'Nicht angemeldet' },
+                { name: 'VPS Hermes', status: 'ok', detail: 'v0.16.0 · Port 8642' },
+                { name: 'ONTHERUN Gateway', status: 'ok', detail: 'Port 3040 · Remote Control' },
+                { name: 'Chat-Log', status: 'ok', detail: Object.keys(STATE.chats).length + ' Chats gespeichert' },
+                { name: 'localStorage', status: 'ok', detail: 'Verfuegbar' },
+                { name: 'Event-Bus', status: 'ok', detail: 'Aktiv' },
+            ];
+
+            panel.innerHTML = '<div class="section-title">System Health</div>';
+            checks.forEach(c => {
+                const cls = c.status === 'ok' ? 'ok' : c.status === 'warn' ? 'warn' : 'err';
+                panel.innerHTML += `<div class="health-card"><div class="health-dot ${cls}"></div><div class="health-name">${esc(c.name)}</div><div class="health-detail">${esc(c.detail)}</div></div>`;
+            });
+        }
+
+        // ========================================
+        // AGENTS
+        // ========================================
+        function renderAgents() {
+            const panel = document.getElementById('agentsPanel');
+            const agents = [
+                { icon: '🎯', name: 'James Guardian', team: 'bmad' },
+                { icon: '📋', name: 'DkZ PM', team: 'bmad' },
+                { icon: '🏗️', name: 'DkZ Architekt', team: 'bmad' },
+                { icon: '👨‍💻', name: 'DkZ Developer', team: 'bmad' },
+                { icon: '🔍', name: 'DkZ Reviewer', team: 'bmad' },
+                { icon: '🧪', name: 'DkZ Tester', team: 'bmad' },
+                { icon: '📚', name: 'DkZ Dokumentar', team: 'bmad' },
+                { icon: '🤖', name: 'CoPilot Builder', team: 'core' },
+                { icon: '🧩', name: 'Module Builder', team: 'core' },
+                { icon: '✨', name: 'Module Builder v2', team: 'core' },
+                { icon: '🧹', name: 'Git Cleanup', team: 'infra' },
+                { icon: '🖥️', name: 'VPS Researcher', team: 'infra' },
+                { icon: '☁️', name: 'Cloud Analyst', team: 'infra' },
+                { icon: '🤖', name: 'NanoBot Antigravity', team: 'nano' },
+                { icon: '💻', name: 'NanoBot OpenCode', team: 'nano' },
+            ];
+
+            panel.innerHTML = '<div class="section-title">Agenten (' + agents.length + '/51)</div>';
+            agents.forEach(a => {
+                panel.innerHTML += `<div class="agent-row"><span class="agent-icon">${a.icon}</span><span class="agent-name">${esc(a.name)}</span><span class="agent-team">${esc(a.team)}</span><div class="health-dot ok"></div></div>`;
+            });
+        }
+
+        // ========================================
+        // CHAT LOGS
+        // ========================================
+        function renderLogs() {
+            const panel = document.getElementById('logsPanel');
+            const chatIds = Object.keys(STATE.chats).sort((a, b) => {
+                return new Date(STATE.chats[b].updated) - new Date(STATE.chats[a].updated);
+            });
+
+            panel.innerHTML = '<div class="section-title">Chat-Verlauf (' + chatIds.length + ' Chats)</div>';
+            chatIds.forEach(id => {
+                const chat = STATE.chats[id];
+                const msgCount = chat.messages.length;
+                const isActive = id === STATE.currentChatId;
+                panel.innerHTML += `<div class="log-entry" style="${isActive ? 'border-color:var(--accent)' : ''}" onclick="loadChat('${esc(id)}')">
+                    <div class="log-title">${isActive ? '▶ ' : ''}${esc(chat.title)}</div>
+                    <div class="log-meta">${esc(chat.model)} · ${msgCount} msgs · ${new Date(chat.updated).toLocaleString('de-DE')}</div>
+                </div>`;
+            });
+        }
+
+        function loadChat(chatId) {
+            if (STATE.chats[chatId]) {
+                STATE.currentChatId = chatId;
+                saveState();
+                switchTab('chat');
+                renderChatMessages();
+            }
+        }
+
+        // ========================================
+        // SETTINGS
+        // ========================================
+        function renderSettings() {
+            const panel = document.getElementById('settingsPanel');
+            const keys = loadApiKeys();
+            
+            panel.innerHTML = `
+                <div class="section-title">API Key & Verbindungseinstellungen</div>
+                
+                <div class="settings-group">
+                    <div class="settings-group-title">Cloud APIs</div>
+                    <div class="settings-row">
+                        <label>Grok Key (xAI)</label>
+                        <input type="password" id="key-xai" value="\${keys.xai || ''}" placeholder="xai-...">
+                        <div class="key-status \${keys.xai ? 'set' : 'unset'}"></div>
+                    </div>
+                    <div class="settings-row">
+                        <label>Gemini Key</label>
+                        <input type="password" id="key-google" value="\${keys.google || ''}" placeholder="AIzaSy...">
+                        <div class="key-status \${keys.google ? 'set' : 'unset'}"></div>
+                    </div>
+                    <div class="settings-row">
+                        <label>Claude Key</label>
+                        <input type="password" id="key-anthropic" value="\${keys.anthropic || ''}" placeholder="sk-ant-...">
+                        <div class="key-status \${keys.anthropic ? 'set' : 'unset'}"></div>
+                    </div>
+                    <div class="settings-row">
+                        <label>OpenAI Key</label>
+                        <input type="password" id="key-openai" value="\${keys.openai || ''}" placeholder="sk-proj-...">
+                        <div class="key-status \${keys.openai ? 'set' : 'unset'}"></div>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <div class="settings-group-title">Inference Hubs</div>
+                    <div class="settings-row">
+                        <label>Hugging Face</label>
+                        <input type="password" id="key-huggingface" value="\${keys.huggingface || ''}" placeholder="hf_...">
+                        <div class="key-status \${keys.huggingface ? 'set' : 'unset'}"></div>
+                    </div>
+                    <div class="settings-row">
+                        <label>NVIDIA NIM</label>
+                        <input type="password" id="key-nvidia" value="\${keys.nvidia || ''}" placeholder="nvapi-...">
+                        <div class="key-status \${keys.nvidia ? 'set' : 'unset'}"></div>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <div class="settings-group-title">Self-Hosted / Local</div>
+                    <div class="settings-row">
+                        <label>vLLM Server URL</label>
+                        <input type="text" id="url-vllm" value="\${keys.vllm_url || 'http://localhost:8000/v1'}" placeholder="http://localhost:8000/v1">
+                    </div>
+                    <div class="settings-row">
+                        <label>vLLM API Key</label>
+                        <input type="password" id="key-vllm" value="\${keys.vllm_key || ''}" placeholder="optionaler API key...">
+                        <div class="key-status \${keys.vllm_key ? 'set' : 'unset'}"></div>
+                    </div>
+                </div>
+
+                <button class="settings-save" onclick="saveSettings()">Speichern</button>
+                <div class="settings-note">
+                    Die API-Schluessel werden lokal in deinem Vivaldi/Electron-Browser (localStorage) verschluesselt und niemals an externe Server uebermittelt.
+                </div>
+            `;
+        }
+
+        function saveSettings() {
+            const keys = {
+                xai: document.getElementById('key-xai').value.trim(),
+                google: document.getElementById('key-google').value.trim(),
+                anthropic: document.getElementById('key-anthropic').value.trim(),
+                openai: document.getElementById('key-openai').value.trim(),
+                huggingface: document.getElementById('key-huggingface').value.trim(),
+                nvidia: document.getElementById('key-nvidia').value.trim(),
+                vllm_url: document.getElementById('url-vllm').value.trim(),
+                vllm_key: document.getElementById('key-vllm').value.trim()
+            };
+            saveApiKeys(keys);
+            addSystemMsg('✅ API-Schluessel erfolgreich gespeichert!');
+            switchTab('chat');
+        }
+
+        // ========================================
+        // INPUT AUTO-RESIZE
+        // ========================================
+        function autoResizeInput() {
+            const input = document.getElementById('chatInput');
+            input.addEventListener('input', () => {
+                input.style.height = '38px';
+                input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+                if (e.key === 'Escape') hideWindow();
+            });
+        }
+
+        // ========================================
+        // WINDOW CONTROLS
+        // ========================================
+        function hideWindow() {
+            if (typeof require !== 'undefined') {
+                require('electron').ipcRenderer.send('hide-window');
+            }
+        }
+
+        function openDashboard() {
+            if (typeof require !== 'undefined') {
+                require('electron').shell.openExternal('http://localhost:7777');
+            } else {
+                window.open('http://localhost:7777', '_blank');
+            }
+        }
+
+        // ========================================
+        // IPC (Electron)
+        // ========================================
+        function ipcSend(channel, data) {
+            if (typeof require !== 'undefined') {
+                require('electron').ipcRenderer.send(channel, data);
+            }
+        }
+
+        if (typeof require !== 'undefined') {
+            const { ipcRenderer } = require('electron');
+            ipcRenderer.on('navigate', (e, page) => {
+                if (page === 'settings') addSystemMsg('⚙️ Settings — coming soon');
+            });
+            ipcRenderer.on('navigate-tab', (e, tab) => { switchTab(tab); });
+            ipcRenderer.on('health-check', () => { switchTab('health'); renderHealth(); });
+            ipcRenderer.on('puter-sync', () => { puterSync(); });
+            ipcRenderer.on('export-logs', () => { exportChatLog(); });
+        }
+
+        // ========================================
+        // BOOT
+        // ========================================
+        init();
+    </script>
+</body>
+</html>

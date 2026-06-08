@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DkZ Grok Chat™ — Heavy xAI Integration</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #060608; --card: rgba(255,255,255,.03); --border: rgba(255,255,255,.08);
+            --text: #e8e8e8; --muted: #666; --accent: #fa1e4e; --green: #00ff88;
+            --yellow: #ffb800; --grok: #1DA1F2; --grok-dark: #0d8bd9;
+            --font: 'Inter', sans-serif; --mono: 'JetBrains Mono', monospace;
+            --radius: 14px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: var(--font); background: var(--bg); color: var(--text); height:100vh; display:flex; overflow:hidden; }
+
+        /* === SIDEBAR === */
+        .sidebar { width: 280px; background: rgba(10,10,14,.95); border-right: 1px solid var(--border); display:flex; flex-direction:column; flex-shrink:0; }
+        .sidebar-header { padding:16px; border-bottom:1px solid var(--border); }
+        .sidebar-header h1 { font-size:16px; font-weight:800; display:flex; align-items:center; gap:8px; }
+        .sidebar-header h1 .grok-icon { font-size:20px; }
+        .sidebar-header .subtitle { font-size:10px; color:var(--muted); margin-top:4px; font-family:var(--mono); }
+
+        /* Tabs */
+        .sidebar-tabs { display:flex; border-bottom:1px solid var(--border); }
+        .sidebar-tab { flex:1; padding:10px 8px; font-size:10px; font-weight:700; text-align:center; cursor:pointer; color:var(--muted); border-bottom:2px solid transparent; transition:all .2s; text-transform:uppercase; letter-spacing:.5px; }
+        .sidebar-tab:hover { color:var(--text); }
+        .sidebar-tab.active { color:var(--grok); border-bottom-color:var(--grok); }
+
+        /* Tab Content */
+        .tab-content { display:none; flex:1; overflow-y:auto; }
+        .tab-content.active { display:flex; flex-direction:column; }
+
+        /* New Chat Button */
+        .new-chat-btn { margin:12px; padding:10px; background:linear-gradient(135deg, var(--grok), var(--grok-dark)); color:#fff; border:none; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer; font-family:var(--font); transition:all .2s; display:flex; align-items:center; justify-content:center; gap:6px; }
+        .new-chat-btn:hover { transform:translateY(-1px); box-shadow:0 4px 20px rgba(29,161,242,.3); }
+
+        /* Chat List */
+        .chat-list { flex:1; overflow-y:auto; padding:4px 8px; }
+        .chat-item { padding:10px 12px; border-radius:10px; cursor:pointer; font-size:11px; font-weight:500; display:flex; align-items:center; gap:8px; transition:all .15s; margin-bottom:2px; position:relative; }
+        .chat-item:hover { background:rgba(255,255,255,.04); }
+        .chat-item.active { background:rgba(29,161,242,.1); color:var(--grok); }
+        .chat-item .ci-date { font-size:9px; color:var(--muted); margin-left:auto; font-family:var(--mono); }
+        .chat-item .ci-delete { display:none; position:absolute; right:8px; top:50%; transform:translateY(-50%); background:rgba(255,59,92,.15); color:var(--accent); border:none; border-radius:6px; padding:2px 6px; font-size:10px; cursor:pointer; }
+        .chat-item:hover .ci-delete { display:block; }
+        .chat-item:hover .ci-date { display:none; }
+
+        /* Project List */
+        .project-item { padding:12px; margin:4px 8px; border-radius:10px; background:var(--card); border:1px solid var(--border); cursor:pointer; transition:all .15s; }
+        .project-item:hover { border-color:var(--grok); }
+        .project-item .pi-name { font-size:12px; font-weight:600; }
+        .project-item .pi-meta { font-size:9px; color:var(--muted); margin-top:4px; font-family:var(--mono); }
+        .new-project-btn { margin:12px 8px; padding:8px; border:1px dashed var(--border); border-radius:10px; background:transparent; color:var(--muted); font-size:11px; cursor:pointer; font-family:var(--font); transition:all .2s; text-align:center; }
+        .new-project-btn:hover { border-color:var(--grok); color:var(--grok); }
+
+        /* Prompt Library */
+        .prompt-item { padding:10px 12px; margin:4px 8px; border-radius:10px; background:var(--card); border:1px solid var(--border); cursor:pointer; transition:all .15s; }
+        .prompt-item:hover { border-color:var(--yellow); }
+        .prompt-item .pr-name { font-size:11px; font-weight:600; }
+        .prompt-item .pr-preview { font-size:10px; color:var(--muted); margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+        /* Image Gallery */
+        .image-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:6px; padding:8px; }
+        .image-thumb { aspect-ratio:1; border-radius:8px; background:var(--card); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:24px; cursor:pointer; transition:all .2s; }
+        .image-thumb:hover { border-color:var(--grok); transform:scale(1.03); }
+        .image-thumb img { width:100%; height:100%; object-fit:cover; border-radius:8px; }
+
+        /* === MAIN CHAT === */
+        .main { flex:1; display:flex; flex-direction:column; }
+        .chat-header { padding:14px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; background:rgba(10,10,14,.6); backdrop-filter:blur(20px); }
+        .chat-header .ch-title { font-size:14px; font-weight:700; flex:1; }
+        .chat-header .ch-model { font-size:10px; color:var(--grok); background:rgba(29,161,242,.1); padding:4px 10px; border-radius:20px; font-weight:600; font-family:var(--mono); }
+        .chat-header .ch-export { background:transparent; border:1px solid var(--border); color:var(--muted); padding:5px 10px; border-radius:8px; font-size:10px; cursor:pointer; font-family:var(--font); font-weight:600; transition:all .2s; }
+        .chat-header .ch-export:hover { border-color:var(--green); color:var(--green); }
+
+        /* Messages */
+        .messages { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:16px; }
+        .msg { max-width:80%; display:flex; flex-direction:column; gap:4px; animation:fadeIn .3s; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        .msg.user { align-self:flex-end; }
+        .msg.assistant { align-self:flex-start; }
+        .msg-bubble { padding:12px 16px; border-radius:16px; font-size:13px; line-height:1.6; }
+        .msg.user .msg-bubble { background:linear-gradient(135deg, var(--grok), var(--grok-dark)); color:#fff; border-bottom-right-radius:4px; }
+        .msg.assistant .msg-bubble { background:var(--card); border:1px solid var(--border); border-bottom-left-radius:4px; }
+        .msg-bubble pre { background:rgba(0,0,0,.3); padding:10px; border-radius:8px; overflow-x:auto; font-family:var(--mono); font-size:12px; margin:8px 0; }
+        .msg-bubble code { font-family:var(--mono); font-size:12px; background:rgba(255,255,255,.06); padding:1px 5px; border-radius:4px; }
+        .msg-meta { font-size:9px; color:var(--muted); font-family:var(--mono); padding:0 4px; }
+
+        /* Thinking indicator */
+        .thinking { display:flex; gap:4px; padding:8px 12px; }
+        .thinking span { width:6px; height:6px; background:var(--grok); border-radius:50%; animation:pulse 1.2s infinite; }
+        .thinking span:nth-child(2) { animation-delay:.2s; }
+        .thinking span:nth-child(3) { animation-delay:.4s; }
+        @keyframes pulse { 0%,100% { opacity:.3; } 50% { opacity:1; } }
+
+        /* Welcome */
+        .welcome { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; opacity:.5; }
+        .welcome .w-icon { font-size:48px; }
+        .welcome .w-title { font-size:20px; font-weight:800; }
+        .welcome .w-sub { font-size:12px; color:var(--muted); }
+
+        /* Input */
+        .input-area { padding:16px 20px; border-top:1px solid var(--border); background:rgba(10,10,14,.6); backdrop-filter:blur(20px); }
+        .input-row { display:flex; gap:8px; align-items:flex-end; }
+        .input-row textarea { flex:1; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px 16px; color:var(--text); font-size:13px; font-family:var(--font); resize:none; min-height:44px; max-height:200px; outline:none; transition:border-color .2s; }
+        .input-row textarea:focus { border-color:var(--grok); }
+        .input-row textarea::placeholder { color:var(--muted); }
+        .send-btn { width:44px; height:44px; background:var(--grok); border:none; border-radius:12px; color:#fff; font-size:18px; cursor:pointer; transition:all .2s; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+        .send-btn:hover { background:var(--grok-dark); transform:scale(1.05); }
+        .send-btn:disabled { opacity:.3; cursor:not-allowed; transform:none; }
+        .input-tools { display:flex; gap:6px; margin-top:8px; }
+        .input-tool { background:transparent; border:1px solid var(--border); color:var(--muted); padding:4px 10px; border-radius:20px; font-size:10px; cursor:pointer; font-family:var(--font); font-weight:600; transition:all .2s; }
+        .input-tool:hover { border-color:var(--grok); color:var(--grok); }
+
+        /* Stats Bar */
+        .stats-bar { padding:6px 20px; border-top:1px solid var(--border); display:flex; gap:16px; font-size:9px; color:var(--muted); font-family:var(--mono); background:rgba(6,6,8,.8); }
+        .stats-bar .stat { display:flex; align-items:center; gap:4px; }
+        .stats-bar .stat-dot { width:5px; height:5px; border-radius:50%; }
+        .stat-dot.green { background:var(--green); }
+        .stat-dot.yellow { background:var(--yellow); }
+        .stat-dot.red { background:var(--accent); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width:4px; }
+        ::-webkit-scrollbar-track { background:transparent; }
+        ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.08); border-radius:4px; }
+        ::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,.15); }
+
+        /* Settings Modal */
+        .modal-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.7); z-index:1000; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+        .modal-overlay.show { display:flex; }
+        .modal { background:#0a0a0e; border:1px solid var(--border); border-radius:16px; padding:24px; width:400px; max-width:90vw; }
+        .modal h2 { font-size:16px; font-weight:800; margin-bottom:16px; }
+        .modal label { font-size:11px; font-weight:600; color:var(--muted); display:block; margin-bottom:4px; margin-top:12px; }
+        .modal input, .modal select { width:100%; padding:10px; background:var(--card); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:var(--font); font-size:12px; outline:none; }
+        .modal input:focus { border-color:var(--grok); }
+        .modal-btns { display:flex; gap:8px; margin-top:20px; }
+        .modal-btns button { flex:1; padding:10px; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer; font-family:var(--font); border:none; }
+        .modal-btns .save { background:var(--grok); color:#fff; }
+        .modal-btns .cancel { background:var(--card); color:var(--text); border:1px solid var(--border); }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="sidebar-header">
+        <h1><span class="grok-icon">🤖</span> DkZ Grok Chat™</h1>
+        <div class="subtitle">xAI Heavy Integration · Offline-First</div>
+    </div>
+
+    <div class="sidebar-tabs">
+        <div class="sidebar-tab active" data-tab="chats">💬 Chats</div>
+        <div class="sidebar-tab" data-tab="projects">📁 Projekte</div>
+        <div class="sidebar-tab" data-tab="prompts">⚡ Prompts</div>
+        <div class="sidebar-tab" data-tab="images">🖼️ Bilder</div>
+    </div>
+
+    <!-- Chats Tab -->
+    <div class="tab-content active" id="tab-chats">
+        <button class="new-chat-btn" onclick="newChat()">➕ Neuer Chat</button>
+        <div class="chat-list" id="chat-list"></div>
+    </div>
+
+    <!-- Projects Tab -->
+    <div class="tab-content" id="tab-projects">
+        <button class="new-project-btn" onclick="newProject()">+ Neues Projekt</button>
+        <div id="project-list"></div>
+    </div>
+
+    <!-- Prompts Tab -->
+    <div class="tab-content" id="tab-prompts">
+        <button class="new-project-btn" onclick="newPrompt()">+ Prompt speichern</button>
+        <div id="prompt-list"></div>
+    </div>
+
+    <!-- Images Tab -->
+    <div class="tab-content" id="tab-images">
+        <div class="image-grid" id="image-grid"></div>
+    </div>
+
+    <!-- Settings -->
+    <div style="padding:12px;border-top:1px solid var(--border);display:flex;gap:6px">
+        <button class="input-tool" onclick="openSettings()" style="flex:1">⚙️ API Settings</button>
+        <button class="input-tool" onclick="exportAll()" style="flex:1">📦 Export All</button>
+    </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+    <div class="chat-header">
+        <span class="ch-title" id="chat-title">Neuer Chat</span>
+        <span class="ch-model" id="chat-model">grok-3</span>
+        <button class="ch-export" onclick="exportChat()">📥 JSON Export</button>
+    </div>
+
+    <div class="messages" id="messages">
+        <div class="welcome">
+            <div class="w-icon">🤖</div>
+            <div class="w-title">DkZ Grok Chat™</div>
+            <div class="w-sub">Jeder Chat wird als separate JSON gespeichert</div>
+        </div>
+    </div>
+
+    <div class="input-area">
+        <div class="input-row">
+            <textarea id="user-input" placeholder="Nachricht an Grok..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"></textarea>
+            <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+        </div>
+        <div class="input-tools">
+            <button class="input-tool" onclick="switchModel('grok-3')">Grok 3</button>
+            <button class="input-tool" onclick="switchModel('grok-3-mini')">Grok 3 Mini</button>
+            <button class="input-tool" onclick="switchModel('grok-3-fast')">Grok 3 Fast</button>
+            <button class="input-tool" onclick="saveAsPrompt()">💾 Als Prompt</button>
+        </div>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat"><span class="stat-dot green" id="api-dot"></span> <span id="api-status">API bereit</span></div>
+        <div class="stat">📊 Chats: <span id="stat-chats">0</span></div>
+        <div class="stat">💬 Nachrichten: <span id="stat-msgs">0</span></div>
+        <div class="stat">🖼️ Bilder: <span id="stat-imgs">0</span></div>
+        <div class="stat">💾 Gesamt: <span id="stat-size">0 KB</span></div>
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settings-modal">
+    <div class="modal">
+        <h2>⚙️ xAI API Konfiguration</h2>
+        <label>API Key</label>
+        <input type="password" id="api-key-input" placeholder="xai-...">
+        <label>Standard-Modell</label>
+        <select id="default-model">
+            <option value="grok-3">Grok 3</option>
+            <option value="grok-3-mini">Grok 3 Mini</option>
+            <option value="grok-3-fast">Grok 3 Fast</option>
+        </select>
+        <label>System Prompt (optional)</label>
+        <input type="text" id="system-prompt" placeholder="Du bist ein hilfreicher Assistent...">
+        <div class="modal-btns">
+            <button class="cancel" onclick="closeSettings()">Abbrechen</button>
+            <button class="save" onclick="saveSettings()">Speichern</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// DkZ Grok Chat™ — Storage Engine
+// Jeder Chat = separate JSON in localStorage
+// ═══════════════════════════════════════
+
+const STORAGE_PREFIX = 'dkz-grok-';
+const API_URL = 'https://api.x.ai/v1/chat/completions';
+
+let currentChatId = null;
+let currentModel = 'grok-3';
+
+// --- INIT ---
+function init() {
+    loadSettings();
+    renderChatList();
+    renderProjects();
+    renderPrompts();
+    renderImages();
+    updateStats();
+    setupTabs();
+    autoGrow(document.getElementById('user-input'));
+}
+
+// --- TABS ---
+function setupTabs() {
+    document.querySelectorAll('.sidebar-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+        });
+    });
+}
+
+// --- CHAT CRUD ---
+function newChat() {
+    const id = 'chat-' + Date.now();
+    const chat = {
+        id: id,
+        title: 'Neuer Chat',
+        model: currentModel,
+        created: new Date().toISOString(),
+        updated: new Date().toISOString(),
+        project: null,
+        messages: [],
+        metadata: { tokens_in: 0, tokens_out: 0, cost_estimate: 0 }
+    };
+    saveChat(chat);
+    currentChatId = id;
+    renderChatList();
+    renderMessages(chat);
+    document.getElementById('chat-title').textContent = 'Neuer Chat';
+    document.getElementById('user-input').focus();
+}
+
+function loadChat(id) {
+    const chat = getChat(id);
+    if (!chat) return;
+    currentChatId = id;
+    currentModel = chat.model || 'grok-3';
+    document.getElementById('chat-title').textContent = chat.title;
+    document.getElementById('chat-model').textContent = currentModel;
+    renderMessages(chat);
+    renderChatList();
+}
+
+function deleteChat(id, e) {
+    e.stopPropagation();
+    if (!confirm('Chat loeschen?')) return;
+    localStorage.removeItem(STORAGE_PREFIX + id);
+    if (currentChatId === id) {
+        currentChatId = null;
+        document.getElementById('messages').innerHTML = '<div class="welcome"><div class="w-icon">🤖</div><div class="w-title">DkZ Grok Chat™</div><div class="w-sub">Jeder Chat wird als separate JSON gespeichert</div></div>';
+    }
+    renderChatList();
+    updateStats();
+}
+
+function getChat(id) {
+    const raw = localStorage.getItem(STORAGE_PREFIX + id);
+    return raw ? JSON.parse(raw) : null;
+}
+
+function saveChat(chat) {
+    chat.updated = new Date().toISOString();
+    localStorage.setItem(STORAGE_PREFIX + chat.id, JSON.stringify(chat));
+}
+
+function getAllChats() {
+    const chats = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith(STORAGE_PREFIX + 'chat-')) {
+            try { chats.push(JSON.parse(localStorage.getItem(key))); } catch(e) {}
+        }
+    }
+    return chats.sort((a, b) => new Date(b.updated) - new Date(a.updated));
+}
+
+// --- RENDER ---
+function renderChatList() {
+    const list = document.getElementById('chat-list');
+    const chats = getAllChats();
+    list.innerHTML = chats.map(c => `
+        <div class="chat-item ${c.id === currentChatId ? 'active' : ''}" onclick="loadChat('${c.id}')">
+            <span>💬</span>
+            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.title)}</span>
+            <span class="ci-date">${new Date(c.updated).toLocaleDateString('de')}</span>
+            <button class="ci-delete" onclick="deleteChat('${c.id}',event)">✕</button>
+        </div>
+    `).join('');
+    document.getElementById('stat-chats').textContent = chats.length;
+}
+
+function renderMessages(chat) {
+    const container = document.getElementById('messages');
+    if (!chat.messages.length) {
+        container.innerHTML = '<div class="welcome"><div class="w-icon">🤖</div><div class="w-title">' + esc(chat.title) + '</div><div class="w-sub">Starte die Konversation...</div></div>';
+        return;
+    }
+    container.innerHTML = chat.messages.map(m => `
+        <div class="msg ${m.role}">
+            <div class="msg-bubble">${formatMsg(m.content)}</div>
+            <div class="msg-meta">${m.role === 'user' ? '👤' : '🤖'} ${new Date(m.timestamp).toLocaleTimeString('de')}${m.tokens ? ' · ' + m.tokens + ' tokens' : ''}</div>
+        </div>
+    `).join('');
+    container.scrollTop = container.scrollHeight;
+}
+
+function formatMsg(text) {
+    // Code blocks
+    text = esc(text);
+    text = text.replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+    // Bold + italic
+    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    // Newlines
+    text = text.replace(/\n/g, '<br>');
+    return text;
+}
+
+function esc(str) {
+    const d = document.createElement('div');
+    d.textContent = str || '';
+    return d.innerHTML;
+}
+
+// --- SEND MESSAGE ---
+async function sendMessage() {
+    const input = document.getElementById('user-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    if (!currentChatId) newChat();
+    const chat = getChat(currentChatId);
+
+    // Add user message
+    chat.messages.push({ role: 'user', content: text, timestamp: new Date().toISOString() });
+
+    // Auto-title from first message
+    if (chat.title === 'Neuer Chat' && chat.messages.length === 1) {
+        chat.title = text.substring(0, 60) + (text.length > 60 ? '...' : '');
+        document.getElementById('chat-title').textContent = chat.title;
+    }
+
+    saveChat(chat);
+    renderMessages(chat);
+    input.value = '';
+    input.style.height = '44px';
+
+    // Show thinking
+    const msgContainer = document.getElementById('messages');
+    const thinkEl = document.createElement('div');
+    thinkEl.className = 'msg assistant';
+    thinkEl.innerHTML = '<div class="thinking"><span></span><span></span><span></span></div>';
+    msgContainer.appendChild(thinkEl);
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+
+    document.getElementById('send-btn').disabled = true;
+
+    try {
+        const settings = getSettings();
+        if (!settings.apiKey) {
+            throw new Error('API Key fehlt! Klicke auf ⚙️ Settings.');
+        }
+
+        const apiMessages = [];
+        if (settings.systemPrompt) {
+            apiMessages.push({ role: 'system', content: settings.systemPrompt });
+        }
+        chat.messages.forEach(m => {
+            if (m.role === 'user' || m.role === 'assistant') {
+                apiMessages.push({ role: m.role, content: m.content });
+            }
+        });
+
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + settings.apiKey
+            },
+            body: JSON.stringify({
+                model: currentModel,
+                messages: apiMessages,
+                temperature: 0.7,
+                stream: false
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.error) throw new Error(data.error.message || 'API Fehler');
+
+        const reply = data.choices[0].message.content;
+        const tokens = data.usage ? data.usage.completion_tokens : 0;
+        const totalTokens = data.usage ? data.usage.total_tokens : 0;
+
+        chat.messages.push({
+            role: 'assistant',
+            content: reply,
+            timestamp: new Date().toISOString(),
+            tokens: tokens,
+            model: currentModel
+        });
+
+        chat.metadata.tokens_in += (data.usage?.prompt_tokens || 0);
+        chat.metadata.tokens_out += tokens;
+
+        // Check for images in response
+        if (reply.includes('![') || reply.includes('data:image')) {
+            saveImage(reply, chat.id);
+        }
+
+        document.getElementById('api-dot').className = 'stat-dot green';
+        document.getElementById('api-status').textContent = 'API OK · ' + totalTokens + ' tokens';
+
+    } catch (err) {
+        chat.messages.push({
+            role: 'assistant',
+            content: '❌ Fehler: ' + err.message,
+            timestamp: new Date().toISOString(),
+            error: true
+        });
+        document.getElementById('api-dot').className = 'stat-dot red';
+        document.getElementById('api-status').textContent = 'Fehler: ' + err.message.substring(0, 40);
+    }
+
+    thinkEl.remove();
+    saveChat(chat);
+    renderMessages(chat);
+    renderChatList();
+    updateStats();
+    document.getElementById('send-btn').disabled = false;
+}
+
+// --- MODEL SWITCH ---
+function switchModel(model) {
+    currentModel = model;
+    document.getElementById('chat-model').textContent = model;
+    if (currentChatId) {
+        const chat = getChat(currentChatId);
+        chat.model = model;
+        saveChat(chat);
+    }
+}
+
+// --- PROJECTS ---
+function newProject() {
+    const name = prompt('Projektname:');
+    if (!name) return;
+    const project = { id: 'proj-' + Date.now(), name, created: new Date().toISOString(), chatIds: [] };
+    localStorage.setItem(STORAGE_PREFIX + project.id, JSON.stringify(project));
+    renderProjects();
+}
+
+function renderProjects() {
+    const list = document.getElementById('project-list');
+    const projects = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith(STORAGE_PREFIX + 'proj-')) {
+            try { projects.push(JSON.parse(localStorage.getItem(key))); } catch(e) {}
+        }
+    }
+    list.innerHTML = projects.map(p => `
+        <div class="project-item" onclick="openProject('${p.id}')">
+            <div class="pi-name">📁 ${esc(p.name)}</div>
+            <div class="pi-meta">${p.chatIds?.length || 0} Chats · ${new Date(p.created).toLocaleDateString('de')}</div>
+        </div>
+    `).join('') || '<div style="padding:20px;text-align:center;color:var(--muted);font-size:11px">Keine Projekte</div>';
+}
+
+function openProject(id) {
+    const p = JSON.parse(localStorage.getItem(STORAGE_PREFIX + id));
+    if (p) alert('Projekt: ' + p.name + '\nChats: ' + (p.chatIds?.length || 0));
+}
+
+// --- PROMPTS ---
+function newPrompt() {
+    const name = prompt('Prompt-Name:');
+    if (!name) return;
+    const content = prompt('Prompt-Text:');
+    if (!content) return;
+    const pr = { id: 'prompt-' + Date.now(), name, content, created: new Date().toISOString() };
+    localStorage.setItem(STORAGE_PREFIX + pr.id, JSON.stringify(pr));
+    renderPrompts();
+}
+
+function saveAsPrompt() {
+    const input = document.getElementById('user-input');
+    if (!input.value.trim()) return;
+    const name = prompt('Prompt-Name:');
+    if (!name) return;
+    const pr = { id: 'prompt-' + Date.now(), name, content: input.value, created: new Date().toISOString() };
+    localStorage.setItem(STORAGE_PREFIX + pr.id, JSON.stringify(pr));
+    renderPrompts();
+}
+
+function renderPrompts() {
+    const list = document.getElementById('prompt-list');
+    const prompts = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith(STORAGE_PREFIX + 'prompt-')) {
+            try { prompts.push(JSON.parse(localStorage.getItem(key))); } catch(e) {}
+        }
+    }
+    list.innerHTML = prompts.map(p => `
+        <div class="prompt-item" onclick="usePrompt('${p.id}')">
+            <div class="pr-name">⚡ ${esc(p.name)}</div>
+            <div class="pr-preview">${esc(p.content)}</div>
+        </div>
+    `).join('') || '<div style="padding:20px;text-align:center;color:var(--muted);font-size:11px">Keine gespeicherten Prompts</div>';
+}
+
+function usePrompt(id) {
+    const p = JSON.parse(localStorage.getItem(STORAGE_PREFIX + id));
+    if (p) document.getElementById('user-input').value = p.content;
+}
+
+// --- IMAGES ---
+function saveImage(content, chatId) {
+    const img = { id: 'img-' + Date.now(), chatId, content: content.substring(0, 500), created: new Date().toISOString() };
+    localStorage.setItem(STORAGE_PREFIX + img.id, JSON.stringify(img));
+    renderImages();
+}
+
+function renderImages() {
+    const grid = document.getElementById('image-grid');
+    const images = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith(STORAGE_PREFIX + 'img-')) {
+            try { images.push(JSON.parse(localStorage.getItem(key))); } catch(e) {}
+        }
+    }
+    grid.innerHTML = images.map(img => `
+        <div class="image-thumb">🖼️</div>
+    `).join('') || '<div style="grid-column:span 2;text-align:center;color:var(--muted);font-size:11px;padding:20px">Keine Bilder</div>';
+    document.getElementById('stat-imgs').textContent = images.length;
+}
+
+// --- SETTINGS ---
+function getSettings() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_PREFIX + 'settings') || '{}'); } catch(e) { return {}; }
+}
+
+function loadSettings() {
+    const s = getSettings();
+    currentModel = s.defaultModel || 'grok-3';
+    document.getElementById('chat-model').textContent = currentModel;
+    if (!s.apiKey) {
+        document.getElementById('api-dot').className = 'stat-dot yellow';
+        document.getElementById('api-status').textContent = 'API Key fehlt';
+    }
+}
+
+function openSettings() {
+    const s = getSettings();
+    document.getElementById('api-key-input').value = s.apiKey || '';
+    document.getElementById('default-model').value = s.defaultModel || 'grok-3';
+    document.getElementById('system-prompt').value = s.systemPrompt || '';
+    document.getElementById('settings-modal').classList.add('show');
+}
+
+function closeSettings() {
+    document.getElementById('settings-modal').classList.remove('show');
+}
+
+function saveSettings() {
+    const settings = {
+        apiKey: document.getElementById('api-key-input').value.trim(),
+        defaultModel: document.getElementById('default-model').value,
+        systemPrompt: document.getElementById('system-prompt').value.trim()
+    };
+    localStorage.setItem(STORAGE_PREFIX + 'settings', JSON.stringify(settings));
+    currentModel = settings.defaultModel;
+    document.getElementById('chat-model').textContent = currentModel;
+    if (settings.apiKey) {
+        document.getElementById('api-dot').className = 'stat-dot green';
+        document.getElementById('api-status').textContent = 'API bereit';
+    }
+    closeSettings();
+}
+
+// --- EXPORT ---
+function exportChat() {
+    if (!currentChatId) return;
+    const chat = getChat(currentChatId);
+    downloadJSON(chat, chat.id + '.json');
+}
+
+function exportAll() {
+    const all = { exported: new Date().toISOString(), chats: [], projects: [], prompts: [], images: [] };
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key.startsWith(STORAGE_PREFIX)) continue;
+        const data = JSON.parse(localStorage.getItem(key));
+        if (key.includes('chat-')) all.chats.push(data);
+        else if (key.includes('proj-')) all.projects.push(data);
+        else if (key.includes('prompt-')) all.prompts.push(data);
+        else if (key.includes('img-')) all.images.push(data);
+    }
+    downloadJSON(all, 'dkz-grok-export-' + new Date().toISOString().split('T')[0] + '.json');
+}
+
+function downloadJSON(data, filename) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+// --- STATS ---
+function updateStats() {
+    let totalSize = 0;
+    let totalMsgs = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith(STORAGE_PREFIX)) {
+            totalSize += localStorage.getItem(key).length;
+            if (key.includes('chat-')) {
+                try { totalMsgs += JSON.parse(localStorage.getItem(key)).messages.length; } catch(e) {}
+            }
+        }
+    }
+    document.getElementById('stat-msgs').textContent = totalMsgs;
+    document.getElementById('stat-size').textContent = (totalSize / 1024).toFixed(1) + ' KB';
+}
+
+// --- AUTO-GROW TEXTAREA ---
+function autoGrow(el) {
+    el.addEventListener('input', () => {
+        el.style.height = '44px';
+        el.style.height = Math.min(el.scrollHeight, 200) + 'px';
+    });
+}
+
+// --- START ---
+init();
+</script>
+
+</body>
+</html>

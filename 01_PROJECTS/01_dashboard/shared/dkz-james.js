@@ -1,15 +1,24 @@
 /**
- * DkZ JAMEZ™ -- GPT Evaluation Agent + Mistral OCR v2.0
+ * DkZ JAMEZ™ -- Guardian Agent v4.0 + GPT Evaluation + Mistral OCR
  * @DKZ:TAG [AGENT:james] [CAT:shared] [LANG:js]
  * @DKZ:RULES R12 Kein Wissensverlust, R20 Dok-Pflicht
- * @version v0.01.1_01
+ * @version v4.0.0
  * 
- * JAMEZ™ LIEST und BEWERTET -- aendert NIE Code.
+ * JAMEZ™ LIEST, BEWERTET und UEBERWACHT -- aendert NIE Code.
  * Portiert aus james_playbook.go + Mistral OCR Integration
  * 
  * Einbinden: <script src="../../shared/dkz-james.js"></script>
  * 
- * Features v2.0:
+ * Features v4.0 (NEU):
+ * - Agent Monitor: 51 Agenten ueberwachen mit Health-Tracking
+ * - Ampel-System: Gruen/Gelb/Rot pro Agent + Gesamt
+ * - Event-Bus: emit/on Pattern fuer System-Events
+ * - Health-Check Scheduler: Auto-Check alle 60s
+ * - Auto-Heal: Erkennt Probleme + schlaegt Fixes vor
+ * - State Persistence: localStorage + JSON-Export
+ * - Desktop Notifications bei Problemen
+ * 
+ * Features v3.0 (bestehend):
  * - Bewertung in 6 Kategorien (quality, security, design, prompt, structure, logic)
  * - 22 Rubric-Regeln mit Pass/Fail + Fix-Hints
  * - Mistral OCR: Bilder/PDFs lesen und analysieren
@@ -17,12 +26,11 @@
  * - Ecosystem Score: 0-100 Gesamtbewertung
  * - Fix-Vorschlaege: suggestFix() via LLM
  * - Live-Feedback-Panel in allen Modulen
- * - NEXUZ Integration (Prompt Archive Bewertung)
  */
 const DkzJames = (() => {
     'use strict';
 
-    const VERSION = '3.0.0';
+    const VERSION = '4.0.0';
 
     // ========================================
     // KNOWLEDGE BASE (Playbook + Blueprint + OpenClaw)
@@ -60,10 +68,10 @@ const DkzJames = (() => {
             versionFormat: 'v{major}.{minor}.{session}_{step}'
         },
 
-        // --- BLAUPAUSE (73 Module, Tech Stack) ---
+        // --- BLAUPAUSE (152 Module, Tech Stack) ---
         blueprint: {
-            version: 'v0.05',
-            totalModules: 73, // 59 Module + 14 Dashboards
+            version: 'v0.06',
+            totalModules: 152, // 130 Module + 22 Dashboards/Hubs
             moduleCategories: {
                 devTools: 15, designUI: 5, contentText: 8, kiPrompts: 5,
                 analyseDaten: 7, produktivitaet: 6, spezial: 6, metaArchiv: 3, backendSystem: 3
@@ -98,8 +106,8 @@ const DkzJames = (() => {
                 r23: 'Jede .go hat .py Fallback (Go=gruen, Python=gelb)'
             },
             sharedScripts: {
-                pflicht: ['dkz-theme.css', 'dkz-debug.js', 'dkz-guide.js', 'dkz-copilot.js'],
-                optional: ['dkz-shortcuts.js', 'dkz-export.js', 'dkz-crosslinks.js', 'dkz-a11y.js', 'dkz-test.js', 'dkz-puter.js', 'nexuz.js', 'dkz-james.js', 'dkz-llm-registry.js', 'dkz-eventlog.js']
+                pflicht: ['dkz-theme.css', 'dkz-debug.js', 'dkz-navbar.js', 'dkz-guide.js', 'dkz-copilot.js', 'dkz-prompt-hub.js', 'dkz-shortcuts.js', 'dkz-export.js', 'dkz-crosslinks.js', 'dkz-a11y.js', 'dkz-test.js', 'dkz-llm-registry.js', 'dkz-eventlog.js', 'dkz-console.js', 'dkz-headbar.js', 'dkz-self-learn.js', 'dkz-tts.js'],
+                optional: ['dkz-puter.js', 'nexuz.js', 'dkz-james.js', 'dkz-nanobot.js', 'dkz-watchdog.js', 'dkz-autohealth.js', 'dkz-liveticker.js', 'dkz-toast.js']
             },
             dataFlow: 'Benutzer(Input) → Modul(Logik) → localStorage(Speicher) → Output/Export(Copy/Down)',
             puterIntegration: { sdk: 'https://js.puter.com/v2/', lazyLoad: true, prefix: 'dkz:', fallback: 'localStorage' }
@@ -187,20 +195,23 @@ const DkzJames = (() => {
             pattern: '3-Spalten Grid: 280px Sidebar | Dot-Grid Canvas | 350px Properties'
         },
 
-        // --- DkZ REGELN (Kernregeln) ---
+        // --- DkZ REGELN (Kernregeln — synchron mit REGELWERK.md v2.00) ---
         rules: {
-            R12: 'Kein Wissensverlust — Alles dokumentieren',
-            R20: 'Dokumentations-Pflicht — Git nach jeder Aenderung',
-            R23: 'Go-Python-Fallback — Jede .go hat .py',
-            R31: 'Backend-Calls nur ueber NEXUZ',
-            R42: 'Keine Frameworks — Vanilla HTML/CSS/JS',
-            R50: 'DkZ Theme Pflicht — dkz-theme.css in jedem Modul',
-            R60: 'Shared Scripts Pflicht — dkz-debug.js, dkz-guide.js',
-            R70: 'Offline-First — localStorage Fallback immer',
-            R80: 'XSS-Schutz — esc() fuer alle User-Inputs',
-            R90: 'Event-Logging — Jedes Modul loggt creation/action/error',
-            R95: 'Externe LLM Prompt-Archivpflicht — Wenn LLMs ausserhalb (Gemini, GPT, Claude, Copilot) Prompts nutzen, MUESSEN diese trotzdem im DkZ Prompt-Archiv (Iceberg-Bridge) hinterlegt werden. Kein Prompt geht undokumentiert.',
-            R96: 'Playbook-Bindungspflicht — Wenn ein LLM das Playbook liest, ist der GESAMTE Output bindend an Playbook-Standards (Format, Farben, Struktur, Konventionen). Das Playbook ist kein Vorschlag sondern das bindende Regelwerk. Jede Antwort MUSS Playbook-konform sein — kein Bauchgefuehl, nur Regelwerk.'
+            R1:  'Nie loeschen — Immer archivieren (99_ARCHIVE/)',
+            R2:  'Git Commit nach jeder Aenderung — feat/fix/chore(bereich): beschreibung',
+            R8:  'Keine Umlaute — NUR ASCII (ae, oe, ue, ss) ueberall',
+            R12: 'Kein Verlust von Wissen — 5 Sicherungsschichten: Git, Archive, Research, Inbox, DEEPKEEP',
+            R13: 'Workflow-Fluss: ANALYSE → PLAN → GENEHMIGUNG → AUSFUEHRUNG → VERIFIKATION → COMMIT → DOKU',
+            R15: 'So viel wie noetig, so wenig wie moeglich — chirurgisch praezise',
+            R20: 'Dokumentations-Pflicht — Kein Code ohne Doku, keine Aenderung ohne Update',
+            R21: 'Shared Scripts Pflicht — dkz-debug.js (XSS/esc()), dkz-copilot.js, dkz-llm-registry.js, dkz-eventlog.js. Ohne dkz-debug.js = nicht deploybar',
+            R23: 'Go-Python-Fallback — Jede .go hat .py Fallback',
+            R31: 'Wiki Hub Auto-Sync — wiki-hub-sync-data.js muss existieren',
+            R38: 'Premium Design Standard — DkZ Dark Theme, Glassmorphism, Micro-Animations. Kein MVP.',
+            R42: 'ESC-Console — Jedes Modul hat ESC-Console (dkz-console.js)',
+            R90: 'Event-Logging Pflicht — Jedes Modul loggt creation/action/error via dkz-eventlog.js',
+            R95: 'Externe LLM Prompt-Archivpflicht — Alle Prompts im DkZ Prompt-Archiv hinterlegen',
+            R96: 'Playbook-Bindungspflicht — LLM Output MUSS Playbook-konform sein'
         },
 
         // --- GM-RULES: Gedaechtnis-Management (GM-01 bis GM-08) ---
@@ -997,6 +1008,291 @@ const DkzJames = (() => {
     }
 
     // ========================================
+    // v4: EVENT BUS (pub/sub)
+    // ========================================
+    const _listeners = {};
+
+    function emit(event, data) {
+        const payload = { event, data, timestamp: new Date().toISOString(), source: 'jamez-v4' };
+        (_listeners[event] || []).forEach(fn => { try { fn(payload); } catch(e) { console.warn('JAMEZ Event Error:', e); } });
+        (_listeners['*'] || []).forEach(fn => { try { fn(payload); } catch(e) {} });
+        // Persist last 100 events
+        const log = JSON.parse(localStorage.getItem('dkz-jamez-events') || '[]');
+        log.push(payload);
+        if (log.length > 100) log.splice(0, log.length - 100);
+        localStorage.setItem('dkz-jamez-events', JSON.stringify(log));
+    }
+
+    function on(event, fn) {
+        if (!_listeners[event]) _listeners[event] = [];
+        _listeners[event].push(fn);
+        return () => { _listeners[event] = _listeners[event].filter(f => f !== fn); };
+    }
+
+    // ========================================
+    // v4: AGENT REGISTRY (51 Agenten)
+    // ========================================
+    const AGENT_REGISTRY = [
+        // BMAD Core (7)
+        { id: 'james-guardian', name: 'James Guardian', role: 'guardian', team: 'bmad', icon: '🎯' },
+        { id: 'dkz-pm', name: 'DkZ PM', role: 'product-manager', team: 'bmad', icon: '📋' },
+        { id: 'dkz-architekt', name: 'DkZ Architekt', role: 'architect', team: 'bmad', icon: '🏗️' },
+        { id: 'dkz-developer', name: 'DkZ Developer', role: 'developer', team: 'bmad', icon: '👨‍💻' },
+        { id: 'dkz-reviewer', name: 'DkZ Reviewer', role: 'reviewer', team: 'bmad', icon: '🔍' },
+        { id: 'dkz-tester', name: 'DkZ Tester', role: 'tester', team: 'bmad', icon: '🧪' },
+        { id: 'dkz-dokumentar', name: 'DkZ Dokumentar', role: 'docs', team: 'bmad', icon: '📚' },
+        // Antigravity Agents (10)
+        { id: 'dkz-copilot-builder', name: 'CoPilot Builder', role: 'builder', team: 'core', icon: '🤖' },
+        { id: 'dkz-issue-fixer', name: 'Issue Fixer', role: 'fixer', team: 'reviewer', icon: '🔧' },
+        { id: 'dkz-llms-builder', name: 'LLMs Builder', role: 'builder', team: 'docs', icon: '📝' },
+        { id: 'dkz-module-builder', name: 'Module Builder', role: 'builder', team: 'core', icon: '🧩' },
+        { id: 'dkz-module-builder-v2', name: 'Module Builder v2', role: 'builder', team: 'core', icon: '✨' },
+        { id: 'dkz-module-scaffold', name: 'Module Scaffold', role: 'scaffold', team: 'core', icon: '🏗️' },
+        { id: 'git-cleanup', name: 'Git Cleanup', role: 'cleanup', team: 'infra', icon: '🧹' },
+        { id: 'git-housekeeping', name: 'Git Housekeeping', role: 'cleanup', team: 'infra', icon: '🏠' },
+        { id: 'github-readme-pusher', name: 'README Pusher', role: 'docs', team: 'docs', icon: '📄' },
+        { id: 'react-panel-builder', name: 'React Panel', role: 'builder', team: 'core', icon: '⚛️' },
+        // Infrastructure (8)
+        { id: 'infra-researcher', name: 'Infra Researcher', role: 'research', team: 'infra', icon: '🔬' },
+        { id: 'vps-researcher', name: 'VPS Researcher', role: 'research', team: 'infra', icon: '🖥️' },
+        { id: 'cloud-analyst', name: 'Cloud Analyst', role: 'analyst', team: 'infra', icon: '☁️' },
+        { id: 'automation-builder', name: 'Automation Builder', role: 'builder', team: 'infra', icon: '⚙️' },
+        { id: 'python-automation', name: 'Python Automation', role: 'automation', team: 'infra', icon: '🐍' },
+        { id: 'system-integration', name: 'System Integration', role: 'research', team: 'infra', icon: '🔗' },
+        { id: 'openhands-researcher', name: 'OpenHands', role: 'research', team: 'infra', icon: '🤲' },
+        { id: 'drive-health', name: 'Drive Health', role: 'health', team: 'infra', icon: '💚' },
+        // NanoBots
+        { id: 'nanobot-antigravity', name: 'NanoBot Antigravity', role: 'bridge', team: 'nano', icon: '🤖' },
+        { id: 'nanobot-opencode', name: 'NanoBot OpenCode', role: 'bridge', team: 'nano', icon: '💻' },
+    ];
+
+    // ========================================
+    // v4: AGENT STATUS TRACKING
+    // ========================================
+    const STORAGE_KEY = 'dkz-jamez-state';
+
+    function getState() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) { return {}; }
+    }
+
+    function saveState(state) {
+        state.lastUpdated = new Date().toISOString();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function getAgentStatus(agentId) {
+        const state = getState();
+        const agents = state.agents || {};
+        if (agentId) return agents[agentId] || { status: 'unknown', ampel: 'gelb' };
+        return agents;
+    }
+
+    function setAgentStatus(agentId, status, details) {
+        const state = getState();
+        if (!state.agents) state.agents = {};
+        const ampel = status === 'active' || status === 'ok' ? 'gruen' :
+                      status === 'degraded' || status === 'idle' ? 'gelb' : 'rot';
+        state.agents[agentId] = {
+            status, ampel, details: details || '',
+            lastSeen: new Date().toISOString(),
+            lastChange: state.agents[agentId]?.status !== status ? new Date().toISOString() : (state.agents[agentId]?.lastChange || new Date().toISOString())
+        };
+        saveState(state);
+        emit('agent.status', { agentId, status, ampel, details });
+        if (ampel === 'rot') emit('agent.error', { agentId, status, details });
+    }
+
+    // ========================================
+    // v4: AMPEL SYSTEM
+    // ========================================
+    function getAmpel() {
+        const state = getState();
+        const agents = state.agents || {};
+        const statuses = Object.values(agents);
+        if (statuses.length === 0) return { ampel: 'gelb', label: 'Unbekannt', agents: { gruen: 0, gelb: 0, rot: 0 } };
+
+        const counts = { gruen: 0, gelb: 0, rot: 0 };
+        statuses.forEach(a => { counts[a.ampel] = (counts[a.ampel] || 0) + 1; });
+
+        let ampel = 'gruen';
+        let label = 'Alle Systeme OK';
+        if (counts.rot > 0) { ampel = 'rot'; label = counts.rot + ' Agent(en) offline'; }
+        else if (counts.gelb > statuses.length * 0.3) { ampel = 'gelb'; label = 'Teilweise degradiert'; }
+
+        return { ampel, label, agents: counts, total: statuses.length };
+    }
+
+    function getAmpelColor(ampel) {
+        return ampel === 'gruen' ? '#00ff88' : ampel === 'gelb' ? '#ffb800' : '#fa1e4e';
+    }
+
+    // ========================================
+    // v4: HEALTH CHECK
+    // ========================================
+    let _healthInterval = null;
+
+    async function healthCheck() {
+        const checks = [];
+        const start = Date.now();
+
+        // 1. Shared Scripts vorhanden?
+        const scripts = ['dkz-debug.js', 'dkz-theme.css', 'dkz-navbar.js', 'dkz-copilot.js'];
+        scripts.forEach(s => {
+            const found = document.querySelector('script[src*="' + s + '"], link[href*="' + s + '"]');
+            checks.push({ id: 'shared-' + s, name: s, status: found ? 'ok' : 'missing', severity: found ? 'info' : 'warning' });
+        });
+
+        // 2. localStorage Gesundheit
+        try {
+            const testKey = 'dkz-health-test-' + Date.now();
+            localStorage.setItem(testKey, 'ok');
+            localStorage.removeItem(testKey);
+            checks.push({ id: 'localstorage', name: 'localStorage', status: 'ok', severity: 'info' });
+        } catch(e) {
+            checks.push({ id: 'localstorage', name: 'localStorage', status: 'error', severity: 'error', detail: e.message });
+        }
+
+        // 3. NEXUZ Gateway
+        const nexuzOk = typeof window.NEXUZ !== 'undefined';
+        checks.push({ id: 'nexuz', name: 'NEXUZ Gateway', status: nexuzOk ? 'ok' : 'offline', severity: nexuzOk ? 'info' : 'warning' });
+
+        // 4. Event-Bus
+        checks.push({ id: 'eventbus', name: 'Event-Bus', status: 'ok', severity: 'info', detail: Object.keys(_listeners).length + ' listeners' });
+
+        // 5. Features.json Check
+        try {
+            const resp = await fetch('../../features.json');
+            if (resp.ok) {
+                const features = await resp.json();
+                const moduleCount = features.modules ? features.modules.length : 0;
+                checks.push({ id: 'features', name: 'features.json', status: 'ok', severity: 'info', detail: moduleCount + ' Module' });
+            } else {
+                checks.push({ id: 'features', name: 'features.json', status: 'error', severity: 'warning', detail: 'HTTP ' + resp.status });
+            }
+        } catch(e) {
+            checks.push({ id: 'features', name: 'features.json', status: 'unreachable', severity: 'info' });
+        }
+
+        const duration = Date.now() - start;
+        const errors = checks.filter(c => c.severity === 'error').length;
+        const warnings = checks.filter(c => c.severity === 'warning').length;
+        const ampel = errors > 0 ? 'rot' : warnings > 2 ? 'gelb' : 'gruen';
+
+        const result = { ampel, checks, errors, warnings, duration, timestamp: new Date().toISOString() };
+
+        // Persist
+        const state = getState();
+        state.lastHealth = result;
+        saveState(state);
+
+        emit('health.check', result);
+
+        // Desktop notification bei Rot
+        if (ampel === 'rot' && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            new Notification('JAMEZ™ ALARM', { body: errors + ' Fehler gefunden!', icon: '🚨' });
+        }
+
+        return result;
+    }
+
+    function startHealthScheduler(intervalMs) {
+        if (_healthInterval) clearInterval(_healthInterval);
+        _healthInterval = setInterval(healthCheck, intervalMs || 60000);
+        healthCheck(); // sofort einmal
+        emit('health.scheduler.started', { interval: intervalMs || 60000 });
+    }
+
+    function stopHealthScheduler() {
+        if (_healthInterval) { clearInterval(_healthInterval); _healthInterval = null; }
+        emit('health.scheduler.stopped', {});
+    }
+
+    // ========================================
+    // v4: AUTO-HEAL SUGGESTIONS
+    // ========================================
+    function autoHealSuggestions() {
+        const state = getState();
+        const health = state.lastHealth || {};
+        const suggestions = [];
+
+        (health.checks || []).forEach(c => {
+            if (c.status === 'missing' && c.id.startsWith('shared-')) {
+                suggestions.push({
+                    severity: 'warning',
+                    message: c.name + ' fehlt — einbinden!',
+                    fix: '<script src="../../shared/' + c.name + '"></script>',
+                    autofix: false
+                });
+            }
+            if (c.id === 'nexuz' && c.status === 'offline') {
+                suggestions.push({
+                    severity: 'info',
+                    message: 'NEXUZ Gateway offline — LLM Features nicht verfuegbar',
+                    fix: 'Starte ONTHERUN: node cli/dkz.js start',
+                    autofix: false
+                });
+            }
+        });
+
+        // Agent Issues
+        const agents = state.agents || {};
+        Object.entries(agents).forEach(([id, a]) => {
+            if (a.ampel === 'rot') {
+                suggestions.push({
+                    severity: 'error',
+                    message: 'Agent "' + id + '" ist offline: ' + (a.details || 'unbekannt'),
+                    fix: 'Agent neu starten oder Health-Check ausfuehren',
+                    autofix: false
+                });
+            }
+        });
+
+        return suggestions;
+    }
+
+    // ========================================
+    // v4: STATE EXPORT/IMPORT
+    // ========================================
+    function exportState() {
+        return {
+            version: VERSION,
+            exported: new Date().toISOString(),
+            state: getState(),
+            events: JSON.parse(localStorage.getItem('dkz-jamez-events') || '[]'),
+            registry: AGENT_REGISTRY
+        };
+    }
+
+    function importState(data) {
+        if (data.state) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data.state));
+        }
+        if (data.events) {
+            localStorage.setItem('dkz-jamez-events', JSON.stringify(data.events));
+        }
+        emit('state.imported', { from: data.exported });
+    }
+
+    // ========================================
+    // v4: NOTIFICATION SYSTEM
+    // ========================================
+    function requestNotificationPermission() {
+        if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    }
+
+    function notify(title, body, icon) {
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            new Notification('JAMEZ™: ' + title, { body: body, icon: icon || '🤖' });
+        }
+        emit('notification', { title, body });
+    }
+
+    // Request on first load
+    requestNotificationPermission();
+
+    // ========================================
     // PUBLIC API
     // ========================================
     return {
@@ -1030,7 +1326,29 @@ const DkzJames = (() => {
         getBlueprint: function () { return KNOWLEDGE.blueprint; },
         getOpenClaw: function () { return KNOWLEDGE.openclaw; },
         getRules: function () { return KNOWLEDGE.rules; },
-        getPromptBlueprints: function () { return KNOWLEDGE.promptBlueprints; }
+        getPromptBlueprints: function () { return KNOWLEDGE.promptBlueprints; },
+        // v4: Event Bus
+        emit: emit,
+        on: on,
+        // v4: Agent Monitor
+        AGENT_REGISTRY: AGENT_REGISTRY,
+        getAgentStatus: getAgentStatus,
+        setAgentStatus: setAgentStatus,
+        // v4: Ampel System
+        getAmpel: getAmpel,
+        getAmpelColor: getAmpelColor,
+        // v4: Health Check
+        healthCheck: healthCheck,
+        startHealthScheduler: startHealthScheduler,
+        stopHealthScheduler: stopHealthScheduler,
+        // v4: Auto-Heal
+        autoHealSuggestions: autoHealSuggestions,
+        // v4: State Management
+        exportState: exportState,
+        importState: importState,
+        getState: getState,
+        // v4: Notifications
+        notify: notify
     };
 })();
 

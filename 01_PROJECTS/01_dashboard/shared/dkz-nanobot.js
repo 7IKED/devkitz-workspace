@@ -503,10 +503,10 @@ const DkzNanoBot = (() => {
     }
 
     // ═══════════════════════════════════════
-    // AI CALL (3-Tier Fallback)
+    // AI CALL (4-Tier Fallback)
     // ═══════════════════════════════════════
     async function _callAI(sys, usr, model) {
-        // 1. Local Gateway
+        // Tier 1: Local Gateway (ONTHERUN)
         try {
             const r = await fetch(`${GATEWAY}/api/v1/chat`, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -514,9 +514,30 @@ const DkzNanoBot = (() => {
                 signal: AbortSignal.timeout(15000)
             });
             if (r.ok) { const d = await r.json(); if (d.reply) return d.reply; }
-        } catch { /* offline */ }
+        } catch { /* Gateway offline */ }
 
-        // 2. Direct VPS Ollama
+        // Tier 2: Pollinations AI (FREE — kein API Key noetig!)
+        try {
+            const r = await fetch('https://text.pollinations.ai/openai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'openai',
+                    messages: [
+                        { role: 'system', content: sys },
+                        { role: 'user', content: usr }
+                    ],
+                    stream: false
+                }),
+                signal: AbortSignal.timeout(20000)
+            });
+            if (r.ok) {
+                const d = await r.json();
+                if (d.choices?.[0]?.message?.content) return d.choices[0].message.content;
+            }
+        } catch { /* Pollinations offline */ }
+
+        // Tier 3: Direct VPS Ollama
         try {
             const r = await fetch('http://72.61.93.129:8811/v1/chat/completions', {
                 method: 'POST',
@@ -525,16 +546,16 @@ const DkzNanoBot = (() => {
                 signal: AbortSignal.timeout(15000)
             });
             if (r.ok) { const d = await r.json(); if (d.choices?.[0]?.message?.content) return d.choices[0].message.content; }
-        } catch { /* offline */ }
+        } catch { /* VPS offline */ }
 
-        // 3. FreeAPI Cascade
+        // Tier 4: FreeAPI Cascade (Gateway free-hub)
         try {
             const r = await fetch(`${GATEWAY}/api/v1/free-hub/cascade`, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ message: usr }), signal: AbortSignal.timeout(10000)
             });
             if (r.ok) { const d = await r.json(); if (d.response) return d.response; }
-        } catch { /* offline */ }
+        } catch { /* Cascade offline */ }
 
         throw new Error('Kein LLM Provider erreichbar.');
     }
