@@ -1,53 +1,217 @@
-# CodeRabbit Configuration — DEVKiTZ Ökosystem
-# @DKZ:RULES -> Siehe REGELWERK.md, R21 Pflegefall-System
-# Version: v0.01.2_01
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# CodeRabbit Konfiguration — DEVKiTZ Oekosystem
+# @DKZ:RULES -> Siehe REGELWERK.md
+# Version: v0.02.0_01 — Konsolidiert (ersetzt alle Sub-Configs)
+# Stand: 2026-06-08
+
+language: "de-DE"
+early_access: false
+
+tone_instructions: |
+  Professionell, direkt, DkZ-Stil.
+  NUR Probleme kommentieren die DURCH DIESEN PR eingefuehrt werden.
+  KEINE pre-existierenden Issues in verschobenem oder reformattiertem Code flaggen.
+  KEINE false positives bei innerHTML wenn esc() Sanitizer vorhanden ist.
+  KEIN Meckern ueber localStorage — ist beabsichtigt (Offline-First Architektur).
 
 reviews:
   profile: "chill"
-  auto_review:
-    enabled: true
-    drafts: false
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  review_details: false
+  commit_status: true
+  collapse_walkthrough: true
+  changed_files_summary: true
+  sequence_diagrams: false
+  estimate_code_review_effort: false
+  assess_linked_issues: true
+  related_issues: true
+  related_prs: false
+  suggested_labels: false
+  auto_apply_labels: false
+  suggested_reviewers: false
+  auto_assign_reviewers: false
+  in_progress_fortune: false
+  enable_prompt_for_ai_agents: true
+
+  # ═══════════════════════════════════════════
+  # PATH FILTERS — Was CodeRabbit IGNORIEREN soll
+  # ═══════════════════════════════════════════
+  path_filters:
+    # Binaer/Build
+    - "!**/*.dll"
+    - "!**/*.pak"
+    - "!**/*.dat"
+    - "!**/*.bin"
+    - "!**/*.exe"
+    - "!**/*.asar"
+    - "!**/*.min.js"
+    - "!**/*.min.css"
+    - "!**/*.map"
+    # Generierte Dateien
+    - "!**/node_modules/**"
+    - "!**/locales/**"
+    - "!**/__pycache__/**"
+    - "!**/*.ipynb"
+    # Medien
+    - "!**/*.png"
+    - "!**/*.jpg"
+    - "!**/*.jpeg"
+    - "!**/*.gif"
+    - "!**/*.ico"
+    - "!**/*.svg"
+    - "!**/*.mp4"
+    - "!**/*.webp"
+    - "!**/*.webm"
+    # Archiv & Temp
+    - "!99_ARCHIVE/**"
+    - "!_github_upload_temp/**"
+    - "!06_NOTEPAD/**"
+    # Runtime Binaries
+    - "!runtime/locales/**"
+    # Externe Projekte (haben eigene Configs)
+    - "!01_PROJECTS/ComfyUI/**"
+    - "!bun/**"
+
+  # ═══════════════════════════════════════════
+  # PATH INSTRUCTIONS — Kontext fuer Reviews
+  # ═══════════════════════════════════════════
   path_instructions:
+    # Globale Regel: Nur neue Issues kommentieren
+    - path: "**"
+      instructions: |
+        WICHTIG: NUR Probleme kommentieren die DURCH DIESEN PR neu eingefuehrt werden.
+        NICHT pre-existierende Issues flaggen in Code der nur verschoben oder reformattiert wurde.
+
+    # Dashboard Module
     - path: "01_PROJECTS/01_dashboard/modules/**"
       instructions: |
-        DkZ Module Review:
-        - Check DkZ Design: #fa1e4e accent, dark theme (#0e0e10)
-        - Verify XSS protection: esc() function must exist
-        - Check for ← Hub button in header
-        - Verify dkz-version meta tag
-        - EventLog integration (DkzEventLog.log)
-        - Debug button (dkz-debug.js) included
-        - Responsive design
-        - No hardcoded credentials
-    - path: "BACKEND/**"
+        DkZ Modul Review — KONTEXT BEACHTEN:
+        1. XSS-Schutz: esc() Funktion MUSS vorhanden sein bei innerHTML.
+           - NUR warnen wenn innerHTML OHNE esc() verwendet wird
+           - textContent ist NICHT noetig wenn esc() den Input sanitized
+           - DkZ hat einen zentralen Sanitizer — NICHT jedes innerHTML flaggen
+        2. Design System: CSS Custom Properties verwenden (--accent, --bg, etc.)
+           - Hardcoded Farben in :root {} sind OK (das IST das Design System)
+        3. localStorage ist BEABSICHTIGT — Offline-First Architektur
+           - NICHT als Security-Issue flaggen
+        4. CORS ist NICHT relevant — lokale Dateien, kein Server
+        5. Pruefen:
+           - Hub-Button im Header vorhanden
+           - dkz-version Meta-Tag
+           - EventLog Integration (DkzEventLog.log)
+           - Responsive Design
+
+    # Shared Scripts (kritisch)
+    - path: "01_PROJECTS/01_dashboard/shared/**"
       instructions: |
-        Backend Security Review:
-        - Check API key validation on all endpoints
-        - Verify no secrets in code
-        - Check CORS headers
-        - Verify data isolation (userId filtering)
-        - Check error handling
-    - path: "FRONTEND/**"
+        Shared Components sind kritisches System-Core.
+        - @DKZ:RULES Marker muss vorhanden sein
+        - Keine Breaking Changes ohne Ruecksprache
+        - EventBus muss immer zuerst geladen werden
+        - STRENG pruefen — Fehler hier brechen 130+ Module
+
+    # JSON Dateien
+    - path: "**/*.json"
       instructions: |
-        Frontend Review:
-        - Check authentication flow
-        - Verify sessionStorage usage (not localStorage for keys)
-        - Check DkZ Design consistency
-        - No exposed API keys
+        JSON validieren:
+        - features.json: MOD-XXX Format pruefen
+        - REGISTRY.json: totalModules muss stimmen
+        - Keine Kommentare in JSON (sind ungueltig)
+
+    # Runtime (Electron)
+    - path: "runtime/**"
+      instructions: |
+        Electron Desktop App:
+        - nodeIntegration: true ist BEABSICHTIGT (Electron IPC noetig)
+        - Security-Verbesserungen (contextIsolation) fuer v3 geplant
+        - Pfade relativ zum Workspace-Root pruefen
+
+    # CI/CD
     - path: ".github/**"
       instructions: |
         CI/CD Review:
-        - Check workflow permissions (minimal)
-        - Verify secret usage
-        - Check for hardcoded values
+        - Workflow Permissions minimal halten
+        - Secrets korrekt referenziert
+        - Keine hardcoded Werte
+
+    # Agents & Skills
+    - path: ".agents/**"
+      instructions: |
+        Agent-Konfiguration:
+        - SKILL.md Frontmatter pruefen (name, description)
+        - Keine sensiblen Daten in Skills
+        - Pfade muessen relativ sein
+
+    # Backend
+    - path: "BACKEND/**"
+      instructions: |
+        Backend Security Review:
+        - API Key Validierung auf allen Endpoints
+        - Keine Secrets im Code
+        - CORS Headers pruefen
+        - Data Isolation (userId Filtering)
+        - Error Handling
+
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false
+    ignore_title_keywords:
+      - "WIP"
+      - "DO NOT REVIEW"
+      - "DO NOT MERGE"
+      - "DRAFT"
+      - "chore"
+
+  finishing_touches:
+    docstrings:
+      enabled: false
+    unit_tests:
+      enabled: false
+
+  # ═══════════════════════════════════════════
+  # TOOLS — Nur relevante aktivieren
+  # ═══════════════════════════════════════════
+  tools:
+    github-checks:
+      enabled: true
+      timeout_ms: 90000
+    ast-grep:
+      enabled: true
+      essential_rules: true
+    gitleaks:
+      enabled: true
+    markdownlint:
+      enabled: false
+    yamllint:
+      enabled: false
+    languagetool:
+      enabled: false
+    shellcheck:
+      enabled: false
+    eslint:
+      enabled: false
+    htmlhint:
+      enabled: false
 
 chat:
   auto_reply: true
 
-language: "de-DE"
-
-tools:
-  github-checks:
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: "auto"
+  issues:
+    scope: "auto"
+  pull_requests:
+    scope: "auto"
+  code_guidelines:
     enabled: true
-  ast-grep:
-    enabled: true
+    filePatterns:
+      - "**/CLAUDE.md"
+      - "**/GEMINI.md"
+      - "**/REGELWERK.md"
+      - "**/.cursor/rules/*.mdc"
