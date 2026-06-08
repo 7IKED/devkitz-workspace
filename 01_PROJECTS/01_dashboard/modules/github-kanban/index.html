@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="dkz-version" content="v0.01.0_01">
+  <meta name="dkz-module" content="github-kanban">
+  <title>GitHub Kanban — DEVKiTZ™</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════
+       DkZ Design System v2 — GitHub Kanban
+       ═══════════════════════════════════════════ */
+    :root {
+      --accent: #fa1e4e;
+      --accent-glow: rgba(250, 30, 78, 0.3);
+      --bg: #060608;
+      --bg-card: #0e0e10;
+      --bg-elevated: #141418;
+      --bg-column: #0a0a0d;
+      --green: #00ff88;
+      --yellow: #ffb800;
+      --red: #ff3b5c;
+      --blue: #4dabf7;
+      --purple: #b197fc;
+      --orange: #ff922b;
+      --text: #ffffff;
+      --text-secondary: rgba(255,255,255,0.6);
+      --text-muted: rgba(255,255,255,0.35);
+      --glass: rgba(255,255,255,0.03);
+      --glass-border: rgba(255,255,255,0.06);
+      --glass-hover: rgba(255,255,255,0.08);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ═══ HEADER ═══ */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--glass-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .hub-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .hub-btn:hover {
+      background: var(--glass-hover);
+      color: var(--text);
+      border-color: var(--accent);
+    }
+
+    .header-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .header-title span { color: var(--accent); }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* ═══ CONTROLS ═══ */
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 24px;
+      flex-wrap: wrap;
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .control-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    select, input[type="text"] {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: 8px 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      outline: none;
+      transition: var(--transition);
+    }
+    select:focus, input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--glass-border);
+      background: var(--glass);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: 'Inter', sans-serif;
+    }
+    .btn:hover { background: var(--glass-hover); border-color: var(--accent); }
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #e01a45;
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+
+    /* ═══ STATS BAR ═══ */
+    .stats-bar {
+      display: flex;
+      gap: 16px;
+      padding: 0 24px 16px;
+      flex-wrap: wrap;
+    }
+
+    .stat-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .stat-chip .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+    .stat-chip .count {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    /* ═══ KANBAN BOARD ═══ */
+    .kanban {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      padding: 0 24px 24px;
+      min-height: calc(100vh - 200px);
+    }
+
+    .column {
+      background: var(--bg-column);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      min-height: 400px;
+    }
+
+    .column-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .column-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .column-title .indicator {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+
+    .column-count {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--glass);
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .column-body {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .column-body::-webkit-scrollbar { width: 4px; }
+    .column-body::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.15);
+      border-radius: 2px;
+    }
+
+    /* ═══ ISSUE/PR CARD ═══ */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+    }
+    .card:hover {
+      border-color: rgba(255,255,255,0.12);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .card.is-pr {
+      border-left: 3px solid var(--purple);
+    }
+    .card.is-issue {
+      border-left: 3px solid var(--green);
+    }
+
+    .card-type {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .card-type.pr { color: var(--purple); }
+    .card-type.issue { color: var(--green); }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.4;
+      margin-bottom: 8px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .card-repo {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      background: var(--glass);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .card-number {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+    }
+
+    .card-labels {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .label {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .card-date {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .card-assignee {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+    }
+
+    /* ═══ EMPTY STATE ═══ */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      font-size: 13px;
+      text-align: center;
+      gap: 8px;
+    }
+    .empty-state .icon { font-size: 28px; opacity: 0.5; }
+
+    /* ═══ TOKEN SETUP ═══ */
+    .token-setup {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 40px;
+      gap: 20px;
+      max-width: 500px;
+      margin: 60px auto;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+    }
+    .token-setup h2 { font-size: 20px; font-weight: 700; }
+    .token-setup p { color: var(--text-secondary); font-size: 14px; text-align: center; line-height: 1.6; }
+    .token-setup input {
+      width: 100%;
+      padding: 12px 16px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ═══ LOADING ═══ */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      gap: 12px;
+      color: var(--text-muted);
+    }
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid var(--glass-border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ═══ TOAST ═══ */
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .toast {
+      padding: 12px 20px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      animation: slideIn 0.3s ease;
+      max-width: 360px;
+    }
+    .toast.success { border-left: 3px solid var(--green); }
+    .toast.error { border-left: 3px solid var(--red); }
+    .toast.info { border-left: 3px solid var(--blue); }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ═══ RESPONSIVE ═══ */
+    @media (max-width: 1200px) {
+      .kanban { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .kanban { grid-template-columns: 1fr; }
+      .controls { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header" id="header">
+    <div class="header-left">
+      <a class="hub-btn" href="../landing-pages/dashboard.html" title="Zurueck zum Hub">← Hub</a>
+      <div class="header-title">GitHub <span>Kanban</span></div>
+    </div>
+    <div class="header-right">
+      <span style="font-size:12px;color:var(--text-muted);font-family:'JetBrains Mono',monospace" id="last-sync">—</span>
+      <button class="btn" onclick="refreshAll()" id="refresh-btn">🔄 Refresh</button>
+      <button class="btn" onclick="showTokenSetup()" id="settings-btn">⚙️</button>
+    </div>
+  </header>
+
+  <!-- CONTROLS -->
+  <div class="controls" id="controls-bar">
+    <div class="control-group">
+      <span class="control-label">Account</span>
+      <select id="filter-account" onchange="applyFilters()">
+        <option value="all">Alle Accounts</option>
+        <option value="7IKED">7IKED</option>
+        <option value="D-VKITZ">D-VKITZ</option>
+        <option value="0PENWORKSPACE">0PENWORKSPACE</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <span class="control-label">Typ</span>
+      <select id="filter-type" onchange="applyFilters()">
+        <option value="all">Issues + PRs</option>
+        <option value="issue">Nur Issues</option>
+        <option value="pr">Nur Pull Requests</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <span class="control-label">Suche</span>
+      <input type="text" id="filter-search" placeholder="Titel durchsuchen..." oninput="applyFilters()">
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-bar" id="stats-bar">
+    <div class="stat-chip"><div class="dot" style="background:var(--green)"></div>Open Issues <span class="count" id="stat-issues">0</span></div>
+    <div class="stat-chip"><div class="dot" style="background:var(--purple)"></div>Open PRs <span class="count" id="stat-prs">0</span></div>
+    <div class="stat-chip"><div class="dot" style="background:var(--blue)"></div>Repos <span class="count" id="stat-repos">0</span></div>
+  </div>
+
+  <!-- KANBAN BOARD -->
+  <div class="kanban" id="kanban-board">
+    <div class="column" id="col-backlog">
+      <div class="column-header">
+        <div class="column-title"><div class="indicator" style="background:var(--text-muted)"></div>Backlog</div>
+        <span class="column-count" id="count-backlog">0</span>
+      </div>
+      <div class="column-body" id="body-backlog"></div>
+    </div>
+    <div class="column" id="col-progress">
+      <div class="column-header">
+        <div class="column-title"><div class="indicator" style="background:var(--yellow)"></div>In Progress</div>
+        <span class="column-count" id="count-progress">0</span>
+      </div>
+      <div class="column-body" id="body-progress"></div>
+    </div>
+    <div class="column" id="col-review">
+      <div class="column-header">
+        <div class="column-title"><div class="indicator" style="background:var(--purple)"></div>Review / PR</div>
+        <span class="column-count" id="count-review">0</span>
+      </div>
+      <div class="column-body" id="body-review"></div>
+    </div>
+    <div class="column" id="col-done">
+      <div class="column-header">
+        <div class="column-title"><div class="indicator" style="background:var(--green)"></div>Done</div>
+        <span class="column-count" id="count-done">0</span>
+      </div>
+      <div class="column-body" id="body-done"></div>
+    </div>
+  </div>
+
+  <!-- TOKEN SETUP (hidden) -->
+  <div class="token-setup" id="token-setup" style="display:none">
+    <h2>🔑 GitHub Token</h2>
+    <p>Erstelle einen <strong>Personal Access Token</strong> auf
+      <a href="https://github.com/settings/tokens" target="_blank" style="color:var(--accent)">github.com/settings/tokens</a>
+      mit <code>repo</code> und <code>read:org</code> Scope.</p>
+    <input type="text" id="token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+    <button class="btn btn-primary" onclick="saveToken()" style="width:100%">Token speichern</button>
+    <button class="btn" onclick="hideTokenSetup()" style="width:100%">Abbrechen</button>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script>
+    // ═══════════════════════════════════════════
+    // DEVKiTZ GitHub Kanban — v0.01.0_01
+    // @DKZ:RULES -> Kein Framework, Vanilla JS
+    // ═══════════════════════════════════════════
+
+    /**
+     * XSS-Schutz: Escaped HTML-Entities
+     */
+    function esc(str) {
+      if (str == null) return '';
+      const div = document.createElement('div');
+      div.textContent = String(str);
+      return div.innerHTML;
+    }
+
+    // ═══ CONFIG ═══
+    const CONFIG = {
+      repos: [
+        // 7IKED
+        { owner: '7IKED', repo: 'devkitz-workspace', account: '7IKED' },
+        { owner: '7IKED', repo: 'dkz-copilot-desktop', account: '7IKED' },
+        { owner: '7IKED', repo: 'dkz-workflow-viewer', account: '7IKED' },
+        { owner: '7IKED', repo: 'dkz-workflow-builder', account: '7IKED' },
+        { owner: '7IKED', repo: 'dkz-wissen-hub', account: '7IKED' },
+        { owner: '7IKED', repo: 'dkz-wiki-viewer', account: '7IKED' },
+        { owner: '7IKED', repo: 'dkz-whisper-tts', account: '7IKED' },
+        { owner: '7IKED', repo: 'devkitz-runtime', account: '7IKED' },
+        // D-VKITZ
+        { owner: 'D-VKITZ', repo: 'D-VKITZ.github.io', account: 'D-VKITZ' },
+        // 0PENWORKSPACE — Repos hier eintragen wenn verfuegbar
+      ],
+      cacheKey: 'dkz-kanban-cache',
+      tokenKey: 'dkz-github-token',
+      cacheTTL: 5 * 60 * 1000 // 5 min
+    };
+
+    let allItems = [];
+    let filteredItems = [];
+
+    // ═══ TOKEN MANAGEMENT ═══
+    function getToken() {
+      return localStorage.getItem(CONFIG.tokenKey) || '';
+    }
+
+    function saveToken() {
+      const token = document.getElementById('token-input').value.trim();
+      if (!token) return toast('Token darf nicht leer sein', 'error');
+      localStorage.setItem(CONFIG.tokenKey, token);
+      hideTokenSetup();
+      toast('Token gespeichert', 'success');
+      refreshAll();
+    }
+
+    function showTokenSetup() {
+      document.getElementById('token-setup').style.display = 'flex';
+      document.getElementById('kanban-board').style.display = 'none';
+      document.getElementById('controls-bar').style.display = 'none';
+      document.getElementById('stats-bar').style.display = 'none';
+      document.getElementById('token-input').value = getToken();
+    }
+
+    function hideTokenSetup() {
+      document.getElementById('token-setup').style.display = 'none';
+      document.getElementById('kanban-board').style.display = 'grid';
+      document.getElementById('controls-bar').style.display = 'flex';
+      document.getElementById('stats-bar').style.display = 'flex';
+    }
+
+    // ═══ GITHUB API ═══
+    async function fetchGitHub(url) {
+      const token = getToken();
+      const headers = {
+        'Accept': 'application/vnd.github.v3+json'
+      };
+      if (token) headers['Authorization'] = `token ${token}`;
+
+      const res = await fetch(url, { headers });
+      if (res.status === 403) {
+        toast('Rate Limit erreicht — Token hinzufuegen fuer mehr Requests', 'error');
+        return [];
+      }
+      if (res.status === 404) return [];
+      if (!res.ok) {
+        toast(`API Fehler: ${res.status}`, 'error');
+        return [];
+      }
+      return res.json();
+    }
+
+    async function fetchRepoIssues(owner, repo, account) {
+      const items = [];
+      try {
+        // Issues (beinhaltet auch PRs bei GitHub API)
+        const issues = await fetchGitHub(
+          `https://api.github.com/repos/${owner}/${repo}/issues?state=all&per_page=30&sort=updated`
+        );
+        if (!Array.isArray(issues)) return items;
+
+        for (const issue of issues) {
+          const isPR = !!issue.pull_request;
+          items.push({
+            id: issue.id,
+            number: issue.number,
+            title: issue.title,
+            type: isPR ? 'pr' : 'issue',
+            state: issue.state,
+            labels: (issue.labels || []).map(l => ({
+              name: l.name,
+              color: '#' + l.color
+            })),
+            repo: repo,
+            owner: owner,
+            account: account,
+            url: issue.html_url,
+            created: issue.created_at,
+            updated: issue.updated_at,
+            assignee: issue.assignee ? issue.assignee.login : null,
+            assigneeAvatar: issue.assignee ? issue.assignee.avatar_url : null,
+            milestone: issue.milestone ? issue.milestone.title : null
+          });
+        }
+      } catch (e) {
+        toast(`Fehler bei ${owner}/${repo}: ${e.message}`, 'error');
+      }
+      return items;
+    }
+
+    // ═══ KANBAN LOGIC ═══
+    function categorizeItem(item) {
+      const labels = item.labels.map(l => l.name.toLowerCase());
+
+      // Done: closed
+      if (item.state === 'closed') return 'done';
+
+      // Review: PRs oder Items mit review/pr Label
+      if (item.type === 'pr' && item.state === 'open') return 'review';
+      if (labels.some(l => l.includes('review') || l.includes('pr'))) return 'review';
+
+      // In Progress
+      if (labels.some(l =>
+        l.includes('in progress') || l.includes('wip') ||
+        l.includes('doing') || l.includes('aktiv')
+      )) return 'progress';
+
+      // Assignee = in progress
+      if (item.assignee && item.state === 'open') return 'progress';
+
+      // Default: Backlog
+      return 'backlog';
+    }
+
+    function renderCard(item) {
+      const typeClass = item.type === 'pr' ? 'is-pr' : 'is-issue';
+      const typeLabel = item.type === 'pr' ? 'PR' : 'ISSUE';
+      const typeCss = item.type === 'pr' ? 'pr' : 'issue';
+      const date = new Date(item.updated).toLocaleDateString('de-DE', {
+        day: '2-digit', month: '2-digit', year: '2-digit'
+      });
+
+      let labelsHtml = '';
+      for (const label of item.labels.slice(0, 3)) {
+        const bg = label.color || '#333';
+        labelsHtml += `<span class="label" style="background:${esc(bg)}20;color:${esc(bg)};border:1px solid ${esc(bg)}40">${esc(label.name)}</span>`;
+      }
+
+      return `
+        <div class="card ${esc(typeClass)}" onclick="window.open('${esc(item.url)}','_blank')" title="${esc(item.title)}">
+          <div class="card-type ${esc(typeCss)}">${esc(typeLabel)}</div>
+          <div class="card-title">${esc(item.title)}</div>
+          <div class="card-meta">
+            <span class="card-repo">${esc(item.owner)}/${esc(item.repo)}</span>
+            <span class="card-number">#${esc(String(item.number))}</span>
+            <span class="card-date">${esc(date)}</span>
+          </div>
+          ${labelsHtml ? `<div class="card-labels">${labelsHtml}</div>` : ''}
+        </div>
+      `;
+    }
+
+    function renderBoard() {
+      const columns = { backlog: [], progress: [], review: [], done: [] };
+
+      for (const item of filteredItems) {
+        const col = categorizeItem(item);
+        columns[col].push(item);
+      }
+
+      // Nur die letzten 20 Done-Items zeigen
+      columns.done = columns.done.slice(0, 20);
+
+      // Rendern
+      for (const [key, items] of Object.entries(columns)) {
+        const body = document.getElementById(`body-${key}`);
+        const count = document.getElementById(`count-${key}`);
+        count.textContent = items.length;
+
+        if (items.length === 0) {
+          body.innerHTML = `<div class="empty-state"><div class="icon">📋</div><div>Keine Items</div></div>`;
+        } else {
+          body.innerHTML = items.map(renderCard).join('');
+        }
+      }
+
+      // Stats
+      const openIssues = filteredItems.filter(i => i.type === 'issue' && i.state === 'open').length;
+      const openPRs = filteredItems.filter(i => i.type === 'pr' && i.state === 'open').length;
+      const repos = new Set(filteredItems.map(i => `${i.owner}/${i.repo}`)).size;
+
+      document.getElementById('stat-issues').textContent = openIssues;
+      document.getElementById('stat-prs').textContent = openPRs;
+      document.getElementById('stat-repos').textContent = repos;
+    }
+
+    // ═══ FILTER ═══
+    function applyFilters() {
+      const account = document.getElementById('filter-account').value;
+      const type = document.getElementById('filter-type').value;
+      const search = document.getElementById('filter-search').value.toLowerCase();
+
+      filteredItems = allItems.filter(item => {
+        if (account !== 'all' && item.account !== account) return false;
+        if (type !== 'all' && item.type !== type) return false;
+        if (search && !item.title.toLowerCase().includes(search)) return false;
+        return true;
+      });
+
+      renderBoard();
+    }
+
+    // ═══ REFRESH ═══
+    async function refreshAll() {
+      const btn = document.getElementById('refresh-btn');
+      btn.textContent = '⏳ Lade...';
+      btn.disabled = true;
+
+      allItems = [];
+      const promises = CONFIG.repos.map(r => fetchRepoIssues(r.owner, r.repo, r.account));
+      const results = await Promise.allSettled(promises);
+
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          allItems.push(...result.value);
+        }
+      }
+
+      // Sort by updated date
+      allItems.sort((a, b) => new Date(b.updated) - new Date(a.updated));
+
+      // Cache
+      try {
+        localStorage.setItem(CONFIG.cacheKey, JSON.stringify({
+          timestamp: Date.now(),
+          items: allItems
+        }));
+      } catch (e) { /* localStorage voll */ }
+
+      applyFilters();
+
+      const now = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+      document.getElementById('last-sync').textContent = `Sync: ${now}`;
+
+      btn.textContent = '🔄 Refresh';
+      btn.disabled = false;
+
+      toast(`${allItems.length} Items aus ${CONFIG.repos.length} Repos geladen`, 'success');
+    }
+
+    // ═══ CACHE ═══
+    function loadFromCache() {
+      try {
+        const cached = JSON.parse(localStorage.getItem(CONFIG.cacheKey) || 'null');
+        if (cached && (Date.now() - cached.timestamp < CONFIG.cacheTTL)) {
+          allItems = cached.items;
+          applyFilters();
+          document.getElementById('last-sync').textContent = 'Cache';
+          return true;
+        }
+      } catch (e) { /* ignore */ }
+      return false;
+    }
+
+    // ═══ TOAST ═══
+    function toast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      el.className = `toast ${esc(type)}`;
+      el.textContent = message;
+      container.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }
+
+    // ═══ INIT ═══
+    (function init() {
+      const token = getToken();
+      if (!token) {
+        showTokenSetup();
+        return;
+      }
+
+      if (!loadFromCache()) {
+        refreshAll();
+      }
+    })();
+  </script>
+</body>
+</html>

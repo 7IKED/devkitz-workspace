@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#060608">
+  <meta name="description" content="Nexus Copilot — Geschlossenes Offline-First System">
+  <link rel="manifest" href="manifest.json">
+  <title>Nexus Copilot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #fa1e4e;
+      --bg: #060608;
+      --bg-panel: rgba(14, 14, 16, 0.85);
+      --green: #00ff88;
+      --yellow: #ffb800;
+      --red: #ff3b5c;
+      --text: #ffffff;
+      --text-muted: rgba(255,255,255,0.5);
+      --glass: rgba(255,255,255,0.03);
+      --glass-border: rgba(255,255,255,0.08);
+      --radius: 16px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: transparent; /* Für Electron Frameless */
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .app-container {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-panel);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      overflow: hidden;
+    }
+
+    /* Handys (PWA im Browser) ignorieren Border/Radius */
+    @media (max-width: 600px) {
+      body { background: var(--bg); }
+      .app-container { border-radius: 0; border: none; }
+    }
+
+    /* HEADER */
+    .header {
+      padding: 16px;
+      border-bottom: 1px solid var(--glass-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      -webkit-app-region: drag; /* Electron window drag */
+    }
+    .header h1 {
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--yellow); /* Default Offline/Connecting */
+      box-shadow: 0 0 8px var(--yellow);
+      transition: 0.3s;
+    }
+    .status-dot.online { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .status-dot.offline { background: var(--red); box-shadow: 0 0 8px var(--red); }
+    
+    .status-text {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* CHAT AREA */
+    .chat-area {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .chat-area::-webkit-scrollbar { width: 4px; }
+    .chat-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+    .msg {
+      max-width: 85%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .msg.user {
+      align-self: flex-end;
+      background: var(--accent);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .msg.ai {
+      align-self: flex-start;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-bottom-left-radius: 4px;
+    }
+    .msg.pending {
+      opacity: 0.5;
+    }
+
+    /* INPUT */
+    .input-area {
+      padding: 16px;
+      border-top: 1px solid var(--glass-border);
+      display: flex;
+      gap: 12px;
+      background: rgba(0,0,0,0.2);
+    }
+    input[type="text"] {
+      flex: 1;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      color: var(--text);
+      padding: 12px 16px;
+      border-radius: 24px;
+      font-size: 14px;
+      outline: none;
+      font-family: 'Inter', sans-serif;
+    }
+    input[type="text"]:focus {
+      border-color: var(--accent);
+    }
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: 0.2s;
+    }
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 16px rgba(250,30,78,0.4);
+    }
+
+    .info-bar {
+      padding: 8px 16px;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      background: var(--glass);
+      border-top: 1px solid var(--glass-border);
+      display: flex;
+      justify-content: space-between;
+    }
+    .tools {
+      display: flex;
+      gap: 8px;
+    }
+    .tool-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid var(--glass-border);
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .tool-btn:hover { background: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="header">
+      <h1><div class="status-dot" id="net-status"></div> Nexus</h1>
+      <div class="status-text" id="status-text">Pruefe Backend...</div>
+    </div>
+    
+    <div class="chat-area" id="chat">
+      <div class="msg ai">Hallo! Ich bin Nexus Copilot.<br><br>Ich laufe komplett lokal und synchronisiere mich mit dem Backend, sobald es verfuegbar ist. Was kann ich tun?</div>
+    </div>
+
+    <div class="input-area">
+      <input type="text" id="msg-input" placeholder="Nachricht an Nexus..." autocomplete="off">
+      <button onclick="nexus.sendMsg()">↑</button>
+    </div>
+    <div class="info-bar">
+      <span id="queue-status">0 Nachrichten in der Offline-Queue</span>
+      <div class="tools">
+        <button class="tool-btn" onclick="openGraphify()">📈 Graphify</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/nexus-client.js"></script>
+  <script>
+    // Electron IPC
+    if (typeof require !== 'undefined') {
+      const { ipcRenderer } = require('electron');
+      ipcRenderer.on('cmd-result', (event, data) => {
+        nexus.appendMessage(`[Autonomie] Ausgefuehrt: ${data.cmd}\nResultat: ${data.output}`, 'ai');
+      });
+    }
+
+    function openGraphify() {
+      // Graphify oeffnet in einem grossen neuen Fenster (oder im Workspace Dashboard)
+      if (typeof require !== 'undefined') {
+        const { shell } = require('electron');
+        // Da wir local sind, leiten wir auf das lokale Dashboard-Modul
+        const url = 'file:///' + require('path').join(__dirname, '..', '..', '..', '01_dashboard', 'modules', 'graphify', 'index.html').replace(/\\/g, '/');
+        shell.openExternal(url);
+      }
+    }
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(err => {
+          console.warn('PWA SW Registration failed:', err);
+        });
+      });
+    }
+
+    // Enter Key Handler
+    document.getElementById('msg-input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') nexus.sendMsg();
+    });
+  </script>
+</body>
+</html>

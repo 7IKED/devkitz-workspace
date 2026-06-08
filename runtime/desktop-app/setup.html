@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DEVKiTZ™ Setup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #fa1e4e;
+      --bg: #060608;
+      --green: #00ff88;
+      --text: #fff;
+      --text-muted: rgba(255,255,255,0.5);
+      --glass: rgba(255,255,255,0.03);
+      --glass-border: rgba(255,255,255,0.05);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .logo {
+      font-size: 64px;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 0 20px rgba(250,30,78,0.5));
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.8; }
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 40px;
+    }
+
+    .progress-box {
+      width: 440px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(12px);
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    .progress-bar {
+      width: 30%;
+      height: 100%;
+      background: var(--accent);
+      border-radius: 3px;
+      animation: loading 2s infinite ease-in-out;
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    @keyframes loading {
+      0% { width: 0%; left: 0; position: absolute; }
+      50% { width: 50%; left: 25%; position: absolute; }
+      100% { width: 0%; left: 100%; position: absolute; }
+    }
+
+    .log {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--green);
+      height: 120px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      padding: 12px;
+      background: rgba(0,0,0,0.5);
+      border-radius: 8px;
+      border: 1px solid rgba(0,255,136,0.1);
+    }
+
+    .log::-webkit-scrollbar { width: 4px; }
+    .log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+
+    .version {
+      position: fixed;
+      bottom: 12px;
+      right: 16px;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo">⚡</div>
+  <div class="title">DEVKiTZ™ Ecosystem</div>
+  <div class="subtitle">Initialisiere deinen persoenlichen Workspace...</div>
+
+  <div class="progress-box">
+    <div class="progress-bar-container">
+      <div class="progress-bar" id="pbar"></div>
+    </div>
+    <div class="log" id="log">Lokalisiere Dokumente-Ordner...
+Pruefe System-Voraussetzungen (Git)...</div>
+  </div>
+
+  <div class="version">v2.0.0</div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+    const logEl = document.getElementById('log');
+    const pbar = document.getElementById('pbar');
+
+    ipcRenderer.on('setup-log', (event, message) => {
+      logEl.textContent += '\n' + message;
+      logEl.scrollTop = logEl.scrollHeight;
+    });
+
+    ipcRenderer.on('setup-error', (event, message) => {
+      logEl.style.color = '#fa1e4e';
+      logEl.textContent += '\n[ERROR] ' + message;
+      logEl.scrollTop = logEl.scrollHeight;
+      pbar.style.animation = 'none';
+      pbar.style.width = '100%';
+      pbar.style.background = '#fa1e4e';
+      pbar.style.boxShadow = '0 0 10px #fa1e4e';
+    });
+
+    ipcRenderer.on('setup-complete', () => {
+      pbar.style.animation = 'none';
+      pbar.style.width = '100%';
+      pbar.style.background = '#00ff88';
+      pbar.style.boxShadow = '0 0 10px #00ff88';
+      logEl.textContent += '\nWorkspace erfolgreich erstellt. Starte Dashboard...';
+      logEl.scrollTop = logEl.scrollHeight;
+    });
+
+    ipcRenderer.on('update-available', () => {
+      const updateInfo = document.createElement('div');
+      updateInfo.style.cssText = 'margin-top:16px;padding:12px;background:rgba(250,30,78,0.1);border:1px solid rgba(250,30,78,0.3);border-radius:8px;font-size:13px;cursor:pointer;text-align:center;';
+      updateInfo.textContent = '🔄 Update verfuegbar — Klicken zum Aktualisieren';
+      updateInfo.onclick = () => ipcRenderer.send('trigger-update');
+      document.querySelector('.progress-box').appendChild(updateInfo);
+    });
+  </script>
+</body>
+</html>
