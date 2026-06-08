@@ -181,37 +181,35 @@ pre{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.06);border-radi
 <h2 class="section-title" style="margin-top:28px">⚙️ Google Apps Script — Drive 4-Ordner-System</h2>
 <pre>
 // DkZ™ 4-Ordner-System — Google Drive Automatisierung
-// Erstellt die 4 Ordner + Archiv und sortiert automatisch
+// Integriert in das zentrale 06_NOTEPAD System (KEIN LÖSCHEN!)
 
 function init4FolderSystem() {
-  const FOLDERS = ['📋 TODO','📅 MEETING','💡 IDEA','🎯 USE_CASE','🗄️ ARCHIVE'];
-  const root = DriveApp.getRootFolder();
-  let base = root.getFoldersByName('DkZ_4-Ordner');
-  base = base.hasNext() ? base.next() : root.createFolder('DkZ_4-Ordner');
+  const FOLDERS = ['todo','meeting','idea','use-case','archive'];
+  const base = findOrCreate('06_NOTEPAD');
 
   FOLDERS.forEach(name =&gt; {
     if (!base.getFoldersByName(name).hasNext()) {
       base.createFolder(name);
-      Logger.log('✅ Erstellt: ' + name);
+      Logger.log('✅ Erstellt: 06_NOTEPAD/' + name);
     }
   });
-  Logger.log('═══ 4-Ordner-System bereit ═══');
+  Logger.log('═══ 06_NOTEPAD 4-Ordner-System bereit ═══');
 }
 
-// Zeit-Trigger: Alte Dateien → ARCHIVE (mit Verify!)
+// Zeit-Trigger: Alte Dateien → ARCHIVE (NUR KOPIE!)
 function autoArchiveTrigger() {
   const RULES = [
-    { folder: '📋 TODO',     days: 7,  label: 'erledigt' },
-    { folder: '📅 MEETING',  days: 3,  label: 'vergangen' },
-    { folder: '💡 IDEA',     days: 30, label: 'unbearbeitet' },
-    { folder: '🎯 USE_CASE', days: 90, label: 'inaktiv' }
+    { folder: 'todo',     days: 7,  label: 'erledigt' },
+    { folder: 'meeting',  days: 3,  label: 'vergangen' },
+    { folder: 'idea',     days: 30, label: 'unbearbeitet' },
+    { folder: 'use-case', days: 90, label: 'inaktiv' }
   ];
 
-  const base = findFolder('DkZ_4-Ordner');
+  const base = findFolder('06_NOTEPAD');
   if (!base) return;
-  const archive = base.getFoldersByName('🗄️ ARCHIVE').next();
+  const archive = findOrCreate('06_NOTEPAD/archive');
   const now = new Date();
-  let moved = 0;
+  let copied = 0;
 
   RULES.forEach(rule =&gt; {
     const src = base.getFoldersByName(rule.folder);
@@ -223,23 +221,20 @@ function autoArchiveTrigger() {
       const f = files.next();
       const age = (now - f.getLastUpdated()) / 86400000;
       if (age &gt; rule.days) {
-        // COPY-VERIFY-REMOVE Pattern!
+        // NUR KOPIE — Original bleibt erhalten!
         archive.addFile(f);
-        const verify = archive.getFilesByName(f.getName());
-        if (verify.hasNext()) {
-          folder.removeFile(f);
-          moved++;
-          log('🗄️ Archiviert (' + rule.label + ')', f.getName(), rule.folder);
-        }
+        // Hinweis: Es wird empfohlen, hier auch logToSheets() zu verwenden, 
+        // wie in ordner-blaupause definiert, um die Kopie zu protokollieren.
+        copied++;
       }
     }
   });
-  Logger.log('Archiviert: ' + moved + ' Dateien');
+  Logger.log('Archiv-Kopien erstellt: ' + copied + ' Dateien (Originale unberührt)');
 }
 
 // Wöchentlicher Backup-Export
 function weeklyBackup() {
-  const base = findFolder('DkZ_4-Ordner');
+  const base = findFolder('06_NOTEPAD');
   if (!base) return;
   const data = { exported: new Date().toISOString(), folders: {} };
   const subs = base.getFolders();
@@ -259,7 +254,7 @@ function weeklyBackup() {
 
   // Backup als JSON in DEEPKEEP
   const deepkeep = findOrCreate('[DEEPKEEP]/session-db');
-  const filename = 'backup_4ordner_' + new Date().toISOString().slice(0,10) + '.json';
+  const filename = 'backup_06notepad_' + new Date().toISOString().slice(0,10) + '.json';
   deepkeep.createFile(filename, JSON.stringify(data, null, 2), 'application/json');
   Logger.log('💾 Backup: ' + filename);
 }
