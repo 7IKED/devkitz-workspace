@@ -48,6 +48,8 @@
 1. `features.json` aktualisiert?
 2. Git committed?
 3. Walkthrough/Notes gespeichert?
+4. **WICHTIG:** Automatisch nach Sessionende (wenn der User sagt, dass er geht oder ein Projekt fertig ist), MUSS der Agent exakt folgendes fragen:
+   > "Frage 1 (Grill-with-docs): Sollen wir jetzt den /byebye Workflow (bzw. second-brain-sync) triggern, der das Schreiben der Session-Logs, das Aktualisieren der Metriken und das Pusten des Branches (feat/docs-roadmap-v3) übernimmt, oder hast du noch eine spezifische Code-Änderung an einem der Module, bevor wir das System 'versiegeln'?"
 
 ---
 
