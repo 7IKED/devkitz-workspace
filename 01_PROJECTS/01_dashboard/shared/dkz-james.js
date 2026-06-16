@@ -491,149 +491,48 @@ const DkzJames = (() => {
     }
 
     // ========================================
-    // MISTRAL OCR: Bilder/PDFs lesen
+    // VISION / OCR: Bilder/PDFs analysieren (Gemma4 12B Fallback via Gateway)
     // ========================================
     async function ocr(input, options) {
         options = options || {};
-        var apiKey = '';
-
-        // Get Mistral API key from NEXUZ or localStorage
-        if (typeof NEXUZ !== 'undefined' && NEXUZ.getToken) {
-            apiKey = NEXUZ.getToken('mistral');
-        }
-        if (!apiKey) {
-            apiKey = localStorage.getItem('mistral-api-key') || '';
-        }
-
-        if (!apiKey) {
-            // Fallback: try to use NEXUZ chat to describe the image
-            if (typeof NEXUZ !== 'undefined' && NEXUZ.chat) {
-                try {
-                    var result = await NEXUZ.chat('Beschreibe dieses Dokument/Bild: ' + (typeof input === 'string' ? input : '[Binary Data]'), {
-                        model: options.model || 'auto',
-                        systemPrompt: 'Du bist ein OCR-Agent. Lese und beschreibe den Inhalt so genau wie moeglich.'
-                    });
-                    return { text: result.response || result.message || '', source: 'llm-fallback', pages: 1 };
-                } catch (e) {
-                    return { text: '', error: 'Kein Mistral API Key und LLM-Fallback fehlgeschlagen: ' + e.message, source: 'error' };
-                }
+        
+        if (typeof NEXUZ !== 'undefined' && NEXUZ.chat) {
+            try {
+                var result = await NEXUZ.chat('Beschreibe dieses Dokument/Bild im Detail: ' + (typeof input === 'string' ? input : '[Binary Data]'), {
+                    model: options.model || 'gemma4-26b', // Default zu gemma4
+                    systemPrompt: 'Du bist JAMEZ™ Vision. Ein Allzweck-Vision-Agent (Gemma4 12B Fallback). Lese und beschreibe den Inhalt exakt.'
+                });
+                return { text: result.response || result.message || '', source: 'gemma4-vision', pages: 1 };
+            } catch (e) {
+                return { text: '', error: 'Gemma4 Vision-Fallback fehlgeschlagen: ' + e.message, source: 'error' };
             }
-            return { text: '', error: 'Kein Mistral API Key konfiguriert. Setze in Einstellungen oder NEXUZ.setToken("mistral", "key")', source: 'error' };
         }
-
-        // Call Mistral OCR API
-        try {
-            var body = {
-                model: 'mistral-ocr-latest',
-                document: typeof input === 'string' && input.startsWith('http')
-                    ? { type: 'document_url', document_url: input }
-                    : { type: 'image_url', image_url: input }
-            };
-
-            if (options.pages) body.pages = options.pages;
-            if (options.includeImages) body.include_image_base64 = true;
-
-            var response = await fetch('https://api.mistral.ai/v1/ocr', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + apiKey
-                },
-                body: JSON.stringify(body)
-            });
-
-            if (!response.ok) {
-                var errText = await response.text();
-                throw new Error('Mistral OCR ' + response.status + ': ' + errText);
-            }
-
-            var data = await response.json();
-            var text = '';
-            var pages = 0;
-
-            if (data.pages) {
-                pages = data.pages.length;
-                text = data.pages.map(function (p) { return p.markdown || p.text || ''; }).join('\n\n---\n\n');
-            } else if (data.text) {
-                text = data.text;
-                pages = 1;
-            }
-
-            return { text: text, pages: pages, source: 'mistral-ocr', raw: data };
-        } catch (e) {
-            // Fallback to NEXUZ LLM
-            if (typeof NEXUZ !== 'undefined' && NEXUZ.chat) {
-                try {
-                    var fallback = await NEXUZ.chat('OCR fehlgeschlagen. Beschreibe: ' + input, { model: 'auto' });
-                    return { text: fallback.response || '', source: 'llm-fallback', error: e.message };
-                } catch (e2) {
-                    return { text: '', error: 'OCR + Fallback fehlgeschlagen: ' + e.message, source: 'error' };
-                }
-            }
-            return { text: '', error: e.message, source: 'error' };
-        }
+        return { text: '', error: 'NEXUZ Gateway nicht konfiguriert für Vision/OCR.', source: 'error' };
     }
 
     // ========================================
-    // MISTRAL OCR 0.8: Object Detection
+    // VISION OBJECT DETECTION (Gemma4 12B Fallback)
     // ========================================
     async function detectObjects(imageInput, options) {
         options = options || {};
-        var apiKey = '';
-        if (typeof NEXUZ !== 'undefined' && NEXUZ.getToken) {
-            apiKey = NEXUZ.getToken('mistral');
-        }
-        if (!apiKey) apiKey = localStorage.getItem('mistral-api-key') || '';
 
-        if (!apiKey) {
-            // LLM fallback for object detection
-            if (typeof NEXUZ !== 'undefined' && NEXUZ.chat) {
+        if (typeof NEXUZ !== 'undefined' && NEXUZ.chat) {
+            try {
+                var result = await NEXUZ.chat('Identifiziere alle Objekte in diesem Bild. Liste sie mit Position (oben/unten/links/rechts/mitte), Typ und Konfidenz. Bild: ' + (typeof imageInput === 'string' ? imageInput : '[Binary]'), {
+                    model: options.model || 'gemma4-26b', // Default zu gemma4
+                    systemPrompt: 'Du bist JAMEZ™ Vision, ein Objekterkennungs-Agent. Gib JSON zurueck: {"objects":[{"label":"...","confidence":0.95,"position":"center","bbox":[x,y,w,h]}]}'
+                });
                 try {
-                    var result = await NEXUZ.chat('Identifiziere alle Objekte in diesem Bild. Liste sie mit Position (oben/unten/links/rechts/mitte), Typ und Konfidenz. Bild: ' + (typeof imageInput === 'string' ? imageInput : '[Binary]'), {
-                        model: options.model || 'auto',
-                        systemPrompt: 'Du bist JAMEZ™ Vision, ein Objekterkennungs-Agent. Gib JSON zurueck: {"objects":[{"label":"...","confidence":0.95,"position":"center","bbox":[x,y,w,h]}]}'
-                    });
-                    try {
-                        var parsed = JSON.parse((result.response || '').match(/\{[\s\S]*\}/)?.[0] || '{}');
-                        return { objects: parsed.objects || [], source: 'llm-vision', model: 'mistral-ocr-0.8' };
-                    } catch(pe) {
-                        return { objects: [], raw: result.response, source: 'llm-raw' };
-                    }
-                } catch(e) {
-                    return { objects: [], error: e.message, source: 'error' };
+                    var parsed = JSON.parse((result.response || '').match(/\{[\s\S]*\}/)?.[0] || '{}');
+                    return { objects: parsed.objects || [], source: 'gemma4-vision', model: 'gemma4-12b' };
+                } catch(pe) {
+                    return { objects: [], raw: result.response, source: 'llm-raw' };
                 }
+            } catch(e) {
+                return { objects: [], error: e.message, source: 'error' };
             }
-            return { objects: [], error: 'Kein Mistral API Key', source: 'error' };
         }
-
-        try {
-            var body = {
-                model: 'mistral-ocr-0.8',
-                document: typeof imageInput === 'string' && imageInput.startsWith('http')
-                    ? { type: 'image_url', image_url: imageInput }
-                    : { type: 'image_url', image_url: imageInput },
-                include_image_base64: false,
-                object_detection: true
-            };
-
-            var response = await fetch('https://api.mistral.ai/v1/ocr', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-                body: JSON.stringify(body)
-            });
-
-            if (!response.ok) throw new Error('Mistral OCR 0.8: ' + response.status);
-            var data = await response.json();
-
-            return {
-                objects: data.objects || data.detections || [],
-                text: data.pages ? data.pages.map(function(p) { return p.markdown || ''; }).join('\n') : '',
-                source: 'mistral-ocr-0.8',
-                raw: data
-            };
-        } catch(e) {
-            return { objects: [], error: e.message, source: 'error' };
-        }
+        return { objects: [], error: 'NEXUZ Gateway nicht konfiguriert.', source: 'error' };
     }
 
     // ========================================

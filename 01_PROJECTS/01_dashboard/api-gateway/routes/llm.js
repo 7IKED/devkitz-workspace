@@ -49,6 +49,26 @@ const BACKENDS = {
         defaultModel: 'deepseek/deepseek-r1:free',
         priority: 3,
         format: 'openai'
+    },
+    'freeapi': {
+        name: 'FreeAPI',
+        baseUrl: 'https://freeapi.example.com/v1/chat/completions',
+        timeout: 30000,
+        connectTimeout: 3000,
+        auth: process.env.FREEAPI_KEY || null,
+        defaultModel: 'free-gpt4o',
+        priority: 4,
+        format: 'openai'
+    },
+    'freellmapi': {
+        name: 'FreeLLMAPI',
+        baseUrl: 'https://freellmapi.example.com/v1/chat/completions',
+        timeout: 30000,
+        connectTimeout: 3000,
+        auth: process.env.FREELLMAPI_KEY || null,
+        defaultModel: 'free-claude',
+        priority: 5,
+        format: 'openai'
     }
 };
 
@@ -76,14 +96,18 @@ const MODEL_ALIASES = {
     'llama-70b':    { backend: 'openrouter-free', model: 'meta-llama/llama-3.3-70b-instruct:free' },
     'gemma-27b':    { backend: 'openrouter-free', model: 'google/gemma-3-27b-it:free' },
     'qwen-72b':     { backend: 'openrouter-free', model: 'qwen/qwen-2.5-72b-instruct:free' },
-    'mistral-24b':  { backend: 'openrouter-free', model: 'mistralai/mistral-small-3.1-24b-instruct:free' },
+    // FreeAPI & FreeLLMAPI
+    'free-gpt4o':   { backend: 'freeapi', model: 'gpt-4o' },
+    'free-claude':  { backend: 'freellmapi', model: 'claude-3-5-sonnet' }
 };
 
 // Backend Health State
 const healthState = {
     'vps-llama-swap': { ok: null, lastCheck: 0, lastError: null, latency: null },
     'local-ollama':   { ok: null, lastCheck: 0, lastError: null, latency: null },
-    'openrouter-free': { ok: null, lastCheck: 0, lastError: null, latency: null }
+    'openrouter-free': { ok: null, lastCheck: 0, lastError: null, latency: null },
+    'freeapi':        { ok: null, lastCheck: 0, lastError: null, latency: null },
+    'freellmapi':     { ok: null, lastCheck: 0, lastError: null, latency: null }
 };
 
 // ═══════════════════════════════════════
