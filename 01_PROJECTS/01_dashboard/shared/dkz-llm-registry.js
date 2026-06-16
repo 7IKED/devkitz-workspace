@@ -29,7 +29,6 @@ const DkzLLM = (() => {
                 { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B', cost: 0, free: true },
                 { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1', cost: 0, free: true },
                 { id: 'qwen/qwen-2.5-72b-instruct:free', name: 'Qwen 2.5 72B', cost: 0, free: true },
-                { id: 'mistralai/mistral-small-3.1-24b-instruct:free', name: 'Mistral Small 3.1', cost: 0, free: true },
                 { id: 'google/gemma-3-27b-it:free', name: 'Gemma 3 27B', cost: 0, free: true },
                 { id: 'nousresearch/hermes-3-llama-3.1-405b:free', name: 'Hermes 3 405B', cost: 0, free: true },
                 { id: 'google/gemini-2.5-flash', name: 'Gemini 2.5 Flash', cost: 0.15, free: false },
@@ -92,7 +91,6 @@ const DkzLLM = (() => {
             models: [
                 { id: 'meta/llama-3.3-70b-instruct', name: 'Llama 3.3 70B', cost: 0, free: true },
                 { id: 'nvidia/llama-3.1-nemotron-70b-instruct', name: 'Nemotron 70B', cost: 0, free: true },
-                { id: 'mistralai/mistral-large-2-instruct', name: 'Mistral Large 2', cost: 0, free: true },
                 { id: 'google/gemma-2-27b-it', name: 'Gemma 2 27B', cost: 0, free: true },
                 { id: 'deepseek-ai/deepseek-r1', name: 'DeepSeek R1', cost: 0, free: true },
                 { id: 'microsoft/phi-4', name: 'Phi-4', cost: 0, free: true },
@@ -107,7 +105,6 @@ const DkzLLM = (() => {
             models: [
                 { id: 'meta-llama/Llama-3.3-70B-Instruct', name: 'Llama 3.3 70B', cost: 0, free: true },
                 { id: 'Qwen/Qwen2.5-72B-Instruct', name: 'Qwen 2.5 72B', cost: 0, free: true },
-                { id: 'mistralai/Mistral-Small-24B-Instruct-2501', name: 'Mistral Small 24B', cost: 0, free: true },
                 { id: 'google/gemma-2-27b-it', name: 'Gemma 2 27B', cost: 0, free: true },
                 { id: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B', name: 'DeepSeek R1 32B', cost: 0, free: true },
                 { id: 'microsoft/phi-4', name: 'Phi-4', cost: 0, free: true },
@@ -176,6 +173,26 @@ const DkzLLM = (() => {
                 { id: 'gpt-4o-mini', name: 'GPT-4o Mini', cost: 0, free: true },
                 { id: 'claude-3-5-haiku', name: 'Claude 3.5 Haiku', cost: 0, free: true },
                 { id: 'meta-llama-3-1-8b-instruct', name: 'Llama 3.1 8B', cost: 0, free: true }
+            ]
+        },
+        freeapi: {
+            name: 'FreeAPI', icon: '🆓', color: '#10a37f',
+            baseUrl: 'https://freeapi.example.com/v1/chat/completions',
+            authHeader: k => ({ 'Authorization': `Bearer ${k}`, 'Content-Type': 'application/json' }),
+            format: 'openai',
+            models: [
+                { id: 'gpt-4o', name: 'GPT-4o (Free)', cost: 0, free: true },
+                { id: 'gpt-4o-mini', name: 'GPT-4o Mini (Free)', cost: 0, free: true }
+            ]
+        },
+        freellmapi: {
+            name: 'FreeLLMAPI', icon: '🕊️', color: '#6366f1',
+            baseUrl: 'https://freellmapi.example.com/v1/chat/completions',
+            authHeader: k => ({ 'Authorization': `Bearer ${k}`, 'Content-Type': 'application/json' }),
+            format: 'openai',
+            models: [
+                { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet (Free)', cost: 0, free: true },
+                { id: 'claude-3-5-haiku', name: 'Claude 3.5 Haiku (Free)', cost: 0, free: true }
             ]
         }
     };

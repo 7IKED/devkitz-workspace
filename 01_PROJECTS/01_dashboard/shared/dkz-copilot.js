@@ -58,7 +58,6 @@ const DkzCopilot = (() => {
         'gemini-pro': 'https://aistudio.google.com/apikey',
         grok: 'https://console.x.ai/',
         'grok-build': 'https://console.x.ai/',
-        mistral: 'https://console.mistral.ai/api-keys/',
         deepseek: 'https://platform.deepseek.com/api_keys',
         groq: 'https://console.groq.com/keys',
         perplexity: 'https://www.perplexity.ai/settings/api',
@@ -88,7 +87,6 @@ const DkzCopilot = (() => {
         grok:          { name: 'Grok 4.3',           url: 'https://api.x.ai/v1/chat/completions',              model: 'grok-4.3',                                     apiFormat: 'openai',    header: _bearer },
         'grok-build':  { name: 'Grok Build',         url: 'https://api.x.ai/v1/chat/completions',              model: 'grok-build-0.1',                               apiFormat: 'openai',    header: _bearer },
         // ─── Weitere Direkte APIs ───
-        mistral:       { name: 'Mistral AI',        url: 'https://api.mistral.ai/v1/chat/completions',        model: 'mistral-medium-latest',                        apiFormat: 'openai',    header: _bearer },
         deepseek:      { name: 'DeepSeek',          url: 'https://api.deepseek.com/chat/completions',         model: 'deepseek-chat',                                apiFormat: 'openai',    header: _bearer },
         groq:          { name: 'Groq',              url: 'https://api.groq.com/openai/v1/chat/completions',   model: 'llama-3.3-70b-versatile',                      apiFormat: 'openai',    header: _bearer },
         perplexity:    { name: 'Perplexity',        url: 'https://api.perplexity.ai/chat/completions',        model: 'sonar-pro',                                    apiFormat: 'openai',    header: _bearer },
