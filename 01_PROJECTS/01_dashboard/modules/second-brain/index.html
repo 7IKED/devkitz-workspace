@@ -603,10 +603,11 @@ fn main() {
                 <div style="margin-top:10px;padding:8px 12px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;gap:8px">
                     <span style="font-size:10px;color:var(--muted)">LLM Backend:</span>
                     <select id="llm-skill-backend" style="padding:4px 8px;background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--font);font-size:10px;outline:none" data-dkz-help="Waehle den LLM Provider fuer die Skills">
-                        <option value="vllm">🚀 GPT OSS 20B (vLLM)</option>
+                        <option value="ollama-cloud" selected>⭐ GPT OSS 20B (Ollama Cloud — DEFAULT)</option>
+                        <option value="vllm">🖥️ VPS vLLM (Qwen 7B aktiv)</option>
                         <option value="llamacpp">⚡ Qwen 7B (llama.cpp)</option>
                         <option value="gateway">🌐 DkZ Gateway</option>
-                        <option value="ollama">🦙 Ollama VPS</option>
+                        <option value="ollama">🦙 Ollama VPS Direct</option>
                         <option value="local">💾 Lokaler Fallback</option>
                     </select>
                     <span id="llm-skill-status" style="font-size:9px;color:var(--green);font-family:var(--mono)">Bereit</span>
@@ -1583,14 +1584,48 @@ fn main() {
     }
     checkLogin();
 
-    // -- Default Model Selection --
-    document.addEventListener('DOMContentLoaded', () => {
+    // -- Default Model Selection: GPT OSS 20B via Ollama Cloud --
+    (function initDefaultModel() {
         const select = document.getElementById('llm-skill-backend');
+        const saved = JSON.parse(localStorage.getItem('dkz-api-config') || '{}');
+        const backend = saved.backend || 'ollama-cloud'; // always default to ollama-cloud / gpt-oss-20b
         if(select) {
-            select.value = 'vllm'; // Set GPT OSS 20B (vLLM) as default
-            localStorage.setItem('dkz-api-config', JSON.stringify({ backend: 'vllm' }));
+            select.value = backend;
+            const statusEl = document.getElementById('llm-skill-status');
+            if(statusEl) {
+                const labels = {
+                    'ollama-cloud': '🟢 GPT OSS 20B (Cloud)',
+                    'vllm': '🟡 Qwen 7B (VPS)',
+                    'llamacpp': '⚡ llama.cpp',
+                    'gateway': '🌐 Gateway',
+                    'ollama': '🦙 VPS Ollama',
+                    'local': '💾 Lokal'
+                };
+                statusEl.textContent = labels[backend] || 'Bereit';
+            }
         }
-    });
+        if(!saved.backend) {
+            localStorage.setItem('dkz-api-config', JSON.stringify({ 
+                backend: 'ollama-cloud',
+                model: 'gpt-oss:20b',
+                vllm: 'http://72.61.93.129:8000/v1',
+                ollama: 'http://72.61.93.129:8811/v1',
+                gateway: 'http://localhost:3040/api/v1',
+                llamacpp: 'http://localhost:8080/v1',
+                opencodeUrl: 'http://127.0.0.1:4096'
+            }));
+        }
+        // Update label on change
+        if(select) select.addEventListener('change', function(){
+            const labels = {'ollama-cloud':'🟢 GPT OSS 20B (Cloud)','vllm':'🟡 Qwen 7B (VPS)','llamacpp':'⚡ llama.cpp','gateway':'🌐 Gateway','ollama':'🦙 VPS Ollama','local':'💾 Lokal'};
+            const s = document.getElementById('llm-skill-status');
+            if(s) s.textContent = labels[this.value] || 'Bereit';
+            const cfg = JSON.parse(localStorage.getItem('dkz-api-config')||'{}');
+            cfg.backend = this.value;
+            localStorage.setItem('dkz-api-config', JSON.stringify(cfg));
+            showToast('🔄 Backend: ' + (labels[this.value] || this.value));
+        });
+    })();
 
     // -- Code Lab --
     let activeLang = 'rust';
