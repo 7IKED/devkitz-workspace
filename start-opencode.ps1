@@ -1,7 +1,8 @@
 # DkZ OpenCode Starter — GPT OSS 20B Default
-# Doppelklick oder: .\start-opencode.ps1
+# Ausfuehren aus C:\DEVKiTZ: .\start-opencode.ps1
+# ODER: powershell -File C:\DEVKiTZ\start-opencode.ps1
 
-$model = "ollama-cloud/gpt-oss:20b"
+$model = "openrouter/openai/gpt-oss-20b:free"
 $port  = 4096
 $url   = "http://127.0.0.1:$port"
 
