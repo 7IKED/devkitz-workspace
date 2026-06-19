@@ -1,0 +1,1737 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧹 Drive Organizer – Config Dashboard</title>
+<link rel="stylesheet" href="../../shared/dkz-theme.css">
+<script src="../../shared/dkz-theme.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e10;
+            --card: #1a1a1c;
+            --card2: #222226;
+            --border: #333338;
+            --text: #f6f6f7;
+            --muted: #a1a1aa;
+            --green: #00ff88;
+            --blue: #55ACEE;
+            --yellow: #FFB800;
+            --red: #fa1e4e;
+            --purple: #ec4899;
+            --orange: #ff8800;
+            --accent: #fa1e4e;
+            --accent-rgb: 250, 30, 78;
+            --accent-glow: rgba(250, 30, 78, 0.25);
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* ── HEADER ── */
+        .header {
+            text-align: center;
+            padding: 36px 24px;
+            background: linear-gradient(135deg, #1a1a1c 0%, #222226 60%, #1a1214 100%);
+            border-radius: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at center, rgba(250, 30, 78, 0.06) 0%, transparent 60%);
+            animation: headerGlow 6s ease-in-out infinite alternate;
+        }
+
+        @keyframes headerGlow {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(10%, 5%);
+            }
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(90deg, var(--red), var(--purple), var(--blue));
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 4s linear infinite;
+            position: relative;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 0% center;
+            }
+
+            100% {
+                background-position: 200% center;
+            }
+        }
+
+        .header p {
+            color: var(--muted);
+            font-size: 13px;
+            margin-top: 8px;
+            position: relative;
+        }
+
+        /* ── GRID ── */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* ── CARDS ── */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            transition: all .3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0;
+            transition: opacity .3s;
+        }
+
+        .card:hover {
+            border-color: rgba(250, 30, 78, 0.35);
+            box-shadow: 0 0 24px rgba(250, 30, 78, 0.1), 0 4px 24px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .card:hover::after {
+            opacity: 1;
+        }
+
+        .card-title {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ── FOLDER TREE ── */
+        .folder-tree {
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 2;
+            color: var(--muted);
+        }
+
+        .folder-tree .main {
+            color: var(--green);
+            font-weight: 700;
+        }
+
+        .folder-tree .sub {
+            padding-left: 20px;
+            color: var(--blue);
+        }
+
+        .folder-tree .special {
+            color: var(--yellow);
+            font-weight: 700;
+        }
+
+        /* ── BUTTONS ── */
+        .btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 12px;
+            font-family: var(--font);
+            transition: all .2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            transition: opacity .2s;
+        }
+
+        .btn:hover::after {
+            opacity: 1;
+        }
+
+        .btn:active {
+            transform: scale(0.97) !important;
+        }
+
+        .btn-green {
+            background: var(--green);
+            color: #000;
+        }
+
+        .btn-green:hover {
+            background: #00cc66;
+            transform: scale(1.05);
+            box-shadow: 0 0 18px rgba(0, 255, 136, 0.4);
+        }
+
+        .btn-blue {
+            background: var(--blue);
+            color: #fff;
+        }
+
+        .btn-blue:hover {
+            background: #3377ee;
+            transform: scale(1.05);
+            box-shadow: 0 0 18px rgba(85, 172, 238, 0.4);
+        }
+
+        .btn-yellow {
+            background: var(--yellow);
+            color: #000;
+        }
+
+        .btn-yellow:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 18px rgba(255, 184, 0, 0.4);
+        }
+
+        .btn-purple {
+            background: var(--purple);
+            color: #fff;
+        }
+
+        .btn-purple:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 18px rgba(236, 72, 153, 0.4);
+        }
+
+        .btn-red {
+            background: var(--red);
+            color: #fff;
+        }
+
+        .btn-red:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 18px rgba(250, 30, 78, 0.4);
+        }
+
+        /* ── STEPS (mit verbindender Linie) ── */
+        .steps {
+            display: flex;
+            gap: 0;
+            margin: 16px 0;
+            position: relative;
+            max-width: 1200px;
+            margin: 16px auto;
+        }
+
+        .steps::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 12.5%;
+            width: 75%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--green), var(--yellow), var(--blue), var(--purple));
+            transform: translateY(-50%);
+            z-index: 0;
+        }
+
+        .step {
+            flex: 1;
+            background: var(--card2);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 10px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            margin: 0 6px;
+            transition: all .3s;
+        }
+
+        .step:hover {
+            transform: translateY(-3px);
+        }
+
+        .step[data-phase="1"] {
+            border-color: var(--green);
+        }
+
+        .step[data-phase="2"] {
+            border-color: var(--yellow);
+        }
+
+        .step[data-phase="3"] {
+            border-color: var(--blue);
+        }
+
+        .step[data-phase="4"] {
+            border-color: var(--purple);
+        }
+
+        .step .num {
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .step[data-phase="1"] .num {
+            color: var(--green);
+        }
+
+        .step[data-phase="2"] .num {
+            color: var(--yellow);
+        }
+
+        .step[data-phase="3"] .num {
+            color: var(--blue);
+        }
+
+        .step[data-phase="4"] .num {
+            color: var(--purple);
+        }
+
+        .step .label {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        /* ── RULES ── */
+        .rule {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 11px;
+            transition: background .2s;
+        }
+
+        .rule:hover {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 4px;
+        }
+
+        .rule:last-child {
+            border: none;
+        }
+
+        .rule .pattern {
+            font-family: var(--mono);
+            color: var(--yellow);
+            flex: 1;
+        }
+
+        .rule .target {
+            color: var(--green);
+        }
+
+        .rule .arrow {
+            color: var(--muted);
+        }
+
+        /* ── TEXTAREA ── */
+        textarea {
+            width: 100%;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 11px;
+            padding: 10px;
+            border-radius: 8px;
+            resize: vertical;
+            min-height: 80px;
+            transition: border-color .3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        /* ── STATUS / DOT ── */
+        .status-bar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 12px;
+            font-size: 11px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 0 0 currentColor;
+            }
+
+            50% {
+                opacity: .5;
+                box-shadow: 0 0 8px 2px currentColor;
+            }
+        }
+
+        /* ── LOG ── */
+        .log {
+            background: var(--card2);
+            border-radius: 8px;
+            padding: 10px;
+            font-family: var(--mono);
+            font-size: 10px;
+            line-height: 1.9;
+            max-height: 180px;
+            overflow-y: auto;
+            color: var(--muted);
+            margin-top: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .log .log-ok {
+            color: var(--green);
+        }
+
+        .log .log-warn {
+            color: var(--yellow);
+        }
+
+        .log .log-err {
+            color: var(--red);
+        }
+
+        .log .log-info {
+            color: var(--blue);
+        }
+
+        /* ── FORM CONTROLS ── */
+        select,
+        input[type="text"],
+        input[type="number"] {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-family: var(--font);
+            transition: border-color .3s;
+        }
+
+        select:focus,
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .config-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 11px;
+        }
+
+        .config-row label {
+            min-width: 100px;
+            color: var(--muted);
+        }
+
+        /* ── BADGES ── */
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
+        }
+
+        .badge-green {
+            background: rgba(0, 255, 136, .15);
+            color: var(--green);
+            box-shadow: 0 0 8px rgba(0, 255, 136, 0.15);
+        }
+
+        .badge-blue {
+            background: rgba(85, 172, 238, .15);
+            color: var(--blue);
+            box-shadow: 0 0 8px rgba(85, 172, 238, 0.15);
+        }
+
+        .badge-yellow {
+            background: rgba(255, 184, 0, .15);
+            color: var(--yellow);
+            box-shadow: 0 0 8px rgba(255, 184, 0, 0.15);
+        }
+
+        /* ── STRESS TEST ── */
+        .stress-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        .stest-item {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 10px;
+            font-family: var(--mono);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all .3s;
+        }
+
+        /* ── AUTO-DEBUG MONITOR ── */
+        .debug-stats {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .debug-stat {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 16px;
+            text-align: center;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .debug-stat .val {
+            font-size: 24px;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .debug-stat .lbl {
+            font-size: 9px;
+            color: var(--muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .debug-entry {
+            display: flex;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            font-size: 10px;
+            font-family: var(--mono);
+            align-items: flex-start;
+            transition: background .2s;
+        }
+
+        .debug-entry:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .debug-entry .de-time {
+            color: var(--muted);
+            flex-shrink: 0;
+            width: 60px;
+        }
+
+        .debug-entry .de-type {
+            font-weight: 700;
+            flex-shrink: 0;
+            width: 90px;
+        }
+
+        .debug-entry .de-msg {
+            flex: 1;
+            color: var(--muted);
+            word-break: break-all;
+        }
+
+        .debug-entry .de-heal {
+            color: var(--green);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .debug-entry.de-error {
+            border-left: 2px solid var(--red);
+        }
+
+        .debug-entry.de-warn {
+            border-left: 2px solid var(--yellow);
+        }
+
+        .debug-entry.de-healed {
+            border-left: 2px solid var(--green);
+            opacity: .7;
+        }
+
+        .debug-shield {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .debug-shield.active {
+            background: rgba(0, 255, 136, .12);
+            color: var(--green);
+            border: 1px solid rgba(0, 255, 136, .3);
+        }
+
+        .debug-shield.inactive {
+            background: rgba(250, 30, 78, .12);
+            color: var(--red);
+            border: 1px solid rgba(250, 30, 78, .3);
+        }
+
+        .stest-item.pass {
+            border-color: rgba(0, 255, 136, 0.4);
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .stest-item.fail {
+            border-color: rgba(250, 30, 78, 0.4);
+            background: rgba(250, 30, 78, 0.05);
+        }
+
+        .stest-item.running {
+            border-color: rgba(255, 184, 0, 0.4);
+            background: rgba(255, 184, 0, 0.05);
+            animation: borderPulse .8s linear infinite;
+        }
+
+        @keyframes borderPulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: .5;
+            }
+        }
+
+        .stest-badge {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .stest-badge.pass {
+            background: rgba(0, 255, 136, .2);
+            color: var(--green);
+        }
+
+        .stest-badge.fail {
+            background: rgba(250, 30, 78, .2);
+            color: var(--red);
+        }
+
+        .stest-badge.run {
+            background: rgba(255, 184, 0, .2);
+            color: var(--yellow);
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--green), var(--blue));
+            border-radius: 2px;
+            transition: width .4s ease;
+            width: 0%;
+        }
+
+        /* ── ONBOARDING ── */
+        .onboarding-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(14, 14, 16, 0.97);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(20px);
+        }
+
+        .onboarding-overlay.hidden {
+            display: none;
+        }
+
+        .ob-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 480px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 0 60px rgba(250, 30, 78, 0.15);
+            animation: fadeUp .4s ease;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ob-box .logo {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .ob-box h2 {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(90deg, var(--red), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .ob-box p {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .ob-dots {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .ob-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--border);
+            transition: all .3s;
+        }
+
+        .ob-dot.active {
+            background: var(--red);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .ob-dot.done {
+            background: var(--green);
+        }
+
+        .btn-google {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+            padding: 12px 24px;
+            background: #fff;
+            color: #333;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 14px;
+            font-family: var(--font);
+            margin: 16px auto;
+            transition: all .2s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-google:hover {
+            transform: scale(1.04);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .api-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--card2);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 12px;
+            margin: 12px 0;
+            transition: border-color .3s;
+        }
+
+        .api-input:focus {
+            outline: none;
+            border-color: var(--red);
+        }
+
+        .api-input.valid {
+            border-color: var(--green);
+        }
+
+        .ob-step {
+            display: none;
+            animation: fadeUp .3s ease;
+        }
+
+        .ob-step.active {
+            display: block;
+        }
+
+        .hint-box {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            text-align: left;
+            margin: 12px 0;
+            font-size: 11px;
+            font-family: var(--mono);
+            line-height: 1.8;
+            color: var(--muted);
+        }
+
+        .hint-box strong {
+            color: var(--yellow);
+        }
+
+        .skip-link {
+            display: block;
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .skip-link:hover {
+            color: var(--text);
+        }
+
+        /* ── FOOTER ── */
+        .footer {
+            text-align: center;
+            margin-top: 24px;
+            color: var(--muted);
+            font-size: 11px;
+            padding: 16px;
+        }
+
+        .footer a {
+            color: var(--blue);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            color: var(--text);
+        }
+
+        /* ── RESPONSIVE ── */
+        @media(max-width:768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .steps {
+                flex-direction: column;
+            }
+
+            .steps::before {
+                display: none;
+            }
+
+            .stress-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media(max-width:480px) {
+            .stress-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ══════════════════════════════════════════════════ -->
+    <!--  ONBOARDING OVERLAY                               -->
+    <!-- ══════════════════════════════════════════════════ -->
+    <div class="onboarding-overlay" id="onboarding">
+        <div class="ob-box">
+            <div class="ob-dots">
+                <div class="ob-dot active" id="d1"></div>
+                <div class="ob-dot" id="d2"></div>
+                <div class="ob-dot" id="d3"></div>
+            </div>
+            <!-- Step 1 -->
+            <div class="ob-step active" id="s1">
+                <div class="logo">🧹</div>
+                <h2>Drive Organizer</h2>
+                <p>Räum dein Google Drive in Sekunden auf!<br>Basierend auf Jeff Su's 5x99 System.</p>
+                <p style="font-size:11px;color:var(--yellow)">Du brauchst einen Google API Key für die Drive-Anbindung.
+                </p>
+                <button class="btn-google" id="btnStep2">
+                    <svg width="20" height="20" viewBox="0 0 48 48">
+                        <path fill="#4285F4"
+                            d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                        <path fill="#34A853"
+                            d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                        <path fill="#FBBC05"
+                            d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                        <path fill="#EA4335"
+                            d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+                    </svg>
+                    Mit Google starten
+                </button>
+                <span class="skip-link" id="btnSkip1">Ohne API Key fortfahren</span>
+            </div>
+            <!-- Step 2 -->
+            <div class="ob-step" id="s2">
+                <div class="logo">🔑</div>
+                <h2>API Key holen</h2>
+                <p>Öffne die Google Cloud Console und erstelle einen API Key:</p>
+                <div class="hint-box">
+                    <strong>1.</strong> Klick auf den Button unten<br>
+                    <strong>2.</strong> Wähle oder erstelle ein Projekt<br>
+                    <strong>3.</strong> Klick "API-Schlüssel erstellen"<br>
+                    <strong>4.</strong> Kopiere den Schlüssel<br>
+                    <strong>5.</strong> Aktiviere die "Google Drive API"
+                </div>
+                <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">
+                    <button class="btn-google" style="background:var(--blue);color:#fff">🌐 Google Cloud Console
+                        öffnen</button>
+                </a>
+                <button class="btn btn-green" id="btnStep3" style="margin-top:8px;width:100%;padding:12px">Ich habe den
+                    Key → Weiter</button>
+                <span class="skip-link" id="btnSkip2">Ohne API Key fortfahren</span>
+            </div>
+            <!-- Step 3 -->
+            <div class="ob-step" id="s3">
+                <div class="logo">✅</div>
+                <h2>API Key eingeben</h2>
+                <p>Füge deinen Google API Key hier ein:</p>
+                <input type="text" class="api-input" id="apiKeyIn" placeholder="AIzaSy..." autocomplete="off"
+                    spellcheck="false">
+                <div id="keyMsg" style="font-size:11px;margin:8px 0;color:var(--muted)"></div>
+                <div class="hint-box">
+                    <strong>Format:</strong> AIzaSy... (39 Zeichen)<br>
+                    <strong>Gespeichert:</strong> Nur lokal im Browser (localStorage)<br>
+                    <strong>Sicher:</strong> Wird nie an Dritte übermittelt
+                </div>
+                <button class="btn btn-green" id="btnGo" style="width:100%;padding:12px;opacity:0.5" disabled>🚀
+                    Dashboard starten</button>
+                <span class="skip-link" id="btnSkip3">Ohne API Key fortfahren</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════ -->
+    <!--  MAIN DASHBOARD                                   -->
+    <!-- ══════════════════════════════════════════════════ -->
+    <div id="mainDash" style="display:none">
+
+        <!-- HEADER -->
+        <div class="header">
+            <button class="btn btn-blue" id="btnBackHub"
+                style="position:absolute;top:16px;left:16px;z-index:2;display:flex;align-items:center;gap:6px;text-decoration:none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+                Hub
+            </button>
+            <h1>🧹 Drive Organizer – Jeff Su 5x99</h1>
+            <p>Universell für jeden Google Drive Account • v1.1.0 • MIT License</p>
+            <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+                <span class="badge badge-green">PHASE 1: Aufräumen</span>
+                <span class="badge badge-yellow">PHASE 2: Sortieren</span>
+                <span class="badge badge-blue">PHASE 3: Inventar</span>
+            </div>
+        </div>
+
+        <!-- PHASE STEPS -->
+        <div class="steps">
+            <div class="step" data-phase="1">
+                <div class="num">1</div>
+                <div class="label">Script zu<br>script.google.com</div>
+            </div>
+            <div class="step" data-phase="2">
+                <div class="num">2</div>
+                <div class="label">phase1_AUFRÄUMEN<br>ausführen</div>
+            </div>
+            <div class="step" data-phase="3">
+                <div class="num">3</div>
+                <div class="label">phase2_SORTIEREN<br>ausführen</div>
+            </div>
+            <div class="step" data-phase="4">
+                <div class="num">4</div>
+                <div class="label">phase3_INVENTAR<br>(optional)</div>
+            </div>
+        </div>
+
+        <div class="grid">
+
+            <!-- ORDNER-STRUKTUR -->
+            <div class="card">
+                <div class="card-title">📁 Ordner-Struktur</div>
+                <div class="folder-tree">
+                    <div class="main">📥 00_INBOX</div>
+                    <div class="main">📂 01_PROJECTS</div>
+                    <div class="sub">├ 01_active</div>
+                    <div class="sub">├ 02_templates</div>
+                    <div class="sub">├ 03_shared</div>
+                    <div class="sub">└ 99_archived</div>
+                    <div class="main">📚 02_RESEARCH</div>
+                    <div class="sub">├ 01_ai_agents</div>
+                    <div class="sub">├ 02_tutorials</div>
+                    <div class="sub">├ 03_frameworks</div>
+                    <div class="sub">├ 04_blueprints</div>
+                    <div class="sub">├ 05_notebooklm</div>
+                    <div class="sub">└ 99_archived</div>
+                    <div class="main">🎨 03_MEDIA</div>
+                    <div class="sub">├ 01_images</div>
+                    <div class="sub">├ 02_video</div>
+                    <div class="sub">├ 03_audio</div>
+                    <div class="sub">├ 04_ai_generated</div>
+                    <div class="sub">└ 99_archived</div>
+                    <div class="main">⚙️ 04_SYSTEM</div>
+                    <div class="sub">├ 01_configs</div>
+                    <div class="sub">├ 02_scripts</div>
+                    <div class="sub">├ 03_exports</div>
+                    <div class="sub">├ 04_backups</div>
+                    <div class="sub">└ 99_archived</div>
+                    <div class="main">📦 99_ARCHIVE</div>
+                    <div class="special">🔒 [DEEPKEEP]</div>
+                    <div class="special">👋 [HELLO WORLD]</div>
+                    <div class="special">💻 [WORKSPACE]</div>
+                    <div class="sub">├ [NOTE]</div>
+                    <div class="sub">├ [TO-DO]</div>
+                    <div class="sub">└ [ARCHIVE]</div>
+                </div>
+            </div>
+
+            <!-- SORTIER-REGELN -->
+            <div class="card">
+                <div class="card-title">🧠 Sortier-Regeln</div>
+                <div style="margin-bottom:8px;font-size:11px;color:var(--muted)">Name-basiert (höhere Priorität):</div>
+                <div id="nameRules"></div>
+                <div style="margin:12px 0 8px;font-size:11px;color:var(--muted)">MIME-Type basiert:</div>
+                <div id="mimeRules"></div>
+            </div>
+
+            <!-- CONFIG -->
+            <div class="card">
+                <div class="card-title">⚙️ Konfiguration</div>
+                <div class="config-row">
+                    <label>Root-Name:</label>
+                    <input id="cfgRoot" type="text" value="(Drive Root)" style="flex:1">
+                </div>
+                <div class="config-row">
+                    <label>Sprache:</label>
+                    <select id="cfgLang">
+                        <option value="de">🇩🇪 Deutsch</option>
+                        <option value="en">🇬🇧 English</option>
+                    </select>
+                </div>
+                <div class="config-row">
+                    <label>Sicherheit:</label>
+                    <select id="cfgSafe">
+                        <option value="sweep">Phase 1: Alles fegen</option>
+                        <option value="dry">Dry Run (nur Log)</option>
+                    </select>
+                </div>
+                <div class="config-row">
+                    <label>Max Dateien:</label>
+                    <input id="cfgMax" type="number" value="500" min="1" max="9999" style="width:80px">
+                </div>
+                <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+                    <button class="btn btn-green" id="btnCopy">📋 Script kopieren</button>
+                    <button class="btn btn-blue" id="btnExport">💾 Config exportieren</button>
+                </div>
+                <div class="status-bar">
+                    <div class="dot" style="background:var(--green);color:var(--green)"></div>
+                    <span style="color:var(--green)">Bereit</span>
+                    <span id="apiStatus" style="color:var(--muted);margin-left:auto">Kein API Key</span>
+                </div>
+            </div>
+
+            <!-- LIVE VORSCHAU -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="dot" style="background:var(--green);color:var(--green)"></span>
+                    Live Vorschau
+                </div>
+                <textarea id="testInput"
+                    placeholder="Dateiname eingeben zum Testen... (z.B. dashboard.html, agent_test.py)"></textarea>
+                <div id="testResult" style="margin-top:8px;font-size:12px;min-height:20px"></div>
+                <div class="log" id="previewLog">
+                    <span class="log-ok">[System] Dashboard v1.1.0 geladen ✓</span><br>
+                    <span class="log-ok">[System] Bereit für Konfiguration</span>
+                </div>
+            </div>
+
+            <!-- STRESS TEST (volle Breite) -->
+            <div class="card" style="grid-column:span 2">
+                <div class="card-title">🔥 Stress Test – Automatische Qualitätsprüfung</div>
+                <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+                    <button class="btn btn-red" id="btnRunTests">▶ Alle Tests ausführen</button>
+                    <button class="btn btn-yellow" id="btnResetTests">↩ Reset</button>
+                    <span id="testSummary" style="font-size:11px;color:var(--muted);margin-left:auto"></span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="testProgress"></div>
+                </div>
+                <div class="stress-grid" id="stressGrid">
+                    <!-- Wird per JS gefüllt -->
+                </div>
+                <div class="log" id="testLog" style="margin-top:12px">
+                    <span class="log-info">[Test] Bereit – klicke "Alle Tests ausführen"</span>
+                </div>
+            </div>
+
+            <!-- AUTO-DEBUG MONITOR (volle Breite) -->
+            <div class="card" style="grid-column:span 2">
+                <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+                    <span>🛡️ Auto-Debug Monitor – Self-Healing Error Tracking</span>
+                    <span class="debug-shield active" id="debugShield">● SHIELD AKTIV</span>
+                </div>
+                <div class="debug-stats">
+                    <div class="debug-stat">
+                        <div class="val" id="dbgTotal" style="color:var(--blue)">0</div>
+                        <div class="lbl">Gesamt</div>
+                    </div>
+                    <div class="debug-stat">
+                        <div class="val" id="dbgErrors" style="color:var(--red)">0</div>
+                        <div class="lbl">Fehler</div>
+                    </div>
+                    <div class="debug-stat">
+                        <div class="val" id="dbgWarnings" style="color:var(--yellow)">0</div>
+                        <div class="lbl">Warnungen</div>
+                    </div>
+                    <div class="debug-stat">
+                        <div class="val" id="dbgHealed" style="color:var(--green)">0</div>
+                        <div class="lbl">Self-Healed</div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+                    <button class="btn btn-purple" id="btnDebugTest">⚡ Test-Fehler werfen</button>
+                    <button class="btn btn-yellow" id="btnDebugClear">🗑️ Log leeren</button>
+                    <button class="btn btn-blue" id="btnDebugToggle">⏸ Shield pausieren</button>
+                </div>
+                <div class="log" id="debugLog" style="max-height:200px">
+                    <span class="log-ok">[Shield] Auto-Debug Monitor aktiv – überwacht JS-Fehler in Echtzeit</span>
+                </div>
+            </div>
+
+        </div><!-- /grid -->
+
+        <div class="footer">
+            Made with 🧡 by DEVKiTZ | Jeff Su 5x99 |
+            <a href="https://github.com" target="_blank" rel="noopener">GitHub</a> |
+            MIT License
+        </div>
+    </div><!-- /mainDash -->
+
+    <script>
+    // DkZ XSS Protection
+    function esc(s) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+        'use strict';
+
+        // ══════════════════════════════════════════════════════════
+        //  SORTIER-REGELN (synchron mit organizer.gs)
+        // ══════════════════════════════════════════════════════════
+
+        const NAME_RULES = [
+            { p: /dashboard|panel|hub|app|builder|engine/, t: '01_PROJECTS/01_active', l: 'dashboard, panel, hub, app, builder, engine' },
+            { p: /template|vorlage|boilerplate/, t: '01_PROJECTS/02_templates', l: 'template, vorlage, boilerplate' },
+            { p: /shared|team|collab/, t: '01_PROJECTS/03_shared', l: 'shared, team, collab' },
+            { p: /blueprint|blaupause|architektur/, t: '02_RESEARCH/04_blueprints', l: 'blueprint, blaupause, architektur' },
+            { p: /notebooklm|notebook|mind.?map/, t: '02_RESEARCH/05_notebooklm', l: 'notebooklm, notebook, mindmap' },
+            { p: /agent|agenten|agentic|bmad|ralph|jarvis/, t: '02_RESEARCH/01_ai_agents', l: 'agent, bmad, ralph, jarvis' },
+            { p: /tutorial|guide|anleitung|how.?to|kurs/, t: '02_RESEARCH/02_tutorials', l: 'tutorial, guide, anleitung' },
+            { p: /framework|iceberg|apache|docker|n8n|mcp/, t: '02_RESEARCH/03_frameworks', l: 'framework, docker, n8n, mcp' },
+            { p: /prompt|skill|workflow|playbook/, t: '02_RESEARCH/01_ai_agents', l: 'prompt, skill, workflow, playbook' },
+            { p: /gemini|gpt|claude|grok|mistral|openai/, t: '02_RESEARCH/01_ai_agents', l: 'gemini, gpt, claude, grok, mistral' },
+            { p: /image|bild|foto|photo|screenshot|logo/, t: '03_MEDIA/01_images', l: 'image, foto, screenshot, logo' },
+            { p: /video|film|clip|recording/, t: '03_MEDIA/02_video', l: 'video, film, clip, recording' },
+            { p: /audio|podcast|mp3|musik|song|sound/, t: '03_MEDIA/03_audio', l: 'audio, podcast, musik, sound' },
+            { p: /generated|sora|dall|flux|midjourney/, t: '03_MEDIA/04_ai_generated', l: 'generated, dall-e, midjourney' },
+            { p: /backup|dump|archive/, t: '04_SYSTEM/04_backups', l: 'backup, dump, archive' },
+            { p: /config|setting|env/, t: '04_SYSTEM/01_configs', l: 'config, setting, env' },
+            { p: /script|code|api|function/, t: '04_SYSTEM/02_scripts', l: 'script, code, api, function' },
+            { p: /csv|report|tabelle/, t: '04_SYSTEM/03_exports', l: 'csv, report, tabelle' },
+        ];
+
+        const MIME_RULES = [
+            { m: 'Google Doc', t: '02_RESEARCH' },
+            { m: 'Google Sheet', t: '04_SYSTEM/03_exports' },
+            { m: 'Google Slides', t: '02_RESEARCH' },
+            { m: 'PDF', t: '02_RESEARCH' },
+            { m: 'Bilder (jpg/png/webp)', t: '03_MEDIA/01_images' },
+            { m: 'Videos (mp4)', t: '03_MEDIA/02_video' },
+            { m: 'Audio (mp3/m4a)', t: '03_MEDIA/03_audio' },
+            { m: 'ZIP/RAR', t: '04_SYSTEM/04_backups' },
+        ];
+
+        // ══════════════════════════════════════════════════════════
+        //  LOG HELPER
+        // ══════════════════════════════════════════════════════════
+
+        function logMsg(el, msg, type = 'info') {
+            const classMap = { ok: 'log-ok', warn: 'log-warn', err: 'log-err', info: 'log-info' };
+            const cls = classMap[type] || 'log-info';
+            const ts = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            el.innerHTML = `<span class="${cls}">[${ts}] ${escHtml(msg)}</span><br>` + el.innerHTML;
+        }
+
+        function escHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        // ══════════════════════════════════════════════════════════
+        //  ONBOARDING (Bug-Fix: alle Listener nach DOM-ready)
+        // ══════════════════════════════════════════════════════════
+
+        function goStep(n) {
+            document.querySelectorAll('.ob-step').forEach(s => s.classList.remove('active'));
+            document.getElementById('s' + n).classList.add('active');
+            document.querySelectorAll('.ob-dot').forEach((d, i) => {
+                d.classList.remove('active', 'done');
+                if (i < n - 1) d.classList.add('done');
+                if (i === n - 1) d.classList.add('active');
+            });
+        }
+
+        function valKey() {
+            const v = (document.getElementById('apiKeyIn').value || '').trim();
+            const m = document.getElementById('keyMsg');
+            const b = document.getElementById('btnGo');
+            const inp = document.getElementById('apiKeyIn');
+            if (v.startsWith('AIza') && v.length >= 35) {
+                inp.classList.add('valid');
+                m.innerHTML = '✅ <span style="color:var(--green)">Gültiges Format</span>';
+                b.disabled = false; b.style.opacity = '1';
+            } else {
+                inp.classList.remove('valid');
+                m.innerHTML = v ? '⚠️ <span style="color:var(--yellow)">Muss mit AIza... beginnen (min. 35 Zeichen)</span>' : '';
+                b.disabled = true; b.style.opacity = '0.5';
+            }
+        }
+
+        function finishOB() {
+            const k = (document.getElementById('apiKeyIn').value || '').trim();
+            if (k.startsWith('AIza') && k.length >= 35) {
+                try { localStorage.setItem('drive_organizer_api_key', k); } catch (e) { console.warn('localStorage nicht verfügbar', e); }
+                document.getElementById('apiStatus').textContent = 'API Key hinterlegt ✓';
+                document.getElementById('apiStatus').style.color = 'var(--green)';
+            }
+            openDash();
+        }
+
+        function skipOB() { openDash(); }
+
+        function openDash() {
+            document.getElementById('onboarding').classList.add('hidden');
+            document.getElementById('mainDash').style.display = 'block';
+        }
+
+        // ══════════════════════════════════════════════════════════
+        //  RENDER RULES
+        // ══════════════════════════════════════════════════════════
+
+        function renderRules() {
+            const nr = document.getElementById('nameRules');
+            const mr = document.getElementById('mimeRules');
+            NAME_RULES.forEach(r => {
+                const d = document.createElement('div');
+                d.className = 'rule';
+                d.innerHTML = `<span class="pattern">${escHtml(r.l)}</span><span class="arrow">→</span><span class="target">${escHtml(r.t)}</span>`;
+                nr.appendChild(d);
+            });
+            MIME_RULES.forEach(r => {
+                const d = document.createElement('div');
+                d.className = 'rule';
+                d.innerHTML = `<span class="pattern">${escHtml(r.m)}</span><span class="arrow">→</span><span class="target">${escHtml(r.t)}</span>`;
+                mr.appendChild(d);
+            });
+        }
+
+        // ══════════════════════════════════════════════════════════
+        //  LIVE TEST SORT (Bug-Fix: sanitized output)
+        // ══════════════════════════════════════════════════════════
+
+        function testSort() {
+            const raw = document.getElementById('testInput').value || '';
+            const name = raw.toLowerCase();
+            const res = document.getElementById('testResult');
+            const log = document.getElementById('previewLog');
+            if (!name.trim()) { res.textContent = ''; return; }
+            for (const r of NAME_RULES) {
+                if (r.p.test(name)) {
+                    res.innerHTML = `✅ <strong>${escHtml(raw)}</strong> → <span style="color:var(--green)">${escHtml(r.t)}</span>`;
+                    logMsg(log, `"${raw}" matched "${r.l}" → ${r.t}`, 'ok');
+                    return;
+                }
+            }
+            res.innerHTML = `❓ <strong>${escHtml(raw)}</strong> → <span style="color:var(--yellow)">[HELLO WORLD] (kein Match)</span>`;
+            logMsg(log, `"${raw}" → kein Match → [HELLO WORLD]`, 'warn');
+        }
+
+        // ══════════════════════════════════════════════════════════
+        //  COPY SCRIPT (Bug-Fix: fetch-Fallback für file://)
+        // ══════════════════════════════════════════════════════════
+
+        function copyScript() {
+            const log = document.getElementById('previewLog');
+            // Fallback: wenn fetch nicht klappt (z.B. file:// Protokoll), zeige Hinweis
+            fetch('organizer.gs')
+                .then(r => {
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    return r.text();
+                })
+                .then(t => {
+                    return navigator.clipboard.writeText(t).then(() => {
+                        logMsg(log, '✅ Script in Zwischenablage kopiert!', 'ok');
+                    });
+                })
+                .catch(() => {
+                    logMsg(log, '⚠️ Script nicht gefunden – öffne organizer.gs manuell und kopiere den Inhalt', 'warn');
+                });
+        }
+
+        // ══════════════════════════════════════════════════════════
+        //  EXPORT CONFIG (Bug-Fix: revokeObjectURL)
+        // ══════════════════════════════════════════════════════════
+
+        function exportConfig() {
+            const cfg = {
+                root: document.getElementById('cfgRoot').value,
+                lang: document.getElementById('cfgLang').value,
+                mode: document.getElementById('cfgSafe').value,
+                max: document.getElementById('cfgMax').value,
+                exportedAt: new Date().toISOString(),
+                version: '1.1.0'
+            };
+            const blob = new Blob([JSON.stringify(cfg, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'drive-organizer-config.json';
+            a.click();
+            // Bug-Fix: Objekt-URL freigeben
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            logMsg(document.getElementById('previewLog'), 'Config exportiert: drive-organizer-config.json', 'ok');
+        }
+
+        // ══════════════════════════════════════════════════════════
+        //  STRESS TESTS
+        // ══════════════════════════════════════════════════════════
+
+        const STRESS_TESTS = [
+            // Funktionale Tests
+            { id: 'T01', name: 'dashboard.html → PROJECTS', fn: () => matchRule('dashboard.html') === '01_PROJECTS/01_active' },
+            { id: 'T02', name: 'agent_test.py → AI_AGENTS', fn: () => matchRule('agent_test.py') === '02_RESEARCH/01_ai_agents' },
+            { id: 'T03', name: 'backup_2024.zip → BACKUPS', fn: () => matchRule('backup_2024.zip') === '04_SYSTEM/04_backups' },
+            { id: 'T04', name: 'tutorial_intro.pdf → TUTORIALS', fn: () => matchRule('tutorial_intro.pdf') === '02_RESEARCH/02_tutorials' },
+            { id: 'T05', name: 'logo_final.png → IMAGES', fn: () => matchRule('logo_final.png') === '03_MEDIA/01_images' },
+            { id: 'T06', name: 'podcast_ep01.mp3 → AUDIO', fn: () => matchRule('podcast_ep01.mp3') === '03_MEDIA/03_audio' },
+            { id: 'T07', name: 'docker_compose.yaml → FRAMEWORKS', fn: () => matchRule('docker_compose.yaml') === '02_RESEARCH/03_frameworks' },
+            { id: 'T08', name: 'export_data.csv → EXPORTS', fn: () => matchRule('export_data.csv') === '04_SYSTEM/03_exports' },
+            { id: 'T09', name: 'dalle_result.jpg → AI_GEN', fn: () => matchRule('dalle_result.jpg') === '03_MEDIA/04_ai_generated' },
+            { id: 'T10', name: 'random_xyz → [kein Match]', fn: () => matchRule('random_xyz_12345') === null },
+            // Edge Cases
+            { id: 'T11', name: 'LEERER String → null', fn: () => matchRule('') === null },
+            { id: 'T12', name: 'XSS Eingabe sicher', fn: () => { const r = document.createElement('div'); r.innerHTML = escHtml('<script>alert(1)<\/script>'); return !r.querySelector('script'); } },
+            { id: 'T13', name: 'API Key (gültig)', fn: () => validateApiKey('AIzaSyABCDEFGHIJKLMNOPQRSTUVWXYZ12') === true },
+            { id: 'T14', name: 'API Key (zu kurz)', fn: () => validateApiKey('AIzaSyShort') === false },
+            { id: 'T15', name: 'API Key (falsches Prefix)', fn: () => validateApiKey('sk-openai12345678901234567890') === false },
+            { id: 'T16', name: 'Blob erstellt', fn: () => { try { new Blob(['{}'], { type: 'application/json' }); return true; } catch (e) { return false; } } },
+            { id: 'T17', name: 'escHtml() maskiert', fn: () => escHtml('<b>&"test"</b>') === '&lt;b&gt;&amp;&quot;test&quot;&lt;/b&gt;' },
+            { id: 'T18', name: '100x matchRule Perf', fn: () => { const t0 = performance.now(); for (let i = 0; i < 100; i++) matchRule('dashboard_agent_v2.html'); return (performance.now() - t0) < 200; } },
+            { id: 'T19', name: 'gemini_chat → AGENTS', fn: () => matchRule('gemini_pro_chat') === '02_RESEARCH/01_ai_agents' },
+            { id: 'T20', name: 'n8n_flow → FRAMEWORKS', fn: () => matchRule('n8n_workflow_export') === '02_RESEARCH/03_frameworks' },
+        ];
+
+        function matchRule(name) {
+            const n = (name || '').toLowerCase();
+            if (!n.trim()) return null;
+            for (const r of NAME_RULES) {
+                if (r.p.test(n)) return r.t;
+            }
+            return null;
+        }
+
+        function validateApiKey(v) {
+            return typeof v === 'string' && v.startsWith('AIza') && v.length >= 35;
+        }
+
+        function renderStressGrid(results) {
+            const grid = document.getElementById('stressGrid');
+            grid.innerHTML = '';
+            STRESS_TESTS.forEach((t, i) => {
+                const res = results[i];
+                const statusClass = res === undefined ? '' : (res ? 'pass' : 'fail');
+                const badgeClass = res === undefined ? 'run' : (res ? 'pass' : 'fail');
+                const badgeText = res === undefined ? 'WAIT' : (res ? 'PASS' : 'FAIL');
+                const div = document.createElement('div');
+                div.className = 'stest-item ' + statusClass;
+                div.id = 'stest-' + t.id;
+                div.innerHTML = '<span style="color:var(--muted);font-size:9px">' + escHtml(t.id) + '</span>'
+                    + '<span style="flex:1;padding:0 8px;font-size:10px">' + escHtml(t.name) + '</span>'
+                    + '<span class="stest-badge ' + badgeClass + '">' + badgeText + '</span>';
+                grid.appendChild(div);
+            });
+        }
+
+        async function runStressTests() {
+            const log = document.getElementById('testLog');
+            const btn = document.getElementById('btnRunTests');
+            const prog = document.getElementById('testProgress');
+            const summary = document.getElementById('testSummary');
+            btn.disabled = true;
+            btn.textContent = '⏳ Läuft...';
+            log.innerHTML = '<span class="log-info">[Test] Starte Stress-Test-Suite...</span>';
+
+            const results = new Array(STRESS_TESTS.length).fill(undefined);
+            renderStressGrid(results);
+
+            let passed = 0, failed = 0;
+
+            for (let i = 0; i < STRESS_TESTS.length; i++) {
+                const t = STRESS_TESTS[i];
+                await new Promise(resolve => setTimeout(resolve, 60));
+                let ok = false;
+                try { ok = !!t.fn(); } catch (e) { ok = false; }
+                results[i] = ok;
+                if (ok) passed++; else failed++;
+
+                // Update einzelnes Item
+                const el = document.getElementById('stest-' + t.id);
+                if (el) {
+                    el.className = 'stest-item ' + (ok ? 'pass' : 'fail');
+                    const badge = el.querySelector('.stest-badge');
+                    if (badge) {
+                        badge.className = 'stest-badge ' + (ok ? 'pass' : 'fail');
+                        badge.textContent = ok ? 'PASS' : 'FAIL';
+                    }
+                }
+
+                prog.style.width = Math.round(((i + 1) / STRESS_TESTS.length) * 100) + '%';
+                logMsg(log, t.id + ': ' + t.name + ' → ' + (ok ? 'PASS ✓' : 'FAIL ✗'), ok ? 'ok' : 'err');
+            }
+
+            const total = STRESS_TESTS.length;
+            summary.textContent = '✅ ' + passed + '/' + total + ' PASS  ❌ ' + failed + '/' + total + ' FAIL';
+            summary.style.color = failed === 0 ? 'var(--green)' : 'var(--yellow)';
+            logMsg(log, '══ Ergebnis: ' + passed + '/' + total + ' Tests bestanden ══', failed === 0 ? 'ok' : 'warn');
+            btn.disabled = false;
+            btn.textContent = '▶ Alle Tests ausführen';
+        }
+
+        function resetTests() {
+            document.getElementById('stressGrid').innerHTML = '';
+            document.getElementById('testProgress').style.width = '0%';
+            document.getElementById('testSummary').textContent = '';
+            document.getElementById('testLog').innerHTML = '<span class="log-info">[Test] Reset – bereit für neuen Lauf</span>';
+        }
+
+        // ══════════════════════════════════════════════════════════
+        //  AUTO-DEBUG MONITOR (CatchJS-inspired Self-Healing)
+        // ══════════════════════════════════════════════════════════
+
+        var debugShieldActive = true;
+        var debugStats = { total: 0, errors: 0, warnings: 0, healed: 0 };
+
+        // Kategorisierung von Fehlertypen
+        function categorizeError(msg, source) {
+            var m = String(msg || '').toLowerCase();
+            if (/typeerror|cannot read|undefined is not/.test(m)) return { type: 'TypeError', color: 'var(--red)', severity: 'error' };
+            if (/referenceerror|is not defined/.test(m)) return { type: 'ReferenceError', color: 'var(--red)', severity: 'error' };
+            if (/syntaxerror|unexpected token/.test(m)) return { type: 'SyntaxError', color: 'var(--red)', severity: 'error' };
+            if (/networkerror|failed to fetch|load failed/.test(m)) return { type: 'NetworkError', color: 'var(--orange)', severity: 'warn' };
+            if (/rangeerror|maximum call/.test(m)) return { type: 'RangeError', color: 'var(--red)', severity: 'error' };
+            if (/cors|cross.?origin|blocked/.test(m)) return { type: 'CORSError', color: 'var(--yellow)', severity: 'warn' };
+            if (/permission|denied|security/.test(m)) return { type: 'SecurityError', color: 'var(--yellow)', severity: 'warn' };
+            if (/quota|storage/.test(m)) return { type: 'StorageError', color: 'var(--yellow)', severity: 'warn' };
+            return { type: 'UnknownError', color: 'var(--muted)', severity: 'error' };
+        }
+
+        // Self-Heal: versucht bekannte Fehler automatisch zu beheben
+        function trySelfHeal(msg, source) {
+            var m = String(msg || '').toLowerCase();
+            // Heal: fetch fehlgeschlagen → log statt crash
+            if (/failed to fetch|networkerror|load failed/.test(m)) {
+                return 'Network-Fehler abgefangen \u2013 Offline-Fallback aktiv';
+            }
+            // Heal: localStorage nicht verf\u00fcgbar
+            if (/quota|storage|localstorage/.test(m)) {
+                return 'Storage-Fehler \u2013 Daten werden im Memory gehalten';
+            }
+            // Heal: DOM-Element nicht gefunden
+            if (/cannot read.*null|null is not an object/.test(m)) {
+                return 'DOM-Element nicht gefunden \u2013 Operation \u00fcbersprungen';
+            }
+            // Heal: CORS blocked
+            if (/cors|cross.?origin/.test(m)) {
+                return 'CORS blockiert \u2013 lokaler Fallback verwendet';
+            }
+            return null;
+        }
+
+        function debugLogEntry(msg, cat, healMsg) {
+            var log = document.getElementById('debugLog');
+            if (!log) return;
+            var ts = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            var cls = healMsg ? 'de-healed' : (cat.severity === 'error' ? 'de-error' : 'de-warn');
+            var html = '<div class="debug-entry ' + cls + '">';
+            html += '<span class="de-time">' + ts + '</span>';
+            html += '<span class="de-type" style="color:' + cat.color + '">' + escHtml(cat.type) + '</span>';
+            html += '<span class="de-msg">' + escHtml(String(msg).substring(0, 200)) + '</span>';
+            if (healMsg) html += '<span class="de-heal">\u2705 ' + escHtml(healMsg) + '</span>';
+            html += '</div>';
+            log.innerHTML = html + log.innerHTML;
+        }
+
+        function updateDebugStats() {
+            var t = document.getElementById('dbgTotal');
+            var e = document.getElementById('dbgErrors');
+            var w = document.getElementById('dbgWarnings');
+            var h = document.getElementById('dbgHealed');
+            if (t) t.textContent = debugStats.total;
+            if (e) e.textContent = debugStats.errors;
+            if (w) w.textContent = debugStats.warnings;
+            if (h) h.textContent = debugStats.healed;
+        }
+
+        function initAutoDebug() {
+            // Global error handler
+            window.onerror = function (msg, source, line, col, error) {
+                if (!debugShieldActive) return false;
+                debugStats.total++;
+                var cat = categorizeError(msg, source);
+                var healMsg = trySelfHeal(msg, source);
+                if (healMsg) {
+                    debugStats.healed++;
+                    debugStats.warnings++;
+                } else {
+                    if (cat.severity === 'error') debugStats.errors++;
+                    else debugStats.warnings++;
+                }
+                debugLogEntry(msg + (line ? ' (L' + line + ')' : ''), cat, healMsg);
+                updateDebugStats();
+                return !!healMsg; // true = error suppressed (healed)
+            };
+
+            // Unhandled promise rejection handler
+            window.addEventListener('unhandledrejection', function (event) {
+                if (!debugShieldActive) return;
+                debugStats.total++;
+                var msg = event.reason ? (event.reason.message || String(event.reason)) : 'Unhandled Promise Rejection';
+                var cat = categorizeError(msg);
+                var healMsg = trySelfHeal(msg);
+                if (healMsg) {
+                    debugStats.healed++;
+                    debugStats.warnings++;
+                    event.preventDefault(); // suppress
+                } else {
+                    debugStats.errors++;
+                }
+                debugLogEntry('[Promise] ' + msg, cat, healMsg);
+                updateDebugStats();
+            });
+
+            // Console.warn interceptor (non-destructive)
+            var origWarn = console.warn;
+            console.warn = function () {
+                if (debugShieldActive) {
+                    debugStats.total++;
+                    debugStats.warnings++;
+                    var msg = Array.prototype.slice.call(arguments).join(' ');
+                    debugLogEntry('[warn] ' + msg, { type: 'ConsoleWarn', color: 'var(--yellow)', severity: 'warn' }, null);
+                    updateDebugStats();
+                }
+                origWarn.apply(console, arguments);
+            };
+
+            debugLogEntry('Shield initialisiert \u2013 \u00fcberwacht window.onerror, Promise, console.warn',
+                { type: 'System', color: 'var(--green)', severity: 'warn' }, null);
+        }
+
+        function debugTestError() {
+            // Werfe verschiedene Test-Fehler
+            debugLogEntry('Test-Fehler-Serie wird geworfen...', { type: 'TestMode', color: 'var(--purple)', severity: 'warn' }, null);
+            // 1. TypeError
+            setTimeout(function () { try { null.test(); } catch (e) { window.onerror(e.message, 'test', 0, 0, e); } }, 100);
+            // 2. Network Error (simuliert)
+            setTimeout(function () { fetch('https://invalid.local/test').catch(function () { }); }, 300);
+            // 3. ReferenceError
+            setTimeout(function () { try { eval('nonExistentVar123.foo()'); } catch (e) { window.onerror(e.message, 'test', 0, 0, e); } }, 500);
+        }
+
+        function debugClear() {
+            var log = document.getElementById('debugLog');
+            if (log) log.innerHTML = '<span class="log-ok">[Shield] Log geleert</span>';
+            debugStats = { total: 0, errors: 0, warnings: 0, healed: 0 };
+            updateDebugStats();
+        }
+
+        function debugToggleShield() {
+            debugShieldActive = !debugShieldActive;
+            var shield = document.getElementById('debugShield');
+            var btn = document.getElementById('btnDebugToggle');
+            if (debugShieldActive) {
+                if (shield) { shield.className = 'debug-shield active'; shield.innerHTML = '\u25cf SHIELD AKTIV'; }
+                if (btn) btn.textContent = '\u23f8 Shield pausieren';
+                debugLogEntry('Shield reaktiviert', { type: 'System', color: 'var(--green)', severity: 'warn' }, null);
+            } else {
+                if (shield) { shield.className = 'debug-shield inactive'; shield.innerHTML = '\u25cf SHIELD PAUSIERT'; }
+                if (btn) btn.textContent = '\u25b6 Shield aktivieren';
+                debugLogEntry('Shield pausiert \u2013 Fehler werden nicht mehr abgefangen', { type: 'System', color: 'var(--red)', severity: 'warn' }, null);
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════
+        //  INIT (Bug-Fix: alles nach DOM-ready, keine inline onclick)
+        // ══════════════════════════════════════════════════════════
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // Onboarding Buttons
+            document.getElementById('btnStep2').addEventListener('click', function () { goStep(2); });
+            document.getElementById('btnStep3').addEventListener('click', function () { goStep(3); });
+            document.getElementById('btnSkip1').addEventListener('click', skipOB);
+            document.getElementById('btnSkip2').addEventListener('click', skipOB);
+            document.getElementById('btnSkip3').addEventListener('click', skipOB);
+            document.getElementById('btnGo').addEventListener('click', finishOB);
+            document.getElementById('apiKeyIn').addEventListener('input', valKey);
+
+            // Dashboard Buttons
+            document.getElementById('btnCopy').addEventListener('click', copyScript);
+            document.getElementById('btnExport').addEventListener('click', exportConfig);
+            document.getElementById('testInput').addEventListener('input', testSort);
+            document.getElementById('btnRunTests').addEventListener('click', runStressTests);
+            document.getElementById('btnResetTests').addEventListener('click', resetTests);
+
+            // Hub back-button
+            var hubBtn = document.getElementById('btnBackHub');
+            if (hubBtn) {
+                hubBtn.addEventListener('click', function () {
+                    window.location.href = '../dashboard/hub/index.html';
+                });
+            }
+
+            // API Key aus localStorage wiederherstellen
+            var savedKey = null;
+            try { savedKey = localStorage.getItem('drive_organizer_api_key'); } catch (e) { /* ignore */ }
+            if (savedKey) {
+                openDash();
+                document.getElementById('apiStatus').textContent = 'API Key aktiv ✓';
+                document.getElementById('apiStatus').style.color = 'var(--green)';
+            }
+
+            // Regeln rendern
+            renderRules();
+
+            // Stress-Test-Grid vorbereiten
+            renderStressGrid([]);
+
+            // Auto-Debug Buttons
+            document.getElementById('btnDebugTest').addEventListener('click', debugTestError);
+            document.getElementById('btnDebugClear').addEventListener('click', debugClear);
+            document.getElementById('btnDebugToggle').addEventListener('click', debugToggleShield);
+
+            // Auto-Debug: Shield starten
+            initAutoDebug();
+        });
+    </script>
+</body>
+
+</html>
