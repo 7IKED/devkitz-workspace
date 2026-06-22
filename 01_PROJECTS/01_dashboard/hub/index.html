@@ -1093,6 +1093,61 @@
             transition: width .8s cubic-bezier(.4, 0, .2, 1)
         }
 
+        /* QR MODAL */
+        .qr-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .8);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .qr-modal.active {
+            display: flex;
+        }
+        .qr-box {
+            background: var(--glass);
+            border: 1px solid var(--accent);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(250, 30, 78, .2);
+            position: relative;
+        }
+        .qr-box img {
+            border-radius: 8px;
+            background: #fff;
+            padding: 10px;
+            margin: 20px 0;
+            width: 200px;
+            height: 200px;
+        }
+        .qr-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            font-size: 20px;
+            cursor: pointer;
+            transition: color .2s;
+        }
+        .qr-close:hover {
+            color: var(--red);
+        }
+        .qr-url-box {
+            background: rgba(255,255,255,.05);
+            padding: 8px;
+            border-radius: 8px;
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--accent);
+            border: 1px solid var(--border);
+        }
+
         /* RESPONSIVE */
         @media(max-width:900px) {
             .header {
@@ -1253,6 +1308,17 @@
     <!-- ERROR OVERLAY -->
     <div class="err-overlay" id="errOverlay" onclick="toggleErrDrawer()"></div>
 
+    <!-- QR MODAL -->
+    <div class="qr-modal" id="qrModal" onclick="if(event.target===this)closeQrModal()">
+        <div class="qr-box">
+            <button class="qr-close" onclick="closeQrModal()">✕</button>
+            <h3 style="margin:0 0 10px 0;font-size:18px">OpenCode Mobile</h3>
+            <p style="font-size:12px;color:var(--muted);margin:0">Scanne diesen Code mit dem Tablet oder Smartphone</p>
+            <img id="qrImage" src="" alt="QR Code" />
+            <div class="qr-url-box" id="qrUrlText">http://192.168.2.69:4096</div>
+        </div>
+    </div>
+
     <!-- ERROR DRAWER -->
     <div class="err-drawer" id="errDrawer">
         <div class="err-drawer-head">
@@ -1283,6 +1349,8 @@
                     <span class="veo-icon">🎬</span>
                     <span class="veo-label">4K VEO</span>
                 </button>
+                <button class="hdr-btn" onclick="openQrModal()" aria-label="OpenCode via Tablet">📱 Tablet</button>
+                <a href="http://127.0.0.1:4096" target="_blank" class="hdr-btn" aria-label="OpenCode oeffnen">💻 OpenCode</a>
                 <a href="../nexuz/index.html" class="hdr-btn" aria-label="NEXUZ² oeffnen">⚡ NEXUZ²</a>
                 <a href="../knowledge-hub/index.html" class="hdr-btn" aria-label="Wiki oeffnen">📝 Wiki</a>
                 <a href="../action-deck/index.html" class="hdr-btn" aria-label="Actions oeffnen">🎴 Actions</a>
@@ -1728,6 +1796,21 @@ ${launch}
                 document.getElementById('errOverlay').classList.remove('open');
             }
         });
+
+        // ═══ QR MODAL ═══
+        function openQrModal() {
+            let host = window.location.hostname;
+            if (!host || host === '127.0.0.1' || host === 'localhost' || host === '') {
+                host = '192.168.2.69'; // Default local IP
+            }
+            const url = `http://${host}:4096`;
+            document.getElementById('qrUrlText').textContent = url;
+            document.getElementById('qrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
+            document.getElementById('qrModal').classList.add('active');
+        }
+        function closeQrModal() {
+            document.getElementById('qrModal').classList.remove('active');
+        }
 
         // ═══ TOAST SYSTEM ═══
         function showToast(icon, msg) {
