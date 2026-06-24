@@ -19,6 +19,7 @@
 | **NEMO-010** | N-Researcher | ✅ Iceberg-Deep-Link | `iceberg_client.py` + API-Gateway-Endpoint + LLM-SQL-Integration in Researcher |
 | **NEMO-011** | Alle | ✅ Logging | `logger.py` — Strukturierte JSON-Logs (EventLog-kompatibel) in `LOGS/swarm_YYYY-mm-dd.jsonl` |
 | **NEMO-014** | Alle | ✅ LLM-Client | `llm_client.py` — Ollama OpenAI-kompatibler Client mit Retry, Timeout, Role-Prompts |
+| **NEMO-021** | DEEPKEEP | ✅ Sanitizer | `deepkeep.py` — Soft-Delete + 7-Tage-Archiv-Regel + Retention-Scan + API-Endpoints in `api_gateway.py` |
 
 ---
 
@@ -26,7 +27,7 @@
 
 | Issue | Agent | Task | Beschreibung |
 |:------|:------|:-----|:-------------|
-| **NEMO-021** | DEEPKEEP | 🟡 Sanitizer | `deepkeep.py` — Soft-Delete + 7-Tage-Archiv-Regel + Retention-Scan + API-Endpoints |
+| *(none — alle aktuellen Tasks abgeschlossen)* |
 
 ---
 
