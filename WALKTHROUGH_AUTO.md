@@ -22,3 +22,15 @@
 - Quelle: 2026-06-24_Antigravity_Test.json
 - Tags: n8n, mobile, text
 - Archiviert: clip_2026-06-24_Antigravity_Test.md
+
+## 2026-06-24 — Pipeline-Test abgeschlossen
+
+- **paperless-consumer.py**: ✅ Validierung + Schema-Check funktioniert. Datei → `processed/` bei Erfolg, → `error/` bei Fehler. Kein Paperless-API-Key konfiguriert (Push übersprungen).
+- **git_nexus.py**: ✅ Liest `.json` aus `Paperless_Inbox/`, archiviert als `clip_*.md` in `04_SYSTEM/ISSUES/`, aktualisiert `WALKTHROUGH_AUTO.md`, erzeugt Git-Commit.
+- **JSON-Schema** (3 Pflichtfelder: `title`, `created`, `content`): ✅ Wird von beiden Komponenten validiert.
+- **Rennbedingung**: Beide Skripte können parallel dieselbe Datei sehen. Kein Problem im Test, da git_nexus zu `.done` umbenennt und consumer nach `processed/` verschiebt. Sollte in Produktion nicht gleichzeitig laufen.
+
+## Nächste Schritte (voraussichtlich)
+- Paperless-ngx API-Key konfigurieren für echten Dokumenten-Push
+- git_nexus.py als Hintergrund-Worker (z.B. Windows Task Scheduler) starten
+- n8n-Webhook `POST /api/v1/n8n/paperclip` live testen
