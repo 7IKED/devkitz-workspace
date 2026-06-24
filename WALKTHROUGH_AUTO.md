@@ -34,3 +34,8 @@
 - Paperless-ngx API-Key konfigurieren für echten Dokumenten-Push
 - git_nexus.py als Hintergrund-Worker (z.B. Windows Task Scheduler) starten
 - n8n-Webhook `POST /api/v1/n8n/paperclip` live testen
+
+## 2026-06-24 — Paperclip: staging-flow-test
+- Quelle: 2026-06-24_staging-flow-test.json
+- Tags: n8n, mobile, text
+- Archiviert: clip_2026-06-24_staging-flow-test.md
