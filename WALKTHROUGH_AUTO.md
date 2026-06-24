@@ -39,3 +39,8 @@
 - Quelle: 2026-06-24_staging-flow-test.json
 - Tags: n8n, mobile, text
 - Archiviert: clip_2026-06-24_staging-flow-test.md
+
+## 2026-06-24 — Paperclip: staging-test-rc
+- Quelle: 2026-06-24_staging-test-rc.json
+- Tags: n8n, mobile, text
+- Archiviert: clip_2026-06-24_staging-test-rc.md
