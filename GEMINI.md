@@ -24,6 +24,7 @@
 - Bei Archivierung: R24 ALARM → 777 fragen
 - Desktop: Nur Dateien ABLEGEN — NIEMALS bestehende aendern
 - Skills MUESSEN geprueft werden BEVOR jede Antwort oder Aktion
+- Lege für neue Projekte immer ein Git-Repository (Arbeitsbaum) an und committe alle Änderungen konsequent.
 
 ---
 

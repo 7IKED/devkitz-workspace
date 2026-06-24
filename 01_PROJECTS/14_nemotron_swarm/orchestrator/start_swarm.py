@@ -11,16 +11,10 @@ import time
 import signal
 import subprocess
 
-SWARM_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_DIR = os.path.dirname(SWARM_DIR)
-LOG_DIR = os.path.join(PROJECT_DIR, "logs")
-AGENTS_DIR = os.path.join(PROJECT_DIR, "agents")
+from config import AGENT_SCRIPTS, PROJECT_ROOT
 
-AGENTS = {
-    "nemo-code": {"script": os.path.join(AGENTS_DIR, "agent_coder.py")},
-    "nemo-res": {"script": os.path.join(AGENTS_DIR, "agent_researcher.py")},
-    "nemo-rev": {"script": os.path.join(AGENTS_DIR, "agent_reviewer.py")},
-}
+SWARM_DIR = os.path.dirname(os.path.abspath(__file__))
+LOG_DIR = os.path.join(SWARM_DIR, "..", "logs")
 
 BRIDGE_SCRIPT = os.path.join(SWARM_DIR, "telegram_bridge.py")
 
@@ -35,7 +29,7 @@ def start_process(name: str, script_path: str) -> subprocess.Popen:
         [sys.executable, script_path],
         stdout=fh,
         stderr=subprocess.STDOUT,
-        cwd=PROJECT_DIR,
+        cwd=PROJECT_ROOT,
     )
     print(f"[swarm] {name} gestartet (PID {proc.pid}) -> logs/{name}.log")
     return proc
@@ -63,9 +57,9 @@ def main():
     print("  Nemotron Swarm — Daemon Launcher")
     print("=" * 50)
 
-    for name, cfg in AGENTS.items():
-        if os.path.exists(cfg["script"]):
-            proc = start_process(name, cfg["script"])
+    for name, cfg in AGENT_SCRIPTS.items():
+        if os.path.exists(cfg):
+            proc = start_process(name, cfg)
             processes.append(proc)
         else:
             print(f"[swarm] FEHLER: {cfg['script']} nicht gefunden!")

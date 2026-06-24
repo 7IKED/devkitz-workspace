@@ -4,7 +4,7 @@ import threading
 import time
 from datetime import datetime, timezone
 
-LOG_DIR = os.path.join(os.path.dirname(__file__), "..", "LOGS")
+from config import LOG_DIR
 
 LEVEL_MAP = {"DEBUG": 10, "INFO": 20, "WARNING": 30, "ERROR": 40}
 

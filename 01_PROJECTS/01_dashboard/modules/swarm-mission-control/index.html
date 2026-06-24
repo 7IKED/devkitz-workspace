@@ -244,9 +244,8 @@ h1 {
 .lf-body { flex: 1; overflow-y: auto; padding: 8px 12px; }
 .feed-item {
   display: flex; gap: 8px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.03);
-  font-size: 11px; animation: feedSlide .3s ease;
+  font-size: 11px;
 }
-@keyframes feedSlide { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
 .feed-time { color: var(--muted); font-family: var(--mono); font-size: 9px; white-space: nowrap; min-width: 55px; padding-top: 1px; }
 .feed-badge {
   padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 700;
@@ -332,8 +331,10 @@ h1 {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
   </style>
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
 </head>
 <body>
+    
 <a href="../hub/index.html" class="hub-btn" title="Hub" style="position:fixed;top:10px;right:10px;z-index:9999;background:var(--accent,#fa1e4e);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:14px;text-decoration:none;cursor:pointer;">🏠 Hub</a>
   <div class="bg-mesh">
     <div class="bg-blob"></div>
@@ -474,20 +475,28 @@ function showToast(msg, dur) {
   setTimeout(function() { t.classList.remove('show'); }, dur);
 }
 
-/* ═══ Demo Agents ═══ */
+/* ═══ Swarm Agents ═══ */
 var DEFAULT_AGENTS = [
-  { id: 'james', name: 'James\u2122', role: 'Guardian', icon: '\uD83C\uDFAF', status: 'online', task: 'System ueberwachen', cpu: 12, ram: 34, uptime: 14400 },
-  { id: 'developer', name: 'Developer\u2122', role: 'Coder', icon: '\uD83D\uDC68\u200D\uD83D\uDCBB', status: 'busy', task: 'Module #47 implementieren', cpu: 78, ram: 62, uptime: 7200 },
-  { id: 'reviewer', name: 'Reviewer\u2122', role: 'QA', icon: '\uD83D\uDD0D', status: 'online', task: 'Code Review PR #123', cpu: 23, ram: 28, uptime: 10800 },
-  { id: 'tester', name: 'Tester\u2122', role: 'Testing', icon: '\uD83E\uDDEA', status: 'busy', task: 'TestStrasse v3 ausfuehren', cpu: 65, ram: 51, uptime: 5400 },
-  { id: 'dokumentar', name: 'Dokumentar\u2122', role: 'Docs', icon: '\uD83D\uDCDA', status: 'offline', task: 'Keine aktive Aufgabe', cpu: 0, ram: 8, uptime: 0 },
-  { id: 'architekt', name: 'Architekt\u2122', role: 'Planning', icon: '\uD83C\uDFD7\uFE0F', status: 'online', task: 'System-Architektur v3 planen', cpu: 31, ram: 40, uptime: 9000 }
+  { id: 'nemo-master', name: 'N-Orchestrator', role: 'Router', icon: '\uD83C\uDFAF', status: 'online', task: 'Warte auf API-Inputs', cpu: 1, ram: 12, uptime: 14400 },
+  { id: 'nemo-code', name: 'N-Coder', role: 'YOLO-Coder', icon: '\uD83D\uDC68\u200D\uD83D\uDCBB', status: 'online', task: 'Standby', cpu: 2, ram: 15, uptime: 7200 },
+  { id: 'nemo-rev', name: 'N-Reviewer', role: 'QA & Review', icon: '\uD83D\uDD0D', status: 'online', task: 'Standby', cpu: 1, ram: 10, uptime: 10800 },
+  { id: 'nemo-res', name: 'N-Researcher', role: 'Iceberg DB', icon: '\uD83D\uDCDA', status: 'online', task: 'Standby', cpu: 1, ram: 14, uptime: 5400 },
+  { id: 'nemo-tele', name: 'N-Telegram', role: 'Telegram Bridge', icon: '\uD83D\uDCF1', status: 'online', task: 'Listening @Ichundmeinbot', cpu: 1, ram: 8, uptime: 3600 }
 ];
 
 function getAgents() {
   try {
     var stored = localStorage.getItem('dkz-smc-agents');
-    if (stored) return JSON.parse(stored);
+    if (stored) {
+      var parsed = JSON.parse(stored);
+      // Merge new defaults if missing
+      DEFAULT_AGENTS.forEach(da => {
+        if (!parsed.find(a => a.id === da.id)) {
+          parsed.push(da);
+        }
+      });
+      return parsed;
+    }
   } catch(e) { /* noop */ }
   return JSON.parse(JSON.stringify(DEFAULT_AGENTS));
 }
@@ -623,19 +632,55 @@ function showAgentDetail(agentId) {
 }
 
 /* ═══ Render Stats ═══ */
-function renderStats() {
-  var missions = getMissions();
-  var total = missions.length;
-  var active = 0, done = 0, errors = 0;
-  for (var i = 0; i < missions.length; i++) {
-    if (missions[i].status === 'active') active++;
-    else if (missions[i].status === 'done') done++;
-    else if (missions[i].status === 'error') errors++;
-  }
+function renderStats(apiData) {
+  var total = apiData ? (apiData.active_tasks + apiData.completed) : 0;
+  var active = apiData ? apiData.active_tasks : 0;
+  var done = apiData ? apiData.completed : 0;
+  var queued = apiData ? apiData.queue_length : 0;
+
   document.getElementById('statTotal').textContent = total;
   document.getElementById('statActive').textContent = active;
   document.getElementById('statDone').textContent = done;
-  document.getElementById('statError').textContent = errors;
+  document.getElementById('statError').textContent = queued;
+  document.querySelector('#statError + .sl').textContent = "In Queue"; // Reuse error stat for queue
+}
+
+/* ═══ API Sync ═══ */
+async function syncSwarmStatus() {
+  try {
+    const res = await fetch('http://localhost:3060/api/v1/swarm/status');
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.data) {
+        renderStats(json.data);
+        
+        // Update Agent statuses based on active tasks
+        const agents = getAgents();
+        
+        // Reset all to online
+        agents.forEach(a => {
+            a.status = 'online';
+            a.task = 'Standby';
+        });
+
+        // Set busy based on tasks
+        json.data.tasks.forEach(task => {
+            if (task.assigned_agent) {
+                const agent = agents.find(a => a.id === task.assigned_agent);
+                if (agent) {
+                    agent.status = 'busy';
+                    agent.task = task.prompt;
+                }
+            }
+        });
+        
+        saveAgents(agents);
+        renderAgents();
+      }
+    }
+  } catch (err) {
+    console.warn("Swarm API offline", err);
+  }
 }
 
 /* ═══ Render Feed ═══ */
@@ -761,7 +806,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   /* Mission Builder */
-  document.getElementById('btnCreateMission').addEventListener('click', function() {
+  document.getElementById('btnCreateMission').addEventListener('click', async function() {
     var name = document.getElementById('missionName').value.trim();
     if (!name) { showToast('Bitte Mission-Name eingeben'); return; }
 
@@ -773,20 +818,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (assignedAgents.length === 0) { showToast('Mindestens einen Agenten zuweisen'); return; }
 
-    var missions = getMissions();
-    missions.push({
-      id: 'M-' + Date.now(),
-      name: name,
-      desc: desc,
-      agents: assignedAgents,
-      deadline: deadline,
-      status: 'active',
-      created: new Date().toISOString()
-    });
-    saveMissions(missions);
-    renderStats();
-    addFeedEvent('success', 'Neue Mission gestartet: ' + name);
-    showToast('Mission "' + name + '" gestartet!');
+    try {
+        const res = await fetch('http://localhost:3060/api/v1/swarm/task', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                prompt: `[${name}] ${desc}`,
+                source: 'dashboard'
+            })
+        });
+        
+        if (res.ok) {
+            const result = await res.json();
+            addFeedEvent('success', 'Neue Mission an Swarm gesendet: ' + name);
+            showToast('Mission "' + name + '" gestartet!');
+            syncSwarmStatus();
+        } else {
+            throw new Error("Server Error");
+        }
+    } catch(err) {
+        addFeedEvent('error', 'Fehler beim Senden der Mission: API offline');
+        showToast('API Fehler');
+    }
 
     /* Reset form */
     document.getElementById('missionName').value = '';
@@ -808,8 +861,13 @@ document.addEventListener('DOMContentLoaded', function() {
   /* Demo feed simulation every 5 seconds */
   setInterval(simulateFeedEvent, 5000);
 
-  /* Agent CPU/RAM update every 3 seconds */
-  setInterval(simulateAgentUpdate, 3000);
+  /* Agent CPU/RAM & API update every 3 seconds */
+  setInterval(() => {
+      simulateAgentUpdate();
+      syncSwarmStatus();
+  }, 3000);
+  
+  syncSwarmStatus();
 
   /* Initial demo event */
   addFeedEvent('info', 'Swarm Mission Control gestartet');
@@ -826,5 +884,7 @@ document.addEventListener('DOMContentLoaded', function() {
   <script src="../../shared/dkz-autobug.js" defer></script>
 
 <script src="../../shared/dkz-premium.js" defer></script>
+    <div id="dkz-toast-container"></div>
+    <script src="../../shared/dkz-hyperreal-bg.js"></script>
 </body>
 </html>

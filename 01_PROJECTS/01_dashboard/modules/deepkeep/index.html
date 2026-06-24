@@ -426,6 +426,7 @@
     </style>
 </head>
 <body data-dkz-module="deepkeep" data-dkz-appid="DKZ-DEEP-001" data-dkz-version="v1.00.0_01" data-dkz-title="DEEPKEEP Tresor" data-dkz-icon="🔒" data-dkz-separable="true">
+    
 
     <!-- PARTICLE CANVAS -->
     <canvas id="particles-canvas"></canvas>
@@ -560,6 +561,7 @@
                 <button class="btn btn-ghost btn-sm" onclick="DK.exportCSV()">&#128196; CSV Export</button>
                 <button class="btn btn-ghost btn-sm" onclick="DK.exportJSON()">&#128196; JSON Export</button>
                 <span style="margin-left:auto;font-size:.6rem;color:var(--muted);font-family:var(--mono)" id="dk-catalog-count">0 Eintraege</span>
+                <span style="margin-left:.5rem;font-size:.55rem;color:var(--green);font-family:var(--mono)" id="dk-sync-badge">Sync: init</span>
             </div>
             <div class="catalog-table-wrap">
                 <table class="catalog-table" id="dk-catalog-table">
@@ -740,6 +742,27 @@
                 hash |= 0;
             }
             return Math.abs(hash).toString(16).padStart(8, '0').toUpperCase();
+        }
+
+        // ─── SERVER API ───
+        var DEEPKEEP_API = localStorage.getItem('dkz-deepkeep-api') || 'http://localhost:3000';
+
+        function apiStore(content, filename) {
+            return fetch(DEEPKEEP_API + '/deepkeep/store', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: content, filename: filename })
+            }).then(function(r) { return r.json(); });
+        }
+
+        function apiList() {
+            return fetch(DEEPKEEP_API + '/deepkeep/list')
+                .then(function(r) { return r.json(); });
+        }
+
+        function apiRetrieve(id) {
+            return fetch(DEEPKEEP_API + '/deepkeep/retrieve/' + encodeURIComponent(id))
+                .then(function(r) { return r.json(); });
         }
 
         // ─── FILE TYPE DETECT ───
@@ -1032,7 +1055,8 @@
                     name: f.name,
                     size: f.size,
                     type: ft.type,
-                    label: ft.label
+                    label: ft.label,
+                    file: f
                 });
                 html += '<div class="preview-item">' +
                     '<div class="preview-left">' +
@@ -1058,27 +1082,75 @@
             var folder = document.getElementById('dk-target').value;
             var catalog = getCatalog();
             var now = new Date().toISOString();
+            var remaining = pendingFiles.length;
+            var uploadedCount = 0;
 
             pendingFiles.forEach(function(f) {
-                catalog.push({
-                    name: f.name,
-                    folder: folder,
-                    size: f.size,
-                    date: now,
-                    tags: ['upload', f.type],
-                    hash: simpleHash(f.name + f.size + now),
-                    protected: true,
-                    addedAt: now
-                });
-                addActivity('upload', f.name + ' → [DEEPKEEP]/' + folder + '/');
+                if (f.file) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        var content = e.target.result;
+                        apiStore(content, f.name).then(function(result) {
+                            catalog.push({
+                                name: f.name,
+                                folder: folder,
+                                size: f.size,
+                                date: now,
+                                tags: ['upload', f.type],
+                                hash: simpleHash(f.name + f.size + now),
+                                serverHash: result.id,
+                                protected: true,
+                                addedAt: now
+                            });
+                            addActivity('upload', f.name + ' => [DEEPKEEP]/' + folder + '/ (sha256:' + result.id.slice(0, 8) + '..)');
+                            uploadedCount++;
+                            remaining--;
+                            if (remaining === 0) finalize(catalog);
+                        }).catch(function() {
+                            catalog.push({
+                                name: f.name,
+                                folder: folder,
+                                size: f.size,
+                                date: now,
+                                tags: ['upload', f.type, 'offline'],
+                                hash: simpleHash(f.name + f.size + now),
+                                protected: true,
+                                addedAt: now
+                            });
+                            addActivity('upload', f.name + ' => [DEEPKEEP]/' + folder + '/ (lokal)');
+                            remaining--;
+                            if (remaining === 0) finalize(catalog);
+                        });
+                    };
+                    reader.onerror = function() {
+                        remaining--;
+                        if (remaining === 0) finalize(catalog);
+                    };
+                    reader.readAsDataURL(f.file);
+                } else {
+                    catalog.push({
+                        name: f.name,
+                        folder: folder,
+                        size: f.size,
+                        date: now,
+                        tags: ['upload', f.type],
+                        hash: simpleHash(f.name + f.size + now),
+                        protected: true,
+                        addedAt: now
+                    });
+                    addActivity('upload', f.name + ' => [DEEPKEEP]/' + folder + '/');
+                    remaining--;
+                    if (remaining === 0) finalize(catalog);
+                }
             });
 
-            saveCatalog(catalog);
-            addActivity('protect', pendingFiles.length + ' Datei(en) als geschuetzt markiert');
-            toast(pendingFiles.length + ' Datei(en) in Tresor verschoben');
-
-            clearPreview();
-            renderAll();
+            function finalize(cat) {
+                saveCatalog(cat);
+                addActivity('protect', uploadedCount + '/' + pendingFiles.length + ' Datei(en) hochgeladen');
+                toast(uploadedCount + ' Datei(en) in Tresor verschoben');
+                clearPreview();
+                renderAll();
+            }
         }
 
         function clearPreview() {
@@ -1087,6 +1159,25 @@
             document.getElementById('dk-preview').innerHTML = '';
             document.getElementById('dk-target').style.display = 'none';
             document.getElementById('dk-upload-actions').style.display = 'none';
+        }
+
+        // ─── SYNC ───
+        function syncWithServer() {
+            var badge = document.getElementById('dk-sync-badge');
+            if (!badge) return;
+            badge.textContent = 'Sync: ...';
+            badge.style.color = 'var(--orange)';
+
+            apiList().then(function(data) {
+                var entries = data.entries || data;
+                var count = Array.isArray(entries) ? entries.length : 0;
+                badge.textContent = 'Sync: ' + count + ' entries';
+                badge.style.color = 'var(--green)';
+                console.log('[DEEPKEEP] server sync: ' + count + ' index entries');
+            }).catch(function() {
+                badge.textContent = 'Sync: offline';
+                badge.style.color = 'var(--red)';
+            });
         }
 
         // ─── SORT ───
@@ -1296,6 +1387,7 @@
             setInterval(updateClock, 1000);
             initDragDrop();
             initParticles();
+            syncWithServer();
             renderAll();
         }
 
@@ -1324,5 +1416,7 @@
     </script>
 
 <script src="../../shared/dkz-premium.js" defer></script>
+    <div id="dkz-toast-container"></div>
+    <script src="../../shared/dkz-hyperreal-bg.js"></script>
 </body>
 </html>

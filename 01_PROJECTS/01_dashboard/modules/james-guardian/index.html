@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dkz-version" content="v0.01.1_01">
+    <title>James Guardian — DEVKiTZ™</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #fa1e4e;
+            --bg: #060608;
+            --surface: #0d0d10;
+            --surface-2: #111116;
+            --surface-3: #1a1a20;
+            --border: rgba(255,255,255,0.06);
+            --border-hover: rgba(255,255,255,0.12);
+            --text: #e8e8ec;
+            --text-dim: #71717a;
+            --text-muted: #52525b;
+            --green: #00ff88;
+            --yellow: #ffb800;
+            --red: #ff3b5c;
+            --blue: #3b82f6;
+            --cyan: #06b6d4;
+            --radius: 14px;
+            --radius-sm: 8px;
+            --font: 'Inter', system-ui, -apple-system, sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .jg-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(6,6,8,0.85);
+            backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .jg-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .jg-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        .jg-subtitle {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            font-family: var(--mono);
+        }
+        .jg-health-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+        .jg-health-dot.online {
+            background: var(--green);
+            box-shadow: 0 0 10px rgba(0,255,136,0.5);
+        }
+        .jg-health-dot.offline {
+            background: var(--red);
+            box-shadow: 0 0 10px rgba(255,59,92,0.5);
+            animation: jgPulse 1s ease-in-out infinite;
+        }
+        @keyframes jgPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+        .jg-health-label {
+            font-size: 0.65rem;
+            font-family: var(--mono);
+            color: var(--text-dim);
+        }
+        .jg-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .jg-btn {
+            padding: 6px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text-dim);
+            font-size: 0.72rem;
+            font-family: var(--font);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .jg-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(250,30,78,0.05);
+        }
+        .jg-btn-primary {
+            border-color: rgba(0,255,136,0.2);
+            color: var(--green);
+            background: rgba(0,255,136,0.05);
+        }
+        .jg-btn-primary:hover {
+            border-color: var(--green);
+            box-shadow: 0 0 8px rgba(0,255,136,0.15);
+        }
+        .jg-btn-danger {
+            border-color: rgba(255,59,92,0.2);
+            color: var(--red);
+            background: rgba(255,59,92,0.05);
+        }
+        .jg-btn-danger:hover {
+            border-color: var(--red);
+        }
+
+        .jg-main {
+            padding: 20px 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .jg-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .jg-stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            text-align: center;
+            transition: border-color 0.2s ease;
+        }
+        .jg-stat-card:hover {
+            border-color: var(--border-hover);
+        }
+        .jg-stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            font-family: var(--mono);
+            line-height: 1.2;
+        }
+        .jg-stat-label {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-top: 4px;
+        }
+        .jg-stat-card.total .jg-stat-value { color: var(--text); }
+        .jg-stat-card.critical .jg-stat-value { color: var(--red); }
+        .jg-stat-card.warning .jg-stat-value { color: var(--yellow); }
+        .jg-stat-card.info .jg-stat-value { color: var(--blue); }
+
+        .jg-feed {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .jg-feed-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .jg-feed-title {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .jg-feed-count {
+            font-size: 0.6rem;
+            font-family: var(--mono);
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: var(--surface-3);
+            color: var(--text-muted);
+        }
+        .jg-feed-body {
+            padding: 8px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .jg-feed-body::-webkit-scrollbar {
+            width: 4px;
+        }
+        .jg-feed-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .jg-feed-body::-webkit-scrollbar-thumb {
+            background: var(--surface-3);
+            border-radius: 2px;
+        }
+
+        .jg-cascade {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            border-left: 3px solid var(--border);
+            background: var(--surface-2);
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+        }
+        .jg-cascade:hover {
+            border-color: var(--border-hover);
+            background: var(--surface-3);
+        }
+        .jg-cascade.critical { border-left-color: var(--red); }
+        .jg-cascade.warning { border-left-color: var(--yellow); }
+        .jg-cascade.info { border-left-color: var(--blue); }
+
+        .jg-cascade-icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+        .jg-cascade.critical .jg-cascade-icon {
+            background: rgba(255,59,92,0.15);
+        }
+        .jg-cascade.warning .jg-cascade-icon {
+            background: rgba(255,184,0,0.15);
+        }
+        .jg-cascade.info .jg-cascade-icon {
+            background: rgba(59,130,246,0.15);
+        }
+
+        .jg-cascade-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .jg-cascade-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .jg-cascade-badge {
+            font-size: 0.55rem;
+            font-family: var(--mono);
+            font-weight: 600;
+            padding: 1px 6px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .jg-cascade.critical .jg-cascade-badge {
+            background: rgba(255,59,92,0.2);
+            color: var(--red);
+        }
+        .jg-cascade.warning .jg-cascade-badge {
+            background: rgba(255,184,0,0.2);
+            color: var(--yellow);
+        }
+        .jg-cascade.info .jg-cascade-badge {
+            background: rgba(59,130,246,0.2);
+            color: var(--blue);
+        }
+        .jg-cascade-title {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .jg-cascade-message {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin-top: 2px;
+            line-height: 1.4;
+        }
+        .jg-cascade-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 6px;
+            font-size: 0.6rem;
+            font-family: var(--mono);
+            color: var(--text-muted);
+        }
+        .jg-cascade-source {
+            color: var(--cyan);
+        }
+
+        .jg-empty {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--text-dim);
+        }
+        .jg-empty-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            opacity: 0.3;
+        }
+        .jg-empty-text {
+            font-size: 0.85rem;
+        }
+
+        .jg-error {
+            text-align: center;
+            padding: 32px 20px;
+        }
+        .jg-error-text {
+            color: var(--red);
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+        }
+
+        .jg-footer {
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+        }
+        .jg-footer-info {
+            font-size: 0.6rem;
+            font-family: var(--mono);
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 640px) {
+            .jg-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .jg-header {
+                padding: 12px 16px;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .jg-main {
+                padding: 12px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="jg-header">
+        <div class="jg-header-left">
+            <span style="font-size:1.3rem;">🛡️</span>
+            <div>
+                <div class="jg-title">James Guardian</div>
+                <div class="jg-subtitle">v0.01.1_01 — Cascade Monitor</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;margin-left:8px;">
+                <span class="jg-health-dot offline" id="healthDot"></span>
+                <span class="jg-health-label" id="healthLabel">Offline</span>
+            </div>
+        </div>
+        <div class="jg-header-actions">
+            <a href="../../dashboard/hub/index.html">
+                <button class="jg-btn">← Hub</button>
+            </a>
+            <button class="jg-btn" id="debugToggle" title="Debug Panel">🐛</button>
+        </div>
+    </header>
+
+    <main class="jg-main">
+        <div class="jg-stats">
+            <div class="jg-stat-card total">
+                <div class="jg-stat-value" id="statTotal">0</div>
+                <div class="jg-stat-label">Gesamt</div>
+            </div>
+            <div class="jg-stat-card critical">
+                <div class="jg-stat-value" id="statCritical">0</div>
+                <div class="jg-stat-label">Critical</div>
+            </div>
+            <div class="jg-stat-card warning">
+                <div class="jg-stat-value" id="statWarning">0</div>
+                <div class="jg-stat-label">Warning</div>
+            </div>
+            <div class="jg-stat-card info">
+                <div class="jg-stat-value" id="statInfo">0</div>
+                <div class="jg-stat-label">Info</div>
+            </div>
+        </div>
+
+        <div class="jg-feed">
+            <div class="jg-feed-header">
+                <span class="jg-feed-title">Cascade Feed</span>
+                <span class="jg-feed-count" id="feedCount">0 Einträge</span>
+            </div>
+            <div class="jg-feed-body" id="feedBody">
+                <div class="jg-empty" id="emptyState">
+                    <div class="jg-empty-icon">🛡️</div>
+                    <div class="jg-empty-text">Keine Cascades vorhanden.<br>Warte auf erste Agenten-Daten...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="jg-footer">
+            <span class="jg-footer-info" id="lastPoll">⏳ Noch kein Poll</span>
+            <span class="jg-footer-info" id="pollStatus">⏸️ idle</span>
+        </div>
+    </main>
+
+    <div id="debugContainer" style="display:none;">
+        <script defer src="../../shared/dkz-debug.js"></script>
+    </div>
+    <script src="../../shared/dkz-eventbus.js"></script>
+    <script src="../../shared/dkz-eventlog.js"></script>
+    <script src="../../shared/dkz-toast.js"></script>
+
+    <script>
+        // XSS Schutz (R15)
+        function esc(s) {
+            if (s == null) return '';
+            var d = document.createElement('div');
+            d.textContent = String(s);
+            return d.innerHTML;
+        }
+
+        // James Guardian — Cascade Client
+        (function() {
+            var CASCADE_URL = '/api/v1/free-hub/cascade';
+            var POLL_INTERVAL = 30000;
+            var MAX_RETRIES = 3;
+            var BASE_URL = 'http://127.0.0.1:3040';
+
+            var cascades = [];
+            var isOnline = false;
+            var retryCount = 0;
+            var pollTimer = null;
+            var isLoading = false;
+
+            var els = {
+                feedBody: document.getElementById('feedBody'),
+                emptyState: document.getElementById('emptyState'),
+                feedCount: document.getElementById('feedCount'),
+                healthDot: document.getElementById('healthDot'),
+                healthLabel: document.getElementById('healthLabel'),
+                lastPoll: document.getElementById('lastPoll'),
+                pollStatus: document.getElementById('pollStatus'),
+                statTotal: document.getElementById('statTotal'),
+                statCritical: document.getElementById('statCritical'),
+                statWarning: document.getElementById('statWarning'),
+                statInfo: document.getElementById('statInfo')
+            };
+
+            function setOnline(online) {
+                isOnline = online;
+                els.healthDot.className = 'jg-health-dot ' + (online ? 'online' : 'offline');
+                els.healthLabel.textContent = online ? 'Live' : 'Offline';
+                els.pollStatus.textContent = online ? '🟢 polling' : '🔴 offline';
+            }
+
+            function severityIcon(sev) {
+                if (sev === 'critical') return '🔴';
+                if (sev === 'warning') return '🟡';
+                return '🔵';
+            }
+
+            function render() {
+                els.emptyState.style.display = cascades.length === 0 ? 'block' : 'none';
+
+                var existingItems = els.feedBody.querySelectorAll('.jg-cascade');
+                for (var i = 0; i < existingItems.length; i++) {
+                    existingItems[i].remove();
+                }
+
+                var total = cascades.length;
+                var critical = 0;
+                var warning = 0;
+                var info = 0;
+
+                for (var i = cascades.length - 1; i >= 0; i--) {
+                    var c = cascades[i];
+                    if (c.severity === 'critical') critical++;
+                    else if (c.severity === 'warning') warning++;
+                    else info++;
+
+                    var div = document.createElement('div');
+                    div.className = 'jg-cascade ' + c.severity;
+
+                    var timeStr = '';
+                    if (c.timestamp) {
+                        var d = new Date(c.timestamp);
+                        timeStr = d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    }
+
+                    div.innerHTML =
+                        '<div class="jg-cascade-icon">' + severityIcon(c.severity) + '</div>' +
+                        '<div class="jg-cascade-content">' +
+                            '<div class="jg-cascade-top">' +
+                                '<span class="jg-cascade-badge">' + esc(c.type || c.severity) + '</span>' +
+                                '<span class="jg-cascade-title">' + esc(c.title) + '</span>' +
+                            '</div>' +
+                            '<div class="jg-cascade-message">' + esc(c.message) + '</div>' +
+                            '<div class="jg-cascade-meta">' +
+                                '<span class="jg-cascade-source">' + esc(c.source) + '</span>' +
+                                '<span>' + timeStr + '</span>' +
+                                '<span>#' + esc(c.id) + '</span>' +
+                            '</div>' +
+                        '</div>';
+
+                    els.feedBody.appendChild(div);
+                }
+
+                els.statTotal.textContent = total;
+                els.statCritical.textContent = critical;
+                els.statWarning.textContent = warning;
+                els.statInfo.textContent = info;
+                els.feedCount.textContent = total + ' Eintr' + (total === 1 ? 'ag' : 'äge');
+            }
+
+            function poll() {
+                if (isLoading) return;
+                isLoading = true;
+
+                var url = BASE_URL + CASCADE_URL;
+                var retries = 0;
+
+                function attempt() {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', url, true);
+                    xhr.timeout = 8000;
+
+                    xhr.onload = function() {
+                        isLoading = false;
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            try {
+                                var data = JSON.parse(xhr.responseText);
+                                if (data.success && Array.isArray(data.cascade)) {
+                                    cascades = data.cascade;
+                                } else if (data.success && Array.isArray(data.cascades)) {
+                                    cascades = data.cascades;
+                                } else if (data.success && data.reply) {
+                                    // stub response
+                                }
+                            } catch (e) {
+                                // parse error
+                            }
+                            setOnline(true);
+                            retryCount = 0;
+                            render();
+                            els.lastPoll.textContent = '🕐 ' + new Date().toLocaleTimeString('de-DE');
+                        } else {
+                            handleError();
+                        }
+                    };
+
+                    xhr.onerror = function() {
+                        handleError();
+                    };
+
+                    xhr.ontimeout = function() {
+                        handleError();
+                    };
+
+                    xhr.send();
+                }
+
+                function handleError() {
+                    isLoading = false;
+                    retryCount++;
+                    if (retryCount < MAX_RETRIES) {
+                        var delay = Math.pow(2, retryCount) * 1000;
+                        els.pollStatus.textContent = '🔄 retry ' + retryCount + '/' + MAX_RETRIES + ' in ' + (delay/1000) + 's';
+                        setTimeout(attempt, delay);
+                    } else {
+                        setOnline(false);
+                        els.lastPoll.textContent = '❌ ' + new Date().toLocaleTimeString('de-DE') + ' (fehlgeschlagen)';
+                    }
+                }
+
+                attempt();
+            }
+
+            function startPolling() {
+                poll();
+                pollTimer = setInterval(poll, POLL_INTERVAL);
+            }
+
+            function stopPolling() {
+                if (pollTimer) {
+                    clearInterval(pollTimer);
+                    pollTimer = null;
+                }
+            }
+
+            // Manuelles Neuladen
+            function refresh() {
+                stopPolling();
+                retryCount = 0;
+                poll();
+                pollTimer = setInterval(poll, POLL_INTERVAL);
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                startPolling();
+
+                // Debug-Panel umschalten
+                var debugToggle = document.getElementById('debugToggle');
+                var debugContainer = document.getElementById('debugContainer');
+                var debugVisible = false;
+                debugToggle.addEventListener('click', function() {
+                    debugVisible = !debugVisible;
+                    debugContainer.style.display = debugVisible ? 'block' : 'none';
+                });
+            });
+
+            // Globale API für andere Module
+            window.JamesGuardian = {
+                getCascades: function() { return cascades; },
+                isOnline: function() { return isOnline; },
+                refresh: refresh
+            };
+        })();
+    </script>
+</body>
+</html>

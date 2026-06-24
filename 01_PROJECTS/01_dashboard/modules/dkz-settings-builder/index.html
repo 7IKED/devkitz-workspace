@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>DEVKiTZ™ Profil Builder</title>
+    <!-- 1. Design System Base & Variables -->
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
+    
+    <!-- 2. Security (esc) & Base Logic -->
+    <script src="../../shared/dkz-debug.js"></script>
+    
+    <!-- 3. Profile Engine, Builder API & Sound -->
+    <script src="../../shared/dkz-premium.js" defer></script>
+    
+    <!-- 4. Dynamic Background (Matrix / Glassmorphism) -->
+    <script src="../../shared/dkz-hyperreal-bg.js" defer></script>
+    
+    <style>
+        .builder-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+        .control-group {
+            margin-bottom: 16px;
+        }
+        .control-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 11px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .control-group input[type="color"] {
+            width: 100%;
+            height: 40px;
+            padding: 2px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--card2);
+            cursor: pointer;
+        }
+        .control-group input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent);
+        }
+        .preview-area {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        @media (max-width: 900px) {
+            .builder-layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <button class="back-btn" onclick="history.back()">◄ Zurück</button>
+            <h1>Profil Builder</h1>
+            <div class="hdr-right"><span class="ver">v1.0.0</span></div>
+        </header>
+
+        <main class="content">
+            <div class="builder-layout dkz-fade">
+                
+                <!-- LEFT: Controls -->
+                <div class="glass-card">
+                    <h2 style="margin-bottom:20px; font-size:16px;">🎨 Theme Controls</h2>
+                    
+                    <div class="control-group">
+                        <label>Hintergrundfarbe (--bg)</label>
+                        <input type="color" id="ctrl-bg" oninput="updateCSS('--bg', this.value)">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>Karten-Hintergrund (--card)</label>
+                        <input type="color" id="ctrl-card" oninput="updateCSS('--card', this.value)">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>Akzent / Neon (--accent)</label>
+                        <input type="color" id="ctrl-accent" oninput="updateCSS('--accent', this.value)">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>Border Color (--border)</label>
+                        <input type="color" id="ctrl-border" oninput="updateCSS('--border', this.value)">
+                    </div>
+                    
+                    <div class="control-group" style="margin-top:24px;">
+                        <label>Card Radius (--radius-lg)</label>
+                        <input type="range" id="ctrl-rad-lg" min="0" max="40" oninput="updateCSS('--radius-lg', this.value + 'px')">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>Button Radius (--radius-sm)</label>
+                        <input type="range" id="ctrl-rad-sm" min="0" max="25" oninput="updateCSS('--radius-sm', this.value + 'px')">
+                    </div>
+                    
+                    <hr style="border:none; border-top:1px solid var(--border); margin: 24px 0;">
+                    
+                    <div class="control-group">
+                        <label>Profil Name speichern</label>
+                        <div style="display:flex; gap:8px;">
+                            <input type="text" class="dkz-input" id="prof-name" placeholder="z.B. Cyberpunk Red" style="flex:1;">
+                            <button class="dkz-btn" onclick="saveProfile()">Sichern</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- RIGHT: Live Preview -->
+                <div class="preview-area">
+                    <div class="stats-row">
+                        <div class="stat">
+                            <div class="sv">1,337</div>
+                            <div class="sl">Aktive Agenten</div>
+                        </div>
+                        <div class="stat">
+                            <div class="sv">42ms</div>
+                            <div class="sl">Latenz</div>
+                        </div>
+                        <div class="stat">
+                            <div class="sv">99%</div>
+                            <div class="sl">System Health</div>
+                        </div>
+                    </div>
+                    
+                    <div class="dkz-card">
+                        <h2 style="margin-bottom:12px; font-size:15px;">Interaktive Vorschau</h2>
+                        <p style="color:var(--muted); font-size:13px; margin-bottom:16px;">
+                            Diese Mockup-Card reagiert sofort auf alle Regler-Änderungen auf der linken Seite.
+                        </p>
+                        <div style="display:flex; gap:12px;">
+                            <button class="dkz-btn">Primary Action</button>
+                            <button class="dkz-btn secondary">Secondary</button>
+                            <input type="text" class="dkz-input" placeholder="Test Input Field...">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+    
+    <div id="dkz-toast-container"></div>
+
+    <script>
+        // Init values when DOM loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const root = document.documentElement;
+                const style = getComputedStyle(root);
+                
+                // Helfer, um HEX-Farben für die Input[type="color"] zu formatieren
+                function rgbToHex(rgbStr) {
+                    if(!rgbStr || !rgbStr.startsWith('rgb')) return '#000000';
+                    let parts = rgbStr.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+                    if(!parts) return '#000000';
+                    delete parts[0];
+                    for (let i = 1; i <= 3; ++i) {
+                        parts[i] = parseInt(parts[i]).toString(16);
+                        if (parts[i].length == 1) parts[i] = '0' + parts[i];
+                    }
+                    return '#' + parts.join('');
+                }
+
+                // Farben setzen
+                document.getElementById('ctrl-bg').value = style.getPropertyValue('--bg').trim().startsWith('#') ? style.getPropertyValue('--bg').trim() : rgbToHex(style.getPropertyValue('--bg').trim());
+                document.getElementById('ctrl-card').value = style.getPropertyValue('--card').trim().startsWith('#') ? style.getPropertyValue('--card').trim() : rgbToHex(style.getPropertyValue('--card').trim());
+                document.getElementById('ctrl-accent').value = style.getPropertyValue('--accent').trim().startsWith('#') ? style.getPropertyValue('--accent').trim() : rgbToHex(style.getPropertyValue('--accent').trim());
+                document.getElementById('ctrl-border').value = style.getPropertyValue('--border').trim().startsWith('#') ? style.getPropertyValue('--border').trim() : rgbToHex(style.getPropertyValue('--border').trim());
+                
+                // Radii setzen
+                let rLg = style.getPropertyValue('--radius-lg').replace('px', '').trim() || 14;
+                let rSm = style.getPropertyValue('--radius-sm').replace('px', '').trim() || 10;
+                document.getElementById('ctrl-rad-lg').value = parseInt(rLg);
+                document.getElementById('ctrl-rad-sm').value = parseInt(rSm);
+            }, 500); // Kurz warten bis Profil geladen ist
+        });
+
+        function updateCSS(key, val) {
+            if (window.DKZ && DKZ.PROFILE) {
+                DKZ.PROFILE.updateVar(key, val);
+            } else {
+                document.documentElement.style.setProperty(key, val);
+            }
+        }
+        
+        function saveProfile() {
+            let name = esc(document.getElementById('prof-name').value) || 'Custom Profile';
+            let id = name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+            if(window.DKZ && DKZ.PROFILE) {
+                DKZ.PROFILE.saveCustom(id, name);
+                
+                // Toast Notification
+                let t = document.createElement('div');
+                t.className = 'toast show';
+                t.textContent = '✅ Profil "' + name + '" gespeichert!';
+                document.getElementById('dkz-toast-container').appendChild(t);
+                DKZ.SFX.play('success');
+                setTimeout(() => t.remove(), 3000);
+            }
+        }
+    </script>
+</body>
+</html>

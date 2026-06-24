@@ -5,11 +5,7 @@ import time
 import urllib.request
 import urllib.error
 
-ICEBERG_BASE = "http://localhost:9881"
-QUERY_PATH = "/api/v1/query"
-SCHEMA_PATH = "/api/v1/schema"
-TIMEOUT = 30
-CACHE_TTL = 300
+from config import ICEBERG_BASE, ICEBERG_QUERY_PATH, ICEBERG_SCHEMA_PATH, ICEBERG_TIMEOUT, ICEBERG_CACHE_TTL
 
 
 class IcebergClient:
@@ -30,7 +26,7 @@ class IcebergClient:
             method="POST",
         )
         try:
-            with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+            with urllib.request.urlopen(req, timeout=ICEBERG_TIMEOUT) as resp:
                 return json.loads(resp.read().decode("utf-8"))
         except (urllib.error.URLError, urllib.error.HTTPError, OSError) as e:
             raise RuntimeError(f"Iceberg unerreichbar ({url}): {e}")
@@ -39,7 +35,7 @@ class IcebergClient:
         url = f"{self.base_url}{path}"
         try:
             req = urllib.request.Request(url, method="GET")
-            with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+            with urllib.request.urlopen(req, timeout=ICEBERG_TIMEOUT) as resp:
                 return json.loads(resp.read().decode("utf-8"))
         except (urllib.error.URLError, urllib.error.HTTPError, OSError) as e:
             raise RuntimeError(f"Iceberg unerreichbar ({url}): {e}")
@@ -48,12 +44,12 @@ class IcebergClient:
         """Ruft das Iceberg-Schema ab (Tabellen + Spalten), mit Cache."""
         now = time.time()
         with self.lock:
-            if not force and self._schema_cache and (now - self._schema_ts) < CACHE_TTL:
+            if not force and self._schema_cache and (now - self._schema_ts) < ICEBERG_CACHE_TTL:
                 return self._schema_cache
         try:
-            result = self._get(SCHEMA_PATH)
+            result = self._get(ICEBERG_SCHEMA_PATH)
         except RuntimeError:
-            result = self._post(QUERY_PATH, {"query": "SHOW TABLES"})
+            result = self._post(ICEBERG_QUERY_PATH, {"query": "SHOW TABLES"})
         with self.lock:
             self._schema_cache = result
             self._schema_ts = now
@@ -63,7 +59,7 @@ class IcebergClient:
         """Fuehrt ein SQL-Statement auf Iceberg aus und gibt die Ergebnisse zurueck."""
         if not sql or not sql.strip():
             return {"error": "Empty query", "rows": [], "columns": []}
-        result = self._post(QUERY_PATH, {"query": sql.strip()})
+        result = self._post(ICEBERG_QUERY_PATH, {"query": sql.strip()})
         if "error" in result:
             raise RuntimeError(f"Iceberg query error: {result['error']}")
         return result

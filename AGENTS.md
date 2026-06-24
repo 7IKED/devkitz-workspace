@@ -55,6 +55,8 @@
 | 49 | Git Housekeeping | Branches, Stashes, Untracked Files bereinigen | infra-team | git-housekeeping |
 | 50 | GitHub README Pusher | Premium READMEs mit Shields.io Badges nach D-VKITZ Repos | docs-team | github-readme-pusher |
 | 51 | React Panel Builder | React Panel-Komponenten fuer DkZ CoPilot Dashboard | core-team | react-panel-builder |
+| 52 | DkZ Paperclip Hub | n8n-Telegram-Webhook zu Markdown Konverter | ai-team | dkz-paperclip-hub |
+| 53 | Paperless Consumer | Validiert + pusht n8n Payloads an Paperless-ngx API | infra-team | paperless-consumer |
 
 ---
 

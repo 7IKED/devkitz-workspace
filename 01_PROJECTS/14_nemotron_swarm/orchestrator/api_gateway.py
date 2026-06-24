@@ -10,6 +10,8 @@ import threading
 import time
 import urllib.request
 
+from config import API_HOST, API_PORT, SWARM_VERSION, VECTOR_STORE_PATH, DASHBOARD_HUB_URL
+
 try:
     from http.server import HTTPServer, BaseHTTPRequestHandler
 except ImportError:
@@ -22,15 +24,11 @@ from memory.vector_store.vector_store import VectorStore
 from orchestrator.iceberg_client import get_client as get_iceberg
 from orchestrator.deepkeep import get_deepkeep
 
-HOST = "0.0.0.0"
-PORT = 3060
-
-
 class SwarmGatewayHandler(BaseHTTPRequestHandler):
     """HTTP-Handler fuer das API Gateway (Port 3060)."""
 
     mem = MemoryManager()
-    vec = VectorStore(os.path.join(os.path.dirname(__file__), "..", "memory", "vector_store"))
+    vec = VectorStore(VECTOR_STORE_PATH)
 
     def log_message(self, format, *args):
         sys.stderr.write(f"[API:3060] {args[0]} {args[1]} {args[2]}\n")
@@ -58,7 +56,7 @@ class SwarmGatewayHandler(BaseHTTPRequestHandler):
             return self._send_json(200, {
                 "service": "nemotron-swarm",
                 "status": "alive",
-                "version": "0.2.0",
+                "version": SWARM_VERSION,
             })
 
         if path == "/api/v1/swarm/status":
@@ -133,7 +131,7 @@ class SwarmGatewayHandler(BaseHTTPRequestHandler):
         if path == "/api/v1/swarm/data/query":
             try:
                 req = urllib.request.Request(
-                    "http://localhost:3040/api/v1/swarm/data/query",
+                    DASHBOARD_HUB_URL,
                     data=body,
                     headers={'Content-Type': 'application/json'},
                 )
@@ -238,8 +236,8 @@ class SwarmGatewayHandler(BaseHTTPRequestHandler):
 
 
 def main():
-    server = HTTPServer((HOST, PORT), SwarmGatewayHandler)
-    print(f"[Nemotron API] Gateway gestartet auf http://{HOST}:{PORT}")
+    server = HTTPServer((API_HOST, API_PORT), SwarmGatewayHandler)
+    print(f"[Nemotron API] Gateway gestartet auf http://{API_HOST}:{API_PORT}")
     print(f"[Nemotron API] Endpunkte:")
     print(f"   GET  /healthz, /")
     print(f"   GET  /api/v1/swarm/status")

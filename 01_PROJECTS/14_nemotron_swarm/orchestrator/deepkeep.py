@@ -16,12 +16,7 @@ import threading
 import time
 from datetime import datetime, timezone
 
-ARCHIVE_ROOT = os.path.join(
-    os.path.dirname(__file__), "..", "99_ARCHIVE"
-)
-
-SECONDS_PER_DAY = 86400
-RETENTION_DAYS = 7
+from config import ARCHIVE_ROOT, SECONDS_PER_DAY, RETENTION_DAYS
 
 
 def esc(text: str, max_len: int = 120) -> str:

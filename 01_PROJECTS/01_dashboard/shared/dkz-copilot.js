@@ -22,10 +22,10 @@ const DkzCopilot = (() => {
     'use strict';
 
     const VERSION = 'v2.007';
-    const GATEWAY_URL = 'http://localhost:3040';
+    const GATEWAY_URL = 'http://localhost:3050';
     const BACKEND = GATEWAY_URL;
     const ICEBERG_URL = 'http://localhost:9881';
-    const WS_URL = 'ws://localhost:3040/ws';
+    const WS_URL = 'ws://localhost:3050/ws';
     let _gatewayOnline = false;
     let _wsClient = null;
     const GT_BLOCKS = ['context', 'task', 'rules', 'examples', 'tools', 'output'];
@@ -126,6 +126,13 @@ const DkzCopilot = (() => {
         // ─── vLLM Default (llama-swap :8080, braucht GPU — aktuell offline) ───
         vllm:          { name: 'vLLM (GPU nötig)',  url: 'http://srv1298466.hstgr.cloud:8080/v1/chat/completions', model: 'gemma4-26b',      apiFormat: 'openai', header: () => ({ 'Content-Type': 'application/json' }) },
         'local-ollama': { name: '💻 Local Ollama (Offline)', url: 'http://localhost:11434/v1/chat/completions', model: 'qwen2.5-coder:7b', apiFormat: 'openai', header: () => ({ 'Content-Type': 'application/json' }) },
+        'local-nemotron': { name: '💻 Nemotron/Mistral 12B', url: 'http://localhost:11434/v1/chat/completions', model: 'mistral-nemo:12b', apiFormat: 'openai', header: () => ({ 'Content-Type': 'application/json' }) },
+        'local-deepseek': { name: '💻 DeepSeek Coder v2', url: 'http://localhost:11434/v1/chat/completions', model: 'deepseek-coder-v2', apiFormat: 'openai', header: () => ({ 'Content-Type': 'application/json' }) },
+        'local-gemma2': { name: '💻 Gemma2 9B', url: 'http://localhost:11434/v1/chat/completions', model: 'gemma2:9b', apiFormat: 'openai', header: () => ({ 'Content-Type': 'application/json' }) },
+        'local-qwen-ocr': { name: '💻 Qwen OCR (Vision)', url: 'http://localhost:11434/v1/chat/completions', model: 'qwen2-vl', apiFormat: 'openai', header: () => ({ 'Content-Type': 'application/json' }) },
+        'local-gemma4': { name: '💻 Gemma4 12B (Audio/Vision/Design)', url: 'http://localhost:11434/v1/chat/completions', model: 'gemma4:12b', apiFormat: 'openai', header: () => ({ 'Content-Type': 'application/json' }) },
+        'opencode': { name: '🤖 OpenCode / Hermes', url: 'http://localhost:4096/v1/chat/completions', model: 'auto', apiFormat: 'openai', header: () => ({ 'Content-Type': 'application/json' }) },
+        'pi-agent': { name: '🧠 Pi Agent (Master Controller)', url: 'http://localhost:3040/api/v1/chat', model: 'pi-agent-core', apiFormat: 'openai', header: () => ({ 'Content-Type': 'application/json' }) },
         puter:         { name: 'Puter AI',          url: '',                                                   model: 'gpt-4o-mini',                                  apiFormat: 'puter',     header: () => ({}) }
     };
 
@@ -169,7 +176,7 @@ const DkzCopilot = (() => {
     }
 
     function getProvider() {
-        const id = _getCookie('dkz-cop-prov') || localStorage.getItem('dkz-copilot-provider') || 'vps-qwen25-3b';
+        const id = _getCookie('dkz-cop-prov') || localStorage.getItem('dkz-copilot-provider') || 'pi-agent';
         return { id, ...PROVIDERS[id] };
     }
     function getApiKey() {
@@ -233,7 +240,16 @@ const DkzCopilot = (() => {
         const modId = _detectModule();
         const role = _isAdmin() ? 'ADMIN' : 'USER';
         const ice = iceBlocks.length > 0 ? '\nIceberg context:\n' + iceBlocks.map(b => `- ${b.name}: ${b.description}`).join('\n') : '';
-        const adminCtx = _isAdmin() ? '\nAdmin access: REGELWERK, BLAUPAUSE, REGISTRY, IMPLEMENTIERUNGSPLAN accessible. Can explain system architecture, rules, and workflows.' : '';
+        let adminCtx = _isAdmin() ? '\nAdmin access: REGELWERK, BLAUPAUSE, REGISTRY, IMPLEMENTIERUNGSPLAN accessible. Can explain system architecture, rules, and workflows.' : '';
+        
+        const p = getProvider();
+        if (p.id === 'pi-agent') {
+            adminCtx += `\nPi Agent Mode: You are the overarching master controller. You orchestrate Playwright, Open Manus, Browser Use, and Computer Use. You can utilize all these tools, as well as almost all playwright configurations and agents created in the 'nanobot' GitHub repository (which is integrated in our system with learning mode).`;
+        }
+        if (p.id === 'opencode') {
+            adminCtx += `\nOpenCode Mode: You are the OpenCode Frontend powered by the Hermes Backend. You act as an autonomous Master Builder, intelligent coding assistant, and system architect. You have direct access to the Nemotron-Agent Swarm and all local/VPS LLMs. Your goal is to write clean, modular, and perfect code following the DEVKiTZ framework and Ralph-Loop.`;
+        }
+
         return `<context>
 You are the DkZ Copilot in "${mod}" (module: ${modId}). Role: ${role}. Stack: HTML/CSS/JS, Node.js :9880, Go Iceberg :9881.
 Design: Cyberclean dark #0e0e10, accent #fa1e4e, Inter + JetBrains Mono. Version: ${VERSION}${adminCtx}
@@ -393,6 +409,22 @@ Markdown + emoji. Concise bullets (BP-05). Complete copy-paste snippets.
                             msgs.innerHTML += `<div style="background:rgba(0,255,136,0.04);border-left:3px solid #00ff88;padding:6px 12px;border-radius:0 8px 8px 0;margin-bottom:6px;font-size:.65rem;color:#52525b;font-family:'JetBrains Mono',monospace">\u26a1 WS: ${esc(msg.type)} \u00b7 ${esc(JSON.stringify(msg.data || {}).substring(0, 80))}</div>`;
                             msgs.scrollTop = msgs.scrollHeight;
                         }
+                    } else if (msg.event === 'swarm_status_update') {
+                        // Phase 15.2: Swarm-2-Copilot Bridge
+                        if (typeof window.showToast === 'function') {
+                            const active = msg.data.active_tasks || 0;
+                            const queued = msg.data.queue_length || 0;
+                            if (active > 0 || queued > 0) {
+                                // Only show if we're not inside the swarm mission control module (to avoid double notifications)
+                                if (_detectModule() !== 'swarm-mission-control') {
+                                    window.showToast(`Swarm Update: ${active} aktiv, ${queued} in Queue`, '#00ff88');
+                                }
+                            }
+                        }
+                    } else if (msg.event === 'paperclip_incoming') {
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(`📎 Neuer Paperclip: ${msg.data.filename}`, '#fa1e4e');
+                        }
                     }
                 } catch { /* ignore non-JSON */ }
             };
@@ -487,6 +519,60 @@ Markdown + emoji. Concise bullets (BP-05). Complete copy-paste snippets.
                 '.gitops': () => { window.location.href = _resolveModulePath('wissen-hub') + '#gitops'; return '🤖 Öffne GitOps & DeepKeep Doku...'; },
                 '.hub': () => { window.location.href = _resolveHubPath(); return '🎯 Öffne Hub...'; },
                 '.settings': () => { openSettings(); return '⚙️ Einstellungen geöffnet'; },
+                '.paperclip': () => { window.location.href = _resolveModulePath('paperclip'); return '📎 Öffne Paperclip...'; },
+                '.paperless': () => { window.location.href = _resolveModulePath('paperless'); return '📄 Öffne Paperless...'; },
+                '.navi': () => { return '🧭 Navigation Engine gestartet (Nutze .navi [modul])...'; },
+                '.gsh': (args) => {
+                    fetch('http://localhost:3040/api/v1/git/gsh', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ command: args || 'status' })
+                    }).then(r => r.json()).then(data => {
+                        const m = document.getElementById('dkz-cop-msgs');
+                        m.innerHTML += `<div style="background:#1a1a20;padding:10px;margin-top:5px;font-family:monospace;font-size:0.7rem;color:#00ff88;border-radius:6px;white-space:pre-wrap;">${esc(data.output || data.error || 'Done.')}</div>`;
+                        m.scrollTop = m.scrollHeight;
+                    }).catch(e => alert('Git Backend offline.'));
+                    return '🚀 Führe Git Shell aus...';
+                },
+                '.research': (args) => {
+                    if (!args) return '⚠️ Bitte Suchbegriff eingeben: .research [query]';
+                    const msgs = document.getElementById('dkz-cop-msgs');
+                    const loadingId = 'res-' + Date.now();
+                    msgs.innerHTML += `<div id="${loadingId}" style="background:rgba(129,140,248,0.06);border-left:3px solid #818cf8;padding:10px;margin-top:5px;font-family:monospace;font-size:0.7rem;color:#818cf8;border-radius:6px;">🔍 Starte OpenResearch für: ${esc(args)}...</div>`;
+                    msgs.scrollTop = msgs.scrollHeight;
+
+                    fetch('http://localhost:3040/research/search', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ query: args, num_results: 3 })
+                    }).then(r => r.json()).then(data => {
+                        document.getElementById(loadingId).remove();
+                        if (!data.success) {
+                            msgs.innerHTML += `<div style="background:rgba(250,30,78,0.1);color:#fa1e4e;padding:10px;margin-top:5px;border-radius:6px;">❌ OpenResearch Fehler: ${esc(data.error || 'Unbekannt')}</div>`;
+                        } else {
+                            let resHtml = `<div style="background:rgba(129,140,248,0.06);border-left:3px solid #818cf8;padding:10px;margin-top:5px;font-size:0.75rem;border-radius:6px;">`;
+                            resHtml += `<strong style="color:#818cf8">📚 OpenResearch Ergebnisse:</strong><br><br>`;
+                            if (data.results && data.results.length > 0) {
+                                data.results.forEach((r, i) => {
+                                    resHtml += `<div style="margin-bottom:8px;">
+                                        <strong>${i+1}. <a href="${esc(r.url)}" target="_blank" style="color:#00ff88;text-decoration:none;">${esc(r.title)}</a></strong><br>
+                                        <span style="color:#a1a1aa;font-size:0.65rem;">${esc(r.snippet)}</span>
+                                    </div>`;
+                                });
+                            } else {
+                                resHtml += `<span style="color:#a1a1aa;">Keine Ergebnisse gefunden.</span>`;
+                            }
+                            resHtml += `</div>`;
+                            msgs.innerHTML += resHtml;
+                        }
+                        msgs.scrollTop = msgs.scrollHeight;
+                    }).catch(e => {
+                        document.getElementById(loadingId).remove();
+                        msgs.innerHTML += `<div style="background:rgba(250,30,78,0.1);color:#fa1e4e;padding:10px;margin-top:5px;border-radius:6px;">❌ OpenResearch Server (Port 3042) ist offline oder nicht erreichbar.</div>`;
+                        msgs.scrollTop = msgs.scrollHeight;
+                    });
+                    return null;
+                },
                 '.skills': () => {
                     const msgs2 = document.getElementById('dkz-cop-msgs');
                     // Node.js Skills (dkz-center)
@@ -873,6 +959,37 @@ Markdown + emoji. Concise bullets (BP-05). Complete copy-paste snippets.
         else _panelEl.style.display = 'block';
         _switchTab('chat');
         _toggleNlm();
+    }
+
+    let _yoloActive = false;
+    async function _toggleYolo() {
+        _yoloActive = !_yoloActive;
+        const btn = document.getElementById('dkz-cop-yolo-btn');
+        if (btn) {
+            btn.style.color = _yoloActive ? '#fa1e4e' : '#71717a';
+            btn.style.textShadow = _yoloActive ? '0 0 10px rgba(250,30,78,0.5)' : 'none';
+        }
+        
+        try {
+            const res = await fetch(GATEWAY_URL + '/api/v1/yolo/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ active: _yoloActive, context: 'dkz-copilot' })
+            });
+            const data = await res.json();
+            
+            // Add a system message to the chat
+            const msgs = document.getElementById('dkz-cop-msgs');
+            if (msgs) {
+                msgs.innerHTML += `<div style="margin-top:6px;padding:6px;background:${_yoloActive ? 'rgba(250,30,78,0.1)' : 'rgba(113,113,122,0.1)'};border-radius:6px;font-size:11px;color:${_yoloActive ? '#fa1e4e' : '#a1a1aa'};text-align:center">
+                    🎯 YOLO / GOAL Modus ${_yoloActive ? 'AKTIVIERT' : 'DEAKTIVIERT'}<br>
+                    <span style="font-size:9px;color:#71717a">${data.message || ''}</span>
+                </div>`;
+                msgs.scrollTop = msgs.scrollHeight;
+            }
+        } catch(e) {
+            console.warn('[DkZ Copilot] Failed to toggle YOLO backend:', e);
+        }
     }
 
     function toggleMatrixChat() {
@@ -1422,6 +1539,7 @@ Markdown + emoji. Concise bullets (BP-05). Complete copy-paste snippets.
                     <span id="dkz-cop-status-dot" style="width:6px;height:6px;border-radius:50%;background:${hasKey?'#00ff88':'#71717a'}"></span>
                 </div>
                 <div style="display:flex;gap:4px">
+                    <button id="dkz-cop-yolo-btn" onclick="DkzCopilot._toggleYolo()" title="YOLO / Goal Mode" style="background:none;border:none;color:#71717a;cursor:pointer;font-size:.85rem;transition:all 0.2s">🎯</button>
                     <button onclick="DkzCopilot._toggleNlm()" title="NotebookLM" style="background:none;border:none;color:#fac832;cursor:pointer;font-size:.85rem">📓</button>
                     <button onclick="DkzCopilot._hidePanel()" style="background:none;border:none;color:#71717a;cursor:pointer;font-size:.95rem">✕</button>
                 </div>
@@ -2050,3 +2168,152 @@ Markdown + emoji. Concise bullets (BP-05). Complete copy-paste snippets.
         get wsConnected() { return _wsClient && _wsClient.readyState === 1; } };
 })();
 if (typeof module !== 'undefined') module.exports = DkzCopilot;
+
+/* --- NATIVE COPILOT & OPENCLAW UI INTEGRATION --- */
+document.addEventListener('DOMContentLoaded', () => {
+    const waitInterval = setInterval(() => {
+        const yoloBtn = document.getElementById('dkz-cop-yolo-btn');
+        if (yoloBtn && yoloBtn.parentElement) {
+            clearInterval(waitInterval);
+            
+            const header = yoloBtn.parentElement;
+            
+            // --- Mode Selector ---
+            const modeSelect = document.createElement('select');
+            modeSelect.innerHTML = `
+                <option value="chat">Mode: Copilot Chat</option>
+                <option value="builder">Mode: Builder</option>
+                <option value="comfyui">Mode: ComfyUI</option>
+            `;
+            modeSelect.style.background = '#060608';
+            modeSelect.style.color = '#fff';
+            modeSelect.style.border = '1px solid #3f3f46';
+            modeSelect.style.borderRadius = '4px';
+            modeSelect.style.fontSize = '0.65rem';
+            modeSelect.style.padding = '2px 4px';
+            modeSelect.style.marginLeft = '10px';
+            modeSelect.onchange = (e) => {
+                if (window.DkzCopilot && typeof window.DkzCopilot.chat === 'function') {
+                    window.DkzCopilot.chat('system', `Modus gewechselt zu: **${e.target.value.toUpperCase()}**`);
+                }
+            };
+            header.appendChild(modeSelect);
+            
+            // --- Auto-Model Selector ---
+            const modelSelect = document.createElement('select');
+            modelSelect.id = 'dkz-auto-model-selector';
+            modelSelect.innerHTML = `
+                <option value="auto">🤖 Auto-Routing (Bestes Modell)</option>
+                <option value="nemotron-mini:4b">🧠 Nemotron-Mini (Control)</option>
+                <option value="deepseek-coder-v2">💻 DeepSeek Coder V2</option>
+                <option value="qwen2.5-coder:7b">🧑‍💻 Qwen2.5 Coder 7b</option>
+                <option value="gemma4:12b">👁️ Gemma4 b12 (Vision/OCR)</option>
+                <option value="voicebox">🗣️ Voicebox (TTS/Voice)</option>
+            `;
+            modelSelect.style.background = '#060608';
+            modelSelect.style.color = '#fff';
+            modelSelect.style.border = '1px solid #3f3f46';
+            modelSelect.style.borderRadius = '4px';
+            modelSelect.style.fontSize = '0.65rem';
+            modelSelect.style.padding = '2px 4px';
+            modelSelect.style.marginLeft = '4px';
+            modelSelect.onchange = (e) => {
+                // When changed, notify the user. Gateway uses this value if we intercept fetch calls.
+                if (window.DkzCopilot && typeof window.DkzCopilot.chat === 'function') {
+                    window.DkzCopilot.chat('system', `Modell gewechselt zu: **${e.target.value}**`);
+                }
+            };
+            header.appendChild(modelSelect);
+            
+            // --- Agent Tools Wrapper ---
+            const toolWrapper = document.createElement('div');
+            toolWrapper.style.display = 'flex';
+            toolWrapper.style.gap = '4px';
+            toolWrapper.style.marginLeft = '10px';
+            
+            const tools = [
+                { id: 'btn-openclaw', icon: '🦀', label: 'OpenClaw', api: '/api/agent/openclaw/init', active: false },
+                { id: 'btn-openhands', icon: '👐', label: 'OpenHands', api: '/api/agent/openhands', active: false },
+                { id: 'btn-gitnexus', icon: '🐙', label: 'GitNexus', api: '/api/agent/gitnexus', active: false },
+                { id: 'btn-secondbrain', icon: '🧠', label: 'Iceberg', api: '/api/agent/secondbrain', active: false }
+            ];
+            
+            tools.forEach(t => {
+                const btn = document.createElement('button');
+                btn.id = t.id;
+                btn.innerHTML = `${t.icon} ${t.label}`;
+                btn.style.background = 'transparent';
+                btn.style.color = '#fff';
+                btn.style.border = '1px solid #3f3f46';
+                btn.style.borderRadius = '4px';
+                btn.style.fontSize = '0.65rem';
+                btn.style.padding = '2px 6px';
+                btn.style.cursor = 'pointer';
+                btn.style.transition = 'all 0.2s ease';
+                
+                btn.onclick = async () => {
+                    t.active = !t.active;
+                    btn.style.background = t.active ? 'rgba(0,255,136,0.1)' : 'transparent';
+                    btn.style.borderColor = t.active ? '#00ff88' : '#3f3f46';
+                    btn.style.color = t.active ? '#00ff88' : '#fff';
+                    
+                    if (t.id === 'btn-openclaw' && t.active) {
+                        if (window.DkzCopilot && typeof window.DkzCopilot.chat === 'function') {
+                            window.DkzCopilot.chat('system', '🦀 **OpenClaw Setup:** Initialisierung gestartet... Verbinde mit Playwright. Richte DOM-Extraktor ein... OpenClaw ist nun systemweit aktiv.');
+                        }
+                    } else if (t.active) {
+                        if (window.DkzCopilot && typeof window.DkzCopilot.chat === 'function') {
+                            window.DkzCopilot.chat('system', `${t.icon} **${t.label}** aktiviert und mit Python Hub verbunden.`);
+                        }
+                    }
+                    
+                    if (t.active) {
+                        try {
+                            fetch('http://localhost:3051' + t.api, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'init' })
+                            });
+                        } catch (e) {
+                            console.error(`[${t.label}] Backend connection failed:`, e);
+                        }
+                    }
+                };
+                toolWrapper.appendChild(btn);
+            });
+            
+            header.appendChild(toolWrapper);
+            
+            // Connect to Paperclip WebSocket
+            try {
+                const ws = new WebSocket('ws://localhost:3040/ws');
+                ws.onmessage = (event) => {
+                    try {
+                        const payload = JSON.parse(event.data);
+                        if (payload.event === 'paperclip_incoming') {
+                            console.log('📎 [Paperclip] New payload:', payload.data);
+                            const st = document.getElementById('dkz-cop-status');
+                            if (st) {
+                                st.innerHTML = `📎 <b>Paperclip:</b> ${payload.data.filename} empfangen!`;
+                                setTimeout(() => st.innerHTML = '', 5000);
+                            }
+                            const chatOut = document.getElementById('dkz-cop-out');
+                            if (chatOut) {
+                                const msgDiv = document.createElement('div');
+                                msgDiv.style.cssText = 'margin:12px 0;padding:12px;background:rgba(250, 30, 78, 0.1);border-left:3px solid #fa1e4e;border-radius:4px;font-size:0.8rem;';
+                                msgDiv.innerHTML = `
+                                    <strong style="color:#fa1e4e">📎 n8n Paperclip Snippet empfangen</strong><br>
+                                    <span style="color:#a1a1aa">Typ: ${payload.data.type} | Ziel: ${payload.data.target}</span><br><br>
+                                    <em>${payload.data.preview}</em><br><br>
+                                    <button onclick="document.getElementById('dkz-cop-in').value='Bitte verarbeite das neue Snippet: ${payload.data.filename}'; document.getElementById('dkz-cop-in').focus();" style="background:#fa1e4e;color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:0.7rem;cursor:pointer;">Importieren</button>
+                                `;
+                                chatOut.appendChild(msgDiv);
+                                chatOut.scrollTop = chatOut.scrollHeight;
+                            }
+                        }
+                    } catch(e) {}
+                };
+            } catch(e) {}
+        }
+    }, 1000);
+});

@@ -31,6 +31,7 @@ import { moduleRoutes } from './routes/modules.js';
 import { mcpRoutes } from './routes/mcp.js';
 import { seoRoutes } from './routes/seo.js';
 import { syncRoutes } from './routes/sync.js';
+import { deepkeepRoutes } from './routes/deepkeep.js';
 import { toolRoutes } from './routes/tools.js';
 import { llmRoutes } from './routes/llm.js';
 import { authMiddleware } from './middleware/auth.js';
@@ -82,6 +83,7 @@ app.get('/', (req, res) => {
             mcp: '/api/v1/mcp/*',
             seo: '/api/v1/seo/*',
             sync: '/api/v1/sync',
+            deepkeep: '/api/v1/deepkeep/*',
             tools: '/api/v1/tools',
             ecosystem: '/api/v1/ecosystem',
             registry: '/api/v1/registry',
@@ -111,6 +113,7 @@ app.use('/api/v1', moduleRoutes);
 app.use('/api/v1', mcpRoutes);
 app.use('/api/v1', seoRoutes);
 app.use('/api/v1', syncRoutes);
+app.use('/api/v1', deepkeepRoutes);
 app.use('/api/v1', toolRoutes);
 app.use('/api/v1', llmRoutes);
 

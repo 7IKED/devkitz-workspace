@@ -193,6 +193,96 @@
   };
 
   // ========================================
+  //  THEME PROFILE ENGINE (Builder API)
+  //  [Ref: dkz-theme.css] -> Overrides variables defined in :root
+  //  [Ref: dkz-hyperreal-bg.js] -> Triggers Matrix Mode via Event
+  // ========================================
+  const DEFAULT_PROFILES = {
+    'hyperreal': {
+      id: 'hyperreal',
+      name: 'Hyperreal Glass',
+      baseTheme: 'dark',
+      vars: {
+        '--radius-lg': '14px',
+        '--radius-md': '12px',
+        '--radius-sm': '10px',
+        '--border-w': '1px'
+      }
+    },
+    'matrix': {
+      id: 'matrix',
+      name: 'Matrix Hacker',
+      baseTheme: 'dark',
+      vars: {
+        '--radius-lg': '0px',
+        '--radius-md': '0px',
+        '--radius-sm': '0px',
+        '--border-w': '1px',
+        '--glass': '#000000',
+        '--blur': 'none',
+        '--bg': '#000000',
+        '--card': '#050505',
+        '--text': '#00ff88',
+        '--accent': '#00ff88',
+        '--border': '#00ff88'
+      }
+    }
+  };
+
+  const DKZ_PROFILE = {
+    current: null,
+    
+    apply(profileId) {
+      /**
+       * Core Profile Application Logic.
+       * Merges the target profile over the existing base UI system.
+       * @see dkz-theme.css (for pattern defaults)
+       */
+      let prof = DEFAULT_PROFILES[profileId];
+      if (!prof) {
+        try { prof = JSON.parse(localStorage.getItem('dkz-custom-profile-' + profileId)); } catch(e){}
+      }
+      if (!prof) prof = DEFAULT_PROFILES['hyperreal']; // Fallback
+
+      this.current = prof;
+
+      // Reset old vars if switching from another profile (prevents artifacting)
+      document.documentElement.style.cssText = '';
+
+      // Set Base Theme (dark/light) -> [Ref: dkz-theme.css]
+      document.documentElement.setAttribute('data-theme', prof.baseTheme || 'dark');
+      DKZ_THEME.current = prof.baseTheme || 'dark';
+      
+      // Inject Custom Shape & Layout Vars -> [Ref: dkz-theme.css]
+      const root = document.documentElement;
+      for (const [key, val] of Object.entries(prof.vars || {})) {
+        root.style.setProperty(key, val);
+      }
+      
+      // Persist user selection
+      localStorage.setItem('dkz-active-profile', prof.id);
+      
+      // Notify ecosystem -> [Ref: dkz-hyperreal-bg.js (drawHexagons)]
+      document.dispatchEvent(new CustomEvent('dkz-profile-change', { detail: prof }));
+    },
+    
+    updateVar(key, val) {
+      document.documentElement.style.setProperty(key, val);
+      if(this.current) {
+         this.current.vars = this.current.vars || {};
+         this.current.vars[key] = val;
+      }
+    },
+    
+    saveCustom(id, name) {
+      if(!this.current) return;
+      this.current.id = id;
+      this.current.name = name || id;
+      localStorage.setItem('dkz-custom-profile-' + id, JSON.stringify(this.current));
+    }
+  };
+
+  // ========================================
   //  FADE-IN STAGGER (IntersectionObserver)
   // ========================================
   function initFadeIn() {
@@ -265,6 +355,20 @@
     themeBtn.onclick = function() { DKZ_THEME.toggle(); };
     bar.appendChild(themeBtn);
 
+    // Matrix / Contrast toggle
+    var matrixBtn = document.createElement('button');
+    matrixBtn.id = 'dkz-matrix-btn';
+    matrixBtn.title = 'Matrix Mode';
+    matrixBtn.style.cssText = btnStyle();
+    matrixBtn.onclick = function() { 
+      var isMatrix = document.body.classList.toggle('dkz-matrix-mode');
+      localStorage.setItem('dkz-matrix-mode', isMatrix ? 'true' : 'false');
+      SFX.play('toggle');
+      updateMatrixIcon();
+      document.dispatchEvent(new CustomEvent('dkz-matrix-toggle'));
+    };
+    bar.appendChild(matrixBtn);
+
     // Sound toggle
     var soundBtn = document.createElement('button');
     soundBtn.id = 'dkz-sound-btn';
@@ -277,6 +381,7 @@
 
     updateLangIcon();
     updateThemeIcon();
+    updateMatrixIcon();
     updateSoundIcon();
   }
 
@@ -306,6 +411,11 @@
   function updateThemeIcon() {
     var btn = document.getElementById('dkz-theme-btn');
     if (btn) btn.textContent = DKZ_THEME.current === 'dark' ? '\uD83C\uDF19' : '\u2600\uFE0F';
+  }
+
+  function updateMatrixIcon() {
+    var btn = document.getElementById('dkz-matrix-btn');
+    if (btn) btn.textContent = document.body.classList.contains('dkz-matrix-mode') ? '💻' : '✨';
   }
 
   function updateSoundIcon() {
@@ -339,6 +449,10 @@
     } else {
       initFadeIn();
     }
+    
+    // Apply Active Profile
+    const activeProf = localStorage.getItem('dkz-active-profile') || 'hyperreal';
+    DKZ_PROFILE.apply(activeProf);
   }
 
   // Auto-init when script loads
@@ -355,6 +469,7 @@
   window.DKZ.SFX = SFX;
   window.DKZ.LANG = DKZ_LANG;
   window.DKZ.THEME = DKZ_THEME;
+  window.DKZ.PROFILE = DKZ_PROFILE;
   window.DKZ.esc = esc;
   window.DKZ.t = function(key) { return DKZ_LANG.t(key); };
 

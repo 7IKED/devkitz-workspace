@@ -13,10 +13,7 @@ import urllib.request
 import urllib.error
 import urllib.parse
 
-POLL_INTERVAL = 5
-GATEWAY_URL = "http://localhost:3060/api/v1/swarm/task"
-
-ENV_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "..", ".env")
+from config import TELEGRAM_POLL_INTERVAL, GATEWAY_URL, DOTENV_PATH as ENV_PATH
 TELEGRAM_BOT_TOKEN = None
 
 OFFSET = 0
@@ -75,7 +72,7 @@ def main():
         print("[telegram-bridge] Kein Telegram Token gefunden. Abbruch.")
         sys.exit(1)
 
-    print(f"[telegram-bridge] Telegram Bridge gestartet (Poll: {POLL_INTERVAL}s)")
+    print(f"[telegram-bridge] Telegram Bridge gestartet (Poll: {TELEGRAM_POLL_INTERVAL}s)")
     print(f"[telegram-bridge] Gateway: {GATEWAY_URL}")
     print(f"[telegram-bridge] Token: ...{TELEGRAM_BOT_TOKEN[-6:]}")
 
@@ -100,13 +97,13 @@ def main():
                     else:
                         print(f"[telegram-bridge] Gateway nicht erreichbar — Nachricht verworfen.")
 
-            time.sleep(POLL_INTERVAL)
+            time.sleep(TELEGRAM_POLL_INTERVAL)
         except KeyboardInterrupt:
             print("[telegram-bridge] Herunterfahren...")
             break
         except Exception as e:
             print(f"[telegram-bridge] Fehler: {e}")
-            time.sleep(POLL_INTERVAL)
+            time.sleep(TELEGRAM_POLL_INTERVAL)
 
 
 if __name__ == "__main__":

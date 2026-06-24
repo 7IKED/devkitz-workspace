@@ -1,0 +1,24 @@
+{
+  "id": "ART-2026-0623-T001",
+  "type": "deepkeep-tresor-integration",
+  "phase": "Phase 3 Task 1",
+  "status": "complete",
+  "summary": "DEEPKEEP Tresor REST API in api-gateway. Speichert Dateien mit SHA256-Hash in [DEEPKEEP]/data/, verhindert Duplikate via index.json, optionaler Google Drive Upload. EventLog für Store/Retrieve.",
+  "files": [
+    "api-gateway/00_lib/dkz-drive-auth.js",
+    "api-gateway/routes/deepkeep.js",
+    "api-gateway/server.js (extended)"
+  ],
+  "endpoints": {
+    "POST /api/v1/deepkeep/store": "content + filename → SHA256 → local file + index entry",
+    "GET /api/v1/deepkeep/retrieve/:id": "SHA256 hash → file content",
+    "GET /api/v1/deepkeep/list": "all index entries"
+  },
+  "decisions": [
+    "Kein googleapis — Drive API via fetch/crypto built-in",
+    "SHA256 Hashing via Node built-in crypto (keine Deps)",
+    "Duplicate-Prevention via in-memory index.Map + index.json",
+    "EventLog als Zeilen-JSON-File in [DEEPKEEP]/event.log",
+    "Google Drive optional — graceful degradation wenn keine Credentials"
+  ]
+}

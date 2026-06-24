@@ -531,8 +531,10 @@
             .rules-table th, .rules-table td { padding: 8px 6px; }
         }
     </style>
+    <link rel="stylesheet" href="../../shared/dkz-theme.css">
 </head>
 <body>
+    
     <div class="bg-mesh">
         <div class="blob blob-1"></div>
         <div class="blob blob-2"></div>
@@ -761,7 +763,7 @@
 
     /* ── Provider Definitions ── */
     const PROVIDERS = [
-        { id: 'gdrive',     name: 'Google Drive',  icon: '\u{1F4C1}', color: '#4285F4', status: 'online',  files: 247, lastSync: Date.now() - 120000 },
+        { id: 'gdrive',     name: 'Google Drive',  icon: '\u{1F4C1}', color: '#4285F4', status: 'auth',  files: 0, lastSync: null },
         { id: 'r2',         name: 'Cloudflare R2', icon: '\u2601\uFE0F',  color: '#F38020', status: 'online',  files: 89,  lastSync: Date.now() - 300000 },
         { id: 'github',     name: 'GitHub',        icon: '\u{1F419}', color: '#238636', status: 'auth',    files: 1342, lastSync: Date.now() - 600000 },
         { id: 'nextcloud',  name: 'Nextcloud',     icon: '\u{1F537}', color: '#0082C9', status: 'offline', files: 0,    lastSync: null },
@@ -869,7 +871,7 @@
             };
             const s = statusMap[p.status];
             const syncText = p.lastSync ? timeAgo(p.lastSync) : 'Nie';
-            return '<div class="provider-card" style="--provider-color:' + esc(p.color) + '">' +
+            return '<div class="provider-card" style="--provider-color:' + esc(p.color) + '" onclick="connectProvider(\'' + esc(p.id) + '\')">' +
                 '<div class="provider-head">' +
                     '<div class="provider-icon" style="background:' + esc(p.color) + '20">' + p.icon + '</div>' +
                     '<div>' +
@@ -891,6 +893,30 @@
         if (diff < 3600) return Math.floor(diff / 60) + 'min';
         if (diff < 86400) return Math.floor(diff / 3600) + 'h';
         return Math.floor(diff / 86400) + 'd';
+    }
+
+    async function connectProvider(id) {
+        if (id === 'gdrive' && window.CLOUDIA_GDrive) {
+            showToast('Verbinde mit Google Drive...', 'info');
+            const res = await window.CLOUDIA_GDrive.connect();
+            if (res.success) {
+                const p = PROVIDERS.find(x => x.id === 'gdrive');
+                if (p) p.status = 'online';
+                showToast('Google Drive verbunden!', 'success');
+                
+                // Fetch actual queue from backend
+                const newQueue = await window.CLOUDIA_GDrive.fetchQueue();
+                if (newQueue.length > 0) {
+                    queue = newQueue;
+                    if (p) p.files = newQueue.length;
+                    saveState();
+                    renderQueue();
+                }
+                renderProviders();
+            }
+        } else if (id !== 'lokal') {
+            showToast('Provider ' + id + ' noch nicht implementiert', 'warning');
+        }
     }
 
     /* ══════════════════════════════════════════
@@ -932,6 +958,11 @@
         }
 
         const hash = generateHash();
+        
+        if (file.provider === 'gdrive' && window.CLOUDIA_GDrive) {
+            window.CLOUDIA_GDrive.sortFile(file.id || hash, target, 'local-rule');
+        }
+
         catalog.push({
             name: file.name,
             path: target + file.name,
@@ -1446,6 +1477,7 @@
        ══════════════════════════════════════════ */
     document.addEventListener('DOMContentLoaded', init);
     </script>
+    <script src="gdrive-adapter.js"></script>
 
     <!-- Shared Scripts -->
     <script src="../../shared/dkz-autobug.js" data-module="cloudia"></script>
@@ -1454,5 +1486,7 @@
     <script src="../../shared/dkz-nanobot.js" data-module="cloudia" data-mode="chatpilot"></script>
 
 <script src="../../shared/dkz-premium.js" defer></script>
+    <div id="dkz-toast-container"></div>
+    <script src="../../shared/dkz-hyperreal-bg.js"></script>
 </body>
 </html>

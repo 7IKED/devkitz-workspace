@@ -657,6 +657,7 @@
     <script src="../../shared/dkz-updater.js"></script>
 </head>
 <body data-dkz-module="aiaikirk" data-dkz-appid="DKZ-KIRK-001" data-dkz-version="v1.00.0" data-dkz-title="AiAiKirk™ Copilot" data-dkz-icon="🤖" data-dkz-separable="true">
+    
 
     <!-- Background Effects -->
     <div class="bg-glow bg-glow-1"></div>
@@ -1059,7 +1060,7 @@
         }, delay);
     }
 
-    function processInput(text) {
+    async function processInput(text) {
         // Check if it's a command
         if (text.startsWith('/')) {
             const parts = text.split(/\s+/);
@@ -1074,9 +1075,22 @@
                 addMessage('bot', '❌ Unbekannter Command: <code>' + esc(cmd) + '</code><br>Tippe <code>/help</code> fuer alle verfuegbaren Befehle.');
             }
         } else {
-            // Natural language — fallback response
-            const idx = Math.floor(Math.random() * FALLBACK_RESPONSES.length);
-            addMessage('bot', FALLBACK_RESPONSES[idx]);
+            // Natural language — Real backend call!
+            try {
+                const res = await fetch('http://localhost:3040/api/v1/aiaikirk/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text, sessionId: 'default' })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    addMessage('bot', data.response.replace(/\n/g, '<br>'));
+                } else {
+                    addMessage('bot', '❌ Backend Fehler: ' + esc(data.error));
+                }
+            } catch (e) {
+                addMessage('bot', '❌ Netzwerk Fehler: ' + esc(e.message));
+            }
         }
     }
 
@@ -1378,5 +1392,7 @@
 <script>function showModuleInfo(){var m=document.getElementById('info-modal');m.style.opacity='1';m.style.pointerEvents='all'}function closeOnboarding(){var m=document.getElementById('onboarding');m.style.opacity='0';m.style.pointerEvents='none';localStorage.setItem('dkz-aiaikirk-onboarded','1')}if(!localStorage.getItem('dkz-aiaikirk-onboarded')){var ob=document.getElementById('onboarding');ob.style.opacity='1';ob.style.pointerEvents='all'}setTimeout(function(){var c=document.querySelector('.top-header .top-header-left');if(c&&!document.getElementById('dkz-info-btn')){var b=document.createElement('button');b.id='dkz-info-btn';b.innerHTML='&#9432;';b.title='Modul-Info';b.style.cssText='padding:4px 8px;border:1px solid rgba(255,255,255,0.04);border-radius:6px;background:rgba(255,255,255,.02);color:#71717a;font-size:1rem;cursor:pointer;margin-left:4px';b.onclick=function(){showModuleInfo()};c.appendChild(b)}},500);</script>
 
 <script src="../../shared/dkz-premium.js" defer></script>
+    <div id="dkz-toast-container"></div>
+    <script src="../../shared/dkz-hyperreal-bg.js"></script>
 </body>
 </html>
