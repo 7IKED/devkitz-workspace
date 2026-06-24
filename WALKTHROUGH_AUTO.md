@@ -34,3 +34,9 @@
 - Paperless-ngx API-Key konfigurieren für echten Dokumenten-Push
 - git_nexus.py als Hintergrund-Worker (z.B. Windows Task Scheduler) starten
 - n8n-Webhook `POST /api/v1/n8n/paperclip` live testen
+
+## 2026-06-24 — Issue: NEMO-003_ui_bridge.md
+Fehler bei der Generierung.
+
+## 2026-06-24 — Issue: PC-001_n8n_workflow.md
+Fehler bei der Generierung.
