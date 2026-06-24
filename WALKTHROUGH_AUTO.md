@@ -17,3 +17,8 @@
 - Quelle: 2026-06-24_test_git_nexus.json
 - Tags: n8n, test, git-nexus
 - Archiviert: clip_2026-06-24_Git-Nexus_Integrationstest.md
+
+## 2026-06-24 — Paperclip: Antigravity_Test
+- Quelle: 2026-06-24_Antigravity_Test.json
+- Tags: n8n, mobile, text
+- Archiviert: clip_2026-06-24_Antigravity_Test.md
