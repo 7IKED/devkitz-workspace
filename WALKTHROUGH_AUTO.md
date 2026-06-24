@@ -44,3 +44,6 @@
 - Quelle: 2026-06-24_staging-test-rc.json
 - Tags: n8n, mobile, text
 - Archiviert: clip_2026-06-24_staging-test-rc.md
+
+## 2026-06-24 — Issue: clip_2026-06-24_staging-test-rc.md
+Fehler bei der Generierung.
