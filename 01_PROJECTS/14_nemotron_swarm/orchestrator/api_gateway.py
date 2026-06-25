@@ -109,6 +109,24 @@ class SwarmGatewayHandler(BaseHTTPRequestHandler):
         if path == "/api/v1/swarm/deepkeep/status":
             return self._send_json(200, get_deepkeep().status())
 
+        if path.startswith("/api/v1/swarm/answer/"):
+            ticket_id = path.split("/")[-1]
+            queue_file = os.path.join(os.path.dirname(__file__), "..", "..", "04_SYSTEM", "sync_queue.jsonl")
+            answer = None
+            if os.path.exists(queue_file):
+                with open(queue_file, "r", encoding="utf-8") as f:
+                    for line in f:
+                        if not line.strip(): continue
+                        try:
+                            item = json.loads(line)
+                            if item.get("ticket_id") == ticket_id and item.get("status") == "answered":
+                                answer = item
+                                break
+                        except: pass
+            if answer:
+                return self._send_json(200, answer)
+            return self._send_json(202, {"status": "pending", "ticket_id": ticket_id})
+
         self._send_json(404, {"error": "Not found"})
 
     def do_POST(self):
@@ -201,6 +219,23 @@ class SwarmGatewayHandler(BaseHTTPRequestHandler):
             except RuntimeError as e:
                 return self._send_json(503, {"error": str(e)})
 
+        if path == "/api/v1/swarm/ask":
+            question = data.get("question", "").strip()
+            if not question:
+                return self._send_json(400, {"error": "question is required"})
+            ticket_id = f"ask-{int(time.time())}"
+            queue_file = os.path.join(os.path.dirname(__file__), "..", "..", "04_SYSTEM", "sync_queue.jsonl")
+            os.makedirs(os.path.dirname(queue_file), exist_ok=True)
+            entry = {
+                "ticket_id": ticket_id,
+                "status": "pending",
+                "question": question,
+                "timestamp": time.time()
+            }
+            with open(queue_file, "a", encoding="utf-8") as f:
+                f.write(json.dumps(entry) + "\n")
+            return self._send_json(201, {"ticket_id": ticket_id, "status": "pending"})
+
         self._send_json(404, {"error": "Not found"})
 
     def _handle_task_submit(self, prompt: str, source: str):
@@ -254,6 +289,8 @@ def main():
     print(f"   GET  /api/v1/swarm/deepkeep/status")
     print(f"   POST /api/v1/swarm/deepkeep/sanitize")
     print(f"   POST /api/v1/swarm/deepkeep/retention")
+    print(f"   POST /api/v1/swarm/ask")
+    print(f"   GET  /api/v1/swarm/answer/<ticket_id>")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
