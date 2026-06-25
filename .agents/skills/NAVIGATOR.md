@@ -1,12 +1,12 @@
 # DkZ Skill Navigator — Navi-Leiste
 
-> Terminal-Referenz fuer ALLE 53 Skills, 77 Workflows und Shortcuts
+> Terminal-Referenz fuer ALLE 62 Skills, 77 Workflows und Shortcuts
 > Fuer: Antigravity, Claude, ChatGPT, Gemini, Hermes, DeepSeek, Codex, Cursor, Kimi, Grok
 > Vollstaendige Referenz: C:\DEVKiTZ\.agents\skills\llms.txt
 
 ---
 
-## Skill-Register (53 Skills)
+## Skill-Register (62 Skills)
 
 ### Meta-Skills (IMMER ZUERST)
 | # | Skill | Alias | Terminal | Pfad |
@@ -89,6 +89,19 @@
 | 52 | Grill With Docs | `grill+` | `dkz skill:grill+` | `grill-with-docs/SKILL.md` |
 | 53 | Rebye | `rebye` | `dkz skill:rebye` | `rebye/SKILL.md` |
 
+### Erweiterte Skills
+| # | Skill | Alias | Terminal | Pfad |
+|:--|:------|:------|:---------|:-----|
+| 54 | Anal | `anal` | `dkz skill:anal` | `anal/SKILL.md` |
+| 55 | DeepKeep Auto Upload | `deepkeep` | `dkz skill:deepkeep` | `deepkeep-auto-upload/SKILL.md` |
+| 56 | GitHub Gem Seeker | `gem` | `dkz skill:gem` | `github-gem-seeker/SKILL.md` |
+| 57 | Internet Skill Finder | `skillfind` | `dkz skill:skillfind` | `internet-skill-finder/SKILL.md` |
+| 58 | Music Prompter | `music` | `dkz skill:music` | `music-prompter/SKILL.md` |
+| 59 | Service Business DT | `digi` | `dkz skill:digi` | `service-business-digital-transformation/SKILL.md` |
+| 60 | SimilarWeb Analytics | `similarweb` | `dkz skill:similarweb` | `similarweb-analytics/SKILL.md` |
+| 61 | Skill Creator | `skillcreate` | `dkz skill:skillcreate` | `skill-creator/SKILL.md` |
+| 62 | Stock Analysis | `stock` | `dkz skill:stock` | `stock-analysis/SKILL.md` |
+
 ---
 
 ## Superpowers Sub-Skills (14)
@@ -129,7 +142,7 @@
 ## Quick Commands
 
 ```
-dkz skill:list         → Alle 53 Skills
+dkz skill:list         → Alle 62 Skills
 dkz skill:[alias]      → Skill laden
 dkz flow:list          → Alle 77 Workflows
 dkz flow:[name]        → Workflow ausfuehren
