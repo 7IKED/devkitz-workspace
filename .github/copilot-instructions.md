@@ -12,6 +12,8 @@ Bei JEDEM PR/Issue den du erstellst:
 1. @7IKED erwaehnen mit konkreter Aufgabe
 2. CONTEXT_BRIDGE.md mit deiner Aktion updaten
 3. Referenz auf den Antigravity-Kontext angeben
+4. **GRAPHIFY-FIRST:** Bevor du Architektur- oder Code-Aenderungen vorschlaegst, konsultiere zwingend den Knowledge Graph (Graphify).
+5. **GITNEXUS-AUDIT:** Repo-Strukturen und Datei-Abhaengigkeiten muessen via GitNexus verifiziert werden.
 
 ## Custom Agents (via @name)
 

@@ -37,6 +37,11 @@ description: Architektur-Vorgaben für CC Studio auf dem VPS via Puter (inkl. Pl
 - **Automatisierung:** Browser-Tasks (Scraping, QA-Tests, Automatisierung) laufen via Playwright headless oder im VNC-Viewer in Puter.
 - **OpenBrowser:** Agenten navigieren via Computer-Use-APIs durch Webseiten.
 
+### 2.6 OpenManus QA-Testing
+- **Rolle:** Autonomer Test-User für dkz.app (AnythingLLM, Dashy, Graphify, GitNexus).
+- **Funktion:** Simuliert menschliches Klick-Verhalten im Browser, prüft ob GUIs geladen sind, klickt auf "Login via GitHub" und verifiziert OAuth-Flows.
+- **Execution:** Wird lokal (oder via SSH) über `python main.py "Prompt"` gestartet und nutzt das Playwright/Computer-Use Backend, um die Puter-Instanzen abzutesten.
+
 ## 4. Orchestrierung & Asynchrone Ausführung
 - **Pi Agent & Nanobots:** Übernehmen die übergeordnete Steuerung und Überwachung der Puter-Instanz.
 - **Webhooks:** Der Puter arbeitet völlig asynchron. Sobald Tasks beendet sind (Research, Build, Tests), sendet der Puter einen **Webhook** zurück ins DkZ-Ökosystem (z.B. an ONTHERUN/gateway), um den Status zu melden. Agenten im lokalen Ökosystem dürfen nicht auf die Ausführung blockieren.

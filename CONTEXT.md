@@ -58,7 +58,10 @@ Visuelles **Dashy-Style Glassmorphism Dashboard** das zeigt:
 3. **AiAiKirk = Steuermann:** Chatbot-UI die alles orchestriert.
 4. **Lokale Ordner:** Nur Baumstruktur (00-99) + INI mit ASCII-Mindmap. Dateien leben auf Drive.
 5. **Desktop/Downloads:** 7-Tage-Regel — unberuehrte Dateien → DEEPKEEP (Dashboard-Funktion, kein Auto-Scan)
-6. **Copilot-Bug:** dkz-copilot.js wirft JavaScript-Fehler beim Laden → MUSS gefixt werden
+6. **Copilot-Bug:** dkz-copilot.js wirft JavaScript-Fehler beim Laden → GEFIXT.
+7. **Graphify-First:** Agenten (Copilot, OpenCode, Antigravity) MÜSSEN vor Architektur-Entscheidungen den Knowledge Graph abfragen.
+8. **GitNexus:** Das Repo-Auditing und Verstehen von Verzeichnisstrukturen muss zwingend über GitNexus erfolgen.
+9. **AnythingLLM (Understand Anything):** Dient als zentraler RAG/Workspace-Speicher für Dokumenten-verständnis, via Hub/Dashy direkt aufrufbar.
 
 ### DkZ Developer™ (Builder Agent)
 Das Ausfuehrungsorgan im Ralph-Loop.

@@ -185,6 +185,9 @@
 > LESEN → SPAWN → EXECUTE → VERIFY → COMMIT → LOOP.
 > Script: `shared/dkz-ralph.js` | Cooldown: 60s | Max Retries: 2
 
+### R98: GRAPHIFY & GITNEXUS FIRST
+> Bevor irgendein Agent (OpenCode, Copilot, Antigravity) Code modifiziert oder Architektur-Plaene ausfuehrt, MUSS der Knowledge Graph (Graphify) und die Repo-Struktur (GitNexus) zwingend analysiert werden, um Context-Drift zu vermeiden.
+
 ### R101: GITHUB PUSH PFLICHT
 > Nach JEDER Session: `git push origin master`. Push-Ergebnis pruefen.
 
@@ -234,6 +237,7 @@ C:\DEVKiTZ\
 | 2026-03-11 | v1.06 — R24 Archiv-Schutz, R25 Naming |
 | 2026-05-22 | v2.00 — Kondensierung, R39 ENTFERNT (Widerspruch zu R8), R8 ist einzige Encoding-Regel |
 | 2026-05-31 | v2.01 — R90 Event-Logging, R95 Prompt-Archiv, R96 Playbook-Bindung, R97 Ralph Loop. 152 Module. James KNOWLEDGE synchronisiert. |
+| 2026-06-26 | v2.02 — R98 Graphify & GitNexus First hinzugefuegt. |
 
 ---
 
