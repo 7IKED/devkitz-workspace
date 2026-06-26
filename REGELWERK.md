@@ -186,7 +186,10 @@
 > Script: `shared/dkz-ralph.js` | Cooldown: 60s | Max Retries: 2
 
 ### R98: GRAPHIFY & GITNEXUS FIRST
-> Bevor irgendein Agent (OpenCode, Copilot, Antigravity) Code modifiziert oder Architektur-Plaene ausfuehrt, MUSS der Knowledge Graph (Graphify) und die Repo-Struktur (GitNexus) zwingend analysiert werden, um Context-Drift zu vermeiden.
+Bezieht sich auf die Analyse des Knowledge Graphs und der Repos vor Code-Änderungen.
+
+### R99: AWESOME QA-TESTING (TDD & POST-BUILD)
+Alle Agenten MÜSSEN zwingend die Workflows `.agents/workflows/awesome-test-before-build.md` und `.agents/workflows/awesome-improve-qa.md` abarbeiten. Wir testen architektonisch VOR dem Bau (TDD/Konzept) und evaluieren die Qualität NACH dem Bau (Code, UI, UX, Network) bevor ein Issue als DONE markiert wird.
 
 ### R101: GITHUB PUSH PFLICHT
 > Nach JEDER Session: `git push origin master`. Push-Ergebnis pruefen.
@@ -238,6 +241,7 @@ C:\DEVKiTZ\
 | 2026-05-22 | v2.00 — Kondensierung, R39 ENTFERNT (Widerspruch zu R8), R8 ist einzige Encoding-Regel |
 | 2026-05-31 | v2.01 — R90 Event-Logging, R95 Prompt-Archiv, R96 Playbook-Bindung, R97 Ralph Loop. 152 Module. James KNOWLEDGE synchronisiert. |
 | 2026-06-26 | v2.02 — R98 Graphify & GitNexus First hinzugefuegt. |
+| 2026-06-27 | v2.03 — R99 Awesome QA-Testing & TDD (Awesome Listen) hinzugefuegt. |
 
 ---
 

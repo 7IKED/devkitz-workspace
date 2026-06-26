@@ -38,6 +38,7 @@ Organisation: D-VKITZ (29 Repos) | Owner: @7IKED
 
 ## Coding Standards (EISERN)
 
+- **AWESOME QA-TESTING:** Abarbeitung der `.agents/workflows/awesome-test-before-build.md` (TDD) und `.agents/workflows/awesome-improve-qa.md` (Post-Build Audit) ist VOR jedem Commit/DONE-Status zwingend erforderlich!
 - IMMER esc() bei User-Input vor innerHTML (XSS-Schutz)
 - DkZ CSS Custom Properties — KEIN hardcoded #fa1e4e
 - Shared Scripts einbinden: dkz-debug.js, dkz-guide.js, dkz-navbar.js, dkz-james.js

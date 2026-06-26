@@ -6,7 +6,7 @@
     window.DkzAuth = {
         sessionKey: 'dkz_github_session',
         oauthUrl: 'https://github.com/login/oauth/authorize',
-        clientId: 'REPLACE_WITH_GITHUB_CLIENT_ID', // Wird von OpenCode uebergeben
+        clientId: 'DKZ_PENDING_OAUTH_CLIENT_ID_WAITING_FOR_ADMIN', // Wird nach Reboot vom Admin gesetzt
         redirectUri: 'https://hub.dkz.app/oauth-callback',
 
         init: function() {
