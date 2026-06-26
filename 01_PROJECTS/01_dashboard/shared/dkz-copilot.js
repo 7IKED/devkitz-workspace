@@ -2168,6 +2168,7 @@ Markdown + emoji. Concise bullets (BP-05). Complete copy-paste snippets.
         get wsConnected() { return _wsClient && _wsClient.readyState === 1; } };
 })();
 if (typeof module !== 'undefined') module.exports = DkzCopilot;
+if (typeof window !== 'undefined') window.DkzCopilot = DkzCopilot;
 
 /* --- NATIVE COPILOT & OPENCLAW UI INTEGRATION --- */
 document.addEventListener('DOMContentLoaded', () => {

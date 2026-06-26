@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Graphify — DkZ Playbook Viewer</title>
+<title>Graphify â€” DkZ Playbook Viewer</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -144,7 +144,7 @@ canvas#graph.dragging { cursor: grabbing; }
     
 <div id="app">
   <div id="header">
-    <a href="../../hub/index.html" style="color:var(--accent,#fa1e4e);text-decoration:none;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;border:1px solid rgba(250,30,78,0.2);background:rgba(250,30,78,0.05);transition:all 0.2s" onmouseenter="this.style.background='rgba(250,30,78,0.15)'" onmouseleave="this.style.background='rgba(250,30,78,0.05)'">← Hub</a>
+    <a href="../../hub/index.html" style="color:var(--accent,#fa1e4e);text-decoration:none;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;border:1px solid rgba(250,30,78,0.2);background:rgba(250,30,78,0.05);transition:all 0.2s" onmouseenter="this.style.background='rgba(250,30,78,0.15)'" onmouseleave="this.style.background='rgba(250,30,78,0.05)'">â† Hub</a>
     <h1>&#9670; Graphify</h1>
     <div class="breadcrumb" id="breadcrumb"><a onclick="resetView()">Root</a></div>
     <input class="search-box" id="search" placeholder="Suche..." oninput="onSearch(this.value)">
@@ -536,7 +536,7 @@ async function sendChat(){
   const msg=input.value.trim(); if(!msg) return;
   input.value='';
   addChatMsg('user', msg);
-  const context = selectedNode ? `Kontext: §${selectedNode.paragraph_num||'?'} "${selectedNode.title}"\n${selectedNode.content_preview}\n\nFrage: ${msg}` : msg;
+  const context = selectedNode ? `Kontext: Â§${selectedNode.paragraph_num||'?'} "${selectedNode.title}"\n${selectedNode.content_preview}\n\nFrage: ${msg}` : msg;
   addChatMsg('system', 'Denke nach...');
   try {
     const controller = new AbortController();
@@ -553,9 +553,9 @@ async function sendChat(){
   } catch(e){
     removeLast('system');
     if (e.name === 'AbortError') {
-      addChatMsg('system', 'API Timeout — NanoChat Bridge (Port 3040) antwortet nicht. Starte den Server mit: dkz-opencode-start.bat');
+      addChatMsg('system', 'API Timeout â€” NanoChat Bridge (Port 3040) antwortet nicht. Starte den Server mit: dkz-opencode-start.bat');
     } else {
-      addChatMsg('system', 'API offline — NanoChat Bridge nicht erreichbar. Chat funktioniert erst wenn localhost:3040 laeuft.');
+      addChatMsg('system', 'API offline â€” NanoChat Bridge nicht erreichbar. Chat funktioniert erst wenn localhost:3040 laeuft.');
     }
   }
 }
@@ -735,7 +735,7 @@ canvas.addEventListener('click', e=>{
   }
 });
 
-// === NANOBOT SYSTEM — Jeder Hauptknoten bekommt einen NanoBot ===
+// === NANOBOT SYSTEM â€” Jeder Hauptknoten bekommt einen NanoBot ===
 const NANOBOT_GATEWAY = 'http://localhost:3040';
 const MATRIX_BRIDGE = 'http://localhost:8008'; // Matrix Synapse
 let nodeBots = {}; // nodeId -> { name, messages[], status }
@@ -808,10 +808,10 @@ async function sendToBot(nodeId){
     const data = await r.json();
     bot.messages.push({ role: 'bot', text: data.response || data.content || 'Keine Antwort' });
     bot.status = 'idle';
-    // Matrix Bridge — wenn verbunden
+    // Matrix Bridge â€” wenn verbunden
     if(bot.matrixRoom) sendToMatrix(bot.matrixRoom, bot.name + ': ' + (data.response || ''));
   } catch(e) {
-    bot.messages.push({ role: 'bot', text: e.name === 'AbortError' ? 'Timeout — Gateway offline' : 'Gateway nicht erreichbar (localhost:3040)' });
+    bot.messages.push({ role: 'bot', text: e.name === 'AbortError' ? 'Timeout â€” Gateway offline' : 'Gateway nicht erreichbar (localhost:3040)' });
     bot.status = 'error';
   }
   refreshBotPanel(nodeId);
@@ -837,7 +837,7 @@ async function connectMatrix(nodeId){
       bot.matrixRoom = data.room_id;
       bot.messages.push({ role: 'bot', text: '\u{1f310} Matrix verbunden: ' + roomAlias });
     } else {
-      bot.messages.push({ role: 'bot', text: '\u{1f310} Matrix Room nicht gefunden — erstelle mit: matrix-cli create ' + roomAlias });
+      bot.messages.push({ role: 'bot', text: '\u{1f310} Matrix Room nicht gefunden â€” erstelle mit: matrix-cli create ' + roomAlias });
     }
   } catch(e){
     bot.messages.push({ role: 'bot', text: '\u26a0\ufe0f Matrix Bridge offline (localhost:8008). Starte Synapse oder Element.' });
@@ -868,15 +868,15 @@ selectNode = function(n){
   }
 };
 
-// === DEEP-LINKING: ?node=§12 oder ?node=id ===
+// === DEEP-LINKING: ?node=Â§12 oder ?node=id ===
 function handleDeepLink(){
   const params = new URLSearchParams(window.location.search);
   const nodeParam = params.get('node');
   if(!nodeParam) return;
-  // Support §-Syntax: ?node=§12 oder ?node=id
+  // Support Â§-Syntax: ?node=Â§12 oder ?node=id
   let target = null;
-  if(nodeParam.startsWith('§') || nodeParam.startsWith('%C2%A7')){
-    const num = parseInt(nodeParam.replace(/[§%C2%A7]/g, ''));
+  if(nodeParam.startsWith('Â§') || nodeParam.startsWith('%C2%A7')){
+    const num = parseInt(nodeParam.replace(/[Â§%C2%A7]/g, ''));
     target = nodes.find(n => n.paragraph_num === num);
   }
   if(!target) target = nodes.find(n => n.id === nodeParam);
@@ -1010,5 +1010,9 @@ window.addEventListener('DOMContentLoaded', () => {
 <script src="../../shared/dkz-premium.js" defer></script>
     <div id="dkz-toast-container"></div>
     <script src="../../shared/dkz-hyperreal-bg.js"></script>
+
+    <!-- DkZ Event Logging (R90) -->
+    <script src="../../shared/dkz-eventlog.js"></script>
 </body>
 </html>
+
